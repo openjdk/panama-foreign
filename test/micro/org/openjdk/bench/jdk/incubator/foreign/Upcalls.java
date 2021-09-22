@@ -22,9 +22,10 @@
  */
 package org.openjdk.bench.jdk.incubator.foreign;
 
+import jdk.incubator.foreign.Addressable;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SymbolLookup;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -41,10 +42,6 @@ import java.lang.invoke.MethodType;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.invoke.MethodHandles.lookup;
-import static jdk.incubator.foreign.CLinker.C_DOUBLE;
-import static jdk.incubator.foreign.CLinker.C_INT;
-import static jdk.incubator.foreign.CLinker.C_LONG_LONG;
-import static jdk.incubator.foreign.CLinker.C_POINTER;
 
 @BenchmarkMode(Mode.AverageTime)
 @Warmup(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
@@ -52,18 +49,18 @@ import static jdk.incubator.foreign.CLinker.C_POINTER;
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "--enable-native-access=ALL-UNNAMED" })
-public class Upcalls {
+public class Upcalls extends CLayouts {
 
-    static final CLinker abi = CLinker.getInstance();
+    static final CLinker abi = CLinker.systemCLinker();
     static final MethodHandle blank;
     static final MethodHandle identity;
     static final MethodHandle args5;
     static final MethodHandle args10;
 
-    static final MemoryAddress cb_blank;
-    static final MemoryAddress cb_identity;
-    static final MemoryAddress cb_args5;
-    static final MemoryAddress cb_args10;
+    static final Addressable cb_blank;
+    static final Addressable cb_identity;
+    static final Addressable cb_args5;
+    static final Addressable cb_args10;
 
     static final long cb_blank_jni;
     static final long cb_identity_jni;
@@ -127,16 +124,15 @@ public class Upcalls {
     static MethodHandle linkFunc(String name, MethodType baseType, FunctionDescriptor baseDesc) {
         return abi.downcallHandle(
             SymbolLookup.loaderLookup().lookup(name).orElseThrow(),
-            baseType.insertParameterTypes(baseType.parameterCount(), MemoryAddress.class),
-            baseDesc.withAppendedArgumentLayouts(C_POINTER)
+                baseDesc.withAppendedArgumentLayouts(C_POINTER)
         );
     }
 
-    static MemoryAddress makeCB(String name, MethodType mt, FunctionDescriptor fd) throws ReflectiveOperationException {
+    static CLinker.UpcallStub makeCB(String name, MethodType mt, FunctionDescriptor fd) throws ReflectiveOperationException {
         return abi.upcallStub(
             lookup().findStatic(Upcalls.class, name, mt),
             fd, ResourceScope.globalScope()
-        ).address();
+        );
     }
 
     static native void blank(long cb);

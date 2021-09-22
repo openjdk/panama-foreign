@@ -51,7 +51,7 @@ import java.util.function.UnaryOperator;
  * (see {@link #sequenceElement()}, {@link #sequenceElement(long)}, {@link #sequenceElement(long, long)}, {@link #groupElement(String)}).
  * Once a path has been fully constructed, clients can ask for the offset associated with the layout element selected
  * by the path (see {@link #offset}), or obtain a memory access var handle to access the selected layout element
- * given an address pointing to a segment associated with the root layout (see {@link #dereferenceHandle(Class)}).
+ * given an address pointing to a segment associated with the root layout (see {@link #dereferenceHandle()}).
  */
 public class LayoutPath {
 
@@ -152,9 +152,13 @@ public class LayoutPath {
         return offset;
     }
 
-    public VarHandle dereferenceHandle(Class<?> carrier) {
-        Utils.checkPrimitiveCarrierCompat(carrier, layout);
+    public VarHandle dereferenceHandle() {
+        if (!(layout instanceof ValueLayout)) {
+            throw new IllegalArgumentException("Path does not select a value layout");
+        }
         checkAlignment(this);
+
+        Class<?> carrier = ((ValueLayout)layout).carrier();
 
         List<Class<?>> expectedCoordinates = new ArrayList<>();
         Deque<Integer> perms = new ArrayDeque<>();

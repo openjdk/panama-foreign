@@ -33,9 +33,6 @@
  *   TestUpcallException
  */
 
-import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.ResourceScope;
 import jdk.test.lib.Utils;
 import org.testng.annotations.Test;
 

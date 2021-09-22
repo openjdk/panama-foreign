@@ -22,7 +22,6 @@
  *
  */
 
-import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemorySegment;
 
 import jdk.incubator.foreign.ResourceScope;
@@ -40,11 +39,11 @@ public class TestStringEncoding {
     @Test(dataProvider = "strings")
     public void testStrings(String testString, int expectedByteLength) {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment text = CLinker.toCString(testString, scope);
+            MemorySegment text = scope.allocateUtf8String(testString);
 
             assertEquals(text.byteSize(), expectedByteLength);
 
-            String roundTrip = CLinker.toJavaString(text);
+            String roundTrip = text.getUtf8String(0);
             assertEquals(roundTrip, testString);
         }
     }

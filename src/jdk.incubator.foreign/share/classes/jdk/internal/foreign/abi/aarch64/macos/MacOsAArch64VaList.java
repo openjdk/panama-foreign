@@ -26,7 +26,7 @@
 package jdk.internal.foreign.abi.aarch64.macos;
 
 import jdk.incubator.foreign.*;
-import jdk.incubator.foreign.CLinker.VaList;
+import jdk.incubator.foreign.VaList;
 import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
@@ -48,7 +48,7 @@ import static jdk.internal.foreign.abi.SharedUtils.alignUp;
 public non-sealed class MacOsAArch64VaList implements VaList {
     public static final Class<?> CARRIER = MemoryAddress.class;
     private static final long VA_SLOT_SIZE_BYTES = 8;
-    private static final VarHandle VH_address = MemoryHandles.asAddressVarHandle(C_POINTER.varHandle(long.class));
+    private static final VarHandle VH_address = C_POINTER.varHandle();
 
     private static final VaList EMPTY = new SharedUtils.EmptyVaList(MemoryAddress.NULL);
 
@@ -65,34 +65,29 @@ public non-sealed class MacOsAArch64VaList implements VaList {
     }
 
     @Override
-    public int vargAsInt(MemoryLayout layout) {
+    public int nextVarg(ValueLayout.OfInt layout) {
         return (int) read(int.class, layout);
     }
 
     @Override
-    public long vargAsLong(MemoryLayout layout) {
+    public long nextVarg(ValueLayout.OfLong layout) {
         return (long) read(long.class, layout);
     }
 
     @Override
-    public double vargAsDouble(MemoryLayout layout) {
+    public double nextVarg(ValueLayout.OfDouble layout) {
         return (double) read(double.class, layout);
     }
 
     @Override
-    public MemoryAddress vargAsAddress(MemoryLayout layout) {
+    public MemoryAddress nextVarg(ValueLayout.OfAddress layout) {
         return (MemoryAddress) read(MemoryAddress.class, layout);
     }
 
     @Override
-    public MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator allocator) {
+    public MemorySegment nextVarg(GroupLayout layout, SegmentAllocator allocator) {
         Objects.requireNonNull(allocator);
         return (MemorySegment) read(MemorySegment.class, layout, allocator);
-    }
-
-    @Override
-    public MemorySegment vargAsSegment(MemoryLayout layout, ResourceScope scope) {
-        return vargAsSegment(layout, SegmentAllocator.ofScope(scope));
     }
 
     private Object read(Class<?> carrier, MemoryLayout layout) {
@@ -101,29 +96,28 @@ public non-sealed class MacOsAArch64VaList implements VaList {
 
     private Object read(Class<?> carrier, MemoryLayout layout, SegmentAllocator allocator) {
         Objects.requireNonNull(layout);
-        SharedUtils.checkCompatibleType(carrier, layout, MacOsAArch64Linker.ADDRESS_SIZE);
         Object res;
         if (carrier == MemorySegment.class) {
             TypeClass typeClass = TypeClass.classifyLayout(layout);
             res = switch (typeClass) {
                 case STRUCT_REFERENCE -> {
                     MemoryAddress structAddr = (MemoryAddress) VH_address.get(segment);
-                    MemorySegment struct = structAddr.asSegment(layout.byteSize(), scope());
+                    MemorySegment struct = MemorySegment.ofAddressNative(structAddr, layout.byteSize(), scope());
                     MemorySegment seg = allocator.allocate(layout);
                     seg.copyFrom(struct);
                     segment = segment.asSlice(VA_SLOT_SIZE_BYTES);
                     yield seg;
                 }
                 case STRUCT_REGISTER, STRUCT_HFA -> {
-                    MemorySegment struct = allocator.allocate(layout);
-                    struct.copyFrom(segment.asSlice(0L, layout.byteSize()));
+                    MemorySegment struct = allocator.allocate(layout)
+                            .copyFrom(segment.asSlice(0, layout.byteSize()));
                     segment = segment.asSlice(alignUp(layout.byteSize(), VA_SLOT_SIZE_BYTES));
                     yield struct;
                 }
                 default -> throw new IllegalStateException("Unexpected TypeClass: " + typeClass);
             };
         } else {
-            VarHandle reader = layout.varHandle(carrier);
+            VarHandle reader = layout.varHandle();
             res = reader.get(segment);
             segment = segment.asSlice(VA_SLOT_SIZE_BYTES);
         }
@@ -144,7 +138,7 @@ public non-sealed class MacOsAArch64VaList implements VaList {
     }
 
     static MacOsAArch64VaList ofAddress(MemoryAddress addr, ResourceScope scope) {
-        MemorySegment segment = addr.asSegment(Long.MAX_VALUE, scope);
+        MemorySegment segment = MemorySegment.ofAddressNative(addr, Long.MAX_VALUE, scope);
         return new MacOsAArch64VaList(segment, scope);
     }
 
@@ -181,33 +175,32 @@ public non-sealed class MacOsAArch64VaList implements VaList {
         private Builder arg(Class<?> carrier, MemoryLayout layout, Object value) {
             Objects.requireNonNull(layout);
             Objects.requireNonNull(value);
-            SharedUtils.checkCompatibleType(carrier, layout, MacOsAArch64Linker.ADDRESS_SIZE);
             args.add(new SimpleVaArg(carrier, layout, value));
             return this;
         }
 
         @Override
-        public Builder vargFromInt(ValueLayout layout, int value) {
+        public Builder addVarg(ValueLayout.OfInt layout, int value) {
             return arg(int.class, layout, value);
         }
 
         @Override
-        public Builder vargFromLong(ValueLayout layout, long value) {
+        public Builder addVarg(ValueLayout.OfLong layout, long value) {
             return arg(long.class, layout, value);
         }
 
         @Override
-        public Builder vargFromDouble(ValueLayout layout, double value) {
+        public Builder addVarg(ValueLayout.OfDouble layout, double value) {
             return arg(double.class, layout, value);
         }
 
         @Override
-        public Builder vargFromAddress(ValueLayout layout, Addressable value) {
+        public Builder addVarg(ValueLayout.OfAddress layout, Addressable value) {
             return arg(MemoryAddress.class, layout, value.address());
         }
 
         @Override
-        public Builder vargFromSegment(GroupLayout layout, MemorySegment value) {
+        public Builder addVarg(GroupLayout layout, MemorySegment value) {
             return arg(MemorySegment.class, layout, value);
         }
 
@@ -237,10 +230,9 @@ public non-sealed class MacOsAArch64VaList implements VaList {
                             VH_address.set(cursor, copy.address());
                             cursor = cursor.asSlice(VA_SLOT_SIZE_BYTES);
                         }
-                        case STRUCT_REGISTER, STRUCT_HFA -> {
-                            cursor.copyFrom(msArg.asSlice(0, arg.layout.byteSize()));
-                            cursor = cursor.asSlice(alignUp(arg.layout.byteSize(), VA_SLOT_SIZE_BYTES));
-                        }
+                        case STRUCT_REGISTER, STRUCT_HFA ->
+                            cursor.copyFrom(msArg.asSlice(0, arg.layout.byteSize()))
+                                    .asSlice(alignUp(arg.layout.byteSize(), VA_SLOT_SIZE_BYTES));
                         default -> throw new IllegalStateException("Unexpected TypeClass: " + typeClass);
                     }
                 } else {

@@ -22,10 +22,10 @@
  */
 package org.openjdk.bench.jdk.incubator.foreign;
 
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.MemoryAccess;
-import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
@@ -44,10 +44,7 @@ import java.lang.invoke.MethodType;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.invoke.MethodHandles.lookup;
-import static jdk.incubator.foreign.CLinker.C_INT;
-import static jdk.incubator.foreign.CLinker.C_LONG_LONG;
-import static jdk.incubator.foreign.CLinker.C_POINTER;
-import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
+import static jdk.incubator.foreign.ValueLayout.JAVA_INT;
 
 @BenchmarkMode(Mode.AverageTime)
 @Warmup(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
@@ -55,12 +52,12 @@ import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "--enable-native-access=ALL-UNNAMED" })
-public class QSort {
+public class QSort extends CLayouts {
 
-    static final CLinker abi = CLinker.getInstance();
+    static final CLinker abi = CLinker.systemCLinker();
     static final MethodHandle clib_qsort;
     static final MemoryAddress native_compar;
-    static final MemoryAddress panama_upcall_compar;
+    static final Addressable panama_upcall_compar;
     static final long jni_upcall_compar;
 
     static final int[] INPUT = { 5, 3, 2, 7, 8, 12, 1, 7 };
@@ -74,10 +71,8 @@ public class QSort {
         jni_upcall_compar = JNICB.makeCB("org/openjdk/bench/jdk/incubator/foreign/QSort", "jni_upcall_compar", "(II)I");
 
         try {
-            SymbolLookup systemLookup = CLinker.systemLookup();
             clib_qsort = abi.downcallHandle(
-                    systemLookup.lookup("qsort").orElseThrow(),
-                    MethodType.methodType(void.class, MemoryAddress.class, long.class, long.class, MemoryAddress.class),
+                    abi.lookup("qsort").orElseThrow(),
                     FunctionDescriptor.ofVoid(C_POINTER, C_LONG_LONG, C_LONG_LONG, C_POINTER)
             );
             System.loadLibrary("QSort");
@@ -125,7 +120,7 @@ public class QSort {
     }
 
     private static int getIntAbsolute(MemoryAddress addr) {
-        return MemoryAccess.getIntAtOffset(MemorySegment.globalNativeSegment(), addr.toRawLongValue());
+        return addr.get(JAVA_INT, 0);
     }
 
     static int panama_upcall_compar(MemoryAddress e0, MemoryAddress e1) {

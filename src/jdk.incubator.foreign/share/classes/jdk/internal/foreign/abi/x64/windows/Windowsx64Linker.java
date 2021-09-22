@@ -24,11 +24,13 @@
  */
 package jdk.internal.foreign.abi.x64.windows;
 
+import jdk.incubator.foreign.Addressable;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
-import jdk.internal.foreign.AbstractCLinker;
+import jdk.incubator.foreign.VaList;
 import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.UpcallStubs;
@@ -42,7 +44,7 @@ import java.util.function.Consumer;
 /**
  * ABI implementation based on Windows ABI AMD64 supplement v.0.99.6
  */
-public final class Windowsx64Linker extends AbstractCLinker {
+public final class Windowsx64Linker implements CLinker {
 
     public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 4;
     public static final int MAX_INTEGER_RETURN_REGISTERS = 1;
@@ -69,9 +71,9 @@ public final class Windowsx64Linker extends AbstractCLinker {
     }
 
     @Override
-    public final MethodHandle downcallHandle(MethodType type, FunctionDescriptor function) {
-        Objects.requireNonNull(type);
+    public final MethodHandle downcallHandle(FunctionDescriptor function) {
         Objects.requireNonNull(function);
+        MethodType type = SharedUtils.inferMethodType(function, false);
         MethodHandle handle = CallArranger.arrangeDowncall(type, function);
         if (!type.returnType().equals(MemorySegment.class)) {
             // not returning segment, just insert a throwing allocator
@@ -81,12 +83,16 @@ public final class Windowsx64Linker extends AbstractCLinker {
     }
 
     @Override
-    public final MemoryAddress upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope) {
+    public final UpcallStub upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope) {
         Objects.requireNonNull(scope);
         Objects.requireNonNull(target);
         Objects.requireNonNull(function);
         SharedUtils.checkExceptions(target);
-        return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function), (ResourceScopeImpl) scope);
+        MethodType type = SharedUtils.inferMethodType(function, true);
+        if (!type.equals(target.type())) {
+            throw new IllegalArgumentException("Wrong method handle type: " + target.type());
+        }
+        return CallArranger.arrangeUpcall(target, target.type(), function, scope);
     }
 
     public static VaList newVaListOfAddress(MemoryAddress ma, ResourceScope scope) {

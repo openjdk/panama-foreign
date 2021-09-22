@@ -27,24 +27,21 @@ package jdk.incubator.foreign;
 
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
-import jdk.internal.foreign.Utils;
 import sun.invoke.util.Wrapper;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * This class defines several factory methods for constructing and combining memory access var handles.
- * To obtain a memory access var handle, clients must start from one of the <em>leaf</em> methods
- * (see {@link MemoryHandles#varHandle(Class, ByteOrder)},
- * {@link MemoryHandles#varHandle(Class, long, ByteOrder)}). This determines the variable type
- * (all primitive types but {@code void}, as well as {@link MemoryAddress} are supported), as well as the alignment constraint and the
- * byte order associated with a memory access var handle. The resulting memory access var handle can then be combined in various ways
+ * Memory access var handles can be obtained using {@link MemoryHandles#varHandle(ValueLayout)}. The provided value layout
+ * determines the type, as well as the alignment constraint and the byte order associated with the memory access var handle.
+ * <p>
+ * The resulting memory access var handle can then be combined in various ways
  * to emulate different addressing modes. The var handles created by this class feature a <em>mandatory</em> coordinate type
  * (of type {@link MemorySegment}), and one {@code long} coordinate type, which represents the offset, in bytes, relative
  * to the segment, at which dereference should occur.
@@ -53,12 +50,12 @@ import java.util.Objects;
  * <blockquote><pre>{@code
 GroupLayout seq = MemoryLayout.structLayout(
         MemoryLayout.paddingLayout(32),
-        MemoryLayout.valueLayout(32, ByteOrder.BIG_ENDIAN).withName("value")
+        ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN).withName("value")
 );
  * }</pre></blockquote>
  * To access the member layout named {@code value}, we can construct a memory access var handle as follows:
  * <blockquote><pre>{@code
-VarHandle handle = MemoryHandles.varHandle(int.class, ByteOrder.BIG_ENDIAN); //(MemorySegment, long) -> int
+VarHandle handle = MemoryHandles.varHandle(ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN)); //(MemorySegment, long) -> int
 handle = MemoryHandles.insertCoordinates(handle, 1, 4); //(MemorySegment) -> int
  * }</pre></blockquote>
  *
@@ -109,8 +106,6 @@ public final class MemoryHandles {
         //sorry, just the one!
     }
 
-    private static final MethodHandle LONG_TO_ADDRESS;
-    private static final MethodHandle ADDRESS_TO_LONG;
     private static final MethodHandle INT_TO_BYTE;
     private static final MethodHandle BYTE_TO_UNSIGNED_INT;
     private static final MethodHandle INT_TO_SHORT;
@@ -124,10 +119,6 @@ public final class MemoryHandles {
 
     static {
         try {
-            LONG_TO_ADDRESS = MethodHandles.lookup().findStatic(MemoryHandles.class, "longToAddress",
-                    MethodType.methodType(MemoryAddress.class, long.class));
-            ADDRESS_TO_LONG = MethodHandles.lookup().findStatic(MemoryHandles.class, "addressToLong",
-                    MethodType.methodType(long.class, MemoryAddress.class));
             INT_TO_BYTE = MethodHandles.explicitCastArguments(MethodHandles.identity(byte.class),
                     MethodType.methodType(byte.class, int.class));
             BYTE_TO_UNSIGNED_INT = MethodHandles.lookup().findStatic(Byte.class, "toUnsignedInt",
@@ -154,34 +145,10 @@ public final class MemoryHandles {
     }
 
     /**
-     * Creates a memory access var handle with the given carrier type and byte order.
-     *
-     * The returned var handle's type is {@code carrier} and the list of coordinate types is
-     * {@code (MemorySegment, long)}, where the {@code long} coordinate type corresponds to byte offset into
-     * a given memory segment. The returned var handle accesses bytes at an offset in a given
-     * memory segment, composing bytes to or from a value of the type {@code carrier} according to the given endianness;
-     * the alignment constraint (in bytes) for the resulting memory access var handle is the same as the size (in bytes) of the
-     * carrier type {@code carrier}.
-     *
-     * @apiNote the resulting var handle features certain <a href="#memaccess-mode">access mode restrictions</a>,
-     * which are common to all memory access var handles.
-     *
-     * @param carrier the carrier type. Valid carriers are {@code byte}, {@code boolean}, {@code short}, {@code char}, {@code int},
-     * {@code float}, {@code long}, {@code double} and {@link MemoryAddress}.
-     * @param byteOrder the required byte order.
-     * @return the new memory access var handle.
-     * @throws IllegalArgumentException when an illegal carrier type is used
-     */
-    public static VarHandle varHandle(Class<?> carrier, ByteOrder byteOrder) {
-        Objects.requireNonNull(carrier);
-        Objects.requireNonNull(byteOrder);
-        return varHandle(carrier,
-                carrierSize(carrier),
-                byteOrder);
-    }
-
-    /**
-     * Creates a memory access var handle with the given carrier type, alignment constraint, and byte order.
+     * Creates a memory access var handle from given value layout. The provided layout will specify the
+     * {@linkplain ValueLayout#carrier() carrier type}, the {@linkplain ValueLayout#byteSize() the byte size},
+     * the {@linkplain ValueLayout#byteAlignment() byte alignment} and the {@linkplain ValueLayout#order() byte order}
+     * associated to the returned var handle.
      *
      * The returned var handle's type is {@code carrier} and the list of coordinate types is
      * {@code (MemorySegment, long)}, where the {@code long} coordinate type corresponds to byte offset into
@@ -192,56 +159,13 @@ public final class MemoryHandles {
      * @apiNote the resulting var handle features certain <a href="#memaccess-mode">access mode restrictions</a>,
      * which are common to all memory access var handles.
      *
-     * @param carrier the carrier type. Valid carriers are {@code byte}, {@code boolean}, {@code short}, {@code char}, {@code int},
-     * {@code float}, {@code long}, {@code double} and {@link MemoryAddress}.
-     * @param alignmentBytes the alignment constraint (in bytes). Must be a power of two.
-     * @param byteOrder the required byte order.
+     * @param layout the value layout for which a memory access handle is to be obtained.
      * @return the new memory access var handle.
      * @throws IllegalArgumentException if an illegal carrier type is used, or if {@code alignmentBytes} is not a power of two.
      */
-    public static VarHandle varHandle(Class<?> carrier, long alignmentBytes, ByteOrder byteOrder) {
-        Objects.requireNonNull(carrier);
-        Objects.requireNonNull(byteOrder);
-        checkCarrier(carrier);
-
-        if (alignmentBytes <= 0
-                || (alignmentBytes & (alignmentBytes - 1)) != 0) { // is power of 2?
-            throw new IllegalArgumentException("Bad alignment: " + alignmentBytes);
-        }
-
-        return Utils.makeMemoryAccessVarHandle(carrier, false, alignmentBytes - 1, byteOrder);
-    }
-
-    /**
-     * Adapt an existing var handle into a new var handle whose carrier type is {@link MemorySegment}.
-     * That is, when calling {@link VarHandle#get(Object...)} on the returned var handle,
-     * the read numeric value will be turned into a memory address (as if by calling {@link MemoryAddress#ofLong(long)});
-     * similarly, when calling {@link VarHandle#set(Object...)}, the memory address to be set will be converted
-     * into a numeric value, and then written into memory. The amount of bytes read (resp. written) from (resp. to)
-     * memory depends on the carrier of the original memory access var handle.
-     *
-     * @param target the memory access var handle to be adapted
-     * @return the adapted var handle.
-     * @throws IllegalArgumentException if the carrier type of {@code varHandle} is either {@code boolean},
-     * {@code float}, or {@code double}, or is not a primitive type.
-     */
-    public static VarHandle asAddressVarHandle(VarHandle target) {
-        Objects.requireNonNull(target);
-        Class<?> carrier = target.varType();
-        if (!carrier.isPrimitive() || carrier == boolean.class ||
-                carrier == float.class || carrier == double.class) {
-            throw new IllegalArgumentException("Unsupported carrier type: " + carrier.getName());
-        }
-
-        if (carrier != long.class) {
-            // slow-path, we need to adapt
-            return filterValue(target,
-                    MethodHandles.explicitCastArguments(ADDRESS_TO_LONG, MethodType.methodType(carrier, MemoryAddress.class)),
-                    MethodHandles.explicitCastArguments(LONG_TO_ADDRESS, MethodType.methodType(MemoryAddress.class, carrier)));
-        } else {
-            // fast-path
-            return filterValue(target, ADDRESS_TO_LONG, LONG_TO_ADDRESS);
-        }
+    public static VarHandle varHandle(ValueLayout layout) {
+        Objects.requireNonNull(layout);
+        return layout.accessHandle();
     }
 
     /**
@@ -254,8 +178,8 @@ public final class MemoryHandles {
      * Java {@code int} to avoid dealing with negative values, which would be
      * the case if modeled as a Java {@code short}. This is illustrated in the following example:
      * <blockquote><pre>{@code
-    MemorySegment segment = MemorySegment.allocateNative(2, ResourceScope.newImplicitScope());
-    VarHandle SHORT_VH = MemoryLayouts.JAVA_SHORT.varHandle(short.class);
+    MemorySegment segment = MemorySegment.allocateNative(2, ResourceScope.newConfinedScope());
+    VarHandle SHORT_VH = ValueLayout.JAVA_SHORT.varHandle();
     VarHandle INT_VH = MemoryHandles.asUnsigned(SHORT_VH, int.class);
     SHORT_VH.set(segment, (short)-1);
     INT_VH.get(segment); // returns 65535
@@ -276,7 +200,7 @@ public final class MemoryHandles {
      * <p>
      * The returned var handle will feature the variable type {@code adaptedType},
      * and the same access coordinates, the same access modes (see {@link
-     * java.lang.invoke.VarHandle.AccessMode}, and the same atomic access
+     * java.lang.invoke.VarHandle.AccessMode}), and the same atomic access
      * guarantees, as those featured by the {@code target} var handle.
      *
      * @param target the memory access var handle to be adapted
@@ -284,7 +208,7 @@ public final class MemoryHandles {
      * @return the adapted var handle.
      * @throws IllegalArgumentException if the carrier type of {@code target}
      * is not one of {@code byte}, {@code short}, or {@code int}; if {@code
-     * adaptedType} is not one of {@code int}, or {@code long}; if the bitwidth
+     * adaptedType} is not one of {@code int}, or {@code long}; if the bit width
      * of the {@code adaptedType} is not greater than that of the {@code target}
      * carrier type.
      *
@@ -324,7 +248,7 @@ public final class MemoryHandles {
      * is processed using the second filter and returned to the caller. More advanced access mode types, such as
      * {@link java.lang.invoke.VarHandle.AccessMode#COMPARE_AND_EXCHANGE} might apply both filters at the same time.
      * <p>
-     * For the boxing and unboxing filters to be well formed, their types must be of the form {@code (A... , S) -> T} and
+     * For the boxing and unboxing filters to be well-formed, their types must be of the form {@code (A... , S) -> T} and
      * {@code (A... , T) -> S}, respectively, where {@code T} is the type of the target var handle. If this is the case,
      * the resulting var handle will have type {@code S} and will feature the additional coordinates {@code A...} (which
      * will be appended to the coordinates of the target var handle).
@@ -332,7 +256,7 @@ public final class MemoryHandles {
      * If the boxing and unboxing filters throw any checked exceptions when invoked, the resulting var handle will
      * throw an {@link IllegalStateException}.
      * <p>
-     * The resulting var handle will feature the same access modes (see {@link java.lang.invoke.VarHandle.AccessMode} and
+     * The resulting var handle will feature the same access modes (see {@link java.lang.invoke.VarHandle.AccessMode}) and
      * atomic access guarantees as those featured by the target var handle.
      *
      * @param target the target var handle
@@ -356,7 +280,7 @@ public final class MemoryHandles {
      * parameter types of the unary filter functions), and then passed (along with any coordinate that was left unaltered
      * by the adaptation) to the target var handle.
      * <p>
-     * For the coordinate filters to be well formed, their types must be of the form {@code S1 -> T1, S2 -> T1 ... Sn -> Tn},
+     * For the coordinate filters to be well-formed, their types must be of the form {@code S1 -> T1, S2 -> T1 ... Sn -> Tn},
      * where {@code T1, T2 ... Tn} are the coordinate types starting at position {@code pos} of the target var handle.
      * <p>
      * If any of the filters throws a checked exception when invoked, the resulting var handle will
@@ -388,7 +312,7 @@ public final class MemoryHandles {
      * When calling e.g. {@link VarHandle#get(Object...)} on the resulting var handle, incoming coordinate values
      * are joined with bound coordinate values, and then passed to the target var handle.
      * <p>
-     * For the bound coordinates to be well formed, their types must be {@code T1, T2 ... Tn },
+     * For the bound coordinates to be well-formed, their types must be {@code T1, T2 ... Tn },
      * where {@code T1, T2 ... Tn} are the coordinate types starting at position {@code pos} of the target var handle.
      * <p>
      * The resulting var handle will feature the same access modes (see {@link java.lang.invoke.VarHandle.AccessMode}) and
@@ -415,7 +339,7 @@ public final class MemoryHandles {
      * <p>
      * The given array controls the reordering.
      * Call {@code #I} the number of incoming coordinates (the value
-     * {@code newCoordinates.size()}, and call {@code #O} the number
+     * {@code newCoordinates.size()}), and call {@code #O} the number
      * of outgoing coordinates (the number of coordinates associated with the target var handle).
      * Then the length of the reordering array must be {@code #O},
      * and each element must be a non-negative number less than {@code #I}.
@@ -450,7 +374,7 @@ public final class MemoryHandles {
     }
 
     /**
-     * Adapts a target var handle handle by pre-processing
+     * Adapts a target var handle by pre-processing
      * a sub-sequence of its coordinate values with a filter (a method handle).
      * The pre-processed coordinates are replaced by the result (if any) of the
      * filter function and the target var handle is then called on the modified (usually shortened)
@@ -514,28 +438,6 @@ public final class MemoryHandles {
         return JLI.dropCoordinates(target, pos, valueTypes);
     }
 
-    private static void checkAddressFirstCoordinate(VarHandle handle) {
-        if (handle.coordinateTypes().size() < 1 ||
-                handle.coordinateTypes().get(0) != MemorySegment.class) {
-            throw new IllegalArgumentException("Expected var handle with leading coordinate of type MemorySegment");
-        }
-    }
-
-    private static void checkCarrier(Class<?> carrier) {
-        if ((!carrier.isPrimitive() && carrier != MemoryAddress.class) || carrier == void.class) {
-            throw new IllegalArgumentException("Illegal carrier: " + carrier.getSimpleName());
-        }
-    }
-
-    private static long carrierSize(Class<?> carrier) {
-        if (carrier == MemoryAddress.class) {
-            return MemoryLayouts.ADDRESS.byteSize();
-        } else {
-            long bitsAlignment = Math.max(8, Wrapper.forPrimitiveType(carrier).bitWidth());
-            return Utils.bitsToBytesOrThrow(bitsAlignment, IllegalStateException::new);
-        }
-    }
-
     private static void checkWidenable(Class<?> carrier) {
         if (!(carrier == byte.class || carrier == short.class || carrier == int.class)) {
             throw new IllegalArgumentException("illegal carrier:" + carrier.getSimpleName());
@@ -553,13 +455,5 @@ public final class MemoryHandles {
             throw new IllegalArgumentException(
                     target.getSimpleName() + " is not wider than: " + carrier.getSimpleName());
         }
-    }
-
-    private static MemoryAddress longToAddress(long value) {
-        return MemoryAddress.ofLong(value);
-    }
-
-    private static long addressToLong(MemoryAddress value) {
-        return value.toRawLongValue();
     }
 }

@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -24,24 +22,27 @@
  */
 package org.openjdk.bench.jdk.incubator.foreign;
 
-
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.CompilerControl;
 import org.openjdk.jmh.annotations.Fork;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 import sun.misc.Unsafe;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
+import java.lang.invoke.VarHandle;
+import java.nio.IntBuffer;
 import java.util.concurrent.TimeUnit;
 
+import static jdk.incubator.foreign.MemoryLayout.PathElement.sequenceElement;
 import static jdk.incubator.foreign.ValueLayout.JAVA_INT;
 
 @BenchmarkMode(Mode.AverageTime)
@@ -50,69 +51,62 @@ import static jdk.incubator.foreign.ValueLayout.JAVA_INT;
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign" })
-public class LoopOverPollutedBuffer {
-
-    static final int ELEM_SIZE = 1_000_000;
-    static final int CARRIER_SIZE = (int) JAVA_INT.byteSize();
-    static final int ALLOC_SIZE = ELEM_SIZE * CARRIER_SIZE;
+public class LoopOverNewHeap {
 
     static final Unsafe unsafe = Utils.unsafe;
 
-    ByteBuffer dbb = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
-    byte[] arr = new byte[ALLOC_SIZE];
-    ByteBuffer hbb = ByteBuffer.wrap(arr).order(ByteOrder.nativeOrder());
-    FloatBuffer hfb = hbb.asFloatBuffer();
+    static final int ELEM_SIZE = 1_000_000;
+    static final int CARRIER_SIZE = (int)JAVA_INT.byteSize();
 
+    static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(sequenceElement());
+
+    @Param(value = {"false", "true"})
+    boolean polluteProfile;
 
     @Setup
     public void setup() {
+        if (polluteProfile) {
+            for (int i = 0 ; i < 10000 ; i++) {
+                MemorySegment intB = MemorySegment.ofArray(new byte[ELEM_SIZE]);
+                MemorySegment intI = MemorySegment.ofArray(new int[ELEM_SIZE]);
+                MemorySegment intD = MemorySegment.ofArray(new double[ELEM_SIZE]);
+                MemorySegment intF = MemorySegment.ofArray(new float[ELEM_SIZE]);
+            }
+        }
+    }
+
+    @Benchmark
+    public void unsafe_loop() {
+        int[] elems = new int[ELEM_SIZE];
         for (int i = 0; i < ELEM_SIZE; i++) {
-            dbb.putFloat(i * 4, i);
-            hbb.putFloat(i * 4, i);
+            unsafe.putInt(elems, Unsafe.ARRAY_INT_BASE_OFFSET + (i * CARRIER_SIZE) , i);
         }
+    }
+
+
+    @Benchmark
+    public void segment_loop() {
+        MemorySegment segment = MemorySegment.ofArray(new int[ELEM_SIZE]);
         for (int i = 0; i < ELEM_SIZE; i++) {
-            hfb.put(i, i);
+            VH_int.set(segment, (long) i, i);
         }
     }
 
-    @TearDown
-    public void tearDown() {
-        unsafe.invokeCleaner(dbb);
-        arr = null;
-        hbb = null;
-        hfb = null;
+    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
+    @Benchmark
+    public void segment_loop_dontinline() {
+        MemorySegment segment = MemorySegment.ofArray(new int[ELEM_SIZE]);
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            VH_int.set(segment, (long) i, i);
+        }
     }
 
     @Benchmark
-    public int direct_byte_buffer_get_float() {
-        int sum = 0;
-        for (int k = 0; k < ELEM_SIZE; k++) {
-            dbb.putFloat(k, (float)k + 1);
-            float v = dbb.getFloat(k * 4);
-            sum += (int)v;
+    public void buffer_loop() {
+        IntBuffer buffer = IntBuffer.wrap(new int[ELEM_SIZE]);
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            buffer.put(i , i);
         }
-        return sum;
     }
 
-    @Benchmark
-    public int heap_byte_buffer_get_int() {
-        int sum = 0;
-        for (int k = 0; k < ELEM_SIZE; k++) {
-            hbb.putInt(k, k + 1);
-            int v = hbb.getInt(k * 4);
-            sum += v;
-        }
-        return sum;
-    }
-
-    @Benchmark
-    public int unsafe_get_float() {
-        int sum = 0;
-        for (int k = 0; k < ALLOC_SIZE; k += 4) {
-            unsafe.putFloat(arr, k + Unsafe.ARRAY_BYTE_BASE_OFFSET, k + 1);
-            float v = unsafe.getFloat(arr, k + Unsafe.ARRAY_BYTE_BASE_OFFSET);
-            sum += (int)v;
-        }
-        return sum;
-    }
 }

@@ -26,15 +26,14 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.ArenaAllocator;
-import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.Utils;
 
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.Array;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 /**
  * This interface models a memory allocator. Clients implementing this interface
@@ -44,23 +43,29 @@ import java.util.stream.Stream;
  * (e.g. {@link MemorySegment#allocateNative(long, long, ResourceScope)}); since {@link SegmentAllocator} is a <em>functional interface</em>,
  * clients can easily obtain a native allocator by using either a lambda expression or a method reference.
  * <p>
- * This interface provides a factory, namely {@link SegmentAllocator#ofScope(ResourceScope)} which can be used to obtain
- * a <em>scoped</em> allocator, that is, an allocator which creates segment bound by a given scope. This can be useful
- * when working inside a <em>try-with-resources</em> construct:
- *
- * <blockquote><pre>{@code
-try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-   SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
-   ...
-}
- * }</pre></blockquote>
- *
- * In addition, this interface also defines factories for commonly used allocators; for instance {@link #arenaAllocator(ResourceScope)}
- * and {@link #arenaAllocator(long, ResourceScope)} are arena-style native allocators. Finally {@link #ofSegment(MemorySegment)}
+ * This interface also defines factories for commonly used allocators; for instance {@link #arenaAllocator(ResourceScope)}
+ * and {@link #arenaAllocator(long, ResourceScope)} are arena-style native allocators. Finally {@link #prefixAllocator(MemorySegment)}
  * returns an allocator which wraps a segment (either on-heap or off-heap) and recycles its content upon each new allocation request.
  */
 @FunctionalInterface
 public interface SegmentAllocator {
+
+    /**
+     * Converts a Java string into a UTF-8 encoded, null-terminated C string,
+     * storing the result into a native memory segment allocated using the provided allocator.
+     * <p>
+     * This method always replaces malformed-input and unmappable-character
+     * sequences with this charset's default replacement byte array.  The
+     * {@link java.nio.charset.CharsetEncoder} class should be used when more
+     * control over the encoding process is required.
+     *
+     * @param str the Java string to be converted into a C string.
+     * @return a new native memory segment containing the converted C string.
+     */
+    default MemorySegment allocateUtf8String(String str) {
+        Objects.requireNonNull(str);
+        return Utils.toCString(str.getBytes(StandardCharsets.UTF_8), this);
+    }
 
     /**
      * Allocate a block of memory with given layout and initialize it with given byte value.
@@ -68,11 +73,10 @@ public interface SegmentAllocator {
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a byte value.
      */
-    default MemorySegment allocate(ValueLayout layout, byte value) {
+    default MemorySegment allocate(ValueLayout.OfByte layout, byte value) {
         Objects.requireNonNull(layout);
-        VarHandle handle = layout.varHandle(byte.class);
+        VarHandle handle = layout.varHandle();
         MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
@@ -84,11 +88,10 @@ public interface SegmentAllocator {
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a char value.
      */
-    default MemorySegment allocate(ValueLayout layout, char value) {
+    default MemorySegment allocate(ValueLayout.OfChar layout, char value) {
         Objects.requireNonNull(layout);
-        VarHandle handle = layout.varHandle(char.class);
+        VarHandle handle = layout.varHandle();
         MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
@@ -100,11 +103,10 @@ public interface SegmentAllocator {
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a short value.
      */
-    default MemorySegment allocate(ValueLayout layout, short value) {
+    default MemorySegment allocate(ValueLayout.OfShort layout, short value) {
         Objects.requireNonNull(layout);
-        VarHandle handle = layout.varHandle(short.class);
+        VarHandle handle = layout.varHandle();
         MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
@@ -116,11 +118,10 @@ public interface SegmentAllocator {
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a int value.
      */
-    default MemorySegment allocate(ValueLayout layout, int value) {
+    default MemorySegment allocate(ValueLayout.OfInt layout, int value) {
         Objects.requireNonNull(layout);
-        VarHandle handle = layout.varHandle(int.class);
+        VarHandle handle = layout.varHandle();
         MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
@@ -132,11 +133,10 @@ public interface SegmentAllocator {
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a float value.
      */
-    default MemorySegment allocate(ValueLayout layout, float value) {
+    default MemorySegment allocate(ValueLayout.OfFloat layout, float value) {
         Objects.requireNonNull(layout);
-        VarHandle handle = layout.varHandle(float.class);
+        VarHandle handle = layout.varHandle();
         MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
@@ -148,11 +148,10 @@ public interface SegmentAllocator {
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a long value.
      */
-    default MemorySegment allocate(ValueLayout layout, long value) {
+    default MemorySegment allocate(ValueLayout.OfLong layout, long value) {
         Objects.requireNonNull(layout);
-        VarHandle handle = layout.varHandle(long.class);
+        VarHandle handle = layout.varHandle();
         MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
@@ -164,11 +163,10 @@ public interface SegmentAllocator {
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a double value.
      */
-    default MemorySegment allocate(ValueLayout layout, double value) {
+    default MemorySegment allocate(ValueLayout.OfDouble layout, double value) {
         Objects.requireNonNull(layout);
-        VarHandle handle = layout.varHandle(double.class);
+        VarHandle handle = layout.varHandle();
         MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
@@ -177,24 +175,18 @@ public interface SegmentAllocator {
     /**
      * Allocate a block of memory with given layout and initialize it with given address value
      * (expressed as an {@link Addressable} instance).
-     * The address value might be narrowed according to the platform address size (see {@link MemoryLayouts#ADDRESS}).
+     * The address value might be narrowed according to the platform address size (see {@link ValueLayout#ADDRESS}).
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code layout.byteSize() != MemoryLayouts.ADDRESS.byteSize()}.
      */
-    default MemorySegment allocate(ValueLayout layout, Addressable value) {
+    default MemorySegment allocate(ValueLayout.OfAddress layout, Addressable value) {
         Objects.requireNonNull(value);
         Objects.requireNonNull(layout);
-        if (MemoryLayouts.ADDRESS.byteSize() != layout.byteSize()) {
-            throw new IllegalArgumentException("Layout size mismatch - " + layout.byteSize() + " != " + MemoryLayouts.ADDRESS.byteSize());
-        }
-        return switch ((int)layout.byteSize()) {
-            case 4 -> allocate(layout, (int)value.address().toRawLongValue());
-            case 8 -> allocate(layout, value.address().toRawLongValue());
-            default -> throw new UnsupportedOperationException("Unsupported pointer size"); // should not get here
-        };
+        MemorySegment segment = allocate(layout);
+        layout.varHandle().set(segment, value.address());
+        return segment;
     }
 
     /**
@@ -203,9 +195,8 @@ public interface SegmentAllocator {
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a byte value.
      */
-    default MemorySegment allocateArray(ValueLayout elementLayout, byte[] array) {
+    default MemorySegment allocateArray(ValueLayout.OfByte elementLayout, byte[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
@@ -215,9 +206,8 @@ public interface SegmentAllocator {
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a short value.
      */
-    default MemorySegment allocateArray(ValueLayout elementLayout, short[] array) {
+    default MemorySegment allocateArray(ValueLayout.OfShort elementLayout, short[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
@@ -227,9 +217,8 @@ public interface SegmentAllocator {
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a char value.
      */
-    default MemorySegment allocateArray(ValueLayout elementLayout, char[] array) {
+    default MemorySegment allocateArray(ValueLayout.OfChar elementLayout, char[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
@@ -239,9 +228,8 @@ public interface SegmentAllocator {
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a int value.
      */
-    default MemorySegment allocateArray(ValueLayout elementLayout, int[] array) {
+    default MemorySegment allocateArray(ValueLayout.OfInt elementLayout, int[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
@@ -251,9 +239,8 @@ public interface SegmentAllocator {
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a float value.
      */
-    default MemorySegment allocateArray(ValueLayout elementLayout, float[] array) {
+    default MemorySegment allocateArray(ValueLayout.OfFloat elementLayout, float[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
@@ -263,9 +250,8 @@ public interface SegmentAllocator {
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a long value.
      */
-    default MemorySegment allocateArray(ValueLayout elementLayout, long[] array) {
+    default MemorySegment allocateArray(ValueLayout.OfLong elementLayout, long[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
@@ -275,46 +261,19 @@ public interface SegmentAllocator {
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a double value.
      */
-    default MemorySegment allocateArray(ValueLayout elementLayout, double[] array) {
+    default MemorySegment allocateArray(ValueLayout.OfDouble elementLayout, double[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
-    }
-
-    /**
-     * Allocate a block of memory with given layout and initialize it with given address array.
-     * The address value of each array element might be narrowed according to the platform address size (see {@link MemoryLayouts#ADDRESS}).
-     * @implSpec the default implementation for this method calls {@code this.allocateArray(layout, array.length)}.
-     * @param elementLayout the element layout of the array to be allocated.
-     * @param array the array to be copied on the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code layout.byteSize() != MemoryLayouts.ADDRESS.byteSize()}.
-     */
-    default MemorySegment allocateArray(ValueLayout elementLayout, Addressable[] array) {
-        Objects.requireNonNull(elementLayout);
-        Objects.requireNonNull(array);
-        Stream.of(array).forEach(Objects::requireNonNull);
-        if (MemoryLayouts.ADDRESS.byteSize() != elementLayout.byteSize()) {
-            throw new IllegalArgumentException("Layout size mismatch - " + elementLayout.byteSize() + " != " + MemoryLayouts.ADDRESS.byteSize());
-        }
-        return switch ((int)elementLayout.byteSize()) {
-            case 4 -> copyArrayWithSwapIfNeeded(Stream.of(array)
-                            .mapToInt(a -> (int)a.address().toRawLongValue()).toArray(),
-                    elementLayout, MemorySegment::ofArray);
-            case 8 -> copyArrayWithSwapIfNeeded(Stream.of(array)
-                            .mapToLong(a -> a.address().toRawLongValue()).toArray(),
-                    elementLayout, MemorySegment::ofArray);
-            default -> throw new UnsupportedOperationException("Unsupported pointer size"); // should not get here
-        };
     }
 
     private <Z> MemorySegment copyArrayWithSwapIfNeeded(Z array, ValueLayout elementLayout,
                                                         Function<Z, MemorySegment> heapSegmentFactory) {
         Objects.requireNonNull(array);
         Objects.requireNonNull(elementLayout);
-        Utils.checkPrimitiveCarrierCompat(array.getClass().componentType(), elementLayout);
-        MemorySegment addr = allocate(MemoryLayout.sequenceLayout(Array.getLength(array), elementLayout));
-        addr.copyFrom(elementLayout, heapSegmentFactory.apply(array), elementLayout.withOrder(ByteOrder.nativeOrder()));
+        int size = Array.getLength(array);
+        MemorySegment addr = allocate(MemoryLayout.sequenceLayout(size, elementLayout));
+        MemorySegment.copy(heapSegmentFactory.apply(array), elementLayout, 0,
+                addr, elementLayout.withOrder(ByteOrder.nativeOrder()), 0, size);
         return addr;
     }
 
@@ -427,7 +386,8 @@ public interface SegmentAllocator {
     /**
      * Returns a segment allocator which responds to allocation requests by recycling a single segment; that is,
      * each new allocation request will return a new slice starting at the segment offset {@code 0} (alignment
-     * constraints are ignored by this allocator). This can be useful to limit allocation requests in case a client
+     * constraints are ignored by this allocator), hence the name <em>prefix allocator</em>.
+     * This allocator can be useful to limit allocation requests in case a client
      * knows that they have fully processed the contents of the allocated segment before the subsequent allocation request
      * takes place.
      * <p>
@@ -437,25 +397,9 @@ public interface SegmentAllocator {
      * @param segment the memory segment to be recycled by the returned allocator.
      * @return an allocator which recycles an existing segment upon each new allocation request.
      */
-    static SegmentAllocator ofSegment(MemorySegment segment) {
+    static SegmentAllocator prefixAllocator(MemorySegment segment) {
         Objects.requireNonNull(segment);
         return (size, align) -> segment.asSlice(0, size);
     }
 
-    /**
-     * Returns a native allocator which responds to allocation requests by allocating new segments
-     * bound by the given resource scope, using the {@link MemorySegment#allocateNative(long, long, ResourceScope)}
-     * factory. This code is equivalent (but likely more efficient) to the following:
-     * <blockquote><pre>{@code
-    Resource scope = ...
-    SegmentAllocator scoped = (size, align) -> MemorySegment.allocateNative(size, align, scope);
-     * }</pre></blockquote>
-     *
-     * @param scope the resource scope associated with the segments created by the returned allocator.
-     * @return an allocator which allocates new memory segment bound by the provided resource scope.
-     */
-    static SegmentAllocator ofScope(ResourceScope scope) {
-        Objects.requireNonNull(scope);
-        return (ResourceScopeImpl)scope;
-    }
 }
