@@ -94,7 +94,7 @@ import java.util.stream.Stream;
  * called <em>mapped memory segments</em>; mapped memory segments are associated with an underlying file descriptor.
  * <p>
  * Contents of mapped memory segments can be {@linkplain #force() persisted} and {@linkplain #load() loaded} to and from the underlying file;
- * these capabilities are suitable replacements for some functionalities in the {@link java.nio.MappedByteBuffer} class.
+ * these capabilities are suitable replacements for some capabilities in the {@link java.nio.MappedByteBuffer} class.
  * Note that, while it is possible to map a segment into a byte buffer (see {@link MemorySegment#asByteBuffer()}),
  * and then call e.g. {@link java.nio.MappedByteBuffer#force()} that way, this can only be done when the source segment
  * is small enough, due to the size limitation inherent to the ByteBuffer API.
@@ -110,7 +110,7 @@ import java.util.stream.Stream;
  * full spatial, temporal and confinement bounds. To do this, clients can {@link #ofAddressNative(MemoryAddress, long, ResourceScope) obtain}
  * a native segment <em>unsafely</em> from a give memory address, by providing the segment size, as well as the segment {@linkplain ResourceScope scope}.
  * This is a <a href="package-summary.html#restricted"><em>restricted</em></a> operation and should be used with
- * caution: for instance, an incorrect segment size correctly could result in a VM crash when attempting to dereference
+ * caution: for instance, an incorrect segment size could result in a VM crash when attempting to dereference
  * the memory segment.
  *
  * <h2>Dereference</h2>
@@ -131,7 +131,7 @@ MemorySegment segment = ...
 int value = segment.get(ValueLayout.JAVA_INT.withOrder(BIG_ENDIAN), 0);
  * }</pre></blockquote>
  *
- * For more complex dereference operation (e.g. structured memory access), clients can obtain a <em>memory access var handle</em>,
+ * For more complex dereference operations (e.g. structured memory access), clients can obtain a <em>memory access var handle</em>,
  * that is, a var handle that accepts a segment and, optionally, one or more additional {@code long} coordinates. Memory
  * access var handles can be obtained from {@linkplain MemoryLayout#varHandle(MemoryLayout.PathElement...) memory layouts}
  * by providing a so called <a href="MemoryLayout.html#layout-paths"><em>layout path</em></a>.
@@ -383,7 +383,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * If the two segments share a common prefix then the returned offset is
      * the length of the common prefix, and it follows that there is a mismatch
      * between the two segments at that offset within the respective segments.
-     * If one segment is a proper prefix of the other than the returned offset is
+     * If one segment is a proper prefix of the other, then the returned offset is
      * the smallest of the segment sizes, and it follows that the offset is only
      * valid for the larger segment. Otherwise, there is no mismatch and {@code
      * -1} is returned.
@@ -588,28 +588,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
     double[] toArray(ValueLayout.OfDouble elementLayout);
 
     /**
-     * Reads a UTF-8 encoded, null-terminated string from this address and offset with given layout.
-     * <p>
-     * This method always replaces malformed-input and unmappable-character
-     * sequences with this charset's default replacement string.  The {@link
-     * java.nio.charset.CharsetDecoder} class should be used when more control
-     * over the decoding process is required.
-     * <p>
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
-     *
-     * @param offset offset in bytes (relative to this address). The final address of this read operation can be expressed as {@code toRowLongValue() + offset}.
-     * @return a Java UTF-8 string containing all the bytes read from the given starting address ({@code toRowLongValue() + offset})
-     * up to (but not including) the first {@code '\0'} terminator character (assuming one is found).
-     * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform.
-     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
-     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
-     */
-
-    /**
      * Reads a UTF-8 encoded, null-terminated string from this segment at given offset.
      * <p>
      * This method always replaces malformed-input and unmappable-character
@@ -621,8 +599,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @return a Java UTF-8 string containing all the bytes read from the given starting address up to (but not including)
      * the first {@code '\0'} terminator character (assuming one is found).
      * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform.
-     * @throws IllegalStateException if the size of the native string is greater than the size of the segment
-     * associated with {@code addr}, or if {@code addr} is associated with a segment that is <em>not alive</em>.
+     * @throws IllegalStateException if the size of the native string is greater than the size of this segment,
+     * or if the scope associated with this segment has been closed, or if access occurs from a thread other than the thread owning that scope.
      */
     default String getUtf8String(long offset) {
         return SharedUtils.toJavaStringInternal(this, offset);
@@ -639,8 +617,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
      *               the final address of this write operation can be expressed as {@code address().toRowLongValue() + offset}.
      * @param str the Java string to be written into this segment.
      * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform.
-     * @throws IllegalStateException if the size of the native string is greater than the size of the segment
-     * associated with {@code addr}, or if {@code addr} is associated with a segment that is <em>not alive</em>.
+     * @throws IllegalStateException if the size of the native string is greater than the size of this segment,
+     * or if the scope associated with this segment has been closed, or if access occurs from a thread other than the thread owning that scope.
      */
     default void setUtf8String(long offset, String str) {
         Utils.toCString(str.getBytes(StandardCharsets.UTF_8), SegmentAllocator.prefixAllocator(asSlice(offset)));
@@ -1294,7 +1272,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     default MemoryAddress get(ValueLayout.OfAddress layout, long offset) {
         return (MemoryAddress)layout.accessHandle().get(this, offset);
     }
-    
+
     /**
      * Writes an address to this segment and offset with given layout.
      *

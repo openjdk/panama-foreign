@@ -77,7 +77,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
     ValueLayout(Class<?> carrier, ByteOrder order, long size) {
         this(carrier, order, size, size, Optional.empty());
     }
-    
+
     ValueLayout(Class<?> carrier, ByteOrder order, long size, long alignment, Optional<String> name) {
         super(OptionalLong.of(size), alignment, name);
         this.carrier = carrier;

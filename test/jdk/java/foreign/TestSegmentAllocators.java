@@ -343,7 +343,7 @@ public class TestSegmentAllocators {
 
     interface AllocationFunction<X, L extends ValueLayout> {
         MemorySegment allocate(SegmentAllocator allocator, L layout, X value);
-        
+
         interface OfByte extends AllocationFunction<Byte, ValueLayout.OfByte> { }
         interface OfBoolean extends AllocationFunction<Boolean, ValueLayout.OfBoolean> { }
         interface OfChar extends AllocationFunction<Character, ValueLayout.OfChar> { }

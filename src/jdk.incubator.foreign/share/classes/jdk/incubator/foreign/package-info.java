@@ -83,7 +83,7 @@ try (ResourceScope scope = ResourceScope.newConfinedScope()) {
  * which is used to <em>bind</em> the life-cycle of the segment created immediately afterwards. Note the use of the
  * <em>try-with-resources</em> construct: this idiom ensures that all the memory resources associated with the segment will be released
  * at the end of the block, according to the semantics described in Section {@jls 14.20.3} of <cite>The Java Language Specification</cite>.
- * Since a resource scope act as a {@link jdk.incubator.foreign.SegmentAllocator segment allocators}, we can also
+ * Since a resource scope acts as a {@link jdk.incubator.foreign.SegmentAllocator segment allocators}, we can also
  * allocate the native memory segment more directly, through the scope.
  *
  * <h3><a id="safety"></a>Safety</h3>
@@ -145,10 +145,10 @@ try (ResourceScope scope = ResourceScope.newConfinedScope()) {
  * or an array of {@code char} values, of given size?), no notion of temporal bounds, nor thread-confinement.
  * <p>
  * Raw pointers are modelled using the {@link jdk.incubator.foreign.MemoryAddress} class. When clients receive a
- * memory address instance from a foreign function call, they can perform memory dereference on it directly, 
+ * memory address instance from a foreign function call, they can perform memory dereference on it directly,
  * using one of the many <em>unsafe</em> dereference methods provided
  * (see {@link jdk.incubator.foreign.MemoryAddress#get(jdk.incubator.foreign.ValueLayout.OfInt, long)}):
- * 
+ *
  * <pre>{@code
 ...
 MemoryAddress addr = ... //obtain address from native code
@@ -175,7 +175,7 @@ int x = segment.get(ValueLayout.JAVA_INT, 0);
  * <pre>{@code
 class IntComparator {
     static int intCompare(MemoryAddress addr1, MemoryAddress addr2) {
-        return addr1.get(ValueLayout.JAVA_INT, 0) - addr2.get(ValueLayout.JAVA_INT, 0); 
+        return addr1.get(ValueLayout.JAVA_INT, 0) - addr2.get(ValueLayout.JAVA_INT, 0);
     }
 }
  * }</pre>

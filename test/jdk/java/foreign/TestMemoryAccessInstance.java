@@ -89,7 +89,7 @@ public class TestMemoryAccessInstance {
                 assertEquals(value, segmentGetter.get(t, layout, 4));
             }
         }
-        
+
         static <L, X> Accessor<MemorySegment, X, L> ofSegment(L layout, X value,
                          SegmentGetter<MemorySegment, X, L> segmentGetter, SegmentSetter<MemorySegment, X, L> segmentSetter,
                          BufferGetter<X> bufferGetter, BufferSetter<X> bufferSetter) {

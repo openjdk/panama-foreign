@@ -73,7 +73,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.MappedMemorySegmentImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
@@ -108,7 +107,7 @@ public class TestByteBuffer {
 
     static SequenceLayout tuples = MemoryLayout.sequenceLayout(500,
             MemoryLayout.structLayout(
-                    ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN).withName("index"),
+                    JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN).withName("index"),
                     JAVA_FLOAT.withOrder(ByteOrder.BIG_ENDIAN).withName("value")
             ));
 
@@ -125,7 +124,7 @@ public class TestByteBuffer {
     );
 
     static SequenceLayout ints = MemoryLayout.sequenceLayout(100,
-            ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN)
+            JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN)
     );
 
     static SequenceLayout floats = MemoryLayout.sequenceLayout(100,
@@ -817,7 +816,7 @@ public class TestByteBuffer {
         Consumer<MemorySegment> shortInitializer =
                 (base) -> initBytes(base, shorts, (addr, pos) -> addr.setAtIndex(JAVA_SHORT.withOrder(ByteOrder.BIG_ENDIAN), pos, (short)(long)pos));
         Consumer<MemorySegment> intInitializer =
-                (base) -> initBytes(base, ints, (addr, pos) -> addr.setAtIndex(ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN), pos, (int)(long)pos));
+                (base) -> initBytes(base, ints, (addr, pos) -> addr.setAtIndex(JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN), pos, (int)(long)pos));
         Consumer<MemorySegment> floatInitializer =
                 (base) -> initBytes(base, floats, (addr, pos) -> addr.setAtIndex(JAVA_FLOAT.withOrder(ByteOrder.BIG_ENDIAN), pos, (float)(long)pos));
         Consumer<MemorySegment> longInitializer =

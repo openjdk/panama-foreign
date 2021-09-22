@@ -221,10 +221,4 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
 
     static final MethodHandleDesc MH_WITH_NAME = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_VIRTUAL, CD_MEMORY_LAYOUT, "withName",
                 MethodTypeDesc.of(CD_MEMORY_LAYOUT, CD_String));
-
-
-    /**
-     * Attribute name used to specify the <em>name</em> property of a memory layout (see {@link #name()} and {@link #withName(String)}).
-     */
-    String LAYOUT_NAME = "layout/name";
 }
