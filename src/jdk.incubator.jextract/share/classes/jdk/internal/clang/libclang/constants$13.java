@@ -32,6 +32,7 @@ import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
 import static jdk.incubator.foreign.CLinker.*;
+import static jdk.internal.clang.libclang.CLayouts.*;
 class constants$13 {
 
     static final FunctionDescriptor CXCursorVisitor$FUNC = FunctionDescriptor.of(C_INT,

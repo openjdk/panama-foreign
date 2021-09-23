@@ -27,7 +27,6 @@
 package jdk.internal.clang;
 
 import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -42,6 +41,9 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import static jdk.internal.clang.libclang.CLayouts.C_INT;
+import static jdk.internal.clang.libclang.CLayouts.C_POINTER;
+
 public class TranslationUnit implements AutoCloseable {
 
     private MemoryAddress tu;
@@ -51,7 +53,7 @@ public class TranslationUnit implements AutoCloseable {
     }
 
     public Cursor getCursor() {
-        return new Cursor(Index_h.clang_getTranslationUnitCursor(ResourceScope.newImplicitScope(), tu));
+        return new Cursor(Index_h.clang_getTranslationUnitCursor(ResourceScope.newConfinedScope(), tu));
     }
 
     public Diagnostic[] getDiagnostics() {
@@ -67,7 +69,7 @@ public class TranslationUnit implements AutoCloseable {
 
     public final void save(Path path) throws TranslationUnitSaveException {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment pathStr = CLinker.toCString(path.toAbsolutePath().toString(), scope);
+            MemorySegment pathStr = scope.allocateUtf8String(path.toAbsolutePath().toString());
             SaveError res = SaveError.valueOf(Index_h.clang_saveTranslationUnit(tu, pathStr, 0));
             if (res != SaveError.None) {
                 throw new TranslationUnitSaveException(path, res);
@@ -88,15 +90,14 @@ public class TranslationUnit implements AutoCloseable {
 
     public void reparse(Index.UnsavedFile... inMemoryFiles) {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
             MemorySegment files = inMemoryFiles.length == 0 ?
                     null :
-                    allocator.allocateArray(CXUnsavedFile.$LAYOUT(), inMemoryFiles.length);
+                    scope.allocateArray(CXUnsavedFile.$LAYOUT(), inMemoryFiles.length);
             for (int i = 0; i < inMemoryFiles.length; i++) {
                 MemorySegment start = files.asSlice(i * CXUnsavedFile.$LAYOUT().byteSize());
-                MemoryAccess.setAddress(start.asSlice(FILENAME_OFFSET), CLinker.toCString(inMemoryFiles[i].file, scope));
-                MemoryAccess.setAddress(start.asSlice(CONTENTS_OFFSET), CLinker.toCString(inMemoryFiles[i].contents, scope));
-                MemoryAccess.setLong(start.asSlice(LENGTH_OFFSET), inMemoryFiles[i].contents.length());
+                start.set(C_POINTER, FILENAME_OFFSET, scope.allocateUtf8String(inMemoryFiles[i].file));
+                start.set(C_POINTER, CONTENTS_OFFSET, scope.allocateUtf8String(inMemoryFiles[i].contents));
+                start.set(C_INT, LENGTH_OFFSET, inMemoryFiles[i].contents.length());
             }
             ErrorCode code = ErrorCode.valueOf(Index_h.clang_reparseTranslationUnit(
                         tu,
@@ -126,10 +127,10 @@ public class TranslationUnit implements AutoCloseable {
 
     public Tokens tokenize(SourceRange range) {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment p = MemorySegment.allocateNative(CLinker.C_POINTER, scope);
-            MemorySegment pCnt = MemorySegment.allocateNative(CLinker.C_INT, scope);
+            MemorySegment p = MemorySegment.allocateNative(C_POINTER, scope);
+            MemorySegment pCnt = MemorySegment.allocateNative(C_INT, scope);
             Index_h.clang_tokenize(tu, range.range, p, pCnt);
-            Tokens rv = new Tokens(MemoryAccess.getAddress(p), MemoryAccess.getInt(pCnt));
+            Tokens rv = new Tokens(p.get(C_POINTER, 0), pCnt.get(C_INT, 0));
             return rv;
         }
     }
@@ -165,7 +166,7 @@ public class TranslationUnit implements AutoCloseable {
 
         public MemorySegment getTokenSegment(int idx) {
             MemoryAddress p = ar.addOffset(idx * CXToken.$LAYOUT().byteSize());
-            return p.asSegment(CXToken.$LAYOUT().byteSize(), ResourceScope.newImplicitScope());
+            return MemorySegment.ofAddressNative(p, CXToken.$LAYOUT().byteSize(), ResourceScope.newConfinedScope());
         }
 
         public Token getToken(int index) {
@@ -210,11 +211,11 @@ public class TranslationUnit implements AutoCloseable {
 
         public SourceLocation getLocation() {
             return new SourceLocation(Index_h.clang_getTokenLocation(
-                ResourceScope.newImplicitScope(), tu, token));
+                ResourceScope.newConfinedScope(), tu, token));
         }
 
         public SourceRange getExtent() {
-            return new SourceRange(Index_h.clang_getTokenExtent(ResourceScope.newImplicitScope(),
+            return new SourceRange(Index_h.clang_getTokenExtent(ResourceScope.newConfinedScope(),
                     tu, token));
         }
     }

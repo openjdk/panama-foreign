@@ -54,9 +54,9 @@ public class Test8240811 extends JextractToolRunner {
             MemoryLayout fooLayout = findLayout(fooCls);
             assertNotNull(fooLayout);
             assertTrue(((GroupLayout)fooLayout).isStruct());
-            checkField(fooLayout, "x",  CLinker.C_INT);
-            checkField(fooLayout, "y",  CLinker.C_INT);
-            checkField(fooLayout, "z",  CLinker.C_INT);
+            checkField(fooLayout, "x",  C_INT);
+            checkField(fooLayout, "y",  C_INT);
+            checkField(fooLayout, "z",  C_INT);
 
             MemoryLayout fooVarLayout = findLayout(cls, "foo");
             assertNotNull(fooVarLayout);
@@ -66,8 +66,8 @@ public class Test8240811 extends JextractToolRunner {
             MemoryLayout foo2Layout = findLayout(foo2Cls);
             assertNotNull(foo2Layout);
             assertTrue(((GroupLayout)foo2Layout).isUnion());
-            checkField(foo2Layout, "i",  CLinker.C_INT);
-            checkField(foo2Layout, "l",  CLinker.C_LONG);
+            checkField(foo2Layout, "i", C_INT);
+            checkField(foo2Layout, "l", C_LONG);
 
             MemoryLayout foo2VarLayout = findLayout(cls, "foo2");
             assertNotNull(foo2VarLayout);
@@ -80,8 +80,8 @@ public class Test8240811 extends JextractToolRunner {
             MemoryLayout barLayout = findLayout(barCls);
             assertNotNull(barLayout);
             assertTrue(((GroupLayout)barLayout).isStruct());
-            checkField(barLayout, "f1",  CLinker.C_FLOAT);
-            checkField(barLayout, "f2",  CLinker.C_FLOAT);
+            checkField(barLayout, "f1",  C_FLOAT);
+            checkField(barLayout, "f2",  C_FLOAT);
 
             MemoryLayout bar2VarLayout = findLayout(cls, "bar2");
             assertNotNull(bar2VarLayout);
@@ -91,8 +91,8 @@ public class Test8240811 extends JextractToolRunner {
             MemoryLayout bar2Layout = findLayout(bar2Cls);
             assertNotNull(bar2Layout);
             assertTrue(((GroupLayout)bar2Layout).isUnion());
-            checkField(bar2Layout, "f",  CLinker.C_FLOAT);
-            checkField(bar2Layout, "d",  CLinker.C_DOUBLE);
+            checkField(bar2Layout, "f", C_FLOAT);
+            checkField(bar2Layout, "d", C_DOUBLE);
         } finally {
             deleteDir(nameCollisionOutput);
         }

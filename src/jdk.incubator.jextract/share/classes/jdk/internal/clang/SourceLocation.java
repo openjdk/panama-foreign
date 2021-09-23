@@ -26,8 +26,6 @@
 package jdk.internal.clang;
 
 import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
@@ -36,6 +34,9 @@ import jdk.internal.clang.libclang.Index_h;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
+
+import static jdk.internal.clang.libclang.CLayouts.C_INT;
+import static jdk.internal.clang.libclang.CLayouts.C_POINTER;
 
 public class SourceLocation {
 
@@ -54,17 +55,17 @@ public class SourceLocation {
     @SuppressWarnings("unchecked")
     private Location getLocation(LocationFactory fn) {
         try (var scope = ResourceScope.newConfinedScope()) {
-             MemorySegment file = MemorySegment.allocateNative(CLinker.C_POINTER, scope);
-             MemorySegment line = MemorySegment.allocateNative(CLinker.C_INT, scope);
-             MemorySegment col = MemorySegment.allocateNative(CLinker.C_INT, scope);
-             MemorySegment offset = MemorySegment.allocateNative(CLinker.C_INT, scope);
+             MemorySegment file = MemorySegment.allocateNative(C_POINTER, scope);
+             MemorySegment line = MemorySegment.allocateNative(C_INT, scope);
+             MemorySegment col = MemorySegment.allocateNative(C_INT, scope);
+             MemorySegment offset = MemorySegment.allocateNative(C_INT, scope);
 
             fn.get(loc, file, line, col, offset);
-            MemoryAddress fname = MemoryAccess.getAddress(file);
+            MemoryAddress fname = file.get(C_POINTER, 0);
             String str = fname == MemoryAddress.NULL ?  null : getFileName(fname);
 
-            return new Location(str, MemoryAccess.getInt(line),
-                MemoryAccess.getInt(col), MemoryAccess.getInt(offset));
+            return new Location(str, line.get(C_INT, 0),
+                col.get(C_INT, 0), offset.get(C_INT, 0));
         }
     }
 

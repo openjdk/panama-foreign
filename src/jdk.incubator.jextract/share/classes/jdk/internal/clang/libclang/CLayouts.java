@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -21,28 +21,19 @@
  *   Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  *  or visit www.oracle.com if you need additional information or have any
  *  questions.
- *
  */
-package jdk.internal.clang;
 
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ResourceScope;
-import jdk.internal.clang.libclang.Index_h;
+package jdk.internal.clang.libclang;
 
-public class SourceRange {
-    final MemorySegment range;
+import jdk.incubator.foreign.ValueLayout;
 
-    SourceRange(MemorySegment range) {
-        this.range = range;
-    }
-
-    public SourceLocation getBegin() {
-        MemorySegment loc = Index_h.clang_getRangeStart(ResourceScope.newConfinedScope(), range);
-        return new SourceLocation(loc);
-    }
-
-    public SourceLocation getEnd() {
-        MemorySegment loc = Index_h.clang_getRangeEnd(ResourceScope.newConfinedScope(), range);
-        return new SourceLocation(loc);
-    }
+public class CLayouts {
+    public static final ValueLayout.OfBoolean C_BOOL = ValueLayout.JAVA_BOOLEAN;
+    public static final ValueLayout.OfByte C_CHAR = ValueLayout.JAVA_BYTE;
+    public static final ValueLayout.OfShort C_SHORT = ValueLayout.JAVA_SHORT;
+    public static final ValueLayout.OfInt C_INT = ValueLayout.JAVA_INT;
+    public static final ValueLayout.OfLong C_LONG_LONG = ValueLayout.JAVA_LONG;
+    public static final ValueLayout.OfFloat C_FLOAT = ValueLayout.JAVA_FLOAT;
+    public static final ValueLayout.OfDouble C_DOUBLE = ValueLayout.JAVA_DOUBLE;
+    public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS;
 }

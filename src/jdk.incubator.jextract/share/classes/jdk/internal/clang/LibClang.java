@@ -25,6 +25,7 @@
  */
 package jdk.internal.clang;
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
@@ -35,25 +36,27 @@ import jdk.internal.clang.libclang.Index_h;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
+import static jdk.internal.clang.libclang.CLayouts.C_INT;
+import static jdk.internal.clang.libclang.CLayouts.C_POINTER;
+
 public class LibClang {
     private static final boolean DEBUG = Boolean.getBoolean("libclang.debug");
     private static final boolean CRASH_RECOVERY = Boolean.getBoolean("libclang.crash_recovery");
     private static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
     private final static MemorySegment disableCrashRecovery =
-            CLinker.toCString("LIBCLANG_DISABLE_CRASH_RECOVERY=" + CRASH_RECOVERY, ResourceScope.newImplicitScope());
+            ResourceScope.newConfinedScope().allocateUtf8String("LIBCLANG_DISABLE_CRASH_RECOVERY=" + CRASH_RECOVERY);
 
     static {
         if (!CRASH_RECOVERY) {
             //this is an hack - needed because clang_toggleCrashRecovery only takes effect _after_ the
             //first call to createIndex.
             try {
-                CLinker linker = CLinker.getInstance();
+                CLinker linker = CLinker.systemCLinker();
                 String putenv = IS_WINDOWS ? "_putenv" : "putenv";
-                MethodHandle PUT_ENV = linker.downcallHandle(CLinker.systemLookup().lookup(putenv).get(),
-                                MethodType.methodType(int.class, MemoryAddress.class),
-                                FunctionDescriptor.of(CLinker.C_INT, CLinker.C_POINTER));
-                int res = (int) PUT_ENV.invokeExact(disableCrashRecovery.address());
+                MethodHandle PUT_ENV = linker.downcallHandle(linker.lookup(putenv).get(),
+                                FunctionDescriptor.of(C_INT, C_POINTER));
+                int res = (int) PUT_ENV.invokeExact((Addressable)disableCrashRecovery);
             } catch (Throwable ex) {
                 throw new ExceptionInInitializerError(ex);
             }
@@ -70,7 +73,7 @@ public class LibClang {
 
     public static String CXStrToString(MemorySegment cxstr) {
         MemoryAddress buf = Index_h.clang_getCString(cxstr);
-        String str = CLinker.toJavaString(buf);
+        String str = buf.getUtf8String(0);
         Index_h.clang_disposeString(cxstr);
         return str;
     }

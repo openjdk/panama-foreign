@@ -29,15 +29,11 @@ import java.lang.constant.Constable;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Position;
@@ -89,7 +85,7 @@ class TreeMaker {
     private Declaration createTreeInternal(Cursor c) {
         switch (c.kind()) {
             case EnumDecl:
-                return createScoped(c, Declaration.Scoped.Kind.ENUM, Declaration::enum_, Declaration::enum_);
+                return createEnum(c, Declaration::enum_, Declaration::enum_);
             case EnumConstantDecl:
                 return createEnumConstant(c);
             case FieldDecl:
@@ -100,9 +96,9 @@ class TreeMaker {
             case FunctionDecl:
                 return createFunction(c);
             case StructDecl:
-                return createScoped(c, Declaration.Scoped.Kind.STRUCT, Declaration::struct, Declaration::struct);
+                return createRecord(c, Declaration.Scoped.Kind.STRUCT, Declaration::struct, Declaration::struct);
             case UnionDecl:
-                return createScoped(c, Declaration.Scoped.Kind.UNION, Declaration::union, Declaration::union);
+                return createRecord(c, Declaration.Scoped.Kind.UNION, Declaration::union, Declaration::union);
             case TypedefDecl: {
                 return createTypedef(c);
             }
@@ -189,7 +185,27 @@ class TreeMaker {
         return Declaration.toplevel(toPos(c), filterNestedDeclarations(decls).toArray(new Declaration[0]));
     }
 
-    public Declaration.Scoped createScoped(Cursor c, Declaration.Scoped.Kind scopeKind, ScopedFactoryLayout factoryLayout, ScopedFactoryNoLayout factoryNoLayout) {
+    public Declaration.Scoped createRecord(Cursor c, Declaration.Scoped.Kind scopeKind, ScopedFactoryLayout factoryLayout, ScopedFactoryNoLayout factoryNoLayout) {
+        Type.Declared t = (Type.Declared)RecordLayoutComputer.compute(typeMaker, 0, c.type(), c.type());
+        List<Declaration> decls = filterNestedDeclarations(t.tree().members());
+        if (c.isDefinition()) {
+            //just a declaration AND definition, we have a layout
+            return factoryLayout.make(toPos(c), c.spelling(), t.tree().layout().get(), decls.toArray(new Declaration[0]));
+        } else {
+            //just a declaration
+            if (scopeKind == Declaration.Scoped.Kind.STRUCT ||
+                    scopeKind == Declaration.Scoped.Kind.UNION ||
+                    scopeKind == Declaration.Scoped.Kind.CLASS) {
+                //if there's a real definition somewhere else, skip this redundant declaration
+                if (!c.getDefinition().isInvalid()) {
+                    return null;
+                }
+            }
+            return factoryNoLayout.make(toPos(c), c.spelling(), decls.toArray(new Declaration[0]));
+        }
+    }
+
+    public Declaration.Scoped createEnum(Cursor c, ScopedFactoryLayout factoryLayout, ScopedFactoryNoLayout factoryNoLayout) {
         List<Declaration> decls = filterNestedDeclarations(c.children()
                 .filter(fc -> {
                     if (fc.isBitField()) {
@@ -201,28 +217,13 @@ class TreeMaker {
                 .map(this::createTree).collect(Collectors.toList()));
         if (c.isDefinition()) {
             //just a declaration AND definition, we have a layout
-            MemoryLayout layout = null;
-            try {
-                layout = LayoutUtils.getLayout(c.type());
-            } catch (TypeMaker.TypeException ex) {
-                System.err.println(ex);
-                System.err.println("WARNING: generating empty struct: " + c.spelling());
-                return factoryNoLayout.make(toPos(c), c.spelling(), decls.toArray(new Declaration[0]));
-            }
-            List<Declaration> adaptedDecls = layout instanceof GroupLayout ?
-                    collectBitfields(layout, decls) :
-                    decls;
-            return factoryLayout.make(toPos(c), c.spelling(), layout, adaptedDecls.toArray(new Declaration[0]));
+            MemoryLayout layout = TypeMaker.valueLayoutForSize(c.type().size() * 8).layout().orElseThrow();
+            return factoryLayout.make(toPos(c), c.spelling(), layout, decls.toArray(new Declaration[0]));
         } else {
             //just a declaration
-            if (scopeKind == Declaration.Scoped.Kind.STRUCT ||
-                    scopeKind == Declaration.Scoped.Kind.UNION ||
-                    scopeKind == Declaration.Scoped.Kind.ENUM ||
-                    scopeKind == Declaration.Scoped.Kind.CLASS) {
-                //if there's a real definition somewhere else, skip this redundant declaration
-                if (!c.getDefinition().isInvalid()) {
-                    return null;
-                }
+            //if there's a real definition somewhere else, skip this redundant declaration
+            if (!c.getDefinition().isInvalid()) {
+                return null;
             }
             return factoryNoLayout.make(toPos(c), c.spelling(), decls.toArray(new Declaration[0]));
         }
@@ -232,6 +233,10 @@ class TreeMaker {
         return d instanceof Declaration.Scoped && ((Declaration.Scoped)d).kind() == Declaration.Scoped.Kind.ENUM;
     }
 
+    private static boolean isBitfield(Declaration d) {
+        return d instanceof Declaration.Scoped && ((Declaration.Scoped)d).kind() == Declaration.Scoped.Kind.BITFIELDS;
+    }
+
     private static boolean isAnonymousStruct(Declaration declaration) {
         return ((CursorPosition)declaration.pos()).cursor.isAnonymousStruct();
     }
@@ -239,7 +244,7 @@ class TreeMaker {
     private List<Declaration> filterNestedDeclarations(List<Declaration> declarations) {
         return declarations.stream()
                 .filter(Objects::nonNull)
-                .filter(d -> isEnum(d) || !d.name().isEmpty() || isAnonymousStruct(d))
+                .filter(d -> isEnum(d) || !d.name().isEmpty() || isAnonymousStruct(d) || isBitfield(d))
                 .collect(Collectors.toList());
     }
 
@@ -262,7 +267,7 @@ class TreeMaker {
         checkCursorAny(c, CursorKind.VarDecl, CursorKind.FieldDecl, CursorKind.ParmDecl);
         if (c.isBitField()) {
             return Declaration.bitfield(toPos(c), c.spelling(), toType(c),
-                    MemoryLayout.valueLayout(c.getBitFieldWidth(), ByteOrder.nativeOrder()));
+                    MemoryLayout.paddingLayout(c.getBitFieldWidth()));
         } else {
             Type type = null;
             try {
@@ -274,58 +279,6 @@ class TreeMaker {
             }
             return varFactory.make(toPos(c), c.spelling(), type);
         }
-    }
-
-    private static void collectNestedBitFields(Set<Declaration> out, Declaration.Scoped anonymousStruct) {
-        for  (Declaration field : anonymousStruct.members()) {
-            if (isAnonymousStruct(field)) {
-                collectNestedBitFields(out, (Declaration.Scoped) field);
-            } else if (field instanceof Declaration.Scoped
-                       && ((Declaration.Scoped) field).kind() == Declaration.Scoped.Kind.BITFIELDS) {
-                out.addAll(((Declaration.Scoped) field).members());
-            }
-        }
-    }
-
-    private static Set<Declaration> nestedBitFields(List<Declaration> members) {
-        Set<Declaration> res = new HashSet<>();
-        for (Declaration member : members) {
-            if (isAnonymousStruct(member)) {
-                collectNestedBitFields(res, (Declaration.Scoped) member);
-            }
-        }
-        return res;
-    }
-
-    private List<Declaration> collectBitfields(MemoryLayout layout, List<Declaration> declarations) {
-        Set<String> nestedBitfieldNames = nestedBitFields(declarations).stream()
-                                                                       .map(Declaration::name)
-                                                                       .collect(Collectors.toSet());
-        List<Declaration> newDecls = new ArrayList<>();
-        for (MemoryLayout e : ((GroupLayout)layout).memberLayouts()) {
-            if (e instanceof GroupLayout contents && LayoutUtils.isBitfields(contents)) {
-                List<Declaration.Variable> bfDecls = new ArrayList<>();
-                outer: for (MemoryLayout bitfield : contents.memberLayouts()) {
-                    if (bitfield.name().isPresent() && !nestedBitfieldNames.contains(bitfield.name().get())) {
-                        Iterator<Declaration> declIt = declarations.iterator();
-                        while (declIt.hasNext()) {
-                            Declaration d = declIt.next();
-                            if (d.name().equals(bitfield.name().get())) {
-                                bfDecls.add((Declaration.Variable)d);
-                                declIt.remove();
-                                continue outer;
-                            }
-                        }
-                        throw new IllegalStateException("No matching declaration found for bitfield: " + bitfield);
-                    }
-                }
-                if (!bfDecls.isEmpty()) {
-                    newDecls.add(Declaration.bitfields(bfDecls.get(0).pos(), "", contents, bfDecls.toArray(new Declaration.Variable[0])));
-                }
-            }
-        }
-        newDecls.addAll(declarations);
-        return newDecls;
     }
 
     private Type toType(Cursor c) {

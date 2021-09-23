@@ -68,7 +68,7 @@ public class Test8245003 {
     public void testArrayAccessor() {
         var seg = iarr$SEGMENT();
         assertEquals(seg.byteSize(), C_INT.byteSize()*5);
-        int[] arr = seg.toIntArray();
+        int[] arr = seg.toArray(C_INT);
         assertEquals(arr.length, 5);
         assertEquals(arr[0], 2);
         assertEquals(arr[1], -2);
@@ -80,7 +80,7 @@ public class Test8245003 {
         assertEquals(seg.byteSize(), Foo.sizeof());
         assertEquals(Foo.count$get(seg), 37);
         var greeting = Foo.greeting$slice(seg);
-        byte[] barr = greeting.toByteArray();
+        byte[] barr = greeting.toArray(C_CHAR);
         assertEquals(new String(barr), "hello");
     }
 }

@@ -24,7 +24,6 @@
 import org.testng.annotations.Test;
 
 import java.util.stream.IntStream;
-import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
@@ -55,9 +54,8 @@ public class Test8252121 {
     @Test
     public void test() {
         try (var scope = ResourceScope.newConfinedScope()) {
-            var allocator = SegmentAllocator.ofScope(scope);
             int[] array = { 3, 5, 89, 34, -33 };
-            MemorySegment seg = allocator.allocateArray(CLinker.C_INT, array);
+            MemorySegment seg = scope.allocateArray(C_INT, array);
             assertEquals(IntStream.of(array).sum(), sum(seg));
             assertEquals(IntStream.of(array).reduce(1, (a,b) -> a*b), mul(seg));
         }

@@ -22,6 +22,7 @@
  */
 
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.VaList;
 import org.testng.annotations.Test;
 
 import jdk.incubator.foreign.MemorySegment;
@@ -54,13 +55,13 @@ public class Test8252016 {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment s = MemorySegment.allocateNative(1024, scope);
             VaList vaList = VaList.make(b -> {
-                b.vargFromInt(C_INT, 12);
-                b.vargFromDouble(C_DOUBLE, 5.5d);
-                b.vargFromLong(C_LONG_LONG, -200L);
-                b.vargFromLong(C_LONG_LONG, Long.MAX_VALUE);
+                b.addVarg(C_INT, 12);
+                b.addVarg(C_DOUBLE, 5.5d);
+                b.addVarg(C_LONG_LONG, -200L);
+                b.addVarg(C_LONG_LONG, Long.MAX_VALUE);
             }, scope);
-            my_vsprintf(s, toCString("%hhd %.2f %lld %lld", scope), vaList);
-            String str = toJavaString(s);
+            my_vsprintf(s, scope.allocateUtf8String("%hhd %.2f %lld %lld"), vaList);
+            String str = s.getUtf8String(0);
             assertEquals(str, "12 5.50 -200 " + Long.MAX_VALUE);
        }
     }

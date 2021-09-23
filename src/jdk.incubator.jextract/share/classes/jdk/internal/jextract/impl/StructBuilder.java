@@ -36,8 +36,6 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
-import static jdk.internal.jextract.impl.LayoutUtils.JEXTRACT_ANONYMOUS;
-
 /**
  * This class generates static utilities class for C structs, unions.
  */
@@ -88,9 +86,7 @@ class StructBuilder extends ConstantBuilder {
         if (!inAnonymousNested()) {
             emitSizeof();
             emitAllocatorAllocate();
-            emitScopeAllocate();
             emitAllocatorAllocateArray();
-            emitScopeAllocateArray();
             emitOfAddressScoped();
             return super.classEnd();
         } else {
@@ -108,8 +104,7 @@ class StructBuilder extends ConstantBuilder {
     public StructBuilder addStruct(String name, Declaration parent, GroupLayout layout, Type type) {
         if (name.isEmpty() && (parent instanceof Declaration.Scoped)) {
             //nested anon struct - merge into this builder!
-            GroupLayout parentLayout = (GroupLayout)((Declaration.Scoped)parent).layout().get();
-            String anonName = findAnonymousStructName(parentLayout, layout);
+            String anonName = layout.name().orElseThrow();
             pushPrefixElement(anonName);
             return this;
         } else {
@@ -123,21 +118,6 @@ class StructBuilder extends ConstantBuilder {
         builder.classBegin();
         builder.classEnd();
         return builder.className();
-    }
-
-    private String findAnonymousStructName(GroupLayout parentLayout, GroupLayout layout) {
-        // nested anonymous struct or union
-        for (MemoryLayout ml : parentLayout.memberLayouts()) {
-            // look for anonymous structs
-            if (ml.attribute(JEXTRACT_ANONYMOUS).isPresent()) {
-                // it's enough to just compare the member layouts, since the member names
-                // have to be unique within the parent layout (in C)
-                if (((GroupLayout) ml).memberLayouts().equals(layout.memberLayouts())) {
-                    return ml.name().orElseThrow();
-                }
-            }
-        }
-        throw new IllegalStateException("Could not find layout in parent");
     }
 
     @Override
@@ -246,33 +226,11 @@ class StructBuilder extends ConstantBuilder {
         decrAlign();
     }
 
-    private void emitScopeAllocate() {
-        incrAlign();
-        indent();
-        append(MEMBER_MODS);
-        append(" MemorySegment allocate(ResourceScope scope) { return allocate(SegmentAllocator.ofScope(scope)); }\n");
-        decrAlign();
-    }
-
     private void emitAllocatorAllocate() {
         incrAlign();
         indent();
         append(MEMBER_MODS);
         append(" MemorySegment allocate(SegmentAllocator allocator) { return allocator.allocate($LAYOUT()); }\n");
-        decrAlign();
-    }
-
-    private void emitScopeAllocateArray() {
-        incrAlign();
-        indent();
-        append(MEMBER_MODS);
-        append(" MemorySegment allocateArray(int len, ResourceScope scope) {\n");
-        incrAlign();
-        indent();
-        append("return allocateArray(len, SegmentAllocator.ofScope(scope));\n");
-        decrAlign();
-        indent();
-        append("}\n");
         decrAlign();
     }
 

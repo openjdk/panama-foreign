@@ -157,7 +157,7 @@ public abstract class DeclarationImpl implements Declaration {
         }
 
         public VariableImpl(Type type, Variable.Kind kind, String name, Position pos) {
-            this(type, LayoutUtils.getLayout(type), kind, name, pos, null);
+            this(type, TypeImpl.getLayout(type), kind, name, pos, null);
         }
 
         public VariableImpl(Type type, MemoryLayout layout, Variable.Kind kind, String name, Position pos) {

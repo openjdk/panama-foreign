@@ -32,6 +32,9 @@ import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
 import static jdk.incubator.foreign.CLinker.*;
+import static jdk.internal.clang.libclang.CLayouts.C_INT;
+import static jdk.internal.clang.libclang.CLayouts.C_POINTER;
+
 public class CXToken {
 
     static final MemoryLayout $struct$LAYOUT = MemoryLayout.structLayout(
@@ -44,7 +47,7 @@ public class CXToken {
     public static MemorySegment int_data$slice(MemorySegment seg) {
         return seg.asSlice(0, 16);
     }
-    static final VarHandle ptr_data$VH = MemoryHandles.asAddressVarHandle($struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("ptr_data")));
+    static final VarHandle ptr_data$VH = $struct$LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("ptr_data"));
     public static VarHandle ptr_data$VH() {
         return CXToken.ptr_data$VH;
     }
@@ -62,12 +65,8 @@ public class CXToken {
     }
     public static long sizeof() { return $LAYOUT().byteSize(); }
     public static MemorySegment allocate(SegmentAllocator allocator) { return allocator.allocate($LAYOUT()); }
-    public static MemorySegment allocate(ResourceScope scope) { return allocate(SegmentAllocator.ofScope(scope)); }
     public static MemorySegment allocateArray(int len, SegmentAllocator allocator) {
         return allocator.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
-    }
-    public static MemorySegment allocateArray(int len, ResourceScope scope) {
-        return allocateArray(len, SegmentAllocator.ofScope(scope));
     }
     public static MemorySegment ofAddress(MemoryAddress addr, ResourceScope scope) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1, scope); }
 }

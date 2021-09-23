@@ -27,6 +27,8 @@
 package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.jextract.Declaration;
+import jdk.incubator.jextract.Position;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Type;
@@ -38,8 +40,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static jdk.internal.jextract.impl.LayoutUtils.JEXTRACT_ANONYMOUS;
-
 /**
  * Base class for C struct, union MemoryLayout computer helper classes.
  */
@@ -50,29 +50,45 @@ abstract class RecordLayoutComputer {
     final Type type;
     // cursor of this struct
     final Cursor cursor;
+    final List<Declaration> fieldDecls;
     final List<MemoryLayout> fieldLayouts;
+
+    final TypeMaker typeMaker;
 
     private int anonCount = 0;
 
-    RecordLayoutComputer(Type parent, Type type) {
+    RecordLayoutComputer(TypeMaker typeMaker, Type parent, Type type) {
         this.parent = parent;
         this.type = type;
         this.cursor = type.getDeclarationCursor().getDefinition();
+        this.fieldDecls = new ArrayList<>();
         this.fieldLayouts = new ArrayList<>();
+        this.typeMaker = typeMaker;
     }
 
-    static MemoryLayout compute(long offsetInParent, Type parent, Type type) {
+    static jdk.incubator.jextract.Type compute(TypeMaker typeMaker, long offsetInParent, Type parent, Type type) {
+        return computeInternal(typeMaker, offsetInParent, parent, type, null);
+    }
+
+    private static jdk.incubator.jextract.Type computeAnonymous(TypeMaker typeMaker, long offsetInParent, Type parent, Type type, String name) {
+        return computeInternal(typeMaker, offsetInParent, parent, type, name);
+    }
+
+    static final jdk.incubator.jextract.Type.Declared ERRONEOUS = jdk.incubator.jextract.Type.declared(
+            Declaration.struct(TreeMaker.CursorPosition.NO_POSITION, "", MemoryLayout.paddingLayout(64)));
+
+    private static jdk.incubator.jextract.Type computeInternal(TypeMaker typeMaker, long offsetInParent, Type parent, Type type, String name) {
         Cursor cursor = type.getDeclarationCursor().getDefinition();
         if (cursor.isInvalid()) {
-            return MemoryLayout.paddingLayout(64);
+            return ERRONEOUS;
         }
 
         final boolean isUnion = cursor.kind() == CursorKind.UnionDecl;
-        return isUnion? new UnionLayoutComputer(offsetInParent, parent, type).compute() :
-                new StructLayoutComputer(offsetInParent, parent, type).compute();
+        return isUnion? new UnionLayoutComputer(typeMaker, offsetInParent, parent, type).compute(name) :
+                new StructLayoutComputer(typeMaker, offsetInParent, parent, type).compute(name);
     }
 
-    final MemoryLayout compute() {
+    final jdk.incubator.jextract.Type.Declared compute(String anonName) {
         Stream<Cursor> fieldCursors = Utils.flattenableChildren(cursor);
         for (Cursor fc : fieldCursors.collect(Collectors.toList())) {
             /*
@@ -93,38 +109,53 @@ abstract class RecordLayoutComputer {
             processField(fc);
         }
 
-        return finishLayout();
+        return finishRecord(anonName);
     }
 
     abstract void startBitfield();
     abstract void processField(Cursor c);
-    abstract MemoryLayout finishLayout();
+    abstract jdk.incubator.jextract.Type.Declared finishRecord(String anonName);
 
-    void addFieldLayout(MemoryLayout MemoryLayout) {
-        fieldLayouts.add(MemoryLayout);
+    void addField(Declaration declaration) {
+        fieldDecls.add(declaration);
+        MemoryLayout layout = null;
+        if (declaration instanceof Declaration.Scoped scoped) {
+            layout = scoped.layout().orElse(null);
+        } else if (declaration instanceof Declaration.Variable var) {
+            layout = var.layout().orElse(null);
+        }
+        if (layout != null) {
+            //fieldLayouts.add(layout.name().isEmpty() ? layout.withName(declaration.name()) : layout);
+            fieldLayouts.add(declaration.name().isEmpty() ? layout : layout.withName(declaration.name()));
+        }
     }
 
-    void addFieldLayout(long offset, Type parent, Cursor c) {
-        MemoryLayout memoryLayout = c.isAnonymousStruct()
-            ? compute(offset, parent, c.type())
-                .withName(nextAnonymousName())
-                .withAttribute(JEXTRACT_ANONYMOUS, true)
-            : fieldLayout(c);
-        addFieldLayout(memoryLayout);
+    void addPadding(long bits) {
+        fieldLayouts.add(MemoryLayout.paddingLayout(bits));
+    }
+
+    void addField(long offset, Type parent, Cursor c) {
+        if (c.isAnonymousStruct()) {
+            addField(((jdk.incubator.jextract.Type.Declared)computeAnonymous(typeMaker, offset, parent, c.type(), nextAnonymousName())).tree());
+        } else {
+            addField(field(c));
+        }
     }
 
     private String nextAnonymousName() {
         return "$anon$" + anonCount++;
     }
 
-    MemoryLayout fieldLayout(Cursor c) {
-        MemoryLayout l = LayoutUtils.getLayout(c.type());
-        String name = LayoutUtils.getName(c);
+    Declaration field(Cursor c) {
+        jdk.incubator.jextract.Type type = typeMaker.makeType(c.type());
+        String name = c.spelling();
         if (c.isBitField()) {
-            MemoryLayout sublayout = MemoryLayout.valueLayout(c.getBitFieldWidth(), ByteOrder.nativeOrder());
-            return sublayout.withName(name);
+            MemoryLayout sublayout = MemoryLayout.paddingLayout(c.getBitFieldWidth());
+            return Declaration.bitfield(new TreeMaker.CursorPosition(c), name, type, sublayout.withName(name));
+        } else if (c.isAnonymousStruct() && type instanceof jdk.incubator.jextract.Type.Declared decl) {
+            return decl.tree();
         } else {
-            return l.withName(name);
+            return Declaration.field(new TreeMaker.CursorPosition(c), name, type);
         }
     }
 
@@ -135,8 +166,8 @@ abstract class RecordLayoutComputer {
         return c.isBitField() ? c.getBitFieldWidth() : c.type().size() * 8;
     }
 
-    MemoryLayout bitfield(List<MemoryLayout> sublayouts) {
-        return LayoutUtils.setBitfields(MemoryLayout.structLayout(sublayouts.toArray(new MemoryLayout[0])));
+    Declaration.Scoped bitfield(List<MemoryLayout> sublayouts, Declaration.Variable... declarations) {
+        return Declaration.bitfields(declarations[0].pos(), MemoryLayout.structLayout(sublayouts.toArray(new MemoryLayout[0])), declarations);
     }
 
     long offsetOf(Type parent, Cursor c) {

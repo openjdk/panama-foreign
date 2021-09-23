@@ -26,10 +26,9 @@
 
 package jdk.incubator.jextract;
 
-import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.internal.jextract.impl.LayoutUtils;
+import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.jextract.impl.TypeImpl;
 import jdk.internal.jextract.impl.UnsupportedLayouts;
 
@@ -96,11 +95,11 @@ public interface Type {
             /**
              * {@code Bool} type.
              */
-            Bool("_Bool", CLinker.C_CHAR),
+            Bool("_Bool", ValueLayout.JAVA_BOOLEAN),
             /**
              * {@code char} type.
              */
-            Char("char", CLinker.C_CHAR),
+            Char("char", ValueLayout.JAVA_BYTE),
             /**
              * {@code char16} type.
              */
@@ -108,19 +107,19 @@ public interface Type {
             /**
              * {@code short} type.
              */
-            Short("short", CLinker.C_SHORT),
+            Short("short", ValueLayout.JAVA_SHORT),
             /**
              * {@code int} type.
              */
-            Int("int", CLinker.C_INT),
+            Int("int", ValueLayout.JAVA_INT),
             /**
              * {@code long} type.
              */
-            Long("long", CLinker.C_LONG),
+            Long("long", TypeImpl.IS_WINDOWS ? ValueLayout.JAVA_INT : ValueLayout.JAVA_LONG),
             /**
              * {@code long long} type.
              */
-            LongLong("long long", CLinker.C_LONG_LONG),
+            LongLong("long long", ValueLayout.JAVA_LONG),
             /**
              * {@code int128} type.
              */
@@ -128,11 +127,11 @@ public interface Type {
             /**
              * {@code float} type.
              */
-            Float("float", CLinker.C_FLOAT),
+            Float("float", ValueLayout.JAVA_FLOAT),
             /**
              * {@code double} type.
              */
-            Double("double",CLinker.C_DOUBLE),
+            Double("double", ValueLayout.JAVA_DOUBLE),
             /**
               * {@code long double} type.
               */
@@ -380,7 +379,7 @@ public interface Type {
      * @return the layout for given type.
      */
     static Optional<MemoryLayout> layoutFor(Type t) {
-        return LayoutUtils.getLayout(t);
+        return TypeImpl.getLayout(t);
     }
 
     /**
@@ -389,7 +388,7 @@ public interface Type {
      * @return the function descriptor for given function type.
      */
     static Optional<FunctionDescriptor> descriptorFor(Function function) {
-        return LayoutUtils.getDescriptor(function);
+        return TypeImpl.getDescriptor(function);
     }
 
     /**

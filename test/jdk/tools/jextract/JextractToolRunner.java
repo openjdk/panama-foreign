@@ -42,6 +42,7 @@ import java.util.spi.ToolProvider;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
+import jdk.incubator.foreign.ValueLayout;
 import jdk.incubator.jextract.Type;
 import jdk.test.lib.util.FileUtils;
 
@@ -52,6 +53,18 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 public class JextractToolRunner {
+
+    private static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
+
+    public static final ValueLayout.OfBoolean C_BOOL = ValueLayout.JAVA_BOOLEAN;
+    public static final ValueLayout.OfByte C_CHAR = ValueLayout.JAVA_BYTE;
+    public static final ValueLayout.OfShort C_SHORT = ValueLayout.JAVA_SHORT;
+    public static final ValueLayout.OfInt C_INT = ValueLayout.JAVA_INT;
+    public static final ValueLayout C_LONG = IS_WINDOWS ? ValueLayout.JAVA_INT : ValueLayout.JAVA_LONG;
+    public static final ValueLayout.OfLong C_LONG_LONG = ValueLayout.JAVA_LONG;
+    public static final ValueLayout.OfFloat C_FLOAT = ValueLayout.JAVA_FLOAT;
+    public static final ValueLayout.OfDouble C_DOUBLE = ValueLayout.JAVA_DOUBLE;
+    public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS;
 
     // (private) exit codes from jextract tool. Copied from JextractTool.
     static final int SUCCESS       = 0;

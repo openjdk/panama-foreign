@@ -48,13 +48,13 @@ public final class Type {
         return Index_h.clang_isFunctionTypeVariadic(type) != 0;
     }
     public Type resultType() {
-        return new Type(Index_h.clang_getResultType(ResourceScope.newImplicitScope(), type));
+        return new Type(Index_h.clang_getResultType(ResourceScope.newConfinedScope(), type));
     }
     public int numberOfArgs() {
         return Index_h.clang_getNumArgTypes(type);
     }
     public Type argType(int idx) {
-        return new Type(Index_h.clang_getArgType(ResourceScope.newImplicitScope(), type, idx));
+        return new Type(Index_h.clang_getArgType(ResourceScope.newConfinedScope(), type, idx));
     }
     private int getCallingConvention0() {
         return Index_h.clang_getFunctionTypeCallingConv(type);
@@ -86,12 +86,12 @@ public final class Type {
 
     // Pointer type
     public Type getPointeeType() {
-        return new Type(Index_h.clang_getPointeeType(ResourceScope.newImplicitScope(), type));
+        return new Type(Index_h.clang_getPointeeType(ResourceScope.newConfinedScope(), type));
     }
 
     // array/vector type
     public Type getElementType() {
-        return new Type(Index_h.clang_getElementType(ResourceScope.newImplicitScope(), type));
+        return new Type(Index_h.clang_getElementType(ResourceScope.newConfinedScope(), type));
     }
 
     public long getNumberOfElements() {
@@ -101,7 +101,7 @@ public final class Type {
     // Struct/RecordType
     private long getOffsetOf0(String fieldName) {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment cfname = CLinker.toCString(fieldName, scope);
+            MemorySegment cfname = scope.allocateUtf8String(fieldName);
             return Index_h.clang_Type_getOffsetOf(type, cfname);
         }
     }
@@ -124,7 +124,7 @@ public final class Type {
      * for 'int', the canonical type for 'T' would be 'int'.
      */
     public Type canonicalType() {
-        return new Type(Index_h.clang_getCanonicalType(ResourceScope.newImplicitScope(), type));
+        return new Type(Index_h.clang_getCanonicalType(ResourceScope.newConfinedScope(), type));
     }
 
     /**
@@ -175,7 +175,7 @@ public final class Type {
     }
 
     public Cursor getDeclarationCursor() {
-        return new Cursor(Index_h.clang_getTypeDeclaration(ResourceScope.newImplicitScope(), type));
+        return new Cursor(Index_h.clang_getTypeDeclaration(ResourceScope.newConfinedScope(), type));
     }
 
     public boolean equalType(Type other) {

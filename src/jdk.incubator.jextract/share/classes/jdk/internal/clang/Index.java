@@ -27,7 +27,6 @@
 package jdk.internal.clang;
 
 import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemorySegment;
@@ -41,6 +40,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+
+import static jdk.internal.clang.libclang.CLayouts.C_POINTER;
 
 public class Index implements AutoCloseable {
     // Pointer to CXIndex
@@ -79,19 +80,15 @@ public class Index implements AutoCloseable {
         }
     }
 
-    private static final VarHandle VH_MemoryAddress =
-            MemoryHandles.asAddressVarHandle(CLinker.C_POINTER.varHandle(long.class));
-
     public TranslationUnit parseTU(String file, Consumer<Diagnostic> dh, int options, String... args)
             throws ParsingFailedException {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
-            MemorySegment src = CLinker.toCString(file, scope);
-            MemorySegment cargs = args.length == 0 ? null : allocator.allocateArray(CLinker.C_POINTER, args.length);
+            MemorySegment src = scope.allocateUtf8String(file);
+            MemorySegment cargs = args.length == 0 ? null : scope.allocateArray(C_POINTER, args.length);
             for (int i = 0 ; i < args.length ; i++) {
-                MemoryAccess.setAddressAtIndex(cargs, i, CLinker.toCString(args[i], scope));
+                cargs.set(C_POINTER, i * C_POINTER.byteSize(), scope.allocateUtf8String(args[i]));
             }
-            MemorySegment outAddress = allocator.allocate(CLinker.C_POINTER);
+            MemorySegment outAddress = scope.allocate(C_POINTER);
             ErrorCode code = ErrorCode.valueOf(Index_h.clang_parseTranslationUnit2(
                     ptr,
                     src,
@@ -101,7 +98,7 @@ public class Index implements AutoCloseable {
                     options,
                     outAddress));
 
-            MemoryAddress tu = (MemoryAddress) VH_MemoryAddress.get(outAddress);
+            MemoryAddress tu = outAddress.get(C_POINTER, 0);
             TranslationUnit rv = new TranslationUnit(tu);
             // even if we failed to parse, we might still have diagnostics
             rv.processDiagnostics(dh);

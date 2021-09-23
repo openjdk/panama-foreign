@@ -25,6 +25,7 @@
 
 package jdk.internal.jextract.impl;
 
+import jdk.incubator.foreign.ValueLayout;
 import jdk.incubator.jextract.Type.Primitive;
 import jdk.incubator.jextract.Type;
 import jdk.incubator.foreign.MemoryAddress;
@@ -57,17 +58,7 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Void> {
     }
 
     static String typeToLayoutName(Primitive.Kind type) {
-        return switch (type) {
-            case Bool -> "C_BOOL";
-            case Char -> "C_CHAR";
-            case Short -> "C_SHORT";
-            case Int -> "C_INT";
-            case Long -> "C_LONG";
-            case LongLong -> "C_LONG_LONG";
-            case Float -> "C_FLOAT";
-            case Double -> "C_DOUBLE";
-            default -> throw new RuntimeException("should not reach here: " + type);
-        };
+        return Utils.layoutToConstant((ValueLayout)type.layout().orElseThrow());
     }
 
     static Class<?> layoutToClass(boolean fp, MemoryLayout layout) {

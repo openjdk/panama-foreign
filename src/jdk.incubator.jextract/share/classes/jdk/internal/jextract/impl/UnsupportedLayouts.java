@@ -26,6 +26,9 @@ package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.ValueLayout;
+import jdk.incubator.jextract.Declaration;
+import jdk.incubator.jextract.Type;
+
 import java.nio.ByteOrder;
 
 /*
@@ -34,32 +37,84 @@ import java.nio.ByteOrder;
 public final class UnsupportedLayouts {
     private UnsupportedLayouts() {}
 
-    private static final String ATTR_LAYOUT_KIND = "jextract.abi.unsupported.layout.kind";
+    public static final MemoryLayout __INT128 = makeUnsupportedLayout(128, "__int128");
 
-    public static final ValueLayout __INT128 = MemoryLayout.valueLayout(128, ByteOrder.nativeOrder()).
-            withAttribute(ATTR_LAYOUT_KIND, "__int128");
+    public static final MemoryLayout LONG_DOUBLE = makeUnsupportedLayout(128, "long double");
 
-    public static final ValueLayout LONG_DOUBLE = MemoryLayout.valueLayout(128, ByteOrder.nativeOrder()).
-            withAttribute(ATTR_LAYOUT_KIND, "long double");
+    public static final MemoryLayout _FLOAT128 = makeUnsupportedLayout(128, "_float128");
 
-    public static final ValueLayout _FLOAT128 = MemoryLayout.valueLayout(128, ByteOrder.nativeOrder()).
-            withAttribute(ATTR_LAYOUT_KIND, "_float128");
+    public static final MemoryLayout __FP16 = makeUnsupportedLayout(16, "__fp16");
 
-    public static final ValueLayout __FP16 = MemoryLayout.valueLayout(16, ByteOrder.nativeOrder()).
-            withAttribute(ATTR_LAYOUT_KIND, "__fp16");
+    public static final MemoryLayout CHAR16 = makeUnsupportedLayout(16, "char16");
 
-    public static final ValueLayout CHAR16 = MemoryLayout.valueLayout(16, ByteOrder.nativeOrder()).
-            withAttribute(ATTR_LAYOUT_KIND, "char16");
+    public static final MemoryLayout WCHAR_T = makeUnsupportedLayout(16, "wchar_t");
 
-    public static final ValueLayout WCHAR_T = MemoryLayout.valueLayout(16, ByteOrder.nativeOrder()).
-            withAttribute(ATTR_LAYOUT_KIND, "wchar_t");
-
-    static boolean isUnsupported(MemoryLayout vl) {
-        return vl.attribute(ATTR_LAYOUT_KIND).isPresent();
+    static String firstUnsupportedType(Type type) {
+        return type.accept(unsupportedVisitor, null);
     }
 
-    static String getUnsupportedTypeName(MemoryLayout vl) {
-        return (String)
-                vl.attribute(ATTR_LAYOUT_KIND).orElseThrow(IllegalArgumentException::new);
+    private static MemoryLayout makeUnsupportedLayout(long size, String name) {
+        return MemoryLayout.paddingLayout(size).withBitAlignment(size).withName(name);
     }
+
+    static Type.Visitor<String, Void> unsupportedVisitor = new Type.Visitor<>() {
+        @Override
+        public String visitPrimitive(Type.Primitive t, Void unused) {
+            MemoryLayout layout = t.kind().layout().orElse(MemoryLayout.paddingLayout(64));
+            if (layout.equals(__INT128) || layout.equals(LONG_DOUBLE) || layout.equals(_FLOAT128) || layout.equals(__FP16)) {
+                return layout.name().get();
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public String visitFunction(Type.Function t, Void unused) {
+            for (Type arg : t.argumentTypes()) {
+                String unsupported = firstUnsupportedType(arg);
+                if (unsupported != null) {
+                    return unsupported;
+                }
+            }
+            String unsupported = firstUnsupportedType(t.returnType());
+            if (unsupported != null) {
+                return unsupported;
+            }
+            return null;
+        }
+
+        @Override
+        public String visitDeclared(Type.Declared t, Void unused) {
+            for (Declaration d : t.tree().members()) {
+                if (d instanceof Declaration.Variable) {
+                    String unsupported = firstUnsupportedType(((Declaration.Variable) d).type());
+                    if (unsupported != null) {
+                        return unsupported;
+                    }
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public String visitDelegated(Type.Delegated t, Void unused) {
+            return t.kind() == Type.Delegated.Kind.TYPEDEF ?
+                    firstUnsupportedType(t.type()) :
+                    null;
+            //in principle we should always do this:
+            // return firstUnsupportedType(t.type());
+            // but if we do that, we might end up with infinite recursion. Old code did not have that issue
+            // as it was layout-based, but doing so it also missed unsupported pointer types (e.g. *long double)
+        }
+
+        @Override
+        public String visitArray(Type.Array t, Void unused) {
+            return firstUnsupportedType(t.elementType());
+        }
+
+        @Override
+        public String visitType(Type t, Void unused) {
+            return null;
+        }
+    };
 }

@@ -195,12 +195,10 @@ public class ConstantBuilder extends ClassSourceBuilder {
         incrAlign();
         indent();
         if (!virtual) {
-            append(toplevel().headerClassName() + ".LIBRARIES, \"" + nativeName + "\"");
+            append("\"" + nativeName + "\"");
             append(",\n");
             indent();
         }
-        append("\"" + functionInfo.methodType().toMethodDescriptorString() + "\",\n");
-        indent();
         append(functionDesc.accessExpression());
         append(", ");
         // isVariadic
@@ -220,28 +218,20 @@ public class ConstantBuilder extends ClassSourceBuilder {
                 addLayout(javaName, varInfo.layout()).accessExpression();
         incrAlign();
         String typeName = varInfo.carrier().getName();
-        boolean isAddr = typeName.contains("MemoryAddress");
-        if (isAddr) {
-            typeName = "long";
-        }
         indent();
         String fieldName = Constant.Kind.VAR_HANDLE.fieldName(javaName);
         append(memberMods() + "VarHandle " + fieldName + " = ");
-        if (isAddr) {
-            append("MemoryHandles.asAddressVarHandle(");
-        }
         append(layoutAccess);
-        append(".varHandle(" + typeName + ".class");
+        append(".varHandle(");
+        String prefix = "";
         if (rootLayoutName != null) {
             for (String prefixElementName : prefixElementNames) {
-                append(", MemoryLayout.PathElement.groupElement(\"" + prefixElementName + "\")");
+                append(prefix + "MemoryLayout.PathElement.groupElement(\"" + prefixElementName + "\")");
+                prefix = ", ";
             }
-            append(", MemoryLayout.PathElement.groupElement(\"" + nativeName + "\")");
+            append(prefix + "MemoryLayout.PathElement.groupElement(\"" + nativeName + "\")");
         }
         append(")");
-        if (isAddr) {
-            append(")");
-        }
         append(";\n");
         decrAlign();
         return new Constant(className(), javaName, Constant.Kind.VAR_HANDLE);
@@ -252,21 +242,21 @@ public class ConstantBuilder extends ClassSourceBuilder {
         incrAlign();
         indent();
         append(memberMods() + "MemoryLayout " + fieldName + " = ");
-        emitLayoutString(layout, false);
+        emitLayoutString(layout);
         append(";\n");
         decrAlign();
         return new Constant(className(), javaName, Constant.Kind.LAYOUT);
     }
 
-    private void emitLayoutString(MemoryLayout l, boolean inBitfield) {
+    private void emitLayoutString(MemoryLayout l) {
         if (l instanceof ValueLayout val) {
-            append(typeToLayoutName(val, inBitfield));
+            append(typeToLayoutName(val));
         } else if (l instanceof SequenceLayout seq) {
             append("MemoryLayout.sequenceLayout(");
             if (seq.elementCount().isPresent()) {
                 append(seq.elementCount().getAsLong() + ", ");
             }
-            emitLayoutString(seq.elementLayout(), false);
+            emitLayoutString(seq.elementLayout());
             append(")");
         } else if (l instanceof GroupLayout group) {
             if (group.isStruct()) {
@@ -276,11 +266,10 @@ public class ConstantBuilder extends ClassSourceBuilder {
             }
             incrAlign();
             String delim = "";
-            boolean isBitfield = LayoutUtils.isBitfields(group);
             for (MemoryLayout e : group.memberLayouts()) {
                 append(delim);
                 indent();
-                emitLayoutString(e, isBitfield);
+                emitLayoutString(e);
                 delim = ",\n";
             }
             append("\n");
@@ -288,7 +277,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
             indent();
             append(")");
         } else {
-            // padding
+            // padding (or unsupported)
             append("MemoryLayout.paddingLayout(" + l.bitSize() + ")");
         }
         if (l.name().isPresent()) {
@@ -307,7 +296,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
         append(" = ");
         if (desc.returnLayout().isPresent()) {
             append("FunctionDescriptor.of(");
-            emitLayoutString(desc.returnLayout().get(), false);
+            emitLayoutString(desc.returnLayout().get());
             if (!noArgs) {
                 append(",");
             }
@@ -321,7 +310,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
             for (MemoryLayout e : desc.argumentLayouts()) {
                 append(delim);
                 indent();
-                emitLayoutString(e, false);
+                emitLayoutString(e);
                 delim = ",\n";
             }
             append("\n");
@@ -340,9 +329,9 @@ public class ConstantBuilder extends ClassSourceBuilder {
         append(memberMods());
         append("MemorySegment ");
         append(fieldName);
-        append(" = CLinker.toCString(\"");
+        append(" = ResourceScope.globalScope().allocateUtf8String(\"");
         append(Utils.quote(Objects.toString(value)));
-        append("\", ResourceScope.newImplicitScope());\n");
+        append("\");\n");
         decrAlign();
         return new Constant(className(), javaName, Constant.Kind.SEGMENT);
     }
@@ -361,16 +350,8 @@ public class ConstantBuilder extends ClassSourceBuilder {
         return new Constant(className(), javaName, Constant.Kind.ADDRESS);
     }
 
-    private static String typeToLayoutName(ValueLayout vl, boolean inBitfields) {
-        if (UnsupportedLayouts.isUnsupported(vl)) {
-            return "MemoryLayout.paddingLayout(" + vl.bitSize() + ")";
-        } else if (inBitfields) {
-            return "MemoryLayout.valueLayout(" + vl.bitSize() + ", ByteOrder.nativeOrder())";
-        } else {
-            CLinker.TypeKind kind = (CLinker.TypeKind) vl.attribute(CLinker.TypeKind.ATTR_NAME).orElseThrow(
-                    () -> new IllegalStateException("Unexpected value layout: could not determine ABI class"));
-            return "C_" + kind.name();
-        }
+    private static String typeToLayoutName(ValueLayout vl) {
+        return Utils.layoutToConstant(vl);
     }
 
     private Constant emitSegmentField(String javaName, String nativeName, MemoryLayout layout) {
@@ -383,9 +364,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
         append(fieldName);
         append(" = ");
         append("RuntimeHelper.lookupGlobalVariable(");
-        append(toplevel().headerClassName() + ".LIBRARIES, \"");
-        append(nativeName);
-        append("\", ");
+        append("\"" + nativeName + "\", ");
         append(layoutConstant.accessExpression());
         append(");\n");
         decrAlign();

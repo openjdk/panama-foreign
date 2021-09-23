@@ -33,6 +33,8 @@
  * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED -Duser.language=en TestClassGeneration
  */
 
+import jdk.incubator.foreign.Addressable;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -51,18 +53,12 @@ import java.nio.file.Path;
 
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.sequenceElement;
-import static jdk.incubator.foreign.CLinker.C_CHAR;
-import static jdk.incubator.foreign.CLinker.C_DOUBLE;
-import static jdk.incubator.foreign.CLinker.C_FLOAT;
-import static jdk.incubator.foreign.CLinker.C_INT;
-import static jdk.incubator.foreign.CLinker.C_LONG_LONG;
-import static jdk.incubator.foreign.CLinker.C_SHORT;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 public class TestClassGeneration extends JextractToolRunner {
 
-    private static final VarHandle VH_bytes = MemoryLayout.sequenceLayout(C_CHAR).varHandle(byte.class, sequenceElement());
+    private static final VarHandle VH_bytes = MemoryLayout.sequenceLayout(C_CHAR).varHandle(sequenceElement());
 
     private Path outputDir;
     private Loader loader;
@@ -217,7 +213,7 @@ public class TestClassGeneration extends JextractToolRunner {
         Class<?> fiClass = loader.loadClass("com.acme." + name);
         assertNotNull(fiClass);
         checkMethod(fiClass, "apply", type);
-        checkMethod(fiClass, "allocate", MemoryAddress.class, fiClass);
+        checkMethod(fiClass, "allocate", CLinker.UpcallStub.class, fiClass);
     }
 
     @BeforeClass

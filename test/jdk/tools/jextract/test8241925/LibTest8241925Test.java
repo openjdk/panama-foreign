@@ -23,7 +23,7 @@
 
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
-import jdk.incubator.foreign.MemoryAccess;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import org.testng.annotations.Test;
@@ -45,39 +45,38 @@ public class LibTest8241925Test {
     @Test
     public void test() {
         try (var scope = ResourceScope.newConfinedScope()) {
-            var allocator = SegmentAllocator.ofScope(scope);
-            var addr = allocator.allocate(C_INT, 12);
-            assertEquals(MemoryAccess.getInt(addr), 12);
+            var addr = scope.allocate(C_INT, 12);
+            assertEquals(addr.get(C_INT, 0), 12);
             square(addr);
-            assertEquals(MemoryAccess.getInt(addr), 144);
+            assertEquals(addr.get(C_INT, 0), 144);
 
-            addr = allocator.allocate(C_DOUBLE, 12.0);
-            assertEquals(MemoryAccess.getDouble(addr), 12.0, 0.1);
+            addr = scope.allocate(C_DOUBLE, 12.0);
+            assertEquals(addr.get(C_DOUBLE, 0), 12.0, 0.1);
             square_fp(addr);
-            assertEquals(MemoryAccess.getDouble(addr), 144.0, 0.1);
+            assertEquals(addr.get(C_DOUBLE, 0), 144.0, 0.1);
 
             int[] intArray = { 34, 67, 78, 8 };
-            addr = allocator.allocateArray(C_INT, intArray);
+            addr = scope.allocateArray(C_INT, intArray);
             int sum = sum(addr, intArray.length);
             assertEquals(sum, IntStream.of(intArray).sum());
-            int[] convertedArray = addr.toIntArray();
+            int[] convertedArray = addr.toArray(C_INT);
             assertEquals(convertedArray, intArray);
 
             double[] dblArray = { 34.5, 67.56, 78.2, 8.45 };
-            addr = allocator.allocateArray(C_DOUBLE, dblArray);
+            addr = scope.allocateArray(C_DOUBLE, dblArray);
             double sumd = sum_fp(addr, dblArray.length);
             assertEquals(sumd, DoubleStream.of(dblArray).sum(), 0.1);
-            double[] convertedDblArray = addr.toDoubleArray();
+            double[] convertedDblArray = addr.toArray(C_DOUBLE);
             for (int i = 0; i < dblArray.length; i++) {
                 assertEquals(dblArray[i], convertedDblArray[i], 0.1);
             }
 
-            assertEquals(toJavaString(name()), "java");
+            assertEquals(name().getUtf8String(0), "java");
 
-            var dest = allocator.allocateArray(C_CHAR, 12);
-            dest.copyFrom(toCString("hello ", scope));
-            var src = toCString("world", scope);
-            assertEquals(toJavaString(concatenate(dest, src)), "hello world");
+            var dest = scope.allocateArray(C_CHAR, 12);
+            dest.copyFrom(scope.allocateUtf8String("hello "));
+            var src = scope.allocateUtf8String("world");
+            assertEquals(concatenate(dest, src).getUtf8String(0), "hello world");
         }
     }
 }

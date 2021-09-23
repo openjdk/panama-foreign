@@ -92,17 +92,17 @@ public class LibStructTest {
     @Test
     public void testFieldTypes() {
         GroupLayout g = (GroupLayout)AllTypes.$LAYOUT();
-        checkField(g, "sc", CLinker.C_CHAR);
-        checkField(g, "uc", CLinker.C_CHAR);
-        checkField(g, "s",  CLinker.C_SHORT);
-        checkField(g, "us", CLinker.C_SHORT);
-        checkField(g, "i",  CLinker.C_INT);
-        checkField(g, "ui", CLinker.C_INT);
-        checkField(g, "l",  CLinker.C_LONG);
-        checkField(g, "ul", CLinker.C_LONG);
-        checkField(g, "ll", CLinker.C_LONG_LONG);
-        checkField(g, "ull",CLinker.C_LONG_LONG);
-        checkField(g, "f",  CLinker.C_FLOAT);
-        checkField(g, "d",  CLinker.C_DOUBLE);
+        checkField(g, "sc", C_CHAR);
+        checkField(g, "uc", C_CHAR);
+        checkField(g, "s",  C_SHORT);
+        checkField(g, "us", C_SHORT);
+        checkField(g, "i",  C_INT);
+        checkField(g, "ui", C_INT);
+        checkField(g, "l",  C_LONG);
+        checkField(g, "ul", C_LONG);
+        checkField(g, "ll", C_LONG_LONG);
+        checkField(g, "ull",C_LONG_LONG);
+        checkField(g, "f",  C_FLOAT);
+        checkField(g, "d",  C_DOUBLE);
     }
 }

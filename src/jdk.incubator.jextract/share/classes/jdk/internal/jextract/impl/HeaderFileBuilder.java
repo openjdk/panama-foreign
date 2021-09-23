@@ -29,6 +29,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
+import jdk.incubator.foreign.ValueLayout;
 import jdk.incubator.jextract.Type;
 
 import jdk.internal.jextract.impl.ConstantBuilder.Constant;
@@ -45,7 +46,7 @@ import java.util.Optional;
  */
 abstract class HeaderFileBuilder extends ClassSourceBuilder {
 
-    private static final String MEMBER_MODS = "public static";
+    static final String MEMBER_MODS = "public static";
 
     private final String superclass;
 
@@ -89,10 +90,6 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
             Constant mhConstant = constantBuilder.addMethodHandle(javaName, nativeName, functionInfo, false)
                     .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
             emitFunctionWrapper(mhConstant, javaName, nativeName, functionInfo);
-            if (functionInfo.methodType().returnType().equals(MemorySegment.class)) {
-                // emit scoped overload
-                emitFunctionWrapperScopedOverload(javaName, functionInfo);
-            }
         });
     }
 
@@ -164,11 +161,7 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
             if (pName.isEmpty()) {
                 pName = "x" + i;
             }
-            if (methodType.parameterType(i).equals(MemoryAddress.class)) {
-                pExprs.add(pName + ".address()");
-            } else {
-                pExprs.add(pName);
-            }
+            pExprs.add(pName);
             Class<?> pType = methodType.parameterType(i);
             if (pType.equals(MemoryAddress.class)) {
                 pType = Addressable.class;
@@ -183,31 +176,6 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
         }
         append(")");
         return pExprs;
-    }
-
-    private void emitFunctionWrapperScopedOverload(String javaName, FunctionInfo functionInfo) {
-        incrAlign();
-        indent();
-        append(MEMBER_MODS + " ");
-        List<String> paramNames = new ArrayList<>(functionInfo.parameterNames().get());
-        paramNames.add(0, "scope");
-        List<String> pExprs = emitFunctionWrapperDecl(javaName,
-                functionInfo.methodType().insertParameterTypes(0, ResourceScope.class),
-                functionInfo.isVarargs(),
-                paramNames);
-        String param = pExprs.remove(0);
-        pExprs.add(0, "SegmentAllocator.ofScope(" + param + ")");
-        append(" {\n");
-        incrAlign();
-        indent();
-        if (!functionInfo.methodType().returnType().equals(void.class)) {
-            append("return ");
-        }
-        append(javaName + "(" + String.join(", ", pExprs) + ");\n");
-        decrAlign();
-        indent();
-        append("}\n");
-        decrAlign();
     }
 
     private void emitFunctionalInterfaceGetter(String fiName, String javaName) {
@@ -230,8 +198,9 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
             incrAlign();
             indent();
             append(MEMBER_MODS);
-            append(" ValueLayout ");
-            append(uniqueNestedClassName(name));
+            append(" ValueLayout.");
+            append(primType.kind().layout().orElseThrow().getClass().getSimpleName());
+            append(" " + uniqueNestedClassName(name));
             append(" = ");
             append(TypeTranslator.typeToLayoutName(kind));
             append(";\n");
@@ -243,9 +212,9 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
         incrAlign();
         indent();
         append(MEMBER_MODS);
-        append(" ValueLayout ");
+        append(" ValueLayout.OfAddress ");
         append(uniqueNestedClassName(name));
-        append(" = C_POINTER;\n");
+        append(" = ValueLayout.ADDRESS;\n");
         decrAlign();
     }
 

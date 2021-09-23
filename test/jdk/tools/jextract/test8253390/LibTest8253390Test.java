@@ -23,7 +23,6 @@
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
-import static jdk.incubator.foreign.CLinker.toJavaString;
 import static test.jextract.test8253390.test8253390_h.*;
 
 /*
@@ -47,7 +46,7 @@ import static test.jextract.test8253390.test8253390_h.*;
 public class LibTest8253390Test {
     @Test
     public void testSquare() {
-        assertEquals(toJavaString(GREETING()), "hello\nworld");
-        assertEquals(toJavaString(GREETING2()), "hello\tworld");
+        assertEquals(GREETING().getUtf8String(0), "hello\nworld");
+        assertEquals(GREETING2().getUtf8String(0), "hello\tworld");
     }
 }

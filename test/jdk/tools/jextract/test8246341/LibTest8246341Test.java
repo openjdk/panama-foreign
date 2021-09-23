@@ -21,8 +21,8 @@
  * questions.
  */
 
-import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import org.testng.annotations.Test;
@@ -57,12 +57,12 @@ public class LibTest8246341Test {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             var callback = func$callback.allocate((argc, argv) -> {
                 callbackCalled[0] = true;
-                var addr = argv.asSegment(C_POINTER.byteSize() * argc, scope);
+                var addr = MemorySegment.ofAddressNative(argv, C_POINTER.byteSize() * argc, scope);
                 assertEquals(argc, 4);
-                assertEquals(toJavaString(MemoryAccess.getAddressAtIndex(addr, 0)), "java");
-                assertEquals(toJavaString(MemoryAccess.getAddressAtIndex(addr, 1)), "python");
-                assertEquals(toJavaString(MemoryAccess.getAddressAtIndex(addr, 2)), "javascript");
-                assertEquals(toJavaString(MemoryAccess.getAddressAtIndex(addr, 3)), "c++");
+                assertEquals(addr.get(C_POINTER, 0).getUtf8String(0), "java");
+                assertEquals(addr.get(C_POINTER, C_POINTER.byteSize() * 1).getUtf8String(0), "python");
+                assertEquals(addr.get(C_POINTER, C_POINTER.byteSize() * 2).getUtf8String(0), "javascript");
+                assertEquals(addr.get(C_POINTER, C_POINTER.byteSize() * 3).getUtf8String(0), "c++");
             }, scope);
             func(callback);
         }
@@ -74,9 +74,9 @@ public class LibTest8246341Test {
         try (var scope = ResourceScope.newConfinedScope()) {
             var allocator = SegmentAllocator.arenaAllocator(C_POINTER.byteSize(), scope);
             var addr = allocator.allocate(C_POINTER);
-            MemoryAccess.setAddress(addr, MemoryAddress.NULL);
+            addr.set(C_POINTER, 0, MemoryAddress.NULL);
             fillin(addr);
-            assertEquals(toJavaString(MemoryAccess.getAddress(addr)), "hello world");
+            assertEquals(addr.get(C_POINTER, 0).getUtf8String(0), "hello world");
         }
     }
 }

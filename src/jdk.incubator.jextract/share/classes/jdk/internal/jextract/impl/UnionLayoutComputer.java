@@ -28,12 +28,11 @@ package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.ValueLayout;
+import jdk.incubator.jextract.Declaration;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,8 +42,8 @@ final class UnionLayoutComputer extends RecordLayoutComputer {
     private final long offset;
     private long actualSize = 0L;
 
-    UnionLayoutComputer(long offsetInParent, Type parent, Type type) {
-        super(parent, type);
+    UnionLayoutComputer(TypeMaker typeMaker, long offsetInParent, Type parent, Type type) {
+        super(typeMaker, parent, type);
         this.offset = offsetInParent;
     }
 
@@ -55,7 +54,7 @@ final class UnionLayoutComputer extends RecordLayoutComputer {
             throw new IllegalStateException("No padding in union elements!");
         }
 
-        addFieldLayout(offset, parent, c);
+        addField(offset, parent, c);
         actualSize = Math.max(actualSize, fieldSize(c));
     }
 
@@ -65,11 +64,12 @@ final class UnionLayoutComputer extends RecordLayoutComputer {
     }
 
     @Override
-    MemoryLayout fieldLayout(Cursor c) {
+    Declaration field(Cursor c) {
         if (c.isBitField()) {
-            return bitfield(List.of(super.fieldLayout(c)));
+            Declaration.Variable var = (Declaration.Variable)super.field(c);
+            return bitfield(List.of(var.layout().get()), var);
         } else {
-            return super.fieldLayout(c);
+            return super.field(c);
         }
     }
 
@@ -85,20 +85,23 @@ final class UnionLayoutComputer extends RecordLayoutComputer {
     }
 
     @Override
-    MemoryLayout finishLayout() {
+    jdk.incubator.jextract.Type.Declared finishRecord(String anonName) {
         // size mismatch indicates use of bitfields in union
         long expectedSize = type.size() * 8;
         if (actualSize < expectedSize) {
             // emit an extra padding of expected size to make sure union layout size is computed correctly
-            addFieldLayout(MemoryLayout.paddingLayout(expectedSize));
+            addPadding(expectedSize);
         } else if (actualSize > expectedSize) {
             throw new AssertionError("Invalid union size - expected: " + expectedSize + "; found: " + actualSize);
         }
 
         MemoryLayout[] fields = fieldLayouts.toArray(new MemoryLayout[0]);
         GroupLayout g = MemoryLayout.unionLayout(fields);
-        String name = LayoutUtils.getName(cursor);
-        return name.isEmpty() ?
-                g : g.withName(name);
+        if (!cursor.spelling().isEmpty()) {
+            g = g.withName(cursor.spelling());
+        } else if (anonName != null) {
+            g = g.withName(anonName);
+        }
+        return jdk.incubator.jextract.Type.declared(Declaration.union(new TreeMaker.CursorPosition(cursor), cursor.spelling(), g, fieldDecls.stream().toArray(Declaration[]::new)));
     }
 }
