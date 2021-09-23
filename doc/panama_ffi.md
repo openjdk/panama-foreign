@@ -161,7 +161,7 @@ MethodHandle strlen = linker.downcallHandle(
 
 Note that, since the function `strlen` is part of the standard C library, which is loaded with the VM, we can just use the system lookup to look it up. The rest is pretty straightforward — the only tricky detail is how to model `size_t`: typically this type has the size of a pointer, so we can use `JAVA_LONG` both Linux and Windows. On the Java side, we model the `size_t` using a `long` and the pointer is modelled using an `Addressable` parameter.
 
-One we have obtained the downcall native method handle, we can just use it as any other method handle:
+One we have obtained the downcall native method handle, we can just use it as any other method handle<a href="#3"><sup>3</sup></a>:
 
 ```java
 try (ResourceScope scope = ResourceScope.newConfinedScope()) {
@@ -444,4 +444,5 @@ public class Examples {
 
 * <a id="1"/>(<sup>1</sup>):<small> In the future, we might add more ways to obtain a symbol lookup — for instance: `SymbolLookup.ofLibrary(String libName, ResourceScope scope)`. This would allow developers to load a library and associate its lifecycle with a `ResourceScope` (rather than a classloader). That is, when the scope is closed, the library will be unloaded. However, adding these new mode will require some additional foundational work on the `CLinker` support — as we need to make sure that the memory address used by a downcall method handle cannot be unloaded while the downcall method handle is being invoked.</small>
 * <a id="2"/>(<sup>2</sup>):<small> In reality this is not entirely new; even in JNI, when you call a `native` method the VM trusts that the corresponding implementing function in C will feature compatible parameter types and return values; if not a crash might occur.</small>
+* <a id="3"/>(<sup>3</sup>):<small> For simplicity, the examples shown in this document use `MethodHandle::invoke` rather than `MethodHandle::invokeExact`; by doing so we avoid having to cast by-reference arguments back to `Addressable`. With `invokeExact` the method handle invocation should be rewritten as `strlen.invokeExact((Addressable)scope.allocateUtf8String("Hello"));`</small>
 
