@@ -128,11 +128,9 @@ public class Reflection {
                         SharedSecrets.getJavaLangAccess().addEnableNativeAccessAllUnnamed();
                     }
                 }
-                if (firstNativeAccessWarning.compareAndSet(false, true)) {
-                    System.err.println("""
-                            WARNING: A restricted native access operation has occurred
-                            WARNING: Use --enable-native-access to grant restricted native access to trusted modules
-                            WARNING: All restricted native access operations from an untrusted module will be denied in a future release""");
+                boolean isFirst = firstNativeAccessWarning.compareAndSet(false, true);
+                if (isFirst) {
+                    System.err.println("WARNING: A restricted native access operation has occurred");
                 }
                 URL url = codeSource(currentClass);
                 String source = currentClass.getName();
@@ -140,6 +138,11 @@ public class Reflection {
                     source += " (" + url + ")";
                 String what = owner.getName() + "." + methodName;
                 System.err.println("WARNING: Restricted native access by " + source + " to " + what);
+                if (isFirst) {
+                    System.err.println("""
+                            WARNING: Use --enable-native-access to prevent warnings about restricted native access by trusted modules
+                            WARNING: All restricted native access operations by untrusted modules will be denied in a future release""");
+                }
             }
         }
 
