@@ -629,29 +629,8 @@ public abstract class Binding {
             // alignment is set to 1 byte here to avoid exceptions for cases where we do super word
             // copies of e.g. 2 int fields of a struct as a single long, while the struct is only
             // 4-byte-aligned (since it only contains ints)
-            ValueLayout layout;
-            if (type() == boolean.class) {
-                layout = ValueLayout.JAVA_BOOLEAN;
-            } else if (type() == char.class) {
-                layout = ValueLayout.JAVA_CHAR;
-            } else if (type() == byte.class) {
-                layout = ValueLayout.JAVA_BYTE;
-            } else if (type() == short.class) {
-                layout = ValueLayout.JAVA_SHORT;
-            } else if (type() == int.class) {
-                layout = ValueLayout.JAVA_INT;
-            } else if (type() == float.class) {
-                layout = ValueLayout.JAVA_FLOAT;
-            } else if (type() == long.class) {
-                layout = ValueLayout.JAVA_LONG;
-            } else if (type() == double.class) {
-                layout = ValueLayout.JAVA_DOUBLE;
-            } else if (type() == MemoryAddress.class) {
-                layout = ValueLayout.ADDRESS;
-            } else {
-                throw new IllegalStateException("Unsupported carrier: " + type().getName());
-            }
-            return MemoryHandles.insertCoordinates(MemoryHandles.varHandle(layout.withOrder(ByteOrder.nativeOrder()).withBitAlignment(8)), 1, offset);
+            ValueLayout layout = MemoryLayout.valueLayout(type(), ByteOrder.nativeOrder()).withBitAlignment(8);
+            return MemoryHandles.insertCoordinates(MemoryHandles.varHandle(layout), 1, offset);
         }
     }
 

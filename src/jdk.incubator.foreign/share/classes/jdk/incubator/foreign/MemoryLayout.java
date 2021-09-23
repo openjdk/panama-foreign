@@ -34,6 +34,7 @@ import java.lang.constant.DynamicConstantDesc;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -678,6 +679,51 @@ E * (S + I * F)
     static MemoryLayout paddingLayout(long size) {
         AbstractLayout.checkSize(size);
         return new PaddingLayout(size);
+    }
+
+    /**
+     * Creates a value layout of given Java carrier and byte order. The type of resulting value layout is determined
+     * by the carrier provided:
+     * <ul>
+     *     <li>{@link ValueLayout.OfBoolean}, for {@code boolean.class}</li>
+     *     <li>{@link ValueLayout.OfByte}, for {@code byte.class}</li>
+     *     <li>{@link ValueLayout.OfShort}, for {@code short.class}</li>
+     *     <li>{@link ValueLayout.OfChar}, for {@code char.class}</li>
+     *     <li>{@link ValueLayout.OfInt}, for {@code int.class}</li>
+     *     <li>{@link ValueLayout.OfFloat}, for {@code float.class}</li>
+     *     <li>{@link ValueLayout.OfLong}, for {@code long.class}</li>
+     *     <li>{@link ValueLayout.OfDouble}, for {@code double.class}</li>
+     *     <li>{@link ValueLayout.OfAddress}, for {@code MemoryAddress.class}</li>
+     * </ul>
+     * @param carrier the value layout carrier.
+     * @param order the value layout's byte order.
+     * @return a new value layout.
+     * @throws IllegalArgumentException if the carrier type is not supported.
+     */
+    static ValueLayout valueLayout(Class<?> carrier, ByteOrder order) {
+        Objects.requireNonNull(carrier);
+        Objects.requireNonNull(order);
+        if (carrier == boolean.class) {
+            return new ValueLayout.OfBoolean(order);
+        } else if (carrier == char.class) {
+            return new ValueLayout.OfChar(order);
+        } else if (carrier == byte.class) {
+            return new ValueLayout.OfByte(order);
+        } else if (carrier == short.class) {
+            return new ValueLayout.OfShort(order);
+        } else if (carrier == int.class) {
+            return new ValueLayout.OfInt(order);
+        } else if (carrier == float.class) {
+            return new ValueLayout.OfFloat(order);
+        } else if (carrier == long.class) {
+            return new ValueLayout.OfLong(order);
+        } else if (carrier == double.class) {
+            return new ValueLayout.OfDouble(order);
+        } else if (carrier == MemoryAddress.class) {
+            return new ValueLayout.OfAddress(order);
+        } else {
+            throw new IllegalArgumentException("Unsupported carrier: " + carrier.getName());
+        }
     }
 
     /**
