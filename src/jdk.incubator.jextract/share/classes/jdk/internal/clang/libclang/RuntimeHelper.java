@@ -28,6 +28,7 @@ package jdk.internal.clang.libclang;
 
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.CLinker.UpcallStub;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.SymbolLookup;
@@ -41,14 +42,7 @@ import jdk.incubator.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.stream.Stream;
 
-import static jdk.incubator.foreign.CLinker.*;
 import static jdk.internal.clang.libclang.CLayouts.C_DOUBLE;
 import static jdk.internal.clang.libclang.CLayouts.C_LONG_LONG;
 import static jdk.internal.clang.libclang.CLayouts.C_POINTER;

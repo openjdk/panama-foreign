@@ -196,8 +196,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     @Override
     public Void visitScoped(Declaration.Scoped d, Declaration parent) {
-        if (d.layout().isEmpty()) {
-            //skip decl-only
+        if (d.layout().isEmpty() || structDefinitionSeen(d)) {
+            //skip decl
             return null;
         }
         boolean isStructKind = switch (d.kind()) {
@@ -368,7 +368,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         Type type = tree.type();
 
         if (type instanceof Type.Declared) {
-            // anon type - let's generate something
+            // declared type - visit declaration recursively
             ((Type.Declared) type).tree().accept(this, tree);
         }
         MemoryLayout layout = tree.layout().orElse(Type.layoutFor(type).orElse(null));

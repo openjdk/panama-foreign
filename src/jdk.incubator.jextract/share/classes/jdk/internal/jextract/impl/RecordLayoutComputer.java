@@ -181,12 +181,4 @@ abstract class RecordLayoutComputer {
                             "Can not find offset of: " + c + ", in: " + parent));
         }
     }
-
-//    public static String getName(Type type) {
-//        Cursor c = type.getDeclarationCursor();
-//        if (c.isInvalid()) {
-//            return type.spelling();
-//        }
-//        return c.spelling();
-//    }
 }

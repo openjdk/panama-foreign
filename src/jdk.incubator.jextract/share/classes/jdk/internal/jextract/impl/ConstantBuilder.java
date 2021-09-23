@@ -329,7 +329,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
         append(memberMods());
         append("MemorySegment ");
         append(fieldName);
-        append(" = ResourceScope.newSharedScope().allocateUtf8String(\"");
+        append(" = ResourceScope.globalScope().allocateUtf8String(\"");
         append(Utils.quote(Objects.toString(value)));
         append("\");\n");
         decrAlign();
