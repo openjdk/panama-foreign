@@ -70,7 +70,7 @@ public interface SymbolLookup {
     @CallerSensitive
     static SymbolLookup loaderLookup() {
         Class<?> caller = Reflection.getCallerClass();
-        Reflection.ensureNativeAccess(caller);
+        Reflection.ensureNativeAccess(caller, SymbolLookup.class, "loaderLookup");
         ClassLoader loader = Objects.requireNonNull(caller.getClassLoader());
         return name -> {
             Objects.requireNonNull(name);

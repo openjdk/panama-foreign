@@ -26,10 +26,17 @@
 package jdk.internal.reflect;
 
 import java.lang.reflect.*;
+import java.net.URL;
+import java.security.AccessController;
+import java.security.CodeSource;
+import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.VM;
 import jdk.internal.vm.annotation.ForceInline;
@@ -107,12 +114,49 @@ public class Reflection {
         }
     }
 
-    @ForceInline
-    public static void ensureNativeAccess(Class<?> currentClass) {
-        Module module = currentClass.getModule();
-        if (!SharedSecrets.getJavaLangAccess().isEnableNativeAccess(module)) {
-            throw new IllegalCallerException("Illegal native access from: " + module);
+    static class NativeAccessLogger {
+        static AtomicBoolean firstNativeAccessWarning = new AtomicBoolean();
+
+        @ForceInline
+        static void logNativeAccessIfNeeded(Class<?> currentClass, Class<?> owner, String methodName) {
+            Module module = currentClass.getModule();
+            if (!SharedSecrets.getJavaLangAccess().isEnableNativeAccess(module)) {
+                synchronized (module) {
+                    if (module.isNamed()) {
+                        SharedSecrets.getJavaLangAccess().addEnableNativeAccess(module);
+                    } else {
+                        SharedSecrets.getJavaLangAccess().addEnableNativeAccessAllUnnamed();
+                    }
+                }
+                if (firstNativeAccessWarning.compareAndSet(false, true)) {
+                    System.err.println("""
+                            WARNING: A restricted native access operation has occurred
+                            WARNING: Use --enable-native-access to grant restricted native access to trusted modules
+                            WARNING: All restricted native access operations from an untrusted module will be denied in a future release""");
+                }
+                URL url = codeSource(currentClass);
+                String source = currentClass.getName();
+                if (url != null)
+                    source += " (" + url + ")";
+                String what = owner.getName() + "." + methodName;
+                System.err.println("WARNING: Restricted native access by " + source + " to " + what);
+            }
         }
+
+        /**
+         * Returns the code source for the given class or null if there is no code source
+         */
+        private static URL codeSource(Class<?> clazz) {
+            PrivilegedAction<ProtectionDomain> pa = clazz::getProtectionDomain;
+            @SuppressWarnings("removal")
+            CodeSource cs = AccessController.doPrivileged(pa).getCodeSource();
+            return (cs != null) ? cs.getLocation() : null;
+        }
+    }
+
+    @ForceInline
+    public static void ensureNativeAccess(Class<?> currentClass, Class<?> owner, String methodName) {
+        NativeAccessLogger.logNativeAccessIfNeeded(currentClass, owner, methodName);
     }
 
     /**

@@ -753,7 +753,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      */
     @CallerSensitive
     static MemorySegment ofAddressNative(MemoryAddress address, long bytesSize, ResourceScope scope) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddressNative");
         Objects.requireNonNull(address);
         Objects.requireNonNull(scope);
         if (bytesSize <= 0) {

@@ -130,7 +130,7 @@ public sealed interface CLinker extends SymbolLookup permits Windowsx64Linker, S
      */
     @CallerSensitive
     static CLinker systemCLinker() {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), CLinker.class, "systemCLinker");
         return SharedUtils.getSystemLinker();
     }
 
