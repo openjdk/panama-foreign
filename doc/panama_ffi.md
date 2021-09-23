@@ -26,11 +26,11 @@ Alternatively, the client can create a memory segment from an address *unsafely*
 MemoryAddress addr = ... //obtain address from native code
 try (ResourceScope scope = ResourceScope.newConfinedScope()) {
 	MemorySegment segment = MemorySegment.ofAddressNative(100, scope);
-	int x = MemoryAccess.getInt(segment);
+	int x = segment.get(JAVA_INT, 0);
 }
 ```
 
-Both `MemoryAddress` and `MemorySegment`, implements the `Addressable` interface, which is an interface modelling entities that can be passed *by reference* — that is, which can be projected to a `MemoryAddress` instance. In the case of `MemoryAddress` such a projection is the identity function; in the case of a memory segment, the projection returns the `MemoryAddres` instance for the segment's base address. This abstraction allows to pass either memory address or memory segments where an address is expected (this is especially useful when generating native bindings).
+Both `MemoryAddress` and `MemorySegment` implement the `Addressable` interface, which is an interface modelling entities that can be passed *by reference* — that is, which can be projected to a `MemoryAddress` instance. In the case of `MemoryAddress` such a projection is the identity function; in the case of a memory segment, the projection returns the `MemoryAddres` instance for the segment's base address. This abstraction allows to pass either memory address or memory segments where an address is expected (this is especially useful when generating native bindings).
 
 ### Segment allocators
 
@@ -85,7 +85,7 @@ For these reasons, all the methods in the Foreign Linker API which *produce* mem
 
 ### Symbol lookups
 
-The first ingredient of any foreign function support is a mechanism to lookup symbols in native libraries. In traditional Java/JNI, this is done via the `System::loadLibrary` and `System::load` methods, which internally map into calls to `dlopen`. Unfortunately, these methods do not provide a way for clients to obtain the address associated with a given library symbol. For this reason, the Foreign Linker API introduces a new abstraction, namely `SymbolLookup` (similar in spirit to a method handle lookup), which provides capabilities to lookup named symbols; we can obtain a symbol lookup in 2 different ways <a href="#1"><sup>1</sup></a>:
+The first ingredient of any foreign function support is a mechanism to lookup symbols in native libraries. In traditional Java/JNI, this is done via the `System::loadLibrary` and `System::load` methods. Unfortunately, these methods do not provide a way for clients to obtain the *address* associated with a given library symbol. For this reason, the Foreign Linker API introduces a new abstraction, namely `SymbolLookup` (similar in spirit to a method handle lookup), which provides capabilities to lookup named symbols; we can obtain a symbol lookup in 2 different ways <a href="#1"><sup>1</sup></a>:
 
 * `SymbolLookup::loaderLookup` — creates a symbol lookup which can be used to search symbols in all the libraries loaded by the caller's classloader (e.g. using `System::loadLibrary` or `System::load`)
 * By obtaining a `CLinker` instance. In fact, `CLinker` implements the `SymbolLookup` interface, and can be used to look up platform-specific symbols in the standard C library.
@@ -130,7 +130,7 @@ The following table shows the mapping between C types, layouts and Java carriers
 | `char*`<br />`int**`<br /> ...                               | `ADDRESS`      | `Addressable`<br />`MemoryAddress` |
 | `struct Point { int x; int y; };`<br />`union Choice { float a; int b; };`<br />... | `GroupLayout`  | `MemorySegment`                    |
 
-Note that all C pointer types are modelled using the `ADDRESS` layout constant; the Java carrier type associated with this layout is either `Addressable` or `MemoryAddress` depending on whether the layout appears in a parameter position (resp. return position) in the function descriptor associated with a downcall method handle (resp. upcall stub). This maximizes applicability of e.g. downcall method handles, ensuring that any implementation of `Addressable` (e.g. memory segments, memory address, upcall stubs, va lists) can be passed where a pointer is expected.
+Note that all C pointer types are modelled using the `ADDRESS` layout constant; the Java carrier type associated with this layout is either `Addressable` or `MemoryAddress` depending on where the layout occurs in the function descriptor. For downcall method handles, for instance, the `Addressable` carrier is used when the `ADDRESS` layout occurs in a parameter position of the corresponding function descriptor. This maximizes applicability of a downcall method handles, ensuring that any implementation of `Addressable` (e.g. memory segments, memory address, upcall stubs, va lists) can be passed where a pointer is expected.
 
 A tool, such as `jextract`, will generate all the required C layouts (for scalars and structs/unions) *automatically*, so that clients do not have to worry about platform-dependent details such as sizes, alignment constraints and padding.
 
@@ -280,7 +280,9 @@ MethodHandle printf = linker.downcallHandle(
 Then we can call the specialized downcall handle as usual:
 
 ```java
-printf.invoke(CLinker.toCString("%d plus %d equals %d").address(), 2, 2, 4); //prints "2 plus 2 equals 4"
+try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+	printf.invoke(scope.allocateUtf8String("%d plus %d equals %d"), 2, 2, 4); //prints "2 plus 2 equals 4"
+}
 ```
 
 While this works, and provides optimal performance, there are some drawbacks:
