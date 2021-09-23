@@ -34,7 +34,7 @@ import java.lang.reflect.InvocationTargetException;
 
 /*
  * @test
- * @run testng TestRestricted
+ * @run testng/othervm -Djdk.internal.foreign.native.access.throw=true TestRestricted
  */
 public class TestRestricted {
     @Test(expectedExceptions = InvocationTargetException.class)

@@ -42,6 +42,8 @@ import jdk.internal.misc.VM;
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.IntrinsicCandidate;
 
+import static sun.security.action.GetBooleanAction.privilegedGetProperty;
+
 /** Common utility routines used by both java.lang and
     java.lang.reflect */
 
@@ -117,10 +119,16 @@ public class Reflection {
     static class NativeAccessLogger {
         static AtomicBoolean firstNativeAccessWarning = new AtomicBoolean();
 
+        static boolean shouldThrow = privilegedGetProperty("jdk.internal.foreign.native.access.throw");
+
         @ForceInline
         static void logNativeAccessIfNeeded(Class<?> currentClass, Class<?> owner, String methodName) {
             Module module = currentClass.getModule();
             if (!SharedSecrets.getJavaLangAccess().isEnableNativeAccess(module)) {
+                if (shouldThrow) {
+                    // used for testing
+                    throw new IllegalCallerException("Illegal native access from: " + module);
+                }
                 synchronized (module) {
                     if (module.isNamed()) {
                         SharedSecrets.getJavaLangAccess().addEnableNativeAccess(module);

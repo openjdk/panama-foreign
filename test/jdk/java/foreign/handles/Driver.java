@@ -25,6 +25,6 @@
  * @test
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build invoker_module/* lookup_module/*
- * @run testng/othervm --enable-native-access=invoker_module
+ * @run testng/othervm -Djdk.internal.foreign.native.access.throw=true --enable-native-access=invoker_module
                        lookup_module/handle.lookup.MethodHandleLookup
  */
