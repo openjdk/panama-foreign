@@ -32,6 +32,7 @@ import jdk.internal.vm.annotation.Stable;
 import sun.invoke.util.Wrapper;
 
 import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
 import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.constant.DynamicConstantDesc;
 import java.lang.constant.MethodHandleDesc;
@@ -148,20 +149,8 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     @Override
     public Optional<DynamicConstantDesc<ValueLayout>> describeConstable() {
-        ClassDesc THIS_DESC = getClass().describeConstable().get();
-        DynamicConstantDesc<ValueLayout> desc = DynamicConstantDesc.ofNamed(BSM_GET_STATIC_FINAL, specializedConstantName(), THIS_DESC, CD_VALUE_LAYOUT);
-        if (order != ByteOrder.nativeOrder()) {
-            MethodHandleDesc MH_WITH_ORDER = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_VIRTUAL, THIS_DESC, "withOrder",
-                    MethodTypeDesc.of(THIS_DESC, CD_BYTEORDER));
-
-            desc = DynamicConstantDesc.ofNamed(BSM_INVOKE, "withOrder", desc.constantType(), MH_WITH_ORDER,
-                    desc, order == ByteOrder.BIG_ENDIAN ? BIG_ENDIAN : LITTLE_ENDIAN);
-        }
-        return Optional.of(decorateLayoutConstant(desc));
-    }
-
-    String specializedConstantName() {
-        throw new IllegalStateException();
+        return Optional.of(decorateLayoutConstant(DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
+                CD_VALUE_LAYOUT, MH_VALUE, carrier().describeConstable().get(), order == ByteOrder.BIG_ENDIAN ? BIG_ENDIAN : LITTLE_ENDIAN)));
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout
@@ -253,11 +242,6 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
             Objects.requireNonNull(order);
             return new OfBoolean(order, alignment, name());
         }
-
-        @Override
-        String specializedConstantName() {
-            return "JAVA_BOOLEAN";
-        }
     }
 
     /**
@@ -291,11 +275,6 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
         public OfByte withOrder(ByteOrder order) {
             Objects.requireNonNull(order);
             return new OfByte(order, alignment, name());
-        }
-
-        @Override
-        String specializedConstantName() {
-            return "JAVA_BYTE";
         }
     }
 
@@ -331,11 +310,6 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
             Objects.requireNonNull(order);
             return new OfChar(order, alignment, name());
         }
-
-        @Override
-        String specializedConstantName() {
-            return "JAVA_CHAR";
-        }
     }
 
     /**
@@ -369,11 +343,6 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
         public OfShort withOrder(ByteOrder order) {
             Objects.requireNonNull(order);
             return new OfShort(order, alignment, name());
-        }
-
-        @Override
-        String specializedConstantName() {
-            return "JAVA_SHORT";
         }
     }
 
@@ -409,11 +378,6 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
             Objects.requireNonNull(order);
             return new OfInt(order, alignment, name());
         }
-
-        @Override
-        String specializedConstantName() {
-            return "JAVA_INT";
-        }
     }
 
     /**
@@ -447,11 +411,6 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
         public OfFloat withOrder(ByteOrder order) {
             Objects.requireNonNull(order);
             return new OfFloat(order, alignment, name());
-        }
-
-        @Override
-        String specializedConstantName() {
-            return "JAVA_FLOAT";
         }
     }
 
@@ -487,11 +446,6 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
             Objects.requireNonNull(order);
             return new OfLong(order, alignment, name());
         }
-
-        @Override
-        String specializedConstantName() {
-            return "JAVA_LONG";
-        }
     }
 
     /**
@@ -526,19 +480,14 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
             Objects.requireNonNull(order);
             return new OfDouble(order, alignment, name());
         }
-
-        @Override
-        String specializedConstantName() {
-            return "JAVA_DOUBLE";
-        }
     }
 
     /**
      * A value layout whose carrier is {@code MemoryAddress.class}.
      */
     public static final class OfAddress extends ValueLayout {
-        OfAddress(ByteOrder order, long size) {
-            super(MemoryAddress.class, order, size);
+        OfAddress(ByteOrder order) {
+            super(MemoryAddress.class, order, Unsafe.ADDRESS_SIZE * 8);
         }
 
         OfAddress(ByteOrder order, long size, long alignment, Optional<String> name) {
@@ -565,52 +514,75 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
             Objects.requireNonNull(order);
             return new OfAddress(order, bitSize(), alignment, name());
         }
-
-        @Override
-        String specializedConstantName() {
-            return "ADDRESS";
-        }
     }
 
     /**
      * A value layout constant whose size is the same as that of a machine address (e.g. {@code size_t}),
      * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * <blockquote><pre>{@code
+    MemoryLayout.valueLayout(MemoryAddress.class, ByteOrder.nativeOrder()).withBitAlignment(8);
+     * }</pre></blockquote>
      */
-    public static final OfAddress ADDRESS = new OfAddress(ByteOrder.nativeOrder(), Unsafe.ADDRESS_SIZE * 8).withBitAlignment(8);
+    public static final OfAddress ADDRESS = new OfAddress(ByteOrder.nativeOrder()).withBitAlignment(8);
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code byte},
      * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * <blockquote><pre>{@code
+    MemoryLayout.valueLayout(byte.class, ByteOrder.nativeOrder()).withBitAlignment(8);
+     * }</pre></blockquote>
      */
     public static final OfByte JAVA_BYTE = new OfByte(ByteOrder.nativeOrder()).withBitAlignment(8);
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code boolean},
      * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * <blockquote><pre>{@code
+    MemoryLayout.valueLayout(boolean.class, ByteOrder.nativeOrder()).withBitAlignment(8);
+     * }</pre></blockquote>
      */
     public static final OfBoolean JAVA_BOOLEAN = new OfBoolean(ByteOrder.nativeOrder()).withBitAlignment(8);
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code char},
      * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * <blockquote><pre>{@code
+    MemoryLayout.valueLayout(char.class, ByteOrder.nativeOrder()).withBitAlignment(8);
+     * }</pre></blockquote>
      */
     public static final OfChar JAVA_CHAR = new OfChar(ByteOrder.nativeOrder()).withBitAlignment(8);
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code short},
      * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * <blockquote><pre>{@code
+    MemoryLayout.valueLayout(short.class, ByteOrder.nativeOrder()).withBitAlignment(8);
+     * }</pre></blockquote>
      */
     public static final OfShort JAVA_SHORT = new OfShort(ByteOrder.nativeOrder()).withBitAlignment(8);
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code int},
      * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * <blockquote><pre>{@code
+    MemoryLayout.valueLayout(int.class, ByteOrder.nativeOrder()).withBitAlignment(8);
+     * }</pre></blockquote>
      */
     public static final OfInt JAVA_INT = new OfInt(ByteOrder.nativeOrder()).withBitAlignment(8);
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code long},
      * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * <blockquote><pre>{@code
+    MemoryLayout.valueLayout(long.class, ByteOrder.nativeOrder()).withBitAlignment(8);
+     * }</pre></blockquote>
      */
     public static final OfLong JAVA_LONG = new OfLong(ByteOrder.nativeOrder())
             .withBitAlignment(8);
@@ -618,12 +590,20 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
     /**
      * A value layout constant whose size is the same as that of a Java {@code float},
      * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * <blockquote><pre>{@code
+    MemoryLayout.valueLayout(float.class, ByteOrder.nativeOrder()).withBitAlignment(8);
+     * }</pre></blockquote>
      */
     public static final OfFloat JAVA_FLOAT = new OfFloat(ByteOrder.nativeOrder()).withBitAlignment(8);
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code double},
      * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * <blockquote><pre>{@code
+    MemoryLayout.valueLayout(double.class, ByteOrder.nativeOrder()).withBitAlignment(8);
+     * }</pre></blockquote>
      */
     public static final OfDouble JAVA_DOUBLE = new OfDouble(ByteOrder.nativeOrder()).withBitAlignment(8);
 }
