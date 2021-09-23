@@ -316,42 +316,6 @@ static void print_arg_moves(const GrowableArray<ArgMove>& arg_moves, Method* ent
 }
 #endif
 
-static void save_native_arguments(MacroAssembler* _masm, const CallRegs& conv, int arg_save_area_offset) {
-  __ block_comment("{ save_native_args ");
-  int store_offset = arg_save_area_offset;
-  for (int i = 0; i < conv._args_length; i++) {
-    VMReg reg = conv._arg_regs[i];
-    if (reg->is_Register()) {
-      __ movptr(Address(rsp, store_offset), reg->as_Register());
-      store_offset += 8;
-    } else if (reg->is_XMMRegister()) {
-      // Java API doesn't support vector args
-      __ movdqu(Address(rsp, store_offset), reg->as_XMMRegister());
-      store_offset += 16;
-    }
-    // do nothing for stack
-  }
-  __ block_comment("} save_native_args ");
-}
-
-static void restore_native_arguments(MacroAssembler* _masm, const CallRegs& conv, int arg_save_area_offset) {
-  __ block_comment("{ restore_native_args ");
-  int load_offset = arg_save_area_offset;
-  for (int i = 0; i < conv._args_length; i++) {
-    VMReg reg = conv._arg_regs[i];
-    if (reg->is_Register()) {
-      __ movptr(reg->as_Register(), Address(rsp, load_offset));
-      load_offset += 8;
-    } else if (reg->is_XMMRegister()) {
-      // Java API doesn't support vector args
-      __ movdqu(reg->as_XMMRegister(), Address(rsp, load_offset));
-      load_offset += 16;
-    }
-    // do nothing for stack
-  }
-  __ block_comment("} restore_native_args ");
-}
-
 static bool is_valid_XMM(XMMRegister reg) {
   return reg->is_valid() && (UseAVX >= 3 || (reg->encoding() < 16)); // why is this not covered by is_valid()?
 }
@@ -384,75 +348,6 @@ static int compute_reg_save_area_size(const ABIDescriptor& abi) {
 #endif
 
   return size;
-}
-
-static int compute_arg_save_area_size(const CallRegs& conv) {
-  int result_size = 0;
-  for (int i = 0; i < conv._args_length; i++) {
-    VMReg reg = conv._arg_regs[i];
-    if (reg->is_Register()) {
-      result_size += 8;
-    } else if (reg->is_XMMRegister()) {
-      // Java API doesn't support vector args
-      result_size += 16;
-    }
-    // do nothing for stack
-  }
-  return result_size;
-}
-
-static int compute_res_save_area_size(const CallRegs& conv) {
-  int result_size = 0;
-  for (int i = 0; i < conv._rets_length; i++) {
-    VMReg reg = conv._ret_regs[i];
-    if (reg->is_Register()) {
-      result_size += 8;
-    } else if (reg->is_XMMRegister()) {
-      // Java API doesn't support vector args
-      result_size += 16;
-    } else {
-      ShouldNotReachHere(); // unhandled type
-    }
-  }
-  return result_size;
-}
-
-static void save_java_result(MacroAssembler* _masm, const CallRegs& conv, int res_save_area_offset) {
-  int offset = res_save_area_offset;
-  __ block_comment("{ save java result ");
-  for (int i = 0; i < conv._rets_length; i++) {
-    VMReg reg = conv._ret_regs[i];
-    if (reg->is_Register()) {
-      __ movptr(Address(rsp, offset), reg->as_Register());
-      offset += 8;
-    } else if (reg->is_XMMRegister()) {
-      // Java API doesn't support vector args
-      __ movdqu(Address(rsp, offset), reg->as_XMMRegister());
-      offset += 16;
-    } else {
-      ShouldNotReachHere(); // unhandled type
-    }
-  }
-  __ block_comment("} save java result ");
-}
-
-static void restore_java_result(MacroAssembler* _masm, const CallRegs& conv, int res_save_area_offset) {
-  int offset = res_save_area_offset;
-  __ block_comment("{ restore java result ");
-  for (int i = 0; i < conv._rets_length; i++) {
-    VMReg reg = conv._ret_regs[i];
-    if (reg->is_Register()) {
-      __ movptr(reg->as_Register(), Address(rsp, offset));
-      offset += 8;
-    } else if (reg->is_XMMRegister()) {
-      // Java API doesn't support vector args
-      __ movdqu(reg->as_XMMRegister(), Address(rsp, offset));
-      offset += 16;
-    } else {
-      ShouldNotReachHere(); // unhandled type
-    }
-  }
-  __ block_comment("} restore java result ");
 }
 
 constexpr int MXCSR_MASK = 0xFFC0;  // Mask out any pending exceptions
@@ -614,16 +509,16 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   }
 
   int reg_save_area_size = compute_reg_save_area_size(abi);
-  int arg_save_area_size = compute_arg_save_area_size(conv);
-  int res_save_area_size = compute_res_save_area_size(conv);
+  RegSpillFill arg_spill(conv._arg_regs, conv._args_length);
+  RegSpillFill result_spill(conv._ret_regs, conv._rets_length);
   // To spill receiver during deopt
   int deopt_spill_size = 1 * BytesPerWord;
 
   int shuffle_area_offset    = 0;
   int deopt_spill_offset     = shuffle_area_offset    + out_arg_area;
   int res_save_area_offset   = deopt_spill_offset     + deopt_spill_size;
-  int arg_save_area_offset   = res_save_area_offset   + res_save_area_size;
-  int reg_save_area_offset   = arg_save_area_offset   + arg_save_area_size;
+  int arg_save_area_offset   = res_save_area_offset   + result_spill.spill_size_bytes();
+  int reg_save_area_offset   = arg_save_area_offset   + arg_spill.spill_size_bytes();
   int frame_data_offset      = reg_save_area_offset   + reg_save_area_size;
   int frame_bottom_offset    = frame_data_offset      + sizeof(OptimizedEntryBlob::FrameData);
 
@@ -669,7 +564,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
   // we have to always spill args since we need to do a call to get the thread
   // (and maybe attach it).
-  save_native_arguments(_masm, conv, arg_save_area_offset);
+  arg_spill.gen_spill(_masm, arg_save_area_offset);
 
   preserve_callee_saved_registers(_masm, abi, reg_save_area_offset);
 
@@ -684,7 +579,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
   __ block_comment("{ argument shuffle");
   // TODO merge these somehow
-  restore_native_arguments(_masm, conv, arg_save_area_offset);
+  arg_spill.gen_fill(_masm, arg_save_area_offset);
   shuffle_arguments(_masm, arg_moves);
   __ block_comment("} argument shuffle");
 
@@ -699,7 +594,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
   __ call(Address(rbx, Method::from_compiled_offset()));
 
-  save_java_result(_masm, conv, res_save_area_offset);
+  result_spill.gen_spill(_masm, res_save_area_offset);
 
   __ block_comment("{ on_exit");
   __ vzeroupper();
@@ -711,7 +606,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
   restore_callee_saved_registers(_masm, abi, reg_save_area_offset);
 
-  restore_java_result(_masm, conv, res_save_area_offset);
+  result_spill.gen_fill(_masm, res_save_area_offset);
 
   // return value shuffle
 #ifdef ASSERT

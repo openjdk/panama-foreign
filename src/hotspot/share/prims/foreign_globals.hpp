@@ -86,4 +86,6 @@ public:
   static const CallRegs parse_call_regs(jobject jconv);
 };
 
+VMReg vmstorage_to_vmreg(int type, int index, int stk_slot_offset = 0);
+
 #endif // SHARE_PRIMS_FOREIGN_GLOBALS

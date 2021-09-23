@@ -38,7 +38,7 @@
 
 JNI_LEAF(jlong, NEP_vmStorageToVMReg(JNIEnv* env, jclass _unused, jint type, jint index, jint stack_slot_offset_bytes))
   int stack_slot_offset_slots = stack_slot_offset_bytes >> LogBytesPerInt;
-  return VMRegImpl::vmStorageToVMReg(type, index, stack_slot_offset_slots)->value();
+  return vmstorage_to_vmreg(type, index, stack_slot_offset_slots)->value();
 JNI_END
 
 JNI_ENTRY(jlong, NEP_makeInvoker(JNIEnv* env, jclass _unused, jobject method_type, jint shadow_space_bytes,
@@ -65,7 +65,6 @@ JNI_ENTRY(jlong, NEP_makeInvoker(JNIEnv* env, jclass _unused, jobject method_typ
 
   // does not contain entry for address:
   GrowableArray<VMReg> input_regs(pslots);
-  GrowableArray<VMReg> output_regs(pslots);
 
   int num_args = 2;
   for (int i = 1; i < pcount; i++) { // skip addr
@@ -82,6 +81,8 @@ JNI_ENTRY(jlong, NEP_makeInvoker(JNIEnv* env, jclass _unused, jobject method_typ
       num_args++;
     }
   }
+
+  GrowableArray<VMReg> output_regs(pslots);
 
   jint outs = ret_moves_oop->length();
   assert(outs <= 1, "No multi-reg returns");

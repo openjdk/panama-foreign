@@ -48,8 +48,3 @@ void VMRegImpl::set_regName() {
     regName[i] = "NON-GPR-FPR";
   }
 }
-
-VMReg VMRegImpl::vmStorageToVMReg(int type, int index, int stk_slot_offset) {
-  Unimplemented();
-  return VMRegImpl::Bad();
-}

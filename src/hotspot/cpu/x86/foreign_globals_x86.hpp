@@ -58,4 +58,22 @@ struct BufferLayout {
   size_t buffer_size;
 };
 
+class RegSpillFill {
+  const VMReg* _regs;
+  int _num_regs;
+  int _spill_size_bytes;
+public:
+  RegSpillFill(const VMReg* regs, int num_regs) : _regs(regs), _num_regs(num_regs) {
+    _spill_size_bytes = compute_spill_area();
+  }
+
+  int spill_size_bytes() const { return _spill_size_bytes; }
+  void gen_spill(MacroAssembler* masm, int rsp_offset) const { return gen(masm, rsp_offset, true); }
+  void gen_fill(MacroAssembler* masm, int rsp_offset) const { return gen(masm, rsp_offset, false); }
+
+private:
+  int compute_spill_area();
+  void gen(MacroAssembler* masm, int rsp_offset, bool is_spill) const;
+};
+
 #endif // CPU_X86_VM_FOREIGN_GLOBALS_X86_HPP

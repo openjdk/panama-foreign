@@ -141,8 +141,6 @@ public:
 
   static void set_regName();
 
-  static VMReg vmStorageToVMReg(int type, int index, int stk_slot_offset = 0);
-
 #include CPU_HEADER(vmreg)
 
 };

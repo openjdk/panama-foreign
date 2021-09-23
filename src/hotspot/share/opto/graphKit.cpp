@@ -2596,7 +2596,6 @@ Node* GraphKit::make_native_call(address call_addr, const TypeFunc* call_type, u
   uint n_filtered_args = nargs - 3; // -addr (2), -nep;
   ResourceMark rm;
   Node** argument_nodes = NEW_RESOURCE_ARRAY(Node*, n_filtered_args);
-  BasicType* argument_bts = NEW_RESOURCE_ARRAY(BasicType, n_filtered_args);
   const Type** arg_types = TypeTuple::fields(n_filtered_args);
   GrowableArray<VMReg> arg_regs(C->comp_arena(), n_filtered_args, n_filtered_args, VMRegImpl::Bad());
 
@@ -2612,7 +2611,6 @@ Node* GraphKit::make_native_call(address call_addr, const TypeFunc* call_type, u
         : argRegs[java_arg_read_pos++];
 
       argument_nodes[vm_arg_pos] = node;
-      argument_bts[vm_arg_pos] = type->basic_type();
       arg_types[TypeFunc::Parms + vm_arg_pos] = type;
       arg_regs.at_put(vm_arg_pos, reg);
     }

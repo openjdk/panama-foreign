@@ -91,3 +91,18 @@ const CallRegs ForeignGlobals::parse_call_regs_impl(jobject jconv) const {
   ShouldNotCallThis();
   return {};
 }
+
+enum class RegType {
+  INTEGER = 0,
+  VECTOR = 1,
+  STACK = 3
+};
+
+VMReg vmStorageToVMReg(int type, int index, int stk_slot_offset) {
+  switch(static_cast<RegType>(type)) {
+    case RegType::INTEGER: return ::as_Register(index)->as_VMReg();
+    case RegType::VECTOR: return ::as_FloatRegister(index)->as_VMReg();
+    case RegType::STACK: return VMRegImpl::stack2reg(stk_slot_offset + (index LP64_ONLY(* 2)));
+  }
+  return VMRegImpl::Bad();
+}

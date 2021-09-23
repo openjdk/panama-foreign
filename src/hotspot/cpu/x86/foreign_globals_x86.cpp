@@ -105,15 +105,70 @@ const CallRegs ForeignGlobals::parse_call_regs_impl(jobject jconv) const {
     oop storage = arg_regs_oop->obj_at(i);
     jint index = storage->int_field(VMS.index_offset);
     jint type = storage->int_field(VMS.type_offset);
-    result._arg_regs[i] = VMRegImpl::vmStorageToVMReg(type, index);
+    result._arg_regs[i] = vmstorage_to_vmreg(type, index);
   }
 
   for (int i = 0; i < result._rets_length; i++) {
     oop storage = ret_regs_oop->obj_at(i);
     jint index = storage->int_field(VMS.index_offset);
     jint type = storage->int_field(VMS.type_offset);
-    result._ret_regs[i] = VMRegImpl::vmStorageToVMReg(type, index);
+    result._ret_regs[i] = vmstorage_to_vmreg(type, index);
   }
 
   return result;
+}
+
+enum class RegType {
+  INTEGER = 0,
+  VECTOR = 1,
+  X87 = 2,
+  STACK = 3
+};
+
+VMReg vmstorage_to_vmreg(int type, int index, int stk_slot_offset) {
+  switch(static_cast<RegType>(type)) {
+    case RegType::INTEGER: return ::as_Register(index)->as_VMReg();
+    case RegType::VECTOR: return ::as_XMMRegister(index)->as_VMReg();
+    case RegType::STACK: return VMRegImpl::stack2reg(stk_slot_offset + (index LP64_ONLY(* 2))); // numbering on x64 goes per 64-bits
+  }
+  return VMRegImpl::Bad();
+}
+
+int RegSpillFill::compute_spill_area() {
+  int result_size = 0;
+  for (int i = 0; i < _num_regs; i++) {
+    VMReg reg = _regs[i];
+    if (reg->is_Register()) {
+      result_size += 8;
+    } else if (reg->is_XMMRegister()) {
+      result_size += 16;
+    } else {
+      // stack and BAD regs
+    }
+  }
+  return result_size;
+}
+
+void RegSpillFill::gen(MacroAssembler* masm, int rsp_offset, bool spill) const {
+  int offset = rsp_offset;
+  for (int i = 0; i < _num_regs; i++) {
+    VMReg reg = _regs[i];
+    if (reg->is_Register()) {
+      if (spill) {
+        masm->movptr(Address(rsp, offset), reg->as_Register());
+      } else {
+        masm->movptr(reg->as_Register(), Address(rsp, offset));
+      }
+      offset += 8;
+    } else if (reg->is_XMMRegister()) {
+      if (spill) {
+        masm->movdqu(Address(rsp, offset), reg->as_XMMRegister());
+      } else {
+        masm->movdqu(reg->as_XMMRegister(), Address(rsp, offset));
+      }
+      offset += 16;
+    } else {
+      // stack and BAD regs
+    }
+  }
 }

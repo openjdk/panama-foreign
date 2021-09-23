@@ -189,72 +189,6 @@ public:
 
   void generate();
 
-  int spill_size_in_bytes() const {
-    if (_output_registers.length() == 0) {
-      return 0;
-    }
-    VMReg reg = _output_registers.at(0);
-    assert(reg->is_reg(), "must be a register");
-    if (reg->is_Register()) {
-      return 8;
-    } else if (reg->is_XMMRegister()) {
-      // if (UseAVX >= 3) {
-      //   return 64;
-      // } else if (UseAVX >= 1) {
-      //   return 32;
-      // } else {
-        return 16;
-      // }
-    } else {
-      ShouldNotReachHere();
-    }
-    return 0;
-  }
-
-  void spill_out_registers() {
-    if (_output_registers.length() == 0) {
-      return;
-    }
-    VMReg reg = _output_registers.at(0);
-    assert(reg->is_reg(), "must be a register");
-    MacroAssembler* masm = _masm;
-    if (reg->is_Register()) {
-      __ movptr(Address(rsp, 0), reg->as_Register());
-    } else if (reg->is_XMMRegister()) {
-      // if (UseAVX >= 3) {
-      //   __ evmovdqul(Address(rsp, 0), reg->as_XMMRegister(), Assembler::AVX_512bit);
-      // } else if (UseAVX >= 1) {
-      //   __ vmovdqu(Address(rsp, 0), reg->as_XMMRegister());
-      // } else {
-        __ movdqu(Address(rsp, 0), reg->as_XMMRegister());
-      // }
-    } else {
-      ShouldNotReachHere();
-    }
-  }
-
-  void fill_out_registers() {
-    if (_output_registers.length() == 0) {
-      return;
-    }
-    VMReg reg = _output_registers.at(0);
-    assert(reg->is_reg(), "must be a register");
-    MacroAssembler* masm = _masm;
-    if (reg->is_Register()) {
-      __ movptr(reg->as_Register(), Address(rsp, 0));
-    } else if (reg->is_XMMRegister()) {
-      // if (UseAVX >= 3) {
-      //   __ evmovdqul(reg->as_XMMRegister(), Address(rsp, 0), Assembler::AVX_512bit);
-      // } else if (UseAVX >= 1) {
-      //   __ vmovdqu(reg->as_XMMRegister(), Address(rsp, 0));
-      // } else {
-        __ movdqu(reg->as_XMMRegister(), Address(rsp, 0));
-      // }
-    } else {
-      ShouldNotReachHere();
-    }
-  }
-
   int frame_complete() const {
     return _frame_complete;
   }
@@ -286,7 +220,7 @@ RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
   if (lt.is_enabled()) {
     ResourceMark rm;
     LogStream ls(lt);
-    ls.print_cr("Generating native invoker for %s {", "native_invoker");
+    ls.print_cr("Generating native invoker {");
     ls.print("BasicType { ");
     for (int i = 0; i < num_args; i++) {
       ls.print("%s, ", type2name(signature[i]));
@@ -481,19 +415,14 @@ static bool is_fp_to_gp_move(VMRegPair from, VMRegPair to) {
   return from.first()->is_XMMRegister() && to.first()->is_Register();
 }
 
-static void shuffle_arguments(MacroAssembler* _masm, const GrowableArray<ArgMove>& arg_moves, int shuffle_spave_offset) {
+static void shuffle_arguments(MacroAssembler* _masm, const GrowableArray<ArgMove>& arg_moves, int shuffle_space_offset) {
   for (int i = 0; i < arg_moves.length(); i++) {
     ArgMove arg_mv = arg_moves.at(i);
     BasicType arg_bt     = arg_mv.bt;
     VMRegPair from_vmreg = arg_mv.from;
     VMRegPair to_vmreg   = arg_mv.to;
 
-    // assert(
-    //   !((from_vmreg.first()->is_Register() && to_vmreg.first()->is_XMMRegister())
-    //   || (from_vmreg.first()->is_XMMRegister() && to_vmreg.first()->is_Register())),
-    //    "move between gp and fp reg not supported");
-
-    Address shuffle_space_addr(rsp, shuffle_spave_offset);
+    Address shuffle_space_addr(rsp, shuffle_space_offset);
 
     __ block_comment(err_msg("bt=%s", null_safe_string(type2name(arg_bt))));
     switch (arg_bt) {
@@ -547,7 +476,7 @@ void NativeInvokerGenerator::generate() {
   if (lt.is_enabled()) {
     ResourceMark rm;
     LogStream ls(lt);
-    ls.print_cr("Argument shuffle for %s {", "native_invoker");
+    ls.print_cr("Argument shuffle {");
     for (int i = 0; i < arg_moves.length(); i++) {
       ArgMove arg_mv = arg_moves.at(i);
       BasicType arg_bt     = arg_mv.bt;
@@ -583,12 +512,17 @@ void NativeInvokerGenerator::generate() {
 
   // in bytes
   int allocated_frame_size = 0;
-  allocated_frame_size += 16;
+  allocated_frame_size += 16; // argument shuffle space, the size of an XMM reg
   allocated_frame_size += out_arg_stk_slots << LogBytesPerInt;
   allocated_frame_size += _shadow_space_bytes;
 
+  RegSpillFill out_reg_spill(_output_registers.data(), _output_registers.length());
+  int spill_rsp_offset = 0;
+
   // spill area can be shared with the above, so we take the max of the 2
-  allocated_frame_size = spill_size_in_bytes() > allocated_frame_size ? spill_size_in_bytes() : allocated_frame_size;
+  allocated_frame_size = out_reg_spill.spill_size_bytes() > allocated_frame_size
+    ? out_reg_spill.spill_size_bytes()
+    : allocated_frame_size;
   // in bytes
   const int shuffle_space_offset = _shadow_space_bytes + (out_arg_stk_slots << LogBytesPerInt);
 
@@ -683,7 +617,7 @@ void NativeInvokerGenerator::generate() {
   __ bind(L_safepoint_poll_slow_path);
   __ vzeroupper();
 
-  spill_out_registers();
+  out_reg_spill.gen_spill(_masm, spill_rsp_offset);
 
   __ mov(c_rarg0, r15_thread);
   __ mov(r12, rsp); // remember sp
@@ -693,7 +627,7 @@ void NativeInvokerGenerator::generate() {
   __ mov(rsp, r12); // restore sp
   __ reinit_heapbase();
 
-  fill_out_registers();
+  out_reg_spill.gen_fill(_masm, spill_rsp_offset);
 
   __ jmp(L_after_safepoint_poll);
   __ block_comment("} L_safepoint_poll_slow_path");
@@ -704,7 +638,7 @@ void NativeInvokerGenerator::generate() {
   __ bind(L_reguard);
   __ vzeroupper();
 
-  spill_out_registers();
+  out_reg_spill.gen_spill(_masm, spill_rsp_offset);
 
   __ mov(r12, rsp); // remember sp
   __ subptr(rsp, frame::arg_reg_save_area_bytes); // windows
@@ -713,7 +647,7 @@ void NativeInvokerGenerator::generate() {
   __ mov(rsp, r12); // restore sp
   __ reinit_heapbase();
 
-  fill_out_registers();
+  out_reg_spill.gen_fill(_masm, spill_rsp_offset);
 
   __ jmp(L_after_reguard);
 
