@@ -682,7 +682,7 @@ E * (S + I * F)
     }
 
     /**
-     * Create a value layout of given Java carrier and byte order. The type of resulting value layout is determined
+     * Creates a value layout of given Java carrier and byte order. The type of resulting value layout is determined
      * by the carrier provided:
      * <ul>
      *     <li>{@link ValueLayout.OfBoolean}, for {@code boolean.class}</li>
