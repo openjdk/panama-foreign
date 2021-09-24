@@ -130,6 +130,11 @@ public class TestSegmentAllocators {
         }
     }
 
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadUnboundedArenaSize() {
+        SegmentAllocator.arenaUnbounded(-1, ResourceScope.globalScope());
+    }
+
     @Test(dataProvider = "arrayScopes")
     public <Z> void testArray(AllocationFactory allocationFactory, ValueLayout layout, AllocationFunction<Object, ValueLayout> allocationFunction, ToArrayHelper<Z> arrayHelper) {
         Z arr = arrayHelper.array();
