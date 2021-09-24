@@ -101,4 +101,61 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     }
 
     static void dummy() { }
+
+    @Test
+    public void testClosedVaListCallback() throws Throwable {
+        MethodHandle handle = CLinker.systemCLinker().downcallHandle(
+                LOOKUP.lookup("addr_func_cb").get(),
+                FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
+
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            VaList list = VaList.make(b -> b.addVarg(C_INT, 42), scope);
+            handle.invoke(list, scopeChecker(scope));
+        }
+    }
+
+    @Test
+    public void testClosedStructCallback() throws Throwable {
+        MethodHandle handle = CLinker.systemCLinker().downcallHandle(
+                LOOKUP.lookup("addr_func_cb").get(),
+                FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
+
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            MemorySegment segment = MemorySegment.allocateNative(POINT, scope);
+            handle.invoke(segment, scopeChecker(scope));
+        }
+    }
+
+    @Test
+    public void testClosedUpcallCallback() throws Throwable {
+        MethodHandle handle = CLinker.systemCLinker().downcallHandle(
+                LOOKUP.lookup("addr_func_cb").get(),
+                FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
+
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            MethodHandle dummy = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "dummy", MethodType.methodType(void.class));
+            CLinker.UpcallStub upcall = CLinker.systemCLinker().upcallStub(dummy, FunctionDescriptor.ofVoid(), scope);
+            handle.invoke(upcall, scopeChecker(scope));
+        }
+    }
+
+    CLinker.UpcallStub scopeChecker(ResourceScope scope) {
+        try {
+            MethodHandle handle = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "checkScope",
+                    MethodType.methodType(void.class, ResourceScope.class));
+            handle = handle.bindTo(scope);
+            return CLinker.systemCLinker().upcallStub(handle, FunctionDescriptor.ofVoid(), ResourceScope.newConfinedScope());
+        } catch (Throwable ex) {
+            throw new AssertionError(ex);
+        }
+    }
+
+    static void checkScope(ResourceScope scope) {
+        try {
+            scope.close();
+            fail("Scope closed unexpectedly!");
+        } catch (IllegalStateException ex) {
+            assertTrue(ex.getMessage().contains("kept alive")); //if acquired, fine
+        }
+    }
 }

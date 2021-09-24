@@ -67,17 +67,72 @@ public class CallOverheadConstant {
     }
 
     @Benchmark
-    public MemorySegment panama_identity_struct() throws Throwable {
-        return (MemorySegment) identity_struct.invokeExact(recycling_allocator, point);
+    public MemorySegment panama_identity_struct_confined() throws Throwable {
+        return (MemorySegment) identity_struct.invokeExact(recycling_allocator, confinedPoint);
     }
 
     @Benchmark
-    public MemoryAddress panama_identity_memory_address() throws Throwable {
+    public MemorySegment panama_identity_struct_shared() throws Throwable {
+        return (MemorySegment) identity_struct.invokeExact(recycling_allocator, sharedPoint);
+    }
+
+    @Benchmark
+    public MemorySegment panama_identity_struct_confined_3() throws Throwable {
+        return (MemorySegment) identity_struct_3.invokeExact(recycling_allocator, confinedPoint, confinedPoint, confinedPoint);
+    }
+
+    @Benchmark
+    public MemorySegment panama_identity_struct_shared_3() throws Throwable {
+        return (MemorySegment) identity_struct_3.invokeExact(recycling_allocator, sharedPoint, sharedPoint, sharedPoint);
+    }
+
+    @Benchmark
+    public MemoryAddress panama_identity_memory_address_shared() throws Throwable {
+        return (MemoryAddress) identity_memory_address.invokeExact((Addressable)sharedPoint.address());
+    }
+
+    @Benchmark
+    public MemoryAddress panama_identity_memory_address_confined() throws Throwable {
+        return (MemoryAddress) identity_memory_address.invokeExact((Addressable)confinedPoint.address());
+    }
+
+    @Benchmark
+    public MemoryAddress panama_identity_memory_address_shared_3() throws Throwable {
+        return (MemoryAddress) identity_memory_address_3.invokeExact((Addressable)sharedPoint.address(), (Addressable)sharedPoint.address(), (Addressable)sharedPoint.address());
+    }
+
+    @Benchmark
+    public MemoryAddress panama_identity_memory_address_confined_3() throws Throwable {
+        return (MemoryAddress) identity_memory_address_3.invokeExact((Addressable)confinedPoint.address(), (Addressable)confinedPoint.address(), (Addressable)confinedPoint.address());
+    }
+
+    @Benchmark
+    public MemoryAddress panama_identity_struct_ref_shared() throws Throwable {
+        return (MemoryAddress) identity_memory_address.invokeExact((Addressable)sharedPoint);
+    }
+
+    @Benchmark
+    public MemoryAddress panama_identity_struct_ref_confined() throws Throwable {
+        return (MemoryAddress) identity_memory_address.invokeExact((Addressable)confinedPoint);
+    }
+
+    @Benchmark
+    public MemoryAddress panama_identity_struct_ref_shared_3() throws Throwable {
+        return (MemoryAddress) identity_memory_address_3.invokeExact((Addressable)sharedPoint, (Addressable)sharedPoint, (Addressable)sharedPoint);
+    }
+
+    @Benchmark
+    public MemoryAddress panama_identity_struct_ref_confined_3() throws Throwable {
+        return (MemoryAddress) identity_memory_address_3.invokeExact((Addressable)confinedPoint, (Addressable)confinedPoint, (Addressable)confinedPoint);
+    }
+
+    @Benchmark
+    public MemoryAddress panama_identity_memory_address_null() throws Throwable {
         return (MemoryAddress) identity_memory_address.invokeExact((Addressable)MemoryAddress.NULL);
     }
 
     @Benchmark
-    public MemoryAddress panama_identity_memory_address_non_exact() throws Throwable {
+    public MemoryAddress panama_identity_memory_address_null_non_exact() throws Throwable {
         return (MemoryAddress) identity_memory_address.invoke(MemoryAddress.NULL);
     }
 
