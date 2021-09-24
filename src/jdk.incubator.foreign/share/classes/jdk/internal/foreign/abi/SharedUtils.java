@@ -55,6 +55,7 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Reference;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -69,9 +70,11 @@ import static java.lang.invoke.MethodHandles.dropArguments;
 import static java.lang.invoke.MethodHandles.dropReturn;
 import static java.lang.invoke.MethodHandles.empty;
 import static java.lang.invoke.MethodHandles.filterArguments;
+import static java.lang.invoke.MethodHandles.foldArguments;
 import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodHandles.permuteArguments;
+import static java.lang.invoke.MethodHandles.spreadInvoker;
 import static java.lang.invoke.MethodHandles.tryFinally;
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.incubator.foreign.ValueLayout.ADDRESS;
@@ -120,9 +123,9 @@ public class SharedUtils {
             MH_HANDLE_UNCAUGHT_EXCEPTION = lookup.findStatic(SharedUtils.class, "handleUncaughtException",
                     methodType(void.class, Throwable.class));
             ACQUIRE_MH = MethodHandles.lookup().findStatic(SharedUtils.class, "acquire",
-                    MethodType.methodType(Addressable.class, Addressable.class));
+                    MethodType.methodType(void.class, int[].class, Object[].class));
             RELEASE_MH = MethodHandles.lookup().findStatic(SharedUtils.class, "release",
-                    MethodType.methodType(void.class, Addressable.class));
+                    MethodType.methodType(void.class, int[].class, Object[].class));
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
         }
@@ -408,14 +411,27 @@ public class SharedUtils {
     }
 
     @ForceInline
-    public static Addressable acquire(Addressable addressable) {
-        ((ResourceScopeImpl)addressable.scope()).acquire0();
-        return addressable;
+    public static void acquire(int[] idxs, Object[] args) {
+        outer: for (int i = 0 ; i < idxs.length ; i++) {
+            ResourceScopeImpl scope_i = ((ResourceScopeImpl)((Addressable)args[idxs[i]]).scope());
+            for (int j = 0 ; j < i ; j++) {
+                ResourceScopeImpl scope_j = ((ResourceScopeImpl)((Addressable)args[idxs[j]]).scope());
+               if (scope_i == scope_j) continue outer;
+            }
+            scope_i.acquire0();
+        }
     }
 
     @ForceInline
-    public static void release(Addressable addressable) {
-        ((ResourceScopeImpl)addressable.scope()).release0();
+    public static void release(int[] idxs, Object[] args) {
+        outer: for (int i = 0 ; i < idxs.length ; i++) {
+            ResourceScopeImpl scope_i = ((ResourceScopeImpl)((Addressable)args[idxs[i]]).scope());
+            for (int j = 0 ; j < i ; j++) {
+                ResourceScopeImpl scope_j = ((ResourceScopeImpl)((Addressable)args[idxs[j]]).scope());
+                if (scope_i == scope_j) continue outer;
+            }
+            scope_i.release0();
+        }
     }
 
     /*
@@ -430,29 +446,23 @@ public class SharedUtils {
         MethodHandle cleanup = hasReturn ?
                 MethodHandles.identity(downcallHandle.type().returnType()) :
                 MethodHandles.empty(MethodType.methodType(void.class));
+        List<Integer> addressableIndices = new ArrayList<>();
         for (int i = 0 ; i < descriptor.argumentLayouts().size() ; i++) {
             int paramIndex = i + (hasAllocator ? 2 : 1); // skip Addressable, and SegmentAllocator (if present)
-            int cleanupIndex = i + (hasReturn ? 1 : 0); // skip Throwable and result (if present), and Addressable
             MemoryLayout layout = descriptor.argumentLayouts().get(i);
-            Class<?> carrier = downcallHandle.type().parameterType(paramIndex);
             if (layout instanceof ValueLayout valueLayout && valueLayout.carrier() == MemoryAddress.class) {
-                // add acquire filter
-                tryBlock = filterArguments(tryBlock, paramIndex, ACQUIRE_MH);
-                // add cleanup filter
-                cleanup = collectArguments(cleanup, cleanupIndex, RELEASE_MH);
-            } else {
-                cleanup = dropArguments(cleanup, cleanupIndex, carrier);
+                addressableIndices.add(paramIndex);
             }
         }
+
+        int[] indices = addressableIndices.stream().mapToInt(x -> x).toArray();
+
         cleanup = dropArguments(cleanup, 0, Throwable.class);
+
         // acquire/release target addressable
-        tryBlock = filterArguments(tryBlock, 0, ACQUIRE_MH);
-        cleanup = collectArguments(cleanup, hasReturn ? 2 : 1, RELEASE_MH);
-        // fixup allocator
-        if (hasAllocator) {
-            // cleanup always has a result here, of type MemorySegment
-            cleanup = dropArguments(cleanup, 3, SegmentAllocator.class);
-        }
+        tryBlock = foldArguments(tryBlock, 0, ACQUIRE_MH.bindTo(indices).asCollector(Object[].class, downcallHandle.type().parameterCount()).asType(downcallHandle.type().changeReturnType(void.class)));
+        cleanup = collectArguments(cleanup, hasReturn ? 2 : 1, RELEASE_MH.bindTo(indices).asCollector(Object[].class, downcallHandle.type().parameterCount()).asType(downcallHandle.type().changeReturnType(void.class)));
+
         return tryFinally(tryBlock, cleanup);
     }
 
