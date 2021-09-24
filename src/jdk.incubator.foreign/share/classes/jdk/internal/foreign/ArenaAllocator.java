@@ -31,6 +31,8 @@ import jdk.incubator.foreign.ResourceScope;
 
 public abstract class ArenaAllocator implements SegmentAllocator {
 
+    public static final long DEFAULT_BLOCK_SIZE = 4 * 1024;
+
     protected MemorySegment segment;
 
     protected long sp = 0L;
@@ -64,10 +66,11 @@ public abstract class ArenaAllocator implements SegmentAllocator {
 
     public static class UnboundedArenaAllocator extends ArenaAllocator {
 
-        private static final long DEFAULT_BLOCK_SIZE = 4 * 1024;
+        final long blockSize;
 
-        public UnboundedArenaAllocator(ResourceScope scope) {
-            super(MemorySegment.allocateNative(DEFAULT_BLOCK_SIZE, 1, scope));
+        public UnboundedArenaAllocator(long blockSize, ResourceScope scope) {
+            super(MemorySegment.allocateNative(blockSize, 1, scope));
+            this.blockSize = blockSize;
         }
 
         private MemorySegment newSegment(long size, long align) {
@@ -83,13 +86,13 @@ public abstract class ArenaAllocator implements SegmentAllocator {
                 return slice;
             } else {
                 long maxPossibleAllocationSize = bytesSize + bytesAlignment - 1;
-                if (maxPossibleAllocationSize > DEFAULT_BLOCK_SIZE) {
+                if (maxPossibleAllocationSize > blockSize) {
                     // too big
                     return newSegment(bytesSize, bytesAlignment);
                 } else {
                     // allocate a new segment and slice from there
                     sp = 0L;
-                    segment = newSegment(DEFAULT_BLOCK_SIZE, 1L);
+                    segment = newSegment(blockSize, 1L);
                     return trySlice(bytesSize, bytesAlignment);
                 }
             }
@@ -129,16 +132,18 @@ public abstract class ArenaAllocator implements SegmentAllocator {
     public static class UnboundedSharedArenaAllocator implements SegmentAllocator {
 
         final ResourceScope scope;
+        final long blockSize;
 
         final ThreadLocal<ArenaAllocator> allocators = new ThreadLocal<>() {
             @Override
             protected ArenaAllocator initialValue() {
-                return new UnboundedArenaAllocator(scope);
+                return new UnboundedArenaAllocator(blockSize, scope);
             }
         };
 
-        public UnboundedSharedArenaAllocator(ResourceScope scope) {
+        public UnboundedSharedArenaAllocator(long blockSize, ResourceScope scope) {
             this.scope = scope;
+            this.blockSize = blockSize;
         }
 
         @Override

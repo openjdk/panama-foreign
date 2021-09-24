@@ -60,7 +60,7 @@ public class StrLenTest extends CLayouts {
     ResourceScope scope = ResourceScope.newConfinedScope();
 
     SegmentAllocator segmentAllocator;
-    SegmentAllocator arenaAllocator = SegmentAllocator.arenaAllocator(scope);
+    SegmentAllocator arenaAllocator = SegmentAllocator.arenaUnbounded(scope);
 
     @Param({"5", "20", "100"})
     public int size;

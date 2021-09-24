@@ -60,7 +60,7 @@ public class NativeTestHelper {
             this.resourceScope = ResourceScope.newConfinedScope();
             this.privateScope = ResourceScope.newConfinedScope();
             privateScope.keepAlive(resourceScope);
-            this.allocator = SegmentAllocator.arenaAllocator(resourceScope);
+            this.allocator = SegmentAllocator.arenaUnbounded(resourceScope);
         }
 
         @Override
