@@ -41,11 +41,13 @@ import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
+import jdk.internal.vm.annotation.ForceInline;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -66,6 +68,7 @@ import static java.lang.invoke.MethodHandles.constant;
 import static java.lang.invoke.MethodHandles.dropArguments;
 import static java.lang.invoke.MethodHandles.dropReturn;
 import static java.lang.invoke.MethodHandles.empty;
+import static java.lang.invoke.MethodHandles.filterArguments;
 import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodHandles.permuteArguments;
@@ -94,6 +97,8 @@ public class SharedUtils {
     private static final MethodHandle MH_CLOSE_CONTEXT;
     private static final MethodHandle MH_REACHBILITY_FENCE;
     private static final MethodHandle MH_HANDLE_UNCAUGHT_EXCEPTION;
+    private static final MethodHandle ACQUIRE_MH;
+    private static final MethodHandle RELEASE_MH;
 
     static {
         try {
@@ -114,6 +119,10 @@ public class SharedUtils {
                     methodType(void.class, Object.class));
             MH_HANDLE_UNCAUGHT_EXCEPTION = lookup.findStatic(SharedUtils.class, "handleUncaughtException",
                     methodType(void.class, Throwable.class));
+            ACQUIRE_MH = MethodHandles.lookup().findStatic(SharedUtils.class, "acquire",
+                    MethodType.methodType(Addressable.class, Addressable.class));
+            RELEASE_MH = MethodHandles.lookup().findStatic(SharedUtils.class, "release",
+                    MethodType.methodType(void.class, Addressable.class));
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
         }
@@ -382,20 +391,6 @@ public class SharedUtils {
 
         closer = collectArguments(closer, insertPos++, MH_CLOSE_CONTEXT); // (Throwable, V?, Addressable?, BindingContext) -> V/void
 
-        if (!upcall) {
-            // now for each Addressable parameter, add a reachability fence
-            MethodType specType = specializedHandle.type();
-            // skip 3 for address, segment allocator, and binding context
-            for (int i = 3; i < specType.parameterCount(); i++) {
-                Class<?> param = specType.parameterType(i);
-                if (Addressable.class.isAssignableFrom(param)) {
-                    closer = collectArguments(closer, insertPos++, reachabilityFenceHandle(param));
-                } else {
-                    closer = dropArguments(closer, insertPos++, param);
-                }
-            }
-        }
-
         MethodHandle contextFactory;
 
         if (bufferCopySize > 0) {
@@ -410,6 +405,55 @@ public class SharedUtils {
         specializedHandle = tryFinally(specializedHandle, closer);
         specializedHandle = collectArguments(specializedHandle, allocatorPos, contextFactory);
         return specializedHandle;
+    }
+
+    @ForceInline
+    public static Addressable acquire(Addressable addressable) {
+        ((ResourceScopeImpl)addressable.scope()).acquire0();
+        return addressable;
+    }
+
+    @ForceInline
+    public static void release(Addressable addressable) {
+        ((ResourceScopeImpl)addressable.scope()).release0();
+    }
+
+    /*
+     * This method adds a try/finally block to a downcall method handle, to make sure that all by-reference
+     * parameters (including the target address of the native function) are kept alive for the duration of
+     * the downcall.
+     */
+    public static MethodHandle wrapDowncall(MethodHandle downcallHandle, FunctionDescriptor descriptor) {
+        boolean hasReturn = descriptor.returnLayout().isPresent();
+        boolean hasAllocator = hasReturn && descriptor.returnLayout().get() instanceof GroupLayout;
+        MethodHandle tryBlock = downcallHandle;
+        MethodHandle cleanup = hasReturn ?
+                MethodHandles.identity(downcallHandle.type().returnType()) :
+                MethodHandles.empty(MethodType.methodType(void.class));
+        for (int i = 0 ; i < descriptor.argumentLayouts().size() ; i++) {
+            int paramIndex = i + (hasAllocator ? 2 : 1); // skip Addressable, and SegmentAllocator (if present)
+            int cleanupIndex = i + (hasReturn ? 1 : 0); // skip Throwable and result (if present), and Addressable
+            MemoryLayout layout = descriptor.argumentLayouts().get(i);
+            Class<?> carrier = downcallHandle.type().parameterType(paramIndex);
+            if (layout instanceof ValueLayout valueLayout && valueLayout.carrier() == MemoryAddress.class) {
+                // add acquire filter
+                tryBlock = filterArguments(tryBlock, paramIndex, ACQUIRE_MH);
+                // add cleanup filter
+                cleanup = collectArguments(cleanup, cleanupIndex, RELEASE_MH);
+            } else {
+                cleanup = dropArguments(cleanup, cleanupIndex, carrier);
+            }
+        }
+        cleanup = dropArguments(cleanup, 0, Throwable.class);
+        // acquire/release target addressable
+        tryBlock = filterArguments(tryBlock, 0, ACQUIRE_MH);
+        cleanup = collectArguments(cleanup, hasReturn ? 2 : 1, RELEASE_MH);
+        // fixup allocator
+        if (hasAllocator) {
+            // cleanup always has a result here, of type MemorySegment
+            cleanup = dropArguments(cleanup, 3, SegmentAllocator.class);
+        }
+        return tryFinally(tryBlock, cleanup);
     }
 
     public static void checkExceptions(MethodHandle target) {

@@ -68,13 +68,19 @@ import java.util.Optional;
  * <li>or, if {@code L} is a {@link GroupLayout}, then {@code C} is set to {@code MemorySegment.class}</li>
  * </ul>
  * <p>
+ * All the arguments of type {@link Addressable} passed to a downcall method handle are {@linkplain ResourceScope#keepAlive(ResourceScope) kept alive}
+ * by the linker implementation. This ensures that the resource scopes associated with a by-reference parameters passed
+ * to a downcall method handle can never be closed, either implicitly or {@linkplain ResourceScope#close() explicitly}
+ * until the downcall method handle completes.
+ * <p>
  * Furthermore, if the function descriptor's return layout is a group layout, the resulting downcall method handle accepts
  * an extra parameter of type {@link SegmentAllocator}, which is used by the linker runtime to allocate the
  * memory region associated with the struct returned by  the downcall method handle.
  * <p>
  * Finally, downcall method handles feature a leading parameter of type {@link Addressable}, from which the
  * address of the target native function can be derived. The address, when known statically, can also be provided by
- * clients at link time.
+ * clients at link time. As for other by-reference parameters (see above) this leading parameter will be
+ * {@linkplain ResourceScope#keepAlive(ResourceScope) kept alive} by the linker implementation.
  * <p>Variadic functions, declared in C either with a trailing ellipses ({@code ...}) at the end of the formal parameter
  * list or with an empty formal parameter list, are not supported directly. However, it is possible to link a native
  * variadic function by using a {@linkplain FunctionDescriptor#asVariadic(MemoryLayout...) <em>variadic</em>} function descriptor,

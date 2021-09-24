@@ -331,10 +331,6 @@ public class ProgrammableInvoker {
 
             // call leaf
             Object o = leaf.invokeWithArguments(leafArgs);
-            // make sure arguments are reachable during the call
-            // technically we only need to do all Addressable parameters here
-            Reference.reachabilityFence(address);
-            Reference.reachabilityFence(args);
 
             // return value processing
             if (o == null) {
