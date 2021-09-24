@@ -37,7 +37,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
-import static jdk.internal.clang.libclang.CLayouts.C_POINTER;
+import static jdk.incubator.foreign.ValueLayout.ADDRESS;
 
 public abstract class TypeImpl implements Type {
 
@@ -402,7 +402,7 @@ public abstract class TypeImpl implements Type {
         @Override
         public MemoryLayout visitDelegated(jdk.incubator.jextract.Type.Delegated t, Void _ignored) {
             if (t.kind() == jdk.incubator.jextract.Type.Delegated.Kind.POINTER) {
-                return C_POINTER;
+                return ADDRESS;
             } else {
                 return t.type().accept(this, null);
             }
@@ -416,7 +416,7 @@ public abstract class TypeImpl implements Type {
              * typedef void CB(int);
              * void func(CB cb);
              */
-            return C_POINTER;
+            return ADDRESS;
         }
 
         @Override

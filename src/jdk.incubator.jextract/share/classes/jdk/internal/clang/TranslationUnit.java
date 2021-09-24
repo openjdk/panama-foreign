@@ -41,8 +41,8 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import static jdk.internal.clang.libclang.CLayouts.C_INT;
-import static jdk.internal.clang.libclang.CLayouts.C_POINTER;
+import static jdk.internal.clang.libclang.Index_h.C_INT;
+import static jdk.internal.clang.libclang.Index_h.C_POINTER;
 
 public class TranslationUnit implements AutoCloseable {
 

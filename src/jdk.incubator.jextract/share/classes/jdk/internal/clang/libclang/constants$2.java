@@ -31,96 +31,89 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
-import static jdk.incubator.foreign.CLinker.*;
-import static jdk.internal.clang.libclang.CLayouts.*;
+import static jdk.incubator.foreign.ValueLayout.*;
 class constants$2 {
 
     static final FunctionDescriptor clang_getExpansionLocation$FUNC = FunctionDescriptor.ofVoid(
         MemoryLayout.structLayout(
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
-            C_INT.withName("int_data"),
+            MemoryLayout.sequenceLayout(2, ADDRESS).withName("ptr_data"),
+            JAVA_INT.withName("int_data"),
             MemoryLayout.paddingLayout(32)
         ),
-        C_POINTER,
-        C_POINTER,
-        C_POINTER,
-        C_POINTER
+        ADDRESS,
+        ADDRESS,
+        ADDRESS,
+        ADDRESS
     );
     static final MethodHandle clang_getExpansionLocation$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getExpansionLocation",
-        "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
+        "clang_getExpansionLocation",
         constants$2.clang_getExpansionLocation$FUNC, false
     );
     static final FunctionDescriptor clang_getSpellingLocation$FUNC = FunctionDescriptor.ofVoid(
         MemoryLayout.structLayout(
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
-            C_INT.withName("int_data"),
+            MemoryLayout.sequenceLayout(2, ADDRESS).withName("ptr_data"),
+            JAVA_INT.withName("int_data"),
             MemoryLayout.paddingLayout(32)
         ),
-        C_POINTER,
-        C_POINTER,
-        C_POINTER,
-        C_POINTER
+        ADDRESS,
+        ADDRESS,
+        ADDRESS,
+        ADDRESS
     );
     static final MethodHandle clang_getSpellingLocation$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getSpellingLocation",
-        "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
+        "clang_getSpellingLocation",
         constants$2.clang_getSpellingLocation$FUNC, false
     );
     static final FunctionDescriptor clang_getFileLocation$FUNC = FunctionDescriptor.ofVoid(
         MemoryLayout.structLayout(
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
-            C_INT.withName("int_data"),
+            MemoryLayout.sequenceLayout(2, ADDRESS).withName("ptr_data"),
+            JAVA_INT.withName("int_data"),
             MemoryLayout.paddingLayout(32)
         ),
-        C_POINTER,
-        C_POINTER,
-        C_POINTER,
-        C_POINTER
+        ADDRESS,
+        ADDRESS,
+        ADDRESS,
+        ADDRESS
     );
     static final MethodHandle clang_getFileLocation$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getFileLocation",
-        "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
+        "clang_getFileLocation",
         constants$2.clang_getFileLocation$FUNC, false
     );
     static final FunctionDescriptor clang_getRangeStart$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
-        C_INT.withName("int_data"),
+        MemoryLayout.sequenceLayout(2, ADDRESS).withName("ptr_data"),
+        JAVA_INT.withName("int_data"),
         MemoryLayout.paddingLayout(32)
     ),
         MemoryLayout.structLayout(
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
-            C_INT.withName("begin_int_data"),
-            C_INT.withName("end_int_data")
+            MemoryLayout.sequenceLayout(2, ADDRESS).withName("ptr_data"),
+            JAVA_INT.withName("begin_int_data"),
+            JAVA_INT.withName("end_int_data")
         )
     );
     static final MethodHandle clang_getRangeStart$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getRangeStart",
-        "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+        "clang_getRangeStart",
         constants$2.clang_getRangeStart$FUNC, false
     );
     static final FunctionDescriptor clang_getRangeEnd$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
-        C_INT.withName("int_data"),
+        MemoryLayout.sequenceLayout(2, ADDRESS).withName("ptr_data"),
+        JAVA_INT.withName("int_data"),
         MemoryLayout.paddingLayout(32)
     ),
         MemoryLayout.structLayout(
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
-            C_INT.withName("begin_int_data"),
-            C_INT.withName("end_int_data")
+            MemoryLayout.sequenceLayout(2, ADDRESS).withName("ptr_data"),
+            JAVA_INT.withName("begin_int_data"),
+            JAVA_INT.withName("end_int_data")
         )
     );
     static final MethodHandle clang_getRangeEnd$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getRangeEnd",
-        "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+        "clang_getRangeEnd",
         constants$2.clang_getRangeEnd$FUNC, false
     );
-    static final FunctionDescriptor clang_getChildDiagnostics$FUNC = FunctionDescriptor.of(C_POINTER,
-        C_POINTER
+    static final FunctionDescriptor clang_getChildDiagnostics$FUNC = FunctionDescriptor.of(ADDRESS,
+        ADDRESS
     );
     static final MethodHandle clang_getChildDiagnostics$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getChildDiagnostics",
-        "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
+        "clang_getChildDiagnostics",
         constants$2.clang_getChildDiagnostics$FUNC, false
     );
 }

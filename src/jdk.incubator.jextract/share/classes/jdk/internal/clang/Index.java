@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static jdk.internal.clang.libclang.CLayouts.C_POINTER;
+import static jdk.internal.clang.libclang.Index_h.C_POINTER;
 
 public class Index implements AutoCloseable {
     // Pointer to CXIndex

@@ -31,16 +31,13 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
-import static jdk.incubator.foreign.CLinker.*;
-import static jdk.internal.clang.libclang.CLayouts.C_INT;
-import static jdk.internal.clang.libclang.CLayouts.C_POINTER;
-
+import static jdk.incubator.foreign.ValueLayout.*;
 public class CXType {
 
     static final MemoryLayout $struct$LAYOUT = MemoryLayout.structLayout(
-        C_INT.withName("kind"),
+        JAVA_INT.withName("kind"),
         MemoryLayout.paddingLayout(32),
-        MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+        MemoryLayout.sequenceLayout(2, ADDRESS).withName("data")
     );
     public static MemoryLayout $LAYOUT() {
         return CXType.$struct$LAYOUT;

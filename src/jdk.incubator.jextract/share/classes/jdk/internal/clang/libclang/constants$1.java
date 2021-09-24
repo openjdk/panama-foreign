@@ -31,91 +31,83 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
-import static jdk.incubator.foreign.CLinker.*;
-import static jdk.internal.clang.libclang.CLayouts.*;
-
+import static jdk.incubator.foreign.ValueLayout.*;
 class constants$1 {
 
-    static final FunctionDescriptor clang_equalLocations$FUNC = FunctionDescriptor.of(C_INT,
+    static final FunctionDescriptor clang_equalLocations$FUNC = FunctionDescriptor.of(JAVA_INT,
         MemoryLayout.structLayout(
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
-            C_INT.withName("int_data"),
+            MemoryLayout.sequenceLayout(2, ADDRESS).withName("ptr_data"),
+            JAVA_INT.withName("int_data"),
             MemoryLayout.paddingLayout(32)
         ),
         MemoryLayout.structLayout(
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
-            C_INT.withName("int_data"),
+            MemoryLayout.sequenceLayout(2, ADDRESS).withName("ptr_data"),
+            JAVA_INT.withName("int_data"),
             MemoryLayout.paddingLayout(32)
         )
     );
     static final MethodHandle clang_equalLocations$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_equalLocations",
-        "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I",
+        "clang_equalLocations",
         constants$1.clang_equalLocations$FUNC, false
     );
     static final FunctionDescriptor clang_getLocation$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
-        C_INT.withName("int_data"),
+        MemoryLayout.sequenceLayout(2, ADDRESS).withName("ptr_data"),
+        JAVA_INT.withName("int_data"),
         MemoryLayout.paddingLayout(32)
     ),
-        C_POINTER,
-        C_POINTER,
-        C_INT,
-        C_INT
+        ADDRESS,
+        ADDRESS,
+        JAVA_INT,
+        JAVA_INT
     );
     static final MethodHandle clang_getLocation$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getLocation",
-        "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;II)Ljdk/incubator/foreign/MemorySegment;",
+        "clang_getLocation",
         constants$1.clang_getLocation$FUNC, false
     );
     static final FunctionDescriptor clang_getLocationForOffset$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
-        C_INT.withName("int_data"),
+        MemoryLayout.sequenceLayout(2, ADDRESS).withName("ptr_data"),
+        JAVA_INT.withName("int_data"),
         MemoryLayout.paddingLayout(32)
     ),
-        C_POINTER,
-        C_POINTER,
-        C_INT
+        ADDRESS,
+        ADDRESS,
+        JAVA_INT
     );
     static final MethodHandle clang_getLocationForOffset$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getLocationForOffset",
-        "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
+        "clang_getLocationForOffset",
         constants$1.clang_getLocationForOffset$FUNC, false
     );
-    static final FunctionDescriptor clang_Location_isInSystemHeader$FUNC = FunctionDescriptor.of(C_INT,
+    static final FunctionDescriptor clang_Location_isInSystemHeader$FUNC = FunctionDescriptor.of(JAVA_INT,
         MemoryLayout.structLayout(
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
-            C_INT.withName("int_data"),
+            MemoryLayout.sequenceLayout(2, ADDRESS).withName("ptr_data"),
+            JAVA_INT.withName("int_data"),
             MemoryLayout.paddingLayout(32)
         )
     );
     static final MethodHandle clang_Location_isInSystemHeader$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_Location_isInSystemHeader",
-        "(Ljdk/incubator/foreign/MemorySegment;)I",
+        "clang_Location_isInSystemHeader",
         constants$1.clang_Location_isInSystemHeader$FUNC, false
     );
-    static final FunctionDescriptor clang_Location_isFromMainFile$FUNC = FunctionDescriptor.of(C_INT,
+    static final FunctionDescriptor clang_Location_isFromMainFile$FUNC = FunctionDescriptor.of(JAVA_INT,
         MemoryLayout.structLayout(
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
-            C_INT.withName("int_data"),
+            MemoryLayout.sequenceLayout(2, ADDRESS).withName("ptr_data"),
+            JAVA_INT.withName("int_data"),
             MemoryLayout.paddingLayout(32)
         )
     );
     static final MethodHandle clang_Location_isFromMainFile$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_Location_isFromMainFile",
-        "(Ljdk/incubator/foreign/MemorySegment;)I",
+        "clang_Location_isFromMainFile",
         constants$1.clang_Location_isFromMainFile$FUNC, false
     );
-    static final FunctionDescriptor clang_Range_isNull$FUNC = FunctionDescriptor.of(C_INT,
+    static final FunctionDescriptor clang_Range_isNull$FUNC = FunctionDescriptor.of(JAVA_INT,
         MemoryLayout.structLayout(
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
-            C_INT.withName("begin_int_data"),
-            C_INT.withName("end_int_data")
+            MemoryLayout.sequenceLayout(2, ADDRESS).withName("ptr_data"),
+            JAVA_INT.withName("begin_int_data"),
+            JAVA_INT.withName("end_int_data")
         )
     );
     static final MethodHandle clang_Range_isNull$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_Range_isNull",
-        "(Ljdk/incubator/foreign/MemorySegment;)I",
+        "clang_Range_isNull",
         constants$1.clang_Range_isNull$FUNC, false
     );
 }

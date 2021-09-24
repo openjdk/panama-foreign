@@ -31,40 +31,35 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
-import static jdk.incubator.foreign.CLinker.*;
-import static jdk.internal.clang.libclang.CLayouts.*;
+import static jdk.incubator.foreign.ValueLayout.*;
 class constants$18 {
 
-    static final FunctionDescriptor clang_EvalResult_getAsUnsigned$FUNC = FunctionDescriptor.of(C_LONG_LONG,
-        C_POINTER
+    static final FunctionDescriptor clang_EvalResult_getAsUnsigned$FUNC = FunctionDescriptor.of(JAVA_LONG,
+        ADDRESS
     );
     static final MethodHandle clang_EvalResult_getAsUnsigned$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_EvalResult_getAsUnsigned",
-        "(Ljdk/incubator/foreign/MemoryAddress;)J",
+        "clang_EvalResult_getAsUnsigned",
         constants$18.clang_EvalResult_getAsUnsigned$FUNC, false
     );
-    static final FunctionDescriptor clang_EvalResult_getAsDouble$FUNC = FunctionDescriptor.of(C_DOUBLE,
-        C_POINTER
+    static final FunctionDescriptor clang_EvalResult_getAsDouble$FUNC = FunctionDescriptor.of(JAVA_DOUBLE,
+        ADDRESS
     );
     static final MethodHandle clang_EvalResult_getAsDouble$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_EvalResult_getAsDouble",
-        "(Ljdk/incubator/foreign/MemoryAddress;)D",
+        "clang_EvalResult_getAsDouble",
         constants$18.clang_EvalResult_getAsDouble$FUNC, false
     );
-    static final FunctionDescriptor clang_EvalResult_getAsStr$FUNC = FunctionDescriptor.of(C_POINTER,
-        C_POINTER
+    static final FunctionDescriptor clang_EvalResult_getAsStr$FUNC = FunctionDescriptor.of(ADDRESS,
+        ADDRESS
     );
     static final MethodHandle clang_EvalResult_getAsStr$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_EvalResult_getAsStr",
-        "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
+        "clang_EvalResult_getAsStr",
         constants$18.clang_EvalResult_getAsStr$FUNC, false
     );
     static final FunctionDescriptor clang_EvalResult_dispose$FUNC = FunctionDescriptor.ofVoid(
-        C_POINTER
+        ADDRESS
     );
     static final MethodHandle clang_EvalResult_dispose$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_EvalResult_dispose",
-        "(Ljdk/incubator/foreign/MemoryAddress;)V",
+        "clang_EvalResult_dispose",
         constants$18.clang_EvalResult_dispose$FUNC, false
     );
 }

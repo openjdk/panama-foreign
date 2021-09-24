@@ -31,16 +31,13 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
-import static jdk.incubator.foreign.CLinker.*;
-import static jdk.internal.clang.libclang.CLayouts.C_LONG_LONG;
-import static jdk.internal.clang.libclang.CLayouts.C_POINTER;
-
+import static jdk.incubator.foreign.ValueLayout.*;
 public class CXUnsavedFile {
 
     static final MemoryLayout $struct$LAYOUT = MemoryLayout.structLayout(
-        C_POINTER.withName("Filename"),
-        C_POINTER.withName("Contents"),
-        C_LONG_LONG.withName("Length")
+        ADDRESS.withName("Filename"),
+        ADDRESS.withName("Contents"),
+        JAVA_LONG.withName("Length")
     ).withName("CXUnsavedFile");
     public static MemoryLayout $LAYOUT() {
         return CXUnsavedFile.$struct$LAYOUT;

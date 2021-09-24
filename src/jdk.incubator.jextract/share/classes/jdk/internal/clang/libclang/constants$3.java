@@ -31,60 +31,53 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
-import static jdk.incubator.foreign.CLinker.*;
-import static jdk.internal.clang.libclang.CLayouts.*;
+import static jdk.incubator.foreign.ValueLayout.*;
 class constants$3 {
 
-    static final FunctionDescriptor clang_getNumDiagnostics$FUNC = FunctionDescriptor.of(C_INT,
-        C_POINTER
+    static final FunctionDescriptor clang_getNumDiagnostics$FUNC = FunctionDescriptor.of(JAVA_INT,
+        ADDRESS
     );
     static final MethodHandle clang_getNumDiagnostics$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getNumDiagnostics",
-        "(Ljdk/incubator/foreign/MemoryAddress;)I",
+        "clang_getNumDiagnostics",
         constants$3.clang_getNumDiagnostics$FUNC, false
     );
-    static final FunctionDescriptor clang_getDiagnostic$FUNC = FunctionDescriptor.of(C_POINTER,
-        C_POINTER,
-        C_INT
+    static final FunctionDescriptor clang_getDiagnostic$FUNC = FunctionDescriptor.of(ADDRESS,
+        ADDRESS,
+        JAVA_INT
     );
     static final MethodHandle clang_getDiagnostic$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getDiagnostic",
-        "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
+        "clang_getDiagnostic",
         constants$3.clang_getDiagnostic$FUNC, false
     );
     static final FunctionDescriptor clang_disposeDiagnostic$FUNC = FunctionDescriptor.ofVoid(
-        C_POINTER
+        ADDRESS
     );
     static final MethodHandle clang_disposeDiagnostic$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_disposeDiagnostic",
-        "(Ljdk/incubator/foreign/MemoryAddress;)V",
+        "clang_disposeDiagnostic",
         constants$3.clang_disposeDiagnostic$FUNC, false
     );
     static final FunctionDescriptor clang_formatDiagnostic$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        C_POINTER.withName("data"),
-        C_INT.withName("private_flags"),
+        ADDRESS.withName("data"),
+        JAVA_INT.withName("private_flags"),
         MemoryLayout.paddingLayout(32)
     ),
-        C_POINTER,
-        C_INT
+        ADDRESS,
+        JAVA_INT
     );
     static final MethodHandle clang_formatDiagnostic$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_formatDiagnostic",
-        "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
+        "clang_formatDiagnostic",
         constants$3.clang_formatDiagnostic$FUNC, false
     );
-    static final FunctionDescriptor clang_defaultDiagnosticDisplayOptions$FUNC = FunctionDescriptor.of(C_INT);
+    static final FunctionDescriptor clang_defaultDiagnosticDisplayOptions$FUNC = FunctionDescriptor.of(JAVA_INT);
     static final MethodHandle clang_defaultDiagnosticDisplayOptions$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_defaultDiagnosticDisplayOptions",
-        "()I",
+        "clang_defaultDiagnosticDisplayOptions",
         constants$3.clang_defaultDiagnosticDisplayOptions$FUNC, false
     );
-    static final FunctionDescriptor clang_getDiagnosticSeverity$FUNC = FunctionDescriptor.of(C_INT,
-        C_POINTER
+    static final FunctionDescriptor clang_getDiagnosticSeverity$FUNC = FunctionDescriptor.of(JAVA_INT,
+        ADDRESS
     );
     static final MethodHandle clang_getDiagnosticSeverity$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getDiagnosticSeverity",
-        "(Ljdk/incubator/foreign/MemoryAddress;)I",
+        "clang_getDiagnosticSeverity",
         constants$3.clang_getDiagnosticSeverity$FUNC, false
     );
 }
