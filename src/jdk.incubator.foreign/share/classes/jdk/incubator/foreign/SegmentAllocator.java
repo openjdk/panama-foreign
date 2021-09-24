@@ -319,8 +319,8 @@ public interface SegmentAllocator {
     MemorySegment allocate(long bytesSize, long bytesAlignment);
 
     /**
-     * Returns a native arena-based allocator which allocates a single memory segment, of given size (using malloc),
-     * and then responds to allocation request by returning different slices of that same segment
+     * Returns a native arena-based allocator which {@linkplain MemorySegment#allocateNative(long, ResourceScope) allocates}
+     * a single memory segment, of given size, and then responds to allocation request by returning different slices of that same segment
      * (until no further allocation is possible).
      * This can be useful when clients want to perform multiple allocation requests while avoiding the cost associated
      * with allocating a new off-heap memory region upon each allocation request.
@@ -355,10 +355,10 @@ public interface SegmentAllocator {
      *     <li>if the size of the allocation requests is smaller than the size of {@code S}, and {@code S} has a <em>free</em>
      *     slice {@code S'} which fits that allocation request, return that {@code S'}.
      *     <li>if the size of the allocation requests is smaller than the size of {@code S}, and {@code S} has no <em>free</em>
-     *     slices which fits that allocation request, allocate a new segment {@code S'} (using malloc), which has same size as {@code S}
+     *     slices which fits that allocation request, allocate a new segment {@code S'}, which has same size as {@code S}
      *     and set {@code S = S'}; the allocator then tries to respond to the same allocation request again.
-     *     <li>if the size of the allocation requests is bigger than the size of {@code S}, allocate a new segment {@code S'}
-     *     (using malloc), which has a sufficient size to satisfy the allocation request, and return {@code S'}.
+     *     <li>if the size of the allocation requests is bigger than the size of {@code S}, allocate a new segment {@code S'},
+     *     which has a sufficient size to satisfy the allocation request, and return {@code S'}.
      * </ul>
      * <p>
      * The block size of the returned arena-based allocator is unspecified, can be platform-dependent, and should generally
@@ -393,10 +393,10 @@ public interface SegmentAllocator {
      *     <li>if the size of the allocation requests is smaller than the size of {@code S}, and {@code S} has a <em>free</em>
      *     slice {@code S'} which fits that allocation request, return that {@code S'}.
      *     <li>if the size of the allocation requests is smaller than the size of {@code S}, and {@code S} has no <em>free</em>
-     *     slices which fits that allocation request, allocate a new segment {@code S'} (using malloc), which has same size as {@code S}
+     *     slices which fits that allocation request, allocate a new segment {@code S'}, which has same size as {@code S}
      *     and set {@code S = S'}; the allocator then tries to respond to the same allocation request again.
-     *     <li>if the size of the allocation requests is bigger than the size of {@code S}, allocate a new segment {@code S'}
-     *     (using malloc), which has a sufficient size to satisfy the allocation request, and return {@code S'}.
+     *     <li>if the size of the allocation requests is bigger than the size of {@code S}, allocate a new segment {@code S'},
+     *     which has a sufficient size to satisfy the allocation request, and return {@code S'}.
      * </ul>
      * <p>
      * This segment allocator can be useful when clients want to perform multiple allocation requests while avoiding the
