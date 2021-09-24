@@ -419,7 +419,7 @@ public non-sealed class SysVVaList implements VaList {
                 return EMPTY;
             }
 
-            SegmentAllocator allocator = SegmentAllocator.arenaAllocator(scope);
+            SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
             MemorySegment vaListSegment = allocator.allocate(LAYOUT);
             MemoryAddress stackArgsPtr = MemoryAddress.NULL;
             if (!stackArgs.isEmpty()) {

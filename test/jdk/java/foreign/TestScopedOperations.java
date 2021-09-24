@@ -121,7 +121,7 @@ public class TestScopedOperations {
         }, "MemorySegment::mapFromFile");
         ScopedOperation.ofScope(scope -> VaList.make(b -> {}, scope), "VaList::make");
         ScopedOperation.ofScope(scope -> VaList.ofAddress(MemoryAddress.ofLong(42), scope), "VaList::make");
-        ScopedOperation.ofScope(SegmentAllocator::arenaAllocator, "SegmentAllocator::arenaAllocator");
+        ScopedOperation.ofScope(SegmentAllocator::arenaUnbounded, "SegmentAllocator::arenaAllocator");
         // segment operations
         ScopedOperation.ofSegment(s -> s.toArray(JAVA_BYTE), "MemorySegment::toArray(BYTE)");
         ScopedOperation.ofSegment(MemorySegment::address, "MemorySegment::address");
@@ -238,8 +238,8 @@ public class TestScopedOperations {
         }
 
         enum AllocatorFactory {
-            ARENA_BOUNDED(scope -> SegmentAllocator.arenaAllocator(1000, scope)),
-            ARENA_UNBOUNDED(SegmentAllocator::arenaAllocator),
+            ARENA_BOUNDED(scope -> SegmentAllocator.arenaBounded(1000, scope)),
+            ARENA_UNBOUNDED(SegmentAllocator::arenaUnbounded),
             FROM_SEGMENT(scope -> {
                 MemorySegment segment = MemorySegment.allocateNative(10, scope);
                 return SegmentAllocator.prefixAllocator(segment);

@@ -43,8 +43,8 @@ import java.util.function.Function;
  * (e.g. {@link MemorySegment#allocateNative(long, long, ResourceScope)}); since {@link SegmentAllocator} is a <em>functional interface</em>,
  * clients can easily obtain a native allocator by using either a lambda expression or a method reference.
  * <p>
- * This interface also defines factories for commonly used allocators; for instance {@link #arenaAllocator(ResourceScope)}
- * and {@link #arenaAllocator(long, ResourceScope)} are arena-style native allocators. Finally {@link #prefixAllocator(MemorySegment)}
+ * This interface also defines factories for commonly used allocators; for instance {@link #arenaUnbounded(ResourceScope)}
+ * and {@link #arenaBounded(long, ResourceScope)} are arena-style native allocators. Finally {@link #prefixAllocator(MemorySegment)}
  * returns an allocator which wraps a segment (either on-heap or off-heap) and recycles its content upon each new allocation request.
  */
 @FunctionalInterface
@@ -319,8 +319,8 @@ public interface SegmentAllocator {
     MemorySegment allocate(long bytesSize, long bytesAlignment);
 
     /**
-     * Returns a native arena-based allocator which allocates a single memory segment, of given size (using malloc),
-     * and then responds to allocation request by returning different slices of that same segment
+     * Returns a native arena-based allocator which {@linkplain MemorySegment#allocateNative(long, ResourceScope) allocates}
+     * a single memory segment, of given size, and then responds to allocation request by returning different slices of that same segment
      * (until no further allocation is possible).
      * This can be useful when clients want to perform multiple allocation requests while avoiding the cost associated
      * with allocating a new off-heap memory region upon each allocation request.
@@ -333,13 +333,13 @@ public interface SegmentAllocator {
      * the allocator capacity.
      *
      * @param size the size (in bytes) of the allocation arena.
-     * @param scope the scope associated with the segments returned by this allocator.
+     * @param scope the scope associated with the segments returned by the arena-based allocator.
      * @return a new bounded arena-based allocator
      * @throws IllegalArgumentException if {@code size <= 0}.
      * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
      * than the thread owning {@code scope}.
      */
-    static SegmentAllocator arenaAllocator(long size, ResourceScope scope) {
+    static SegmentAllocator arenaBounded(long size, ResourceScope scope) {
         Objects.requireNonNull(scope);
         return scope.ownerThread() == null ?
                 new ArenaAllocator.BoundedSharedArenaAllocator(scope, size) :
@@ -347,18 +347,56 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Returns a native unbounded arena-based allocator.
+     * Returns a native unbounded arena-based allocator, with predefined block size.
      * <p>
-     * The returned allocator allocates a memory segment {@code S} of a certain fixed size (using malloc) and then
-     * responds to allocation requests in one of the following ways:
+     * The returned allocator {@linkplain MemorySegment#allocateNative(long, ResourceScope) allocates} a memory segment
+     * {@code S} of a certain (fixed) block size and then responds to allocation requests in one of the following ways:
      * <ul>
      *     <li>if the size of the allocation requests is smaller than the size of {@code S}, and {@code S} has a <em>free</em>
      *     slice {@code S'} which fits that allocation request, return that {@code S'}.
      *     <li>if the size of the allocation requests is smaller than the size of {@code S}, and {@code S} has no <em>free</em>
-     *     slices which fits that allocation request, allocate a new segment {@code S'} (using malloc), which has same size as {@code S}
+     *     slices which fits that allocation request, allocate a new segment {@code S'}, which has same size as {@code S}
      *     and set {@code S = S'}; the allocator then tries to respond to the same allocation request again.
-     *     <li>if the size of the allocation requests is bigger than the size of {@code S}, allocate a new segment {@code S'}
-     *     (using malloc), which has a sufficient size to satisfy the allocation request, and return {@code S'}.
+     *     <li>if the size of the allocation requests is bigger than the size of {@code S}, allocate a new segment {@code S'},
+     *     which has a sufficient size to satisfy the allocation request, and return {@code S'}.
+     * </ul>
+     * <p>
+     * The block size of the returned arena-based allocator is unspecified, can be platform-dependent, and should generally
+     * not be relied upon. Clients can {@linkplain #arenaUnbounded(long, ResourceScope) obtain} an unbounded arena-based allocator
+     * with specific block size, if they so wish.
+     * <p>
+     * This segment allocator can be useful when clients want to perform multiple allocation requests while avoiding the
+     * cost associated with allocating a new off-heap memory region upon each allocation request.
+     * <p>
+     * An allocator associated with a <em>shared</em> resource scope is thread-safe and allocation requests may be
+     * performed concurrently; conversely, if the arena allocator is associated with a <em>confined</em> resource scope,
+     * allocation requests can only occur from the thread owning the allocator's resource scope.
+     * <p>
+     * The returned allocator might throw an {@link OutOfMemoryError} if an incoming allocation request exceeds
+     * the system capacity.
+     *
+     * @param scope the scope associated with the segments returned by the arena-based allocator.
+     * @return a new unbounded arena-based allocator
+     * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
+     * than the thread owning {@code scope}.
+     */
+    static SegmentAllocator arenaUnbounded(ResourceScope scope) {
+        return arenaUnbounded(ArenaAllocator.DEFAULT_BLOCK_SIZE, scope);
+    }
+
+    /**
+     * Returns a native unbounded arena-based allocator, with given block size.
+     * <p>
+     * The returned allocator {@linkplain MemorySegment#allocateNative(long, ResourceScope) allocates} a memory segment
+     * {@code S} of the specified block size and then responds to allocation requests in one of the following ways:
+     * <ul>
+     *     <li>if the size of the allocation requests is smaller than the size of {@code S}, and {@code S} has a <em>free</em>
+     *     slice {@code S'} which fits that allocation request, return that {@code S'}.
+     *     <li>if the size of the allocation requests is smaller than the size of {@code S}, and {@code S} has no <em>free</em>
+     *     slices which fits that allocation request, allocate a new segment {@code S'}, which has same size as {@code S}
+     *     and set {@code S = S'}; the allocator then tries to respond to the same allocation request again.
+     *     <li>if the size of the allocation requests is bigger than the size of {@code S}, allocate a new segment {@code S'},
+     *     which has a sufficient size to satisfy the allocation request, and return {@code S'}.
      * </ul>
      * <p>
      * This segment allocator can be useful when clients want to perform multiple allocation requests while avoiding the
@@ -371,16 +409,21 @@ public interface SegmentAllocator {
      * The returned allocator might throw an {@link OutOfMemoryError} if an incoming allocation request exceeds
      * the system capacity.
      *
-     * @param scope the scope associated with the segments returned by this allocator.
+     * @param blockSize the block size associated with the arena-based allocator.
+     * @param scope the scope associated with the segments returned by the arena-based allocator.
      * @return a new unbounded arena-based allocator
+     * @throws IllegalArgumentException if {@code blockSize <= 0}.
      * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
      * than the thread owning {@code scope}.
      */
-    static SegmentAllocator arenaAllocator(ResourceScope scope) {
+    static SegmentAllocator arenaUnbounded(long blockSize, ResourceScope scope) {
         Objects.requireNonNull(scope);
+        if (blockSize <= 0) {
+            throw new IllegalArgumentException("Invalid block size: " + blockSize);
+        }
         return scope.ownerThread() == null ?
-                new ArenaAllocator.UnboundedSharedArenaAllocator(scope) :
-                new ArenaAllocator.UnboundedArenaAllocator(scope);
+                new ArenaAllocator.UnboundedSharedArenaAllocator(blockSize, scope) :
+                new ArenaAllocator.UnboundedArenaAllocator(blockSize, scope);
     }
 
     /**
