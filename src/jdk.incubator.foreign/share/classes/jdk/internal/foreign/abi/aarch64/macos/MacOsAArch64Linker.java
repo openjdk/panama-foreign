@@ -68,7 +68,7 @@ public final class MacOsAArch64Linker implements CLinker {
             // not returning segment, just insert a throwing allocator
             handle = MethodHandles.insertArguments(handle, 1, SharedUtils.THROWING_ALLOCATOR);
         }
-        return handle;
+        return SharedUtils.wrapDowncall(handle, function);
     }
 
     @Override
