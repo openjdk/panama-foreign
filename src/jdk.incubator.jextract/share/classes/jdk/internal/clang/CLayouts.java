@@ -23,11 +23,11 @@
  *  questions.
  */
 
-package jdk.internal.clang.libclang;
+package jdk.internal.clang;
 
 import jdk.incubator.foreign.ValueLayout;
 
-public class CLayouts {
+public interface CLayouts {
     public static final ValueLayout.OfBoolean C_BOOL = ValueLayout.JAVA_BOOLEAN;
     public static final ValueLayout.OfByte C_CHAR = ValueLayout.JAVA_BYTE;
     public static final ValueLayout.OfShort C_SHORT = ValueLayout.JAVA_SHORT;

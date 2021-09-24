@@ -28,7 +28,6 @@ package jdk.internal.clang.libclang;
 
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.CLinker.UpcallStub;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.SymbolLookup;
@@ -38,24 +37,34 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.ValueLayout;
-
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.stream.Stream;
 
-import static jdk.internal.clang.libclang.CLayouts.C_DOUBLE;
-import static jdk.internal.clang.libclang.CLayouts.C_LONG_LONG;
-import static jdk.internal.clang.libclang.CLayouts.C_POINTER;
+import static jdk.incubator.foreign.CLinker.*;
+import static jdk.incubator.foreign.ValueLayout.*;
 
 final class RuntimeHelper {
+
     private RuntimeHelper() {}
     private final static CLinker LINKER = CLinker.systemCLinker();
     private final static ClassLoader LOADER = RuntimeHelper.class.getClassLoader();
     private final static MethodHandles.Lookup MH_LOOKUP = MethodHandles.lookup();
+    private final static SymbolLookup SYMBOL_LOOKUP;
 
-    static SymbolLookup lookup() {
+    static {
+        // Manual change to handle platform specific library name difference
+        String libName = System.getProperty("os.name").startsWith("Windows")? "libclang" : "clang";
+        System.loadLibrary(libName);
+
         SymbolLookup loaderLookup = SymbolLookup.loaderLookup();
-        return name -> loaderLookup.lookup(name).or(() -> LINKER.lookup(name));
+        SYMBOL_LOOKUP = name -> loaderLookup.lookup(name).or(() -> LINKER.lookup(name));
     }
 
     static <T> T requireNonNull(T obj, String symbolName) {
@@ -67,12 +76,12 @@ final class RuntimeHelper {
 
     private final static SegmentAllocator THROWING_ALLOCATOR = (x, y) -> { throw new AssertionError("should not reach here"); };
 
-    static final MemorySegment lookupGlobalVariable(SymbolLookup LOOKUP, String name, MemoryLayout layout) {
-        return LOOKUP.lookup(name).map(s -> MemorySegment.ofAddressNative(s.address(), layout.byteSize(), ResourceScope.newSharedScope())).orElse(null);
+    static final MemorySegment lookupGlobalVariable(String name, MemoryLayout layout) {
+        return SYMBOL_LOOKUP.lookup(name).map(addr -> MemorySegment.ofAddressNative(addr, layout.byteSize(), ResourceScope.newSharedScope())).orElse(null);
     }
 
-    static final MethodHandle downcallHandle(SymbolLookup LOOKUP, String name, String desc, FunctionDescriptor fdesc, boolean variadic) {
-        return LOOKUP.lookup(name).map(
+    static final MethodHandle downcallHandle(String name, FunctionDescriptor fdesc, boolean variadic) {
+        return SYMBOL_LOOKUP.lookup(name).map(
                 addr -> {
                     return variadic ?
                         VarargsInvoker.make(addr, fdesc) :
@@ -80,18 +89,18 @@ final class RuntimeHelper {
                 }).orElse(null);
     }
 
-    static final MethodHandle downcallHandle(String desc, FunctionDescriptor fdesc, boolean variadic) {
+    static final MethodHandle downcallHandle(FunctionDescriptor fdesc, boolean variadic) {
         if (variadic) {
             throw new AssertionError("Cannot get here!");
         }
         return LINKER.downcallHandle(fdesc);
     }
 
-    static final <Z> UpcallStub upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc) {
+    static final <Z> CLinker.UpcallStub upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc) {
         return upcallStub(fi, z, fdesc, mtypeDesc, ResourceScope.newConfinedScope());
     }
 
-    static final <Z> UpcallStub upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc, ResourceScope scope) {
+    static final <Z> CLinker.UpcallStub upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc, ResourceScope scope) {
         try {
             MethodHandle handle = MH_LOOKUP.findVirtual(fi, "apply",
                     MethodType.fromMethodDescriptorString(mtypeDesc, LOADER));
@@ -241,11 +250,11 @@ final class RuntimeHelper {
 
         private MemoryLayout variadicLayout(Class<?> c) {
             if (c == long.class) {
-                return C_LONG_LONG;
+                return JAVA_LONG;
             } else if (c == double.class) {
-                return C_DOUBLE;
+                return JAVA_DOUBLE;
             } else if (MemoryAddress.class.isAssignableFrom(c)) {
-                return C_POINTER;
+                return ADDRESS;
             } else {
                 throw new IllegalArgumentException("Unhandled variadic argument class: " + c);
             }

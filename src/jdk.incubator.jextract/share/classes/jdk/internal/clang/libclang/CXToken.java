@@ -31,15 +31,12 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
-import static jdk.incubator.foreign.CLinker.*;
-import static jdk.internal.clang.libclang.CLayouts.C_INT;
-import static jdk.internal.clang.libclang.CLayouts.C_POINTER;
-
+import static jdk.incubator.foreign.ValueLayout.*;
 public class CXToken {
 
     static final MemoryLayout $struct$LAYOUT = MemoryLayout.structLayout(
-        MemoryLayout.sequenceLayout(4, C_INT).withName("int_data"),
-        C_POINTER.withName("ptr_data")
+        MemoryLayout.sequenceLayout(4, JAVA_INT).withName("int_data"),
+        ADDRESS.withName("ptr_data")
     );
     public static MemoryLayout $LAYOUT() {
         return CXToken.$struct$LAYOUT;

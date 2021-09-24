@@ -37,7 +37,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
-import static jdk.internal.clang.libclang.CLayouts.C_POINTER;
+import static jdk.internal.clang.CLayouts.C_POINTER;
 
 public abstract class TypeImpl implements Type {
 

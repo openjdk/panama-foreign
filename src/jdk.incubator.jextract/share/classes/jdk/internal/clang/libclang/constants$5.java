@@ -31,78 +31,71 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
-import static jdk.incubator.foreign.CLinker.*;
-import static jdk.internal.clang.libclang.CLayouts.*;
+import static jdk.incubator.foreign.ValueLayout.*;
 class constants$5 {
 
-    static final FunctionDescriptor clang_defaultReparseOptions$FUNC = FunctionDescriptor.of(C_INT,
-        C_POINTER
+    static final FunctionDescriptor clang_defaultReparseOptions$FUNC = FunctionDescriptor.of(JAVA_INT,
+        ADDRESS
     );
     static final MethodHandle clang_defaultReparseOptions$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_defaultReparseOptions",
-        "(Ljdk/incubator/foreign/MemoryAddress;)I",
+        "clang_defaultReparseOptions",
         constants$5.clang_defaultReparseOptions$FUNC, false
     );
-    static final FunctionDescriptor clang_reparseTranslationUnit$FUNC = FunctionDescriptor.of(C_INT,
-        C_POINTER,
-        C_INT,
-        C_POINTER,
-        C_INT
+    static final FunctionDescriptor clang_reparseTranslationUnit$FUNC = FunctionDescriptor.of(JAVA_INT,
+        ADDRESS,
+        JAVA_INT,
+        ADDRESS,
+        JAVA_INT
     );
     static final MethodHandle clang_reparseTranslationUnit$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_reparseTranslationUnit",
-        "(Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;I)I",
+        "clang_reparseTranslationUnit",
         constants$5.clang_reparseTranslationUnit$FUNC, false
     );
     static final FunctionDescriptor clang_getNullCursor$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        C_INT.withName("kind"),
-        C_INT.withName("xdata"),
-        MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+        JAVA_INT.withName("kind"),
+        JAVA_INT.withName("xdata"),
+        MemoryLayout.sequenceLayout(3, ADDRESS).withName("data")
     ));
     static final MethodHandle clang_getNullCursor$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getNullCursor",
-        "()Ljdk/incubator/foreign/MemorySegment;",
+        "clang_getNullCursor",
         constants$5.clang_getNullCursor$FUNC, false
     );
     static final FunctionDescriptor clang_getTranslationUnitCursor$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        C_INT.withName("kind"),
-        C_INT.withName("xdata"),
-        MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+        JAVA_INT.withName("kind"),
+        JAVA_INT.withName("xdata"),
+        MemoryLayout.sequenceLayout(3, ADDRESS).withName("data")
     ),
-        C_POINTER
+        ADDRESS
     );
     static final MethodHandle clang_getTranslationUnitCursor$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getTranslationUnitCursor",
-        "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+        "clang_getTranslationUnitCursor",
         constants$5.clang_getTranslationUnitCursor$FUNC, false
     );
-    static final FunctionDescriptor clang_equalCursors$FUNC = FunctionDescriptor.of(C_INT,
+    static final FunctionDescriptor clang_equalCursors$FUNC = FunctionDescriptor.of(JAVA_INT,
         MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            C_INT.withName("xdata"),
-            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+            JAVA_INT.withName("kind"),
+            JAVA_INT.withName("xdata"),
+            MemoryLayout.sequenceLayout(3, ADDRESS).withName("data")
         ),
         MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            C_INT.withName("xdata"),
-            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+            JAVA_INT.withName("kind"),
+            JAVA_INT.withName("xdata"),
+            MemoryLayout.sequenceLayout(3, ADDRESS).withName("data")
         )
     );
     static final MethodHandle clang_equalCursors$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_equalCursors",
-        "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I",
+        "clang_equalCursors",
         constants$5.clang_equalCursors$FUNC, false
     );
-    static final FunctionDescriptor clang_Cursor_isNull$FUNC = FunctionDescriptor.of(C_INT,
+    static final FunctionDescriptor clang_Cursor_isNull$FUNC = FunctionDescriptor.of(JAVA_INT,
         MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            C_INT.withName("xdata"),
-            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+            JAVA_INT.withName("kind"),
+            JAVA_INT.withName("xdata"),
+            MemoryLayout.sequenceLayout(3, ADDRESS).withName("data")
         )
     );
     static final MethodHandle clang_Cursor_isNull$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_Cursor_isNull",
-        "(Ljdk/incubator/foreign/MemorySegment;)I",
+        "clang_Cursor_isNull",
         constants$5.clang_Cursor_isNull$FUNC, false
     );
 }

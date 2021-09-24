@@ -4,6 +4,5 @@ jextract was run using "sh extract.sh" on Mac OS.
 Manual modifications:
 
 * GNU/CP copyright header added
-* Generated C_LONG layouts are replaced with C_LONGLONG for portability
 * Index_h.libName was manually added to handle platform dependency of
 libclang shared library. 

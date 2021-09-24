@@ -31,72 +31,64 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
-import static jdk.incubator.foreign.CLinker.*;
-import static jdk.internal.clang.libclang.CLayouts.*;
-
+import static jdk.incubator.foreign.ValueLayout.*;
 class constants$0 {
 
-    static final FunctionDescriptor clang_getCString$FUNC = FunctionDescriptor.of(C_POINTER,
+    static final FunctionDescriptor clang_getCString$FUNC = FunctionDescriptor.of(ADDRESS,
         MemoryLayout.structLayout(
-            C_POINTER.withName("data"),
-            C_INT.withName("private_flags"),
+            ADDRESS.withName("data"),
+            JAVA_INT.withName("private_flags"),
             MemoryLayout.paddingLayout(32)
         )
     );
     static final MethodHandle clang_getCString$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getCString",
-        "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
+        "clang_getCString",
         constants$0.clang_getCString$FUNC, false
     );
     static final FunctionDescriptor clang_disposeString$FUNC = FunctionDescriptor.ofVoid(
         MemoryLayout.structLayout(
-            C_POINTER.withName("data"),
-            C_INT.withName("private_flags"),
+            ADDRESS.withName("data"),
+            JAVA_INT.withName("private_flags"),
             MemoryLayout.paddingLayout(32)
         )
     );
     static final MethodHandle clang_disposeString$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_disposeString",
-        "(Ljdk/incubator/foreign/MemorySegment;)V",
+        "clang_disposeString",
         constants$0.clang_disposeString$FUNC, false
     );
-    static final FunctionDescriptor clang_createIndex$FUNC = FunctionDescriptor.of(C_POINTER,
-        C_INT,
-        C_INT
+    static final FunctionDescriptor clang_createIndex$FUNC = FunctionDescriptor.of(ADDRESS,
+        JAVA_INT,
+        JAVA_INT
     );
     static final MethodHandle clang_createIndex$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_createIndex",
-        "(II)Ljdk/incubator/foreign/MemoryAddress;",
+        "clang_createIndex",
         constants$0.clang_createIndex$FUNC, false
     );
     static final FunctionDescriptor clang_disposeIndex$FUNC = FunctionDescriptor.ofVoid(
-        C_POINTER
+        ADDRESS
     );
     static final MethodHandle clang_disposeIndex$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_disposeIndex",
-        "(Ljdk/incubator/foreign/MemoryAddress;)V",
+        "clang_disposeIndex",
         constants$0.clang_disposeIndex$FUNC, false
     );
     static final FunctionDescriptor clang_getFileName$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        C_POINTER.withName("data"),
-        C_INT.withName("private_flags"),
+        ADDRESS.withName("data"),
+        JAVA_INT.withName("private_flags"),
         MemoryLayout.paddingLayout(32)
     ),
-        C_POINTER
+        ADDRESS
     );
     static final MethodHandle clang_getFileName$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getFileName",
-        "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+        "clang_getFileName",
         constants$0.clang_getFileName$FUNC, false
     );
     static final FunctionDescriptor clang_getNullLocation$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
-        C_INT.withName("int_data"),
+        MemoryLayout.sequenceLayout(2, ADDRESS).withName("ptr_data"),
+        JAVA_INT.withName("int_data"),
         MemoryLayout.paddingLayout(32)
     ));
     static final MethodHandle clang_getNullLocation$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getNullLocation",
-        "()Ljdk/incubator/foreign/MemorySegment;",
+        "clang_getNullLocation",
         constants$0.clang_getNullLocation$FUNC, false
     );
 }

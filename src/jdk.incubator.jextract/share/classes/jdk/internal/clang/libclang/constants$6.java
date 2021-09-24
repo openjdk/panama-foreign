@@ -31,64 +31,57 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
-import static jdk.incubator.foreign.CLinker.*;
-import static jdk.internal.clang.libclang.CLayouts.*;
+import static jdk.incubator.foreign.ValueLayout.*;
 class constants$6 {
 
-    static final FunctionDescriptor clang_getCursorKind$FUNC = FunctionDescriptor.of(C_INT,
+    static final FunctionDescriptor clang_getCursorKind$FUNC = FunctionDescriptor.of(JAVA_INT,
         MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            C_INT.withName("xdata"),
-            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+            JAVA_INT.withName("kind"),
+            JAVA_INT.withName("xdata"),
+            MemoryLayout.sequenceLayout(3, ADDRESS).withName("data")
         )
     );
     static final MethodHandle clang_getCursorKind$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getCursorKind",
-        "(Ljdk/incubator/foreign/MemorySegment;)I",
+        "clang_getCursorKind",
         constants$6.clang_getCursorKind$FUNC, false
     );
-    static final FunctionDescriptor clang_isDeclaration$FUNC = FunctionDescriptor.of(C_INT,
-        C_INT
+    static final FunctionDescriptor clang_isDeclaration$FUNC = FunctionDescriptor.of(JAVA_INT,
+        JAVA_INT
     );
     static final MethodHandle clang_isDeclaration$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_isDeclaration",
-        "(I)I",
+        "clang_isDeclaration",
         constants$6.clang_isDeclaration$FUNC, false
     );
-    static final FunctionDescriptor clang_isAttribute$FUNC = FunctionDescriptor.of(C_INT,
-        C_INT
+    static final FunctionDescriptor clang_isAttribute$FUNC = FunctionDescriptor.of(JAVA_INT,
+        JAVA_INT
     );
     static final MethodHandle clang_isAttribute$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_isAttribute",
-        "(I)I",
+        "clang_isAttribute",
         constants$6.clang_isAttribute$FUNC, false
     );
-    static final FunctionDescriptor clang_isInvalid$FUNC = FunctionDescriptor.of(C_INT,
-        C_INT
+    static final FunctionDescriptor clang_isInvalid$FUNC = FunctionDescriptor.of(JAVA_INT,
+        JAVA_INT
     );
     static final MethodHandle clang_isInvalid$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_isInvalid",
-        "(I)I",
+        "clang_isInvalid",
         constants$6.clang_isInvalid$FUNC, false
     );
-    static final FunctionDescriptor clang_isPreprocessing$FUNC = FunctionDescriptor.of(C_INT,
-        C_INT
+    static final FunctionDescriptor clang_isPreprocessing$FUNC = FunctionDescriptor.of(JAVA_INT,
+        JAVA_INT
     );
     static final MethodHandle clang_isPreprocessing$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_isPreprocessing",
-        "(I)I",
+        "clang_isPreprocessing",
         constants$6.clang_isPreprocessing$FUNC, false
     );
-    static final FunctionDescriptor clang_getCursorLanguage$FUNC = FunctionDescriptor.of(C_INT,
+    static final FunctionDescriptor clang_getCursorLanguage$FUNC = FunctionDescriptor.of(JAVA_INT,
         MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            C_INT.withName("xdata"),
-            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+            JAVA_INT.withName("kind"),
+            JAVA_INT.withName("xdata"),
+            MemoryLayout.sequenceLayout(3, ADDRESS).withName("data")
         )
     );
     static final MethodHandle clang_getCursorLanguage$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getCursorLanguage",
-        "(Ljdk/incubator/foreign/MemorySegment;)I",
+        "clang_getCursorLanguage",
         constants$6.clang_getCursorLanguage$FUNC, false
     );
 }

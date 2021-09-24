@@ -35,8 +35,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 
-import static jdk.internal.clang.libclang.CLayouts.C_INT;
-import static jdk.internal.clang.libclang.CLayouts.C_POINTER;
+import static jdk.internal.clang.CLayouts.C_INT;
+import static jdk.internal.clang.CLayouts.C_POINTER;
 
 public class SourceLocation {
 

@@ -31,89 +31,82 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
-import static jdk.incubator.foreign.CLinker.*;
-import static jdk.internal.clang.libclang.CLayouts.*;
+import static jdk.incubator.foreign.ValueLayout.*;
 class constants$8 {
 
     static final FunctionDescriptor clang_getEnumDeclIntegerType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        C_INT.withName("kind"),
+        JAVA_INT.withName("kind"),
         MemoryLayout.paddingLayout(32),
-        MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+        MemoryLayout.sequenceLayout(2, ADDRESS).withName("data")
     ),
         MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            C_INT.withName("xdata"),
-            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+            JAVA_INT.withName("kind"),
+            JAVA_INT.withName("xdata"),
+            MemoryLayout.sequenceLayout(3, ADDRESS).withName("data")
         )
     );
     static final MethodHandle clang_getEnumDeclIntegerType$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getEnumDeclIntegerType",
-        "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+        "clang_getEnumDeclIntegerType",
         constants$8.clang_getEnumDeclIntegerType$FUNC, false
     );
-    static final FunctionDescriptor clang_getEnumConstantDeclValue$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+    static final FunctionDescriptor clang_getEnumConstantDeclValue$FUNC = FunctionDescriptor.of(JAVA_LONG,
         MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            C_INT.withName("xdata"),
-            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+            JAVA_INT.withName("kind"),
+            JAVA_INT.withName("xdata"),
+            MemoryLayout.sequenceLayout(3, ADDRESS).withName("data")
         )
     );
     static final MethodHandle clang_getEnumConstantDeclValue$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getEnumConstantDeclValue",
-        "(Ljdk/incubator/foreign/MemorySegment;)J",
+        "clang_getEnumConstantDeclValue",
         constants$8.clang_getEnumConstantDeclValue$FUNC, false
     );
-    static final FunctionDescriptor clang_getEnumConstantDeclUnsignedValue$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+    static final FunctionDescriptor clang_getEnumConstantDeclUnsignedValue$FUNC = FunctionDescriptor.of(JAVA_LONG,
         MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            C_INT.withName("xdata"),
-            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+            JAVA_INT.withName("kind"),
+            JAVA_INT.withName("xdata"),
+            MemoryLayout.sequenceLayout(3, ADDRESS).withName("data")
         )
     );
     static final MethodHandle clang_getEnumConstantDeclUnsignedValue$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getEnumConstantDeclUnsignedValue",
-        "(Ljdk/incubator/foreign/MemorySegment;)J",
+        "clang_getEnumConstantDeclUnsignedValue",
         constants$8.clang_getEnumConstantDeclUnsignedValue$FUNC, false
     );
-    static final FunctionDescriptor clang_getFieldDeclBitWidth$FUNC = FunctionDescriptor.of(C_INT,
+    static final FunctionDescriptor clang_getFieldDeclBitWidth$FUNC = FunctionDescriptor.of(JAVA_INT,
         MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            C_INT.withName("xdata"),
-            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+            JAVA_INT.withName("kind"),
+            JAVA_INT.withName("xdata"),
+            MemoryLayout.sequenceLayout(3, ADDRESS).withName("data")
         )
     );
     static final MethodHandle clang_getFieldDeclBitWidth$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getFieldDeclBitWidth",
-        "(Ljdk/incubator/foreign/MemorySegment;)I",
+        "clang_getFieldDeclBitWidth",
         constants$8.clang_getFieldDeclBitWidth$FUNC, false
     );
-    static final FunctionDescriptor clang_Cursor_getNumArguments$FUNC = FunctionDescriptor.of(C_INT,
+    static final FunctionDescriptor clang_Cursor_getNumArguments$FUNC = FunctionDescriptor.of(JAVA_INT,
         MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            C_INT.withName("xdata"),
-            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+            JAVA_INT.withName("kind"),
+            JAVA_INT.withName("xdata"),
+            MemoryLayout.sequenceLayout(3, ADDRESS).withName("data")
         )
     );
     static final MethodHandle clang_Cursor_getNumArguments$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_Cursor_getNumArguments",
-        "(Ljdk/incubator/foreign/MemorySegment;)I",
+        "clang_Cursor_getNumArguments",
         constants$8.clang_Cursor_getNumArguments$FUNC, false
     );
     static final FunctionDescriptor clang_Cursor_getArgument$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        C_INT.withName("kind"),
-        C_INT.withName("xdata"),
-        MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+        JAVA_INT.withName("kind"),
+        JAVA_INT.withName("xdata"),
+        MemoryLayout.sequenceLayout(3, ADDRESS).withName("data")
     ),
         MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            C_INT.withName("xdata"),
-            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+            JAVA_INT.withName("kind"),
+            JAVA_INT.withName("xdata"),
+            MemoryLayout.sequenceLayout(3, ADDRESS).withName("data")
         ),
-        C_INT
+        JAVA_INT
     );
     static final MethodHandle clang_Cursor_getArgument$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_Cursor_getArgument",
-        "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
+        "clang_Cursor_getArgument",
         constants$8.clang_Cursor_getArgument$FUNC, false
     );
 }

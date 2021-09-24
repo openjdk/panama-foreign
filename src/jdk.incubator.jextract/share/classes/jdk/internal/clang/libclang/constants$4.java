@@ -31,79 +31,72 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
-import static jdk.incubator.foreign.CLinker.*;
-import static jdk.internal.clang.libclang.CLayouts.*;
+import static jdk.incubator.foreign.ValueLayout.*;
 class constants$4 {
 
     static final FunctionDescriptor clang_getDiagnosticLocation$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
-        C_INT.withName("int_data"),
+        MemoryLayout.sequenceLayout(2, ADDRESS).withName("ptr_data"),
+        JAVA_INT.withName("int_data"),
         MemoryLayout.paddingLayout(32)
     ),
-        C_POINTER
+        ADDRESS
     );
     static final MethodHandle clang_getDiagnosticLocation$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getDiagnosticLocation",
-        "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+        "clang_getDiagnosticLocation",
         constants$4.clang_getDiagnosticLocation$FUNC, false
     );
     static final FunctionDescriptor clang_getDiagnosticSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        C_POINTER.withName("data"),
-        C_INT.withName("private_flags"),
+        ADDRESS.withName("data"),
+        JAVA_INT.withName("private_flags"),
         MemoryLayout.paddingLayout(32)
     ),
-        C_POINTER
+        ADDRESS
     );
     static final MethodHandle clang_getDiagnosticSpelling$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getDiagnosticSpelling",
-        "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+        "clang_getDiagnosticSpelling",
         constants$4.clang_getDiagnosticSpelling$FUNC, false
     );
-    static final FunctionDescriptor clang_parseTranslationUnit$FUNC = FunctionDescriptor.of(C_POINTER,
-        C_POINTER,
-        C_POINTER,
-        C_POINTER,
-        C_INT,
-        C_POINTER,
-        C_INT,
-        C_INT
+    static final FunctionDescriptor clang_parseTranslationUnit$FUNC = FunctionDescriptor.of(ADDRESS,
+        ADDRESS,
+        ADDRESS,
+        ADDRESS,
+        JAVA_INT,
+        ADDRESS,
+        JAVA_INT,
+        JAVA_INT
     );
     static final MethodHandle clang_parseTranslationUnit$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_parseTranslationUnit",
-        "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;II)Ljdk/incubator/foreign/MemoryAddress;",
+        "clang_parseTranslationUnit",
         constants$4.clang_parseTranslationUnit$FUNC, false
     );
-    static final FunctionDescriptor clang_parseTranslationUnit2$FUNC = FunctionDescriptor.of(C_INT,
-        C_POINTER,
-        C_POINTER,
-        C_POINTER,
-        C_INT,
-        C_POINTER,
-        C_INT,
-        C_INT,
-        C_POINTER
+    static final FunctionDescriptor clang_parseTranslationUnit2$FUNC = FunctionDescriptor.of(JAVA_INT,
+        ADDRESS,
+        ADDRESS,
+        ADDRESS,
+        JAVA_INT,
+        ADDRESS,
+        JAVA_INT,
+        JAVA_INT,
+        ADDRESS
     );
     static final MethodHandle clang_parseTranslationUnit2$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_parseTranslationUnit2",
-        "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;)I",
+        "clang_parseTranslationUnit2",
         constants$4.clang_parseTranslationUnit2$FUNC, false
     );
-    static final FunctionDescriptor clang_saveTranslationUnit$FUNC = FunctionDescriptor.of(C_INT,
-        C_POINTER,
-        C_POINTER,
-        C_INT
+    static final FunctionDescriptor clang_saveTranslationUnit$FUNC = FunctionDescriptor.of(JAVA_INT,
+        ADDRESS,
+        ADDRESS,
+        JAVA_INT
     );
     static final MethodHandle clang_saveTranslationUnit$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_saveTranslationUnit",
-        "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)I",
+        "clang_saveTranslationUnit",
         constants$4.clang_saveTranslationUnit$FUNC, false
     );
     static final FunctionDescriptor clang_disposeTranslationUnit$FUNC = FunctionDescriptor.ofVoid(
-        C_POINTER
+        ADDRESS
     );
     static final MethodHandle clang_disposeTranslationUnit$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_disposeTranslationUnit",
-        "(Ljdk/incubator/foreign/MemoryAddress;)V",
+        "clang_disposeTranslationUnit",
         constants$4.clang_disposeTranslationUnit$FUNC, false
     );
 }

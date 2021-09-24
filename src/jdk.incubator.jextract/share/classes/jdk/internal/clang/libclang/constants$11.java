@@ -31,97 +31,90 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
-import static jdk.incubator.foreign.CLinker.*;
-import static jdk.internal.clang.libclang.CLayouts.*;
+import static jdk.incubator.foreign.ValueLayout.*;
 class constants$11 {
 
     static final FunctionDescriptor clang_getArgType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        C_INT.withName("kind"),
+        JAVA_INT.withName("kind"),
         MemoryLayout.paddingLayout(32),
-        MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+        MemoryLayout.sequenceLayout(2, ADDRESS).withName("data")
     ),
         MemoryLayout.structLayout(
-            C_INT.withName("kind"),
+            JAVA_INT.withName("kind"),
             MemoryLayout.paddingLayout(32),
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(2, ADDRESS).withName("data")
         ),
-        C_INT
+        JAVA_INT
     );
     static final MethodHandle clang_getArgType$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getArgType",
-        "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
+        "clang_getArgType",
         constants$11.clang_getArgType$FUNC, false
     );
-    static final FunctionDescriptor clang_isFunctionTypeVariadic$FUNC = FunctionDescriptor.of(C_INT,
+    static final FunctionDescriptor clang_isFunctionTypeVariadic$FUNC = FunctionDescriptor.of(JAVA_INT,
         MemoryLayout.structLayout(
-            C_INT.withName("kind"),
+            JAVA_INT.withName("kind"),
             MemoryLayout.paddingLayout(32),
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(2, ADDRESS).withName("data")
         )
     );
     static final MethodHandle clang_isFunctionTypeVariadic$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_isFunctionTypeVariadic",
-        "(Ljdk/incubator/foreign/MemorySegment;)I",
+        "clang_isFunctionTypeVariadic",
         constants$11.clang_isFunctionTypeVariadic$FUNC, false
     );
     static final FunctionDescriptor clang_getCursorResultType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        C_INT.withName("kind"),
+        JAVA_INT.withName("kind"),
         MemoryLayout.paddingLayout(32),
-        MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+        MemoryLayout.sequenceLayout(2, ADDRESS).withName("data")
     ),
         MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            C_INT.withName("xdata"),
-            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+            JAVA_INT.withName("kind"),
+            JAVA_INT.withName("xdata"),
+            MemoryLayout.sequenceLayout(3, ADDRESS).withName("data")
         )
     );
     static final MethodHandle clang_getCursorResultType$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getCursorResultType",
-        "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+        "clang_getCursorResultType",
         constants$11.clang_getCursorResultType$FUNC, false
     );
     static final FunctionDescriptor clang_getElementType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        C_INT.withName("kind"),
+        JAVA_INT.withName("kind"),
         MemoryLayout.paddingLayout(32),
-        MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+        MemoryLayout.sequenceLayout(2, ADDRESS).withName("data")
     ),
         MemoryLayout.structLayout(
-            C_INT.withName("kind"),
+            JAVA_INT.withName("kind"),
             MemoryLayout.paddingLayout(32),
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(2, ADDRESS).withName("data")
         )
     );
     static final MethodHandle clang_getElementType$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getElementType",
-        "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+        "clang_getElementType",
         constants$11.clang_getElementType$FUNC, false
     );
-    static final FunctionDescriptor clang_getNumElements$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+    static final FunctionDescriptor clang_getNumElements$FUNC = FunctionDescriptor.of(JAVA_LONG,
         MemoryLayout.structLayout(
-            C_INT.withName("kind"),
+            JAVA_INT.withName("kind"),
             MemoryLayout.paddingLayout(32),
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(2, ADDRESS).withName("data")
         )
     );
     static final MethodHandle clang_getNumElements$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getNumElements",
-        "(Ljdk/incubator/foreign/MemorySegment;)J",
+        "clang_getNumElements",
         constants$11.clang_getNumElements$FUNC, false
     );
     static final FunctionDescriptor clang_getArrayElementType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        C_INT.withName("kind"),
+        JAVA_INT.withName("kind"),
         MemoryLayout.paddingLayout(32),
-        MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+        MemoryLayout.sequenceLayout(2, ADDRESS).withName("data")
     ),
         MemoryLayout.structLayout(
-            C_INT.withName("kind"),
+            JAVA_INT.withName("kind"),
             MemoryLayout.paddingLayout(32),
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(2, ADDRESS).withName("data")
         )
     );
     static final MethodHandle clang_getArrayElementType$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getArrayElementType",
-        "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+        "clang_getArrayElementType",
         constants$11.clang_getArrayElementType$FUNC, false
     );
 }
