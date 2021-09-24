@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -123,9 +124,9 @@ public class SharedUtils {
             MH_HANDLE_UNCAUGHT_EXCEPTION = lookup.findStatic(SharedUtils.class, "handleUncaughtException",
                     methodType(void.class, Throwable.class));
             ACQUIRE_MH = MethodHandles.lookup().findStatic(SharedUtils.class, "acquire",
-                    MethodType.methodType(void.class, int[].class, Object[].class));
+                    MethodType.methodType(void.class, Object[].class));
             RELEASE_MH = MethodHandles.lookup().findStatic(SharedUtils.class, "release",
-                    MethodType.methodType(void.class, int[].class, Object[].class));
+                    MethodType.methodType(void.class, Object[].class));
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
         }
@@ -411,26 +412,26 @@ public class SharedUtils {
     }
 
     @ForceInline
-    public static void acquire(int[] idxs, Object[] args) {
-        outer: for (int i = 0 ; i < idxs.length ; i++) {
-            ResourceScopeImpl scope_i = ((ResourceScopeImpl)((Addressable)args[idxs[i]]).scope());
-            for (int j = 0 ; j < i ; j++) {
-                ResourceScopeImpl scope_j = ((ResourceScopeImpl)((Addressable)args[idxs[j]]).scope());
-               if (scope_i == scope_j) continue outer;
+    public static void acquire(Object[] args) {
+        ResourceScope lastScope = null;
+        for (int i = 0 ; i < args.length ; i++) {
+            ResourceScope scope = ((Addressable)args[i]).scope();
+            if (scope != ResourceScopeImpl.GLOBAL && scope != lastScope) {
+                lastScope = scope;
+                ((ResourceScopeImpl)scope).acquire0();
             }
-            scope_i.acquire0();
         }
     }
 
     @ForceInline
-    public static void release(int[] idxs, Object[] args) {
-        outer: for (int i = 0 ; i < idxs.length ; i++) {
-            ResourceScopeImpl scope_i = ((ResourceScopeImpl)((Addressable)args[idxs[i]]).scope());
-            for (int j = 0 ; j < i ; j++) {
-                ResourceScopeImpl scope_j = ((ResourceScopeImpl)((Addressable)args[idxs[j]]).scope());
-                if (scope_i == scope_j) continue outer;
+    public static void release(Object[] args) {
+        ResourceScope lastScope = null;
+        for (int i = 0 ; i < args.length ; i++) {
+            ResourceScope scope = ((Addressable)args[i]).scope();
+            if (scope != ResourceScopeImpl.GLOBAL && scope != lastScope) {
+                lastScope = scope;
+                ((ResourceScopeImpl)scope).release0();
             }
-            scope_i.release0();
         }
     }
 
@@ -441,29 +442,46 @@ public class SharedUtils {
      */
     public static MethodHandle wrapDowncall(MethodHandle downcallHandle, FunctionDescriptor descriptor) {
         boolean hasReturn = descriptor.returnLayout().isPresent();
-        boolean hasAllocator = hasReturn && descriptor.returnLayout().get() instanceof GroupLayout;
         MethodHandle tryBlock = downcallHandle;
         MethodHandle cleanup = hasReturn ?
                 MethodHandles.identity(downcallHandle.type().returnType()) :
                 MethodHandles.empty(MethodType.methodType(void.class));
-        List<Integer> addressableIndices = new ArrayList<>();
-        for (int i = 0 ; i < descriptor.argumentLayouts().size() ; i++) {
-            int paramIndex = i + (hasAllocator ? 2 : 1); // skip Addressable, and SegmentAllocator (if present)
-            MemoryLayout layout = descriptor.argumentLayouts().get(i);
-            if (layout instanceof ValueLayout valueLayout && valueLayout.carrier() == MemoryAddress.class) {
-                addressableIndices.add(paramIndex);
+        int addressableCount = 0;
+        List<UnaryOperator<MethodHandle>> adapters = new ArrayList<>();
+        for (int i = 0 ; i < downcallHandle.type().parameterCount() ; i++) {
+            Class<?> ptype = downcallHandle.type().parameterType(i);
+            if (ptype == Addressable.class) {
+                addressableCount++;
+            } else {
+                int pos = i;
+                adapters.add(mh -> dropArguments(mh, pos, ptype));
             }
         }
 
-        int[] indices = addressableIndices.stream().mapToInt(x -> x).toArray();
+        if (addressableCount > 0) {
+            cleanup = dropArguments(cleanup, 0, Throwable.class);
 
-        cleanup = dropArguments(cleanup, 0, Throwable.class);
+            MethodType adapterType = MethodType.methodType(void.class);
+            for (int i = 0 ; i < addressableCount ; i++) {
+                adapterType = adapterType.appendParameterTypes(Addressable.class);
+            }
 
-        // acquire/release target addressable
-        tryBlock = foldArguments(tryBlock, 0, ACQUIRE_MH.bindTo(indices).asCollector(Object[].class, downcallHandle.type().parameterCount()).asType(downcallHandle.type().changeReturnType(void.class)));
-        cleanup = collectArguments(cleanup, hasReturn ? 2 : 1, RELEASE_MH.bindTo(indices).asCollector(Object[].class, downcallHandle.type().parameterCount()).asType(downcallHandle.type().changeReturnType(void.class)));
+            MethodHandle acquireHandle = ACQUIRE_MH.asCollector(Object[].class, addressableCount).asType(adapterType);
+            MethodHandle releaseHandle = RELEASE_MH.asCollector(Object[].class, addressableCount).asType(adapterType);
 
-        return tryFinally(tryBlock, cleanup);
+            for (UnaryOperator<MethodHandle> adapter : adapters) {
+                acquireHandle = adapter.apply(acquireHandle);
+                releaseHandle = adapter.apply(releaseHandle);
+            }
+
+            // acquire/release target addressable
+            tryBlock = foldArguments(tryBlock, 0, acquireHandle);
+            cleanup = collectArguments(cleanup, hasReturn ? 2 : 1, releaseHandle);
+
+            return tryFinally(tryBlock, cleanup);
+        } else {
+            return downcallHandle;
+        }
     }
 
     public static void checkExceptions(MethodHandle target) {
