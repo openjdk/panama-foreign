@@ -27,6 +27,7 @@
 #include "compiler/disassembler.hpp"
 #include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
+#include "prims/foreign_globals.inline.hpp"
 #include "prims/universalNativeInvoker.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "utilities/formatBuffer.hpp"
@@ -264,239 +265,59 @@ RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
   return stub;
 }
 
-struct ArgMove {
-  BasicType bt;
-  VMRegPair from;
-  VMRegPair to;
+class DowncallNativeCallConv : public CallConvClosure {
+  const GrowableArray<VMReg>& _input_regs;
+  Register _input_addr_reg;
+public:
+  DowncallNativeCallConv(const GrowableArray<VMReg>& input_regs, Register input_addr_reg)
+   : _input_regs(input_regs),
+   _input_addr_reg(input_addr_reg) {}
 
-  bool is_identity() const {
-      return (from.first() == to.first() && from.second() == to.second())
-        && !from.first()->is_stack(); // stack regs are interpreted differently
+  int calling_convention(BasicType* sig_bt, VMRegPair* out_regs, int num_args) override {
+    out_regs[0].set2(_input_addr_reg->as_VMReg()); // address
+    out_regs[1].set_bad(); // upper half
+
+    int src_pos = 0;
+    int stk_slots = 0;
+    for (int i = 2; i < num_args; i++) { // skip address (2)
+      switch (sig_bt[i]) {
+        case T_BOOLEAN:
+        case T_CHAR:
+        case T_BYTE:
+        case T_SHORT:
+        case T_INT:
+        case T_FLOAT: {
+          VMReg reg = _input_regs.at(src_pos++);
+          out_regs[i].set1(reg);
+          if (reg->is_stack())
+            stk_slots += 2;
+          break;
+        }
+        case T_LONG:
+        case T_DOUBLE: {
+          assert((i + 1) < num_args && sig_bt[i + 1] == T_VOID, "expecting half");
+          VMReg reg = _input_regs.at(src_pos);
+          out_regs[i].set2(reg);
+          src_pos += 2; // skip BAD as well
+          if (reg->is_stack())
+            stk_slots += 2;
+          break;
+        }
+        case T_VOID: // Halves of longs and doubles
+          assert(i != 0 && (sig_bt[i - 1] == T_LONG || sig_bt[i - 1] == T_DOUBLE), "expecting half");
+          out_regs[i].set_bad();
+          break;
+        default:
+          ShouldNotReachHere();
+          break;
+      }
+    }
+    return stk_slots;
   }
 };
 
-static GrowableArray<ArgMove> compute_argument_shuffle(BasicType* sig_bt, int num_args, const GrowableArray<VMReg>& input_regs, int& out_arg_stk_slots, Register input_addr_reg) {
-
-  VMRegPair* in_regs = NEW_RESOURCE_ARRAY(VMRegPair, num_args);
-
-  SharedRuntime::java_calling_convention(sig_bt, in_regs, num_args);
-
-  VMRegPair* out_regs = NEW_RESOURCE_ARRAY(VMRegPair, num_args);
-  out_regs[0].set2(input_addr_reg->as_VMReg()); // address
-  out_regs[1].set_bad(); // upper half
-
-  int src_pos = 0;
-  int stk_slots = 0;
-  for (int i = 2; i < num_args; i++) { // skip address (2)
-    switch (sig_bt[i]) {
-      case T_BOOLEAN:
-      case T_CHAR:
-      case T_BYTE:
-      case T_SHORT:
-      case T_INT:
-      case T_FLOAT: {
-        VMReg reg = input_regs.at(src_pos++);
-        out_regs[i].set1(reg);
-        if (reg->is_stack())
-          stk_slots += 2;
-        break;
-      }
-      case T_LONG:
-      case T_DOUBLE: {
-        assert((i + 1) < num_args && sig_bt[i + 1] == T_VOID, "expecting half");
-        VMReg reg = input_regs.at(src_pos);
-        out_regs[i].set2(reg);
-        src_pos += 2; // skip BAD as well
-        if (reg->is_stack())
-          stk_slots += 2;
-        break;
-      }
-      case T_VOID: // Halves of longs and doubles
-        assert(i != 0 && (sig_bt[i - 1] == T_LONG || sig_bt[i - 1] == T_DOUBLE), "expecting half");
-        out_regs[i].set_bad();
-        break;
-      default:
-        ShouldNotReachHere();
-        break;
-    }
-  }
-  out_arg_stk_slots = stk_slots;
-
-  GrowableArray<int> arg_order(2 * num_args);
-
-  VMRegPair tmp_vmreg;
-  tmp_vmreg.set2(rbx->as_VMReg());
-
-  // Compute a valid move order, using tmp_vmreg to break any cycles
-  SharedRuntime::compute_move_order(sig_bt,
-                                    num_args, in_regs,
-                                    num_args, out_regs,
-                                    arg_order,
-                                    tmp_vmreg);
-
-  GrowableArray<ArgMove> arg_order_vmreg(num_args); // conservative
-
-#ifdef ASSERT
-  bool reg_destroyed[RegisterImpl::number_of_registers];
-  bool freg_destroyed[XMMRegisterImpl::number_of_registers];
-  for ( int r = 0 ; r < RegisterImpl::number_of_registers ; r++ ) {
-    reg_destroyed[r] = false;
-  }
-  for ( int f = 0 ; f < XMMRegisterImpl::number_of_registers ; f++ ) {
-    freg_destroyed[f] = false;
-  }
-#endif // ASSERT
-
-  for (int i = 0; i < arg_order.length(); i += 2) {
-    int in_arg  = arg_order.at(i);
-    int out_arg = arg_order.at(i + 1);
-
-    assert(in_arg != -1 || out_arg != -1, "");
-    BasicType arg_bt = (in_arg != -1 ? sig_bt[in_arg] : sig_bt[out_arg]);
-    switch (arg_bt) {
-      case T_BOOLEAN:
-      case T_BYTE:
-      case T_SHORT:
-      case T_CHAR:
-      case T_INT:
-      case T_FLOAT:
-        break; // process
-
-      case T_LONG:
-      case T_DOUBLE:
-        assert(in_arg  == -1 || (in_arg  + 1 < num_args && sig_bt[in_arg  + 1] == T_VOID), "bad arg list: %d", in_arg);
-        assert(out_arg == -1 || (out_arg + 1 < num_args && sig_bt[out_arg + 1] == T_VOID), "bad arg list: %d", out_arg);
-        break; // process
-
-      case T_VOID:
-        continue; // skip
-
-      default:
-        fatal("found in upcall args: %s", type2name(arg_bt));
-    }
-
-    ArgMove move;
-    move.bt   = arg_bt;
-    move.from = (in_arg != -1 ? in_regs[in_arg] : tmp_vmreg);
-    move.to   = (out_arg != -1 ? out_regs[out_arg] : tmp_vmreg);
-
-    if(move.is_identity()) {
-      continue; // useless move
-    }
-
-#ifdef ASSERT
-    if (in_arg != -1) {
-      if (in_regs[in_arg].first()->is_Register()) {
-        assert(!reg_destroyed[in_regs[in_arg].first()->as_Register()->encoding()], "destroyed reg!");
-      } else if (in_regs[in_arg].first()->is_XMMRegister()) {
-        assert(!freg_destroyed[in_regs[in_arg].first()->as_XMMRegister()->encoding()], "destroyed reg!");
-      }
-    }
-    if (out_arg != -1) {
-      if (out_regs[out_arg].first()->is_Register()) {
-        reg_destroyed[out_regs[out_arg].first()->as_Register()->encoding()] = true;
-      } else if (out_regs[out_arg].first()->is_XMMRegister()) {
-        freg_destroyed[out_regs[out_arg].first()->as_XMMRegister()->encoding()] = true;
-      }
-    }
-#endif /* ASSERT */
-
-    arg_order_vmreg.push(move);
-  }
-
-  return arg_order_vmreg;
-}
-
-static const char* null_safe_string(const char* str) {
-  return str == nullptr ? "NULL" : str;
-}
-
-static bool is_fp_to_gp_move(VMRegPair from, VMRegPair to) {
-  return from.first()->is_XMMRegister() && to.first()->is_Register();
-}
-
-static void shuffle_arguments(MacroAssembler* _masm, const GrowableArray<ArgMove>& arg_moves, int shuffle_space_offset) {
-  for (int i = 0; i < arg_moves.length(); i++) {
-    ArgMove arg_mv = arg_moves.at(i);
-    BasicType arg_bt     = arg_mv.bt;
-    VMRegPair from_vmreg = arg_mv.from;
-    VMRegPair to_vmreg   = arg_mv.to;
-
-    Address shuffle_space_addr(rsp, shuffle_space_offset);
-
-    __ block_comment(err_msg("bt=%s", null_safe_string(type2name(arg_bt))));
-    switch (arg_bt) {
-      case T_BOOLEAN:
-      case T_BYTE:
-      case T_SHORT:
-      case T_CHAR:
-      case T_INT:
-       __ move32_64(from_vmreg, to_vmreg);
-       break;
-
-      case T_FLOAT:
-        if (is_fp_to_gp_move(from_vmreg, to_vmreg)) { // Windows vararg call
-          __ movsd(shuffle_space_addr, from_vmreg.first()->as_XMMRegister());
-          __ movq(to_vmreg.first()->as_Register(), shuffle_space_addr);
-        } else {
-          __ float_move(from_vmreg, to_vmreg);
-        }
-        break;
-
-      case T_DOUBLE:
-        if (is_fp_to_gp_move(from_vmreg, to_vmreg)) { // Windows vararg call
-          __ movsd(shuffle_space_addr, from_vmreg.first()->as_XMMRegister());
-          __ movq(to_vmreg.first()->as_Register(), shuffle_space_addr);
-        } else {
-          __ double_move(from_vmreg, to_vmreg);
-        }
-        break;
-
-      case T_LONG :
-        __ long_move(from_vmreg, to_vmreg);
-        break;
-
-      default:
-        fatal("found in upcall args: %s", type2name(arg_bt));
-    }
-  }
-}
-
 void NativeInvokerGenerator::generate() {
   assert(!(target_uses_register(r15_thread->as_VMReg()) || target_uses_register(rscratch1->as_VMReg())), "Register conflict");
-
-  // TODO stack arg slots
-  int out_arg_stk_slots = -1;
-  Register input_addr_reg = rscratch1;
-  GrowableArray<ArgMove> arg_moves = compute_argument_shuffle(_signature, _num_args, _input_registers, out_arg_stk_slots, rscratch1);
-  assert(out_arg_stk_slots != -1, "out_arg_size_bytes was not set");
-
-#ifdef ASSERT
-  LogTarget(Trace, panama) lt;
-  if (lt.is_enabled()) {
-    ResourceMark rm;
-    LogStream ls(lt);
-    ls.print_cr("Argument shuffle {");
-    for (int i = 0; i < arg_moves.length(); i++) {
-      ArgMove arg_mv = arg_moves.at(i);
-      BasicType arg_bt     = arg_mv.bt;
-      VMRegPair from_vmreg = arg_mv.from;
-      VMRegPair to_vmreg   = arg_mv.to;
-
-      ls.print("Move a %s from (", null_safe_string(type2name(arg_bt)));
-      from_vmreg.first()->print_on(&ls);
-      ls.print(",");
-      from_vmreg.second()->print_on(&ls);
-      ls.print(") to (");
-      to_vmreg.first()->print_on(&ls);
-      ls.print(",");
-      to_vmreg.second()->print_on(&ls);
-      ls.print_cr(")");
-    }
-    ls.print_cr("Stack argument slots: %d", out_arg_stk_slots);
-    ls.print_cr("}");
-  }
-#endif
 
   enum layout {
     rbp_off,
@@ -510,10 +331,24 @@ void NativeInvokerGenerator::generate() {
     // out arg area (e.g. for stack args)
   };
 
+  Register input_addr_reg = rscratch1;
+  JavaCallConv in_conv;
+  DowncallNativeCallConv out_conv(_input_registers, input_addr_reg);
+  ArgumentShuffle arg_shuffle(_signature, _num_args, _signature, _num_args, &in_conv, &out_conv);
+
+#ifdef ASSERT
+  LogTarget(Trace, panama) lt;
+  if (lt.is_enabled()) {
+    ResourceMark rm;
+    LogStream ls(lt);
+    arg_shuffle.print_on(&ls);
+  }
+#endif
+
   // in bytes
   int allocated_frame_size = 0;
   allocated_frame_size += 16; // argument shuffle space, the size of an XMM reg
-  allocated_frame_size += out_arg_stk_slots << LogBytesPerInt;
+  allocated_frame_size += arg_shuffle.out_arg_stack_slots() << LogBytesPerInt;
   allocated_frame_size += _shadow_space_bytes;
 
   RegSpillFill out_reg_spill(_output_registers.data(), _output_registers.length());
@@ -524,7 +359,7 @@ void NativeInvokerGenerator::generate() {
     ? out_reg_spill.spill_size_bytes()
     : allocated_frame_size;
   // in bytes
-  const int shuffle_space_offset = _shadow_space_bytes + (out_arg_stk_slots << LogBytesPerInt);
+  const int shuffle_space_offset = _shadow_space_bytes + (arg_shuffle.out_arg_stack_slots() << LogBytesPerInt);
 
   allocated_frame_size = align_up(allocated_frame_size, 16);
   // _framesize is in 32-bit stack slots:
@@ -555,7 +390,7 @@ void NativeInvokerGenerator::generate() {
   __ block_comment("} thread java2native");
 
   __ block_comment("{ argument shuffle");
-  shuffle_arguments(_masm, arg_moves, shuffle_space_offset);
+  arg_shuffle.gen_shuffle(_masm, shuffle_space_offset);
   __ block_comment("} argument shuffle");
 
   __ call(input_addr_reg);

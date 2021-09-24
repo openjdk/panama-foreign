@@ -27,6 +27,8 @@
 #include "asm/macroAssembler.hpp"
 #include "utilities/growableArray.hpp"
 
+class outputStream;
+
 constexpr size_t xmm_reg_size = 16; // size of XMM reg
 
 struct ABIDescriptor {
@@ -74,6 +76,43 @@ public:
 private:
   int compute_spill_area();
   void gen(MacroAssembler* masm, int rsp_offset, bool is_spill) const;
+};
+
+class CallConvClosure {
+public:
+  virtual int calling_convention(BasicType* sig_bt, VMRegPair* regs, int num_args) = 0;
+};
+
+class JavaCallConv : public CallConvClosure {
+public:
+  int calling_convention(BasicType* sig_bt, VMRegPair* regs, int num_args) override;
+};
+
+class ArgumentShuffle {
+public:
+  struct Move {
+    BasicType bt;
+    VMRegPair from;
+    VMRegPair to;
+
+    bool is_identity() const {
+        return (from.first() == to.first() && from.second() == to.second())
+          && !from.first()->is_stack(); // stack regs are interpreted differently
+    }
+  };
+private:
+  GrowableArray<Move> _moves;
+  int _out_arg_stack_slots;
+public:
+  ArgumentShuffle(
+    BasicType* in_sig_bt, int num_in_args,
+    BasicType* out_sig_bt, int num_out_args,
+    CallConvClosure* input_conv, CallConvClosure* output_conv);
+
+  int out_arg_stack_slots() const { return _out_arg_stack_slots; }
+  void gen_shuffle(MacroAssembler* masm, int shuffle_space_rsp_offset = -1) const;
+
+  void print_on(outputStream* os) const;
 };
 
 #endif // CPU_X86_VM_FOREIGN_GLOBALS_X86_HPP

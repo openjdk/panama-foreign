@@ -28,6 +28,7 @@
 #include "oops/oopCast.inline.hpp"
 #include "prims/foreign_globals.hpp"
 #include "prims/foreign_globals.inline.hpp"
+#include "runtime/sharedRuntime.hpp"
 
 bool ABIDescriptor::is_volatile_reg(Register reg) const {
     return _integer_argument_registers.contains(reg)
@@ -171,4 +172,178 @@ void RegSpillFill::gen(MacroAssembler* masm, int rsp_offset, bool spill) const {
       // stack and BAD regs
     }
   }
+}
+
+ArgumentShuffle::ArgumentShuffle(
+    BasicType* in_sig_bt,
+    int num_in_args,
+    BasicType* out_sig_bt,
+    int num_out_args,
+    CallConvClosure* input_conv,
+    CallConvClosure* output_conv) : _moves(num_in_args), _out_arg_stack_slots(0) {
+
+  VMRegPair* in_regs = NEW_RESOURCE_ARRAY(VMRegPair, num_in_args);
+  input_conv->calling_convention(in_sig_bt, in_regs, num_in_args);
+
+  VMRegPair* out_regs = NEW_RESOURCE_ARRAY(VMRegPair, num_out_args);
+  _out_arg_stack_slots = output_conv->calling_convention(out_sig_bt, out_regs, num_out_args);
+
+  GrowableArray<int> arg_order(2 * num_in_args);
+
+  VMRegPair tmp_vmreg;
+  tmp_vmreg.set2(rbx->as_VMReg());
+
+  // Compute a valid move order, using tmp_vmreg to break any cycles
+  SharedRuntime::compute_move_order(in_sig_bt,
+                                    num_in_args, in_regs,
+                                    num_out_args, out_regs,
+                                    arg_order,
+                                    tmp_vmreg);
+
+#ifdef ASSERT
+  bool reg_destroyed[RegisterImpl::number_of_registers];
+  bool freg_destroyed[XMMRegisterImpl::number_of_registers];
+  for ( int r = 0 ; r < RegisterImpl::number_of_registers ; r++ ) {
+    reg_destroyed[r] = false;
+  }
+  for ( int f = 0 ; f < XMMRegisterImpl::number_of_registers ; f++ ) {
+    freg_destroyed[f] = false;
+  }
+#endif // ASSERT
+
+  for (int i = 0; i < arg_order.length(); i += 2) {
+    int in_arg  = arg_order.at(i);
+    int out_arg = arg_order.at(i + 1);
+
+    assert(in_arg != -1 || out_arg != -1, "");
+    BasicType arg_bt = (in_arg != -1 ? in_sig_bt[in_arg] : out_sig_bt[out_arg]);
+    switch (arg_bt) {
+      case T_BOOLEAN:
+      case T_BYTE:
+      case T_SHORT:
+      case T_CHAR:
+      case T_INT:
+      case T_FLOAT:
+        break; // process
+
+      case T_LONG:
+      case T_DOUBLE:
+        assert(in_arg  == -1 || (in_arg  + 1 < num_in_args && in_sig_bt[in_arg  + 1] == T_VOID), "bad arg list: %d", in_arg);
+        assert(out_arg == -1 || (out_arg + 1 < num_out_args && out_sig_bt[out_arg + 1] == T_VOID), "bad arg list: %d", out_arg);
+        break; // process
+
+      case T_VOID:
+        continue; // skip
+
+      default:
+        fatal("found in upcall args: %s", type2name(arg_bt));
+    }
+
+    Move move;
+    move.bt   = arg_bt;
+    move.from = (in_arg != -1 ? in_regs[in_arg] : tmp_vmreg);
+    move.to   = (out_arg != -1 ? out_regs[out_arg] : tmp_vmreg);
+
+    if(move.is_identity()) {
+      continue; // useless move
+    }
+
+#ifdef ASSERT
+    if (in_arg != -1) {
+      if (in_regs[in_arg].first()->is_Register()) {
+        assert(!reg_destroyed[in_regs[in_arg].first()->as_Register()->encoding()], "destroyed reg!");
+      } else if (in_regs[in_arg].first()->is_XMMRegister()) {
+        assert(!freg_destroyed[in_regs[in_arg].first()->as_XMMRegister()->encoding()], "destroyed reg!");
+      }
+    }
+    if (out_arg != -1) {
+      if (out_regs[out_arg].first()->is_Register()) {
+        reg_destroyed[out_regs[out_arg].first()->as_Register()->encoding()] = true;
+      } else if (out_regs[out_arg].first()->is_XMMRegister()) {
+        freg_destroyed[out_regs[out_arg].first()->as_XMMRegister()->encoding()] = true;
+      }
+    }
+#endif /* ASSERT */
+
+    _moves.push(move);
+  }
+}
+
+static bool is_fp_to_gp_move(VMRegPair from, VMRegPair to) {
+  return from.first()->is_XMMRegister() && to.first()->is_Register();
+}
+
+void ArgumentShuffle::gen_shuffle(MacroAssembler* masm, int shuffle_space_rsp_offset) const {
+  for (int i = 0; i < _moves.length(); i++) {
+    Move move = _moves.at(i);
+    BasicType arg_bt     = move.bt;
+    VMRegPair from_vmreg = move.from;
+    VMRegPair to_vmreg   = move.to;
+
+    masm->block_comment(err_msg("bt=%s", null_safe_string(type2name(arg_bt))));
+    switch (arg_bt) {
+      case T_BOOLEAN:
+      case T_BYTE:
+      case T_SHORT:
+      case T_CHAR:
+      case T_INT:
+       masm->move32_64(from_vmreg, to_vmreg);
+       break;
+
+      case T_FLOAT:
+        if (is_fp_to_gp_move(from_vmreg, to_vmreg)) { // Windows vararg call
+          assert(shuffle_space_rsp_offset != -1, "shuffle area not available");
+          Address shuffle_space_addr(rsp, shuffle_space_rsp_offset);
+          masm->movsd(shuffle_space_addr, from_vmreg.first()->as_XMMRegister());
+          masm->movq(to_vmreg.first()->as_Register(), shuffle_space_addr);
+        } else {
+          masm->float_move(from_vmreg, to_vmreg);
+        }
+        break;
+
+      case T_DOUBLE:
+        if (is_fp_to_gp_move(from_vmreg, to_vmreg)) { // Windows vararg call
+          assert(shuffle_space_rsp_offset != -1, "shuffle area not available");
+          Address shuffle_space_addr(rsp, shuffle_space_rsp_offset);
+          masm->movsd(shuffle_space_addr, from_vmreg.first()->as_XMMRegister());
+          masm->movq(to_vmreg.first()->as_Register(), shuffle_space_addr);
+        } else {
+          masm->double_move(from_vmreg, to_vmreg);
+        }
+        break;
+
+      case T_LONG :
+        masm->long_move(from_vmreg, to_vmreg);
+        break;
+
+      default:
+        fatal("found in upcall args: %s", type2name(arg_bt));
+    }
+  }
+}
+
+void ArgumentShuffle::print_on(outputStream* os) const {
+  os->print_cr("Argument shuffle {");
+  for (int i = 0; i < _moves.length(); i++) {
+    Move move = _moves.at(i);
+    BasicType arg_bt     = move.bt;
+    VMRegPair from_vmreg = move.from;
+    VMRegPair to_vmreg   = move.to;
+
+    os->print("Move a %s from (", null_safe_string(type2name(arg_bt)));
+    from_vmreg.first()->print_on(os);
+    os->print(",");
+    from_vmreg.second()->print_on(os);
+    os->print(") to (");
+    to_vmreg.first()->print_on(os);
+    os->print(",");
+    to_vmreg.second()->print_on(os);
+    os->print_cr(")");
+  }
+  os->print_cr("Stack argument slots: %d", _out_arg_stack_slots);
+  os->print_cr("}");
+}
+
+int JavaCallConv::calling_convention(BasicType* sig_bt, VMRegPair* regs, int num_args) {
+  return SharedRuntime::java_calling_convention(sig_bt, regs, num_args);
 }

@@ -41,4 +41,8 @@ void ForeignGlobals::loadArray(objArrayOop jarray, int type_index, GrowableArray
   }
 }
 
+inline const char* null_safe_string(const char* str) {
+  return str == nullptr ? "NULL" : str;
+}
+
 #endif // SHARE_PRIMS_FOREIGN_GLOBALS_INLINE_HPP
