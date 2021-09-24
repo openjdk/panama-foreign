@@ -36,7 +36,7 @@ import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,7 +45,6 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.SymbolLookup;
 import org.testng.annotations.*;
 
-import static java.lang.invoke.MethodType.methodType;
 import static org.testng.Assert.assertEquals;
 
 public class TestIntrinsics extends NativeTestHelper {
@@ -114,10 +113,11 @@ public class TestIntrinsics extends NativeTestHelper {
         }
 
         { // high_arity
+            MemoryLayout UTF16_CHAR = MemoryLayout.valueLayout(char.class, ByteOrder.nativeOrder());
             FunctionDescriptor baseFD = FunctionDescriptor.ofVoid(
                     C_LONG_LONG, C_LONG_LONG, C_LONG_LONG, C_LONG_LONG, C_LONG_LONG, C_LONG_LONG, C_LONG_LONG, C_LONG_LONG,
                     C_DOUBLE, C_DOUBLE, C_DOUBLE, C_DOUBLE, C_DOUBLE, C_DOUBLE, C_DOUBLE, C_DOUBLE,
-                    C_INT, C_DOUBLE, C_LONG_LONG, C_FLOAT, C_CHAR, C_SHORT, C_SHORT);
+                    C_INT, C_DOUBLE, C_LONG_LONG, C_FLOAT, C_CHAR, C_SHORT, UTF16_CHAR);
             Object[] args = {
                 0, 0, 0, 0, 0, 0, 0, 0, // saturating registers
                 0D, 0D, 0D, 0D, 0D, 0D, 0D, 0D, // saturating registers
