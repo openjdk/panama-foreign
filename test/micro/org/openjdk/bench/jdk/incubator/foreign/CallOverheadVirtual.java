@@ -131,7 +131,7 @@ public class CallOverheadVirtual {
     }
 
     @Benchmark
-    public MemoryAddress panama_identity_memory_address() throws Throwable {
+    public MemoryAddress panama_identity_memory_address_null() throws Throwable {
         return (MemoryAddress) identity_memory_address_v.invokeExact(identity_memory_address_addr, MemoryAddress.NULL);
     }
 
