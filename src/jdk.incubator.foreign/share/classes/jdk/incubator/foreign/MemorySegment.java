@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -319,6 +319,20 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @return {@code true} if this segment is a mapped segment.
      */
     boolean isMapped();
+
+    /**
+     * Returns true if this segment overlaps the {@code other} segment.
+     *
+     * If the two segments are not either both backed by native or heap memory, {@code false} is returned.
+     * Otherwise, their offset and {@linkplain #byteSize() size} (in bytes) are used to determine if an overlap occurs.
+     *
+     * @param other the segment to be tested for an overlap with this segment.
+     * @return {@code true} if this segment overlaps the other segment.
+     * @throws IllegalStateException if either the scope associated with this segment or the scope associated
+     * with the {@code other} segment have been already closed, or if access occurs from a thread other than the thread
+     * owning either scopes.
+     */
+    boolean isOverlapping(MemorySegment other);
 
     /**
      * Fills a value into this memory segment.

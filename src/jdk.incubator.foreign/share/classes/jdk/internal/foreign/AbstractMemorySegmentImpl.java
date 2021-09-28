@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -250,6 +250,30 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
 
     @Override
     public boolean isNative() {
+        return false;
+    }
+
+    @Override
+    public boolean isOverlapping(MemorySegment other) {
+        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)Objects.requireNonNull(other);
+        if (base() == that.base()) {  // both are either native or heap
+            this.checkAccess(0, this.length, true);
+            that.checkAccess(0, that.length, true);
+            this.checkValidState();
+            that.checkValidState();
+
+            final long thisStart = this.min();
+            final long thatStart = that.min();
+            if (thisStart == thatStart) {
+                return true;
+            }
+            final long thisEnd = thisStart + this.byteSize() - 1L;
+            final long thatEnd = thatStart + that.byteSize() - 1L;
+            if (thisStart < thatStart && thisEnd >= thatStart) {
+                return true;
+            }
+            return thatStart < thisStart && thatEnd >= thisStart;
+        }
         return false;
     }
 

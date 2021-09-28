@@ -44,6 +44,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -126,9 +127,10 @@ public class TestScopedOperations {
         ScopedOperation.ofSegment(s -> s.toArray(JAVA_BYTE), "MemorySegment::toArray(BYTE)");
         ScopedOperation.ofSegment(MemorySegment::address, "MemorySegment::address");
         ScopedOperation.ofSegment(s -> MemoryLayout.sequenceLayout(s.byteSize(), JAVA_BYTE), "MemorySegment::spliterator");
-        ScopedOperation.ofSegment(s -> s.copyFrom(s), "MemorySegment::copyFrom");
-        ScopedOperation.ofSegment(s -> s.mismatch(s), "MemorySegment::mismatch");
-        ScopedOperation.ofSegment(s -> s.fill((byte) 0), "MemorySegment::fill");
+        ScopedOperation.ofSegments(MemorySegment::copyFrom, "MemorySegment::copyFrom");
+        ScopedOperation.ofSegments(MemorySegment::mismatch, "MemorySegment::mismatch");
+        ScopedOperation.ofSegments(MemorySegment::isOverlapping, "MemorySegment::isOverlapping");
+
         // valist operations
         ScopedOperation.ofVaList(VaList::address, "VaList::address");
         ScopedOperation.ofVaList(VaList::copy, "VaList::copy");
@@ -196,6 +198,25 @@ public class TestScopedOperations {
                     MemorySegment segment = segmentFactory.segmentFactory.apply(scope);
                     segmentConsumer.accept(segment);
                 }, segmentFactory.name() + "/" + name));
+            }
+        }
+
+        static void ofSegments(BiConsumer<MemorySegment, MemorySegment> segmentsConsumer, String name) {
+            for (ScopedOperation.SegmentFactory segmentFactory : ScopedOperation.SegmentFactory.values()) {
+                scopedOperations.add(new ScopedOperation(scope1 -> {
+                    ResourceScope scope2 = ResourceScope.newConfinedScope();
+                    MemorySegment segment2 = segmentFactory.segmentFactory.apply(scope2);
+                    MemorySegment segment1 = segmentFactory.segmentFactory.apply(scope1);
+                    scope1.close();
+                    segmentsConsumer.accept(segment1, segment2);
+                }, segmentFactory.name() + "/" + name + "1"));
+                scopedOperations.add(new ScopedOperation(scope1 -> {
+                    ResourceScope scope2 = ResourceScope.newConfinedScope();
+                    MemorySegment segment2 = segmentFactory.segmentFactory.apply(scope2);
+                    MemorySegment segment1 = segmentFactory.segmentFactory.apply(scope1);
+                    scope2.close();
+                    segmentsConsumer.accept(segment1, segment2);
+                }, segmentFactory.name() + "/" + name + "2"));
             }
         }
 
