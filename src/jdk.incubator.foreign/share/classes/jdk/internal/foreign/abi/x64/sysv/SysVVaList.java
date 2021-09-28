@@ -26,6 +26,7 @@
 package jdk.internal.foreign.abi.x64.sysv;
 
 import jdk.incubator.foreign.*;
+import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.misc.Unsafe;
@@ -44,7 +45,7 @@ import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.abi.SharedUtils.THROWING_ALLOCATOR;
 
 // See https://software.intel.com/sites/default/files/article/402129/mpx-linux64-abi.pdf "3.5.7 Variable Argument Lists"
-public non-sealed class SysVVaList implements VaList {
+public non-sealed class SysVVaList implements VaList, Scoped {
     private static final Unsafe U = Unsafe.getUnsafe();
 
     static final Class<?> CARRIER = MemoryAddress.class;

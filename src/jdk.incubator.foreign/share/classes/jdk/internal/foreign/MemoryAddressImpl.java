@@ -28,6 +28,7 @@ package jdk.internal.foreign;
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.reflect.CallerSensitive;
@@ -39,7 +40,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * This class provides an immutable implementation for the {@code MemoryAddress} interface. This class contains information
  * about the segment this address is associated with, as well as an offset into such segment.
  */
-public final class MemoryAddressImpl implements MemoryAddress {
+public final class MemoryAddressImpl implements MemoryAddress, Scoped {
 
     private final long offset;
 
@@ -92,6 +93,11 @@ public final class MemoryAddressImpl implements MemoryAddress {
 
     public static MemorySegment ofLongUnchecked(long value, long byteSize) {
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, ResourceScopeImpl.GLOBAL);
+    }
+
+    @Override
+    public ResourceScope scope() {
+        return ResourceScopeImpl.GLOBAL;
     }
 
     @Override

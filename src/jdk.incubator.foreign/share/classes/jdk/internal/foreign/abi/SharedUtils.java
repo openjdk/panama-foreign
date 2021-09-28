@@ -39,6 +39,7 @@ import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.ResourceScopeImpl;
@@ -409,13 +410,13 @@ public class SharedUtils {
 
     @ForceInline
     public static Addressable acquire(Addressable addressable) {
-        ((ResourceScopeImpl)addressable.scope()).acquire0();
+        ((ResourceScopeImpl)((Scoped)addressable).scope()).acquire0();
         return addressable;
     }
 
     @ForceInline
     public static void release(Addressable addressable) {
-        ((ResourceScopeImpl)addressable.scope()).release0();
+        ((ResourceScopeImpl)((Scoped)addressable).scope()).release0();
     }
 
     /*
@@ -564,7 +565,7 @@ public class SharedUtils {
         }
     }
 
-    public static non-sealed class EmptyVaList implements VaList {
+    public static non-sealed class EmptyVaList implements VaList, Scoped {
 
         private final MemoryAddress address;
 
