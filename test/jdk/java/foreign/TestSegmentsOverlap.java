@@ -26,49 +26,89 @@
  * @run testng/othervm TestSegmentsOverlap
  */
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.function.Supplier;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
+import static java.lang.System.out;
 import static org.testng.Assert.*;
 
 public class TestSegmentsOverlap {
 
+    static Path tempPath;
+
+    static {
+        try {
+            File file = File.createTempFile("buffer", "txt");
+            file.deleteOnExit();
+            tempPath = file.toPath();
+            Files.write(file.toPath(), new byte[256], StandardOpenOption.WRITE);
+
+        } catch (IOException ex) {
+            throw new ExceptionInInitializerError(ex);
+        }
+    }
+
     // native
 
-    @Test
-    public void testNativeBasic() {
-        var s1 = MemorySegment.allocateNative(128, ResourceScope.newConfinedScope());
-        var s2 = MemorySegment.allocateNative(128, ResourceScope.newConfinedScope());
-        var s3 = MemorySegment.ofArray(new byte[]{});
+    @DataProvider(name = "nativeSegmentFactories")
+    public Object[][] nativeSegmentFactories() {
+        List<Supplier<MemorySegment>> l = List.of(
+                () -> MemorySegment.allocateNative(128, ResourceScope.newConfinedScope()),
+                () -> {
+                    try {
+                        return MemorySegment.mapFile(tempPath, 0L, 16, FileChannel.MapMode.READ_WRITE, ResourceScope.newConfinedScope());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+        return l.stream().map(s -> new Object[] { s }).toArray(Object[][]::new);
+    }
+
+    @Test(dataProvider="nativeSegmentFactories")
+    public void testNativeBasic(Supplier<MemorySegment> segmentSupplier) {
+        var s1 = segmentSupplier.get();
+        var s2 = segmentSupplier.get();
+        var sHeap = MemorySegment.ofArray(new byte[]{});
+        out.format("testNativeBasic s1:%s, s2:%s, sHeap:%s\n", s1, s2, sHeap);
         assertFalse(s1.isOverlapping(s2));
-        assertFalse(s1.isOverlapping(s3));
+        assertFalse(s2.isOverlapping(s1));
+        assertFalse(s1.isOverlapping(sHeap));
     }
 
-    @Test
-    public void testNativeIdentical() {
-        var s1 = MemorySegment.allocateNative(128, ResourceScope.newConfinedScope());
+    @Test(dataProvider="nativeSegmentFactories")
+    public void testNativeIdentical(Supplier<MemorySegment> segmentSupplier) {
+        var s1 = segmentSupplier.get();
         var s2 = s1.asReadOnly();
+        out.format("testNativeIdentical s1:%s, s2:%s\n", s1, s2);
         assertTrue(s1.isOverlapping(s2));
+        assertTrue(s2.isOverlapping(s1));
     }
 
-    @Test
-    public void testNativeSlices() {
-        MemorySegment segment = MemorySegment.allocateNative(10, 1, ResourceScope.newConfinedScope());
-        MemorySegment other = MemorySegment.allocateNative(10, 1, ResourceScope.newConfinedScope());
+    @Test(dataProvider="nativeSegmentFactories")
+    public void testNativeSlices(Supplier<MemorySegment> segmentSupplier) {
+        MemorySegment s1 = segmentSupplier.get();
+        MemorySegment s2 = segmentSupplier.get();
         for (int offset = 0 ; offset < 10 ; offset++) {
-            MemorySegment slice = segment.asSlice(offset);
-            assertTrue(segment.isOverlapping(slice));
-            assertTrue(slice.isOverlapping(segment));
-            assertFalse(other.isOverlapping(slice));
+            MemorySegment slice = s1.asSlice(offset);
+            out.format("testNativeSlices s1:%s, s2:%s, slice:%s, offset:%d\n", s1, s2, slice, offset);
+            assertTrue(s1.isOverlapping(slice));
+            assertTrue(slice.isOverlapping(s1));
+            assertFalse(s2.isOverlapping(slice));
         }
     }
 
     // heap
 
-    @DataProvider(name = "segmentFactories")
+    @DataProvider(name = "heapSegmentFactories")
     public Object[][] segmentFactories() {
         List<Supplier<MemorySegment>> l = List.of(
                 () -> MemorySegment.ofArray(new byte[] { 0x00, 0x01, 0x02, 0x03 }),
@@ -82,31 +122,36 @@ public class TestSegmentsOverlap {
         return l.stream().map(s -> new Object[] { s }).toArray(Object[][]::new);
     }
 
-    @Test(dataProvider="segmentFactories")
+    @Test(dataProvider="heapSegmentFactories")
     public void testHeapBasic(Supplier<MemorySegment> segmentSupplier) {
         var s1 = segmentSupplier.get();
         var s2 = segmentSupplier.get();
-        var s3 = MemorySegment.allocateNative(128, ResourceScope.newConfinedScope());
+        var sNative = MemorySegment.allocateNative(128, ResourceScope.newConfinedScope());
+        out.format("testHeapBasic s1:%s, s2:%s, sNative:%s\n", s1, s2, sNative);
         assertFalse(s1.isOverlapping(s2));
-        assertFalse(s1.isOverlapping(s3));
+        assertFalse(s2.isOverlapping(s1));
+        assertFalse(s1.isOverlapping(sNative));
     }
 
-    @Test(dataProvider="segmentFactories")
+    @Test(dataProvider="heapSegmentFactories")
     public void testHeapIdentical(Supplier<MemorySegment> segmentSupplier) {
         var s1 = segmentSupplier.get();
         var s2 = s1.asReadOnly();
+        out.format("testHeapIdentical s1:%s, s2:%s\n", s1, s2);
         assertTrue(s1.isOverlapping(s2));
+        assertTrue(s2.isOverlapping(s1));
     }
 
-    @Test(dataProvider="segmentFactories")
+    @Test(dataProvider="heapSegmentFactories")
     public void testHeapSlices(Supplier<MemorySegment> segmentSupplier) {
-        MemorySegment segment = segmentSupplier.get();
-        MemorySegment other = segmentSupplier.get();
+        MemorySegment s1 = segmentSupplier.get();
+        MemorySegment s2 = segmentSupplier.get();
         for (int offset = 0 ; offset < 4 ; offset++) {
-            MemorySegment slice = segment.asSlice(offset);
-            assertTrue(segment.isOverlapping(slice));
-            assertTrue(slice.isOverlapping(segment));
-            assertFalse(other.isOverlapping(slice));
+            MemorySegment slice = s1.asSlice(offset);
+            out.format("testHeapSlices s1:%s, s2:%s, slice:%s\n", s1, s2, slice);
+            assertTrue(s1.isOverlapping(slice));
+            assertTrue(slice.isOverlapping(s1));
+            assertFalse(s2.isOverlapping(slice));
         }
     }
 }

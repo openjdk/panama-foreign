@@ -321,13 +321,24 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     boolean isMapped();
 
     /**
-     * Returns true if this segment overlaps the {@code other} segment.
+     * Returns true if this segment overlaps with the {@code other} segment.
      *
-     * If the two segments are not either both backed by native or heap memory, {@code false} is returned.
-     * Otherwise, their offset and {@linkplain #byteSize() size} (in bytes) are used to determine if an overlap occurs.
+     * Two segments S1 and S2 are said to overlap if it is possible to find at least two slices L1 (from S1) and L2 (from S2)
+     * such that L1 and L2 are backed by the same memory region. As such, it is never possible for a {@link #isNative() native}
+     * segment to overlap with a heap segment.
+     *
+     * Example:
+     * <blockquote><pre>{@code
+     *     MemorySegment s1 = MemorySegment.allocateNative(100, scope);
+     *     MemorySegment s2 = MemorySegment.allocateNative(100, scope);
+     *     s1.overlap(s2);  // false
+     *     MemorySegment s3 = s1.slice(0, 50);
+     *     s1.overlap(slice);  // true
+     *     s2.overlap(slice);  // false
+     * }</pre></blockquote>
      *
      * @param other the segment to be tested for an overlap with this segment.
-     * @return {@code true} if this segment overlaps the other segment.
+     * @return {@code true} if this segment overlaps with the other segment.
      * @throws IllegalStateException if either the scope associated with this segment or the scope associated
      * with the {@code other} segment have been already closed, or if access occurs from a thread other than the thread
      * owning either scopes.

@@ -254,11 +254,9 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
     }
 
     @Override
-    public boolean isOverlapping(MemorySegment other) {
+    public final boolean isOverlapping(MemorySegment other) {
         AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)Objects.requireNonNull(other);
         if (base() == that.base()) {  // both are either native or heap
-            this.checkAccess(0, this.length, true);
-            that.checkAccess(0, that.length, true);
             this.checkValidState();
             that.checkValidState();
 
