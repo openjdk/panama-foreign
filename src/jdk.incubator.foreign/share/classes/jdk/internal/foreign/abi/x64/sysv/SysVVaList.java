@@ -26,6 +26,7 @@
 package jdk.internal.foreign.abi.x64.sysv;
 
 import jdk.incubator.foreign.*;
+import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.misc.Unsafe;
@@ -278,6 +279,7 @@ public non-sealed class SysVVaList implements VaList {
     @Override
     public void skip(MemoryLayout... layouts) {
         Objects.requireNonNull(layouts);
+        ((ResourceScopeImpl)segment.scope()).checkValidStateSlow();
         for (MemoryLayout layout : layouts) {
             Objects.requireNonNull(layout);
             TypeClass typeClass = TypeClass.classifyLayout(layout);

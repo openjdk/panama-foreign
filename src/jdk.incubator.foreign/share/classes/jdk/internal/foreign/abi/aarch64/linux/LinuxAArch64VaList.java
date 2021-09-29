@@ -26,6 +26,7 @@
 package jdk.internal.foreign.abi.aarch64.linux;
 
 import jdk.incubator.foreign.*;
+import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.aarch64.*;
@@ -322,6 +323,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
     @Override
     public void skip(MemoryLayout... layouts) {
         Objects.requireNonNull(layouts);
+        ((ResourceScopeImpl)segment.scope()).checkValidStateSlow();
         for (MemoryLayout layout : layouts) {
             Objects.requireNonNull(layout);
             TypeClass typeClass = TypeClass.classifyLayout(layout);

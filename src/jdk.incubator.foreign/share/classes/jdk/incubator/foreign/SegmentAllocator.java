@@ -26,6 +26,7 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.ArenaAllocator;
+import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.Utils;
 
 import java.lang.invoke.VarHandle;
