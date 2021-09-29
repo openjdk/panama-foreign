@@ -143,6 +143,15 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
     VaList copy();
 
     /**
+     * Returns the memory address associated with this va list.
+     * @throws IllegalStateException if the scope associated with this va list has been closed, or if access occurs from
+     * a thread other than the thread owning that scope.
+     * @return The memory address associated with this va list.
+     */
+    @Override
+    MemoryAddress address();
+
+    /**
      * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list}.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.

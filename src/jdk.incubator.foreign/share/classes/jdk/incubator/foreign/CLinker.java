@@ -68,9 +68,9 @@ import java.util.Optional;
  * <li>or, if {@code L} is a {@link GroupLayout}, then {@code C} is set to {@code MemorySegment.class}</li>
  * </ul>
  * <p>
- * All the arguments of type {@link Addressable} passed to a downcall method handle are {@linkplain ResourceScope#keepAlive(ResourceScope) kept alive}
- * by the linker implementation. This ensures that the resource scopes associated with a by-reference parameters passed
- * to a downcall method handle can never be closed, either implicitly or {@linkplain ResourceScope#close() explicitly}
+ * Arguments of type {@link MemorySegment}, {@link VaList} and {@link UpcallStub} passed by-reference to a downcall method handle
+ * are {@linkplain ResourceScope#keepAlive(ResourceScope) kept alive} by the linker implementation. That is, the resource
+ * scope associated with such arguments cannot be closed, either implicitly or {@linkplain ResourceScope#close() explicitly}
  * until the downcall method handle completes.
  * <p>
  * Furthermore, if the function descriptor's return layout is a group layout, the resulting downcall method handle accepts
@@ -243,5 +243,20 @@ public sealed interface CLinker extends SymbolLookup permits Windowsx64Linker, S
          * @return the target Java method handle invoked by this upcall stub.
          */
         MethodHandle target();
+
+        /**
+         * Returns the resource scope associated with this instance.
+         * @return the resource scope associated with this instance.
+         */
+        ResourceScope scope();
+
+        /**
+         * Returns the memory address associated with this upcall stub.
+         * @throws IllegalStateException if the scope associated with this upcall stub has been closed, or if access occurs from
+         * a thread other than the thread owning that scope.
+         * @return The memory address associated with this upcall stub.
+         */
+        @Override
+        MemoryAddress address();
     }
 }

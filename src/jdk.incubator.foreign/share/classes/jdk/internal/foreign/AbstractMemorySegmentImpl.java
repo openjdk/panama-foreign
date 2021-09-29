@@ -31,8 +31,6 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.ScopedMemoryAccess;
-import jdk.internal.reflect.CallerSensitive;
-import jdk.internal.reflect.Reflection;
 import jdk.internal.util.ArraysSupport;
 import jdk.internal.vm.annotation.ForceInline;
 import sun.security.action.GetPropertyAction;
@@ -57,7 +55,7 @@ import static jdk.incubator.foreign.ValueLayout.JAVA_BYTE;
  * are defined for each memory segment kind, see {@link NativeMemorySegmentImpl}, {@link HeapMemorySegmentImpl} and
  * {@link MappedMemorySegmentImpl}.
  */
-public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegmentProxy implements MemorySegment {
+public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegmentProxy implements MemorySegment, Scoped {
 
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
