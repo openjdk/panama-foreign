@@ -27,6 +27,7 @@ package jdk.internal.foreign.abi.x64.windows;
 
 import jdk.incubator.foreign.*;
 import jdk.incubator.foreign.VaList;
+import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
@@ -55,7 +56,7 @@ import static jdk.internal.foreign.PlatformLayouts.Win64.C_POINTER;
 //            ? **(t**)((ap += sizeof(__int64)) - sizeof(__int64))             \
 //            :  *(t* )((ap += sizeof(__int64)) - sizeof(__int64)))
 //
-public non-sealed class WinVaList implements VaList {
+public non-sealed class WinVaList implements VaList, Scoped {
     public static final Class<?> CARRIER = MemoryAddress.class;
     private static final long VA_SLOT_SIZE_BYTES = 8;
     private static final VarHandle VH_address = C_POINTER.varHandle();
