@@ -25,24 +25,25 @@
 #define SHARE_OOPS_OOPCAST_INLINE_HPP
 
 #include "oops/oopsHierarchy.hpp"
+#include "oops/oop.inline.hpp"
 
 template<typename T>
-static bool check_type(oop theOop) {
-  static_assert(sizeof(T) == 0, "No check_type specialization found for this type");
+static bool is_oop_type(oop theOop) {
+  static_assert(sizeof(T) == 0, "No is_oop_type specialization found for this type");
   return false;
 }
 template<>
-inline bool check_type<instanceOop>(oop theOop) { return theOop->is_instance(); }
+inline bool is_oop_type<instanceOop>(oop theOop) { return theOop->is_instance(); }
 template<>
-inline bool check_type<arrayOop>(oop theOop) { return theOop->is_array(); }
+inline bool is_oop_type<arrayOop>(oop theOop) { return theOop->is_array(); }
 template<>
-inline bool check_type<objArrayOop>(oop theOop) { return theOop->is_objArray(); }
+inline bool is_oop_type<objArrayOop>(oop theOop) { return theOop->is_objArray(); }
 template<>
-inline bool check_type<typeArrayOop>(oop theOop) { return theOop->is_typeArray(); }
+inline bool is_oop_type<typeArrayOop>(oop theOop) { return theOop->is_typeArray(); }
 
 template<typename R>
 R oop_cast(oop theOop) {
-  assert(check_type<R>(theOop), "Invalid cast");
+  assert(is_oop_type<R>(theOop), "Invalid cast");
   return (R) theOop;
 }
 

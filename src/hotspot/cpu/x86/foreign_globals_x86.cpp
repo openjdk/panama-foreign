@@ -131,6 +131,7 @@ VMReg vmstorage_to_vmreg(int type, int index, int stk_slot_offset) {
     case RegType::INTEGER: return ::as_Register(index)->as_VMReg();
     case RegType::VECTOR: return ::as_XMMRegister(index)->as_VMReg();
     case RegType::STACK: return VMRegImpl::stack2reg(stk_slot_offset + (index LP64_ONLY(* 2))); // numbering on x64 goes per 64-bits
+    case RegType::X87: break;
   }
   return VMRegImpl::Bad();
 }
