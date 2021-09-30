@@ -40,6 +40,7 @@
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -93,7 +94,7 @@ public class TestUpcallStructScope extends NativeTestHelper {
         MethodHandle target = methodHandle(capturedSegment::set);
         FunctionDescriptor upcallDesc = FunctionDescriptor.ofVoid(S_PDI_LAYOUT);
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            CLinker.UpcallStub upcallStub = LINKER.upcallStub(target, upcallDesc, scope);
+            NativeSymbol upcallStub = LINKER.upcallStub(target, upcallDesc, scope);
             MemorySegment argSegment = MemorySegment.allocateNative(S_PDI_LAYOUT, scope);
             MH_do_upcall.invoke(upcallStub, argSegment);
         }

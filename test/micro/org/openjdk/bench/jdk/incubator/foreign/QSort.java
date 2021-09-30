@@ -56,7 +56,7 @@ public class QSort extends CLayouts {
 
     static final CLinker abi = CLinker.systemCLinker();
     static final MethodHandle clib_qsort;
-    static final MemoryAddress native_compar;
+    static final Addressable native_compar;
     static final Addressable panama_upcall_compar;
     static final long jni_upcall_compar;
 

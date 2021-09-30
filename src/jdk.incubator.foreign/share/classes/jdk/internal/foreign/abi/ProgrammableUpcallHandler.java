@@ -25,14 +25,12 @@
 
 package jdk.internal.foreign.abi;
 
-import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.ResourceScopeImpl;
 import sun.security.action.GetPropertyAction;
 
 import java.lang.invoke.MethodHandle;
@@ -87,7 +85,7 @@ public class ProgrammableUpcallHandler {
         }
     }
 
-    public static CLinker.UpcallStub make(ABIDescriptor abi, MethodHandle target, CallingSequence callingSequence, ResourceScope scope) {
+    public static NativeSymbol make(ABIDescriptor abi, MethodHandle target, CallingSequence callingSequence, ResourceScope scope) {
         Binding.VMLoad[] argMoves = argMoveBindings(callingSequence);
         Binding.VMStore[] retMoves = retMoveBindings(callingSequence);
 
@@ -133,7 +131,7 @@ public class ProgrammableUpcallHandler {
             MethodHandle invokeMoves = insertArguments(MH_invokeMoves, 1, doBindingsErased, argMoves, retMoves, abi, layout);
             entryPoint = allocateUpcallStub(invokeMoves, abi, layout);
         }
-        return new UpcallStubs.UpcallStubImpl(entryPoint, callingSequence.functionDesc(), target, scope);
+        return UpcallStubs.makeUpcall(entryPoint, scope);
     }
 
     private static void checkPrimitive(MethodType type) {

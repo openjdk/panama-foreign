@@ -27,7 +27,6 @@ package jdk.incubator.foreign;
 
 import jdk.internal.foreign.SystemLookup;
 import jdk.internal.foreign.abi.SharedUtils;
-import jdk.internal.foreign.abi.UpcallStubs;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
@@ -68,7 +67,7 @@ import java.util.Optional;
  * <li>or, if {@code L} is a {@link GroupLayout}, then {@code C} is set to {@code MemorySegment.class}</li>
  * </ul>
  * <p>
- * Arguments of type {@link MemorySegment}, {@link VaList} and {@link UpcallStub} passed by-reference to a downcall method handle
+ * Arguments of type {@link MemorySegment}, {@link VaList} and {@link NativeSymbol} passed by-reference to a downcall method handle
  * are {@linkplain ResourceScope#keepAlive(ResourceScope) kept alive} by the linker implementation. That is, the resource
  * scope associated with such arguments cannot be closed, either implicitly or {@linkplain ResourceScope#close() explicitly}
  * until the downcall method handle completes.
@@ -106,9 +105,9 @@ import java.util.Optional;
  *     </ul></li>
  * <li>or, if {@code L} is a {@link GroupLayout}, then {@code C} is set to {@code MemorySegment.class}</li>
  * </ul>
- * Upcall stubs are modelled by instances of type {@link UpcallStub}; upcall stubs can be passed by reference to other
- * downcall method handles (as {@link UpcallStub} implements the {@link Addressable} interface) and,
- * when no longer required, they can be {@link ResourceScope#close() released}, via their {@linkplain UpcallStub#scope() scope}.
+ * Upcall stubs are modelled by instances of type {@link NativeSymbol}; upcall stubs can be passed by reference to other
+ * downcall method handles (as {@link NativeSymbol} implements the {@link Addressable} interface) and,
+ * when no longer required, they can be {@link ResourceScope#close() released}, via their {@linkplain NativeSymbol#scope() scope}.
  *
  * <h2>System lookup</h2>
  *
@@ -146,7 +145,7 @@ public sealed interface CLinker extends SymbolLookup permits Windowsx64Linker, S
      * @return a linker-specific library lookup which is suitable to find symbols in the standard libraries associated with this linker.
      */
     @Override
-    default Optional<MemoryAddress> lookup(String name) {
+    default Optional<NativeSymbol> lookup(String name) {
         return SystemLookup.getInstance().lookup(name);
     }
 
@@ -215,48 +214,12 @@ public sealed interface CLinker extends SymbolLookup permits Windowsx64Linker, S
      * @param target   the target method handle.
      * @param function the function descriptor.
      * @param scope the upcall stub scope.
-     * @return the native stub segment.
+     * @return the native stub symbol.
      * @throws IllegalArgumentException if the provided descriptor contains either a sequence or a padding layout,
      * or if it is determined that the target method handle can throw an exception, or if the target method handle
      * has a type that does not match the upcall stub <a href="CLinker.html#upcall-stubs"><em>inferred type</em></a>.
      * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
      * than the thread owning {@code scope}.
      */
-    UpcallStub upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);
-
-    /**
-     * An upcall stub is a pointer to a stub of code which can be passed to native functions to call a given <em>target</em> Java method handle.
-     * Created by {@link #upcallStub(MethodHandle, FunctionDescriptor, ResourceScope)}, an upcall stub can be passed by
-     * reference to other downcall method handles, as this interface extends {@link Addressable}.
-     * When no longer required, resources associated with an upcall stub can be {@link ResourceScope#close() released},
-     * via its {@linkplain UpcallStub#scope() scope}.
-     */
-    sealed interface UpcallStub extends Addressable permits UpcallStubs.UpcallStubImpl {
-        /**
-         * Obtains the function descriptor with which this upcall stub was {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, ResourceScope) created}.
-         * @return the function descriptor with which this upcall stub was {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, ResourceScope) created}.
-         */
-        FunctionDescriptor descriptor();
-
-        /**
-         * Obtains the target Java method handle invoked by this upcall stub.
-         * @return the target Java method handle invoked by this upcall stub.
-         */
-        MethodHandle target();
-
-        /**
-         * Returns the resource scope associated with this instance.
-         * @return the resource scope associated with this instance.
-         */
-        ResourceScope scope();
-
-        /**
-         * Returns the memory address associated with this upcall stub.
-         * @throws IllegalStateException if the scope associated with this upcall stub has been closed, or if access occurs from
-         * a thread other than the thread owning that scope.
-         * @return The memory address associated with this upcall stub.
-         */
-        @Override
-        MemoryAddress address();
-    }
+    NativeSymbol upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);
 }

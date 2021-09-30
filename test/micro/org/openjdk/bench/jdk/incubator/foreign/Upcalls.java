@@ -25,7 +25,7 @@ package org.openjdk.bench.jdk.incubator.foreign;
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SymbolLookup;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -128,7 +128,7 @@ public class Upcalls extends CLayouts {
         );
     }
 
-    static CLinker.UpcallStub makeCB(String name, MethodType mt, FunctionDescriptor fd) throws ReflectiveOperationException {
+    static NativeSymbol makeCB(String name, MethodType mt, FunctionDescriptor fd) throws ReflectiveOperationException {
         return abi.upcallStub(
             lookup().findStatic(Upcalls.class, name, mt),
             fd, ResourceScope.globalScope()

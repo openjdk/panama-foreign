@@ -37,6 +37,7 @@
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -93,7 +94,7 @@ public class TestUpcall extends CallGeneratorHelper {
         }
     }
 
-    static CLinker.UpcallStub dummyStub;
+    static NativeSymbol dummyStub;
 
     @BeforeClass
     void setup() {
@@ -111,7 +112,7 @@ public class TestUpcall extends CallGeneratorHelper {
 
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        MemoryAddress addr = LOOKUP.lookup(fName).get();
+        NativeSymbol addr = LOOKUP.lookup(fName).get();
         try (NativeScope scope = new NativeScope()) {
             MethodHandle mh = downcallHandle(abi, addr, scope, function(ret, paramTypes, fields));
             Object[] args = makeArgs(scope.scope(), ret, paramTypes, fields, returnChecks, argChecks);
@@ -130,7 +131,7 @@ public class TestUpcall extends CallGeneratorHelper {
 
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        MemoryAddress addr = LOOKUP.lookup(fName).get();
+        NativeSymbol addr = LOOKUP.lookup(fName).get();
         MethodHandle mh = downcallHandle(abi, addr, CONFINED_ALLOCATOR, function(ret, paramTypes, fields));
         Object[] args = makeArgs(ResourceScope.newSharedScope(), ret, paramTypes, fields, returnChecks, argChecks);
         Object[] callArgs = args;
@@ -147,7 +148,7 @@ public class TestUpcall extends CallGeneratorHelper {
         checkSelected(TestType.ASYNC);
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        MemoryAddress addr = LOOKUP.lookup(fName).get();
+        NativeSymbol addr = LOOKUP.lookup(fName).get();
         try (NativeScope scope = new NativeScope()) {
             FunctionDescriptor descriptor = function(ret, paramTypes, fields);
             MethodHandle mh = reverse(downcallHandle(abi, addr, CONFINED_ALLOCATOR, descriptor));
@@ -158,7 +159,7 @@ public class TestUpcall extends CallGeneratorHelper {
             FunctionDescriptor callbackDesc = descriptor.returnLayout()
                     .map(FunctionDescriptor::of)
                     .orElse(FunctionDescriptor.ofVoid());
-            CLinker.UpcallStub callback = abi.upcallStub(mh, callbackDesc, scope.scope());
+            NativeSymbol callback = abi.upcallStub(mh, callbackDesc, scope.scope());
 
             MethodHandle invoker = asyncInvoker(ret, ret == Ret.VOID ? null : paramTypes.get(0), fields);
 
@@ -187,7 +188,7 @@ public class TestUpcall extends CallGeneratorHelper {
                 + (returnType == ParamType.STRUCT ? "_" + sigCode(fields) : "");
 
         return INVOKERS.computeIfAbsent(name, symbol -> {
-            MemoryAddress invokerSymbol = LOOKUP.lookup(symbol).orElseThrow();
+            NativeSymbol invokerSymbol = LOOKUP.lookup(symbol).orElseThrow();
             MemoryLayout returnLayout = returnType.layout(fields);
             FunctionDescriptor desc = FunctionDescriptor.of(returnLayout, C_POINTER);
 
@@ -214,7 +215,7 @@ public class TestUpcall extends CallGeneratorHelper {
     }
 
     @SuppressWarnings("unchecked")
-    static CLinker.UpcallStub makeCallback(ResourceScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) {
+    static NativeSymbol makeCallback(ResourceScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) {
         if (params.isEmpty()) {
             return dummyStub;
         }

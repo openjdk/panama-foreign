@@ -25,6 +25,7 @@ import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SymbolLookup;
 
@@ -67,7 +68,7 @@ public class ThrowingUpcall extends NativeTestHelper {
         handle = MethodHandles.insertArguments(invoker, 0, handle);
 
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            CLinker.UpcallStub stub = CLinker.systemCLinker().upcallStub(handle, FunctionDescriptor.ofVoid(), scope);
+            NativeSymbol stub = CLinker.systemCLinker().upcallStub(handle, FunctionDescriptor.ofVoid(), scope);
 
             downcall.invoke(stub); // should call Shutdown.exit(1);
         }

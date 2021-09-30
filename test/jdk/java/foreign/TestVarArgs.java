@@ -33,6 +33,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.ValueLayout;
@@ -64,7 +65,7 @@ public class TestVarArgs extends NativeTestHelper {
         System.loadLibrary("VarArgs");
     }
 
-    static final MemoryAddress VARARGS_ADDR =
+    static final NativeSymbol VARARGS_ADDR =
             SymbolLookup.loaderLookup()
                     .lookup("varargs").get();
 

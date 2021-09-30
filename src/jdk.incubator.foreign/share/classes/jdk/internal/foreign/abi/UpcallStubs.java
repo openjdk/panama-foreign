@@ -24,14 +24,11 @@
  */
 package jdk.internal.foreign.abi;
 
-import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
-import jdk.internal.foreign.Scoped;
+import jdk.internal.foreign.NativeSymbolImpl;
 import jdk.internal.foreign.ResourceScopeImpl;
-
-import java.lang.invoke.MethodHandle;
 
 public class UpcallStubs {
 
@@ -51,22 +48,13 @@ public class UpcallStubs {
         registerNatives();
     }
 
-
-    // where
-    public record UpcallStubImpl(long entry, FunctionDescriptor descriptor, MethodHandle target, ResourceScope scope) implements Scoped, CLinker.UpcallStub {
-        public UpcallStubImpl {
-            ((ResourceScopeImpl)scope).addOrCleanupIfFail(new ResourceScopeImpl.ResourceList.ResourceCleanup() {
-                @Override
-                public void cleanup() {
-                    freeUpcallStub(entry);
-                }
-            });
-        }
-
-        @Override
-        public MemoryAddress address() {
-            ((ResourceScopeImpl)scope).checkValidStateSlow();
-            return MemoryAddress.ofLong(entry);
-        }
+    static NativeSymbol makeUpcall(long entry, ResourceScope scope) {
+        ((ResourceScopeImpl)scope).addOrCleanupIfFail(new ResourceScopeImpl.ResourceList.ResourceCleanup() {
+            @Override
+            public void cleanup() {
+                freeUpcallStub(entry);
+            }
+        });
+        return new NativeSymbolImpl("", MemoryAddress.ofLong(entry), scope);
     }
 }
