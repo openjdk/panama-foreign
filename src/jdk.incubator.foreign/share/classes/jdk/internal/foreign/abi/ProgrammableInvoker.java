@@ -262,7 +262,7 @@ public class ProgrammableInvoker {
      */
     Object invokeMoves(long addr, Object[] args, Binding.VMStore[] argBindings, Binding.VMLoad[] returnBindings) {
         MemorySegment stackArgsSeg = null;
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope(null)) {
             MemorySegment argBuffer = MemorySegment.allocateNative(layout.size, 64, scope);
             if (stackArgsBytes > 0) {
                 stackArgsSeg = MemorySegment.allocateNative(stackArgsBytes, 8, scope);

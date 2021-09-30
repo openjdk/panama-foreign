@@ -72,7 +72,7 @@ public class VaList extends CLayouts {
 
     @Benchmark
     public void vaList() throws Throwable {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope(null)) {
             jdk.incubator.foreign.VaList vaList = jdk.incubator.foreign.VaList.make(b ->
                     b.addVarg(C_INT, 1)
                             .addVarg(C_DOUBLE, 2D)
