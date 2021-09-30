@@ -30,7 +30,6 @@
  *
  * @run testng/othervm/native
  *   --enable-native-access=ALL-UNNAMED
- *   -Xbatch
  *   TestUpcallHighArity
  */
 
@@ -112,9 +111,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
                 args[i] = makeArg(argLayouts.get(i - 1), null, false);
             }
 
-            for (int i = 0; i < 20_000; i++) {
-                downcall.invokeWithArguments(args);
-            }
+            downcall.invokeWithArguments(args);
 
             Object[] capturedArgsArr = capturedArgs.get();
             for (int i = 0; i < capturedArgsArr.length; i++) {
