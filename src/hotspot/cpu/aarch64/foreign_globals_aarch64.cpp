@@ -98,11 +98,11 @@ enum class RegType {
   STACK = 3
 };
 
-VMReg vmStorageToVMReg(int type, int index, int stk_slot_offset) {
+VMReg vmstorage_to_vmreg(int type, int index) {
   switch(static_cast<RegType>(type)) {
     case RegType::INTEGER: return ::as_Register(index)->as_VMReg();
     case RegType::VECTOR: return ::as_FloatRegister(index)->as_VMReg();
-    case RegType::STACK: return VMRegImpl::stack2reg(stk_slot_offset + (index LP64_ONLY(* 2)));
+    case RegType::STACK: return VMRegImpl::stack2reg(index LP64_ONLY(* 2));
   }
   return VMRegImpl::Bad();
 }

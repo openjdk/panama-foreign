@@ -36,9 +36,8 @@
 #include "runtime/jniHandles.hpp"
 #include "runtime/jniHandles.inline.hpp"
 
-JNI_LEAF(jlong, NEP_vmStorageToVMReg(JNIEnv* env, jclass _unused, jint type, jint index, jint stack_slot_offset_bytes))
-  int stack_slot_offset_slots = stack_slot_offset_bytes >> LogBytesPerInt;
-  return vmstorage_to_vmreg(type, index, stack_slot_offset_slots)->value();
+JNI_LEAF(jlong, NEP_vmStorageToVMReg(JNIEnv* env, jclass _unused, jint type, jint index))
+  return vmstorage_to_vmreg(type, index)->value();
 JNI_END
 
 JNI_ENTRY(jlong, NEP_makeInvoker(JNIEnv* env, jclass _unused, jobject method_type, jint shadow_space_bytes,
@@ -105,7 +104,7 @@ JNI_END
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 
 static JNINativeMethod NEP_methods[] = {
-  {CC "vmStorageToVMReg", CC "(III)J", FN_PTR(NEP_vmStorageToVMReg)},
+  {CC "vmStorageToVMReg", CC "(II)J", FN_PTR(NEP_vmStorageToVMReg)},
   {CC "makeInvoker", CC "(Ljava/lang/invoke/MethodType;I[J[J)J", FN_PTR(NEP_makeInvoker)},
 };
 

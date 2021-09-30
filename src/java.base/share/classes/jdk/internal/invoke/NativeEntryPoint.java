@@ -78,8 +78,8 @@ public class NativeEntryPoint {
         assert (methodType.parameterType(0) == long.class) : "Address expected";
 
         int shadowSpaceBytes = abi.shadowSpaceBytes();
-        long[] encArgMoves = encodeVMStorages(argMoves, abi.shadowSpaceBytes());
-        long[] encRetMoves = encodeVMStorages(returnMoves, 16); // rbp and ret addr
+        long[] encArgMoves = encodeVMStorages(argMoves);
+        long[] encRetMoves = encodeVMStorages(returnMoves);
 
         CacheKey key = new CacheKey(methodType, abi.shadowSpaceBytes(),
                 Arrays.asList(argMoves), Arrays.asList(returnMoves));
@@ -90,15 +90,15 @@ public class NativeEntryPoint {
                 needTransition, methodType, name, invoker);
     }
 
-    private static long[] encodeVMStorages(VMStorageProxy[] moves, int stackSlotOffset) {
+    private static long[] encodeVMStorages(VMStorageProxy[] moves) {
         long[] out = new long[moves.length];
         for (int i = 0; i < moves.length; i++) {
-            out[i] = vmStorageToVMReg(moves[i].type(), moves[i].index(), stackSlotOffset);
+            out[i] = vmStorageToVMReg(moves[i].type(), moves[i].index());
         }
         return out;
     }
 
-    private static native long vmStorageToVMReg(int type, int index, int stackSlotOffset);
+    private static native long vmStorageToVMReg(int type, int index);
 
     private static native long makeInvoker(MethodType methodType, int shadowSpaceBytes, long[] encArgMoves, long[] encRetMoves);
 
