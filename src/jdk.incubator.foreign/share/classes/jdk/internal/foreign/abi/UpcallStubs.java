@@ -24,12 +24,11 @@
  */
 package jdk.internal.foreign.abi;
 
-import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.ResourceScopeImpl;
 
 import java.lang.invoke.MethodHandle;
@@ -54,7 +53,7 @@ public class UpcallStubs {
 
 
     // where
-    public record UpcallStubImpl(long entry, FunctionDescriptor descriptor, MethodHandle target, ResourceScope scope) implements CLinker.UpcallStub {
+    public record UpcallStubImpl(long entry, FunctionDescriptor descriptor, MethodHandle target, ResourceScope scope) implements Scoped, CLinker.UpcallStub {
         public UpcallStubImpl {
             ((ResourceScopeImpl)scope).addOrCleanupIfFail(new ResourceScopeImpl.ResourceList.ResourceCleanup() {
                 @Override

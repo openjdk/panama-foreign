@@ -738,13 +738,4 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      */
     @CallerSensitive
     void setAtIndex(ValueLayout.OfAddress layout, long index, Addressable value);
-
-    /**
-     * Returns the {@linkplain ResourceScope#globalScope() global scope}.
-     * @return the {@linkplain ResourceScope#globalScope() global scope}.
-     */
-    @Override
-    default ResourceScope scope() {
-        return ResourceScope.globalScope();
-    }
 }
