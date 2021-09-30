@@ -233,7 +233,7 @@ public non-sealed class SysVVaList implements VaList, Scoped {
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = layout.varHandle();
-                    try (ResourceScope localScope = ResourceScope.newConfinedScope()) {
+                    try (ResourceScope localScope = ResourceScope.newConfinedScope(null)) {
                         MemorySegment slice = MemorySegment.ofAddressNative(stackPtr(), layout.byteSize(), localScope);
                         Object res = reader.get(slice);
                         postAlignStack(layout);

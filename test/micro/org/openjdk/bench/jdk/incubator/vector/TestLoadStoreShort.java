@@ -209,7 +209,7 @@ public class TestLoadStoreShort {
 
   @Benchmark
   public void bufferSegmentConfined() {
-    try (final var scope = ResourceScope.newConfinedScope()) {
+    try (final var scope = ResourceScope.newConfinedScope(null)) {
       final var srcBufferSegmentConfined = MemorySegment.ofAddressNative(srcAddress, size, scope).asByteBuffer();
       final var dstBufferSegmentConfined = MemorySegment.ofAddressNative(dstAddress, size, scope).asByteBuffer();
 
