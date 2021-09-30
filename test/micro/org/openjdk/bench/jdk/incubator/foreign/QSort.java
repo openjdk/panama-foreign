@@ -63,6 +63,8 @@ public class QSort extends CLayouts {
     static final int[] INPUT = { 5, 3, 2, 7, 8, 12, 1, 7 };
     static final MemorySegment INPUT_SEGMENT;
 
+    static Addressable qsort_addr = abi.lookup("qsort").get();
+
     static {
         INPUT_SEGMENT = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(INPUT.length, JAVA_INT), ResourceScope.globalScope());
         INPUT_SEGMENT.copyFrom(MemorySegment.ofArray(INPUT));
@@ -72,7 +74,7 @@ public class QSort extends CLayouts {
 
         try {
             clib_qsort = abi.downcallHandle(
-                    abi.lookup("qsort").orElseThrow(),
+                    qsort_addr,
                     FunctionDescriptor.ofVoid(C_POINTER, C_LONG_LONG, C_LONG_LONG, C_POINTER)
             );
             System.loadLibrary("QSort");
