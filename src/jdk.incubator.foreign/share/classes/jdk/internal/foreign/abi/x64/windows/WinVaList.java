@@ -133,6 +133,7 @@ public non-sealed class WinVaList implements VaList, Scoped {
     @Override
     public void skip(MemoryLayout... layouts) {
         Objects.requireNonNull(layouts);
+        ((ResourceScopeImpl)scope).checkValidStateSlow();
         Stream.of(layouts).forEach(Objects::requireNonNull);
         segment = segment.asSlice(layouts.length * VA_SLOT_SIZE_BYTES);
     }
