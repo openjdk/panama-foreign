@@ -39,6 +39,7 @@ import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.ResourceScopeImpl;
@@ -415,7 +416,7 @@ public class SharedUtils {
     public static void acquire(Object[] args) {
         ResourceScope lastScope = null;
         for (int i = 0 ; i < args.length ; i++) {
-            ResourceScope scope = ((Addressable)args[i]).scope();
+            ResourceScope scope = ((Scoped)args[i]).scope();
             if (scope != ResourceScopeImpl.GLOBAL && scope != lastScope) {
                 lastScope = scope;
                 ((ResourceScopeImpl)scope).acquire0();
@@ -427,7 +428,7 @@ public class SharedUtils {
     public static void release(Object[] args) {
         ResourceScope lastScope = null;
         for (int i = 0 ; i < args.length ; i++) {
-            ResourceScope scope = ((Addressable)args[i]).scope();
+            ResourceScope scope = ((Scoped)args[i]).scope();
             if (scope != ResourceScopeImpl.GLOBAL && scope != lastScope) {
                 lastScope = scope;
                 ((ResourceScopeImpl)scope).release0();
@@ -592,7 +593,7 @@ public class SharedUtils {
         }
     }
 
-    public static non-sealed class EmptyVaList implements VaList {
+    public static non-sealed class EmptyVaList implements VaList, Scoped {
 
         private final MemoryAddress address;
 

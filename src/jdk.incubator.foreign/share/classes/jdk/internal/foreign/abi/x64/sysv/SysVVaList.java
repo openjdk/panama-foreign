@@ -26,6 +26,8 @@
 package jdk.internal.foreign.abi.x64.sysv;
 
 import jdk.incubator.foreign.*;
+import jdk.internal.foreign.ResourceScopeImpl;
+import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.misc.Unsafe;
@@ -44,7 +46,7 @@ import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.abi.SharedUtils.THROWING_ALLOCATOR;
 
 // See https://software.intel.com/sites/default/files/article/402129/mpx-linux64-abi.pdf "3.5.7 Variable Argument Lists"
-public non-sealed class SysVVaList implements VaList {
+public non-sealed class SysVVaList implements VaList, Scoped {
     private static final Unsafe U = Unsafe.getUnsafe();
 
     static final Class<?> CARRIER = MemoryAddress.class;
@@ -231,7 +233,7 @@ public non-sealed class SysVVaList implements VaList {
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = layout.varHandle();
-                    try (ResourceScope localScope = ResourceScope.newConfinedScope()) {
+                    try (ResourceScope localScope = ResourceScope.newConfinedScope(null)) {
                         MemorySegment slice = MemorySegment.ofAddressNative(stackPtr(), layout.byteSize(), localScope);
                         Object res = reader.get(slice);
                         postAlignStack(layout);
@@ -278,6 +280,7 @@ public non-sealed class SysVVaList implements VaList {
     @Override
     public void skip(MemoryLayout... layouts) {
         Objects.requireNonNull(layouts);
+        ((ResourceScopeImpl)segment.scope()).checkValidStateSlow();
         for (MemoryLayout layout : layouts) {
             Objects.requireNonNull(layout);
             TypeClass typeClass = TypeClass.classifyLayout(layout);

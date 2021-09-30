@@ -26,6 +26,8 @@
 package jdk.internal.foreign.abi.aarch64.linux;
 
 import jdk.incubator.foreign.*;
+import jdk.internal.foreign.ResourceScopeImpl;
+import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.aarch64.*;
@@ -49,7 +51,7 @@ import static jdk.internal.foreign.abi.aarch64.CallArranger.MAX_REGISTER_ARGUMEN
  * Standard va_list implementation as defined by AAPCS document and used on
  * Linux. Variadic parameters may be passed in registers or on the stack.
  */
-public non-sealed class LinuxAArch64VaList implements VaList {
+public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
     private static final Unsafe U = Unsafe.getUnsafe();
 
     static final Class<?> CARRIER = MemoryAddress.class;
@@ -322,6 +324,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
     @Override
     public void skip(MemoryLayout... layouts) {
         Objects.requireNonNull(layouts);
+        ((ResourceScopeImpl)segment.scope()).checkValidStateSlow();
         for (MemoryLayout layout : layouts) {
             Objects.requireNonNull(layout);
             TypeClass typeClass = TypeClass.classifyLayout(layout);

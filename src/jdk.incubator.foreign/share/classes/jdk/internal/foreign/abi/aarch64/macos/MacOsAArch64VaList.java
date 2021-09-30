@@ -27,6 +27,7 @@ package jdk.internal.foreign.abi.aarch64.macos;
 
 import jdk.incubator.foreign.*;
 import jdk.incubator.foreign.VaList;
+import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
@@ -45,7 +46,7 @@ import static jdk.internal.foreign.abi.SharedUtils.alignUp;
  * parameters are passed on the stack and the type of va_list decays to
  * char* instead of the structure defined in the AAPCS.
  */
-public non-sealed class MacOsAArch64VaList implements VaList {
+public non-sealed class MacOsAArch64VaList implements VaList, Scoped {
     public static final Class<?> CARRIER = MemoryAddress.class;
     private static final long VA_SLOT_SIZE_BYTES = 8;
     private static final VarHandle VH_address = C_POINTER.varHandle();
@@ -127,6 +128,7 @@ public non-sealed class MacOsAArch64VaList implements VaList {
     @Override
     public void skip(MemoryLayout... layouts) {
         Objects.requireNonNull(layouts);
+        ((ResourceScopeImpl)scope).checkValidStateSlow();
 
         for (MemoryLayout layout : layouts) {
             Objects.requireNonNull(layout);

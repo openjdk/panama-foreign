@@ -128,7 +128,7 @@ public class BulkMismatchAcquire {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public long mismatch_large_segment_acquire() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope(null)) {
             scope.keepAlive(mismatchSegmentLarge1.scope());
             return mismatchSegmentLarge1.mismatch(mismatchSegmentLarge2);
         }
