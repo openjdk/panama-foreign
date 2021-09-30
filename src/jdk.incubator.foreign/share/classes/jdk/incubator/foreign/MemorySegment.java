@@ -321,29 +321,33 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     boolean isMapped();
 
     /**
-     * Returns true if this segment overlaps with the {@code other} segment.
+     * Returns a new memory segment that is the overlap of the two segments.
      *
-     * Two segments S1 and S2 are said to overlap if it is possible to find at least two slices L1 (from S1) and L2 (from S2)
-     * such that L1 and L2 are backed by the same memory region. As such, it is never possible for a {@link #isNative() native}
-     * segment to overlap with a heap segment.
+     * <p>Two segments S1 and S2 are said to overlap if it is possible to find
+     * at least two slices L1 (from S1) and L2 (from S2) such that L1 and L2 are
+     * backed by the same memory region. As such, it is not possible for an
+     * {@link #isNative() native} segment to overlap with a heap segment; in
+     * this case, or when no overlap occurs, {@code null} is returned.
      *
-     * Example:
-     * <blockquote><pre>{@code
-     *     MemorySegment s1 = MemorySegment.allocateNative(100, scope);
-     *     MemorySegment s2 = MemorySegment.allocateNative(100, scope);
-     *     s1.overlap(s2);  // false
-     *     MemorySegment s3 = s1.slice(0, 50);
-     *     s1.overlap(slice);  // true
-     *     s2.overlap(slice);  // false
-     * }</pre></blockquote>
-     *
-     * @param other the segment to be tested for an overlap with this segment.
-     * @return {@code true} if this segment overlaps with the other segment.
-     * @throws IllegalStateException if either the scope associated with this segment or the scope associated
-     * with the {@code other} segment have been already closed, or if access occurs from a thread other than the thread
-     * owning either scopes.
+     * @param other the segment to test for an overlap with this segment.
+     * @return a new memory segment, or {@code null} if no overlap occurs.
      */
-    boolean isOverlapping(MemorySegment other);
+    MemorySegment overlap(MemorySegment other);
+
+    /**
+     * Returns the offset, in bytes, from this segment to the other segment.
+     *
+     * <p>The offset is relative to the {@linkplain #address() base address} of
+     * this segment and will be in the range of 0 (inclusive) up to the
+     * {@linkplain #byteSize() size} (in bytes) of this segment (exclusive). If
+     * the two segments do not {@link #overlap(MemorySegment) overlap}, an
+     * offset can not be retrieved and {@code -1L} is returned.
+     *
+     * @param other the segment to retrieve an offset to.
+     * @return the relative offset, in bytes, from this segment to the other
+     *         segment, or -1L if no overlap occurs.
+     */
+    long offsetOf(MemorySegment other);
 
     /**
      * Fills a value into this memory segment.

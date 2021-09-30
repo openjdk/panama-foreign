@@ -252,25 +252,34 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
     }
 
     @Override
-    public final boolean isOverlapping(MemorySegment other) {
+    public final MemorySegment overlap(MemorySegment other) {
         AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)Objects.requireNonNull(other);
-        if (base() == that.base()) {  // both are either native or heap
-            this.checkValidState();
-            that.checkValidState();
+        long offsetFromThis = this.offsetOf(that);
+        if (offsetFromThis >= 0L) {  // this and that overlap
+            long offsetFromThat = that.offsetOf(this);
+            long newSize = Math.min(this.byteSize() - offsetFromThis, that.byteSize() - offsetFromThat);
+            return dup(offsetFromThis, newSize, mask, scope);
+        }
+        return null;
+    }
 
+    @Override
+    public final long offsetOf(MemorySegment other) {
+        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl) Objects.requireNonNull(other);
+        if (base() == that.base()) {  // both are either native or heap
             final long thisStart = this.min();
             final long thatStart = that.min();
-            if (thisStart == thatStart) {
-                return true;
-            }
             final long thisEnd = thisStart + this.byteSize() - 1L;
             final long thatEnd = thatStart + that.byteSize() - 1L;
-            if (thisStart < thatStart && thisEnd >= thatStart) {
-                return true;
+
+            if (thisStart <= thatStart && thisEnd >= thatStart) {
+                return thatStart - thisStart;
             }
-            return thatStart < thisStart && thatEnd >= thisStart;
+            if (thatStart <= thisStart && thatEnd >= thisStart) {
+                return 0L;
+            }
         }
-        return false;
+        return -1L;
     }
 
     @Override

@@ -129,7 +129,6 @@ public class TestScopedOperations {
         ScopedOperation.ofSegment(s -> MemoryLayout.sequenceLayout(s.byteSize(), JAVA_BYTE), "MemorySegment::spliterator");
         ScopedOperation.ofSegments(MemorySegment::copyFrom, "MemorySegment::copyFrom");
         ScopedOperation.ofSegments(MemorySegment::mismatch, "MemorySegment::mismatch");
-        ScopedOperation.ofSegments(MemorySegment::isOverlapping, "MemorySegment::isOverlapping");
 
         // valist operations
         ScopedOperation.ofVaList(VaList::address, "VaList::address");
