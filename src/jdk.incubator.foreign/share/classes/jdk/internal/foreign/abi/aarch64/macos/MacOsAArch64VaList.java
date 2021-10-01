@@ -128,6 +128,7 @@ public non-sealed class MacOsAArch64VaList implements VaList, Scoped {
     @Override
     public void skip(MemoryLayout... layouts) {
         Objects.requireNonNull(layouts);
+        ((ResourceScopeImpl)scope).checkValidStateSlow();
 
         for (MemoryLayout layout : layouts) {
             Objects.requireNonNull(layout);

@@ -47,8 +47,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static jdk.incubator.foreign.ValueLayout.JAVA_BYTE;
+import static jdk.incubator.foreign.ValueLayout.JAVA_INT;
+import static jdk.incubator.foreign.ValueLayout.JAVA_LONG;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -69,11 +72,12 @@ public class TestScopedOperations {
     }
 
     @Test(dataProvider = "scopedOperations")
-    public void testOpAfterClose(String name, ScopedOperation scopedOperation) {
+    public <Z> void testOpAfterClose(String name, ScopedOperation<Z> scopedOperation) {
         ResourceScope scope = ResourceScope.newConfinedScope();
+        Z obj = scopedOperation.apply(scope);
         scope.close();
         try {
-            scopedOperation.accept(scope);
+            scopedOperation.accept(obj);
             fail();
         } catch (IllegalStateException ex) {
             assertTrue(ex.getMessage().contains("closed"));
@@ -81,12 +85,13 @@ public class TestScopedOperations {
     }
 
     @Test(dataProvider = "scopedOperations")
-    public void testOpOutsideConfinement(String name, ScopedOperation scopedOperation) {
+    public <Z> void testOpOutsideConfinement(String name, ScopedOperation<Z> scopedOperation) {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            Z obj = scopedOperation.apply(scope);
             AtomicReference<Throwable> failed = new AtomicReference<>();
             Thread t = new Thread(() -> {
                 try {
-                    scopedOperation.accept(scope);
+                    scopedOperation.accept(obj);
                 } catch (Throwable ex) {
                     failed.set(ex);
                 }
@@ -120,16 +125,15 @@ public class TestScopedOperations {
                 fail();
             }
         }, "MemorySegment::mapFromFile");
-        ScopedOperation.ofScope(scope -> VaList.make(b -> {}, scope), "VaList::make");
+        ScopedOperation.ofScope(scope -> VaList.make(b -> b.addVarg(JAVA_INT, 42), scope), "VaList::make");
         ScopedOperation.ofScope(scope -> VaList.ofAddress(MemoryAddress.ofLong(42), scope), "VaList::make");
         ScopedOperation.ofScope(SegmentAllocator::arenaUnbounded, "SegmentAllocator::arenaAllocator");
         // segment operations
         ScopedOperation.ofSegment(s -> s.toArray(JAVA_BYTE), "MemorySegment::toArray(BYTE)");
         ScopedOperation.ofSegment(MemorySegment::address, "MemorySegment::address");
-        ScopedOperation.ofSegment(s -> MemoryLayout.sequenceLayout(s.byteSize(), JAVA_BYTE), "MemorySegment::spliterator");
-        ScopedOperation.ofSegments(MemorySegment::copyFrom, "MemorySegment::copyFrom");
-        ScopedOperation.ofSegments(MemorySegment::mismatch, "MemorySegment::mismatch");
-
+        ScopedOperation.ofSegment(s -> s.copyFrom(s), "MemorySegment::copyFrom");
+        ScopedOperation.ofSegment(s -> s.mismatch(s), "MemorySegment::mismatch");
+        ScopedOperation.ofSegment(s -> s.fill((byte) 0), "MemorySegment::fill");
         // valist operations
         ScopedOperation.ofVaList(VaList::address, "VaList::address");
         ScopedOperation.ofVaList(VaList::copy, "VaList::copy");
@@ -165,66 +169,52 @@ public class TestScopedOperations {
         return scopedOperations.stream().map(op -> new Object[] { op.name, op }).toArray(Object[][]::new);
     }
 
-    static class ScopedOperation implements Consumer<ResourceScope> {
+    static class ScopedOperation<X> implements Consumer<X>, Function<ResourceScope, X> {
 
-        final Consumer<ResourceScope> scopeConsumer;
+        final Function<ResourceScope, X> factory;
+        final Consumer<X> operation;
         final String name;
 
-        private ScopedOperation(Consumer<ResourceScope> scopeConsumer, String name) {
-            this.scopeConsumer = scopeConsumer;
+        private ScopedOperation(Function<ResourceScope, X> factory, Consumer<X> operation, String name) {
+            this.factory = factory;
+            this.operation = operation;
             this.name = name;
         }
 
         @Override
-        public void accept(ResourceScope scope) {
-            scopeConsumer.accept(scope);
+        public void accept(X obj) {
+            operation.accept(obj);
+        }
+
+        @Override
+        public X apply(ResourceScope scope) {
+            return factory.apply(scope);
         }
 
         static void ofScope(Consumer<ResourceScope> scopeConsumer, String name) {
-            scopedOperations.add(new ScopedOperation(scopeConsumer::accept, name));
+            scopedOperations.add(new ScopedOperation<>(Function.identity(), scopeConsumer, name));
         }
 
         static void ofVaList(Consumer<VaList> vaListConsumer, String name) {
-            scopedOperations.add(new ScopedOperation(scope -> {
-                VaList vaList = VaList.make((builder) -> {}, scope);
-                vaListConsumer.accept(vaList);
-            }, name));
+            scopedOperations.add(new ScopedOperation<>(scope -> VaList.make(builder -> builder.addVarg(JAVA_LONG, 42), scope),
+                    vaListConsumer, name));
         }
 
         static void ofSegment(Consumer<MemorySegment> segmentConsumer, String name) {
             for (SegmentFactory segmentFactory : SegmentFactory.values()) {
-                scopedOperations.add(new ScopedOperation(scope -> {
-                    MemorySegment segment = segmentFactory.segmentFactory.apply(scope);
-                    segmentConsumer.accept(segment);
-                }, segmentFactory.name() + "/" + name));
-            }
-        }
-
-        static void ofSegments(BiConsumer<MemorySegment, MemorySegment> segmentsConsumer, String name) {
-            for (ScopedOperation.SegmentFactory segmentFactory : ScopedOperation.SegmentFactory.values()) {
-                scopedOperations.add(new ScopedOperation(scope1 -> {
-                    ResourceScope scope2 = ResourceScope.newConfinedScope();
-                    MemorySegment segment2 = segmentFactory.segmentFactory.apply(scope2);
-                    MemorySegment segment1 = segmentFactory.segmentFactory.apply(scope1);
-                    scope1.close();
-                    segmentsConsumer.accept(segment1, segment2);
-                }, segmentFactory.name() + "/" + name + "1"));
-                scopedOperations.add(new ScopedOperation(scope1 -> {
-                    ResourceScope scope2 = ResourceScope.newConfinedScope();
-                    MemorySegment segment2 = segmentFactory.segmentFactory.apply(scope2);
-                    MemorySegment segment1 = segmentFactory.segmentFactory.apply(scope1);
-                    scope2.close();
-                    segmentsConsumer.accept(segment1, segment2);
-                }, segmentFactory.name() + "/" + name + "2"));
+                scopedOperations.add(new ScopedOperation<>(
+                        segmentFactory.segmentFactory,
+                        segmentConsumer,
+                        segmentFactory.name() + "/" + name));
             }
         }
 
         static void ofAllocator(Consumer<SegmentAllocator> allocatorConsumer, String name) {
             for (AllocatorFactory allocatorFactory : AllocatorFactory.values()) {
-                scopedOperations.add(new ScopedOperation(scope -> {
-                    SegmentAllocator allocator = allocatorFactory.allocatorFactory.apply(scope);
-                    allocatorConsumer.accept(allocator);
-                }, allocatorFactory.name() + "/" + name));
+                scopedOperations.add(new ScopedOperation<>(
+                        allocatorFactory.allocatorFactory,
+                        allocatorConsumer,
+                        allocatorFactory.name() + "/" + name));
             }
         }
 
@@ -259,11 +249,7 @@ public class TestScopedOperations {
 
         enum AllocatorFactory {
             ARENA_BOUNDED(scope -> SegmentAllocator.arenaBounded(1000, scope)),
-            ARENA_UNBOUNDED(SegmentAllocator::arenaUnbounded),
-            FROM_SEGMENT(scope -> {
-                MemorySegment segment = MemorySegment.allocateNative(10, scope);
-                return SegmentAllocator.prefixAllocator(segment);
-            });
+            ARENA_UNBOUNDED(SegmentAllocator::arenaUnbounded);
 
             final Function<ResourceScope, SegmentAllocator> allocatorFactory;
 

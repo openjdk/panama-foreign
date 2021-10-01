@@ -104,27 +104,38 @@ public class ResourceScopeClose {
 
     @Benchmark
     public MemorySegment confined_close() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope(null)) {
             return MemorySegment.allocateNative(ALLOC_SIZE, 4, scope);
         }
     }
 
     @Benchmark
     public MemorySegment shared_close() {
-        try (ResourceScope scope = ResourceScope.newSharedScope()) {
+        try (ResourceScope scope = ResourceScope.newSharedScope(null)) {
             return MemorySegment.allocateNative(ALLOC_SIZE, 4, scope);
         }
     }
 
     @Benchmark
-    public MemorySegment implicit_close() {
+    public MemorySegment confined_implicit() {
         return MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newConfinedScope());
     }
 
     @Benchmark
-    public MemorySegment implicit_close_systemgc() {
+    public MemorySegment shared_implicit() {
+        return MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newSharedScope());
+    }
+
+    @Benchmark
+    public MemorySegment confined_implicit_systemgc() {
         if (gcCount++ == 0) System.gc(); // GC when we overflow
         return MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newConfinedScope());
+    }
+
+    @Benchmark
+    public MemorySegment shared_implicit_systemgc() {
+        if (gcCount++ == 0) System.gc(); // GC when we overflow
+        return MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newSharedScope());
     }
 
     // keep
