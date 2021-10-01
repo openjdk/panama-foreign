@@ -125,9 +125,9 @@ public class SharedUtils {
             MH_HANDLE_UNCAUGHT_EXCEPTION = lookup.findStatic(SharedUtils.class, "handleUncaughtException",
                     methodType(void.class, Throwable.class));
             ACQUIRE_MH = MethodHandles.lookup().findStatic(SharedUtils.class, "acquire",
-                    MethodType.methodType(void.class, Object[].class));
+                    MethodType.methodType(void.class, Scoped[].class));
             RELEASE_MH = MethodHandles.lookup().findStatic(SharedUtils.class, "release",
-                    MethodType.methodType(void.class, Object[].class));
+                    MethodType.methodType(void.class, Scoped[].class));
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
         }
@@ -414,67 +414,84 @@ public class SharedUtils {
 
     @ForceInline
     @SuppressWarnings("fallthrough")
-    public static void acquire(Object[] args) {
+    public static void acquire(Scoped[] args) {
+        ResourceScope scope4 = null;
         ResourceScope scope3 = null;
         ResourceScope scope2 = null;
         ResourceScope scope1 = null;
         ResourceScope scope0 = null;
         switch (args.length) {
             default:
-                for (int i = 4 ; i < args.length ; i++) {
-                    ResourceScope scope = ((Scoped)args[i]).scope();
-                    ((ResourceScopeImpl)scope).release0();
+                for (int i = 5 ; i < args.length ; i++) {
+                    acquire(args[i].scope());
                 }
+            case 5:
+                scope4 = args[4].scope();
+                acquire(scope4);
             case 4:
-                scope3 = ((Scoped) args[3]).scope();
-                ((ResourceScopeImpl)scope3).acquire0();
+                scope3 = args[3].scope();
+                if (scope3 != scope4)
+                    acquire(scope3);
             case 3:
-                scope2 = ((Scoped) args[2]).scope();
-                if (scope2 != scope3)
-                    ((ResourceScopeImpl)scope2).acquire0();
+                scope2 = args[2].scope();
+                if (scope2 != scope3 && scope2 != scope4)
+                    acquire(scope2);
             case 2:
-                scope1 = ((Scoped) args[1]).scope();
-                if (scope1 != scope2 && scope1 != scope3)
-                    ((ResourceScopeImpl)scope1).acquire0();
+                scope1 = args[1].scope();
+                if (scope1 != scope2 && scope1 != scope3 && scope1 != scope4)
+                    acquire(scope1);
             case 1:
-                scope0 = ((Scoped) args[0]).scope();
-                if (scope0 != scope1 && scope0 != scope2 && scope0 != scope3)
-                    ((ResourceScopeImpl)scope0).acquire0();
+                scope0 = args[0].scope();
+                if (scope0 != scope1 && scope0 != scope2 && scope0 != scope3 && scope0 != scope4)
+                    acquire(scope0);
             case 0: break;
         }
     }
 
     @ForceInline
     @SuppressWarnings("fallthrough")
-    public static void release(Object[] args) {
+    public static void release(Scoped[] args) {
+        ResourceScope scope4 = null;
         ResourceScope scope3 = null;
         ResourceScope scope2 = null;
         ResourceScope scope1 = null;
         ResourceScope scope0 = null;
         switch (args.length) {
             default:
-                for (int i = 4 ; i < args.length ; i++) {
-                    ResourceScope scope = ((Scoped)args[i]).scope();
-                    ((ResourceScopeImpl)scope).release0();
+                for (int i = 5 ; i < args.length ; i++) {
+                    release(args[i].scope());
                 }
+            case 5:
+                scope4 = args[4].scope();
+                release(scope4);
             case 4:
-                scope3 = ((Scoped) args[3]).scope();
-                ((ResourceScopeImpl) scope3).release0();
+                scope3 = args[3].scope();
+                if (scope3 != scope4)
+                    release(scope3);
             case 3:
-                scope2 = ((Scoped) args[2]).scope();
-                if (scope2 != scope3)
-                    ((ResourceScopeImpl) scope2).release0();
+                scope2 = args[2].scope();
+                if (scope2 != scope3 && scope2 != scope4)
+                    release(scope2);
             case 2:
-                scope1 = ((Scoped) args[1]).scope();
-                if (scope1 != scope2 && scope1 != scope3)
-                    ((ResourceScopeImpl) scope1).release0();
+                scope1 = args[1].scope();
+                if (scope1 != scope2 && scope1 != scope3 && scope1 != scope4)
+                    release(scope1);
             case 1:
-                scope0 = ((Scoped) args[0]).scope();
-                if (scope0 != scope1 && scope0 != scope2 && scope0 != scope3)
-                    ((ResourceScopeImpl) scope0).release0();
-            case 0:
-                break;
+                scope0 = args[0].scope();
+                if (scope0 != scope1 && scope0 != scope2 && scope0 != scope3 && scope0 != scope4)
+                    release(scope0);
+            case 0: break;
         }
+    }
+
+    @ForceInline
+    private static void acquire(ResourceScope scope) {
+        ((ResourceScopeImpl)scope).acquire0();
+    }
+
+    @ForceInline
+    private static void release(ResourceScope scope) {
+        ((ResourceScopeImpl)scope).release0();
     }
 
     /*
@@ -508,8 +525,8 @@ public class SharedUtils {
                 adapterType = adapterType.appendParameterTypes(Addressable.class);
             }
 
-            MethodHandle acquireHandle = ACQUIRE_MH.asCollector(Object[].class, addressableCount).asType(adapterType);
-            MethodHandle releaseHandle = RELEASE_MH.asCollector(Object[].class, addressableCount).asType(adapterType);
+            MethodHandle acquireHandle = ACQUIRE_MH.asCollector(Scoped[].class, addressableCount).asType(adapterType);
+            MethodHandle releaseHandle = RELEASE_MH.asCollector(Scoped[].class, addressableCount).asType(adapterType);
 
             for (UnaryOperator<MethodHandle> adapter : adapters) {
                 acquireHandle = adapter.apply(acquireHandle);
