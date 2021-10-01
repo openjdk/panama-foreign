@@ -107,3 +107,88 @@ VMReg vmstorage_to_vmreg(int type, int index) {
   }
   return VMRegImpl::Bad();
 }
+
+int RegSpillFill::pd_reg_size(VMReg reg) {
+  assert(reg->is_reg(), "must be a register");
+  if (reg->is_Register()) {
+    return 8;
+  } else if (reg->is_FloatRegister()) {
+    bool use_sve = Matcher::supports_scalable_vector();
+    if (use_sve) {
+      return Matcher::scalable_vector_reg_size(T_BYTE);
+    }
+    return 16;
+  } else {
+    ShouldNotReachHere();
+  }
+  return 0;
+}
+
+void RegSpillFill::pd_store_reg(MacroAssemblre* masm, int offset, VMReg reg) {
+  assert(reg->is_reg(), "must be a register");
+  if (reg->is_Register()) {
+    masm->spill(reg->as_Register(), true, offset);
+  } else if (reg->is_FloatRegister()) {
+    bool use_sve = Matcher::supports_scalable_vector();
+    if (use_sve) {
+      masm->spill_sve_vector(reg->as_FloatRegister(), offset, Matcher::scalable_vector_reg_size(T_BYTE));
+    } else {
+      masm->spill(reg->as_FloatRegister(), masm->Q, offset);
+    }
+  } else {
+    ShouldNotReachHere();
+  }
+}
+
+void RegSpillFill::pd_load_reg(MacroAssemblre* masm, int offset, VMReg reg) {
+  assert(reg->is_reg(), "must be a register");
+  if (reg->is_Register()) {
+    masm->unspill(reg->as_Register(), true, offset);
+  } else if (reg->is_FloatRegister()) {
+    bool use_sve = Matcher::supports_scalable_vector();
+    if (use_sve) {
+      masm->unspill_sve_vector(reg->as_FloatRegister(), offset, Matcher::scalable_vector_reg_size(T_BYTE));
+    } else {
+      masm->unspill(reg->as_FloatRegister(), masm->Q, offset);
+    }
+  } else {
+    ShouldNotReachHere();
+  }
+}
+
+void ArgumentShuffle::pd_gen_shuffle(MacroAssembler* masm, int shuffle_space_rsp_offset) const {
+  assert(shuffle_space_rsp_offset == -1, "not expected");
+
+  for (int i = 0; i < _moves.length(); i++) {
+    Move move = _moves.at(i);
+    BasicType arg_bt     = move.bt;
+    VMRegPair from_vmreg = move.from;
+    VMRegPair to_vmreg   = move.to;
+
+    masm->block_comment(err_msg("bt=%s", null_safe_string(type2name(arg_bt))));
+    switch (arg_bt) {
+      case T_BOOLEAN:
+      case T_BYTE:
+      case T_SHORT:
+      case T_CHAR:
+      case T_INT:
+       masm->move32_64(from_vmreg, to_vmreg);
+       break;
+
+      case T_FLOAT:
+        masm->float_move(from_vmreg, to_vmreg);
+        break;
+
+      case T_DOUBLE:
+        masm->double_move(from_vmreg, to_vmreg);
+        break;
+
+      case T_LONG :
+        masm->long_move(from_vmreg, to_vmreg);
+        break;
+
+      default:
+        fatal("found in upcall args: %s", type2name(arg_bt));
+    }
+  }
+}

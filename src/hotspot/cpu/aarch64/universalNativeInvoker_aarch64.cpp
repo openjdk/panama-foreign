@@ -126,121 +126,59 @@ address ProgrammableInvoker::generate_adapter(jobject jabi, jobject jlayout) {
   return _invoke_native_blob->code_begin();
 }
 
-// // ---------------------------------------------------------------
+// ---------------------------------------------------------------
 
-// class NativeInvokerGenerator : public StubCodeGenerator {
-//   address _call_target;
-//   int _shadow_space_bytes;
+class NativeInvokerGenerator : public StubCodeGenerator {
+  address _call_target;
+  int _shadow_space_bytes;
 
-//   const GrowableArray<VMReg>& _input_registers;
-//   const GrowableArray<VMReg>& _output_registers;
+  const GrowableArray<VMReg>& _input_registers;
+  const GrowableArray<VMReg>& _output_registers;
 
-//   int _frame_complete;
-//   int _framesize;
-//   OopMapSet* _oop_maps;
-// public:
-//   NativeInvokerGenerator(CodeBuffer* buffer,
-//                          address call_target,
-//                          int shadow_space_bytes,
-//                          const GrowableArray<VMReg>& input_registers,
-//                          const GrowableArray<VMReg>& output_registers)
-//    : StubCodeGenerator(buffer, PrintMethodHandleStubs),
-//      _call_target(call_target),
-//      _shadow_space_bytes(shadow_space_bytes),
-//      _input_registers(input_registers),
-//      _output_registers(output_registers),
-//      _frame_complete(0),
-//      _framesize(0),
-//      _oop_maps(NULL) {
-//     assert(_output_registers.length() <= 1
-//            || (_output_registers.length() == 2 && !_output_registers.at(1)->is_valid()), "no multi-reg returns");
-//   }
+  int _frame_complete;
+  int _framesize;
+  OopMapSet* _oop_maps;
+public:
+  NativeInvokerGenerator(CodeBuffer* buffer,
+                         address call_target,
+                         int shadow_space_bytes,
+                         const GrowableArray<VMReg>& input_registers,
+                         const GrowableArray<VMReg>& output_registers)
+   : StubCodeGenerator(buffer, PrintMethodHandleStubs),
+     _call_target(call_target),
+     _shadow_space_bytes(shadow_space_bytes),
+     _input_registers(input_registers),
+     _output_registers(output_registers),
+     _frame_complete(0),
+     _framesize(0),
+     _oop_maps(NULL) {
+    assert(_output_registers.length() <= 1
+           || (_output_registers.length() == 2 && !_output_registers.at(1)->is_valid()), "no multi-reg returns");
+  }
 
-//   void generate();
+  void generate();
 
-//   int spill_size_in_bytes() const {
-//     if (_output_registers.length() == 0) {
-//       return 0;
-//     }
-//     VMReg reg = _output_registers.at(0);
-//     assert(reg->is_reg(), "must be a register");
-//     if (reg->is_Register()) {
-//       return 8;
-//     } else if (reg->is_FloatRegister()) {
-//       bool use_sve = Matcher::supports_scalable_vector();
-//       if (use_sve) {
-//         return Matcher::scalable_vector_reg_size(T_BYTE);
-//       }
-//       return 16;
-//     } else {
-//       ShouldNotReachHere();
-//     }
-//     return 0;
-//   }
+  int frame_complete() const {
+    return _frame_complete;
+  }
 
-//   void spill_output_registers() {
-//     if (_output_registers.length() == 0) {
-//       return;
-//     }
-//     VMReg reg = _output_registers.at(0);
-//     assert(reg->is_reg(), "must be a register");
-//     MacroAssembler* masm = _masm;
-//     if (reg->is_Register()) {
-//       __ spill(reg->as_Register(), true, 0);
-//     } else if (reg->is_FloatRegister()) {
-//       bool use_sve = Matcher::supports_scalable_vector();
-//       if (use_sve) {
-//         __ spill_sve_vector(reg->as_FloatRegister(), 0, Matcher::scalable_vector_reg_size(T_BYTE));
-//       } else {
-//         __ spill(reg->as_FloatRegister(), __ Q, 0);
-//       }
-//     } else {
-//       ShouldNotReachHere();
-//     }
-//   }
+  int framesize() const {
+    return (_framesize >> (LogBytesPerWord - LogBytesPerInt));
+  }
 
-//   void fill_output_registers() {
-//     if (_output_registers.length() == 0) {
-//       return;
-//     }
-//     VMReg reg = _output_registers.at(0);
-//     assert(reg->is_reg(), "must be a register");
-//     MacroAssembler* masm = _masm;
-//     if (reg->is_Register()) {
-//       __ unspill(reg->as_Register(), true, 0);
-//     } else if (reg->is_FloatRegister()) {
-//       bool use_sve = Matcher::supports_scalable_vector();
-//       if (use_sve) {
-//         __ unspill_sve_vector(reg->as_FloatRegister(), 0, Matcher::scalable_vector_reg_size(T_BYTE));
-//       } else {
-//         __ unspill(reg->as_FloatRegister(), __ Q, 0);
-//       }
-//     } else {
-//       ShouldNotReachHere();
-//     }
-//   }
+  OopMapSet* oop_maps() const {
+    return _oop_maps;
+  }
 
-//   int frame_complete() const {
-//     return _frame_complete;
-//   }
+private:
+#ifdef ASSERT
+  bool target_uses_register(VMReg reg) {
+    return _input_registers.contains(reg) || _output_registers.contains(reg);
+  }
+#endif
+};
 
-//   int framesize() const {
-//     return (_framesize >> (LogBytesPerWord - LogBytesPerInt));
-//   }
-
-//   OopMapSet* oop_maps() const {
-//     return _oop_maps;
-//   }
-
-// private:
-// #ifdef ASSERT
-//   bool target_uses_register(VMReg reg) {
-//     return _input_registers.contains(reg) || _output_registers.contains(reg);
-//   }
-// #endif
-// };
-
-// static const int native_invoker_code_size = 1024;
+static const int native_invoker_code_size = 1024;
 
 RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
                                                       int num_args,
@@ -248,139 +186,162 @@ RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
                                                       int shadow_space_bytes,
                                                       const GrowableArray<VMReg>& input_registers,
                                                       const GrowableArray<VMReg>& output_registers) {
-  Unimplemented();
-  return nullptr;
+  int locs_size  = 64;
+  CodeBuffer code("nep_invoker_blob", native_invoker_code_size, locs_size);
+  NativeInvokerGenerator g(&code, call_target, shadow_space_bytes, input_registers, output_registers);
+  g.generate();
+  code.log_section_sizes("nep_invoker_blob");
 
-//   int locs_size  = 64;
-//   CodeBuffer code("nep_invoker_blob", native_invoker_code_size, locs_size);
-//   NativeInvokerGenerator g(&code, call_target, shadow_space_bytes, input_registers, output_registers);
-//   g.generate();
-//   code.log_section_sizes("nep_invoker_blob");
+  RuntimeStub* stub =
+    RuntimeStub::new_runtime_stub("nep_invoker_blob",
+                                  &code,
+                                  g.frame_complete(),
+                                  g.framesize(),
+                                  g.oop_maps(), false);
+  return stub;
+}
 
-//   RuntimeStub* stub =
-//     RuntimeStub::new_runtime_stub("nep_invoker_blob",
-//                                   &code,
-//                                   g.frame_complete(),
-//                                   g.framesize(),
-//                                   g.oop_maps(), false);
-//   return stub;
-// }
+void NativeInvokerGenerator::generate() {
+  assert(!(target_uses_register(rscratch1->as_VMReg())
+           || target_uses_register(rscratch2->as_VMReg())
+           || target_uses_register(rthread->as_VMReg())),
+         "Register conflict");
 
-// void NativeInvokerGenerator::generate() {
-//   assert(!(target_uses_register(rscratch1->as_VMReg())
-//            || target_uses_register(rscratch2->as_VMReg())
-//            || target_uses_register(rthread->as_VMReg())),
-//          "Register conflict");
+  enum layout {
+    rbp_off,
+    rbp_off2,
+    return_off,
+    return_off2,
+    framesize // inclusive of return address
+    // The following are also computed dynamically:
+    // spill area for return value
+    // out arg area (e.g. for stack args)
+  };
 
-//   enum layout {
-//     rbp_off,
-//     rbp_off2,
-//     return_off,
-//     return_off2,
-//     framesize // inclusive of return address
-//   };
+  Register input_addr_reg = rscratch1;
+  JavaCallConv in_conv;
+  DowncallNativeCallConv out_conv(_input_registers, input_addr_reg->as_VMReg());
+  ArgumentShuffle arg_shuffle(_signature, _num_args, _signature, _num_args, &in_conv, &out_conv, r19->as_VMReg());
 
-//   assert(_shadow_space_bytes == 0, "not expecting shadow space on AArch64");
-//   _framesize = align_up(framesize + (spill_size_in_bytes() >> LogBytesPerInt), 4);
-//   assert(is_even(_framesize/2), "sp not 16-byte aligned");
+#ifdef ASSERT
+  LogTarget(Trace, panama) lt;
+  if (lt.is_enabled()) {
+    ResourceMark rm;
+    LogStream ls(lt);
+    arg_shuffle.print_on(&ls);
+  }
+#endif
 
-//   _oop_maps  = new OopMapSet();
-//   MacroAssembler* masm = _masm;
+  RegSpillFill out_reg_spill(_output_registers.data(), _output_registers.length());
+  int spill_offset = 0;
 
-//   address start = __ pc();
+  assert(_shadow_space_bytes == 0, "not expecting shadow space on AArch64");
+  _framesize = align_up(framesize
+    + (out_reg_spill.spill_size_bytes() >> LogBytesPerInt)
+    + arg_shuffle.out_arg_stack_slots(), 4);
+  assert(is_even(_framesize/2), "sp not 16-byte aligned");
 
-//   __ enter();
+  _oop_maps  = new OopMapSet();
+  MacroAssembler* masm = _masm;
 
-//   // lr and fp are already in place
-//   __ sub(sp, rfp, ((unsigned)_framesize-4) << LogBytesPerInt); // prolog
+  address start = __ pc();
 
-//   _frame_complete = __ pc() - start;
+  __ enter();
 
-//   address the_pc = __ pc();
-//   __ set_last_Java_frame(sp, rfp, the_pc, rscratch1);
-//   OopMap* map = new OopMap(_framesize, 0);
-//   _oop_maps->add_gc_map(the_pc - start, map);
+  // lr and fp are already in place
+  __ sub(sp, rfp, ((unsigned)_framesize-4) << LogBytesPerInt); // prolog
 
-//   // State transition
-//   __ mov(rscratch1, _thread_in_native);
-//   __ lea(rscratch2, Address(rthread, JavaThread::thread_state_offset()));
-//   __ stlrw(rscratch1, rscratch2);
+  _frame_complete = __ pc() - start;
 
-//   rt_call(masm, _call_target);
+  address the_pc = __ pc();
+  __ set_last_Java_frame(sp, rfp, the_pc, rscratch1);
+  OopMap* map = new OopMap(_framesize, 0);
+  _oop_maps->add_gc_map(the_pc - start, map);
 
-//   __ mov(rscratch1, _thread_in_native_trans);
-//   __ strw(rscratch1, Address(rthread, JavaThread::thread_state_offset()));
+  // State transition
+  __ mov(rscratch1, _thread_in_native);
+  __ lea(rscratch2, Address(rthread, JavaThread::thread_state_offset()));
+  __ stlrw(rscratch1, rscratch2);
 
-//   // Force this write out before the read below
-//   __ membar(Assembler::LoadLoad | Assembler::LoadStore |
-//             Assembler::StoreLoad | Assembler::StoreStore);
+  __ block_comment("{ argument shuffle");
+  arg_shuffle.gen_shuffle(_masm);
+  __ block_comment("} argument shuffle");
 
-//   __ verify_sve_vector_length();
+  rt_call(masm, _call_target);
 
-//   Label L_after_safepoint_poll;
-//   Label L_safepoint_poll_slow_path;
+  __ mov(rscratch1, _thread_in_native_trans);
+  __ strw(rscratch1, Address(rthread, JavaThread::thread_state_offset()));
 
-//   __ safepoint_poll(L_safepoint_poll_slow_path, true /* at_return */, true /* acquire */, false /* in_nmethod */);
+  // Force this write out before the read below
+  __ membar(Assembler::LoadLoad | Assembler::LoadStore |
+            Assembler::StoreLoad | Assembler::StoreStore);
 
-//   __ ldrw(rscratch1, Address(rthread, JavaThread::suspend_flags_offset()));
-//   __ cbnzw(rscratch1, L_safepoint_poll_slow_path);
+  __ verify_sve_vector_length();
 
-//   __ bind(L_after_safepoint_poll);
+  Label L_after_safepoint_poll;
+  Label L_safepoint_poll_slow_path;
 
-//   // change thread state
-//   __ mov(rscratch1, _thread_in_Java);
-//   __ lea(rscratch2, Address(rthread, JavaThread::thread_state_offset()));
-//   __ stlrw(rscratch1, rscratch2);
+  __ safepoint_poll(L_safepoint_poll_slow_path, true /* at_return */, true /* acquire */, false /* in_nmethod */);
 
-//   __ block_comment("reguard stack check");
-//   Label L_reguard;
-//   Label L_after_reguard;
-//   __ ldrb(rscratch1, Address(rthread, JavaThread::stack_guard_state_offset()));
-//   __ cmpw(rscratch1, StackOverflow::stack_guard_yellow_reserved_disabled);
-//   __ br(Assembler::EQ, L_reguard);
-//   __ bind(L_after_reguard);
+  __ ldrw(rscratch1, Address(rthread, JavaThread::suspend_flags_offset()));
+  __ cbnzw(rscratch1, L_safepoint_poll_slow_path);
 
-//   __ reset_last_Java_frame(true);
+  __ bind(L_after_safepoint_poll);
 
-//   __ leave(); // required for proper stackwalking of RuntimeStub frame
-//   __ ret(lr);
+  // change thread state
+  __ mov(rscratch1, _thread_in_Java);
+  __ lea(rscratch2, Address(rthread, JavaThread::thread_state_offset()));
+  __ stlrw(rscratch1, rscratch2);
 
-//   //////////////////////////////////////////////////////////////////////////////
+  __ block_comment("reguard stack check");
+  Label L_reguard;
+  Label L_after_reguard;
+  __ ldrb(rscratch1, Address(rthread, JavaThread::stack_guard_state_offset()));
+  __ cmpw(rscratch1, StackOverflow::stack_guard_yellow_reserved_disabled);
+  __ br(Assembler::EQ, L_reguard);
+  __ bind(L_after_reguard);
 
-//   __ block_comment("{ L_safepoint_poll_slow_path");
-//   __ bind(L_safepoint_poll_slow_path);
+  __ reset_last_Java_frame(true);
 
-//   // Need to save the native result registers around any runtime calls.
-//   spill_output_registers();
+  __ leave(); // required for proper stackwalking of RuntimeStub frame
+  __ ret(lr);
 
-//   __ mov(c_rarg0, rthread);
-//   assert(frame::arg_reg_save_area_bytes == 0, "not expecting frame reg save area");
-//   __ lea(rscratch1, RuntimeAddress(CAST_FROM_FN_PTR(address, JavaThread::check_special_condition_for_native_trans)));
-//   __ blr(rscratch1);
+  //////////////////////////////////////////////////////////////////////////////
 
-//   fill_output_registers();
+  __ block_comment("{ L_safepoint_poll_slow_path");
+  __ bind(L_safepoint_poll_slow_path);
 
-//   __ b(L_after_safepoint_poll);
-//   __ block_comment("} L_safepoint_poll_slow_path");
+  // Need to save the native result registers around any runtime calls.
+  out_reg_spill.gen_spill(_masm, spill_offset);
 
-//   //////////////////////////////////////////////////////////////////////////////
+  __ mov(c_rarg0, rthread);
+  assert(frame::arg_reg_save_area_bytes == 0, "not expecting frame reg save area");
+  __ lea(rscratch1, RuntimeAddress(CAST_FROM_FN_PTR(address, JavaThread::check_special_condition_for_native_trans)));
+  __ blr(rscratch1);
 
-//   __ block_comment("{ L_reguard");
-//   __ bind(L_reguard);
+  out_reg_spill.gen_fill(_masm, spill_offset);
 
-//   spill_output_registers();
+  __ b(L_after_safepoint_poll);
+  __ block_comment("} L_safepoint_poll_slow_path");
 
-//   rt_call(masm, CAST_FROM_FN_PTR(address, SharedRuntime::reguard_yellow_pages));
+  //////////////////////////////////////////////////////////////////////////////
 
-//   fill_output_registers();
+  __ block_comment("{ L_reguard");
+  __ bind(L_reguard);
 
-//   __ b(L_after_reguard);
+  out_reg_spill.gen_spill(_masm, spill_offset);
 
-//   __ block_comment("} L_reguard");
+  rt_call(masm, CAST_FROM_FN_PTR(address, SharedRuntime::reguard_yellow_pages));
 
-//   //////////////////////////////////////////////////////////////////////////////
+  out_reg_spill.gen_fill(_masm, spill_offset);
 
-//   __ flush();
+  __ b(L_after_reguard);
+
+  __ block_comment("} L_reguard");
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  __ flush();
 }
 
 bool ProgrammableInvoker::supports_native_invoker() {

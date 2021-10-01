@@ -26,19 +26,25 @@
 
 #include "code/vmreg.hpp"
 #include "oops/oopsHierarchy.hpp"
+#include "runtime/sharedRuntime.hpp"
 #include "utilities/growableArray.hpp"
 #include "utilities/macros.hpp"
 
 #include CPU_HEADER(foreign_globals)
 
-struct CallRegs {
+class CallConvClosure {
+public:
+  virtual int calling_convention(BasicType* sig_bt, VMRegPair* regs, int num_args) const = 0;
+};
+
+struct CallRegs : public CallConvClosure {
   VMReg* _arg_regs;
   int _args_length;
 
   VMReg* _ret_regs;
   int _rets_length;
 
-  void calling_convention(BasicType* sig_bt, VMRegPair *parm_regs, uint argcnt) const;
+  int calling_convention(BasicType* sig_bt, VMRegPair* regs, int num_args) const override;
 };
 
 class ForeignGlobals {
@@ -87,5 +93,77 @@ public:
 };
 
 VMReg vmstorage_to_vmreg(int type, int index);
+
+class JavaCallConv : public CallConvClosure {
+public:
+  int JavaCallConv::calling_convention(BasicType* sig_bt, VMRegPair* regs, int num_args) const override {
+    return SharedRuntime::java_calling_convention(sig_bt, regs, num_args);
+  }
+};
+
+class DowncallNativeCallConv : public CallConvClosure {
+  const GrowableArray<VMReg>& _input_regs;
+  VMReg _input_addr_reg;
+public:
+  DowncallNativeCallConv(const GrowableArray<VMReg>& input_regs, VMReg input_addr_reg)
+   : _input_regs(input_regs),
+   _input_addr_reg(input_addr_reg) {}
+
+  int calling_convention(BasicType* sig_bt, VMRegPair* out_regs, int num_args) const override;
+};
+
+class RegSpillFill {
+  const VMReg* _regs;
+  int _num_regs;
+  int _spill_size_bytes;
+public:
+  RegSpillFill(const VMReg* regs, int num_regs) : _regs(regs), _num_regs(num_regs) {
+    _spill_size_bytes = compute_spill_area();
+  }
+
+  int spill_size_bytes() const { return _spill_size_bytes; }
+  void gen_spill(MacroAssembler* masm, int rsp_offset) const { return gen(masm, rsp_offset, true); }
+  void gen_fill(MacroAssembler* masm, int rsp_offset) const { return gen(masm, rsp_offset, false); }
+
+private:
+  int compute_spill_area();
+  void gen(MacroAssembler* masm, int rsp_offset, bool is_spill) const;
+
+  int pd_reg_size(VMReg reg) const;
+  void pd_store_reg(MacroAssembler* masm, int offset, VMReg reg) const;
+  void pd_load_reg(MacroAssembler* masm, int offset, VMReg reg) const;
+};
+
+class ArgumentShuffle {
+public:
+  struct Move {
+    BasicType bt;
+    VMRegPair from;
+    VMRegPair to;
+
+    bool is_identity() const {
+        return (from.first() == to.first() && from.second() == to.second())
+          && !from.first()->is_stack(); // stack regs are interpreted differently
+    }
+  };
+private:
+  GrowableArray<Move> _moves;
+  int _out_arg_stack_slots;
+public:
+  ArgumentShuffle(
+    BasicType* in_sig_bt, int num_in_args,
+    BasicType* out_sig_bt, int num_out_args,
+    const CallConvClosure* input_conv, const CallConvClosure* output_conv,
+    VMReg shuffle_temp);
+
+  int out_arg_stack_slots() const { return _out_arg_stack_slots; }
+  void gen_shuffle(MacroAssembler* masm, int shuffle_space_rsp_offset = -1) const {
+    pd_gen_shuffle(masm, shuffle_space_rsp_offset);
+  }
+
+  void print_on(outputStream* os) const;
+private:
+  void pd_gen_shuffle(MacroAssembler* masm, int shuffle_space_rsp_offset) const;
+};
 
 #endif // SHARE_PRIMS_FOREIGN_GLOBALS

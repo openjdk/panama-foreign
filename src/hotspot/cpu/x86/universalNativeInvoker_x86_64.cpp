@@ -265,57 +265,6 @@ RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
   return stub;
 }
 
-class DowncallNativeCallConv : public CallConvClosure {
-  const GrowableArray<VMReg>& _input_regs;
-  Register _input_addr_reg;
-public:
-  DowncallNativeCallConv(const GrowableArray<VMReg>& input_regs, Register input_addr_reg)
-   : _input_regs(input_regs),
-   _input_addr_reg(input_addr_reg) {}
-
-  int calling_convention(BasicType* sig_bt, VMRegPair* out_regs, int num_args) override {
-    out_regs[0].set2(_input_addr_reg->as_VMReg()); // address
-    out_regs[1].set_bad(); // upper half
-
-    int src_pos = 0;
-    int stk_slots = 0;
-    for (int i = 2; i < num_args; i++) { // skip address (2)
-      switch (sig_bt[i]) {
-        case T_BOOLEAN:
-        case T_CHAR:
-        case T_BYTE:
-        case T_SHORT:
-        case T_INT:
-        case T_FLOAT: {
-          VMReg reg = _input_regs.at(src_pos++);
-          out_regs[i].set1(reg);
-          if (reg->is_stack())
-            stk_slots += 2;
-          break;
-        }
-        case T_LONG:
-        case T_DOUBLE: {
-          assert((i + 1) < num_args && sig_bt[i + 1] == T_VOID, "expecting half");
-          VMReg reg = _input_regs.at(src_pos);
-          out_regs[i].set2(reg);
-          src_pos += 2; // skip BAD as well
-          if (reg->is_stack())
-            stk_slots += 2;
-          break;
-        }
-        case T_VOID: // Halves of longs and doubles
-          assert(i != 0 && (sig_bt[i - 1] == T_LONG || sig_bt[i - 1] == T_DOUBLE), "expecting half");
-          out_regs[i].set_bad();
-          break;
-        default:
-          ShouldNotReachHere();
-          break;
-      }
-    }
-    return stk_slots;
-  }
-};
-
 void NativeInvokerGenerator::generate() {
   assert(!(target_uses_register(r15_thread->as_VMReg()) || target_uses_register(rscratch1->as_VMReg())), "Register conflict");
 
@@ -333,8 +282,8 @@ void NativeInvokerGenerator::generate() {
 
   Register input_addr_reg = rscratch1;
   JavaCallConv in_conv;
-  DowncallNativeCallConv out_conv(_input_registers, input_addr_reg);
-  ArgumentShuffle arg_shuffle(_signature, _num_args, _signature, _num_args, &in_conv, &out_conv);
+  DowncallNativeCallConv out_conv(_input_registers, input_addr_reg->as_VMReg());
+  ArgumentShuffle arg_shuffle(_signature, _num_args, _signature, _num_args, &in_conv, &out_conv, rbx->as_VMReg());
 
 #ifdef ASSERT
   LogTarget(Trace, panama) lt;

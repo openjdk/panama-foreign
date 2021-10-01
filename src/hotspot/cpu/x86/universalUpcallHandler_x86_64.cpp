@@ -277,19 +277,6 @@ static void restore_callee_saved_registers(MacroAssembler* _masm, const ABIDescr
 
   __ block_comment("} restore_callee_saved_regs ");
 }
-
-class UpcallNativeCallConv : public CallConvClosure {
-  const CallRegs& _regs;
-public:
-  UpcallNativeCallConv(const CallRegs& regs)
-   : _regs(regs) {}
-
-  int calling_convention(BasicType* sig_bt, VMRegPair* out_regs, int num_args) override {
-    _regs.calling_convention(sig_bt, out_regs, num_args);
-    return 0; // Expected to be unused
-  }
-};
-
 // Register is a class, but it would be assigned numerical value.
 // "0" is assigned for rax and for xmm0. Thus we need to ignore -Wnonnull.
 PRAGMA_DIAG_PUSH
@@ -326,9 +313,8 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   BasicType* in_sig_bt = out_sig_bt + 1;
   int total_in_args = total_out_args - 1;
 
-  UpcallNativeCallConv in_conv(call_regs);
   JavaCallConv out_conv;
-  ArgumentShuffle arg_shuffle(in_sig_bt, total_in_args, out_sig_bt, total_out_args, &in_conv, &out_conv);
+  ArgumentShuffle arg_shuffle(in_sig_bt, total_in_args, out_sig_bt, total_out_args, &call_regs, &out_conv, rbx->as_VMReg());
   int stack_slots = SharedRuntime::out_preserve_stack_slots() + arg_shuffle.out_arg_stack_slots();
   int out_arg_area = align_up(stack_slots * VMRegImpl::stack_slot_size, StackAlignmentInBytes);
 
