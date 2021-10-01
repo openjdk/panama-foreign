@@ -183,7 +183,7 @@ public class TestNulls {
         addDefaultMapping(VaList.class, VaListHelper.vaList);
         addDefaultMapping(VaList.Builder.class, VaListHelper.vaListBuilder);
         addDefaultMapping(ResourceScope.class, ResourceScope.newConfinedScope());
-        addDefaultMapping(SegmentAllocator.class, (size, align) -> null);
+        addDefaultMapping(SegmentAllocator.class, SegmentAllocator.prefixAllocator(MemorySegment.ofArray(new byte[10])));
         addDefaultMapping(Supplier.class, () -> null);
         addDefaultMapping(ClassLoader.class, TestNulls.class.getClassLoader());
         addDefaultMapping(SymbolLookup.class, CLinker.systemCLinker());

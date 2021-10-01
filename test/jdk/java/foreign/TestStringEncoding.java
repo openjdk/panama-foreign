@@ -25,6 +25,7 @@
 import jdk.incubator.foreign.MemorySegment;
 
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
@@ -39,7 +40,8 @@ public class TestStringEncoding {
     @Test(dataProvider = "strings")
     public void testStrings(String testString, int expectedByteLength) {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment text = scope.allocateUtf8String(testString);
+            SegmentAllocator allocator = SegmentAllocator.arenaBounded(expectedByteLength, scope);
+            MemorySegment text = allocator.allocateUtf8String(testString);
 
             assertEquals(text.byteSize(), expectedByteLength);
 

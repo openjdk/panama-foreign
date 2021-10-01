@@ -97,7 +97,8 @@ public class StrLenTest extends CLayouts {
     @Benchmark
     public int panama_strlen() throws Throwable {
         try (ResourceScope scope = ResourceScope.newConfinedScope(null)) {
-            MemorySegment segment = scope.allocateUtf8String(str);
+            MemorySegment segment = MemorySegment.allocateNative(str.length() + 1, scope);
+            segment.setUtf8String(0, str);
             return (int)STRLEN.invokeExact((Addressable)segment);
         }
     }

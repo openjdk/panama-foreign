@@ -50,7 +50,17 @@ import static org.testng.Assert.*;
 
 public class CallGeneratorHelper extends NativeTestHelper {
 
-    static SegmentAllocator CONFINED_ALLOCATOR = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.newSharedScope());
+    static SegmentAllocator THROWING_ALLOCATOR = new SegmentAllocator() {
+        @Override
+        public ResourceScope scope() {
+            return ResourceScope.globalScope();
+        }
+
+        @Override
+        public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+            throw new UnsupportedOperationException();
+        }
+    };
 
     static final int SAMPLE_FACTOR = Integer.parseInt((String)System.getProperties().getOrDefault("generator.sample.factor", "-1"));
 

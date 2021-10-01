@@ -196,38 +196,43 @@ public class StdLibTest extends NativeTestHelper {
 
         String strcat(String s1, String s2) throws Throwable {
             try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-                MemorySegment buf = scope.allocate(s1.length() + s2.length() + 1);
+                SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+                MemorySegment buf = allocator.allocate(s1.length() + s2.length() + 1);
                 buf.setUtf8String(0, s1);
-                MemorySegment other = scope.allocateUtf8String(s2);
+                MemorySegment other = allocator.allocateUtf8String(s2);
                 return ((MemoryAddress)strcat.invokeExact(buf, other)).getUtf8String(0);
             }
         }
 
         int strcmp(String s1, String s2) throws Throwable {
             try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-                MemorySegment ns1 = scope.allocateUtf8String(s1);
-                MemorySegment ns2 = scope.allocateUtf8String(s2);
+                SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+                MemorySegment ns1 = allocator.allocateUtf8String(s1);
+                MemorySegment ns2 = allocator.allocateUtf8String(s2);
                 return (int)strcmp.invoke(ns1, ns2);
             }
         }
 
         int puts(String msg) throws Throwable {
             try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-                MemorySegment s = scope.allocateUtf8String(msg);
+                SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+                MemorySegment s = allocator.allocateUtf8String(msg);
                 return (int)puts.invoke(s);
             }
         }
 
         int strlen(String msg) throws Throwable {
             try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-                MemorySegment s = scope.allocateUtf8String(msg);
+                SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+                MemorySegment s = allocator.allocateUtf8String(msg);
                 return (int)strlen.invoke(s);
             }
         }
 
         Tm gmtime(long arg) throws Throwable {
             try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-                MemorySegment time = scope.allocate(8);
+                SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+                MemorySegment time = allocator.allocate(8);
                 time.set(C_LONG_LONG, 0, arg);
                 return new Tm((MemoryAddress)gmtime.invoke(time));
             }
@@ -276,7 +281,8 @@ public class StdLibTest extends NativeTestHelper {
         int[] qsort(int[] arr) throws Throwable {
             //init native array
             try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-                MemorySegment nativeArr = scope.allocateArray(C_INT, arr);
+                SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+                MemorySegment nativeArr = allocator.allocateArray(C_INT, arr);
 
                 //call qsort
                 CLinker.UpcallStub qsortUpcallStub = abi.upcallStub(qsortCompar, qsortComparFunction, scope);
@@ -299,7 +305,8 @@ public class StdLibTest extends NativeTestHelper {
 
         int printf(String format, List<PrintfArg> args) throws Throwable {
             try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-                MemorySegment formatStr = scope.allocateUtf8String(format);
+                SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+                MemorySegment formatStr = allocator.allocateUtf8String(format);
                 return (int)specializedPrintf(args).invoke(formatStr,
                         args.stream().map(a -> a.nativeValue(scope)).toArray());
             }
@@ -307,7 +314,8 @@ public class StdLibTest extends NativeTestHelper {
 
         int vprintf(String format, List<PrintfArg> args) throws Throwable {
             try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-                MemorySegment formatStr = scope.allocateUtf8String(format);
+                SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+                MemorySegment formatStr = allocator.allocateUtf8String(format);
                 VaList vaList = VaList.make(b -> args.forEach(a -> a.accept(b, scope)), scope);
                 return (int)vprintf.invoke(formatStr, vaList);
             }
@@ -385,7 +393,11 @@ public class StdLibTest extends NativeTestHelper {
     enum PrintfArg implements BiConsumer<VaList.Builder, ResourceScope> {
 
         INTEGRAL(int.class, C_INT, "%d", scope -> 42, 42, VaList.Builder::addVarg),
-        STRING(MemoryAddress.class, C_POINTER, "%s", scope -> scope.allocateUtf8String("str").address(), "str", VaList.Builder::addVarg),
+        STRING(MemoryAddress.class, C_POINTER, "%s", scope -> {
+            var segment = MemorySegment.allocateNative(4, scope);
+            segment.setUtf8String(0, "str");
+            return segment.address();
+        }, "str", VaList.Builder::addVarg),
         CHAR(byte.class, C_CHAR, "%c", scope -> (byte) 'h', 'h', (builder, layout, value) -> builder.addVarg(C_INT, (int)value)),
         DOUBLE(double.class, C_DOUBLE, "%.4f", scope ->1.2345d, 1.2345d, VaList.Builder::addVarg);
 

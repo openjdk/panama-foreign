@@ -37,6 +37,7 @@
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -125,32 +126,15 @@ public class TestUpcall extends CallGeneratorHelper {
     }
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
-    public void testUpcallsNoScope(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
-        checkSelected(TestType.NO_SCOPE);
-
-        List<Consumer<Object>> returnChecks = new ArrayList<>();
-        List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        MemoryAddress addr = LOOKUP.lookup(fName).get();
-        MethodHandle mh = downcallHandle(abi, addr, CONFINED_ALLOCATOR, function(ret, paramTypes, fields));
-        Object[] args = makeArgs(ResourceScope.newSharedScope(), ret, paramTypes, fields, returnChecks, argChecks);
-        Object[] callArgs = args;
-        Object res = mh.invokeWithArguments(callArgs);
-        argChecks.forEach(c -> c.accept(args));
-        if (ret == Ret.NON_VOID) {
-            returnChecks.forEach(c -> c.accept(res));
-        }
-    }
-
-
-    @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testUpcallsAsync(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         checkSelected(TestType.ASYNC);
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         MemoryAddress addr = LOOKUP.lookup(fName).get();
-        try (NativeScope scope = new NativeScope()) {
+        try (ResourceScope scope = ResourceScope.newSharedScope()) {
+            SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
             FunctionDescriptor descriptor = function(ret, paramTypes, fields);
-            MethodHandle mh = reverse(downcallHandle(abi, addr, CONFINED_ALLOCATOR, descriptor));
+            MethodHandle mh = reverse(downcallHandle(abi, addr, allocator, descriptor));
             Object[] args = makeArgs(ResourceScope.newSharedScope(), ret, paramTypes, fields, returnChecks, argChecks);
 
             mh = mh.asSpreader(Object[].class, args.length);
@@ -158,12 +142,12 @@ public class TestUpcall extends CallGeneratorHelper {
             FunctionDescriptor callbackDesc = descriptor.returnLayout()
                     .map(FunctionDescriptor::of)
                     .orElse(FunctionDescriptor.ofVoid());
-            CLinker.UpcallStub callback = abi.upcallStub(mh, callbackDesc, scope.scope());
+            CLinker.UpcallStub callback = abi.upcallStub(mh, callbackDesc, scope);
 
             MethodHandle invoker = asyncInvoker(ret, ret == Ret.VOID ? null : paramTypes.get(0), fields);
 
             Object res = invoker.type().returnType() == MemorySegment.class
-                    ? invoker.invoke(scope, callback)
+                    ? invoker.invoke(allocator, callback)
                     : invoker.invoke(callback);
             argChecks.forEach(c -> c.accept(args));
             if (ret == Ret.NON_VOID) {
