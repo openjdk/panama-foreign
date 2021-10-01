@@ -421,10 +421,7 @@ public class SharedUtils {
         ResourceScope scope1 = null;
         ResourceScope scope0 = null;
         switch (args.length) {
-            default:
-                for (int i = 5 ; i < args.length ; i++) {
-                    acquire(args[i].scope());
-                }
+            // fast path, acquire only scopes not seen in other parameters
             case 5:
                 scope4 = args[4].scope();
                 acquire(scope4);
@@ -445,6 +442,11 @@ public class SharedUtils {
                 if (scope0 != scope1 && scope0 != scope2 && scope0 != scope3 && scope0 != scope4)
                     acquire(scope0);
             case 0: break;
+            // slow path, acquire all remaining addressable parameters in isolation
+            default:
+                for (int i = 5 ; i < args.length ; i++) {
+                    acquire(args[i].scope());
+                }
         }
     }
 
@@ -457,10 +459,7 @@ public class SharedUtils {
         ResourceScope scope1 = null;
         ResourceScope scope0 = null;
         switch (args.length) {
-            default:
-                for (int i = 5 ; i < args.length ; i++) {
-                    release(args[i].scope());
-                }
+            // fast path, release only scopes not seen in other parameters
             case 5:
                 scope4 = args[4].scope();
                 release(scope4);
@@ -481,6 +480,11 @@ public class SharedUtils {
                 if (scope0 != scope1 && scope0 != scope2 && scope0 != scope3 && scope0 != scope4)
                     release(scope0);
             case 0: break;
+            // slow path, release all remaining addressable parameters in isolation
+            default:
+                for (int i = 5 ; i < args.length ; i++) {
+                    release(args[i].scope());
+                }
         }
     }
 
