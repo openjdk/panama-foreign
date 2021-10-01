@@ -49,7 +49,7 @@ import java.util.Objects;
  * shared scopes use a more sophisticated synchronization mechanism, which guarantees that no concurrent
  * access is possible when a scope is being closed (see {@link jdk.internal.misc.ScopedMemoryAccess}).
  */
-public abstract non-sealed class ResourceScopeImpl implements ResourceScope, ScopedMemoryAccess.Scope, SegmentAllocator {
+public abstract non-sealed class ResourceScopeImpl implements ResourceScope, ScopedMemoryAccess.Scope {
 
     final ResourceList resourceList;
     final Cleaner.Cleanable cleanable;
@@ -174,14 +174,6 @@ public abstract non-sealed class ResourceScopeImpl implements ResourceScope, Sco
     @Override
     protected Object clone() throws CloneNotSupportedException {
         throw new CloneNotSupportedException();
-    }
-
-    /**
-     * Allocates a segment using this scope.
-     */
-    @Override
-    public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-        return MemorySegment.allocateNative(bytesSize, bytesAlignment, this);
     }
 
     /**

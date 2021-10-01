@@ -60,7 +60,7 @@ public abstract class ArenaAllocator implements SegmentAllocator {
         }
     }
 
-    ResourceScope scope() {
+    public ResourceScope scope() {
         return segment.scope();
     }
 
@@ -140,6 +140,11 @@ public abstract class ArenaAllocator implements SegmentAllocator {
                 return new UnboundedArenaAllocator(blockSize, scope);
             }
         };
+
+        @Override
+        public ResourceScope scope() {
+            return scope;
+        }
 
         public UnboundedSharedArenaAllocator(long blockSize, ResourceScope scope) {
             this.scope = scope;

@@ -36,23 +36,29 @@ import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * This interface models a memory allocator. Clients implementing this interface
- * must implement the {@link #allocate(long, long)} method. This interface defines several default methods
+ * This interface models a memory allocator. This interface defines several default methods
  * which can be useful to create segments from several kinds of Java values such as primitives and arrays.
  * This interface can be seen as a thin wrapper around the basic capabilities for creating native segments
- * (e.g. {@link MemorySegment#allocateNative(long, long, ResourceScope)}); since {@link SegmentAllocator} is a <em>functional interface</em>,
- * clients can easily obtain a native allocator by using either a lambda expression or a method reference.
+ * (e.g. {@link MemorySegment#allocateNative(long, long, ResourceScope)}). An allocator is always associated
+ * with a {@link #scope() scope}. All memory segments obtained from a given allocator must be associated with
+ * the allocator's scope.
  * <p>
  * This interface also defines factories for commonly used allocators; for instance {@link #arenaUnbounded(ResourceScope)}
  * and {@link #arenaBounded(long, ResourceScope)} are arena-style native allocators. Finally {@link #prefixAllocator(MemorySegment)}
  * returns an allocator which wraps a segment (either on-heap or off-heap) and recycles its content upon each new allocation request.
  */
-@FunctionalInterface
 public interface SegmentAllocator {
 
     /**
+     * Obtains the allocator scope. All segments obtained from this allocator should be associated with the scope returned
+     * from this method.
+     * @return the allocator scope.
+     */
+    ResourceScope scope();
+
+    /**
      * Converts a Java string into a UTF-8 encoded, null-terminated C string,
-     * storing the result into a native memory segment allocated using the provided allocator.
+     * storing the result into a memory segment, associated with this allocator {@link #scope() scope}.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement byte array.  The
@@ -68,7 +74,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given byte value.
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope},
+     * with given layout and initialize it with given byte value.
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
@@ -83,7 +90,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given char value.
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope},
+     * with given layout and initialize it with given char value.
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
@@ -98,7 +106,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given short value.
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope},
+     * with given layout and initialize it with given short value.
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
@@ -113,7 +122,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given int value.
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope},
+     * with given layout and initialize it with given int value.
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
@@ -128,7 +138,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given float value.
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope},
+     * with given layout and initialize it with given float value.
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
@@ -143,7 +154,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given long value.
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope},
+     * with given layout and initialize it with given long value.
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
@@ -158,7 +170,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given double value.
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope},
+     * with given layout and initialize it with given double value.
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
@@ -173,7 +186,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given address value
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope},
+     * with given layout and initialize it with given address value
      * (expressed as an {@link Addressable} instance).
      * The address value might be narrowed according to the platform address size (see {@link ValueLayout#ADDRESS}).
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
@@ -190,7 +204,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given byte array.
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope},
+     * with given layout and initialize it with given byte array.
      * @implSpec the default implementation for this method calls {@code this.allocateArray(layout, array.length)}.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
@@ -201,7 +216,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given short array.
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope},
+     * with given layout and initialize it with given short array.
      * @implSpec the default implementation for this method calls {@code this.allocateArray(layout, array.length)}.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
@@ -212,7 +228,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given char array.
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope},
+     * with given layout and initialize it with given char array.
      * @implSpec the default implementation for this method calls {@code this.allocateArray(layout, array.length)}.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
@@ -223,7 +240,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given int array.
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope},
+     * with given layout and initialize it with given int array.
      * @implSpec the default implementation for this method calls {@code this.allocateArray(layout, array.length)}.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
@@ -234,7 +252,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given float array.
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope},
+     * with given layout and initialize it with given float array.
      * @implSpec the default implementation for this method calls {@code this.allocateArray(layout, array.length)}.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
@@ -245,7 +264,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given long array.
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope},
+     * with given layout and initialize it with given long array.
      * @implSpec the default implementation for this method calls {@code this.allocateArray(layout, array.length)}.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
@@ -256,7 +276,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given double array.
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope},
+     * with given layout and initialize it with given double array.
      * @implSpec the default implementation for this method calls {@code this.allocateArray(layout, array.length)}.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
@@ -278,7 +299,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout.
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope}, with given layout.
      * @implSpec the default implementation for this method calls {@code this.allocate(layout.byteSize(), layout.byteAlignment())}.
      * @param layout the layout of the block of memory to be allocated.
      * @return a segment for the newly allocated memory block.
@@ -289,7 +310,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory corresponding to an array with given element layout and size.
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope}, with given element layout and size.
      * @implSpec the default implementation for this method calls {@code this.allocate(MemoryLayout.sequenceLayout(count, elementLayout))}.
      * @param elementLayout the array element layout.
      * @param count the array element count.
@@ -301,7 +322,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given size, with default alignment (1-byte aligned).
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope}, with given size
+     * and default alignment constraints (1-byte aligned).
      * @implSpec the default implementation for this method calls {@code this.allocate(bytesSize, 1)}.
      * @param bytesSize the size (in bytes) of the block of memory to be allocated.
      * @return a segment for the newly allocated memory block.
@@ -311,7 +333,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given size and alignment constraint.
+     * Allocate a memory segment, associated with this allocator {@link #scope() scope}, with given size and
+     * alignment constraints.
      * @param bytesSize the size (in bytes) of the block of memory to be allocated.
      * @param bytesAlignment the alignment (in bytes) of the block of memory to be allocated.
      * @return a segment for the newly allocated memory block.
@@ -319,7 +342,8 @@ public interface SegmentAllocator {
     MemorySegment allocate(long bytesSize, long bytesAlignment);
 
     /**
-     * Returns a native arena-based allocator which {@linkplain MemorySegment#allocateNative(long, ResourceScope) allocates}
+     * Returns a native arena-based allocator, associated with the provided scope,
+     * which {@linkplain MemorySegment#allocateNative(long, ResourceScope) allocates}
      * a single memory segment, of given size, and then responds to allocation request by returning different slices of that same segment
      * (until no further allocation is possible).
      * This can be useful when clients want to perform multiple allocation requests while avoiding the cost associated
@@ -347,7 +371,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Returns a native unbounded arena-based allocator, with predefined block size.
+     * Returns a native unbounded arena-based allocator, associated with the provided scope, with predefined block size.
      * <p>
      * The returned allocator {@linkplain MemorySegment#allocateNative(long, ResourceScope) allocates} a memory segment
      * {@code S} of a certain (fixed) block size and then responds to allocation requests in one of the following ways:
@@ -385,7 +409,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Returns a native unbounded arena-based allocator, with given block size.
+     * Returns a native unbounded arena-based allocator, associated with the provided scope, with given block size.
      * <p>
      * The returned allocator {@linkplain MemorySegment#allocateNative(long, ResourceScope) allocates} a memory segment
      * {@code S} of the specified block size and then responds to allocation requests in one of the following ways:
@@ -429,7 +453,9 @@ public interface SegmentAllocator {
     /**
      * Returns a segment allocator which responds to allocation requests by recycling a single segment; that is,
      * each new allocation request will return a new slice starting at the segment offset {@code 0} (alignment
-     * constraints are ignored by this allocator), hence the name <em>prefix allocator</em>.
+     * constraints are ignored by this allocator), hence the name <em>prefix allocator</em>. A prefix allocator
+     * is always associated with the scope of the segment it is based upon.
+     * <p>
      * This allocator can be useful to limit allocation requests in case a client
      * knows that they have fully processed the contents of the allocated segment before the subsequent allocation request
      * takes place.
@@ -442,7 +468,17 @@ public interface SegmentAllocator {
      */
     static SegmentAllocator prefixAllocator(MemorySegment segment) {
         Objects.requireNonNull(segment);
-        return (size, align) -> segment.asSlice(0, size);
+        return new SegmentAllocator() {
+            @Override
+            public ResourceScope scope() {
+                return segment.scope();
+            }
+
+            @Override
+            public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+                return segment.asSlice(0, bytesSize);
+            }
+        };
     }
 
 }

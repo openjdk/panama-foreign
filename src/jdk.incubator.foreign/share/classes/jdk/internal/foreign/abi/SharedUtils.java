@@ -130,7 +130,17 @@ public class SharedUtils {
     }
 
     // this allocator should be used when no allocation is expected
-    public static final SegmentAllocator THROWING_ALLOCATOR = (size, align) -> { throw new IllegalStateException("Cannot get here"); };
+    public static final SegmentAllocator THROWING_ALLOCATOR = new SegmentAllocator() {
+        @Override
+        public ResourceScope scope() {
+            return ResourceScope.globalScope();
+        }
+
+        @Override
+        public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+            throw new IllegalStateException("Cannot get here");
+        }
+    };
 
     /**
      * Align the specified type from a given address

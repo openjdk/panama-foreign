@@ -309,7 +309,7 @@ public non-sealed class SysVVaList implements VaList, Scoped {
 
     @Override
     public VaList copy() {
-        MemorySegment copy = segment.scope().allocate(LAYOUT);
+        MemorySegment copy = MemorySegment.allocateNative(LAYOUT, segment.scope());
         copy.copyFrom(segment);
         return new SysVVaList(copy, regSaveArea);
     }
@@ -343,7 +343,7 @@ public non-sealed class SysVVaList implements VaList, Scoped {
 
         public Builder(ResourceScope scope) {
             this.scope = scope;
-            this.reg_save_area = scope.allocate(LAYOUT_REG_SAVE_AREA);
+            this.reg_save_area = MemorySegment.allocateNative(LAYOUT_REG_SAVE_AREA, scope);
         }
 
         @Override

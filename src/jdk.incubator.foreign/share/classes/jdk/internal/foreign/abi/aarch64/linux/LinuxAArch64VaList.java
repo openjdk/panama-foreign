@@ -356,7 +356,7 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
 
     @Override
     public VaList copy() {
-        MemorySegment copy = segment.scope().allocate(LAYOUT);
+        MemorySegment copy = MemorySegment.allocateNative(LAYOUT, segment.scope());
         copy.copyFrom(segment);
         return new LinuxAArch64VaList(copy, gpRegsArea, fpRegsArea);
     }
@@ -403,8 +403,8 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
 
         Builder(ResourceScope scope) {
             this.scope = scope;
-            this.gpRegs = scope.allocate(LAYOUT_GP_REGS);
-            this.fpRegs = scope.allocate(LAYOUT_FP_REGS);
+            this.gpRegs = MemorySegment.allocateNative(LAYOUT_GP_REGS, scope);
+            this.fpRegs = MemorySegment.allocateNative(LAYOUT_FP_REGS, scope);
         }
 
         @Override

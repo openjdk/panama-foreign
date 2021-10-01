@@ -139,7 +139,7 @@ try (ResourceScope criticalScope = ResourceScope.newConfinedScope()) {
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  */
-public sealed interface ResourceScope extends AutoCloseable, SegmentAllocator permits ResourceScopeImpl {
+public sealed interface ResourceScope extends AutoCloseable permits ResourceScopeImpl {
     /**
      * Is this resource scope alive?
      * @return true, if this resource scope is alive.
@@ -193,17 +193,6 @@ public sealed interface ResourceScope extends AutoCloseable, SegmentAllocator pe
      * a thread other than the thread owning this scope.
      */
     void keepAlive(ResourceScope target);
-
-    /**
-     * Allocate a native segment with given size and alignment constraint. This is equivalent to:
-     * <blockquote><pre>{@code
-    MemorySegment.allocateNative(bytesSize, bytesAlignment, this);
-     * }</pre></blockquote>
-     * @param bytesSize the size (in bytes) of the native segment to be allocated.
-     * @param bytesAlignment the alignment (in bytes) of the native segment to be allocated.
-     * @return a new native segment with given size and alignment.
-     */
-    MemorySegment allocate(long bytesSize, long bytesAlignment);
 
     /**
      * Create a new confined scope. Equivalent to (but likely more efficient than) the following code:
