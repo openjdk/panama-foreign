@@ -413,26 +413,67 @@ public class SharedUtils {
     }
 
     @ForceInline
+    @SuppressWarnings("fallthrough")
     public static void acquire(Object[] args) {
-        ResourceScope lastScope = null;
-        for (int i = 0 ; i < args.length ; i++) {
-            ResourceScope scope = ((Scoped)args[i]).scope();
-            if (scope != ResourceScopeImpl.GLOBAL && scope != lastScope) {
-                lastScope = scope;
-                ((ResourceScopeImpl)scope).acquire0();
-            }
+        ResourceScope scope3 = null;
+        ResourceScope scope2 = null;
+        ResourceScope scope1 = null;
+        ResourceScope scope0 = null;
+        switch (args.length) {
+            default:
+                for (int i = 4 ; i < args.length ; i++) {
+                    ResourceScope scope = ((Scoped)args[i]).scope();
+                    ((ResourceScopeImpl)scope).release0();
+                }
+            case 4:
+                scope3 = ((Scoped) args[3]).scope();
+                ((ResourceScopeImpl)scope3).acquire0();
+            case 3:
+                scope2 = ((Scoped) args[2]).scope();
+                if (scope2 != scope3)
+                    ((ResourceScopeImpl)scope2).acquire0();
+            case 2:
+                scope1 = ((Scoped) args[1]).scope();
+                if (scope1 != scope2 && scope1 != scope3)
+                    ((ResourceScopeImpl)scope1).acquire0();
+            case 1:
+                scope0 = ((Scoped) args[0]).scope();
+                if (scope0 != scope1 && scope0 != scope2 && scope0 != scope3)
+                    ((ResourceScopeImpl)scope0).acquire0();
+            case 0: break;
         }
     }
 
     @ForceInline
+    @SuppressWarnings("fallthrough")
     public static void release(Object[] args) {
-        ResourceScope lastScope = null;
-        for (int i = 0 ; i < args.length ; i++) {
-            ResourceScope scope = ((Scoped)args[i]).scope();
-            if (scope != ResourceScopeImpl.GLOBAL && scope != lastScope) {
-                lastScope = scope;
-                ((ResourceScopeImpl)scope).release0();
-            }
+        ResourceScope scope3 = null;
+        ResourceScope scope2 = null;
+        ResourceScope scope1 = null;
+        ResourceScope scope0 = null;
+        switch (args.length) {
+            default:
+                for (int i = 4 ; i < args.length ; i++) {
+                    ResourceScope scope = ((Scoped)args[i]).scope();
+                    ((ResourceScopeImpl)scope).release0();
+                }
+            case 4:
+                scope3 = ((Scoped) args[3]).scope();
+                ((ResourceScopeImpl) scope3).release0();
+            case 3:
+                scope2 = ((Scoped) args[2]).scope();
+                if (scope2 != scope3)
+                    ((ResourceScopeImpl) scope2).release0();
+            case 2:
+                scope1 = ((Scoped) args[1]).scope();
+                if (scope1 != scope2 && scope1 != scope3)
+                    ((ResourceScopeImpl) scope1).release0();
+            case 1:
+                scope0 = ((Scoped) args[0]).scope();
+                if (scope0 != scope1 && scope0 != scope2 && scope0 != scope3)
+                    ((ResourceScopeImpl) scope0).release0();
+            case 0:
+                break;
         }
     }
 
@@ -476,7 +517,7 @@ public class SharedUtils {
             }
 
             // acquire/release target addressable
-            tryBlock = foldArguments(tryBlock, 0, acquireHandle);
+            tryBlock = foldArguments(tryBlock, acquireHandle);
             cleanup = collectArguments(cleanup, hasReturn ? 2 : 1, releaseHandle);
 
             return tryFinally(tryBlock, cleanup);
