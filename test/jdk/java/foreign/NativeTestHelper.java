@@ -49,41 +49,6 @@ public class NativeTestHelper {
         return layout instanceof ValueLayout valueLayout && valueLayout.carrier() == MemoryAddress.class;
     }
 
-    public static class NativeScope implements SegmentAllocator, AutoCloseable {
-        final ResourceScope resourceScope;
-        final ResourceScope privateScope;
-        final SegmentAllocator allocator;
-
-        long allocatedBytes = 0;
-
-        public NativeScope() {
-            this.resourceScope = ResourceScope.newConfinedScope();
-            this.privateScope = ResourceScope.newConfinedScope();
-            privateScope.keepAlive(resourceScope);
-            this.allocator = SegmentAllocator.arenaUnbounded(resourceScope);
-        }
-
-        @Override
-        public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-            allocatedBytes += bytesSize;
-            return allocator.allocate(bytesSize, bytesAlignment);
-        }
-
-        public ResourceScope scope() {
-            return resourceScope;
-        }
-
-        public long allocatedBytes() {
-            return allocatedBytes;
-        }
-
-        @Override
-        public void close() {
-            privateScope.close();
-            resourceScope.close();
-        }
-    }
-
     // the constants below are useful aliases for C types. The type/carrier association is only valid for 64-bit platforms.
 
     /**

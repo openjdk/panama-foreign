@@ -129,16 +129,16 @@ public class VaListTest extends NativeTestHelper {
     private static final Function<Consumer<VaList.Builder>, VaList> platformVaListFactory
             = (builder) -> VaList.make(builder, ResourceScope.newConfinedScope());
 
-    private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> winVaListScopedFactory
-            = (builder, scope) -> Windowsx64Linker.newVaList(builder, scope.scope());
-    private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> sysvVaListScopedFactory
-            = (builder, scope) -> SysVx64Linker.newVaList(builder, scope.scope());
-    private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> linuxAArch64VaListScopedFactory
-            = (builder, scope) -> LinuxAArch64Linker.newVaList(builder, scope.scope());
-    private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> macAArch64VaListScopedFactory
-            = (builder, scope) -> MacOsAArch64Linker.newVaList(builder, scope.scope());
-    private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> platformVaListScopedFactory
-            = (builder, scope) -> VaList.make(builder, scope.scope());
+    private static final BiFunction<Consumer<VaList.Builder>, ResourceScope, VaList> winVaListScopedFactory
+            = (builder, scope) -> Windowsx64Linker.newVaList(builder, scope);
+    private static final BiFunction<Consumer<VaList.Builder>, ResourceScope, VaList> sysvVaListScopedFactory
+            = (builder, scope) -> SysVx64Linker.newVaList(builder, scope);
+    private static final BiFunction<Consumer<VaList.Builder>, ResourceScope, VaList> linuxAArch64VaListScopedFactory
+            = (builder, scope) -> LinuxAArch64Linker.newVaList(builder, scope);
+    private static final BiFunction<Consumer<VaList.Builder>, ResourceScope, VaList> macAArch64VaListScopedFactory
+            = (builder, scope) -> MacOsAArch64Linker.newVaList(builder, scope);
+    private static final BiFunction<Consumer<VaList.Builder>, ResourceScope, VaList> platformVaListScopedFactory
+            = (builder, scope) -> VaList.make(builder, scope);
 
     @DataProvider
     @SuppressWarnings("unchecked")
@@ -579,14 +579,13 @@ public class VaListTest extends NativeTestHelper {
     }
 
     @Test(dataProvider = "sumIntsScoped")
-    public void testScopedVaList(BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> vaListFactory,
+    public void testScopedVaList(BiFunction<Consumer<VaList.Builder>, ResourceScope, VaList> vaListFactory,
                                  BiFunction<Integer, VaList, Integer> sumInts,
                                  ValueLayout.OfInt intLayout) {
         VaList listLeaked;
-        try (NativeScope scope = new NativeScope()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             VaList list = vaListFactory.apply(b -> b.addVarg(intLayout, 4)
-                            .addVarg(intLayout, 8),
-                    scope);
+                            .addVarg(intLayout, 8), scope);
             int x = sumInts.apply(2, list);
             assertEquals(x, 12);
             listLeaked = list;
@@ -599,13 +598,14 @@ public class VaListTest extends NativeTestHelper {
                                 Function<VaList, Integer> sumStruct, // ignored
                                 GroupLayout Point_LAYOUT, VarHandle VH_Point_x, VarHandle VH_Point_y) {
         MemorySegment pointOut;
-        try (NativeScope scope = new NativeScope()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             try (ResourceScope innerScope = ResourceScope.newConfinedScope()) {
                 MemorySegment pointIn = MemorySegment.allocateNative(Point_LAYOUT, innerScope);
                 VH_Point_x.set(pointIn, 3);
                 VH_Point_y.set(pointIn, 6);
                 VaList list = vaListFactory.apply(b -> b.addVarg(Point_LAYOUT, pointIn));
-                pointOut = list.nextVarg(Point_LAYOUT, scope);
+                pointOut = MemorySegment.allocateNative(Point_LAYOUT, scope);
+                list.nextVarg(Point_LAYOUT, SegmentAllocator.prefixAllocator(pointOut));
                 assertEquals((int) VH_Point_x.get(pointOut), 3);
                 assertEquals((int) VH_Point_y.get(pointOut), 6);
                 list.scope().close();

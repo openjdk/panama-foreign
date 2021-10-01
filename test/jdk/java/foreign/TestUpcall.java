@@ -113,9 +113,10 @@ public class TestUpcall extends CallGeneratorHelper {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         MemoryAddress addr = LOOKUP.lookup(fName).get();
-        try (NativeScope scope = new NativeScope()) {
-            MethodHandle mh = downcallHandle(abi, addr, scope, function(ret, paramTypes, fields));
-            Object[] args = makeArgs(scope.scope(), ret, paramTypes, fields, returnChecks, argChecks);
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+            MethodHandle mh = downcallHandle(abi, addr, allocator, function(ret, paramTypes, fields));
+            Object[] args = makeArgs(scope, ret, paramTypes, fields, returnChecks, argChecks);
             Object[] callArgs = args;
             Object res = mh.invokeWithArguments(callArgs);
             argChecks.forEach(c -> c.accept(args));
