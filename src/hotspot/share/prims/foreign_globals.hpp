@@ -96,7 +96,7 @@ VMReg vmstorage_to_vmreg(int type, int index);
 
 class JavaCallConv : public CallConvClosure {
 public:
-  int JavaCallConv::calling_convention(BasicType* sig_bt, VMRegPair* regs, int num_args) const override {
+  int calling_convention(BasicType* sig_bt, VMRegPair* regs, int num_args) const override {
     return SharedRuntime::java_calling_convention(sig_bt, regs, num_args);
   }
 };

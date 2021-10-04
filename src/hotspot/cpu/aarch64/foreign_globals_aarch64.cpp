@@ -28,8 +28,10 @@
 #include "runtime/jniHandles.inline.hpp"
 #include "oops/typeArrayOop.inline.hpp"
 #include "oops/oopCast.inline.hpp"
+#include "opto/matcher.hpp"
 #include "prims/foreign_globals.hpp"
 #include "prims/foreign_globals.inline.hpp"
+#include "utilities/formatBuffer.hpp"
 
 bool ABIDescriptor::is_volatile_reg(Register reg) const {
   return _integer_argument_registers.contains(reg)
@@ -108,8 +110,7 @@ VMReg vmstorage_to_vmreg(int type, int index) {
   return VMRegImpl::Bad();
 }
 
-int RegSpillFill::pd_reg_size(VMReg reg) {
-  assert(reg->is_reg(), "must be a register");
+int RegSpillFill::pd_reg_size(VMReg reg) const {
   if (reg->is_Register()) {
     return 8;
   } else if (reg->is_FloatRegister()) {
@@ -118,14 +119,11 @@ int RegSpillFill::pd_reg_size(VMReg reg) {
       return Matcher::scalable_vector_reg_size(T_BYTE);
     }
     return 16;
-  } else {
-    ShouldNotReachHere();
   }
-  return 0;
+  return 0; // stack and BAD
 }
 
-void RegSpillFill::pd_store_reg(MacroAssemblre* masm, int offset, VMReg reg) {
-  assert(reg->is_reg(), "must be a register");
+void RegSpillFill::pd_store_reg(MacroAssembler* masm, int offset, VMReg reg) const {
   if (reg->is_Register()) {
     masm->spill(reg->as_Register(), true, offset);
   } else if (reg->is_FloatRegister()) {
@@ -136,12 +134,11 @@ void RegSpillFill::pd_store_reg(MacroAssemblre* masm, int offset, VMReg reg) {
       masm->spill(reg->as_FloatRegister(), masm->Q, offset);
     }
   } else {
-    ShouldNotReachHere();
+    // stack and BAD
   }
 }
 
-void RegSpillFill::pd_load_reg(MacroAssemblre* masm, int offset, VMReg reg) {
-  assert(reg->is_reg(), "must be a register");
+void RegSpillFill::pd_load_reg(MacroAssembler* masm, int offset, VMReg reg) const {
   if (reg->is_Register()) {
     masm->unspill(reg->as_Register(), true, offset);
   } else if (reg->is_FloatRegister()) {
@@ -152,7 +149,7 @@ void RegSpillFill::pd_load_reg(MacroAssemblre* masm, int offset, VMReg reg) {
       masm->unspill(reg->as_FloatRegister(), masm->Q, offset);
     }
   } else {
-    ShouldNotReachHere();
+    // stack and BAD
   }
 }
 

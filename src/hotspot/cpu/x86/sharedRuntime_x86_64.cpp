@@ -3641,12 +3641,3 @@ void OptoRuntime::generate_exception_blob() {
 }
 #endif // COMPILER2
 
-void SharedRuntime::compute_move_order(const BasicType* in_sig_bt,
-                                       int total_in_args, const VMRegPair* in_regs,
-                                       int total_out_args, VMRegPair* out_regs,
-                                       GrowableArray<int>& arg_order,
-                                       VMRegPair tmp_vmreg) {
-  ComputeMoveOrder order(total_in_args, in_regs,
-                         total_out_args, out_regs,
-                         in_sig_bt, arg_order, tmp_vmreg);
-}

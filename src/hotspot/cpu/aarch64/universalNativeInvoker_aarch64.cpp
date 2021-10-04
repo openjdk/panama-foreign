@@ -25,6 +25,10 @@
 #include "precompiled.hpp"
 #include "asm/macroAssembler.hpp"
 #include "code/codeBlob.hpp"
+#include "code/codeCache.hpp"
+#include "code/vmreg.inline.hpp"
+#include "compiler/oopMap.hpp"
+#include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
 #include "prims/universalNativeInvoker.hpp"
 
@@ -129,7 +133,9 @@ address ProgrammableInvoker::generate_adapter(jobject jabi, jobject jlayout) {
 // ---------------------------------------------------------------
 
 class NativeInvokerGenerator : public StubCodeGenerator {
-  address _call_target;
+  BasicType* _signature;
+  int _num_args;
+  BasicType _ret_bt;
   int _shadow_space_bytes;
 
   const GrowableArray<VMReg>& _input_registers;
@@ -140,12 +146,16 @@ class NativeInvokerGenerator : public StubCodeGenerator {
   OopMapSet* _oop_maps;
 public:
   NativeInvokerGenerator(CodeBuffer* buffer,
-                         address call_target,
+                         BasicType* signature,
+                         int num_args,
+                         BasicType ret_bt,
                          int shadow_space_bytes,
                          const GrowableArray<VMReg>& input_registers,
                          const GrowableArray<VMReg>& output_registers)
    : StubCodeGenerator(buffer, PrintMethodHandleStubs),
-     _call_target(call_target),
+     _signature(signature),
+     _num_args(num_args),
+     _ret_bt(ret_bt),
      _shadow_space_bytes(shadow_space_bytes),
      _input_registers(input_registers),
      _output_registers(output_registers),
@@ -188,7 +198,7 @@ RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
                                                       const GrowableArray<VMReg>& output_registers) {
   int locs_size  = 64;
   CodeBuffer code("nep_invoker_blob", native_invoker_code_size, locs_size);
-  NativeInvokerGenerator g(&code, call_target, shadow_space_bytes, input_registers, output_registers);
+  NativeInvokerGenerator g(&code, signature, num_args, ret_bt, shadow_space_bytes, input_registers, output_registers);
   g.generate();
   code.log_section_sizes("nep_invoker_blob");
 
@@ -199,6 +209,17 @@ RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
                                   g.framesize(),
                                   g.oop_maps(), false);
   return stub;
+}
+
+// copy-paste from sharedRuntime
+static void rt_call(MacroAssembler* _masm, address dest) {
+  CodeBlob *cb = CodeCache::find_blob(dest);
+  if (cb) {
+    __ far_call(RuntimeAddress(dest));
+  } else {
+    __ lea(rscratch1, RuntimeAddress(dest));
+    __ blr(rscratch1);
+  }
 }
 
 void NativeInvokerGenerator::generate() {
@@ -267,7 +288,23 @@ void NativeInvokerGenerator::generate() {
   arg_shuffle.gen_shuffle(_masm);
   __ block_comment("} argument shuffle");
 
-  rt_call(masm, _call_target);
+  __ blr (input_addr_reg);
+
+  // Unpack native results.
+  switch (_ret_bt) {
+    case T_BOOLEAN: __ c2bool(r0);                     break;
+    case T_CHAR   : __ ubfx(r0, r0, 0, 16);            break;
+    case T_BYTE   : __ sbfx(r0, r0, 0, 8);             break;
+    case T_SHORT  : __ sbfx(r0, r0, 0, 16);            break;
+    case T_INT    : __ sbfx(r0, r0, 0, 32);            break;
+    case T_DOUBLE :
+    case T_FLOAT  :
+      // Result is in v0 we'll save as needed
+        break;    
+    case T_VOID: break;
+    case T_LONG: break;
+    default       : ShouldNotReachHere();
+  }
 
   __ mov(rscratch1, _thread_in_native_trans);
   __ strw(rscratch1, Address(rthread, JavaThread::thread_state_offset()));

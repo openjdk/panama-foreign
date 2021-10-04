@@ -152,74 +152,6 @@ void RegSpillFill::gen(MacroAssembler* masm, int rsp_offset, bool spill) const {
   }
 }
 
-ArgumentShuffle::ArgumentShuffle(
-    BasicType* in_sig_bt,
-    int num_in_args,
-    BasicType* out_sig_bt,
-    int num_out_args,
-    const CallConvClosure* input_conv,
-    const CallConvClosure* output_conv,
-    VMReg shuffle_temp) : _moves(num_in_args), _out_arg_stack_slots(0) {
-
-  VMRegPair* in_regs = NEW_RESOURCE_ARRAY(VMRegPair, num_in_args);
-  input_conv->calling_convention(in_sig_bt, in_regs, num_in_args);
-
-  VMRegPair* out_regs = NEW_RESOURCE_ARRAY(VMRegPair, num_out_args);
-  _out_arg_stack_slots = output_conv->calling_convention(out_sig_bt, out_regs, num_out_args);
-
-  GrowableArray<int> arg_order(2 * num_in_args);
-
-  VMRegPair tmp_vmreg;
-  tmp_vmreg.set2(shuffle_temp);
-
-  // Compute a valid move order, using tmp_vmreg to break any cycles
-  SharedRuntime::compute_move_order(in_sig_bt,
-                                    num_in_args, in_regs,
-                                    num_out_args, out_regs,
-                                    arg_order,
-                                    tmp_vmreg);
-
-  for (int i = 0; i < arg_order.length(); i += 2) {
-    int in_arg  = arg_order.at(i);
-    int out_arg = arg_order.at(i + 1);
-
-    assert(in_arg != -1 || out_arg != -1, "");
-    BasicType arg_bt = (in_arg != -1 ? in_sig_bt[in_arg] : out_sig_bt[out_arg]);
-    switch (arg_bt) {
-      case T_BOOLEAN:
-      case T_BYTE:
-      case T_SHORT:
-      case T_CHAR:
-      case T_INT:
-      case T_FLOAT:
-        break; // process
-
-      case T_LONG:
-      case T_DOUBLE:
-        assert(in_arg  == -1 || (in_arg  + 1 < num_in_args && in_sig_bt[in_arg  + 1] == T_VOID), "bad arg list: %d", in_arg);
-        assert(out_arg == -1 || (out_arg + 1 < num_out_args && out_sig_bt[out_arg + 1] == T_VOID), "bad arg list: %d", out_arg);
-        break; // process
-
-      case T_VOID:
-        continue; // skip
-
-      default:
-        fatal("found in upcall args: %s", type2name(arg_bt));
-    }
-
-    Move move;
-    move.bt   = arg_bt;
-    move.from = (in_arg != -1 ? in_regs[in_arg] : tmp_vmreg);
-    move.to   = (out_arg != -1 ? out_regs[out_arg] : tmp_vmreg);
-
-    if(move.is_identity()) {
-      continue; // useless move
-    }
-
-    _moves.push(move);
-  }
-}
-
 void ArgumentShuffle::print_on(outputStream* os) const {
   os->print_cr("Argument shuffle {");
   for (int i = 0; i < _moves.length(); i++) {
@@ -283,3 +215,249 @@ int DowncallNativeCallConv::calling_convention(BasicType* sig_bt, VMRegPair* out
   }
   return stk_slots;
 }
+
+// copy-pasted from x86_64 impl
+class ForeignCMO: public StackObj {
+  class MoveOperation: public ResourceObj {
+    friend class ForeignCMO;
+   private:
+    VMRegPair        _src;
+    VMRegPair        _dst;
+    int              _src_index;
+    int              _dst_index;
+    bool             _processed;
+    MoveOperation*  _next;
+    MoveOperation*  _prev;
+
+    static int get_id(VMRegPair r) {
+      return r.first()->value();
+    }
+
+   public:
+    MoveOperation(int src_index, VMRegPair src, int dst_index, VMRegPair dst):
+      _src(src)
+    , _dst(dst)
+    , _src_index(src_index)
+    , _dst_index(dst_index)
+    , _processed(false)
+    , _next(NULL)
+    , _prev(NULL) {
+    }
+
+    VMRegPair src() const              { return _src; }
+    int src_id() const                 { return get_id(src()); }
+    int src_index() const              { return _src_index; }
+    VMRegPair dst() const              { return _dst; }
+    void set_dst(int i, VMRegPair dst) { _dst_index = i, _dst = dst; }
+    int dst_index() const              { return _dst_index; }
+    int dst_id() const                 { return get_id(dst()); }
+    MoveOperation* next() const       { return _next; }
+    MoveOperation* prev() const       { return _prev; }
+    void set_processed()               { _processed = true; }
+    bool is_processed() const          { return _processed; }
+
+    // insert
+    void break_cycle(VMRegPair temp_register) {
+      // create a new store following the last store
+      // to move from the temp_register to the original
+      MoveOperation* new_store = new MoveOperation(-1, temp_register, dst_index(), dst());
+
+      // break the cycle of links and insert new_store at the end
+      // break the reverse link.
+      MoveOperation* p = prev();
+      assert(p->next() == this, "must be");
+      _prev = NULL;
+      p->_next = new_store;
+      new_store->_prev = p;
+
+      // change the original store to save it's value in the temp.
+      set_dst(-1, temp_register);
+    }
+
+    void link(GrowableArray<MoveOperation*>& killer) {
+      // link this store in front the store that it depends on
+      MoveOperation* n = killer.at_grow(src_id(), NULL);
+      if (n != NULL) {
+        assert(_next == NULL && n->_prev == NULL, "shouldn't have been set yet");
+        _next = n;
+        n->_prev = this;
+      }
+    }
+  };
+
+ private:
+  GrowableArray<MoveOperation*> edges;
+
+ public:
+  ForeignCMO(int total_in_args, const VMRegPair* in_regs, int total_c_args, VMRegPair* out_regs,
+             const BasicType* in_sig_bt, GrowableArray<int>& arg_order, VMRegPair tmp_vmreg) {
+    // Move operations where the dest is the stack can all be
+    // scheduled first since they can't interfere with the other moves.
+    for (int i = total_in_args - 1, c_arg = total_c_args - 1; i >= 0; i--, c_arg--) {
+      if (in_sig_bt[i] == T_ARRAY) {
+        c_arg--;
+        if (out_regs[c_arg].first()->is_stack() &&
+            out_regs[c_arg + 1].first()->is_stack()) {
+          arg_order.push(i);
+          arg_order.push(c_arg);
+        } else {
+          if (out_regs[c_arg].first()->is_stack() ||
+              in_regs[i].first() == out_regs[c_arg].first()) {
+            add_edge(i, in_regs[i].first(), c_arg, out_regs[c_arg + 1]);
+          } else {
+            add_edge(i, in_regs[i].first(), c_arg, out_regs[c_arg]);
+          }
+        }
+      } else if (in_sig_bt[i] == T_VOID) {
+        arg_order.push(i);
+        arg_order.push(c_arg);
+      } else {
+        if (out_regs[c_arg].first()->is_stack() ||
+            in_regs[i].first() == out_regs[c_arg].first()) {
+          arg_order.push(i);
+          arg_order.push(c_arg);
+        } else {
+          add_edge(i, in_regs[i].first(), c_arg, out_regs[c_arg]);
+        }
+      }
+    }
+    // Break any cycles in the register moves and emit the in the
+    // proper order.
+    GrowableArray<MoveOperation*>* stores = get_store_order(tmp_vmreg);
+    for (int i = 0; i < stores->length(); i++) {
+      arg_order.push(stores->at(i)->src_index());
+      arg_order.push(stores->at(i)->dst_index());
+    }
+ }
+
+  // Collected all the move operations
+  void add_edge(int src_index, VMRegPair src, int dst_index, VMRegPair dst) {
+    if (src.first() == dst.first()) return;
+    edges.append(new MoveOperation(src_index, src, dst_index, dst));
+  }
+
+  // Walk the edges breaking cycles between moves.  The result list
+  // can be walked in order to produce the proper set of loads
+  GrowableArray<MoveOperation*>* get_store_order(VMRegPair temp_register) {
+    // Record which moves kill which values
+    GrowableArray<MoveOperation*> killer;
+    for (int i = 0; i < edges.length(); i++) {
+      MoveOperation* s = edges.at(i);
+      assert(killer.at_grow(s->dst_id(), NULL) == NULL, "only one killer");
+      killer.at_put_grow(s->dst_id(), s, NULL);
+    }
+    assert(killer.at_grow(MoveOperation::get_id(temp_register), NULL) == NULL,
+           "make sure temp isn't in the registers that are killed");
+
+    // create links between loads and stores
+    for (int i = 0; i < edges.length(); i++) {
+      edges.at(i)->link(killer);
+    }
+
+    // at this point, all the move operations are chained together
+    // in a doubly linked list.  Processing it backwards finds
+    // the beginning of the chain, forwards finds the end.  If there's
+    // a cycle it can be broken at any point,  so pick an edge and walk
+    // backward until the list ends or we end where we started.
+    GrowableArray<MoveOperation*>* stores = new GrowableArray<MoveOperation*>();
+    for (int e = 0; e < edges.length(); e++) {
+      MoveOperation* s = edges.at(e);
+      if (!s->is_processed()) {
+        MoveOperation* start = s;
+        // search for the beginning of the chain or cycle
+        while (start->prev() != NULL && start->prev() != s) {
+          start = start->prev();
+        }
+        if (start->prev() == s) {
+          start->break_cycle(temp_register);
+        }
+        // walk the chain forward inserting to store list
+        while (start != NULL) {
+          stores->append(start);
+          start->set_processed();
+          start = start->next();
+        }
+      }
+    }
+    return stores;
+  }
+};
+
+static void compute_move_order(const BasicType* in_sig_bt,
+                               int total_in_args, const VMRegPair* in_regs,
+                               int total_out_args, VMRegPair* out_regs,
+                               GrowableArray<int>& arg_order,
+                               VMRegPair tmp_vmreg) {
+  ForeignCMO order(total_in_args, in_regs,
+                   total_out_args, out_regs,
+                   in_sig_bt, arg_order, tmp_vmreg);
+}
+
+ArgumentShuffle::ArgumentShuffle(
+    BasicType* in_sig_bt,
+    int num_in_args,
+    BasicType* out_sig_bt,
+    int num_out_args,
+    const CallConvClosure* input_conv,
+    const CallConvClosure* output_conv,
+    VMReg shuffle_temp) : _moves(num_in_args), _out_arg_stack_slots(0) {
+
+  VMRegPair* in_regs = NEW_RESOURCE_ARRAY(VMRegPair, num_in_args);
+  input_conv->calling_convention(in_sig_bt, in_regs, num_in_args);
+
+  VMRegPair* out_regs = NEW_RESOURCE_ARRAY(VMRegPair, num_out_args);
+  _out_arg_stack_slots = output_conv->calling_convention(out_sig_bt, out_regs, num_out_args);
+
+  GrowableArray<int> arg_order(2 * num_in_args);
+
+  VMRegPair tmp_vmreg;
+  tmp_vmreg.set2(shuffle_temp);
+
+  // Compute a valid move order, using tmp_vmreg to break any cycles
+  compute_move_order(in_sig_bt,
+                     num_in_args, in_regs,
+                     num_out_args, out_regs,
+                     arg_order,
+                     tmp_vmreg);
+
+  for (int i = 0; i < arg_order.length(); i += 2) {
+    int in_arg  = arg_order.at(i);
+    int out_arg = arg_order.at(i + 1);
+
+    assert(in_arg != -1 || out_arg != -1, "");
+    BasicType arg_bt = (in_arg != -1 ? in_sig_bt[in_arg] : out_sig_bt[out_arg]);
+    switch (arg_bt) {
+      case T_BOOLEAN:
+      case T_BYTE:
+      case T_SHORT:
+      case T_CHAR:
+      case T_INT:
+      case T_FLOAT:
+        break; // process
+
+      case T_LONG:
+      case T_DOUBLE:
+        assert(in_arg  == -1 || (in_arg  + 1 < num_in_args && in_sig_bt[in_arg  + 1] == T_VOID), "bad arg list: %d", in_arg);
+        assert(out_arg == -1 || (out_arg + 1 < num_out_args && out_sig_bt[out_arg + 1] == T_VOID), "bad arg list: %d", out_arg);
+        break; // process
+
+      case T_VOID:
+        continue; // skip
+
+      default:
+        fatal("found in upcall args: %s", type2name(arg_bt));
+    }
+
+    Move move;
+    move.bt   = arg_bt;
+    move.from = (in_arg != -1 ? in_regs[in_arg] : tmp_vmreg);
+    move.to   = (out_arg != -1 ? out_regs[out_arg] : tmp_vmreg);
+
+    if(move.is_identity()) {
+      continue; // useless move
+    }
+
+    _moves.push(move);
+  }
+}
+
