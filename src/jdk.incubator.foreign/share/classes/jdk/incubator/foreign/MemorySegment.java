@@ -321,7 +321,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     boolean isMapped();
 
     /**
-     * Returns a new memory segment that is the overlap of the two segments.
+     * Returns a new slice of this segment that is the overlap of the two
+     * segments.
      *
      * <p>Two segments S1 and S2 are said to overlap if it is possible to find
      * at least two slices L1 (from S1) and L2 (from S2) such that L1 and L2 are
@@ -330,24 +331,22 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * this case, or when no overlap occurs, {@code null} is returned.
      *
      * @param other the segment to test for an overlap with this segment.
-     * @return a new memory segment, or {@code null} if no overlap occurs.
+     * @return a new slice of this segment, or {@code null} if no overlap occurs.
      */
-    MemorySegment overlap(MemorySegment other);
+    MemorySegment asOverlappingSlice(MemorySegment other);
 
     /**
      * Returns the offset, in bytes, from this segment to the other segment.
      *
      * <p>The offset is relative to the {@linkplain #address() base address} of
-     * this segment and will be in the range of 0 (inclusive) up to the
-     * {@linkplain #byteSize() size} (in bytes) of this segment (exclusive). If
-     * the two segments do not {@link #overlap(MemorySegment) overlap}, an
-     * offset can not be retrieved and {@code -1L} is returned.
+     * this segment and can be a negative or positive value. If the segments
+     * share the same base address, {@code 0} is returned.
      *
      * @param other the segment to retrieve an offset to.
      * @return the relative offset, in bytes, from this segment to the other
-     *         segment, or -1L if no overlap occurs.
+     *         segment.
      */
-    long offsetOf(MemorySegment other);
+    long offsetTo(MemorySegment other);
 
     /**
      * Fills a value into this memory segment.

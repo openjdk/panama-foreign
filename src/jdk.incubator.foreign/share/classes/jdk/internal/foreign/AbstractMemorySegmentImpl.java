@@ -252,34 +252,30 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
     }
 
     @Override
-    public final MemorySegment overlap(MemorySegment other) {
+    public final MemorySegment asOverlappingSlice(MemorySegment other) {
         AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)Objects.requireNonNull(other);
-        long offsetFromThis = this.offsetOf(that);
-        if (offsetFromThis >= 0L) {  // this and that overlap
-            long offsetFromThat = that.offsetOf(this);
-            long newSize = Math.min(this.byteSize() - offsetFromThis, that.byteSize() - offsetFromThat);
-            return dup(offsetFromThis, newSize, mask, scope);
-        }
-        return null;
-    }
-
-    @Override
-    public final long offsetOf(MemorySegment other) {
-        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl) Objects.requireNonNull(other);
-        if (base() == that.base()) {  // both are either native or heap
+        if (base() == that.base()) {  // both either native or heap
             final long thisStart = this.min();
             final long thatStart = that.min();
             final long thisEnd = thisStart + this.byteSize() - 1L;
             final long thatEnd = thatStart + that.byteSize() - 1L;
 
-            if (thisStart <= thatStart && thisEnd >= thatStart) {
-                return thatStart - thisStart;
-            }
-            if (thatStart <= thisStart && thatEnd >= thisStart) {
-                return 0L;
+            if (thisStart <= thatEnd && thisEnd >= thatStart) {  //overlap occurs
+                long offsetToThat = this.offsetTo(that);
+                long newOffset = offsetToThat >= 0 ? offsetToThat : 0;
+                return asSlice(newOffset, Math.min(this.byteSize() - newOffset, that.byteSize() + offsetToThat));
             }
         }
-        return -1L;
+        return null;
+    }
+
+    @Override
+    public final long offsetTo(MemorySegment other) {
+        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl) Objects.requireNonNull(other);
+        if (base() == that.base()) {
+            return that.min() - this.min();
+        }
+        throw new UnsupportedOperationException("Cannot compute offset from native to heap (or vice versa).");
     }
 
     @Override
