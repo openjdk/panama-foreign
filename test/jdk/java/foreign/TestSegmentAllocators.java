@@ -84,7 +84,6 @@ public class TestSegmentAllocators {
                     boolean isBound = allocationFactory.isBound();
                     try {
                         allocationFunction.allocate(allocator, alignedLayout, value);
-                        allocationFunction.allocate(allocator, alignedLayout, value);
                         assertFalse(isBound);
                     } catch (OutOfMemoryError ex) {
                         //failure is expected if bound

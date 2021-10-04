@@ -89,10 +89,11 @@ public final class ArenaAllocator implements SegmentAllocator {
                     return newSegment(bytesSize, bytesAlignment);
                 } else {
                     // allocate a new segment and slice from there
+                    allocatedSize += segment.byteSize() - sp;
                     sp = 0L;
                     segment = newSegment(blockSize, 1L);
                     slice = trySlice(bytesSize, bytesAlignment);
-                    allocatedSize = sp;
+                    allocatedSize += sp;
                     return slice;
                 }
             }
