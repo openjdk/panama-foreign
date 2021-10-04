@@ -95,7 +95,7 @@ import java.util.Spliterator;
  * <blockquote><pre>{@code
 try (ResourceScope scope = ResourceScope.newSharedScope()) {
     SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.sequenceLayout(1024, ValueLayout.JAVA_INT);
-    MemorySegment segment = scope.allocate(SEQUENCE_LAYOUT);
+    MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT, scope);
     int sum = segment.elements(ValueLayout.JAVA_INT).parallel()
                         .mapToInt(s -> s.get(ValueLayout.JAVA_INT, 0))
                         .sum();
