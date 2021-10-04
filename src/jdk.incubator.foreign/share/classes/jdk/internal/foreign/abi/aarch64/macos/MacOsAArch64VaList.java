@@ -26,7 +26,6 @@
 package jdk.internal.foreign.abi.aarch64.macos;
 
 import jdk.incubator.foreign.*;
-import jdk.incubator.foreign.VaList;
 import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.abi.SharedUtils;

@@ -39,7 +39,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
-import java.lang.ref.Reference;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;

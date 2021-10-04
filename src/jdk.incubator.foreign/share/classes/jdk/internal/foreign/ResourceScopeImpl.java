@@ -33,7 +33,6 @@ import jdk.internal.misc.ScopedMemoryAccess;
 
 import java.lang.ref.Cleaner;
 import java.lang.ref.Reference;
-import java.nio.file.Path;
 import java.util.Objects;
 
 /**

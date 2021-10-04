@@ -41,7 +41,6 @@ import java.util.Objects;
 
 import static jdk.internal.foreign.PlatformLayouts.AArch64;
 
-import jdk.incubator.foreign.VaList;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.abi.SharedUtils.THROWING_ALLOCATOR;

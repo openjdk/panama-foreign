@@ -44,9 +44,17 @@ import java.util.function.Function;
  * (e.g. {@link MemorySegment#allocateNative(long, long, ResourceScope)}); since {@link SegmentAllocator} is a <em>functional interface</em>,
  * clients can easily obtain a native allocator by using either a lambda expression or a method reference.
  * <p>
- * This interface also defines factories for commonly used allocators; for instance {@link #newNativeArena(ResourceScope)}
- * creates an arena-style native allocator, while {@link #prefixAllocator(MemorySegment)} creates an allocator
- * which wraps a segment (either on-heap or off-heap) and recycles its content upon each new allocation request.
+ * This interface also defines factories for commonly used allocators; {@link #nativeAllocator(ResourceScope)} creates
+ * an allocator which {@linkplain MemorySegment#allocateNative(long, long, ResourceScope) allocates} native segments,
+ * backed by a given scope. {@link #newNativeArena(ResourceScope)} creates a more efficient arena-style native allocator.
+ * Finally, {@link #prefixAllocator(MemorySegment)} creates an allocator which wraps a segment (either on-heap or off-heap)
+ * and recycles its content upon each new allocation request.
+ * <p>
+ * Passing a segment allocator to an API can be especially useful in circumstances where a client wants to communicate <em>where</em>
+ * the results of a certain operation (performed by the API) should be stored, as a memory segment. For instance,
+ * {@linkplain CLinker#downcallHandle(FunctionDescriptor) downcall method handles} can accept an additional
+ * {@link SegmentAllocator} parameter if the underlying native function is known to return a struct by-value. Effectively,
+ * the allocator parameter tells the linker runtime where to store the return value of the native function.
  */
 @FunctionalInterface
 public interface SegmentAllocator {
