@@ -57,7 +57,7 @@ import static jdk.incubator.foreign.ValueLayout.JAVA_BYTE;
 @Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "--enable-native-access=ALL-UNNAMED" })
 public class StrLenTest extends CLayouts {
 
-    ResourceScope scope = ResourceScope.newConfinedScope();
+    ResourceScope scope = ResourceScope.newImplicitScope();
 
     SegmentAllocator segmentAllocator;
     SegmentAllocator arenaAllocator = SegmentAllocator.newNativeArena(scope);

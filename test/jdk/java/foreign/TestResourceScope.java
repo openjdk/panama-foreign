@@ -300,6 +300,7 @@ public class TestResourceScope {
         return new Object[][] {
                 { (Supplier<ResourceScope>)ResourceScope::newConfinedScope },
                 { (Supplier<ResourceScope>)ResourceScope::newSharedScope },
+                { (Supplier<ResourceScope>)ResourceScope::newImplicitScope },
                 { (Supplier<ResourceScope>)ResourceScope::globalScope }
         };
     }

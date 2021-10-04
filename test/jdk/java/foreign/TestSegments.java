@@ -48,18 +48,18 @@ public class TestSegments {
 
     @Test(dataProvider = "badSizeAndAlignments", expectedExceptions = IllegalArgumentException.class)
     public void testBadAllocateAlign(long size, long align) {
-        MemorySegment.allocateNative(size, align, ResourceScope.newConfinedScope());
+        MemorySegment.allocateNative(size, align, ResourceScope.newImplicitScope());
     }
 
     @Test(expectedExceptions = { OutOfMemoryError.class,
                                  IllegalArgumentException.class })
     public void testAllocateTooBig() {
-        MemorySegment.allocateNative(Long.MAX_VALUE, ResourceScope.newConfinedScope());
+        MemorySegment.allocateNative(Long.MAX_VALUE, ResourceScope.newImplicitScope());
     }
 
     @Test(expectedExceptions = OutOfMemoryError.class)
     public void testNativeAllocationTooBig() {
-        MemorySegment segment = MemorySegment.allocateNative(1024 * 1024 * 8 * 2, ResourceScope.newConfinedScope()); // 2M
+        MemorySegment segment = MemorySegment.allocateNative(1024 * 1024 * 8 * 2, ResourceScope.newImplicitScope()); // 2M
     }
 
     @Test
@@ -99,14 +99,14 @@ public class TestSegments {
     @Test(expectedExceptions = IndexOutOfBoundsException.class)
     public void testSmallSegmentMax() {
         long offset = (long)Integer.MAX_VALUE + (long)Integer.MAX_VALUE + 2L + 6L; // overflows to 6 when casted to int
-        MemorySegment memorySegment = MemorySegment.allocateNative(10, ResourceScope.newConfinedScope());
+        MemorySegment memorySegment = MemorySegment.allocateNative(10, ResourceScope.newImplicitScope());
         memorySegment.get(JAVA_INT, offset);
     }
 
     @Test(expectedExceptions = IndexOutOfBoundsException.class)
     public void testSmallSegmentMin() {
         long offset = ((long)Integer.MIN_VALUE * 2L) + 6L; // underflows to 6 when casted to int
-        MemorySegment memorySegment = MemorySegment.allocateNative(10, ResourceScope.newConfinedScope());
+        MemorySegment memorySegment = MemorySegment.allocateNative(10, ResourceScope.newImplicitScope());
         memorySegment.get(JAVA_INT, offset);
     }
 
@@ -133,12 +133,12 @@ public class TestSegments {
                 () -> MemorySegment.ofArray(new int[] { 1, 2, 3, 4 }),
                 () -> MemorySegment.ofArray(new long[] { 1l, 2l, 3l, 4l } ),
                 () -> MemorySegment.ofArray(new short[] { 1, 2, 3, 4 } ),
-                () -> MemorySegment.allocateNative(4, ResourceScope.newConfinedScope()),
-                () -> MemorySegment.allocateNative(4, 8, ResourceScope.newConfinedScope()),
-                () -> MemorySegment.allocateNative(JAVA_INT, ResourceScope.newConfinedScope()),
-                () -> MemorySegment.allocateNative(4, ResourceScope.newConfinedScope()),
-                () -> MemorySegment.allocateNative(4, 8, ResourceScope.newConfinedScope()),
-                () -> MemorySegment.allocateNative(JAVA_INT, ResourceScope.newConfinedScope())
+                () -> MemorySegment.allocateNative(4, ResourceScope.newImplicitScope()),
+                () -> MemorySegment.allocateNative(4, 8, ResourceScope.newImplicitScope()),
+                () -> MemorySegment.allocateNative(JAVA_INT, ResourceScope.newImplicitScope()),
+                () -> MemorySegment.allocateNative(4, ResourceScope.newImplicitScope()),
+                () -> MemorySegment.allocateNative(4, 8, ResourceScope.newImplicitScope()),
+                () -> MemorySegment.allocateNative(JAVA_INT, ResourceScope.newImplicitScope())
 
         );
         return l.stream().map(s -> new Object[] { s }).toArray(Object[][]::new);

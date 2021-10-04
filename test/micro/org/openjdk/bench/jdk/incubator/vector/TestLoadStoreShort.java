@@ -112,7 +112,7 @@ public class TestLoadStoreShort {
     dstBufferNative = ByteBuffer.allocateDirect(size);
 
 
-    implicitScope = ResourceScope.newConfinedScope();
+    implicitScope = ResourceScope.newSharedScope();
     srcSegmentImplicit = MemorySegment.allocateNative(size, SPECIES.vectorByteSize(), implicitScope);
     srcBufferSegmentImplicit = srcSegmentImplicit.asByteBuffer();
     dstSegmentImplicit = MemorySegment.allocateNative(size, SPECIES.vectorByteSize(), implicitScope);

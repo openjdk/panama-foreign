@@ -497,7 +497,7 @@ public class TestByteBuffer {
         File f = new File("testNeg1.out");
         f.createNewFile();
         f.deleteOnExit();
-        MemorySegment.mapFile(f.toPath(), 0L, -1, FileChannel.MapMode.READ_WRITE, ResourceScope.newConfinedScope());
+        MemorySegment.mapFile(f.toPath(), 0L, -1, FileChannel.MapMode.READ_WRITE, ResourceScope.newSharedScope());
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -505,7 +505,7 @@ public class TestByteBuffer {
         File f = new File("testNeg2.out");
         f.createNewFile();
         f.deleteOnExit();
-        MemorySegment.mapFile(f.toPath(), -1, 1, FileChannel.MapMode.READ_WRITE, ResourceScope.newConfinedScope());
+        MemorySegment.mapFile(f.toPath(), -1, 1, FileChannel.MapMode.READ_WRITE, ResourceScope.newSharedScope());
     }
 
     @Test
@@ -564,7 +564,7 @@ public class TestByteBuffer {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testMapCustomPath() throws IOException {
         Path path = Path.of(URI.create("jrt:/"));
-        MemorySegment.mapFile(path, 0L, 0L, FileChannel.MapMode.READ_WRITE, ResourceScope.newConfinedScope());
+        MemorySegment.mapFile(path, 0L, 0L, FileChannel.MapMode.READ_WRITE, ResourceScope.newImplicitScope());
     }
 
     @Test(dataProvider="resizeOps")
@@ -727,6 +727,7 @@ public class TestByteBuffer {
     public static Object[][] segments() throws Throwable {
         return new Object[][] {
                 { (Supplier<MemorySegment>) () -> MemorySegment.allocateNative(16, ResourceScope.newImplicitScope()) },
+                { (Supplier<MemorySegment>) () -> MemorySegment.allocateNative(16, ResourceScope.newConfinedScope()) },
                 { (Supplier<MemorySegment>) () -> MemorySegment.ofArray(new byte[16]) }
         };
     }
