@@ -37,9 +37,7 @@ import java.util.Spliterator;
 /**
  * A resource scope manages the lifecycle of one or more resources. Resources (e.g. {@link MemorySegment}) associated
  * with a resource scope can only be accessed while the resource scope is <em>alive</em> (see {@link #isAlive()}),
- * and by the thread associated with the resource scope (if any). A resource scope can be used as a
- * {@linkplain SegmentAllocator segment allocator}; that is, this interface provides many methods which can be
- * used to allocate native segments, associated with this scope.
+ * and by the thread associated with the resource scope (if any).
  *
  * <h2>Deterministic deallocation</h2>
  *
@@ -52,7 +50,7 @@ import java.util.Spliterator;
  * Moreover, closing a resource scope might trigger the releasing of the underlying memory resources associated with said scope; for instance:
  * <ul>
  *     <li>closing the scope associated with a native memory segment results in <em>freeing</em> the native memory associated with it
- *     (see {@link MemorySegment#allocateNative(long, ResourceScope)}, or {@link SegmentAllocator#arenaUnbounded(ResourceScope)})</li>
+ *     (see {@link MemorySegment#allocateNative(long, ResourceScope)}, or {@link SegmentAllocator#newNativeArena(ResourceScope)})</li>
  *     <li>closing the scope associated with a mapped memory segment results in the backing memory-mapped file to be unmapped
  *     (see {@link MemorySegment#mapFile(Path, long, long, FileChannel.MapMode, ResourceScope)})</li>
  *     <li>closing the scope associated with an upcall stub results in releasing the stub

@@ -34,7 +34,6 @@ import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.ValueLayout;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,21 +44,12 @@ import java.util.stream.IntStream;
 
 import org.testng.annotations.*;
 
-import static jdk.incubator.foreign.CLinker.*;
 import static org.testng.Assert.*;
 
 public class CallGeneratorHelper extends NativeTestHelper {
 
-    static SegmentAllocator THROWING_ALLOCATOR = new SegmentAllocator() {
-        @Override
-        public ResourceScope scope() {
-            return ResourceScope.globalScope();
-        }
-
-        @Override
-        public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-            throw new UnsupportedOperationException();
-        }
+    static SegmentAllocator THROWING_ALLOCATOR = (size, align) -> {
+        throw new UnsupportedOperationException();
     };
 
     static final int SAMPLE_FACTOR = Integer.parseInt((String)System.getProperties().getOrDefault("generator.sample.factor", "-1"));

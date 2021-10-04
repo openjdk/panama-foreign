@@ -71,7 +71,7 @@ public class TestDowncall extends CallGeneratorHelper {
         try (ResourceScope scope = ResourceScope.newSharedScope()) {
             boolean needsScope = mt.returnType().equals(MemorySegment.class);
             SegmentAllocator allocator = needsScope ?
-                    SegmentAllocator.arenaUnbounded(scope) :
+                    SegmentAllocator.newNativeArena(scope) :
                     THROWING_ALLOCATOR;
             Object res = doCall(addr, allocator, mt, descriptor, args);
             if (ret == Ret.NON_VOID) {

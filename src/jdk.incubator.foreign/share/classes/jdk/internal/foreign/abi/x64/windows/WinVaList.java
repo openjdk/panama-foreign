@@ -209,7 +209,7 @@ public non-sealed class WinVaList implements VaList, Scoped {
             if (args.isEmpty()) {
                 return EMPTY;
             }
-            SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+            SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
             MemorySegment segment = allocator.allocate(VA_SLOT_SIZE_BYTES * args.size());
             List<MemorySegment> attachedSegments = new ArrayList<>();
             attachedSegments.add(segment);

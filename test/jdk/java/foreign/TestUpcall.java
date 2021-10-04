@@ -44,7 +44,6 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 
 import jdk.incubator.foreign.ResourceScope;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -114,7 +113,7 @@ public class TestUpcall extends CallGeneratorHelper {
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         MemoryAddress addr = LOOKUP.lookup(fName).get();
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+            SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
             MethodHandle mh = downcallHandle(abi, addr, allocator, function(ret, paramTypes, fields));
             Object[] args = makeArgs(scope, ret, paramTypes, fields, returnChecks, argChecks);
             Object[] callArgs = args;
@@ -133,7 +132,7 @@ public class TestUpcall extends CallGeneratorHelper {
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         MemoryAddress addr = LOOKUP.lookup(fName).get();
         try (ResourceScope scope = ResourceScope.newSharedScope()) {
-            SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+            SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
             FunctionDescriptor descriptor = function(ret, paramTypes, fields);
             MethodHandle mh = reverse(downcallHandle(abi, addr, allocator, descriptor));
             Object[] args = makeArgs(ResourceScope.newSharedScope(), ret, paramTypes, fields, returnChecks, argChecks);

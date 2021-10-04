@@ -50,6 +50,9 @@ import java.util.function.Consumer;
  * As such, this interface only supports reading {@code int}, {@code double},
  * and any other type that fits into a {@code long}.
  *
+ * This class is not thread safe, and all accesses should occur within a single thread
+ * (regardless of the scope associated with the variable arity list).
+ *
  * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
  * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
  */

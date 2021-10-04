@@ -262,7 +262,7 @@ public abstract class Binding {
          */
         public static Context ofBoundedAllocator(long size) {
             ResourceScope scope = ResourceScope.newConfinedScope(null);
-            return new Context(SegmentAllocator.arenaBounded(size, scope), scope);
+            return new Context(SegmentAllocator.newNativeArena(size, scope), scope);
         }
 
         /**

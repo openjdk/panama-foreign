@@ -211,7 +211,7 @@ public non-sealed class MacOsAArch64VaList implements VaList, Scoped {
                 return EMPTY;
             }
 
-            SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+            SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
 
             // Each argument may occupy up to four slots
             MemorySegment segment = allocator.allocate(VA_SLOT_SIZE_BYTES * args.size() * 4);
