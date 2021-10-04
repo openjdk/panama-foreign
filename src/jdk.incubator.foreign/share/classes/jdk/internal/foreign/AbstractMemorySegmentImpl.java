@@ -257,11 +257,11 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
         if (base() == that.base()) {  // both either native or heap
             final long thisStart = this.min();
             final long thatStart = that.min();
-            final long thisEnd = thisStart + this.byteSize() - 1L;
-            final long thatEnd = thatStart + that.byteSize() - 1L;
+            final long thisEnd = thisStart + this.byteSize();
+            final long thatEnd = thatStart + that.byteSize();
 
-            if (thisStart <= thatEnd && thisEnd >= thatStart) {  //overlap occurs
-                long offsetToThat = this.offsetTo(that);
+            if (thisStart < thatEnd && thisEnd > thatStart) {  //overlap occurs
+                long offsetToThat = this.segmentOffset(that);
                 long newOffset = offsetToThat >= 0 ? offsetToThat : 0;
                 return asSlice(newOffset, Math.min(this.byteSize() - newOffset, that.byteSize() + offsetToThat));
             }
@@ -270,7 +270,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
     }
 
     @Override
-    public final long offsetTo(MemorySegment other) {
+    public final long segmentOffset(MemorySegment other) {
         AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl) Objects.requireNonNull(other);
         if (base() == that.base()) {
             return that.min() - this.min();
