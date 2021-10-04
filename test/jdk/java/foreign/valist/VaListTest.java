@@ -75,7 +75,7 @@ public class VaListTest extends NativeTestHelper {
 
     static {
         try {
-            ADDRESS_TO_VALIST = MethodHandles.lookup().findStatic(VaList.class, "ofAddress", MethodType.methodType(VaList.class, MemoryAddress.class));
+            ADDRESS_TO_VALIST = MethodHandles.lookup().findStatic(VaList.class, "ofAddress", MethodType.methodType(VaList.class, MemoryAddress.class, ResourceScope.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -822,7 +822,8 @@ public class VaListTest extends NativeTestHelper {
             try {
                 MethodHandle handle = MethodHandles.lookup().findVirtual(VaListConsumer.class, "accept",
                         MethodType.methodType(void.class, VaList.class)).bindTo(instance);
-                return MethodHandles.filterArguments(handle, 0, ADDRESS_TO_VALIST);
+                return MethodHandles.filterArguments(handle, 0,
+                        MethodHandles.insertArguments(ADDRESS_TO_VALIST, 1, ResourceScope.newConfinedScope()));
             } catch (ReflectiveOperationException e) {
                 throw new InternalError(e);
             }
