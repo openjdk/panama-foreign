@@ -169,8 +169,8 @@ void ArgumentShuffle::pd_gen_shuffle(MacroAssembler* masm, int shuffle_space_rsp
       case T_SHORT:
       case T_CHAR:
       case T_INT:
-       masm->move32_64(from_vmreg, to_vmreg);
-       break;
+        masm->move32_64(from_vmreg, to_vmreg);
+        break;
 
       case T_FLOAT:
         masm->float_move(from_vmreg, to_vmreg);

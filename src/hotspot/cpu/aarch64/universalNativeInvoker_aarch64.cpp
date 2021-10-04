@@ -288,7 +288,7 @@ void NativeInvokerGenerator::generate() {
   arg_shuffle.gen_shuffle(_masm);
   __ block_comment("} argument shuffle");
 
-  __ blr (input_addr_reg);
+  __ blr(input_addr_reg);
 
   // Unpack native results.
   switch (_ret_bt) {
@@ -300,7 +300,7 @@ void NativeInvokerGenerator::generate() {
     case T_DOUBLE :
     case T_FLOAT  :
       // Result is in v0 we'll save as needed
-        break;    
+      break;
     case T_VOID: break;
     case T_LONG: break;
     default       : ShouldNotReachHere();

@@ -344,21 +344,21 @@ void NativeInvokerGenerator::generate() {
 
   __ call(input_addr_reg);
 
-    // Unpack native results.
-    switch (_ret_bt) {
-      case T_BOOLEAN: __ c2bool(rax);            break;
-      case T_CHAR   : __ movzwl(rax, rax);       break;
-      case T_BYTE   : __ sign_extend_byte (rax); break;
-      case T_SHORT  : __ sign_extend_short(rax); break;
-      case T_INT    : /* nothing to do */        break;
-      case T_DOUBLE :
-      case T_FLOAT  :
-        // Result is in xmm0 we'll save as needed
-        break;
-      case T_VOID: break;
-      case T_LONG: break;
-      default       : ShouldNotReachHere();
-    }
+  // Unpack native results.
+  switch (_ret_bt) {
+    case T_BOOLEAN: __ c2bool(rax);            break;
+    case T_CHAR   : __ movzwl(rax, rax);       break;
+    case T_BYTE   : __ sign_extend_byte (rax); break;
+    case T_SHORT  : __ sign_extend_short(rax); break;
+    case T_INT    : /* nothing to do */        break;
+    case T_DOUBLE :
+    case T_FLOAT  :
+      // Result is in xmm0 we'll save as needed
+      break;
+    case T_VOID: break;
+    case T_LONG: break;
+    default       : ShouldNotReachHere();
+  }
 
   __ block_comment("{ thread native2java");
   __ restore_cpu_control_state_after_jni();
