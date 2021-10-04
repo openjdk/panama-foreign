@@ -32,6 +32,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.ref.Cleaner;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Spliterator;
 
 /**
@@ -59,16 +60,12 @@ import java.util.Spliterator;
  *
  * <h2>Implicit deallocation</h2>
  *
- * Resource scopes are also closed automatically once the scope instance becomes
- * <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>. This can be useful to allow for predictable,
- * deterministic resource deallocation, while still preventing accidental native memory leaks. In case a managed resource scope
- * is closed explicitly, no further action will be taken when the scope becomes unreachable; that is, cleanup actions
- * (see {@link #addCloseAction(Runnable)}) associated with a resource scope, whether managed or not, are called <em>exactly once</em>.
- * <p>
- * Clients can opt out of implicit deallocation, by passing a {@code null} cleaner parameter to some of the
- * {@linkplain #newConfinedScope(Cleaner) scope factories}. This should be done with care: if a scope is not associated
- * with a {@linkplain Cleaner cleaner}, it is possible for the resources associated to the scope to never be cleaned up,
- * should the scope become unreachable before the {@link #close()} method is called.
+ * Resource scopes can be associated with a {@link Cleaner} instance, so that they are also closed automatically,
+ * once the scope instance becomes <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
+ * This can be useful to allow for predictable, deterministic resource deallocation, while still preventing accidental
+ * native memory leaks. In case a managed resource scope is closed explicitly, no further action will be taken when
+ * the scope becomes unreachable; that is, cleanup actions (see {@link #addCloseAction(Runnable)}) associated with a
+ * resource scope, whether managed or not, are called <em>exactly once</em>.
  *
  * <h2>Global scope</h2>
  *
@@ -193,49 +190,55 @@ public sealed interface ResourceScope extends AutoCloseable permits ResourceScop
     void keepAlive(ResourceScope target);
 
     /**
-     * Create a new confined scope. Equivalent to (but likely more efficient than) the following code:
-     * <pre>{@code
-    newConfinedScope(Cleaner.create());
-     * }</pre>
+     * Create a new confined scope.
      * @return a new confined scope.
      */
     static ResourceScope newConfinedScope() {
-        return ResourceScopeImpl.createConfined( Thread.currentThread(), CleanerFactory.cleaner());
+        return ResourceScopeImpl.createConfined( Thread.currentThread(), null);
     }
 
     /**
-     * Create a new confined scope. If {@code cleaner != null}, the resulting scope is managed by the provided
-     * cleaner instance; otherwise the resulting scope will <em>not</em> feature implicit deallocation.
-     * @param cleaner the cleaner to be associated with the returned scope (can be {@code null}).
-     * @return a new confined scope, managed by {@code cleaner}, if {@code cleaner != null}.
+     * Create a new confined scope, managed by the provided cleaner instance.
+     * @param cleaner the cleaner to be associated with the returned scope.
+     * @return a new confined scope, managed by {@code cleaner}.
      */
     static ResourceScope newConfinedScope(Cleaner cleaner) {
+        Objects.requireNonNull(cleaner);
         return ResourceScopeImpl.createConfined(Thread.currentThread(), cleaner);
     }
 
     /**
-     * Create a new shared scope. Equivalent to (but likely more efficient than) the following code:
-     * <pre>{@code
-newSharedScope(Cleaner.create());
-     * }</pre>
+     * Create a new shared scope.
      * @return a new shared scope.
      */
     static ResourceScope newSharedScope() {
-        return ResourceScopeImpl.createShared(CleanerFactory.cleaner());
+        return ResourceScopeImpl.createShared(null);
     }
 
     /**
-     * Create a new shared scope. If {@code cleaner != null}, the resulting scope is managed by the provided
-     * cleaner instance; otherwise the resulting scope will <em>not</em> feature implicit deallocation.
-     * @param cleaner the cleaner to be associated with the returned scope (can be {@code null}).
-     * @return a new shared scope, managed by {@code cleaner}, if {@code cleaner != null}.
+     * Create a new shared scope, managed by the provided cleaner instance.
+     * @param cleaner the cleaner to be associated with the returned scope.
+     * @return a new shared scope, managed by {@code cleaner}.
      */
     static ResourceScope newSharedScope(Cleaner cleaner) {
+        Objects.requireNonNull(cleaner);
         return ResourceScopeImpl.createShared(cleaner);
     }
 
     /**
-     * Returns an implicit scope which is assumed to be always alive.
+     * Returns a shared scope, managed by a private {@link Cleaner} instance. Equivalent to (but likely more efficient than)
+     * the following code:
+     * <pre>{@code
+    newSharedScope(Cleaner.create());
+     * }</pre>
+     * @return a shared scope, managed by a private {@link Cleaner} instance.
+     */
+    static ResourceScope newImplicitScope() {
+        return newSharedScope(CleanerFactory.cleaner());
+    }
+
+    /**
+     * Returns a shared scope which is assumed to be always alive.
      * @return the global scope.
      */
     static ResourceScope globalScope() {

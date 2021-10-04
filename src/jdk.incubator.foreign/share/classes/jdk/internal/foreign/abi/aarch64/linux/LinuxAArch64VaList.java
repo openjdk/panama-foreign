@@ -124,7 +124,7 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
 
     private static MemoryAddress emptyListAddress() {
         long ptr = U.allocateMemory(LAYOUT.byteSize());
-        ResourceScope scope = ResourceScope.newSharedScope();
+        ResourceScope scope = ResourceScope.newImplicitScope();
         scope.addCloseAction(() -> U.freeMemory(ptr));
         MemorySegment ms = MemorySegment.ofAddressNative(MemoryAddress.ofLong(ptr),
                 LAYOUT.byteSize(), scope);

@@ -182,7 +182,7 @@ public class TestNulls {
         addDefaultMapping(CLinker.class, CLinker.systemCLinker());
         addDefaultMapping(VaList.class, VaListHelper.vaList);
         addDefaultMapping(VaList.Builder.class, VaListHelper.vaListBuilder);
-        addDefaultMapping(ResourceScope.class, ResourceScope.newConfinedScope());
+        addDefaultMapping(ResourceScope.class, ResourceScope.newSharedScope());
         addDefaultMapping(SegmentAllocator.class, SegmentAllocator.prefixAllocator(MemorySegment.ofArray(new byte[10])));
         addDefaultMapping(Supplier.class, () -> null);
         addDefaultMapping(ClassLoader.class, TestNulls.class.getClassLoader());
@@ -198,7 +198,7 @@ public class TestNulls {
             vaList = VaList.make(b -> {
                 builderRef.set(b);
                 b.addVarg(JAVA_LONG, 42L);
-            }, ResourceScope.newConfinedScope());
+            }, ResourceScope.newImplicitScope());
             vaListBuilder = builderRef.get();
         }
     }

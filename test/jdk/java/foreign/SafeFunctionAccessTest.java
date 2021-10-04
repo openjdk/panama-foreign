@@ -144,7 +144,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
             MethodHandle handle = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "checkScope",
                     MethodType.methodType(void.class, ResourceScope.class));
             handle = handle.bindTo(scope);
-            return CLinker.systemCLinker().upcallStub(handle, FunctionDescriptor.ofVoid(), ResourceScope.newConfinedScope());
+            return CLinker.systemCLinker().upcallStub(handle, FunctionDescriptor.ofVoid(), ResourceScope.newImplicitScope());
         } catch (Throwable ex) {
             throw new AssertionError(ex);
         }

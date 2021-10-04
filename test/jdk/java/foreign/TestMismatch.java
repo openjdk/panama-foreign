@@ -205,7 +205,7 @@ public class TestMismatch {
     }
 
     enum SegmentKind {
-        NATIVE(i -> MemorySegment.allocateNative(i, ResourceScope.newConfinedScope())),
+        NATIVE(i -> MemorySegment.allocateNative(i, ResourceScope.newImplicitScope())),
         ARRAY(i -> MemorySegment.ofArray(new byte[i]));
 
         final IntFunction<MemorySegment> segmentFactory;

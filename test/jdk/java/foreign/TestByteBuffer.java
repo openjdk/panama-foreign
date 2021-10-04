@@ -274,7 +274,7 @@ public class TestByteBuffer {
         f.createNewFile();
         f.deleteOnExit();
 
-        MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, 8, FileChannel.MapMode.READ_WRITE, ResourceScope.newConfinedScope());
+        MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, 8, FileChannel.MapMode.READ_WRITE, ResourceScope.newImplicitScope());
         assertTrue(segment.isMapped());
         segment.scope().close();
         mappedBufferOp.apply(segment);
@@ -726,7 +726,7 @@ public class TestByteBuffer {
     @DataProvider(name = "segments")
     public static Object[][] segments() throws Throwable {
         return new Object[][] {
-                { (Supplier<MemorySegment>) () -> MemorySegment.allocateNative(16, ResourceScope.newConfinedScope()) },
+                { (Supplier<MemorySegment>) () -> MemorySegment.allocateNative(16, ResourceScope.newImplicitScope()) },
                 { (Supplier<MemorySegment>) () -> MemorySegment.ofArray(new byte[16]) }
         };
     }
@@ -734,8 +734,11 @@ public class TestByteBuffer {
     @DataProvider(name = "closeableScopes")
     public static Object[][] closeableScopes() {
         return new Object[][] {
-                { (Supplier<ResourceScope>)ResourceScope::newConfinedScope },
-                { (Supplier<ResourceScope>)ResourceScope::newSharedScope }
+                { (Supplier<ResourceScope>) () -> ResourceScope.newSharedScope()   },
+                { (Supplier<ResourceScope>) () -> ResourceScope.newConfinedScope() },
+                { (Supplier<ResourceScope>) () -> ResourceScope.newSharedScope(Cleaner.create())   },
+                { (Supplier<ResourceScope>) () -> ResourceScope.newConfinedScope(Cleaner.create()) },
+                { (Supplier<ResourceScope>) () -> ResourceScope.newImplicitScope() }
         };
     }
 

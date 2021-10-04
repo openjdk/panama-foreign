@@ -97,7 +97,7 @@ public class TestUpcall extends CallGeneratorHelper {
 
     @BeforeClass
     void setup() {
-        dummyStub = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), ResourceScope.newSharedScope());
+        dummyStub = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), ResourceScope.newImplicitScope());
     }
 
     private static void checkSelected(TestType type) {
@@ -135,7 +135,7 @@ public class TestUpcall extends CallGeneratorHelper {
             SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
             FunctionDescriptor descriptor = function(ret, paramTypes, fields);
             MethodHandle mh = reverse(downcallHandle(abi, addr, allocator, descriptor));
-            Object[] args = makeArgs(ResourceScope.newSharedScope(), ret, paramTypes, fields, returnChecks, argChecks);
+            Object[] args = makeArgs(ResourceScope.newImplicitScope(), ret, paramTypes, fields, returnChecks, argChecks);
 
             mh = mh.asSpreader(Object[].class, args.length);
             mh = MethodHandles.insertArguments(mh, 0, (Object) args);
@@ -244,7 +244,7 @@ public class TestUpcall extends CallGeneratorHelper {
         for (int i = 0; i < o.length; i++) {
             if (o[i] instanceof MemorySegment) {
                 MemorySegment ms = (MemorySegment) o[i];
-                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), ResourceScope.newSharedScope());
+                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), ResourceScope.newImplicitScope());
                 copy.copyFrom(ms);
                 o[i] = copy;
             }
