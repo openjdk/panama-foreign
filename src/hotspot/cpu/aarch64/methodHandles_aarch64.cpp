@@ -260,7 +260,18 @@ address MethodHandles::generate_method_handle_interpreter_entry(MacroAssembler* 
 
 void MethodHandles::jump_to_native_invoker(MacroAssembler* _masm, Register nep_reg, Register temp_target) {
   BLOCK_COMMENT("jump_to_native_invoker {");
-  __ hlt(0);
+  // This is the initial entry point of a lazy method handle.
+  // After type checking, it picks up the invoker from the LambdaForm.
+  assert_different_registers(nep_reg, temp_target);
+  assert(nep_reg != noreg, "required register");
+
+  // Load the invoker, as NEP -> .invoker
+  __ verify_oop(nep_reg);
+  __ access_load_at(T_ADDRESS, IN_HEAP, temp_target,
+                    Address(nep_reg, NONZERO(jdk_internal_invoke_NativeEntryPoint::invoker_offset_in_bytes())),
+                    noreg, noreg);
+
+  __ br(temp_target); 
   BLOCK_COMMENT("} jump_to_native_invoker");
 }
 

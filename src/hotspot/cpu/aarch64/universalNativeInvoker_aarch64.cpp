@@ -208,6 +208,11 @@ RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
                                   g.frame_complete(),
                                   g.framesize(),
                                   g.oop_maps(), false);
+
+  if (TraceNativeInvokers) {
+    stub->print_on(tty);
+  }
+
   return stub;
 }
 
@@ -382,5 +387,5 @@ void NativeInvokerGenerator::generate() {
 }
 
 bool ProgrammableInvoker::supports_native_invoker() {
-  return false;
+  return true;
 }

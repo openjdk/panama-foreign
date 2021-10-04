@@ -24,7 +24,6 @@
 #include "precompiled.hpp"
 #include "asm/macroAssembler.hpp"
 #include "code/codeBlob.hpp"
-#include "compiler/disassembler.hpp"
 #include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
 #include "prims/foreign_globals.inline.hpp"
@@ -259,7 +258,6 @@ RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
 
   if (TraceNativeInvokers) {
     stub->print_on(tty);
-    Disassembler::decode(stub, tty);
   }
 
   return stub;
