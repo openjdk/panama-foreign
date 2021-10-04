@@ -25,6 +25,7 @@
 
 package jdk.incubator.foreign;
 
+import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.ArenaAllocator;
 import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.Utils;
@@ -410,8 +411,12 @@ public interface SegmentAllocator {
     /**
      * Returns a segment allocator which responds to allocation requests by recycling a single segment; that is,
      * each new allocation request will return a new slice starting at the segment offset {@code 0} (alignment
-     * constraints are ignored by this allocator), hence the name <em>prefix allocator</em>. A prefix allocator
-     * is always associated with the scope of the segment it is based upon.
+     * constraints are ignored by this allocator), hence the name <em>prefix allocator</em>.
+     * Equivalent to (but likely more efficient than) the following code:
+     * <blockquote><pre>{@code
+    MemorySegment segment = ...
+    SegmentAllocator prefixAllocator = (size, align) -> segment.asSlice(0, size);
+     * }</pre></blockquote>
      * <p>
      * This allocator can be useful to limit allocation requests in case a client
      * knows that they have fully processed the contents of the allocated segment before the subsequent allocation request
@@ -425,7 +430,7 @@ public interface SegmentAllocator {
      */
     static SegmentAllocator prefixAllocator(MemorySegment segment) {
         Objects.requireNonNull(segment);
-        return (size, alignment) -> segment.asSlice(0, size);
+        return (AbstractMemorySegmentImpl)segment;
     }
 
     /**

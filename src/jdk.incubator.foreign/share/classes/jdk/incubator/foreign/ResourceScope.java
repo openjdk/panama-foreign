@@ -76,7 +76,7 @@ import java.util.Spliterator;
  *
  * <h2><a id = "thread-confinement">Thread confinement</a></h2>
  *
- * Resource scopes can be further divided into two categories: <em>thread-confined</em> resource scopes, and <em>shared</em>
+ * Resource scopes can be divided into two categories: <em>thread-confined</em> resource scopes, and <em>shared</em>
  * resource scopes.
  * <p>
  * Confined resource scopes (see {@link #newConfinedScope()}), support strong thread-confinement guarantees. Upon creation,
@@ -184,8 +184,8 @@ public sealed interface ResourceScope extends AutoCloseable permits ResourceScop
      * @implNote A given scope can support up to {@link Integer#MAX_VALUE} pending keep alive requests.
      * @param target the scope that needs to be kept alive.
      * @throws IllegalArgumentException if {@code target == this}.
-     * @throws IllegalStateException if this scope has been closed, or if access occurs from
-     * a thread other than the thread owning this scope.
+     * @throws IllegalStateException if this scope or {@code target} have been closed, or if access occurs from
+     * a thread other than the thread owning this scope or {@code target}.
      */
     void keepAlive(ResourceScope target);
 

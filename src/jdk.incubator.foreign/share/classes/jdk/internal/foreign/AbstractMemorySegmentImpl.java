@@ -55,7 +55,7 @@ import static jdk.incubator.foreign.ValueLayout.JAVA_BYTE;
  * are defined for each memory segment kind, see {@link NativeMemorySegmentImpl}, {@link HeapMemorySegmentImpl} and
  * {@link MappedMemorySegmentImpl}.
  */
-public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegmentProxy implements MemorySegment, Scoped {
+public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegmentProxy implements MemorySegment, SegmentAllocator, Scoped {
 
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
@@ -141,6 +141,11 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
         checkAccess(0, length, false);
         SCOPED_MEMORY_ACCESS.setMemory(scope, base(), min(), length, value);
         return this;
+    }
+
+    @Override
+    public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+        return asSlice(0, bytesSize);
     }
 
     @Override
