@@ -387,5 +387,5 @@ void NativeInvokerGenerator::generate() {
 }
 
 bool ProgrammableInvoker::supports_native_invoker() {
-  return true;
+  return false;
 }
