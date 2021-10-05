@@ -442,7 +442,8 @@ public interface SegmentAllocator {
      * Returns a native allocator, associated with the provided scope. Equivalent to (but likely more efficient than)
      * the following code:
      * <blockquote><pre>{@code
-    SegmentAllocator nativeAllocator = (size, align) -> MemorySegment.allocateNative(size, align);
+    ResourceScope scope = ...
+    SegmentAllocator nativeAllocator = (size, align) -> MemorySegment.allocateNative(size, align, scope);
      * }</pre></blockquote>
      *
      * @param scope the scope associated with the returned allocator.
