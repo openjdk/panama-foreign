@@ -26,6 +26,7 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
@@ -70,11 +71,11 @@ public class SystemLookup implements SymbolLookup {
             SymbolLookup fallbackLibLookup = libLookup(libs -> libs.loadLibrary("WinFallbackLookup"));
 
             int numSymbols = WindowsFallbackSymbols.values().length;
-            MemorySegment funcs = MemorySegment.ofAddressNative(fallbackLibLookup.lookup("funcs").orElseThrow(),
+            MemorySegment funcs = MemorySegment.ofAddressNative(fallbackLibLookup.lookup("funcs").orElseThrow().address(),
                 ADDRESS.byteSize() * numSymbols, ResourceScope.globalScope());
 
             SymbolLookup fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.valueOfOrNull(name))
-                .map(symbol -> funcs.getAtIndex(ADDRESS, symbol.ordinal()));
+                .map(symbol -> NativeSymbol.ofAddress(symbol.name(), funcs.getAtIndex(ADDRESS, symbol.ordinal()), ResourceScope.globalScope()));
 
             final SymbolLookup finalLookup = lookup;
             lookup = name -> finalLookup.lookup(name).or(() -> fallbackLookup.lookup(name));
@@ -90,7 +91,8 @@ public class SystemLookup implements SymbolLookup {
             try {
                 long addr = lib.lookup(name);
                 return addr == 0 ?
-                        Optional.empty() : Optional.of(MemoryAddress.ofLong(addr));
+                        Optional.empty() :
+                        Optional.of(NativeSymbol.ofAddress(name, MemoryAddress.ofLong(addr), ResourceScope.globalScope()));
             } catch (NoSuchMethodException e) {
                 return Optional.empty();
             }
@@ -98,7 +100,7 @@ public class SystemLookup implements SymbolLookup {
     }
 
     @Override
-    public Optional<MemoryAddress> lookup(String name) {
+    public Optional<NativeSymbol> lookup(String name) {
         return syslookup.lookup(name);
     }
 

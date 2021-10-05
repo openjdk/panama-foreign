@@ -34,6 +34,8 @@ import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.NativeSymbol;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
@@ -45,7 +47,7 @@ public class TestNULLAddress {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testNULLLinking() {
         LINKER.downcallHandle(
-                MemoryAddress.NULL,
+                NativeSymbol.ofAddress("nullAddress", MemoryAddress.NULL, ResourceScope.globalScope()),
                 FunctionDescriptor.ofVoid());
     }
 
@@ -53,7 +55,7 @@ public class TestNULLAddress {
     public void testNULLVirtual() throws Throwable {
         MethodHandle mh = LINKER.downcallHandle(
                 FunctionDescriptor.ofVoid());
-        mh.invokeExact((Addressable) MemoryAddress.NULL);
+        mh.invokeExact(NativeSymbol.ofAddress("null", MemoryAddress.NULL, ResourceScope.globalScope()));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)

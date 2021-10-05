@@ -31,6 +31,7 @@ import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.SequenceLayout;
@@ -386,13 +387,13 @@ public class SharedUtils {
             insertPos = 2;
         }
 
-        // downcalls get the leading Addressable/SegmentAllocator param as well
+        // downcalls get the leading NativeSymbol/SegmentAllocator param as well
         if (!upcall) {
-            closer = collectArguments(closer, insertPos++, reachabilityFenceHandle(Addressable.class));
-            closer = dropArguments(closer, insertPos++, SegmentAllocator.class); // (Throwable, V?, Addressable, SegmentAllocator) -> V/void
+            closer = collectArguments(closer, insertPos++, reachabilityFenceHandle(NativeSymbol.class));
+            closer = dropArguments(closer, insertPos++, SegmentAllocator.class); // (Throwable, V?, NativeSymbol, SegmentAllocator) -> V/void
         }
 
-        closer = collectArguments(closer, insertPos++, MH_CLOSE_CONTEXT); // (Throwable, V?, Addressable?, BindingContext) -> V/void
+        closer = collectArguments(closer, insertPos++, MH_CLOSE_CONTEXT); // (Throwable, V?, NativeSymbol?, BindingContext) -> V/void
 
         MethodHandle contextFactory;
 
@@ -511,7 +512,7 @@ public class SharedUtils {
         List<UnaryOperator<MethodHandle>> adapters = new ArrayList<>();
         for (int i = 0 ; i < downcallHandle.type().parameterCount() ; i++) {
             Class<?> ptype = downcallHandle.type().parameterType(i);
-            if (ptype == Addressable.class) {
+            if (ptype == Addressable.class || ptype == NativeSymbol.class) {
                 addressableCount++;
             } else {
                 int pos = i;
@@ -524,7 +525,7 @@ public class SharedUtils {
 
             MethodType adapterType = MethodType.methodType(void.class);
             for (int i = 0 ; i < addressableCount ; i++) {
-                adapterType = adapterType.appendParameterTypes(Addressable.class);
+                adapterType = adapterType.appendParameterTypes(i == 0 ? NativeSymbol.class : Addressable.class);
             }
 
             MethodHandle acquireHandle = ACQUIRE_MH.asCollector(Scoped[].class, addressableCount).asType(adapterType);
@@ -535,7 +536,6 @@ public class SharedUtils {
                 releaseHandle = adapter.apply(releaseHandle);
             }
 
-            // acquire/release target addressable
             tryBlock = foldArguments(tryBlock, acquireHandle);
             cleanup = collectArguments(cleanup, hasReturn ? 2 : 1, releaseHandle);
 
@@ -564,7 +564,7 @@ public class SharedUtils {
                 FunctionDescriptor.ofVoid(ADDRESS));
     }
 
-    public static void checkSymbol(Addressable symbol) {
+    public static void checkSymbol(NativeSymbol symbol) {
         checkAddressable(symbol, "Symbol is NULL");
     }
 

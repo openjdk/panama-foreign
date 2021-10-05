@@ -62,7 +62,7 @@ public class TestSymbolLookup {
 
     @Test
     public void testVariableSymbolLookup() {
-        MemorySegment segment = MemorySegment.ofAddressNative(LOOKUP.lookup("c").get(), ValueLayout.JAVA_INT.byteSize(), ResourceScope.globalScope());
+        MemorySegment segment = MemorySegment.ofAddressNative(LOOKUP.lookup("c").get().address(), ValueLayout.JAVA_INT.byteSize(), ResourceScope.globalScope());
         assertEquals(segment.get(JAVA_BYTE, 0), 42);
     }
 }

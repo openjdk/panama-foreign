@@ -28,6 +28,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SymbolLookup;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -56,14 +57,14 @@ public class QSort extends CLayouts {
 
     static final CLinker abi = CLinker.systemCLinker();
     static final MethodHandle clib_qsort;
-    static final Addressable native_compar;
-    static final Addressable panama_upcall_compar;
+    static final NativeSymbol native_compar;
+    static final NativeSymbol panama_upcall_compar;
     static final long jni_upcall_compar;
 
     static final int[] INPUT = { 5, 3, 2, 7, 8, 12, 1, 7 };
     static final MemorySegment INPUT_SEGMENT;
 
-    static Addressable qsort_addr = abi.lookup("qsort").get();
+    static NativeSymbol qsort_addr = abi.lookup("qsort").get();
 
     static {
         INPUT_SEGMENT = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(INPUT.length, JAVA_INT), ResourceScope.globalScope());

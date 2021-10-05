@@ -30,6 +30,7 @@
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.VaList;
@@ -162,6 +163,8 @@ public class TestScopedOperations {
         ScopedOperation.ofAllocator(a -> a.allocateArray(ValueLayout.JAVA_FLOAT, new float[]{0}), "NativeAllocator::allocateArray/float");
         ScopedOperation.ofAllocator(a -> a.allocateArray(ValueLayout.JAVA_LONG, new long[]{0}), "NativeAllocator::allocateArray/long");
         ScopedOperation.ofAllocator(a -> a.allocateArray(ValueLayout.JAVA_DOUBLE, new double[]{0}), "NativeAllocator::allocateArray/double");
+        // native symbol
+        ScopedOperation.of(scope -> NativeSymbol.ofAddress("", MemoryAddress.NULL, scope), NativeSymbol::address, "NativeSymbol::address");
     };
 
     @DataProvider(name = "scopedOperations")
@@ -189,6 +192,10 @@ public class TestScopedOperations {
         @Override
         public X apply(ResourceScope scope) {
             return factory.apply(scope);
+        }
+
+        static <Z> void of(Function<ResourceScope, Z> factory, Consumer<Z> consumer, String name) {
+            scopedOperations.add(new ScopedOperation<>(factory, consumer, name));
         }
 
         static void ofScope(Consumer<ResourceScope> scopeConsumer, String name) {
