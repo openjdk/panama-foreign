@@ -98,7 +98,6 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
     private static final VarHandle VH_vr_offs
         = LAYOUT.varHandle(groupElement("__vr_offs"));
 
-    private static final Cleaner cleaner = Cleaner.create();
     private static final VaList EMPTY
         = new SharedUtils.EmptyVaList(emptyListAddress());
 
@@ -127,7 +126,6 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
         scope.addCloseAction(() -> U.freeMemory(ptr));
         MemorySegment ms = MemorySegment.ofAddressNative(MemoryAddress.ofLong(ptr),
                 LAYOUT.byteSize(), scope);
-        cleaner.register(LinuxAArch64VaList.class, () -> ms.scope().close());
         VH_stack.set(ms, MemoryAddress.NULL);
         VH_gr_top.set(ms, MemoryAddress.NULL);
         VH_vr_top.set(ms, MemoryAddress.NULL);

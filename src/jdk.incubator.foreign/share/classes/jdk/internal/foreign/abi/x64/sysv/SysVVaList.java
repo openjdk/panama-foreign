@@ -109,7 +109,6 @@ public non-sealed class SysVVaList implements VaList, Scoped {
     private static final VarHandle VH_overflow_arg_area = LAYOUT.varHandle(groupElement("overflow_arg_area"));
     private static final VarHandle VH_reg_save_area = LAYOUT.varHandle(groupElement("reg_save_area"));
 
-    private static final Cleaner cleaner = Cleaner.create();
     private static final VaList EMPTY = new SharedUtils.EmptyVaList(emptyListAddress());
 
     private final MemorySegment segment;
@@ -131,7 +130,6 @@ public non-sealed class SysVVaList implements VaList, Scoped {
         scope.addCloseAction(() -> U.freeMemory(ptr));
         MemorySegment base = MemorySegment.ofAddressNative(MemoryAddress.ofLong(ptr),
                 LAYOUT.byteSize(), scope);
-        cleaner.register(SysVVaList.class, () -> base.scope().close());
         VH_gp_offset.set(base, MAX_GP_OFFSET);
         VH_fp_offset.set(base, MAX_FP_OFFSET);
         VH_overflow_arg_area.set(base, MemoryAddress.NULL);
