@@ -26,6 +26,7 @@ package jdk.internal.foreign.abi;
 
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.ValueLayout;
@@ -86,10 +87,10 @@ public class ProgrammableInvoker {
             MH_INVOKE_MOVES = lookup.findVirtual(ProgrammableInvoker.class, "invokeMoves",
                     methodType(Object.class, long.class, Object[].class, Binding.VMStore[].class, Binding.VMLoad[].class));
             MH_INVOKE_INTERP_BINDINGS = lookup.findVirtual(ProgrammableInvoker.class, "invokeInterpBindings",
-                    methodType(Object.class, Addressable.class, SegmentAllocator.class, Object[].class, MethodHandle.class, Map.class, Map.class));
+                    methodType(Object.class, NativeSymbol.class, SegmentAllocator.class, Object[].class, MethodHandle.class, Map.class, Map.class));
             MH_WRAP_ALLOCATOR = lookup.findStatic(Binding.Context.class, "ofAllocator",
                     methodType(Binding.Context.class, SegmentAllocator.class));
-            MH_ADDR_TO_LONG = lookup.findStatic(ProgrammableInvoker.class, "unboxTargetAddress", methodType(long.class, Addressable.class));
+            MH_ADDR_TO_LONG = lookup.findStatic(ProgrammableInvoker.class, "unboxTargetAddress", methodType(long.class, NativeSymbol.class));
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -171,7 +172,7 @@ public class ProgrammableInvoker {
         return handle;
     }
 
-    private static long unboxTargetAddress(Addressable addr) {
+    private static long unboxTargetAddress(NativeSymbol addr) {
         SharedUtils.checkSymbol(addr);
         return addr.address().toRawLongValue();
     }
@@ -311,7 +312,7 @@ public class ProgrammableInvoker {
         }
     }
 
-    Object invokeInterpBindings(Addressable address, SegmentAllocator allocator, Object[] args, MethodHandle leaf,
+    Object invokeInterpBindings(NativeSymbol symbol, SegmentAllocator allocator, Object[] args, MethodHandle leaf,
                                 Map<VMStorage, Integer> argIndexMap,
                                 Map<VMStorage, Integer> retIndexMap) throws Throwable {
         Binding.Context unboxContext = bufferCopySize != 0
@@ -320,12 +321,12 @@ public class ProgrammableInvoker {
         try (unboxContext) {
             // do argument processing, get Object[] as result
             Object[] leafArgs = new Object[leaf.type().parameterCount()];
-            leafArgs[0] = address; // addr
+            leafArgs[0] = symbol; // symbol
             for (int i = 0; i < args.length; i++) {
                 Object arg = args[i];
                 BindingInterpreter.unbox(arg, callingSequence.argumentBindings(i),
                         (storage, type, value) -> {
-                            leafArgs[argIndexMap.get(storage) + 1] = value; // +1 to skip addr
+                            leafArgs[argIndexMap.get(storage) + 1] = value; // +1 to skip symbol
                         }, unboxContext);
             }
 

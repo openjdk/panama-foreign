@@ -76,7 +76,7 @@ import java.util.Optional;
  * an extra parameter of type {@link SegmentAllocator}, which is used by the linker runtime to allocate the
  * memory region associated with the struct returned by  the downcall method handle.
  * <p>
- * Finally, downcall method handles feature a leading parameter of type {@link Addressable}, from which the
+ * Finally, downcall method handles feature a leading parameter of type {@link NativeSymbol}, from which the
  * address of the target native function can be derived. The address, when known statically, can also be provided by
  * clients at link time. As for other by-reference parameters (see above) this leading parameter will be
  * {@linkplain ResourceScope#keepAlive(ResourceScope) kept alive} by the linker implementation.
@@ -151,7 +151,7 @@ public sealed interface CLinker extends SymbolLookup permits Windowsx64Linker, S
 
     /**
      * Obtains a foreign method handle, with the given type and featuring the given function descriptor,
-     * which can be used to call a target foreign function at the given address.
+     * which can be used to call a target foreign function at the address in the given native symbol.
      * <p>
      * If the provided method type's return type is {@code MemorySegment}, then the resulting method handle features
      * an additional prefix parameter, of type {@link SegmentAllocator}, which will be used by the linker runtime
@@ -170,23 +170,23 @@ public sealed interface CLinker extends SymbolLookup permits Windowsx64Linker, S
      *
      * @see SymbolLookup
      */
-    default MethodHandle downcallHandle(Addressable symbol, FunctionDescriptor function) {
+    default MethodHandle downcallHandle(NativeSymbol symbol, FunctionDescriptor function) {
         SharedUtils.checkSymbol(symbol);
         return downcallHandle(function).bindTo(symbol);
     }
 
     /**
      * Obtains a foreign method handle, with the given type and featuring the given function descriptor, which can be
-     * used to call a target foreign function at an address.
-     * The resulting method handle features a prefix parameter (as the first parameter) corresponding to the address, of
-     * type {@link Addressable}.
+     * used to call a target foreign function at the address in a dynamically provided native symbol.
+     * The resulting method handle features a prefix parameter (as the first parameter) corresponding to the foreign function
+     * entry point, of type {@link NativeSymbol}.
      * <p>
      * If the provided function descriptor's return layout is a {@link GroupLayout}, then the resulting method handle features an
      * additional prefix parameter (inserted immediately after the address parameter), of type {@link SegmentAllocator}),
      * which will be used by the linker runtime to allocate structs returned by-value.
      * <p>
-     * The returned method handle will throw an {@link IllegalArgumentException} if the target address passed to it is
-     * {@link MemoryAddress#NULL}, or a {@link NullPointerException} if the target address is {@code null}.
+     * The returned method handle will throw an {@link IllegalArgumentException} if the native symbol passed to it is
+     * associated with the {@link MemoryAddress#NULL} address, or a {@link NullPointerException} if the native symbol is {@code null}.
      *
      * @param function the function descriptor.
      * @return the downcall method handle. The method handle type is <a href="CLinker.html#downcall-method-handles"><em>inferred</em></a>

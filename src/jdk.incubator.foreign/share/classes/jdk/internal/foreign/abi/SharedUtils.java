@@ -31,6 +31,7 @@ import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.SequenceLayout;
@@ -384,13 +385,13 @@ public class SharedUtils {
             insertPos = 2;
         }
 
-        // downcalls get the leading Addressable/SegmentAllocator param as well
+        // downcalls get the leading NativeSymbol/SegmentAllocator param as well
         if (!upcall) {
-            closer = collectArguments(closer, insertPos++, reachabilityFenceHandle(Addressable.class));
-            closer = dropArguments(closer, insertPos++, SegmentAllocator.class); // (Throwable, V?, Addressable, SegmentAllocator) -> V/void
+            closer = collectArguments(closer, insertPos++, reachabilityFenceHandle(NativeSymbol.class));
+            closer = dropArguments(closer, insertPos++, SegmentAllocator.class); // (Throwable, V?, NativeSymbol, SegmentAllocator) -> V/void
         }
 
-        closer = collectArguments(closer, insertPos++, MH_CLOSE_CONTEXT); // (Throwable, V?, Addressable?, BindingContext) -> V/void
+        closer = collectArguments(closer, insertPos++, MH_CLOSE_CONTEXT); // (Throwable, V?, NativeSymbol?, BindingContext) -> V/void
 
         MethodHandle contextFactory;
 
@@ -432,8 +433,8 @@ public class SharedUtils {
                 MethodHandles.identity(downcallHandle.type().returnType()) :
                 MethodHandles.empty(MethodType.methodType(void.class));
         for (int i = 0 ; i < descriptor.argumentLayouts().size() ; i++) {
-            int paramIndex = i + (hasAllocator ? 2 : 1); // skip Addressable, and SegmentAllocator (if present)
-            int cleanupIndex = i + (hasReturn ? 1 : 0); // skip Throwable and result (if present), and Addressable
+            int paramIndex = i + (hasAllocator ? 2 : 1); // skip NativeSymbol, and SegmentAllocator (if present)
+            int cleanupIndex = i + (hasReturn ? 1 : 0); // skip Throwable and result (if present), and NativeSymbol
             MemoryLayout layout = descriptor.argumentLayouts().get(i);
             Class<?> carrier = downcallHandle.type().parameterType(paramIndex);
             if (layout instanceof ValueLayout valueLayout && valueLayout.carrier() == MemoryAddress.class) {
@@ -446,9 +447,9 @@ public class SharedUtils {
             }
         }
         cleanup = dropArguments(cleanup, 0, Throwable.class);
-        // acquire/release target addressable
-        tryBlock = filterArguments(tryBlock, 0, ACQUIRE_MH);
-        cleanup = collectArguments(cleanup, hasReturn ? 2 : 1, RELEASE_MH);
+        // acquire/release native symbol
+        tryBlock = filterArguments(tryBlock, 0, ACQUIRE_MH.asType(MethodType.methodType(NativeSymbol.class, NativeSymbol.class)));
+        cleanup = collectArguments(cleanup, hasReturn ? 2 : 1, RELEASE_MH.asType(MethodType.methodType(void.class, NativeSymbol.class)));
         // fixup allocator
         if (hasAllocator) {
             // cleanup always has a result here, of type MemorySegment
@@ -476,7 +477,7 @@ public class SharedUtils {
                 FunctionDescriptor.ofVoid(ADDRESS));
     }
 
-    public static void checkSymbol(Addressable symbol) {
+    public static void checkSymbol(NativeSymbol symbol) {
         checkAddressable(symbol, "Symbol is NULL");
     }
 

@@ -30,6 +30,7 @@ import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
 import java.lang.invoke.MethodHandle;
+import java.util.Objects;
 
 /**
  * A native symbol models a reference to a location (typically the entry point of a function) in a native library.
@@ -80,6 +81,9 @@ sealed public interface NativeSymbol extends Addressable permits NativeSymbolImp
     @CallerSensitive
     static NativeSymbol ofAddress(String name, MemoryAddress address, ResourceScope scope) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Objects.requireNonNull(name);
+        Objects.requireNonNull(address);
+        Objects.requireNonNull(scope);
         return new NativeSymbolImpl(name, address, scope);
     }
 }

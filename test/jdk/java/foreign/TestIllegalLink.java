@@ -32,6 +32,8 @@ import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.NativeSymbol;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -40,7 +42,7 @@ import static org.testng.Assert.fail;
 
 public class TestIllegalLink extends NativeTestHelper {
 
-    private static final MemoryAddress DUMMY_TARGET = MemoryAddress.ofLong(1);
+    private static final NativeSymbol DUMMY_TARGET = NativeSymbol.ofAddress("dummy", MemoryAddress.ofLong(1), ResourceScope.globalScope());
     private static final CLinker ABI = CLinker.systemCLinker();
 
     @Test(dataProvider = "types")

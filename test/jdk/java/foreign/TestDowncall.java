@@ -107,8 +107,8 @@ public class TestDowncall extends CallGeneratorHelper {
     }
 
 
-    Object doCall(Addressable addr, SegmentAllocator allocator, MethodType type, FunctionDescriptor descriptor, Object[] args) throws Throwable {
-        MethodHandle mh = downcallHandle(abi, addr, allocator, descriptor);
+    Object doCall(NativeSymbol symbol, SegmentAllocator allocator, MethodType type, FunctionDescriptor descriptor, Object[] args) throws Throwable {
+        MethodHandle mh = downcallHandle(abi, symbol, allocator, descriptor);
         Object res = mh.invokeWithArguments(args);
         return res;
     }
