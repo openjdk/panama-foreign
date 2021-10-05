@@ -293,12 +293,12 @@ address MacroAssembler::target_addr_for_insn(address insn_addr, unsigned insn) {
   return address(((uint64_t)insn_addr + (offset << 2)));
 }
 
-void MacroAssembler::safepoint_poll(Label& slow_path, bool at_return, bool acquire, bool in_nmethod) {
+void MacroAssembler::safepoint_poll(Label& slow_path, bool at_return, bool acquire, bool in_nmethod, Register scratch) {
   if (acquire) {
-    lea(rscratch1, Address(rthread, JavaThread::polling_word_offset()));
-    ldar(rscratch1, rscratch1);
+    lea(scratch, Address(rthread, JavaThread::polling_word_offset()));
+    ldar(scratch, scratch);
   } else {
-    ldr(rscratch1, Address(rthread, JavaThread::polling_word_offset()));
+    ldr(scratch, Address(rthread, JavaThread::polling_word_offset()));
   }
   if (at_return) {
     // Note that when in_nmethod is set, the stack pointer is incremented before the poll. Therefore,
@@ -306,7 +306,17 @@ void MacroAssembler::safepoint_poll(Label& slow_path, bool at_return, bool acqui
     cmp(in_nmethod ? sp : rfp, rscratch1);
     br(Assembler::HI, slow_path);
   } else {
-    tbnz(rscratch1, log2i_exact(SafepointMechanism::poll_bit()), slow_path);
+    tbnz(scratch, log2i_exact(SafepointMechanism::poll_bit()), slow_path);
+  }
+}
+
+void MacroAssembler::rt_call(address dest, Register scratch) {
+  CodeBlob *cb = CodeCache::find_blob(dest);
+  if (cb) {
+    far_call(RuntimeAddress(dest));
+  } else {
+    lea(scratch, RuntimeAddress(dest));
+    blr(scratch);
   }
 }
 
@@ -5108,13 +5118,13 @@ void MacroAssembler::cache_wbsync(bool is_pre) {
   }
 }
 
-void MacroAssembler::verify_sve_vector_length() {
+void MacroAssembler::verify_sve_vector_length(Register scratch) {
   // Make sure that native code does not change SVE vector length.
   if (!UseSVE) return;
   Label verify_ok;
-  movw(rscratch1, zr);
-  sve_inc(rscratch1, B);
-  subsw(zr, rscratch1, VM_Version::get_initial_sve_vector_length());
+  movw(scratch, zr);
+  sve_inc(scratch, B);
+  subsw(zr, scratch, VM_Version::get_initial_sve_vector_length());
   br(EQ, verify_ok);
   stop("Error: SVE vector length has changed since jvm startup");
   bind(verify_ok);

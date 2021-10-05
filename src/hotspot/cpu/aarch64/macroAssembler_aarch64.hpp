@@ -106,7 +106,8 @@ class MacroAssembler: public Assembler {
  virtual void check_and_handle_popframe(Register java_thread);
  virtual void check_and_handle_earlyret(Register java_thread);
 
-  void safepoint_poll(Label& slow_path, bool at_return, bool acquire, bool in_nmethod);
+  void safepoint_poll(Label& slow_path, bool at_return, bool acquire, bool in_nmethod, Register scratch = rscratch1);
+  void rt_call(MacroAssembler* _masm, address dest, Register scratch = rscratch1);
 
   // Helper functions for statistics gathering.
   // Unconditional atomic increment.
@@ -963,7 +964,7 @@ public:
 
   Address argument_address(RegisterOrConstant arg_slot, int extra_slot_offset = 0);
 
-  void verify_sve_vector_length();
+  void verify_sve_vector_length(Register scratch = rscratch1);
   void reinitialize_ptrue() {
     if (UseSVE > 0) {
       sve_ptrue(ptrue, B);
