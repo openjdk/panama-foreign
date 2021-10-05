@@ -41,15 +41,20 @@ import java.util.function.Function;
  * This interface models a memory allocator. Clients implementing this interface
  * must implement the {@link #allocate(long, long)} method. This interface defines several default methods
  * which can be useful to create segments from several kinds of Java values such as primitives and arrays.
- * This interface can be seen as a thin wrapper around the basic capabilities for creating native segments
- * (e.g. {@link MemorySegment#allocateNative(long, long, ResourceScope)}); since {@link SegmentAllocator} is a <em>functional interface</em>,
+ * This interface can be seen as a thin wrapper around the basic capabilities for
+ * {@linkplain MemorySegment#allocateNative(long, long, ResourceScope) creating} native segments;
+ * since {@link SegmentAllocator} is a <em>functional interface</em>,
  * clients can easily obtain a native allocator by using either a lambda expression or a method reference.
  * <p>
- * This interface also defines factories for commonly used allocators; {@link #nativeAllocator(ResourceScope)} creates
- * an allocator which {@linkplain MemorySegment#allocateNative(long, long, ResourceScope) allocates} native segments,
- * backed by a given scope. {@link #newNativeArena(ResourceScope)} creates a more efficient arena-style native allocator.
- * Finally, {@link #prefixAllocator(MemorySegment)} creates an allocator which wraps a segment (either on-heap or off-heap)
- * and recycles its content upon each new allocation request.
+ * This interface also defines factories for commonly used allocators:
+ * <ul>
+ *     <li>{@link #nativeAllocator(ResourceScope)} creates an allocator which
+ *     {@linkplain MemorySegment#allocateNative(long, long, ResourceScope) allocates} native segments, backed by a given scope;</li>
+ *     <li>{@link #newNativeArena(ResourceScope)} creates a more efficient arena-style native allocator, where memory
+ *     is allocated in bigger blocks, which are then sliced accordingly to fit allocation requests;</li>
+ *     <li>{@link #prefixAllocator(MemorySegment)} creates an allocator which wraps a segment (either on-heap or off-heap)
+ *     and recycles its content upon each new allocation request.</li>
+ * </ul>
  * <p>
  * Passing a segment allocator to an API can be especially useful in circumstances where a client wants to communicate <em>where</em>
  * the results of a certain operation (performed by the API) should be stored, as a memory segment. For instance,

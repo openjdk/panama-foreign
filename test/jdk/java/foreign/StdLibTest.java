@@ -231,8 +231,7 @@ public class StdLibTest extends NativeTestHelper {
 
         Tm gmtime(long arg) throws Throwable {
             try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-                var malloc = SegmentAllocator.nativeAllocator(scope);
-                MemorySegment time = malloc.allocate(8);
+                MemorySegment time = MemorySegment.allocateNative(8, scope);
                 time.set(C_LONG_LONG, 0, arg);
                 return new Tm((MemoryAddress)gmtime.invoke(time));
             }
