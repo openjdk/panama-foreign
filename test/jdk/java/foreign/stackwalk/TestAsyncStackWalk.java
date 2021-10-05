@@ -107,9 +107,9 @@
  *   TestAsyncStackWalk
  */
 
-import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
 
@@ -148,7 +148,7 @@ public class TestAsyncStackWalk extends NativeTestHelper {
 
     public static void main(String[] args) throws Throwable {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            CLinker.UpcallStub stub = linker.upcallStub(MH_m, FunctionDescriptor.ofVoid(), scope);
+            NativeSymbol stub = linker.upcallStub(MH_m, FunctionDescriptor.ofVoid(), scope);
             MemoryAddress stubAddress = stub.address();
             invocations = 0;
             didStackWalk = false;

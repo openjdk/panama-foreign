@@ -25,7 +25,7 @@ package org.openjdk.bench.jdk.incubator.foreign;
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SymbolLookup;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -57,10 +57,10 @@ public class Upcalls extends CLayouts {
     static final MethodHandle args5;
     static final MethodHandle args10;
 
-    static final Addressable cb_blank;
-    static final Addressable cb_identity;
-    static final Addressable cb_args5;
-    static final Addressable cb_args10;
+    static final NativeSymbol cb_blank;
+    static final NativeSymbol cb_identity;
+    static final NativeSymbol cb_args5;
+    static final NativeSymbol cb_args10;
 
     static final long cb_blank_jni;
     static final long cb_identity_jni;
@@ -83,7 +83,7 @@ public class Upcalls extends CLayouts {
                 MethodType mt = MethodType.methodType(void.class);
                 FunctionDescriptor fd = FunctionDescriptor.ofVoid();
 
-                blank = linkFunc(name, mt, fd);
+                blank = linkFunc(name, fd);
                 cb_blank = makeCB(name, mt, fd);
             }
             {
@@ -91,7 +91,7 @@ public class Upcalls extends CLayouts {
                 MethodType mt = MethodType.methodType(int.class, int.class);
                 FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT);
 
-                identity = linkFunc(name, mt, fd);
+                identity = linkFunc(name, fd);
                 cb_identity = makeCB(name, mt, fd);
             }
             {
@@ -101,7 +101,7 @@ public class Upcalls extends CLayouts {
                 FunctionDescriptor fd = FunctionDescriptor.ofVoid(
                         C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE, C_LONG_LONG);
 
-                args5 = linkFunc(name, mt, fd);
+                args5 = linkFunc(name, fd);
                 cb_args5 = makeCB(name, mt, fd);
             }
             {
@@ -113,7 +113,7 @@ public class Upcalls extends CLayouts {
                         C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE, C_LONG_LONG,
                         C_DOUBLE, C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE);
 
-                args10 = linkFunc(name, mt, fd);
+                args10 = linkFunc(name, fd);
                 cb_args10 = makeCB(name, mt, fd);
             }
         } catch (ReflectiveOperationException e) {
@@ -121,14 +121,14 @@ public class Upcalls extends CLayouts {
         }
     }
 
-    static MethodHandle linkFunc(String name, MethodType baseType, FunctionDescriptor baseDesc) {
+    static MethodHandle linkFunc(String name, FunctionDescriptor baseDesc) {
         return abi.downcallHandle(
             SymbolLookup.loaderLookup().lookup(name).orElseThrow(),
                 baseDesc.withAppendedArgumentLayouts(C_POINTER)
         );
     }
 
-    static CLinker.UpcallStub makeCB(String name, MethodType mt, FunctionDescriptor fd) throws ReflectiveOperationException {
+    static NativeSymbol makeCB(String name, MethodType mt, FunctionDescriptor fd) throws ReflectiveOperationException {
         return abi.upcallStub(
             lookup().findStatic(Upcalls.class, name, mt),
             fd, ResourceScope.globalScope()

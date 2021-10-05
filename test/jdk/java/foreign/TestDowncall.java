@@ -36,6 +36,7 @@
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
@@ -64,7 +65,7 @@ public class TestDowncall extends CallGeneratorHelper {
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testDowncall(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> checks = new ArrayList<>();
-        MemoryAddress addr = LOOKUP.lookup(fName).get();
+        NativeSymbol addr = LOOKUP.lookup(fName).get();
         MethodType mt = methodType(ret, paramTypes, fields);
         FunctionDescriptor descriptor = function(ret, paramTypes, fields);
         Object[] args = makeArgs(paramTypes, fields, checks);
@@ -73,7 +74,7 @@ public class TestDowncall extends CallGeneratorHelper {
             SegmentAllocator allocator = needsScope ?
                     SegmentAllocator.newNativeArena(scope) :
                     THROWING_ALLOCATOR;
-            Object res = doCall(addr, allocator, mt, descriptor, args);
+            Object res = doCall(addr, allocator, descriptor, args);
             if (ret == Ret.NON_VOID) {
                 checks.forEach(c -> c.accept(res));
                 if (needsScope) {
@@ -84,8 +85,8 @@ public class TestDowncall extends CallGeneratorHelper {
         }
     }
 
-    Object doCall(Addressable addr, SegmentAllocator allocator, MethodType type, FunctionDescriptor descriptor, Object[] args) throws Throwable {
-        MethodHandle mh = downcallHandle(abi, addr, allocator, descriptor);
+    Object doCall(NativeSymbol symbol, SegmentAllocator allocator, FunctionDescriptor descriptor, Object[] args) throws Throwable {
+        MethodHandle mh = downcallHandle(abi, symbol, allocator, descriptor);
         Object res = mh.invokeWithArguments(args);
         return res;
     }

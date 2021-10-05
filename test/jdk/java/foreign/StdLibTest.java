@@ -180,7 +180,7 @@ public class StdLibTest extends NativeTestHelper {
         final static MethodHandle vprintf = abi.downcallHandle(abi.lookup("vprintf").get(),
                 FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER));
 
-        final static MemoryAddress printfAddr = abi.lookup("printf").get();
+        final static NativeSymbol printfAddr = abi.lookup("printf").get();
 
         final static FunctionDescriptor printfBase = FunctionDescriptor.of(C_INT, C_POINTER);
 
@@ -284,7 +284,7 @@ public class StdLibTest extends NativeTestHelper {
                 MemorySegment nativeArr = malloc.allocateArray(C_INT, arr);
 
                 //call qsort
-                CLinker.UpcallStub qsortUpcallStub = abi.upcallStub(qsortCompar, qsortComparFunction, scope);
+                NativeSymbol qsortUpcallStub = abi.upcallStub(qsortCompar, qsortComparFunction, scope);
 
                 qsort.invoke(nativeArr, (long)arr.length, C_INT.byteSize(), qsortUpcallStub);
 

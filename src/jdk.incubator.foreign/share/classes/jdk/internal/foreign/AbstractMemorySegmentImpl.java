@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -254,6 +254,33 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
     @Override
     public boolean isNative() {
         return false;
+    }
+
+    @Override
+    public final MemorySegment asOverlappingSlice(MemorySegment other) {
+        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)Objects.requireNonNull(other);
+        if (base() == that.base()) {  // both either native or heap
+            final long thisStart = this.min();
+            final long thatStart = that.min();
+            final long thisEnd = thisStart + this.byteSize();
+            final long thatEnd = thatStart + that.byteSize();
+
+            if (thisStart < thatEnd && thisEnd > thatStart) {  //overlap occurs
+                long offsetToThat = this.segmentOffset(that);
+                long newOffset = offsetToThat >= 0 ? offsetToThat : 0;
+                return asSlice(newOffset, Math.min(this.byteSize() - newOffset, that.byteSize() + offsetToThat));
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public final long segmentOffset(MemorySegment other) {
+        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl) Objects.requireNonNull(other);
+        if (base() == that.base()) {
+            return that.min() - this.min();
+        }
+        throw new UnsupportedOperationException("Cannot compute offset from native to heap (or vice versa).");
     }
 
     @Override

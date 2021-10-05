@@ -536,7 +536,7 @@ public class VaListTest extends NativeTestHelper {
     public void testUpcall(MethodHandle target, MethodHandle callback) throws Throwable {
         FunctionDescriptor desc = FunctionDescriptor.ofVoid(C_POINTER);
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            CLinker.UpcallStub stub = abi.upcallStub(callback, desc, scope);
+            NativeSymbol stub = abi.upcallStub(callback, desc, scope);
             target.invoke(stub);
         }
     }

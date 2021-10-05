@@ -30,6 +30,7 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.misc.ScopedMemoryAccess;
+import jdk.internal.vm.annotation.ForceInline;
 
 import java.lang.ref.Cleaner;
 import java.lang.ref.Reference;
@@ -197,11 +198,13 @@ public abstract non-sealed class ResourceScopeImpl implements ResourceScope, Seg
         }
 
         @Override
+        @ForceInline
         public void release0() {
             // do nothing
         }
 
         @Override
+        @ForceInline
         public void acquire0() {
             // do nothing
         }

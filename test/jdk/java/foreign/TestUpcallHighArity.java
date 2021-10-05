@@ -36,6 +36,7 @@
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -103,7 +104,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
                                          .asCollector(Object[].class, upcallType.parameterCount())
                                          .asType(upcallType);
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            CLinker.UpcallStub upcallStub = LINKER.upcallStub(target, upcallDescriptor, scope);
+            NativeSymbol upcallStub = LINKER.upcallStub(target, upcallDescriptor, scope);
             Object[] args = new Object[upcallType.parameterCount() + 1];
             args[0] = upcallStub;
             List<MemoryLayout> argLayouts = upcallDescriptor.argumentLayouts();

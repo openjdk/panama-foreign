@@ -206,7 +206,7 @@ Addressable comparFunc = CLinker.systemCLinker().upcallStub(
  * by the platform C ABI. The lifecycle of the stub returned by
  * {@link jdk.incubator.foreign.CLinker#upcallStub(java.lang.invoke.MethodHandle, jdk.incubator.foreign.FunctionDescriptor, jdk.incubator.foreign.ResourceScope)}
  * is tied to the {@linkplain jdk.incubator.foreign.ResourceScope resource scope} parameter passed to that method. This
- * is made available by the {@link jdk.incubator.foreign.CLinker.UpcallStub} instance returned by that method.
+ * is made available by the {@link jdk.incubator.foreign.NativeSymbol} instance returned by that method.
  *
  * <a id="restricted"></a>
  * <h2>Restricted methods</h2>

@@ -28,6 +28,7 @@ import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.VaList;
 import jdk.internal.foreign.abi.SharedUtils;
@@ -80,7 +81,7 @@ public final class Windowsx64Linker implements CLinker {
     }
 
     @Override
-    public final UpcallStub upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope) {
+    public final NativeSymbol upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope) {
         Objects.requireNonNull(scope);
         Objects.requireNonNull(target);
         Objects.requireNonNull(function);

@@ -36,6 +36,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 
 import java.lang.invoke.MethodHandle;
 
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import org.testng.annotations.*;
@@ -47,9 +48,9 @@ public class TestVirtualCalls extends NativeTestHelper {
     static final CLinker abi = CLinker.systemCLinker();
 
     static final MethodHandle func;
-    static final Addressable funcA;
-    static final Addressable funcB;
-    static final Addressable funcC;
+    static final NativeSymbol funcA;
+    static final NativeSymbol funcB;
+    static final NativeSymbol funcC;
 
     static {
         func = abi.downcallHandle(
@@ -71,7 +72,7 @@ public class TestVirtualCalls extends NativeTestHelper {
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testNullTarget() throws Throwable {
-        int x = (int) func.invokeExact((Addressable) null);
+        int x = (int) func.invokeExact((NativeSymbol) null);
     }
 
 }
