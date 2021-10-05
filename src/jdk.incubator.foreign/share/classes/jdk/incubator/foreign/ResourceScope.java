@@ -30,6 +30,7 @@ import jdk.internal.ref.CleanerFactory;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.ref.Cleaner;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -73,9 +74,14 @@ import java.util.Spliterator;
  *
  * An important implicit resource scope is the so called {@linkplain #globalScope() global scope}; the global scope is
  * a resource scope that cannot be closed, either explicitly or implicitly. As a results, the global scope will never
- * attempt to release resources associated with it. Examples of resources associated with the global scope are
- * {@linkplain MemorySegment#ofArray(int[]) heap segments} and variable arity lists
- * {@linkplain VaList#ofAddress(MemoryAddress, ResourceScope) obtained} from raw memory addresses.
+ * attempt to release resources associated with it. Examples of resources associated with the global scope are:
+ * <ul>
+ *     <li>heap segments created from {@linkplain MemorySegment#ofArray(int[]) arrays} or
+ *     {@linkplain MemorySegment#ofByteBuffer(ByteBuffer) buffers};</li>
+ *     <li>variable arity lists {@linkplain VaList#ofAddress(MemoryAddress, ResourceScope) obtained} from raw memory addresses;
+ *     <li>native symbols {@linkplain SymbolLookup#lookup(String) obtained} from a {@linkplain SymbolLookup#loaderLookup() loader lookup},
+ *     or from the {@link CLinker}.</li>
+ * </ul>
  * In other words, the global scope is used to indicate that the lifecycle of one or more resources must, where
  * needed, be managed independently by clients.
  *
