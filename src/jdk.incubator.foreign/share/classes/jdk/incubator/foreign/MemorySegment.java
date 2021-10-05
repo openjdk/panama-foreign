@@ -325,8 +325,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * the provided segment.
      *
      * <p>Two segments S1 and S2 are said to overlap if it is possible to find
-     * at least two slices L1 (from S1) and L2 (from S2) such that L1 and L2 are
-     * backed by the same memory region. As such, it is not possible for an
+     * at least two slices L1 (from S1) and L2 (from S2) that are backed by the
+     * same memory region. As such, it is not possible for a
      * {@link #isNative() native} segment to overlap with a heap segment; in
      * this case, or when no overlap occurs, {@code null} is returned.
      *
@@ -340,8 +340,16 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * segment.
      *
      * <p>The offset is relative to the base address of this segment and can be
-     * a negative or positive value. If the segments share the same base address,
-     * {@code 0} is returned.
+     * a negative or positive value. For instance, if both segments are native
+     * segments, the resulting offset can be computed as follows:
+     *
+     * <pre>{@code
+     * other.baseAddress().toRawLongValue() - segment.baseAddress().toRawLongValue()
+     * }</pre>
+     *
+     * If the segments share the same base address, {@code 0} is returned. If
+     * {@code other} is a slice of this segment, the offset is always
+     * {@code 0 <= x < this.byteSize()}.
      *
      * @param other the segment to retrieve an offset to.
      * @return the relative offset, in bytes, of the provided segment.
