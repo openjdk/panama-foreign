@@ -57,11 +57,13 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Reference;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -70,7 +72,7 @@ import static java.lang.invoke.MethodHandles.constant;
 import static java.lang.invoke.MethodHandles.dropArguments;
 import static java.lang.invoke.MethodHandles.dropReturn;
 import static java.lang.invoke.MethodHandles.empty;
-import static java.lang.invoke.MethodHandles.filterArguments;
+import static java.lang.invoke.MethodHandles.foldArguments;
 import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodHandles.permuteArguments;
@@ -122,9 +124,9 @@ public class SharedUtils {
             MH_HANDLE_UNCAUGHT_EXCEPTION = lookup.findStatic(SharedUtils.class, "handleUncaughtException",
                     methodType(void.class, Throwable.class));
             ACQUIRE_MH = MethodHandles.lookup().findStatic(SharedUtils.class, "acquire",
-                    MethodType.methodType(Addressable.class, Addressable.class));
+                    MethodType.methodType(void.class, Scoped[].class));
             RELEASE_MH = MethodHandles.lookup().findStatic(SharedUtils.class, "release",
-                    MethodType.methodType(void.class, Addressable.class));
+                    MethodType.methodType(void.class, Scoped[].class));
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
         }
@@ -410,14 +412,89 @@ public class SharedUtils {
     }
 
     @ForceInline
-    public static Addressable acquire(Addressable addressable) {
-        ((ResourceScopeImpl)((Scoped)addressable).scope()).acquire0();
-        return addressable;
+    @SuppressWarnings("fallthrough")
+    public static void acquire(Scoped[] args) {
+        ResourceScope scope4 = null;
+        ResourceScope scope3 = null;
+        ResourceScope scope2 = null;
+        ResourceScope scope1 = null;
+        ResourceScope scope0 = null;
+        switch (args.length) {
+            default:
+                // slow path, acquire all remaining addressable parameters in isolation
+                for (int i = 5 ; i < args.length ; i++) {
+                    acquire(args[i].scope());
+                }
+            // fast path, acquire only scopes not seen in other parameters
+            case 5:
+                scope4 = args[4].scope();
+                acquire(scope4);
+            case 4:
+                scope3 = args[3].scope();
+                if (scope3 != scope4)
+                    acquire(scope3);
+            case 3:
+                scope2 = args[2].scope();
+                if (scope2 != scope3 && scope2 != scope4)
+                    acquire(scope2);
+            case 2:
+                scope1 = args[1].scope();
+                if (scope1 != scope2 && scope1 != scope3 && scope1 != scope4)
+                    acquire(scope1);
+            case 1:
+                scope0 = args[0].scope();
+                if (scope0 != scope1 && scope0 != scope2 && scope0 != scope3 && scope0 != scope4)
+                    acquire(scope0);
+            case 0: break;
+        }
     }
 
     @ForceInline
-    public static void release(Addressable addressable) {
-        ((ResourceScopeImpl)((Scoped)addressable).scope()).release0();
+    @SuppressWarnings("fallthrough")
+    public static void release(Scoped[] args) {
+        ResourceScope scope4 = null;
+        ResourceScope scope3 = null;
+        ResourceScope scope2 = null;
+        ResourceScope scope1 = null;
+        ResourceScope scope0 = null;
+        switch (args.length) {
+            default:
+                // slow path, release all remaining addressable parameters in isolation
+                for (int i = 5 ; i < args.length ; i++) {
+                    release(args[i].scope());
+                }
+            // fast path, release only scopes not seen in other parameters
+            case 5:
+                scope4 = args[4].scope();
+                release(scope4);
+            case 4:
+                scope3 = args[3].scope();
+                if (scope3 != scope4)
+                    release(scope3);
+            case 3:
+                scope2 = args[2].scope();
+                if (scope2 != scope3 && scope2 != scope4)
+                    release(scope2);
+            case 2:
+                scope1 = args[1].scope();
+                if (scope1 != scope2 && scope1 != scope3 && scope1 != scope4)
+                    release(scope1);
+            case 1:
+                scope0 = args[0].scope();
+                if (scope0 != scope1 && scope0 != scope2 && scope0 != scope3 && scope0 != scope4)
+                    release(scope0);
+            case 0: break;
+        }
+    }
+
+    @ForceInline
+    private static void acquire(ResourceScope scope) {
+        ((ResourceScopeImpl)scope).acquire0();
+    }
+
+    @ForceInline
+    private static void release(ResourceScope scope) {
+        ((ResourceScopeImpl)scope).release0();
     }
 
     /*
@@ -427,35 +504,45 @@ public class SharedUtils {
      */
     public static MethodHandle wrapDowncall(MethodHandle downcallHandle, FunctionDescriptor descriptor) {
         boolean hasReturn = descriptor.returnLayout().isPresent();
-        boolean hasAllocator = hasReturn && descriptor.returnLayout().get() instanceof GroupLayout;
         MethodHandle tryBlock = downcallHandle;
         MethodHandle cleanup = hasReturn ?
                 MethodHandles.identity(downcallHandle.type().returnType()) :
                 MethodHandles.empty(MethodType.methodType(void.class));
-        for (int i = 0 ; i < descriptor.argumentLayouts().size() ; i++) {
-            int paramIndex = i + (hasAllocator ? 2 : 1); // skip NativeSymbol, and SegmentAllocator (if present)
-            int cleanupIndex = i + (hasReturn ? 1 : 0); // skip Throwable and result (if present), and NativeSymbol
-            MemoryLayout layout = descriptor.argumentLayouts().get(i);
-            Class<?> carrier = downcallHandle.type().parameterType(paramIndex);
-            if (layout instanceof ValueLayout valueLayout && valueLayout.carrier() == MemoryAddress.class) {
-                // add acquire filter
-                tryBlock = filterArguments(tryBlock, paramIndex, ACQUIRE_MH);
-                // add cleanup filter
-                cleanup = collectArguments(cleanup, cleanupIndex, RELEASE_MH);
+        int addressableCount = 0;
+        List<UnaryOperator<MethodHandle>> adapters = new ArrayList<>();
+        for (int i = 0 ; i < downcallHandle.type().parameterCount() ; i++) {
+            Class<?> ptype = downcallHandle.type().parameterType(i);
+            if (ptype == Addressable.class || ptype == NativeSymbol.class) {
+                addressableCount++;
             } else {
-                cleanup = dropArguments(cleanup, cleanupIndex, carrier);
+                int pos = i;
+                adapters.add(mh -> dropArguments(mh, pos, ptype));
             }
         }
-        cleanup = dropArguments(cleanup, 0, Throwable.class);
-        // acquire/release native symbol
-        tryBlock = filterArguments(tryBlock, 0, ACQUIRE_MH.asType(MethodType.methodType(NativeSymbol.class, NativeSymbol.class)));
-        cleanup = collectArguments(cleanup, hasReturn ? 2 : 1, RELEASE_MH.asType(MethodType.methodType(void.class, NativeSymbol.class)));
-        // fixup allocator
-        if (hasAllocator) {
-            // cleanup always has a result here, of type MemorySegment
-            cleanup = dropArguments(cleanup, 3, SegmentAllocator.class);
+
+        if (addressableCount > 0) {
+            cleanup = dropArguments(cleanup, 0, Throwable.class);
+
+            MethodType adapterType = MethodType.methodType(void.class);
+            for (int i = 0 ; i < addressableCount ; i++) {
+                adapterType = adapterType.appendParameterTypes(i == 0 ? NativeSymbol.class : Addressable.class);
+            }
+
+            MethodHandle acquireHandle = ACQUIRE_MH.asCollector(Scoped[].class, addressableCount).asType(adapterType);
+            MethodHandle releaseHandle = RELEASE_MH.asCollector(Scoped[].class, addressableCount).asType(adapterType);
+
+            for (UnaryOperator<MethodHandle> adapter : adapters) {
+                acquireHandle = adapter.apply(acquireHandle);
+                releaseHandle = adapter.apply(releaseHandle);
+            }
+
+            tryBlock = foldArguments(tryBlock, acquireHandle);
+            cleanup = collectArguments(cleanup, hasReturn ? 2 : 1, releaseHandle);
+
+            return tryFinally(tryBlock, cleanup);
+        } else {
+            return downcallHandle;
         }
-        return tryFinally(tryBlock, cleanup);
     }
 
     public static void checkExceptions(MethodHandle target) {

@@ -55,6 +55,6 @@ public class UpcallStubs {
                 freeUpcallStub(entry);
             }
         });
-        return new NativeSymbolImpl("", MemoryAddress.ofLong(entry), scope);
+        return new NativeSymbolImpl("upcall:" + Long.toHexString(entry), MemoryAddress.ofLong(entry), scope);
     }
 }
