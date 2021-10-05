@@ -102,7 +102,8 @@ public class TestNulls {
             VaList.Builder.class,
             FunctionDescriptor.class,
             SegmentAllocator.class,
-            ResourceScope.class
+            ResourceScope.class,
+            NativeSymbol.class
     };
 
     static final Set<String> EXCLUDE_LIST = Set.of(
@@ -187,6 +188,7 @@ public class TestNulls {
         addDefaultMapping(Supplier.class, () -> null);
         addDefaultMapping(ClassLoader.class, TestNulls.class.getClassLoader());
         addDefaultMapping(SymbolLookup.class, CLinker.systemCLinker());
+        addDefaultMapping(NativeSymbol.class, NativeSymbol.ofAddress("dummy", MemoryAddress.ofLong(1), ResourceScope.globalScope()));
     }
 
     static class VaListHelper {

@@ -49,9 +49,9 @@ public interface SymbolLookup {
      * Looks up a symbol with given name in this lookup.
      *
      * @param name the symbol name.
-     * @return the symbol (if any).
+     * @return the lookup symbol (if any).
      */
-    Optional<MemoryAddress> lookup(String name);
+    Optional<NativeSymbol> lookup(String name);
 
     /**
      * Obtains a symbol lookup suitable to find symbols in native libraries associated with the caller's classloader
@@ -76,7 +76,8 @@ public interface SymbolLookup {
             Objects.requireNonNull(name);
             JavaLangAccess javaLangAccess = SharedSecrets.getJavaLangAccess();
             MemoryAddress addr = MemoryAddress.ofLong(javaLangAccess.findNative(loader, name));
-            return addr == MemoryAddress.NULL? Optional.empty() : Optional.of(addr);
+            return addr == MemoryAddress.NULL? Optional.empty() : Optional.of(NativeSymbol.ofAddress(name, addr, ResourceScope.globalScope()));
         };
     }
+
 }

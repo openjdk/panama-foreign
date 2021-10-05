@@ -42,6 +42,7 @@ import java.util.List;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.SymbolLookup;
 import org.testng.annotations.*;
 
@@ -87,7 +88,7 @@ public class TestIntrinsics extends NativeTestHelper {
         }
 
         AddIdentity addIdentity = (name, carrier, layout, arg) -> {
-            MemoryAddress ma = LOOKUP.lookup(name).get();
+            NativeSymbol ma = LOOKUP.lookup(name).get();
             MethodType mt = methodType(carrier, carrier);
             FunctionDescriptor fd = FunctionDescriptor.of(layout, layout);
 
@@ -96,7 +97,7 @@ public class TestIntrinsics extends NativeTestHelper {
         };
 
         { // empty
-            MemoryAddress ma = LOOKUP.lookup("empty").get();
+            NativeSymbol ma = LOOKUP.lookup("empty").get();
             MethodType mt = methodType(void.class);
             FunctionDescriptor fd = FunctionDescriptor.ofVoid();
             tests.add(abi.downcallHandle(ma, fd), null);
@@ -111,7 +112,7 @@ public class TestIntrinsics extends NativeTestHelper {
         addIdentity.add("identity_double", double.class,  C_DOUBLE,        10D);
 
         { // identity_va
-            MemoryAddress ma = LOOKUP.lookup("identity_va").get();
+            NativeSymbol ma = LOOKUP.lookup("identity_va").get();
             MethodType mt = methodType(int.class, int.class, double.class, int.class, float.class, long.class);
             FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT).asVariadic(C_DOUBLE, C_INT, C_FLOAT, C_LONG_LONG);
             tests.add(abi.downcallHandle(ma, fd), 1, 1, 10D, 2, 3F, 4L);
@@ -124,7 +125,7 @@ public class TestIntrinsics extends NativeTestHelper {
                     C_SHORT, JAVA_CHAR);
             Object[] args = {1, 10D, 2L, 3F, (byte) 0, (short) 13, 'a'};
             for (int i = 0; i < args.length; i++) {
-                MemoryAddress ma = LOOKUP.lookup("invoke_high_arity" + i).get();
+                NativeSymbol ma = LOOKUP.lookup("invoke_high_arity" + i).get();
                 MethodType mt = baseMT.changeReturnType(baseMT.parameterType(i));
                 FunctionDescriptor fd = baseFD.withReturnLayout(baseFD.argumentLayouts().get(i));
                 Object expected = args[i];

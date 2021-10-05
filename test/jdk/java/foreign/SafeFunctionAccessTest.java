@@ -30,8 +30,8 @@
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.SymbolLookup;
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
@@ -43,7 +43,6 @@ import java.lang.invoke.MethodType;
 import jdk.incubator.foreign.VaList;
 import org.testng.annotations.*;
 
-import static jdk.incubator.foreign.ValueLayout.ADDRESS;
 import static org.testng.Assert.*;
 
 public class SafeFunctionAccessTest extends NativeTestHelper {
@@ -87,7 +86,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testClosedUpcall() throws Throwable {
-        CLinker.UpcallStub upcall;
+        NativeSymbol upcall;
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MethodHandle dummy = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "dummy", MethodType.methodType(void.class));
             upcall = CLinker.systemCLinker().upcallStub(dummy, FunctionDescriptor.ofVoid(), scope);
@@ -134,12 +133,12 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
 
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MethodHandle dummy = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "dummy", MethodType.methodType(void.class));
-            CLinker.UpcallStub upcall = CLinker.systemCLinker().upcallStub(dummy, FunctionDescriptor.ofVoid(), scope);
+            NativeSymbol upcall = CLinker.systemCLinker().upcallStub(dummy, FunctionDescriptor.ofVoid(), scope);
             handle.invoke(upcall, scopeChecker(scope));
         }
     }
 
-    CLinker.UpcallStub scopeChecker(ResourceScope scope) {
+    NativeSymbol scopeChecker(ResourceScope scope) {
         try {
             MethodHandle handle = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "checkScope",
                     MethodType.methodType(void.class, ResourceScope.class));
