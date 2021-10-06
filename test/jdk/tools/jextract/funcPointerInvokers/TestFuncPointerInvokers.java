@@ -53,7 +53,7 @@ public class TestFuncPointerInvokers {
             AtomicInteger val = new AtomicInteger(-1);
             MemorySegment bar = Bar.allocate(scope);
             Bar.foo$set(bar, Foo.allocate((i) -> val.set(i), scope).address());
-            Bar.foo(bar).apply(42);
+            Bar.foo(bar, scope).apply(42);
             assertEquals(val.get(), 42);
         }
     }
@@ -64,7 +64,7 @@ public class TestFuncPointerInvokers {
             AtomicInteger val = new AtomicInteger(-1);
             MemorySegment bar = Bar.allocate(scope);
             Bar.foo$set(bar, Foo.allocate((i) -> val.set(i), scope).address());
-            Foo.ofAddress(Bar.foo$get(bar)).apply(42);
+            Foo.ofAddress(Bar.foo$get(bar), scope).apply(42);
             assertEquals(val.get(), 42);
         }
     }
@@ -84,7 +84,7 @@ public class TestFuncPointerInvokers {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             AtomicInteger val = new AtomicInteger(-1);
             f$set(Foo.allocate((i) -> val.set(i), scope).address());
-            Foo.ofAddress(f$get()).apply(42);
+            Foo.ofAddress(f$get(), scope).apply(42);
             assertEquals(val.get(), 42);
         }
     }
@@ -95,7 +95,7 @@ public class TestFuncPointerInvokers {
             AtomicInteger val = new AtomicInteger(-1);
             MemorySegment baz = Baz.allocate(scope);
             Baz.fp$set(baz, Baz.fp.allocate((i) -> val.set(i), scope).address());
-            Baz.fp(baz).apply(42);
+            Baz.fp(baz, scope).apply(42);
             assertEquals(val.get(), 42);
         }
     }
@@ -106,7 +106,7 @@ public class TestFuncPointerInvokers {
             AtomicInteger val = new AtomicInteger(-1);
             MemorySegment baz = Baz.allocate(scope);
             Baz.fp$set(baz, Baz.fp.allocate((i) -> val.set(i), scope).address());
-            Baz.fp.ofAddress(Baz.fp$get(baz)).apply(42);
+            Baz.fp.ofAddress(Baz.fp$get(baz), scope).apply(42);
             assertEquals(val.get(), 42);
         }
     }
@@ -126,7 +126,7 @@ public class TestFuncPointerInvokers {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             AtomicInteger val = new AtomicInteger(-1);
             fp$set(fp.allocate((i) -> val.set(i), scope).address());
-            fp.ofAddress(fp$get()).apply(42);
+            fp.ofAddress(fp$get(), scope).apply(42);
             assertEquals(val.get(), 42);
         }
     }
