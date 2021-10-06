@@ -134,18 +134,13 @@ private:
   void pd_load_reg(MacroAssembler* masm, int offset, VMReg reg) const;
 };
 
-class ArgumentShuffle {
-public:
-  struct Move {
-    BasicType bt;
-    VMRegPair from;
-    VMRegPair to;
+struct Move {
+  BasicType bt;
+  VMRegPair from;
+  VMRegPair to;
+};
 
-    bool is_identity() const {
-        return (from.first() == to.first() && from.second() == to.second())
-          && !from.first()->is_stack(); // stack regs are interpreted differently
-    }
-  };
+class ArgumentShuffle {
 private:
   GrowableArray<Move> _moves;
   int _out_arg_stack_slots;

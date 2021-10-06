@@ -215,34 +215,6 @@ RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
                                                       int shadow_space_bytes,
                                                       const GrowableArray<VMReg>& input_registers,
                                                       const GrowableArray<VMReg>& output_registers) {
-#ifdef ASSERT
-  LogTarget(Trace, panama) lt;
-  if (lt.is_enabled()) {
-    ResourceMark rm;
-    LogStream ls(lt);
-    ls.print_cr("Generating native invoker {");
-    ls.print("BasicType { ");
-    for (int i = 0; i < num_args; i++) {
-      ls.print("%s, ", type2name(signature[i]));
-    }
-    ls.print_cr("}");
-    ls.print_cr("shadow_space_bytes = %d", shadow_space_bytes);
-    ls.print("input_registers { ");
-    for (int i = 0; i < input_registers.length(); i++) {
-      VMReg reg = input_registers.at(i);
-      ls.print("%s (" INTPTR_FORMAT "), ", reg->name(), reg->value());
-    }
-    ls.print_cr("}");
-      ls.print("output_registers { ");
-    for (int i = 0; i < output_registers.length(); i++) {
-      VMReg reg = output_registers.at(i);
-      ls.print("%s (" INTPTR_FORMAT "), ", reg->name(), reg->value());
-    }
-    ls.print_cr("}");
-    ls.print_cr("}");
-  }
-#endif
-
   int locs_size  = 64;
   CodeBuffer code("nep_invoker_blob", native_invoker_code_size, locs_size);
   NativeInvokerGenerator g(&code, signature, num_args, ret_bt, shadow_space_bytes, input_registers, output_registers);

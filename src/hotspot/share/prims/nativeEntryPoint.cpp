@@ -27,6 +27,7 @@
 #include "classfile/javaClasses.hpp"
 #include "classfile/javaClasses.inline.hpp"
 #include "code/vmreg.hpp"
+#include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/typeArrayOop.hpp"
 #include "oops/oopCast.inline.hpp"
@@ -95,6 +96,34 @@ JNI_ENTRY(jlong, NEP_makeInvoker(JNIEnv* env, jclass _unused, jobject method_typ
       output_regs.push(VMRegImpl::Bad()); // half of double/long
     }
   }
+
+#ifdef ASSERT
+  LogTarget(Trace, panama) lt;
+  if (lt.is_enabled()) {
+    ResourceMark rm;
+    LogStream ls(lt);
+    ls.print_cr("Generating native invoker {");
+    ls.print("BasicType { ");
+    for (int i = 0; i < num_args; i++) {
+      ls.print("%s, ", type2name(basic_type[i]));
+    }
+    ls.print_cr("}");
+    ls.print_cr("shadow_space_bytes = %d", shadow_space_bytes);
+    ls.print("input_registers { ");
+    for (int i = 0; i < input_regs.length(); i++) {
+      VMReg reg = input_regs.at(i);
+      ls.print("%s (" INTPTR_FORMAT "), ", reg->name(), reg->value());
+    }
+    ls.print_cr("}");
+      ls.print("output_registers { ");
+    for (int i = 0; i < output_regs.length(); i++) {
+      VMReg reg = output_regs.at(i);
+      ls.print("%s (" INTPTR_FORMAT "), ", reg->name(), reg->value());
+    }
+    ls.print_cr("}");
+    ls.print_cr("}");
+  }
+#endif
 
   return (jlong) ProgrammableInvoker::make_native_invoker(
     basic_type, num_args, ret_bt, shadow_space_bytes, input_regs, output_regs)->code_begin();
