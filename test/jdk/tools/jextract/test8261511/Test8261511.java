@@ -50,7 +50,7 @@ public class Test8261511 {
     public void test() {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             var funcPtr = Foo.sum$get(get_foo(scope));
-            var sumIface = Foo.sum.ofAddress(funcPtr);
+            var sumIface = Foo.sum.ofAddress(funcPtr, scope);
             assertEquals(sumIface.apply(15,20), 35);
             assertEquals(sum(1.2, 4.5), 5.7, 0.001);
         }

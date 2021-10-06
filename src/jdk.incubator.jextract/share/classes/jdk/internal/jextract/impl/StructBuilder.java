@@ -148,10 +148,10 @@ class StructBuilder extends ConstantBuilder {
         incrAlign();
         indent();
         append(MEMBER_MODS + " ");
-        append(fiName + " " + javaName + " (MemorySegment segment) {\n");
+        append(fiName + " " + javaName + " (MemorySegment segment, ResourceScope scope) {\n");
         incrAlign();
         indent();
-        append("return " + fiName + ".ofAddress(" + javaName + "$get(segment));\n");
+        append("return " + fiName + ".ofAddress(" + javaName + "$get(segment), scope);\n");
         decrAlign();
         indent();
         append("}\n");

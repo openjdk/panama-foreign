@@ -76,16 +76,7 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
             Constant functionDesc = constantBuilder.addFunctionDesc(className(), fiDesc);
             incrAlign();
             indent();
-            append(MEMBER_MODS + " CLinker.UpcallStub allocate(" + className() + " fi) {\n");
-            incrAlign();
-            indent();
-            append("return RuntimeHelper.upcallStub(" + className() + ".class, fi, " + functionDesc.accessExpression() + ", " +
-                    "\"" + fiType.toMethodDescriptorString() + "\");\n");
-            decrAlign();
-            indent();
-            append("}\n");
-            indent();
-            append(MEMBER_MODS + " CLinker.UpcallStub allocate(" + className() + " fi, ResourceScope scope) {\n");
+            append(MEMBER_MODS + " NativeSymbol allocate(" + className() + " fi, ResourceScope scope) {\n");
             incrAlign();
             indent();
             append("return RuntimeHelper.upcallStub(" + className() + ".class, fi, " + functionDesc.accessExpression() + ", " +
@@ -102,9 +93,11 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
             Constant mhConstant = constantBuilder.addMethodHandle(className(), className(), FunctionInfo.ofFunctionPointer(fiType, fiDesc), true);
             incrAlign();
             indent();
-            append(MEMBER_MODS + " " + className() + " ofAddress(MemoryAddress addr) {\n");
+            append(MEMBER_MODS + " " + className() + " ofAddress(MemoryAddress addr, ResourceScope scope) {\n");
             incrAlign();
             indent();
+            append("NativeSymbol symbol = NativeSymbol.ofAddress(");
+            append("\"" + className() + "::\" + Long.toHexString(addr.toRawLongValue()), addr, scope);");
             append("return (");
             String delim = "";
             for (int i = 0 ; i < fiType.parameterCount(); i++) {
@@ -120,7 +113,7 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
             if (!fiType.returnType().equals(void.class)) {
                 append("return (" + fiType.returnType().getName() + ")");
             }
-            append(mhConstant.accessExpression() + ".invokeExact((Addressable)addr");
+            append(mhConstant.accessExpression() + ".invokeExact(symbol");
             if (fiType.parameterCount() > 0) {
                 String params = IntStream.range(0, fiType.parameterCount())
                         .mapToObj(i -> "x" + i)

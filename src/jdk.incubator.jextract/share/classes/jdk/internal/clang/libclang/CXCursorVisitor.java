@@ -27,24 +27,21 @@
 
 package jdk.internal.clang.libclang;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
-import static jdk.incubator.foreign.ValueLayout.*;
 public interface CXCursorVisitor {
 
     int apply(jdk.incubator.foreign.MemorySegment x0, jdk.incubator.foreign.MemorySegment x1, jdk.incubator.foreign.MemoryAddress x2);
-    static CLinker.UpcallStub allocate(CXCursorVisitor fi) {
+    static NativeSymbol allocate(CXCursorVisitor fi) {
         return RuntimeHelper.upcallStub(CXCursorVisitor.class, fi, constants$13.CXCursorVisitor$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
     }
-    static CLinker.UpcallStub allocate(CXCursorVisitor fi, ResourceScope scope) {
+    static NativeSymbol allocate(CXCursorVisitor fi, ResourceScope scope) {
         return RuntimeHelper.upcallStub(CXCursorVisitor.class, fi, constants$13.CXCursorVisitor$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I", scope);
     }
-    static CXCursorVisitor ofAddress(MemoryAddress addr) {
+    static CXCursorVisitor ofAddress(MemoryAddress addr, ResourceScope scope) {
+        NativeSymbol symbol = NativeSymbol.ofAddress("CXCursorVisitor::" + Long.toHexString(addr.toRawLongValue()), addr, scope);
         return (jdk.incubator.foreign.MemorySegment x0, jdk.incubator.foreign.MemorySegment x1, jdk.incubator.foreign.MemoryAddress x2) -> {
             try {
-                return (int)constants$13.CXCursorVisitor$MH.invokeExact((Addressable)addr, x0, x1, x2);
+                return (int)constants$13.CXCursorVisitor$MH.invokeExact(symbol, x0, x1, x2);
             } catch (Throwable ex$) {
                 throw new AssertionError("should not reach here", ex$);
             }

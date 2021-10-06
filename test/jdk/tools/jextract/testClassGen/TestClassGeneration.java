@@ -38,6 +38,7 @@ import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -213,7 +214,7 @@ public class TestClassGeneration extends JextractToolRunner {
         Class<?> fiClass = loader.loadClass("com.acme." + name);
         assertNotNull(fiClass);
         checkMethod(fiClass, "apply", type);
-        checkMethod(fiClass, "allocate", CLinker.UpcallStub.class, fiClass);
+        checkMethod(fiClass, "allocate", NativeSymbol.class, fiClass, ResourceScope.class);
     }
 
     @BeforeClass

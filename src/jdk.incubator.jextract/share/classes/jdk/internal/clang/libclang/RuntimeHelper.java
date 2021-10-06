@@ -30,6 +30,7 @@ import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -77,7 +78,7 @@ final class RuntimeHelper {
     private final static SegmentAllocator THROWING_ALLOCATOR = (x, y) -> { throw new AssertionError("should not reach here"); };
 
     static final MemorySegment lookupGlobalVariable(String name, MemoryLayout layout) {
-        return SYMBOL_LOOKUP.lookup(name).map(addr -> MemorySegment.ofAddressNative(addr, layout.byteSize(), ResourceScope.newSharedScope())).orElse(null);
+        return SYMBOL_LOOKUP.lookup(name).map(symbol -> MemorySegment.ofAddressNative(symbol.address(), layout.byteSize(), ResourceScope.newSharedScope())).orElse(null);
     }
 
     static final MethodHandle downcallHandle(String name, FunctionDescriptor fdesc, boolean variadic) {
@@ -96,11 +97,11 @@ final class RuntimeHelper {
         return LINKER.downcallHandle(fdesc);
     }
 
-    static final <Z> CLinker.UpcallStub upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc) {
+    static final <Z> NativeSymbol upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc) {
         return upcallStub(fi, z, fdesc, mtypeDesc, ResourceScope.newConfinedScope());
     }
 
-    static final <Z> CLinker.UpcallStub upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc, ResourceScope scope) {
+    static final <Z> NativeSymbol upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc, ResourceScope scope) {
         try {
             MethodHandle handle = MH_LOOKUP.findVirtual(fi, "apply",
                     MethodType.fromMethodDescriptorString(mtypeDesc, LOADER));
@@ -119,10 +120,10 @@ final class RuntimeHelper {
 
     private static class VarargsInvoker {
         private static final MethodHandle INVOKE_MH;
-        private final Addressable symbol;
+        private final NativeSymbol symbol;
         private final FunctionDescriptor function;
 
-        private VarargsInvoker(Addressable symbol, FunctionDescriptor function) {
+        private VarargsInvoker(NativeSymbol symbol, FunctionDescriptor function) {
             this.symbol = symbol;
             this.function = function;
         }
@@ -135,7 +136,7 @@ final class RuntimeHelper {
             }
         }
 
-        static MethodHandle make(Addressable symbol, FunctionDescriptor function) {
+        static MethodHandle make(NativeSymbol symbol, FunctionDescriptor function) {
             VarargsInvoker invoker = new VarargsInvoker(symbol, function);
             MethodHandle handle = INVOKE_MH.bindTo(invoker).asCollector(Object[].class, function.argumentLayouts().size() + 1);
             MethodType mtype = MethodType.methodType(function.returnLayout().isPresent() ? carrier(function.returnLayout().get(), true) : void.class);
