@@ -105,7 +105,7 @@ JNI_ENTRY(jlong, NEP_makeInvoker(JNIEnv* env, jclass _unused, jobject method_typ
     ls.print_cr("Generating native invoker {");
     ls.print("BasicType { ");
     for (int i = 0; i < num_args; i++) {
-      ls.print("%s, ", type2name(basic_type[i]));
+      ls.print("%s, ", null_safe_string(type2name(basic_type[i])));
     }
     ls.print_cr("}");
     ls.print_cr("shadow_space_bytes = %d", shadow_space_bytes);

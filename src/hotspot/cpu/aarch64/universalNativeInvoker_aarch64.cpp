@@ -235,7 +235,7 @@ void NativeInvokerGenerator::generate() {
     // out arg area (e.g. for stack args)
   };
 
-  Register input_addr_reg = rscratch1;
+  Register input_addr_reg = scratch1;
   JavaCallConv in_conv;
   DowncallNativeCallConv out_conv(_input_registers, input_addr_reg->as_VMReg());
   ArgumentShuffle arg_shuffle(_signature, _num_args, _signature, _num_args, &in_conv, &out_conv, r19->as_VMReg());
@@ -378,5 +378,5 @@ void NativeInvokerGenerator::generate() {
 }
 
 bool ProgrammableInvoker::supports_native_invoker() {
-  return false;
+  return true;
 }
