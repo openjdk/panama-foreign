@@ -201,7 +201,7 @@ public sealed interface ResourceScope extends AutoCloseable permits ResourceScop
     void keepAlive(ResourceScope target);
 
     /**
-     * Create a new confined scope.
+     * Creates a new confined scope.
      * @return a new confined scope.
      */
     static ResourceScope newConfinedScope() {
