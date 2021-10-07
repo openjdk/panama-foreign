@@ -25,7 +25,9 @@
 
 package jdk.incubator.foreign;
 
+import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.ArenaAllocator;
+import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.Utils;
 
 import java.lang.invoke.VarHandle;
@@ -39,20 +41,33 @@ import java.util.function.Function;
  * This interface models a memory allocator. Clients implementing this interface
  * must implement the {@link #allocate(long, long)} method. This interface defines several default methods
  * which can be useful to create segments from several kinds of Java values such as primitives and arrays.
- * This interface can be seen as a thin wrapper around the basic capabilities for creating native segments
- * (e.g. {@link MemorySegment#allocateNative(long, long, ResourceScope)}); since {@link SegmentAllocator} is a <em>functional interface</em>,
+ * This interface can be seen as a thin wrapper around the basic capabilities for
+ * {@linkplain MemorySegment#allocateNative(long, long, ResourceScope) creating} native segments;
+ * since {@link SegmentAllocator} is a <em>functional interface</em>,
  * clients can easily obtain a native allocator by using either a lambda expression or a method reference.
  * <p>
- * This interface also defines factories for commonly used allocators; for instance {@link #arenaUnbounded(ResourceScope)}
- * and {@link #arenaBounded(long, ResourceScope)} are arena-style native allocators. Finally {@link #prefixAllocator(MemorySegment)}
- * returns an allocator which wraps a segment (either on-heap or off-heap) and recycles its content upon each new allocation request.
+ * This interface also defines factories for commonly used allocators:
+ * <ul>
+ *     <li>{@link #nativeAllocator(ResourceScope)} creates an allocator which
+ *     {@linkplain MemorySegment#allocateNative(long, long, ResourceScope) allocates} native segments, backed by a given scope;</li>
+ *     <li>{@link #newNativeArena(ResourceScope)} creates a more efficient arena-style native allocator, where memory
+ *     is allocated in bigger blocks, which are then sliced accordingly to fit allocation requests;</li>
+ *     <li>{@link #prefixAllocator(MemorySegment)} creates an allocator which wraps a segment (either on-heap or off-heap)
+ *     and recycles its content upon each new allocation request.</li>
+ * </ul>
+ * <p>
+ * Passing a segment allocator to an API can be especially useful in circumstances where a client wants to communicate <em>where</em>
+ * the results of a certain operation (performed by the API) should be stored, as a memory segment. For instance,
+ * {@linkplain CLinker#downcallHandle(FunctionDescriptor) downcall method handles} can accept an additional
+ * {@link SegmentAllocator} parameter if the underlying native function is known to return a struct by-value. Effectively,
+ * the allocator parameter tells the linker runtime where to store the return value of the native function.
  */
 @FunctionalInterface
 public interface SegmentAllocator {
 
     /**
      * Converts a Java string into a UTF-8 encoded, null-terminated C string,
-     * storing the result into a native memory segment allocated using the provided allocator.
+     * storing the result into a memory segment.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement byte array.  The
@@ -68,7 +83,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given byte value.
+     * Allocate a memory segment with given layout and initialize it with given byte value.
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
@@ -83,7 +98,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given char value.
+     * Allocate a memory segment with given layout and initialize it with given char value.
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
@@ -98,7 +113,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given short value.
+     * Allocate a memory segment with given layout and initialize it with given short value.
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
@@ -113,7 +128,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given int value.
+     * Allocate a memory segment with given layout and initialize it with given int value.
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
@@ -128,7 +143,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given float value.
+     * Allocate a memory segment with given layout and initialize it with given float value.
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
@@ -143,7 +158,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given long value.
+     * Allocate a memory segment with given layout and initialize it with given long value.
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
@@ -158,7 +173,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given double value.
+     * Allocate a memory segment with given layout and initialize it with given double value.
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
@@ -173,7 +188,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given address value
+     * Allocate a memory segment with given layout and initialize it with given address value
      * (expressed as an {@link Addressable} instance).
      * The address value might be narrowed according to the platform address size (see {@link ValueLayout#ADDRESS}).
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
@@ -190,7 +205,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given byte array.
+     * Allocate a memory segment with given layout and initialize it with given byte array.
      * @implSpec the default implementation for this method calls {@code this.allocateArray(layout, array.length)}.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
@@ -201,7 +216,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given short array.
+     * Allocate a memory segment with given layout and initialize it with given short array.
      * @implSpec the default implementation for this method calls {@code this.allocateArray(layout, array.length)}.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
@@ -212,7 +227,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given char array.
+     * Allocate a memory segment with given layout and initialize it with given char array.
      * @implSpec the default implementation for this method calls {@code this.allocateArray(layout, array.length)}.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
@@ -223,7 +238,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given int array.
+     * Allocate a memory segment with given layout and initialize it with given int array.
      * @implSpec the default implementation for this method calls {@code this.allocateArray(layout, array.length)}.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
@@ -234,7 +249,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given float array.
+     * Allocate a memory segment with given layout and initialize it with given float array.
      * @implSpec the default implementation for this method calls {@code this.allocateArray(layout, array.length)}.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
@@ -245,7 +260,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given long array.
+     * Allocate a memory segment with given layout and initialize it with given long array.
      * @implSpec the default implementation for this method calls {@code this.allocateArray(layout, array.length)}.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
@@ -256,7 +271,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given layout and initialize it with given double array.
+     * Allocate a memory segment with given layout and initialize it with given double array.
      * @implSpec the default implementation for this method calls {@code this.allocateArray(layout, array.length)}.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
@@ -278,7 +293,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout.
+     * Allocate a memory segment with given layout.
      * @implSpec the default implementation for this method calls {@code this.allocate(layout.byteSize(), layout.byteAlignment())}.
      * @param layout the layout of the block of memory to be allocated.
      * @return a segment for the newly allocated memory block.
@@ -289,7 +304,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory corresponding to an array with given element layout and size.
+     * Allocate a memory segment with given element layout and size.
      * @implSpec the default implementation for this method calls {@code this.allocate(MemoryLayout.sequenceLayout(count, elementLayout))}.
      * @param elementLayout the array element layout.
      * @param count the array element count.
@@ -301,7 +316,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory with given size, with default alignment (1-byte aligned).
+     * Allocate a memory segment with given size
+     * and default alignment constraints (1-byte aligned).
      * @implSpec the default implementation for this method calls {@code this.allocate(bytesSize, 1)}.
      * @param bytesSize the size (in bytes) of the block of memory to be allocated.
      * @return a segment for the newly allocated memory block.
@@ -311,7 +327,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given size and alignment constraint.
+     * Allocate a memory segment with given size and alignment constraints.
      * @param bytesSize the size (in bytes) of the block of memory to be allocated.
      * @param bytesAlignment the alignment (in bytes) of the block of memory to be allocated.
      * @return a segment for the newly allocated memory block.
@@ -319,73 +335,41 @@ public interface SegmentAllocator {
     MemorySegment allocate(long bytesSize, long bytesAlignment);
 
     /**
-     * Returns a native arena-based allocator which {@linkplain MemorySegment#allocateNative(long, ResourceScope) allocates}
-     * a single memory segment, of given size, and then responds to allocation request by returning different slices of that same segment
-     * (until no further allocation is possible).
-     * This can be useful when clients want to perform multiple allocation requests while avoiding the cost associated
-     * with allocating a new off-heap memory region upon each allocation request.
-     * <p>
-     * An allocator associated with a <em>shared</em> resource scope is thread-safe and allocation requests may be
-     * performed concurrently; conversely, if the arena allocator is associated with a <em>confined</em> resource scope,
-     * allocation requests can only occur from the thread owning the allocator's resource scope.
-     * <p>
-     * The returned allocator might throw an {@link OutOfMemoryError} if an incoming allocation request exceeds
-     * the allocator capacity.
-     *
-     * @param size the size (in bytes) of the allocation arena.
-     * @param scope the scope associated with the segments returned by the arena-based allocator.
-     * @return a new bounded arena-based allocator
-     * @throws IllegalArgumentException if {@code size <= 0}.
-     * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
-     * than the thread owning {@code scope}.
-     */
-    static SegmentAllocator arenaBounded(long size, ResourceScope scope) {
-        Objects.requireNonNull(scope);
-        return scope.ownerThread() == null ?
-                new ArenaAllocator.BoundedSharedArenaAllocator(scope, size) :
-                new ArenaAllocator.BoundedArenaAllocator(scope, size);
-    }
-
-    /**
-     * Returns a native unbounded arena-based allocator, with predefined block size.
-     * <p>
-     * The returned allocator {@linkplain MemorySegment#allocateNative(long, ResourceScope) allocates} a memory segment
-     * {@code S} of a certain (fixed) block size and then responds to allocation requests in one of the following ways:
-     * <ul>
-     *     <li>if the size of the allocation requests is smaller than the size of {@code S}, and {@code S} has a <em>free</em>
-     *     slice {@code S'} which fits that allocation request, return that {@code S'}.
-     *     <li>if the size of the allocation requests is smaller than the size of {@code S}, and {@code S} has no <em>free</em>
-     *     slices which fits that allocation request, allocate a new segment {@code S'}, which has same size as {@code S}
-     *     and set {@code S = S'}; the allocator then tries to respond to the same allocation request again.
-     *     <li>if the size of the allocation requests is bigger than the size of {@code S}, allocate a new segment {@code S'},
-     *     which has a sufficient size to satisfy the allocation request, and return {@code S'}.
-     * </ul>
-     * <p>
-     * The block size of the returned arena-based allocator is unspecified, can be platform-dependent, and should generally
-     * not be relied upon. Clients can {@linkplain #arenaUnbounded(long, ResourceScope) obtain} an unbounded arena-based allocator
-     * with specific block size, if they so wish.
-     * <p>
-     * This segment allocator can be useful when clients want to perform multiple allocation requests while avoiding the
-     * cost associated with allocating a new off-heap memory region upon each allocation request.
-     * <p>
-     * An allocator associated with a <em>shared</em> resource scope is thread-safe and allocation requests may be
-     * performed concurrently; conversely, if the arena allocator is associated with a <em>confined</em> resource scope,
-     * allocation requests can only occur from the thread owning the allocator's resource scope.
-     * <p>
-     * The returned allocator might throw an {@link OutOfMemoryError} if an incoming allocation request exceeds
-     * the system capacity.
+     * Returns a native unbounded arena-based allocator, with predefined block size and maximum arena size,
+     * associated with the provided scope. Equivalent to the following code:
+     * <blockquote><pre>{@code
+    SegmentAllocator.newNativeArena(Long.MAX_VALUE, predefinedBlockSize, scope);
+     * }</pre></blockquote>
      *
      * @param scope the scope associated with the segments returned by the arena-based allocator.
      * @return a new unbounded arena-based allocator
      * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
      * than the thread owning {@code scope}.
      */
-    static SegmentAllocator arenaUnbounded(ResourceScope scope) {
-        return arenaUnbounded(ArenaAllocator.DEFAULT_BLOCK_SIZE, scope);
+    static SegmentAllocator newNativeArena(ResourceScope scope) {
+        return newNativeArena(Long.MAX_VALUE, ArenaAllocator.DEFAULT_BLOCK_SIZE, scope);
     }
 
     /**
-     * Returns a native unbounded arena-based allocator, with given block size.
+     * Returns a native unbounded arena-based allocator, with block size set to the specified arena size, associated with
+     * the provided scope, with given arena size. Equivalent to the following code:
+     * <blockquote><pre>{@code
+    SegmentAllocator.newNativeArena(arenaSize, arenaSize, scope);
+     * }</pre></blockquote>
+     *
+     * @param arenaSize the size (in bytes) of the allocation arena.
+     * @param scope the scope associated with the segments returned by the arena-based allocator.
+     * @return a new unbounded arena-based allocator
+     * @throws IllegalArgumentException if {@code arenaSize <= 0}.
+     * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
+     * than the thread owning {@code scope}.
+     */
+    static SegmentAllocator newNativeArena(long arenaSize, ResourceScope scope) {
+        return newNativeArena(arenaSize, arenaSize, scope);
+    }
+
+    /**
+     * Returns a native arena-based allocator, associated with the provided scope, with given arena size and block size.
      * <p>
      * The returned allocator {@linkplain MemorySegment#allocateNative(long, ResourceScope) allocates} a memory segment
      * {@code S} of the specified block size and then responds to allocation requests in one of the following ways:
@@ -406,30 +390,39 @@ public interface SegmentAllocator {
      * performed concurrently; conversely, if the arena allocator is associated with a <em>confined</em> resource scope,
      * allocation requests can only occur from the thread owning the allocator's resource scope.
      * <p>
-     * The returned allocator might throw an {@link OutOfMemoryError} if an incoming allocation request exceeds
-     * the system capacity.
+     * The returned allocator might throw an {@link OutOfMemoryError} if the total memory allocated with this allocator
+     * exceeds the arena size, or the system capacity. Furthermore, the returned allocator is not thread safe, and all
+     * allocation requests should occur within a single thread (regardless of the scope associated with the native arena).
      *
+     * @param arenaSize the size (in bytes) of the allocation arena.
      * @param blockSize the block size associated with the arena-based allocator.
      * @param scope the scope associated with the segments returned by the arena-based allocator.
      * @return a new unbounded arena-based allocator
-     * @throws IllegalArgumentException if {@code blockSize <= 0}.
+     * @throws IllegalArgumentException if {@code blockSize <= 0}, if {@code arenaSize <= 0} or if {@code arenaSize < blockSize}.
      * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
      * than the thread owning {@code scope}.
      */
-    static SegmentAllocator arenaUnbounded(long blockSize, ResourceScope scope) {
+    static SegmentAllocator newNativeArena(long arenaSize, long blockSize, ResourceScope scope) {
         Objects.requireNonNull(scope);
         if (blockSize <= 0) {
             throw new IllegalArgumentException("Invalid block size: " + blockSize);
         }
-        return scope.ownerThread() == null ?
-                new ArenaAllocator.UnboundedSharedArenaAllocator(blockSize, scope) :
-                new ArenaAllocator.UnboundedArenaAllocator(blockSize, scope);
+        if (arenaSize <= 0 || arenaSize < blockSize) {
+            throw new IllegalArgumentException("Invalid arena size: " + arenaSize);
+        }
+        return new ArenaAllocator(blockSize, arenaSize, scope);
     }
 
     /**
      * Returns a segment allocator which responds to allocation requests by recycling a single segment; that is,
      * each new allocation request will return a new slice starting at the segment offset {@code 0} (alignment
      * constraints are ignored by this allocator), hence the name <em>prefix allocator</em>.
+     * Equivalent to (but likely more efficient than) the following code:
+     * <blockquote><pre>{@code
+    MemorySegment segment = ...
+    SegmentAllocator prefixAllocator = (size, align) -> segment.asSlice(0, size);
+     * }</pre></blockquote>
+     * <p>
      * This allocator can be useful to limit allocation requests in case a client
      * knows that they have fully processed the contents of the allocated segment before the subsequent allocation request
      * takes place.
@@ -442,7 +435,22 @@ public interface SegmentAllocator {
      */
     static SegmentAllocator prefixAllocator(MemorySegment segment) {
         Objects.requireNonNull(segment);
-        return (size, align) -> segment.asSlice(0, size);
+        return (AbstractMemorySegmentImpl)segment;
     }
 
+    /**
+     * Returns a native allocator, associated with the provided scope. Equivalent to (but likely more efficient than)
+     * the following code:
+     * <blockquote><pre>{@code
+    ResourceScope scope = ...
+    SegmentAllocator nativeAllocator = (size, align) -> MemorySegment.allocateNative(size, align, scope);
+     * }</pre></blockquote>
+     *
+     * @param scope the scope associated with the returned allocator.
+     * @return a native allocator, associated with the provided scope.
+     */
+    static SegmentAllocator nativeAllocator(ResourceScope scope) {
+        Objects.requireNonNull(scope);
+        return (ResourceScopeImpl)scope;
+    }
 }

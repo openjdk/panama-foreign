@@ -82,7 +82,7 @@ public class LoopOverNew {
 
     @Benchmark
     public void segment_loop_confined() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope(null)) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, scope);
             for (int i = 0; i < ELEM_SIZE; i++) {
                 VH_int.set(segment, (long) i, i);
@@ -92,7 +92,7 @@ public class LoopOverNew {
 
     @Benchmark
     public void segment_loop_shared() {
-        try (ResourceScope scope = ResourceScope.newSharedScope(null)) {
+        try (ResourceScope scope = ResourceScope.newSharedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, scope);
             for (int i = 0; i < ELEM_SIZE; i++) {
                 VH_int.set(segment, (long) i, i);
@@ -138,7 +138,7 @@ public class LoopOverNew {
     @Benchmark
     public void segment_loop_implicit() {
         if (gcCount++ == 0) System.gc(); // GC when we overflow
-        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newConfinedScope());
+        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newImplicitScope());
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }

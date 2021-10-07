@@ -52,7 +52,9 @@ public class TestResourceScope {
     public void testConfined(Supplier<Cleaner> cleanerSupplier) {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
-        ResourceScope scope = ResourceScope.newConfinedScope(cleaner);
+        ResourceScope scope = cleaner != null ?
+                ResourceScope.newConfinedScope(cleaner) :
+                ResourceScope.newConfinedScope();
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
             scope.addCloseAction(() -> acc.addAndGet(delta));
@@ -75,7 +77,9 @@ public class TestResourceScope {
     public void testSharedSingleThread(Supplier<Cleaner> cleanerSupplier) {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
-        ResourceScope scope = ResourceScope.newSharedScope(cleaner);
+        ResourceScope scope = cleaner != null ?
+                ResourceScope.newSharedScope(cleaner) :
+                ResourceScope.newSharedScope();
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
             scope.addCloseAction(() -> acc.addAndGet(delta));
@@ -99,7 +103,9 @@ public class TestResourceScope {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
         List<Thread> threads = new ArrayList<>();
-        ResourceScope scope = ResourceScope.newSharedScope(cleaner);
+        ResourceScope scope = cleaner != null ?
+                ResourceScope.newSharedScope(cleaner) :
+                ResourceScope.newSharedScope();
         AtomicReference<ResourceScope> scopeRef = new AtomicReference<>(scope);
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
@@ -294,6 +300,7 @@ public class TestResourceScope {
         return new Object[][] {
                 { (Supplier<ResourceScope>)ResourceScope::newConfinedScope },
                 { (Supplier<ResourceScope>)ResourceScope::newSharedScope },
+                { (Supplier<ResourceScope>)ResourceScope::newImplicitScope },
                 { (Supplier<ResourceScope>)ResourceScope::globalScope }
         };
     }

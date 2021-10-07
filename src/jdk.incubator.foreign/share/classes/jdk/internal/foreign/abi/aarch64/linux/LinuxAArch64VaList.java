@@ -41,7 +41,6 @@ import java.util.Objects;
 
 import static jdk.internal.foreign.PlatformLayouts.AArch64;
 
-import jdk.incubator.foreign.VaList;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.abi.SharedUtils.THROWING_ALLOCATOR;
@@ -99,7 +98,6 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
     private static final VarHandle VH_vr_offs
         = LAYOUT.varHandle(groupElement("__vr_offs"));
 
-    private static final Cleaner cleaner = Cleaner.create();
     private static final VaList EMPTY
         = new SharedUtils.EmptyVaList(emptyListAddress());
 
@@ -124,11 +122,10 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
 
     private static MemoryAddress emptyListAddress() {
         long ptr = U.allocateMemory(LAYOUT.byteSize());
-        ResourceScope scope = ResourceScope.newSharedScope();
+        ResourceScope scope = ResourceScope.newImplicitScope();
         scope.addCloseAction(() -> U.freeMemory(ptr));
         MemorySegment ms = MemorySegment.ofAddressNative(MemoryAddress.ofLong(ptr),
                 LAYOUT.byteSize(), scope);
-        cleaner.register(LinuxAArch64VaList.class, () -> ms.scope().close());
         VH_stack.set(ms, MemoryAddress.NULL);
         VH_gr_top.set(ms, MemoryAddress.NULL);
         VH_vr_top.set(ms, MemoryAddress.NULL);
@@ -356,7 +353,7 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
 
     @Override
     public VaList copy() {
-        MemorySegment copy = segment.scope().allocate(LAYOUT);
+        MemorySegment copy = MemorySegment.allocateNative(LAYOUT, segment.scope());
         copy.copyFrom(segment);
         return new LinuxAArch64VaList(copy, gpRegsArea, fpRegsArea);
     }
@@ -403,8 +400,8 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
 
         Builder(ResourceScope scope) {
             this.scope = scope;
-            this.gpRegs = scope.allocate(LAYOUT_GP_REGS);
-            this.fpRegs = scope.allocate(LAYOUT_FP_REGS);
+            this.gpRegs = MemorySegment.allocateNative(LAYOUT_GP_REGS, scope);
+            this.fpRegs = MemorySegment.allocateNative(LAYOUT_FP_REGS, scope);
         }
 
         @Override
@@ -497,7 +494,7 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
                 return EMPTY;
             }
 
-            SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+            SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
             MemorySegment vaListSegment = allocator.allocate(LAYOUT);
             MemoryAddress stackArgsPtr = MemoryAddress.NULL;
             if (!stackArgs.isEmpty()) {

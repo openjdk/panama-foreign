@@ -37,10 +37,10 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
- * An interface that models a C {@code va_list}.
+ * An interface that models a variable argument list, similar in functionality to a C {@code va_list}.
  * <p>
- * A va list is a stateful cursor used to iterate over a set of variadic arguments. A va list can be passed
- * by reference e.g. to a downcall method handle.
+ * A variable argument list is a stateful cursor used to iterate over a set of arguments. A variable argument list
+ * can be passed by reference e.g. to a {@linkplain CLinker#downcallHandle(FunctionDescriptor) downcall method handle}.
  * <p>
  * Per the C specification (see C standard 6.5.2.2 Function calls - item 6),
  * arguments to variadic calls are erased by way of 'default argument promotions',
@@ -50,129 +50,107 @@ import java.util.function.Consumer;
  * As such, this interface only supports reading {@code int}, {@code double},
  * and any other type that fits into a {@code long}.
  *
+ * This class is not thread safe, and all accesses should occur within a single thread
+ * (regardless of the scope associated with the variable arity list).
+ *
  * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
  * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
  */
 sealed public interface VaList extends Addressable permits WinVaList, SysVVaList, LinuxAArch64VaList, MacOsAArch64VaList, SharedUtils.EmptyVaList {
 
     /**
-     * Reads the next value as an {@code int} and advances this va list's position.
+     * Reads the next value as an {@code int} and advances this variable argument list's position.
      *
-     * @param layout the layout of the value
-     * @return the value read as an {@code int}
-     * @throws IllegalStateException if the resource scope associated with this instance has been closed
-     * (see {@link #scope()}).
+     * @param layout the layout of the value to be read.
+     * @return the {@code int} value read from this variable argument list.
+     * @throws IllegalStateException if the scope associated with this variable argument list has been closed, or if access occurs from
+     * a thread other than the thread owning that scope.
      */
     int nextVarg(ValueLayout.OfInt layout);
 
     /**
-     * Reads the next value as a {@code long} and advances this va list's position.
+     * Reads the next value as a {@code long} and advances this variable argument list's position.
      *
-     * @param layout the layout of the value
-     * @return the value read as an {@code long}
-     * @throws IllegalStateException if the resource scope associated with this instance has been closed
-     * (see {@link #scope()}).
+     * @param layout the layout of the value to be read.
+     * @return the {@code long} value read from this variable argument list.
+     * @throws IllegalStateException if the scope associated with this variable argument list has been closed, or if access occurs from
+     * a thread other than the thread owning that scope.
      */
     long nextVarg(ValueLayout.OfLong layout);
 
     /**
-     * Reads the next value as a {@code double} and advances this va list's position.
+     * Reads the next value as a {@code double} and advances this variable argument list's position.
      *
      * @param layout the layout of the value
-     * @return the value read as an {@code double}
-     * @throws IllegalStateException if the resource scope associated with this instance has been closed
-     * (see {@link #scope()}).
+     * @return the {@code double} value read from this variable argument list.
+     * @throws IllegalStateException if the scope associated with this variable argument list has been closed, or if access occurs from
+     * a thread other than the thread owning that scope.
      */
     double nextVarg(ValueLayout.OfDouble layout);
 
     /**
-     * Reads the next value as a {@code MemoryAddress} and advances this va list's position.
+     * Reads the next value as a {@code MemoryAddress} and advances this variable argument list's position.
      *
-     * @param layout the layout of the value
-     * @return the value read as an {@code MemoryAddress}
-     * @throws IllegalStateException if the resource scope associated with this instance has been closed
-     * (see {@link #scope()}).
+     * @param layout the layout of the value to be read.
+     * @return the {@code MemoryAddress} value read from this variable argument list.
+     * @throws IllegalStateException if the scope associated with this variable argument list has been closed, or if access occurs from
+     * a thread other than the thread owning that scope.
      */
     MemoryAddress nextVarg(ValueLayout.OfAddress layout);
 
     /**
-     * Reads the next value as a {@code MemorySegment}, and advances this va list's position.
+     * Reads the next value as a {@code MemorySegment}, and advances this variable argument list's position.
      * <p>
      * The memory segment returned by this method will be allocated using the given {@link SegmentAllocator}.
      *
-     * @param layout the layout of the value
-     * @param allocator the allocator to be used for the native segment allocation
-     * @return the value read as an {@code MemorySegment}
-     * @throws IllegalStateException if the resource scope associated with this instance has been closed
-     * (see {@link #scope()}).
+     * @param layout the layout of the value to be read.
+     * @param allocator the allocator to be used to create a segment where the contents of the variable argument list
+     *                  will be copied.
+     * @return the {@code MemorySegment} value read from this variable argument list.
+     * @throws IllegalStateException if the scope associated with this variable argument list has been closed, or if access occurs from
+     * a thread other than the thread owning that scope.
      */
     MemorySegment nextVarg(GroupLayout layout, SegmentAllocator allocator);
 
     /**
-     * Skips a number of elements with the given memory layouts, and advances this va list's position.
+     * Skips a number of elements with the given memory layouts, and advances this variable argument list's position.
      *
-     * @param layouts the layout of the value
-     * @throws IllegalStateException if the resource scope associated with this instance has been closed
-     * (see {@link #scope()}).
+     * @param layouts the layouts of the values to be skipped.
+     * @throws IllegalStateException if the scope associated with this variable argument list has been closed, or if access occurs from
+     * a thread other than the thread owning that scope.
      */
     void skip(MemoryLayout... layouts);
 
     /**
-     * Returns the resource scope associated with this instance.
-     * @return the resource scope associated with this instance.
+     * Returns the resource scope associated with this variable argument list.
+     * @return the resource scope associated with this variable argument list.
      */
     ResourceScope scope();
 
     /**
-     * Copies this C {@code va_list} at its current position. Copying is useful to traverse the va list's elements
-     * starting from the current position, without affecting the state of the original va list, essentially
-     * allowing the elements to be traversed multiple times.
-     * <p>
-     * Any native resource required by the execution of this method will be allocated in the resource scope
-     * associated with this instance (see {@link #scope()}).
-     * <p>
-     * This method only copies the va list cursor itself and not the memory that may be attached to the
-     * va list which holds its elements. That means that if this va list was created with the
-     * {@link #make(Consumer, ResourceScope)} method, closing this va list will also release the native memory that holds its
-     * elements, making the copy unusable.
+     * Copies this variable argument list at its current position into a new variable argument list associated
+     * with the same scope as this variable argument list. using the segment provided allocator. Copying is useful to
+     * traverse the variable argument list elements, starting from the current position, without affecting the state
+     * of the original variable argument list, essentially allowing the elements to be traversed multiple times.
      *
-     * @return a copy of this C {@code va_list}.
-     * @throws IllegalStateException if the resource scope associated with this instance has been closed
-     * (see {@link #scope()}).
+     * @return a copy of this variable argument list.
+     * @throws IllegalStateException if the scope associated with this variable argument list has been closed, or if access occurs from
+     * a thread other than the thread owning that scope.
      */
     VaList copy();
 
     /**
-     * Returns the memory address associated with this va list.
-     * @throws IllegalStateException if the scope associated with this va list has been closed, or if access occurs from
+     * Returns the memory address associated with this variable argument list.
+     * @throws UnsupportedOperationException if this variable argument list has been allocated using heap segments.
+     * @throws IllegalStateException if the scope associated with this variable argument list has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
-     * @return The memory address associated with this va list.
+     * @return The memory address associated with this variable argument list.
      */
     @Override
     MemoryAddress address();
 
     /**
-     * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list}.
-     * <p>
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
-     *
-     * @param address a memory address pointing to an existing C {@code va_list}.
-     * @return a new {@code VaList} instance backed by the C {@code va_list} at {@code address}.
-     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
-     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
-     */
-    @CallerSensitive
-    static VaList ofAddress(MemoryAddress address) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        return SharedUtils.newVaListOfAddress(address, ResourceScope.globalScope());
-    }
-
-    /**
-     * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list},
+     * Constructs a new variable argument list from a memory address pointing to an existing variable argument list,
      * with given resource scope.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
@@ -180,9 +158,9 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
-     * @param address a memory address pointing to an existing C {@code va_list}.
-     * @param scope the resource scope to be associated with the returned {@code VaList} instance.
-     * @return a new {@code VaList} instance backed by the C {@code va_list} at {@code address}.
+     * @param address a memory address pointing to an existing variable argument list.
+     * @param scope the resource scope to be associated with the returned variable argument list.
+     * @return a new variable argument list backed by the memory region at {@code address}.
      * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
      * than the thread owning {@code scope}.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
@@ -198,8 +176,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
     }
 
     /**
-     * Constructs a new {@code VaList} using a builder (see {@link Builder}), associated with a given
-     * {@linkplain ResourceScope resource scope}.
+     * Constructs a new variable argument list using a builder (see {@link Builder}), with a given resource scope.
      * <p>
      * If this method needs to allocate native memory, such memory will be managed by the given
      * {@linkplain ResourceScope resource scope}, and will be released when the resource scope is {@linkplain ResourceScope#close closed}.
@@ -208,11 +185,11 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * this method will return the same as {@link #empty()}.
      *
      * @param actions a consumer for a builder (see {@link Builder}) which can be used to specify the elements
-     *                of the underlying C {@code va_list}.
-     * @param scope the scope to be used for the valist allocation.
-     * @return a new {@code VaList} instance backed by a fresh C {@code va_list}.
-     * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
-     * than the thread owning {@code scope}.
+     *                of the underlying variable argument list.
+     * @param scope scope the scope to be associated with the new variable arity list.
+     * @return a new variable argument list.
+     * @throws IllegalStateException if the scope associated with {@code allocator} has been already closed,
+     * or if access occurs from a thread other than the thread owning that scope.
      */
     static VaList make(Consumer<Builder> actions, ResourceScope scope) {
         Objects.requireNonNull(actions);
@@ -221,18 +198,17 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
     }
 
     /**
-     * Returns an empty C {@code va_list} constant.
-     * <p>
-     * The returned {@code VaList} can not be closed.
-     *
-     * @return a {@code VaList} modelling an empty C {@code va_list}.
+     * Returns an empty variable argument list, associated with the {@linkplain ResourceScope#globalScope() global}
+     * scope. The resulting variable argument list does not contain any argument, and throws {@link UnsupportedOperationException}
+     * on all operations, except for {@link #scope()}, {@link #copy()} and {@link #address()}.
+     * @return an empty variable argument list.
      */
     static VaList empty() {
         return SharedUtils.emptyVaList();
     }
 
     /**
-     * A builder interface used to construct a C {@code va_list}.
+     * A builder interface used to construct a variable argument list.
      *
      * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
      * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
@@ -240,46 +216,46 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
     sealed interface Builder permits WinVaList.Builder, SysVVaList.Builder, LinuxAArch64VaList.Builder, MacOsAArch64VaList.Builder {
 
         /**
-         * Adds a native value represented as an {@code int} to the C {@code va_list} being constructed.
+         * Writes an {@code int} value to the variable argument list being constructed.
          *
-         * @param layout the native layout of the value.
-         * @param value the value, represented as an {@code int}.
+         * @param layout the layout of the value to be written.
+         * @param value the {@code int} value to be written.
          * @return this builder.
          */
         Builder addVarg(ValueLayout.OfInt layout, int value);
 
         /**
-         * Adds a native value represented as a {@code long} to the C {@code va_list} being constructed.
+         * Writes a {@code long} value to the variable argument list being constructed.
          *
-         * @param layout the native layout of the value.
-         * @param value the value, represented as a {@code long}.
+         * @param layout the layout of the value to be written.
+         * @param value the {@code long} value to be written.
          * @return this builder.
          */
         Builder addVarg(ValueLayout.OfLong layout, long value);
 
         /**
-         * Adds a native value represented as a {@code double} to the C {@code va_list} being constructed.
+         * Writes a {@code double} value to the variable argument list being constructed.
          *
-         * @param layout the native layout of the value.
-         * @param value the value, represented as a {@code double}.
+         * @param layout the layout of the value to be written.
+         * @param value the {@code double} value to be written.
          * @return this builder.
          */
         Builder addVarg(ValueLayout.OfDouble layout, double value);
 
         /**
-         * Adds a native value represented as a {@code MemoryAddress} to the C {@code va_list} being constructed.
+         * Writes an {@code Addressable} value to the variable argument list being constructed.
          *
-         * @param layout the native layout of the value.
-         * @param value the value, represented as a {@code Addressable}.
+         * @param layout the layout of the value to be written.
+         * @param value the {@code Addressable} value to be written.
          * @return this builder.
          */
         Builder addVarg(ValueLayout.OfAddress layout, Addressable value);
 
         /**
-         * Adds a native value represented as a {@code MemorySegment} to the C {@code va_list} being constructed.
+         * Writes a {@code MemorySegment} value, with given layout, to the variable argument list being constructed.
          *
-         * @param layout the native layout of the value.
-         * @param value the value, represented as a {@code MemorySegment}.
+         * @param layout the layout of the value to be written.
+         * @param value the {@code MemorySegment} whose contents will be copied.
          * @return this builder.
          */
         Builder addVarg(GroupLayout layout, MemorySegment value);

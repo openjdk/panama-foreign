@@ -26,7 +26,6 @@
 package jdk.internal.foreign.abi.aarch64.macos;
 
 import jdk.incubator.foreign.*;
-import jdk.incubator.foreign.VaList;
 import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.abi.SharedUtils;
@@ -211,7 +210,7 @@ public non-sealed class MacOsAArch64VaList implements VaList, Scoped {
                 return EMPTY;
             }
 
-            SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+            SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
 
             // Each argument may occupy up to four slots
             MemorySegment segment = allocator.allocate(VA_SLOT_SIZE_BYTES * args.size() * 4);
