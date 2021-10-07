@@ -152,13 +152,13 @@ public:
     VMReg shuffle_temp);
 
   int out_arg_stack_slots() const { return _out_arg_stack_slots; }
-  void gen_shuffle(MacroAssembler* masm, int shuffle_space_rsp_offset = -1) const {
-    pd_gen_shuffle(masm, shuffle_space_rsp_offset);
+  void gen_shuffle(MacroAssembler* masm) const {
+    pd_gen_shuffle(masm);
   }
 
   void print_on(outputStream* os) const;
 private:
-  void pd_gen_shuffle(MacroAssembler* masm, int shuffle_space_rsp_offset) const;
+  void pd_gen_shuffle(MacroAssembler* masm) const;
 };
 
 #endif // SHARE_PRIMS_FOREIGN_GLOBALS

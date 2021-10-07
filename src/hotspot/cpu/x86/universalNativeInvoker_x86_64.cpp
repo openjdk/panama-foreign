@@ -266,7 +266,6 @@ void NativeInvokerGenerator::generate() {
 
   // in bytes
   int allocated_frame_size = 0;
-  allocated_frame_size += 16; // argument shuffle space, the size of an XMM reg
   allocated_frame_size += arg_shuffle.out_arg_stack_slots() << LogBytesPerInt;
   allocated_frame_size += _shadow_space_bytes;
 
@@ -277,9 +276,6 @@ void NativeInvokerGenerator::generate() {
   allocated_frame_size = out_reg_spill.spill_size_bytes() > allocated_frame_size
     ? out_reg_spill.spill_size_bytes()
     : allocated_frame_size;
-  // in bytes
-  const int shuffle_space_offset = _shadow_space_bytes + (arg_shuffle.out_arg_stack_slots() << LogBytesPerInt);
-
   allocated_frame_size = align_up(allocated_frame_size, 16);
   // _framesize is in 32-bit stack slots:
   _framesize += framesize_base + (allocated_frame_size >> LogBytesPerInt);
@@ -309,7 +305,7 @@ void NativeInvokerGenerator::generate() {
   __ block_comment("} thread java2native");
 
   __ block_comment("{ argument shuffle");
-  arg_shuffle.gen_shuffle(_masm, shuffle_space_offset);
+  arg_shuffle.gen_shuffle(_masm);
   __ block_comment("} argument shuffle");
 
   __ call(input_addr_reg);

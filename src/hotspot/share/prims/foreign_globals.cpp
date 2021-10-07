@@ -222,12 +222,12 @@ class ForeignCMO: public StackObj {
   class MoveOperation: public ResourceObj {
     friend class ForeignCMO;
    private:
-    BasicType        _bt;
     VMRegPair        _src;
     VMRegPair        _dst;
     bool             _processed;
     MoveOperation*  _next;
     MoveOperation*  _prev;
+    BasicType        _bt;
 
     static int get_id(VMRegPair r) {
       return r.first()->value();
@@ -395,7 +395,12 @@ ArgumentShuffle::ArgumentShuffle(
   VMRegPair tmp_vmreg;
   tmp_vmreg.set2(shuffle_temp);
 
-  // Compute a valid move order, using tmp_vmreg to break any cycles
+  // Compute a valid move order, using tmp_vmreg to break any cycles.
+  // Note that ForeignCMO ignores the upper half of our VMRegPairs.
+  // We are not moving Java values here, only register-sized values,
+  // so we shouldn't have to worry about the upper half any ways.
+  // This should work fine on 32-bit as well, since we would only be
+  // moving 32-bit sized values (i.e. low-level MH shouldn't take any double/long).
   ForeignCMO order(num_in_args, in_regs,
                    num_out_args, out_regs,
                    in_sig_bt, tmp_vmreg);

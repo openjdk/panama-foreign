@@ -153,9 +153,7 @@ void RegSpillFill::pd_load_reg(MacroAssembler* masm, int offset, VMReg reg) cons
   }
 }
 
-void ArgumentShuffle::pd_gen_shuffle(MacroAssembler* masm, int shuffle_space_rsp_offset) const {
-  assert(shuffle_space_rsp_offset == -1, "not expected");
-
+void ArgumentShuffle::pd_gen_shuffle(MacroAssembler* masm) const {
   for (int i = 0; i < _moves.length(); i++) {
     Move move = _moves.at(i);
     BasicType arg_bt     = move.bt;

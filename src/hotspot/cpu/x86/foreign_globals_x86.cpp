@@ -165,11 +165,7 @@ void RegSpillFill::pd_load_reg(MacroAssembler* masm, int offset, VMReg reg) cons
   }
 }
 
-static bool is_fp_to_gp_move(VMRegPair from, VMRegPair to) {
-  return from.first()->is_XMMRegister() && to.first()->is_Register();
-}
-
-void ArgumentShuffle::pd_gen_shuffle(MacroAssembler* masm, int shuffle_space_rsp_offset) const {
+void ArgumentShuffle::pd_gen_shuffle(MacroAssembler* masm) const {
   for (int i = 0; i < _moves.length(); i++) {
     Move move = _moves.at(i);
     BasicType arg_bt     = move.bt;
@@ -183,32 +179,26 @@ void ArgumentShuffle::pd_gen_shuffle(MacroAssembler* masm, int shuffle_space_rsp
       case T_SHORT:
       case T_CHAR:
       case T_INT:
-       masm->move32_64(from_vmreg, to_vmreg);
-       break;
+        masm->move32_64(from_vmreg, to_vmreg);
+        break;
 
       case T_FLOAT:
-        if (is_fp_to_gp_move(from_vmreg, to_vmreg)) { // Windows vararg call
-          assert(shuffle_space_rsp_offset != -1, "shuffle area not available");
-          Address shuffle_space_addr(rsp, shuffle_space_rsp_offset);
-          masm->movsd(shuffle_space_addr, from_vmreg.first()->as_XMMRegister());
-          masm->movq(to_vmreg.first()->as_Register(), shuffle_space_addr);
+        if (to_vmreg.first()->is_Register()) { // Windows vararg call
+          masm->movq(to_vmreg.first()->as_Register(), from_vmreg.first()->as_XMMRegister());
         } else {
           masm->float_move(from_vmreg, to_vmreg);
         }
         break;
 
       case T_DOUBLE:
-        if (is_fp_to_gp_move(from_vmreg, to_vmreg)) { // Windows vararg call
-          assert(shuffle_space_rsp_offset != -1, "shuffle area not available");
-          Address shuffle_space_addr(rsp, shuffle_space_rsp_offset);
-          masm->movsd(shuffle_space_addr, from_vmreg.first()->as_XMMRegister());
-          masm->movq(to_vmreg.first()->as_Register(), shuffle_space_addr);
+        if (to_vmreg.first()->is_Register()) { // Windows vararg call
+          masm->movq(to_vmreg.first()->as_Register(), from_vmreg.first()->as_XMMRegister());
         } else {
           masm->double_move(from_vmreg, to_vmreg);
         }
         break;
 
-      case T_LONG :
+      case T_LONG:
         masm->long_move(from_vmreg, to_vmreg);
         break;
 

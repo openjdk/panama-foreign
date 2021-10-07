@@ -944,7 +944,7 @@ void MacroAssembler::long_move(VMRegPair src, VMRegPair dst) {
     }
   } else if (dst.is_single_phys_reg()) {
     assert(src.is_single_reg(),  "not a stack pair");
-    movq(dst.first()->as_Register(), Address(rbp, reg2offset_out(src.first())));
+    movq(dst.first()->as_Register(), Address(rbp, reg2offset_in(src.first())));
   } else {
     assert(src.is_single_reg() && dst.is_single_reg(), "not stack pairs");
     movq(rax, Address(rbp, reg2offset_in(src.first())));
@@ -970,7 +970,7 @@ void MacroAssembler::double_move(VMRegPair src, VMRegPair dst) {
     }
   } else if (dst.is_single_phys_reg()) {
     assert(src.is_single_reg(),  "not a stack pair");
-    movdbl(dst.first()->as_XMMRegister(), Address(rbp, reg2offset_out(src.first())));
+    movdbl(dst.first()->as_XMMRegister(), Address(rbp, reg2offset_in(src.first())));
   } else {
     assert(src.is_single_reg() && dst.is_single_reg(), "not stack pairs");
     movq(rax, Address(rbp, reg2offset_in(src.first())));
