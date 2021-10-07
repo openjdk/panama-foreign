@@ -44,7 +44,7 @@
  * ranging from {@code 0} to {@code 9}, we can use the following code:
  *
  * <pre>{@code
-MemorySegment segment = MemorySegment.allocateNative(10 * 4, ResourceScope.newConfinedScope());
+MemorySegment segment = MemorySegment.allocateNative(10 * 4, ResourceScope.newImplicitScope());
 for (int i = 0 ; i < 10 ; i++) {
    segment.setAtIndex(ValueLayout.JAVA_INT, i, 42);
 }
@@ -72,7 +72,7 @@ for (int i = 0 ; i < 10 ; i++) {
  *
  * <pre>{@code
 try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-    MemorySegment segment = scope.allocate(10 * 4);
+    MemorySegment segment = MemorySegment.allocateNative(10 * 4, scope);
     for (int i = 0 ; i < 10 ; i++) {
         segment.setAtIndex(ValueLayout.JAVA_INT, i, 42);
     }
@@ -83,8 +83,6 @@ try (ResourceScope scope = ResourceScope.newConfinedScope()) {
  * which is used to <em>bind</em> the life-cycle of the segment created immediately afterwards. Note the use of the
  * <em>try-with-resources</em> construct: this idiom ensures that all the memory resources associated with the segment will be released
  * at the end of the block, according to the semantics described in Section {@jls 14.20.3} of <cite>The Java Language Specification</cite>.
- * Since a resource scope acts as a {@link jdk.incubator.foreign.SegmentAllocator segment allocators}, we can also
- * allocate the native memory segment more directly, through the scope.
  *
  * <h3><a id="safety"></a>Safety</h3>
  *
@@ -118,7 +116,8 @@ try (ResourceScope scope = ResourceScope.newConfinedScope()) {
       );
 
       try (var scope = ResourceScope.newConfinedScope()) {
-         var cString = scope.allocateUtf8String("Hello");
+         var cString = MemorySegment.allocateNative(5 + 1, scope);
+         cString.setUtf8String("Hello");
          long len = (long)strlen.invoke(cString); // 5
       }
  * }</pre>

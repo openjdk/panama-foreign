@@ -28,6 +28,7 @@ import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.SymbolLookup;
@@ -75,8 +76,8 @@ public class MethodHandleInvoker {
         addDefaultMapping(MemoryLayout.class, ValueLayout.JAVA_INT);
         addDefaultMapping(FunctionDescriptor.class, FunctionDescriptor.ofVoid());
         addDefaultMapping(SymbolLookup.class, SymbolLookup.loaderLookup());
-        addDefaultMapping(ResourceScope.class, ResourceScope.newConfinedScope());
-        addDefaultMapping(SegmentAllocator.class, (size, align) -> null);
+        addDefaultMapping(ResourceScope.class, ResourceScope.newImplicitScope());
+        addDefaultMapping(SegmentAllocator.class, SegmentAllocator.prefixAllocator(MemorySegment.ofArray(new byte[10])));
         addDefaultMapping(ValueLayout.OfByte.class, ValueLayout.JAVA_BYTE);
         addDefaultMapping(ValueLayout.OfBoolean.class, ValueLayout.JAVA_BOOLEAN);
         addDefaultMapping(ValueLayout.OfChar.class, ValueLayout.JAVA_CHAR);

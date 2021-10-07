@@ -30,77 +30,83 @@ import jdk.internal.ref.CleanerFactory;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.ref.Cleaner;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Spliterator;
 
 /**
  * A resource scope manages the lifecycle of one or more resources. Resources (e.g. {@link MemorySegment}) associated
- * with a resource scope can only be accessed while the resource scope is <em>alive</em> (see {@link #isAlive()}),
- * and by the thread associated with the resource scope (if any). A resource scope can be used as a
- * {@linkplain SegmentAllocator segment allocator}; that is, this interface provides many methods which can be
- * used to allocate native segments, associated with this scope.
+ * with a resource scope can only be accessed while the resource scope is {@linkplain #isAlive() alive},
+ * and by the {@linkplain #ownerThread() thread} associated with the resource scope (if any).
  *
  * <h2>Deterministic deallocation</h2>
  *
- * Resource scopes obtained from {@link #newConfinedScope()}, {@link #newSharedScope()} support <em>deterministic deallocation</em>;
- * Resource scopes can be closed explicitly (see {@link ResourceScope#close()}). When a resource scope is closed,
- * it is no longer <em>alive</em> (see {@link #isAlive()}), and subsequent operations on resources associated with that scope
- * (e.g. attempting to access a {@link MemorySegment} instance) will fail with {@link IllegalStateException}.
+ * Resource scopes support <em>deterministic deallocation</em>; that is, they can be {@linkplain ResourceScope#close() closed}
+ * explicitly. When a resource scope is closed, it is no longer {@link #isAlive() alive}, and subsequent
+ * operations on resources associated with that scope (e.g. attempting to access a {@link MemorySegment} instance)
+ * will fail with {@link IllegalStateException}.
  * <p>
- * Closing a resource scope will cause all the cleanup actions associated with that scope (see {@link #addCloseAction(Runnable)}) to be called.
+ * Closing a resource scope will cause all the {@linkplain #addCloseAction(Runnable) close actions} associated with that scope to be called.
  * Moreover, closing a resource scope might trigger the releasing of the underlying memory resources associated with said scope; for instance:
  * <ul>
- *     <li>closing the scope associated with a native memory segment results in <em>freeing</em> the native memory associated with it
- *     (see {@link MemorySegment#allocateNative(long, ResourceScope)}, or {@link SegmentAllocator#arenaUnbounded(ResourceScope)})</li>
- *     <li>closing the scope associated with a mapped memory segment results in the backing memory-mapped file to be unmapped
- *     (see {@link MemorySegment#mapFile(Path, long, long, FileChannel.MapMode, ResourceScope)})</li>
- *     <li>closing the scope associated with an upcall stub results in releasing the stub
- *     (see {@link CLinker#upcallStub(MethodHandle, FunctionDescriptor, ResourceScope)}</li>
+ *     <li>closing the scope associated with a {@linkplain MemorySegment#allocateNative(long, long, ResourceScope) native memory segment}
+ *     results in <em>freeing</em> the native memory associated with it;</li>
+ *     <li>closing the scope associated with a {@linkplain MemorySegment#mapFile(Path, long, long, FileChannel.MapMode, ResourceScope) mapped memory segment}
+ *     results in the backing memory-mapped file to be unmapped;</li>
+ *     <li>closing the scope associated with an {@linkplain CLinker#upcallStub(MethodHandle, FunctionDescriptor, ResourceScope) upcall stub}
+ *     results in releasing the stub;</li>
+ *     <li>closing the scope associated with a {@linkplain VaList variable arity list} results in releasing the memory
+ *     associated with that variable arity list instance.</li>
  * </ul>
  *
  * <h2>Implicit deallocation</h2>
  *
- * Resource scopes are also closed automatically once the scope instance becomes
- * <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>. This can be useful to allow for predictable,
- * deterministic resource deallocation, while still preventing accidental native memory leaks. In case a managed resource scope
- * is closed explicitly, no further action will be taken when the scope becomes unreachable; that is, cleanup actions
- * (see {@link #addCloseAction(Runnable)}) associated with a resource scope, whether managed or not, are called <em>exactly once</em>.
- * <p>
- * Clients can opt out of implicit deallocation, by passing a {@code null} cleaner parameter to some of the
- * {@linkplain #newConfinedScope(Cleaner) scope factories}. This should be done with care: if a scope is not associated
- * with a {@linkplain Cleaner cleaner}, it is possible for the resources associated to the scope to never be cleaned up,
- * should the scope become unreachable before the {@link #close()} method is called.
+ * Resource scopes can be associated with a {@link Cleaner} instance, so that they are also closed automatically,
+ * once the scope instance becomes <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
+ * This can be useful to allow for predictable, deterministic resource deallocation, while still preventing accidental
+ * native memory leaks. In case a managed resource scope is closed explicitly, no further action will be taken when
+ * the scope becomes unreachable; that is, {@linkplain #addCloseAction(Runnable) close actions} associated with a
+ * resource scope, whether managed or not, are called <em>exactly once</em>.
  *
- * <h2>Global scope</h2>
+ * <h2><a id = "global-scope">Global scope</a></h2>
  *
  * An important implicit resource scope is the so called {@linkplain #globalScope() global scope}; the global scope is
- * a resource scope that cannot be closed, and that is guaranteed to never become <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
- * As a results, the global scope will never attempt to release resources associated with it. Such resources must, where
+ * a resource scope that cannot be closed, either explicitly or implicitly. As a result, the global scope will never
+ * attempt to release resources associated with it. Examples of resources associated with the global scope are:
+ * <ul>
+ *     <li>heap segments created from {@linkplain MemorySegment#ofArray(int[]) arrays} or
+ *     {@linkplain MemorySegment#ofByteBuffer(ByteBuffer) buffers};</li>
+ *     <li>variable arity lists {@linkplain VaList#ofAddress(MemoryAddress, ResourceScope) obtained} from raw memory addresses;
+ *     <li>native symbols {@linkplain SymbolLookup#lookup(String) obtained} from a {@linkplain SymbolLookup#loaderLookup() loader lookup},
+ *     or from the {@link CLinker}.</li>
+ * </ul>
+ * In other words, the global scope is used to indicate that the lifecycle of one or more resources must, where
  * needed, be managed independently by clients.
  *
  * <h2><a id = "thread-confinement">Thread confinement</a></h2>
  *
- * Resource scopes can be further divided into two categories: <em>thread-confined</em> resource scopes, and <em>shared</em>
+ * Resource scopes can be divided into two categories: <em>thread-confined</em> resource scopes, and <em>shared</em>
  * resource scopes.
  * <p>
- * Confined resource scopes (see {@link #newConfinedScope()}), support strong thread-confinement guarantees. Upon creation,
- * they are assigned an <em>owner thread</em>, typically the thread which initiated the creation operation (see {@link #ownerThread()}).
+ * {@linkplain #newConfinedScope() Confined resource scopes}, support strong thread-confinement guarantees. Upon creation,
+ * they are assigned an {@linkplain #ownerThread() owner thread}, typically the thread which initiated the creation operation.
  * After creating a confined resource scope, only the owner thread will be allowed to directly manipulate the resources
  * associated with this resource scope. Any attempt to perform resource access from a thread other than the
  * owner thread will result in a runtime failure.
  * <p>
- * Shared resource scopes (see {@link #newSharedScope()}), on the other hand, have no owner thread;
- * as such resources associated with this shared resource scopes can be accessed by multiple threads.
+ * {@linkplain #newSharedScope() Shared resource scopes}, on the other hand, have no owner thread;
+ * as such, resources associated with shared resource scopes can be accessed by multiple threads.
  * This might be useful when multiple threads need to access the same resource concurrently (e.g. in the case of parallel processing).
- * For instance, a client might obtain a {@link Spliterator} from a shared segment, which can then be used to slice the
+ * For instance, a client might obtain a {@link Spliterator} from a segment backed by a shared scope, which can then be used to slice the
  * segment and allow multiple threads to work in parallel on disjoint segment slices. The following code can be used to sum
  * all int values in a memory segment in parallel:
  *
  * <blockquote><pre>{@code
 try (ResourceScope scope = ResourceScope.newSharedScope()) {
     SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.sequenceLayout(1024, ValueLayout.JAVA_INT);
-    MemorySegment segment = scope.allocate(SEQUENCE_LAYOUT);
+    MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT, scope);
     int sum = segment.elements(ValueLayout.JAVA_INT).parallel()
                         .mapToInt(s -> s.get(ValueLayout.JAVA_INT, 0))
                         .sum();
@@ -112,14 +118,14 @@ try (ResourceScope scope = ResourceScope.newSharedScope()) {
  * a resource associated with a shared scope while the scope is being closed from another thread, an exception might occur on both
  * the accessing and the closing threads. Clients should refrain from attempting to close a shared resource scope repeatedly
  * (e.g. keep calling {@link #close()} until no exception is thrown). Instead, clients of shared resource scopes
- * should always ensure that proper synchronization mechanisms (e.g. using resource scope handles, see below) are put in place
+ * should always ensure that proper synchronization mechanisms (e.g. using temporal dependencies, see below) are put in place
  * so that threads closing shared resource scopes can never race against threads accessing resources managed by same scopes.
  *
  * <h2>Temporal dependencies</h2>
  *
  * Resource scopes can depend on each other. More specifically, a scope can feature
  * {@linkplain #keepAlive(ResourceScope) temporal dependencies} on one or more other resource scopes.
- * Such a resource scope cannot be closed (either implicitly or explicitly) until <em>all</em> the scopes it is bound to
+ * Such a resource scope cannot be closed (either implicitly or explicitly) until <em>all</em> the scopes it depends on
  * have also been closed.
  * <p>
  * This can be useful when clients need to perform a critical operation on a memory segment, during which they have
@@ -139,7 +145,7 @@ try (ResourceScope criticalScope = ResourceScope.newConfinedScope()) {
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  */
-public sealed interface ResourceScope extends AutoCloseable, SegmentAllocator permits ResourceScopeImpl {
+public sealed interface ResourceScope extends AutoCloseable permits ResourceScopeImpl {
     /**
      * Is this resource scope alive?
      * @return true, if this resource scope is alive.
@@ -189,67 +195,62 @@ public sealed interface ResourceScope extends AutoCloseable, SegmentAllocator pe
      * @implNote A given scope can support up to {@link Integer#MAX_VALUE} pending keep alive requests.
      * @param target the scope that needs to be kept alive.
      * @throws IllegalArgumentException if {@code target == this}.
-     * @throws IllegalStateException if this scope has been closed, or if access occurs from
-     * a thread other than the thread owning this scope.
+     * @throws IllegalStateException if this scope or {@code target} have been closed, or if access occurs from
+     * a thread other than the thread owning this scope or {@code target}.
      */
     void keepAlive(ResourceScope target);
 
     /**
-     * Allocate a native segment with given size and alignment constraint. This is equivalent to:
-     * <blockquote><pre>{@code
-    MemorySegment.allocateNative(bytesSize, bytesAlignment, this);
-     * }</pre></blockquote>
-     * @param bytesSize the size (in bytes) of the native segment to be allocated.
-     * @param bytesAlignment the alignment (in bytes) of the native segment to be allocated.
-     * @return a new native segment with given size and alignment.
-     */
-    MemorySegment allocate(long bytesSize, long bytesAlignment);
-
-    /**
-     * Create a new confined scope. Equivalent to (but likely more efficient than) the following code:
-     * <pre>{@code
-    newConfinedScope(Cleaner.create());
-     * }</pre>
+     * Creates a new confined scope.
      * @return a new confined scope.
      */
     static ResourceScope newConfinedScope() {
-        return ResourceScopeImpl.createConfined( Thread.currentThread(), CleanerFactory.cleaner());
+        return ResourceScopeImpl.createConfined( Thread.currentThread(), null);
     }
 
     /**
-     * Create a new confined scope. If {@code cleaner != null}, the resulting scope is managed by the provided
-     * cleaner instance; otherwise the resulting scope will <em>not</em> feature implicit deallocation.
-     * @param cleaner the cleaner to be associated with the returned scope (can be {@code null}).
-     * @return a new confined scope, managed by {@code cleaner}, if {@code cleaner != null}.
+     * Creates a new confined scope, managed by the provided cleaner instance.
+     * @param cleaner the cleaner to be associated with the returned scope.
+     * @return a new confined scope, managed by {@code cleaner}.
      */
     static ResourceScope newConfinedScope(Cleaner cleaner) {
+        Objects.requireNonNull(cleaner);
         return ResourceScopeImpl.createConfined(Thread.currentThread(), cleaner);
     }
 
     /**
-     * Create a new shared scope. Equivalent to (but likely more efficient than) the following code:
-     * <pre>{@code
-newSharedScope(Cleaner.create());
-     * }</pre>
+     * Creates a new shared scope.
      * @return a new shared scope.
      */
     static ResourceScope newSharedScope() {
-        return ResourceScopeImpl.createShared(CleanerFactory.cleaner());
+        return ResourceScopeImpl.createShared(null);
     }
 
     /**
-     * Create a new shared scope. If {@code cleaner != null}, the resulting scope is managed by the provided
-     * cleaner instance; otherwise the resulting scope will <em>not</em> feature implicit deallocation.
-     * @param cleaner the cleaner to be associated with the returned scope (can be {@code null}).
-     * @return a new shared scope, managed by {@code cleaner}, if {@code cleaner != null}.
+     * Creates a new shared scope, managed by the provided cleaner instance.
+     * @param cleaner the cleaner to be associated with the returned scope.
+     * @return a new shared scope, managed by {@code cleaner}.
      */
     static ResourceScope newSharedScope(Cleaner cleaner) {
+        Objects.requireNonNull(cleaner);
         return ResourceScopeImpl.createShared(cleaner);
     }
 
     /**
-     * Returns an implicit scope which is assumed to be always alive.
-     * @return the global scope.
+     * Creates a new shared scope, managed by a private {@link Cleaner} instance. Equivalent to (but likely more efficient than)
+     * the following code:
+     * <pre>{@code
+    newSharedScope(Cleaner.create());
+     * }</pre>
+     * @return a shared scope, managed by a private {@link Cleaner} instance.
+     */
+    static ResourceScope newImplicitScope() {
+        return newSharedScope(CleanerFactory.cleaner());
+    }
+
+    /**
+     * Returns the <a href="ResourceScope.html#global-scope"><em>global scope</em></a>.
+     * @return the <a href="ResourceScope.html#global-scope"><em>global scope</em></a>.
      */
     static ResourceScope globalScope() {
         return ResourceScopeImpl.GLOBAL;

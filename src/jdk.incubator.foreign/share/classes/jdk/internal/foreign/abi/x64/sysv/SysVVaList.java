@@ -40,7 +40,6 @@ import java.util.Objects;
 
 import static jdk.internal.foreign.PlatformLayouts.SysV;
 
-import jdk.incubator.foreign.VaList;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.abi.SharedUtils.THROWING_ALLOCATOR;
@@ -110,7 +109,6 @@ public non-sealed class SysVVaList implements VaList, Scoped {
     private static final VarHandle VH_overflow_arg_area = LAYOUT.varHandle(groupElement("overflow_arg_area"));
     private static final VarHandle VH_reg_save_area = LAYOUT.varHandle(groupElement("reg_save_area"));
 
-    private static final Cleaner cleaner = Cleaner.create();
     private static final VaList EMPTY = new SharedUtils.EmptyVaList(emptyListAddress());
 
     private final MemorySegment segment;
@@ -128,11 +126,10 @@ public non-sealed class SysVVaList implements VaList, Scoped {
 
     private static MemoryAddress emptyListAddress() {
         long ptr = U.allocateMemory(LAYOUT.byteSize());
-        ResourceScope scope = ResourceScope.newSharedScope();
+        ResourceScope scope = ResourceScope.newImplicitScope();
         scope.addCloseAction(() -> U.freeMemory(ptr));
         MemorySegment base = MemorySegment.ofAddressNative(MemoryAddress.ofLong(ptr),
                 LAYOUT.byteSize(), scope);
-        cleaner.register(SysVVaList.class, () -> base.scope().close());
         VH_gp_offset.set(base, MAX_GP_OFFSET);
         VH_fp_offset.set(base, MAX_FP_OFFSET);
         VH_overflow_arg_area.set(base, MemoryAddress.NULL);
@@ -233,7 +230,7 @@ public non-sealed class SysVVaList implements VaList, Scoped {
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = layout.varHandle();
-                    try (ResourceScope localScope = ResourceScope.newConfinedScope(null)) {
+                    try (ResourceScope localScope = ResourceScope.newConfinedScope()) {
                         MemorySegment slice = MemorySegment.ofAddressNative(stackPtr(), layout.byteSize(), localScope);
                         Object res = reader.get(slice);
                         postAlignStack(layout);
@@ -309,7 +306,7 @@ public non-sealed class SysVVaList implements VaList, Scoped {
 
     @Override
     public VaList copy() {
-        MemorySegment copy = segment.scope().allocate(LAYOUT);
+        MemorySegment copy = MemorySegment.allocateNative(LAYOUT, segment.scope());
         copy.copyFrom(segment);
         return new SysVVaList(copy, regSaveArea);
     }
@@ -343,7 +340,7 @@ public non-sealed class SysVVaList implements VaList, Scoped {
 
         public Builder(ResourceScope scope) {
             this.scope = scope;
-            this.reg_save_area = scope.allocate(LAYOUT_REG_SAVE_AREA);
+            this.reg_save_area = MemorySegment.allocateNative(LAYOUT_REG_SAVE_AREA, scope);
         }
 
         @Override
@@ -422,7 +419,7 @@ public non-sealed class SysVVaList implements VaList, Scoped {
                 return EMPTY;
             }
 
-            SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+            SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
             MemorySegment vaListSegment = allocator.allocate(LAYOUT);
             MemoryAddress stackArgsPtr = MemoryAddress.NULL;
             if (!stackArgs.isEmpty()) {

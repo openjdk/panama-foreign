@@ -536,7 +536,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     }
 
     /**
-     * Is this a padding layout (e.g. a layout created from {@link #paddingLayout(long)}) ?
+     * Is this a {@linkplain #paddingLayout(long) padding layout} ?
      * @return true, if this layout is a padding layout.
      */
     boolean isPadding();

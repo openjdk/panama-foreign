@@ -34,7 +34,6 @@ import jdk.internal.vm.annotation.ForceInline;
 
 import java.lang.ref.Cleaner;
 import java.lang.ref.Reference;
-import java.nio.file.Path;
 import java.util.Objects;
 
 /**
@@ -50,7 +49,7 @@ import java.util.Objects;
  * shared scopes use a more sophisticated synchronization mechanism, which guarantees that no concurrent
  * access is possible when a scope is being closed (see {@link jdk.internal.misc.ScopedMemoryAccess}).
  */
-public abstract non-sealed class ResourceScopeImpl implements ResourceScope, ScopedMemoryAccess.Scope, SegmentAllocator {
+public abstract non-sealed class ResourceScopeImpl implements ResourceScope, SegmentAllocator, ScopedMemoryAccess.Scope {
 
     final ResourceList resourceList;
     final Cleaner.Cleanable cleanable;
@@ -102,6 +101,11 @@ public abstract non-sealed class ResourceScopeImpl implements ResourceScope, Sco
 
     public static ResourceScopeImpl createShared(Cleaner cleaner) {
         return new SharedScope(cleaner);
+    }
+
+    @Override
+    public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+        return MemorySegment.allocateNative(bytesSize, bytesAlignment, this);
     }
 
     public abstract void release0();
@@ -175,14 +179,6 @@ public abstract non-sealed class ResourceScopeImpl implements ResourceScope, Sco
     @Override
     protected Object clone() throws CloneNotSupportedException {
         throw new CloneNotSupportedException();
-    }
-
-    /**
-     * Allocates a segment using this scope.
-     */
-    @Override
-    public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-        return MemorySegment.allocateNative(bytesSize, bytesAlignment, this);
     }
 
     /**

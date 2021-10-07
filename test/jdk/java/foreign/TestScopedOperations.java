@@ -45,10 +45,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static jdk.incubator.foreign.ValueLayout.JAVA_BYTE;
 import static jdk.incubator.foreign.ValueLayout.JAVA_INT;
@@ -128,7 +126,7 @@ public class TestScopedOperations {
         }, "MemorySegment::mapFromFile");
         ScopedOperation.ofScope(scope -> VaList.make(b -> b.addVarg(JAVA_INT, 42), scope), "VaList::make");
         ScopedOperation.ofScope(scope -> VaList.ofAddress(MemoryAddress.ofLong(42), scope), "VaList::make");
-        ScopedOperation.ofScope(SegmentAllocator::arenaUnbounded, "SegmentAllocator::arenaAllocator");
+        ScopedOperation.ofScope(SegmentAllocator::newNativeArena, "SegmentAllocator::arenaAllocator");
         // segment operations
         ScopedOperation.ofSegment(s -> s.toArray(JAVA_BYTE), "MemorySegment::toArray(BYTE)");
         ScopedOperation.ofSegment(MemorySegment::address, "MemorySegment::address");
@@ -143,7 +141,8 @@ public class TestScopedOperations {
         ScopedOperation.ofVaList(list -> list.nextVarg(ValueLayout.JAVA_LONG), "VaList::nextVarg/long");
         ScopedOperation.ofVaList(list -> list.nextVarg(ValueLayout.JAVA_DOUBLE), "VaList::nextVarg/double");
         ScopedOperation.ofVaList(VaList::skip, "VaList::skip");
-        ScopedOperation.ofVaList(list -> list.nextVarg(MemoryLayout.structLayout(ValueLayout.JAVA_INT), ResourceScope.newConfinedScope()), "VaList::vargAsSegment/1");
+        ScopedOperation.ofVaList(list -> list.nextVarg(MemoryLayout.structLayout(ValueLayout.JAVA_INT),
+                SegmentAllocator.prefixAllocator(MemorySegment.ofArray(new byte[4]))), "VaList::nextVargs/segment");
         // allocator operations
         ScopedOperation.ofAllocator(a -> a.allocate(1), "NativeAllocator::allocate/size");
         ScopedOperation.ofAllocator(a -> a.allocate(1, 1), "NativeAllocator::allocate/size/align");
@@ -255,8 +254,8 @@ public class TestScopedOperations {
         }
 
         enum AllocatorFactory {
-            ARENA_BOUNDED(scope -> SegmentAllocator.arenaBounded(1000, scope)),
-            ARENA_UNBOUNDED(SegmentAllocator::arenaUnbounded);
+            ARENA_BOUNDED(scope -> SegmentAllocator.newNativeArena(1000, scope)),
+            ARENA_UNBOUNDED(SegmentAllocator::newNativeArena);
 
             final Function<ResourceScope, SegmentAllocator> allocatorFactory;
 
