@@ -180,15 +180,13 @@ public class TranslationUnit implements AutoCloseable {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < size; i++) {
-                try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-                    var allocator = SegmentAllocator.nativeAllocator(scope);
-                    MemorySegment s = Index_h.clang_getTokenSpelling(allocator, tu, getTokenSegment(i));
-                    sb.append("Token[");
-                    sb.append(i);
-                    sb.append("]=");
-                    sb.append(LibClang.CXStrToString(s));
-                    sb.append("\n");
-                }
+                sb.append("Token[");
+                sb.append(i);
+                sb.append("]=");
+                int pos = i;
+                sb.append(LibClang.CXStrToString(allocator ->
+                        Index_h.clang_getTokenSpelling(allocator, tu, getTokenSegment(pos))));
+                sb.append("\n");
             }
             return sb.toString();
         }
@@ -206,12 +204,8 @@ public class TranslationUnit implements AutoCloseable {
         }
 
         public String spelling() {
-            try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-                SegmentAllocator allocator = SegmentAllocator.nativeAllocator(scope);
-                MemorySegment s = Index_h.clang_getTokenSpelling(
-                    allocator, tu, token);
-                return LibClang.CXStrToString(s);
-            }
+            return LibClang.CXStrToString(allocator ->
+                    Index_h.clang_getTokenSpelling(allocator, tu, token));
         }
 
         public SourceLocation getLocation() {

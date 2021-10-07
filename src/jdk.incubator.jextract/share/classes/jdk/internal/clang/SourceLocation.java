@@ -71,10 +71,8 @@ public class SourceLocation {
     }
 
     private static String getFileName(MemoryAddress fname) {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            var allocator = SegmentAllocator.nativeAllocator(scope);
-            return LibClang.CXStrToString(Index_h.clang_getFileName(allocator, fname));
-        }
+        return LibClang.CXStrToString(allocator ->
+                Index_h.clang_getFileName(allocator, fname));
     }
 
     public Location getFileLocation() { return getLocation(Index_h::clang_getFileLocation); }

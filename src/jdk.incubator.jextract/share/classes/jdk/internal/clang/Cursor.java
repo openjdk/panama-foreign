@@ -76,27 +76,18 @@ public final class Cursor {
     }
 
     public String spelling() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            var allocator = SegmentAllocator.nativeAllocator(scope);
-            return LibClang.CXStrToString(
-                Index_h.clang_getCursorSpelling(allocator, cursor));
-        }
+        return LibClang.CXStrToString(allocator ->
+            Index_h.clang_getCursorSpelling(allocator, cursor));
     }
 
     public String USR() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            var allocator = SegmentAllocator.nativeAllocator(scope);
-            return LibClang.CXStrToString(
+        return LibClang.CXStrToString(allocator ->
                 Index_h.clang_getCursorUSR(allocator, cursor));
-        }
     }
 
     public String prettyPrinted(PrintingPolicy policy) {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            var allocator = SegmentAllocator.nativeAllocator(scope);
-            return LibClang.CXStrToString(
-                Index_h.clang_getCursorPrettyPrinted(allocator, cursor, policy.ptr()));
-        }
+        return LibClang.CXStrToString(allocator ->
+            Index_h.clang_getCursorPrettyPrinted(allocator, cursor, policy.ptr()));
     }
 
     public String prettyPrinted() {
@@ -106,11 +97,8 @@ public final class Cursor {
     }
 
     public String displayName() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            var allocator = SegmentAllocator.nativeAllocator(scope);
-            return LibClang.CXStrToString(
+        return LibClang.CXStrToString(allocator ->
                 Index_h.clang_getCursorDisplayName(allocator, cursor));
-        }
     }
 
     public boolean equalCursor(Cursor other) {
@@ -223,11 +211,8 @@ public final class Cursor {
     }
 
     public String getMangling() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            var allocator = SegmentAllocator.nativeAllocator(scope);
-            return LibClang.CXStrToString(
+        return LibClang.CXStrToString(allocator ->
                 Index_h.clang_Cursor_getMangling(allocator, cursor));
-        }
     }
 
     public TranslationUnit getTranslationUnit() {

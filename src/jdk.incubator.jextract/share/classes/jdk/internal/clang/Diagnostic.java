@@ -80,11 +80,7 @@ public class Diagnostic {
     }
 
     public String spelling() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-           var allocator = SegmentAllocator.nativeAllocator(scope);
-           return LibClang.CXStrToString(
-                Index_h.clang_getDiagnosticSpelling(allocator, ptr));
-        }
+       return LibClang.CXStrToString(allocator -> Index_h.clang_getDiagnosticSpelling(allocator, ptr));
     }
 
     public void dispose() {
@@ -93,11 +89,8 @@ public class Diagnostic {
 
     @Override
     public String toString() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            var allocator = SegmentAllocator.nativeAllocator(scope);
-            return LibClang.CXStrToString(
-                Index_h.clang_formatDiagnostic(allocator, ptr,
-                    Index_h.clang_defaultDiagnosticDisplayOptions()));
-        }
+        return LibClang.CXStrToString(allocator ->
+            Index_h.clang_formatDiagnostic(allocator, ptr,
+                Index_h.clang_defaultDiagnosticDisplayOptions()));
     }
 }

@@ -148,10 +148,8 @@ public final class Type {
     }
 
     public String spelling() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            var allocator = SegmentAllocator.nativeAllocator(scope);
-            return LibClang.CXStrToString(Index_h.clang_getTypeSpelling(allocator, type));
-        }
+        return LibClang.CXStrToString(allocator ->
+                Index_h.clang_getTypeSpelling(allocator, type));
     }
 
     public int kind0() {
