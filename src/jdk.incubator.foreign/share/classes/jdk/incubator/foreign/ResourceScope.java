@@ -219,7 +219,7 @@ public sealed interface ResourceScope extends AutoCloseable permits ResourceScop
     }
 
     /**
-     * Create a new shared scope.
+     * Creates a new shared scope.
      * @return a new shared scope.
      */
     static ResourceScope newSharedScope() {
