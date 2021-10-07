@@ -53,7 +53,8 @@ public class BulkMismatchAcquire {
 
     public enum ScopeKind {
         CONFINED(ResourceScope::newConfinedScope),
-        SHARED(ResourceScope::newSharedScope);
+        SHARED(ResourceScope::newSharedScope),
+        IMPLICIT(ResourceScope::newImplicitScope);
 
         final Supplier<ResourceScope> scopeFactory;
 
@@ -128,7 +129,7 @@ public class BulkMismatchAcquire {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public long mismatch_large_segment_acquire() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope(null)) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             scope.keepAlive(mismatchSegmentLarge1.scope());
             return mismatchSegmentLarge1.mismatch(mismatchSegmentLarge2);
         }
@@ -149,7 +150,7 @@ public class BulkMismatchAcquire {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public long mismatch_small_segment_acquire() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope(null)) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             scope.keepAlive(mismatchSegmentLarge1.scope());
             return mismatchSegmentSmall1.mismatch(mismatchSegmentSmall2);
         }

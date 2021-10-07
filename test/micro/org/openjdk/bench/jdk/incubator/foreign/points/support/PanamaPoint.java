@@ -66,7 +66,7 @@ public class PanamaPoint extends CLayouts implements AutoCloseable {
     private final MemorySegment segment;
 
     public PanamaPoint(int x, int y) {
-        this(MemorySegment.allocateNative(LAYOUT, ResourceScope.newConfinedScope(null)), x, y);
+        this(MemorySegment.allocateNative(LAYOUT, ResourceScope.newConfinedScope()), x, y);
     }
 
     public PanamaPoint(MemorySegment segment, int x, int y) {

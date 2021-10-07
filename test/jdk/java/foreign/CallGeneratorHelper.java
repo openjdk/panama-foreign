@@ -35,7 +35,6 @@ import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.ValueLayout;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,12 +45,13 @@ import java.util.stream.IntStream;
 
 import org.testng.annotations.*;
 
-import static jdk.incubator.foreign.CLinker.*;
 import static org.testng.Assert.*;
 
 public class CallGeneratorHelper extends NativeTestHelper {
 
-    static SegmentAllocator CONFINED_ALLOCATOR = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.newSharedScope());
+    static SegmentAllocator THROWING_ALLOCATOR = (size, align) -> {
+        throw new UnsupportedOperationException();
+    };
 
     static final int SAMPLE_FACTOR = Integer.parseInt((String)System.getProperties().getOrDefault("generator.sample.factor", "-1"));
 
@@ -376,11 +376,11 @@ public class CallGeneratorHelper extends NativeTestHelper {
     @SuppressWarnings("unchecked")
     static Object makeArg(MemoryLayout layout, List<Consumer<Object>> checks, boolean check) throws ReflectiveOperationException {
         if (layout instanceof GroupLayout) {
-            MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.newSharedScope());
+            MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.newImplicitScope());
             initStruct(segment, (GroupLayout)layout, checks, check);
             return segment;
         } else if (isPointer(layout)) {
-            MemorySegment segment = MemorySegment.allocateNative(1, ResourceScope.newSharedScope());
+            MemorySegment segment = MemorySegment.allocateNative(1, ResourceScope.newImplicitScope());
             if (check) {
                 checks.add(o -> {
                     try {

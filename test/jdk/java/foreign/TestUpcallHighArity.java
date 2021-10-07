@@ -88,7 +88,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
         for (int i = 0; i < o.length; i++) {
             if (o[i] instanceof MemorySegment) {
                 MemorySegment ms = (MemorySegment) o[i];
-                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), ResourceScope.newConfinedScope());
+                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), ResourceScope.newImplicitScope());
                 copy.copyFrom(ms);
                 o[i] = copy;
             }

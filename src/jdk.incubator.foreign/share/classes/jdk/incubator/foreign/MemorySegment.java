@@ -148,7 +148,7 @@ int value = segment.get(ValueLayout.JAVA_INT.withOrder(BIG_ENDIAN), 0);
  * <blockquote><pre>{@code
 MemorySegment segment = null;
 try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-    segment = scope.allocate(8);
+    segment = MemorySegment.allocateNative(8, scope);
 }
 segment.get(ValueLayout.JAVA_LONG, 0); // already closed!
  * }</pre></blockquote>
@@ -187,7 +187,7 @@ MemorySegment roSegment = segment.asReadOnly();
  * <blockquote><pre>{@code
 try (ResourceScope scope = ResourceScope.newSharedScope()) {
     SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.sequenceLayout(1024, ValueLayout.JAVA_INT);
-    MemorySegment segment = scope.allocate(SEQUENCE_LAYOUT);
+    MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT, scope);
     int sum = segment.elements(ValueLayout.JAVA_INT).parallel()
                            .mapToInt(s -> s.get(ValueLayout.JAVA_INT, 0))
                            .sum();

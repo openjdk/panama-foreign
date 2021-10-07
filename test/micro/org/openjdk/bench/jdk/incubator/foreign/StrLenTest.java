@@ -57,10 +57,10 @@ import static jdk.incubator.foreign.ValueLayout.JAVA_BYTE;
 @Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "--enable-native-access=ALL-UNNAMED" })
 public class StrLenTest extends CLayouts {
 
-    ResourceScope scope = ResourceScope.newConfinedScope();
+    ResourceScope scope = ResourceScope.newImplicitScope();
 
     SegmentAllocator segmentAllocator;
-    SegmentAllocator arenaAllocator = SegmentAllocator.arenaUnbounded(scope);
+    SegmentAllocator arenaAllocator = SegmentAllocator.newNativeArena(scope);
 
     @Param({"5", "20", "100"})
     public int size;
@@ -96,8 +96,9 @@ public class StrLenTest extends CLayouts {
 
     @Benchmark
     public int panama_strlen() throws Throwable {
-        try (ResourceScope scope = ResourceScope.newConfinedScope(null)) {
-            MemorySegment segment = scope.allocateUtf8String(str);
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            MemorySegment segment = MemorySegment.allocateNative(str.length() + 1, scope);
+            segment.setUtf8String(0, str);
             return (int)STRLEN.invokeExact((Addressable)segment);
         }
     }

@@ -37,6 +37,7 @@ import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.NativeSymbol;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -68,46 +69,23 @@ public class TestDowncall extends CallGeneratorHelper {
         MethodType mt = methodType(ret, paramTypes, fields);
         FunctionDescriptor descriptor = function(ret, paramTypes, fields);
         Object[] args = makeArgs(paramTypes, fields, checks);
-        try (NativeScope scope = new NativeScope()) {
+        try (ResourceScope scope = ResourceScope.newSharedScope()) {
             boolean needsScope = mt.returnType().equals(MemorySegment.class);
-            Object res = doCall(addr, scope, mt, descriptor, args);
+            SegmentAllocator allocator = needsScope ?
+                    SegmentAllocator.newNativeArena(scope) :
+                    THROWING_ALLOCATOR;
+            Object res = doCall(addr, allocator, descriptor, args);
             if (ret == Ret.NON_VOID) {
                 checks.forEach(c -> c.accept(res));
                 if (needsScope) {
                     // check that return struct has indeed been allocated in the native scope
-                    assertEquals(((MemorySegment) res).scope(), scope.scope());
-                    assertEquals(scope.allocatedBytes(), descriptor.returnLayout().get().byteSize());
-                } else {
-                    // if here, there should be no allocation through the scope!
-                    assertEquals(scope.allocatedBytes(), 0L);
+                    assertEquals(((MemorySegment) res).scope(), scope);
                 }
-            } else {
-                // if here, there should be no allocation through the scope!
-                assertEquals(scope.allocatedBytes(), 0L);
             }
         }
     }
 
-    @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
-    public void testDowncallNoScope(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
-        List<Consumer<Object>> checks = new ArrayList<>();
-        NativeSymbol addr = LOOKUP.lookup(fName).get();
-        MethodType mt = methodType(ret, paramTypes, fields);
-        FunctionDescriptor descriptor = function(ret, paramTypes, fields);
-        Object[] args = makeArgs(paramTypes, fields, checks);
-        boolean needsScope = mt.returnType().equals(MemorySegment.class);
-        Object res = doCall(addr, CONFINED_ALLOCATOR, mt, descriptor, args);
-        if (ret == Ret.NON_VOID) {
-            checks.forEach(c -> c.accept(res));
-            if (needsScope) {
-                // check that return struct has indeed been allocated in the default scope
-                ((MemorySegment)res).scope().close(); // should be ok
-            }
-        }
-    }
-
-
-    Object doCall(NativeSymbol symbol, SegmentAllocator allocator, MethodType type, FunctionDescriptor descriptor, Object[] args) throws Throwable {
+    Object doCall(NativeSymbol symbol, SegmentAllocator allocator, FunctionDescriptor descriptor, Object[] args) throws Throwable {
         MethodHandle mh = downcallHandle(abi, symbol, allocator, descriptor);
         Object res = mh.invokeWithArguments(args);
         return res;

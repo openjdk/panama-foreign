@@ -29,16 +29,23 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.ResourceScope;
 
-public abstract class ArenaAllocator implements SegmentAllocator {
+public final class ArenaAllocator implements SegmentAllocator {
 
     public static final long DEFAULT_BLOCK_SIZE = 4 * 1024;
 
-    protected MemorySegment segment;
+    MemorySegment segment;
 
-    protected long sp = 0L;
+    long sp = 0L;
+    long size = 0;
+    final long blockSize;
+    final long arenaSize;
+    final ResourceScope scope;
 
-    ArenaAllocator(MemorySegment segment) {
-        this.segment = segment;
+    public ArenaAllocator(long blockSize, long arenaSize, ResourceScope scope) {
+        this.blockSize = blockSize;
+        this.arenaSize = arenaSize;
+        this.scope = scope;
+        this.segment = newSegment(blockSize, 1);
     }
 
     MemorySegment trySlice(long bytesSize, long bytesAlignment) {
@@ -53,102 +60,48 @@ public abstract class ArenaAllocator implements SegmentAllocator {
         }
     }
 
-    void checkConfinementIfNeeded() {
-        Thread ownerThread = scope().ownerThread();
-        if (ownerThread != null && ownerThread != Thread.currentThread()) {
-            throw new IllegalStateException("Attempt to allocate outside confinement thread");
-        }
+    public ResourceScope scope() {
+        return scope;
     }
 
-    ResourceScope scope() {
-        return segment.scope();
+    private MemorySegment newSegment(long size, long align) {
+        return MemorySegment.allocateNative(size, align, scope);
     }
 
-    public static class UnboundedArenaAllocator extends ArenaAllocator {
-
-        final long blockSize;
-
-        public UnboundedArenaAllocator(long blockSize, ResourceScope scope) {
-            super(MemorySegment.allocateNative(blockSize, 1, scope));
-            this.blockSize = blockSize;
-        }
-
-        private MemorySegment newSegment(long size, long align) {
-            return MemorySegment.allocateNative(size, align, segment.scope());
-        }
-
-        @Override
-        public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-            checkConfinementIfNeeded();
+    @Override
+    public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+        long prevSp = sp;
+        long allocatedSize = 0L;
+        try {
             // try to slice from current segment first...
             MemorySegment slice = trySlice(bytesSize, bytesAlignment);
             if (slice != null) {
+                allocatedSize = sp - prevSp;
                 return slice;
             } else {
                 long maxPossibleAllocationSize = bytesSize + bytesAlignment - 1;
                 if (maxPossibleAllocationSize > blockSize) {
                     // too big
+                    allocatedSize = Utils.alignUp(bytesSize, bytesAlignment);
+                    if (size > arenaSize) {
+                        throw new OutOfMemoryError();
+                    }
                     return newSegment(bytesSize, bytesAlignment);
                 } else {
                     // allocate a new segment and slice from there
+                    allocatedSize += segment.byteSize() - sp;
                     sp = 0L;
                     segment = newSegment(blockSize, 1L);
-                    return trySlice(bytesSize, bytesAlignment);
+                    slice = trySlice(bytesSize, bytesAlignment);
+                    allocatedSize += sp;
+                    return slice;
                 }
             }
-        }
-    }
-
-    public static class BoundedArenaAllocator extends ArenaAllocator {
-
-        public BoundedArenaAllocator(ResourceScope scope, long size) {
-            super(MemorySegment.allocateNative(size, 1, scope));
-        }
-
-        @Override
-        public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-            checkConfinementIfNeeded();
-            // try to slice from current segment first...
-            MemorySegment slice = trySlice(bytesSize, bytesAlignment);
-            if (slice != null) {
-                return slice;
-            } else {
-                throw new OutOfMemoryError("Not enough space left to allocate");
+        } finally {
+            size += allocatedSize;
+            if (size > arenaSize) {
+                throw new OutOfMemoryError();
             }
-        }
-    }
-
-    public static class BoundedSharedArenaAllocator extends BoundedArenaAllocator {
-        public BoundedSharedArenaAllocator(ResourceScope scope, long size) {
-            super(scope, size);
-        }
-
-        @Override
-        public synchronized MemorySegment allocate(long bytesSize, long bytesAlignment) {
-            return super.allocate(bytesSize, bytesAlignment);
-        }
-    }
-
-    public static class UnboundedSharedArenaAllocator implements SegmentAllocator {
-
-        final ResourceScope scope;
-        final long blockSize;
-
-        final ThreadLocal<ArenaAllocator> allocators = new ThreadLocal<>() {
-            @Override
-            protected ArenaAllocator initialValue() {
-                return new UnboundedArenaAllocator(blockSize, scope);
-            }
-        };
-
-        public UnboundedSharedArenaAllocator(long blockSize, ResourceScope scope) {
-            this.scope = scope;
-            this.blockSize = blockSize;
-        }
-
-        @Override
-        public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-            return allocators.get().allocate(bytesSize, bytesAlignment);
         }
     }
 }

@@ -40,7 +40,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
-import java.lang.ref.Reference;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -263,7 +262,7 @@ public class ProgrammableInvoker {
      */
     Object invokeMoves(long addr, Object[] args, Binding.VMStore[] argBindings, Binding.VMLoad[] returnBindings) {
         MemorySegment stackArgsSeg = null;
-        try (ResourceScope scope = ResourceScope.newConfinedScope(null)) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment argBuffer = MemorySegment.allocateNative(layout.size, 64, scope);
             if (stackArgsBytes > 0) {
                 stackArgsSeg = MemorySegment.allocateNative(stackArgsBytes, 8, scope);

@@ -179,11 +179,13 @@ public class AbstractChannelsTest {
     static class ScopeSupplier implements Supplier<ResourceScope> {
 
         static final Supplier<ResourceScope> NEW_CONFINED =
-                new ScopeSupplier(() -> ResourceScope.newConfinedScope(), "newConfinedScope()");
+                new ScopeSupplier(ResourceScope::newConfinedScope, "newConfinedScope()");
         static final Supplier<ResourceScope> NEW_SHARED =
-                new ScopeSupplier(() -> ResourceScope.newSharedScope(), "newSharedScope()");
+                new ScopeSupplier(ResourceScope::newSharedScope, "newSharedScope()");
+        static final Supplier<ResourceScope> NEW_IMPLICIT =
+                new ScopeSupplier(ResourceScope::newImplicitScope, "newImplicitScope()");
         static final Supplier<ResourceScope> GLOBAL =
-                new ScopeSupplier(() -> ResourceScope.globalScope(), "globalScope()");
+                new ScopeSupplier(ResourceScope::globalScope, "globalScope()");
 
         private final Supplier<ResourceScope> supplier;
         private final String str;

@@ -38,6 +38,7 @@ import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.NativeSymbol;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -98,7 +99,7 @@ public class TestUpcall extends CallGeneratorHelper {
 
     @BeforeClass
     void setup() {
-        dummyStub = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), ResourceScope.newSharedScope());
+        dummyStub = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), ResourceScope.newImplicitScope());
     }
 
     private static void checkSelected(TestType type) {
@@ -113,9 +114,10 @@ public class TestUpcall extends CallGeneratorHelper {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         NativeSymbol addr = LOOKUP.lookup(fName).get();
-        try (NativeScope scope = new NativeScope()) {
-            MethodHandle mh = downcallHandle(abi, addr, scope, function(ret, paramTypes, fields));
-            Object[] args = makeArgs(scope.scope(), ret, paramTypes, fields, returnChecks, argChecks);
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
+            MethodHandle mh = downcallHandle(abi, addr, allocator, function(ret, paramTypes, fields));
+            Object[] args = makeArgs(scope, ret, paramTypes, fields, returnChecks, argChecks);
             Object[] callArgs = args;
             Object res = mh.invokeWithArguments(callArgs);
             argChecks.forEach(c -> c.accept(args));
@@ -126,45 +128,28 @@ public class TestUpcall extends CallGeneratorHelper {
     }
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
-    public void testUpcallsNoScope(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
-        checkSelected(TestType.NO_SCOPE);
-
-        List<Consumer<Object>> returnChecks = new ArrayList<>();
-        List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        NativeSymbol addr = LOOKUP.lookup(fName).get();
-        MethodHandle mh = downcallHandle(abi, addr, CONFINED_ALLOCATOR, function(ret, paramTypes, fields));
-        Object[] args = makeArgs(ResourceScope.newSharedScope(), ret, paramTypes, fields, returnChecks, argChecks);
-        Object[] callArgs = args;
-        Object res = mh.invokeWithArguments(callArgs);
-        argChecks.forEach(c -> c.accept(args));
-        if (ret == Ret.NON_VOID) {
-            returnChecks.forEach(c -> c.accept(res));
-        }
-    }
-
-
-    @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testUpcallsAsync(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         checkSelected(TestType.ASYNC);
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         NativeSymbol addr = LOOKUP.lookup(fName).get();
-        try (NativeScope scope = new NativeScope()) {
+        try (ResourceScope scope = ResourceScope.newSharedScope()) {
+            SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
             FunctionDescriptor descriptor = function(ret, paramTypes, fields);
-            MethodHandle mh = reverse(downcallHandle(abi, addr, CONFINED_ALLOCATOR, descriptor));
-            Object[] args = makeArgs(ResourceScope.newSharedScope(), ret, paramTypes, fields, returnChecks, argChecks);
+            MethodHandle mh = reverse(downcallHandle(abi, addr, allocator, descriptor));
+            Object[] args = makeArgs(ResourceScope.newImplicitScope(), ret, paramTypes, fields, returnChecks, argChecks);
 
             mh = mh.asSpreader(Object[].class, args.length);
             mh = MethodHandles.insertArguments(mh, 0, (Object) args);
             FunctionDescriptor callbackDesc = descriptor.returnLayout()
                     .map(FunctionDescriptor::of)
                     .orElse(FunctionDescriptor.ofVoid());
-            NativeSymbol callback = abi.upcallStub(mh, callbackDesc, scope.scope());
+            NativeSymbol callback = abi.upcallStub(mh, callbackDesc, scope);
 
             MethodHandle invoker = asyncInvoker(ret, ret == Ret.VOID ? null : paramTypes.get(0), fields);
 
             Object res = invoker.type().returnType() == MemorySegment.class
-                    ? invoker.invoke(scope, callback)
+                    ? invoker.invoke(allocator, callback)
                     : invoker.invoke(callback);
             argChecks.forEach(c -> c.accept(args));
             if (ret == Ret.NON_VOID) {
@@ -261,7 +246,7 @@ public class TestUpcall extends CallGeneratorHelper {
         for (int i = 0; i < o.length; i++) {
             if (o[i] instanceof MemorySegment) {
                 MemorySegment ms = (MemorySegment) o[i];
-                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), ResourceScope.newSharedScope());
+                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), ResourceScope.newImplicitScope());
                 copy.copyFrom(ms);
                 o[i] = copy;
             }
