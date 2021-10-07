@@ -91,7 +91,7 @@ public class LibClang {
      * associated segment. Since jextract is single-threaded, we can use a prefix allocator, to speed up string
      * conversion. The size of the prefix segment is set to 256, which should be enough to hold a CXString.
      */
-    private final static SegmentAllocator stringAllocator = SegmentAllocator.prefixAllocator(
+    private final static SegmentAllocator STRING_ALLOCATOR = SegmentAllocator.prefixAllocator(
             MemorySegment.allocateNative(256, 8, ResourceScope.newImplicitScope()));
 
     public static String version() {
