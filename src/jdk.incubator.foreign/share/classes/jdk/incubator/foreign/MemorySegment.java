@@ -148,7 +148,7 @@ int value = segment.get(ValueLayout.JAVA_INT.withOrder(BIG_ENDIAN), 0);
  * <blockquote><pre>{@code
 MemorySegment segment = null;
 try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-    segment = MemorySegment.allocateNative(8);
+    segment = MemorySegment.allocateNative(8, scope);
 }
 segment.get(ValueLayout.JAVA_LONG, 0); // already closed!
  * }</pre></blockquote>
