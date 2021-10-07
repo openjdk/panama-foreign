@@ -116,7 +116,7 @@ try (ResourceScope scope = ResourceScope.newConfinedScope()) {
       );
 
       try (var scope = ResourceScope.newConfinedScope()) {
-         var cString = MemorySegment.allocateNative(5 + 1);
+         var cString = MemorySegment.allocateNative(5 + 1, scope);
          cString.setUtf8String("Hello");
          long len = (long)strlen.invoke(cString); // 5
       }
