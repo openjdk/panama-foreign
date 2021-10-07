@@ -81,8 +81,8 @@ public class CallOverheadHelper extends CLayouts {
             C_INT, C_INT
     );
 
-    static final MemorySegment sharedPoint = MemorySegment.allocateNative(POINT_LAYOUT, ResourceScope.newImplicitScope());
-    static final MemorySegment confinedPoint = MemorySegment.allocateNative(POINT_LAYOUT, ResourceScope.newImplicitScope());
+    static final MemorySegment sharedPoint = MemorySegment.allocateNative(POINT_LAYOUT, ResourceScope.newSharedScope());
+    static final MemorySegment confinedPoint = MemorySegment.allocateNative(POINT_LAYOUT, ResourceScope.newConfinedScope());
 
     static final MemorySegment point = MemorySegment.allocateNative(POINT_LAYOUT, ResourceScope.newImplicitScope());
 

@@ -488,7 +488,7 @@ public class TestByteBuffer {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testTooBigForByteBuffer() {
-        MemorySegment segment = MemorySegment.ofAddressNative(MemoryAddress.NULL, Integer.MAX_VALUE + 10L, ResourceScope.globalScope());
+        MemorySegment segment = MemorySegment.ofAddressNative(MemoryAddress.NULL, Integer.MAX_VALUE + 10L, ResourceScope.newImplicitScope());
         segment.asByteBuffer();
     }
 
@@ -497,7 +497,7 @@ public class TestByteBuffer {
         File f = new File("testNeg1.out");
         f.createNewFile();
         f.deleteOnExit();
-        MemorySegment.mapFile(f.toPath(), 0L, -1, FileChannel.MapMode.READ_WRITE, ResourceScope.newSharedScope());
+        MemorySegment.mapFile(f.toPath(), 0L, -1, FileChannel.MapMode.READ_WRITE, ResourceScope.newImplicitScope());
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -505,7 +505,7 @@ public class TestByteBuffer {
         File f = new File("testNeg2.out");
         f.createNewFile();
         f.deleteOnExit();
-        MemorySegment.mapFile(f.toPath(), -1, 1, FileChannel.MapMode.READ_WRITE, ResourceScope.newSharedScope());
+        MemorySegment.mapFile(f.toPath(), -1, 1, FileChannel.MapMode.READ_WRITE, ResourceScope.newImplicitScope());
     }
 
     @Test
