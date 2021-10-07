@@ -360,7 +360,7 @@ public interface SegmentAllocator {
      * @param arenaSize the size (in bytes) of the allocation arena.
      * @param scope the scope associated with the segments returned by the arena-based allocator.
      * @return a new unbounded arena-based allocator
-     * @throws IllegalArgumentException if {@code blockSize <= 0}, if {@code arenaSize <= 0} or if {@code arenaSize < blockSize}.
+     * @throws IllegalArgumentException if {@code arenaSize <= 0}.
      * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
      * than the thread owning {@code scope}.
      */
