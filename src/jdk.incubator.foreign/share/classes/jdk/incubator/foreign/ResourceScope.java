@@ -73,7 +73,7 @@ import java.util.Spliterator;
  * <h2>Global scope</h2>
  *
  * An important implicit resource scope is the so called {@linkplain #globalScope() global scope}; the global scope is
- * a resource scope that cannot be closed, either explicitly or implicitly. As a results, the global scope will never
+ * a resource scope that cannot be closed, either explicitly or implicitly. As a result, the global scope will never
  * attempt to release resources associated with it. Examples of resources associated with the global scope are:
  * <ul>
  *     <li>heap segments created from {@linkplain MemorySegment#ofArray(int[]) arrays} or
