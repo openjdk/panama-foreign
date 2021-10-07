@@ -227,7 +227,7 @@ public sealed interface ResourceScope extends AutoCloseable permits ResourceScop
     }
 
     /**
-     * Create a new shared scope, managed by the provided cleaner instance.
+     * Creates a new shared scope, managed by the provided cleaner instance.
      * @param cleaner the cleaner to be associated with the returned scope.
      * @return a new shared scope, managed by {@code cleaner}.
      */
