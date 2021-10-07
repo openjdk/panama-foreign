@@ -70,7 +70,7 @@ import java.util.Spliterator;
  * the scope becomes unreachable; that is, {@linkplain #addCloseAction(Runnable) close actions} associated with a
  * resource scope, whether managed or not, are called <em>exactly once</em>.
  *
- * <h2>Global scope</h2>
+ * <h2><a id = "global-scope">Global scope</a></h2>
  *
  * An important implicit resource scope is the so called {@linkplain #globalScope() global scope}; the global scope is
  * a resource scope that cannot be closed, either explicitly or implicitly. As a result, the global scope will never
@@ -237,7 +237,7 @@ public sealed interface ResourceScope extends AutoCloseable permits ResourceScop
     }
 
     /**
-     * Returns a shared scope, managed by a private {@link Cleaner} instance. Equivalent to (but likely more efficient than)
+     * Creates a new shared scope, managed by a private {@link Cleaner} instance. Equivalent to (but likely more efficient than)
      * the following code:
      * <pre>{@code
     newSharedScope(Cleaner.create());
@@ -249,8 +249,8 @@ public sealed interface ResourceScope extends AutoCloseable permits ResourceScop
     }
 
     /**
-     * Returns a shared scope which is assumed to be always alive.
-     * @return the global scope.
+     * Returns the <a href="ResourceScope.html#global-scope"><em>global scope</em></a>.
+     * @return the <a href="ResourceScope.html#global-scope"><em>global scope</em></a>.
      */
     static ResourceScope globalScope() {
         return ResourceScopeImpl.GLOBAL;
