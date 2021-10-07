@@ -31,6 +31,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.clang.libclang.Index_h;
 
 import java.lang.invoke.MethodHandle;
@@ -44,8 +45,11 @@ public class LibClang {
     private static final boolean CRASH_RECOVERY = Boolean.getBoolean("libclang.crash_recovery");
     private static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
+    final static SegmentAllocator IMPLICIT_ALLOCATOR =
+            (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.newImplicitScope());
+
     private final static MemorySegment disableCrashRecovery =
-            ResourceScope.newConfinedScope().allocateUtf8String("LIBCLANG_DISABLE_CRASH_RECOVERY=" + CRASH_RECOVERY);
+            IMPLICIT_ALLOCATOR.allocateUtf8String("LIBCLANG_DISABLE_CRASH_RECOVERY=" + CRASH_RECOVERY);
 
     static {
         if (!CRASH_RECOVERY) {
@@ -80,7 +84,8 @@ public class LibClang {
 
     public static String version() {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            return CXStrToString(Index_h.clang_getClangVersion(scope));
+            var allocator = SegmentAllocator.nativeAllocator(scope);
+            return CXStrToString(Index_h.clang_getClangVersion(allocator));
         }
     }
 }

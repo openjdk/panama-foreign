@@ -27,7 +27,10 @@ package jdk.internal.clang;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.clang.libclang.Index_h;
+
+import static jdk.internal.clang.LibClang.IMPLICIT_ALLOCATOR;
 
 public class Diagnostic {
     final MemoryAddress ptr;
@@ -73,13 +76,14 @@ public class Diagnostic {
     }
 
     public SourceLocation location() {
-        return new SourceLocation(Index_h.clang_getDiagnosticLocation(ResourceScope.newConfinedScope(), ptr));
+        return new SourceLocation(Index_h.clang_getDiagnosticLocation(IMPLICIT_ALLOCATOR, ptr));
     }
 
     public String spelling() {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+           var allocator = SegmentAllocator.nativeAllocator(scope);
            return LibClang.CXStrToString(
-                Index_h.clang_getDiagnosticSpelling(scope, ptr));
+                Index_h.clang_getDiagnosticSpelling(allocator, ptr));
         }
     }
 
@@ -90,8 +94,9 @@ public class Diagnostic {
     @Override
     public String toString() {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            var allocator = SegmentAllocator.nativeAllocator(scope);
             return LibClang.CXStrToString(
-                Index_h.clang_formatDiagnostic(scope, ptr,
+                Index_h.clang_formatDiagnostic(allocator, ptr,
                     Index_h.clang_defaultDiagnosticDisplayOptions()));
         }
     }

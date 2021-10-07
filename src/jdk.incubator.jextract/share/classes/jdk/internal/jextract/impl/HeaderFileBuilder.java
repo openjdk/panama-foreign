@@ -90,6 +90,10 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
             Constant mhConstant = constantBuilder.addMethodHandle(javaName, nativeName, functionInfo, false)
                     .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
             emitFunctionWrapper(mhConstant, javaName, nativeName, functionInfo);
+            if (functionInfo.methodType().returnType().equals(MemorySegment.class)) {
+                // emit scoped overload
+                emitFunctionWrapperScopedOverload(javaName, functionInfo);
+            }
         });
     }
 
@@ -145,6 +149,31 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
         decrAlign();
         indent();
         append("}\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+    }
+
+    private void emitFunctionWrapperScopedOverload(String javaName, FunctionInfo functionInfo) {
+        incrAlign();
+        indent();
+        append(MEMBER_MODS + " ");
+        List<String> paramNames = new ArrayList<>(functionInfo.parameterNames().get());
+        paramNames.add(0, "scope");
+        List<String> pExprs = emitFunctionWrapperDecl(javaName,
+        functionInfo.methodType().insertParameterTypes(0, ResourceScope.class),
+        functionInfo.isVarargs(),
+        paramNames);
+        String param = pExprs.remove(0);
+        pExprs.add(0, "SegmentAllocator.nativeAllocator(" + param + ")");
+        append(" {\n");
+        incrAlign();
+        indent();
+        if (!functionInfo.methodType().returnType().equals(void.class)) {
+            append("return ");
+        }
+        append(javaName + "(" + String.join(", ", pExprs) + ");\n");
         decrAlign();
         indent();
         append("}\n");

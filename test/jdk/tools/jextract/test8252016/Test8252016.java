@@ -22,6 +22,7 @@
  */
 
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.VaList;
 import org.testng.annotations.Test;
 
@@ -53,14 +54,15 @@ public class Test8252016 {
     @Test
     public void testsVsprintf() {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment s = MemorySegment.allocateNative(1024, scope);
+            var allocator = SegmentAllocator.newNativeArena(scope);
+            MemorySegment s = allocator.allocate(1024);
             VaList vaList = VaList.make(b -> {
                 b.addVarg(C_INT, 12);
                 b.addVarg(C_DOUBLE, 5.5d);
                 b.addVarg(C_LONG_LONG, -200L);
                 b.addVarg(C_LONG_LONG, Long.MAX_VALUE);
             }, scope);
-            my_vsprintf(s, scope.allocateUtf8String("%hhd %.2f %lld %lld"), vaList);
+            my_vsprintf(s, allocator.allocateUtf8String("%hhd %.2f %lld %lld"), vaList);
             String str = s.getUtf8String(0);
             assertEquals(str, "12 5.50 -200 " + Long.MAX_VALUE);
        }

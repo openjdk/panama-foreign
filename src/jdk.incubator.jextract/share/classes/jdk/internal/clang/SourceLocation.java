@@ -29,6 +29,7 @@ import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.clang.libclang.Index_h;
 
 import java.nio.file.Path;
@@ -71,7 +72,8 @@ public class SourceLocation {
 
     private static String getFileName(MemoryAddress fname) {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            return LibClang.CXStrToString(Index_h.clang_getFileName(scope, fname));
+            var allocator = SegmentAllocator.nativeAllocator(scope);
+            return LibClang.CXStrToString(Index_h.clang_getFileName(allocator, fname));
         }
     }
 
