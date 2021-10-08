@@ -287,7 +287,7 @@ public class TestSegmentAllocators {
         ARENA_UNBOUNDED(false, (size, scope) -> SegmentAllocator.newNativeArena(scope)),
         NATIVE_ALLOCATOR(false, (size, scope) -> SegmentAllocator.nativeAllocator(scope)),
         IMPLICIT_ALLOCATOR(false, (size, scope) -> SegmentAllocator.implicitAllocator());
-        
+
         private final boolean isBound;
         private final BiFunction<Long, ResourceScope, SegmentAllocator> factory;
 
