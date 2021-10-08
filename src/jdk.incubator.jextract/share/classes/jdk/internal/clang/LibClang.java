@@ -78,7 +78,7 @@ public class LibClang {
     }
 
     public static String CXStrToString(Function<SegmentAllocator, MemorySegment> segmentSupplier) {
-        MemorySegment cxstr = segmentSupplier.apply(stringAllocator);
+        MemorySegment cxstr = segmentSupplier.apply(STRING_ALLOCATOR);
         MemoryAddress buf = Index_h.clang_getCString(cxstr);
         String str = buf.getUtf8String(0);
         Index_h.clang_disposeString(cxstr);
