@@ -29,6 +29,8 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.clang.libclang.Index_h;
 
+import static jdk.internal.clang.LibClang.IMPLICIT_ALLOCATOR;
+
 public class SourceRange {
     final MemorySegment range;
 
@@ -37,12 +39,12 @@ public class SourceRange {
     }
 
     public SourceLocation getBegin() {
-        MemorySegment loc = Index_h.clang_getRangeStart(ResourceScope.newConfinedScope(), range);
+        MemorySegment loc = Index_h.clang_getRangeStart(IMPLICIT_ALLOCATOR, range);
         return new SourceLocation(loc);
     }
 
     public SourceLocation getEnd() {
-        MemorySegment loc = Index_h.clang_getRangeEnd(ResourceScope.newConfinedScope(), range);
+        MemorySegment loc = Index_h.clang_getRangeEnd(IMPLICIT_ALLOCATOR, range);
         return new SourceLocation(loc);
     }
 }

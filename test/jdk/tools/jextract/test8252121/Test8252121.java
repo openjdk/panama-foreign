@@ -54,8 +54,9 @@ public class Test8252121 {
     @Test
     public void test() {
         try (var scope = ResourceScope.newConfinedScope()) {
+            var allocator = SegmentAllocator.nativeAllocator(scope);
             int[] array = { 3, 5, 89, 34, -33 };
-            MemorySegment seg = scope.allocateArray(C_INT, array);
+            MemorySegment seg = allocator.allocateArray(C_INT, array);
             assertEquals(IntStream.of(array).sum(), sum(seg));
             assertEquals(IntStream.of(array).reduce(1, (a,b) -> a*b), mul(seg));
         }

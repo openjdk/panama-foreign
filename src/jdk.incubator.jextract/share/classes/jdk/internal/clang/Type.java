@@ -26,12 +26,13 @@
 
 package jdk.internal.clang;
 
-import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.clang.libclang.CXType;
 import jdk.internal.clang.libclang.Index_h;
+
+import static jdk.internal.clang.LibClang.IMPLICIT_ALLOCATOR;
 
 public final class Type {
     private final MemorySegment type;
@@ -48,13 +49,13 @@ public final class Type {
         return Index_h.clang_isFunctionTypeVariadic(type) != 0;
     }
     public Type resultType() {
-        return new Type(Index_h.clang_getResultType(ResourceScope.newConfinedScope(), type));
+        return new Type(Index_h.clang_getResultType(IMPLICIT_ALLOCATOR, type));
     }
     public int numberOfArgs() {
         return Index_h.clang_getNumArgTypes(type);
     }
     public Type argType(int idx) {
-        return new Type(Index_h.clang_getArgType(ResourceScope.newConfinedScope(), type, idx));
+        return new Type(Index_h.clang_getArgType(IMPLICIT_ALLOCATOR, type, idx));
     }
     private int getCallingConvention0() {
         return Index_h.clang_getFunctionTypeCallingConv(type);
@@ -86,12 +87,12 @@ public final class Type {
 
     // Pointer type
     public Type getPointeeType() {
-        return new Type(Index_h.clang_getPointeeType(ResourceScope.newConfinedScope(), type));
+        return new Type(Index_h.clang_getPointeeType(IMPLICIT_ALLOCATOR, type));
     }
 
     // array/vector type
     public Type getElementType() {
-        return new Type(Index_h.clang_getElementType(ResourceScope.newConfinedScope(), type));
+        return new Type(Index_h.clang_getElementType(IMPLICIT_ALLOCATOR, type));
     }
 
     public long getNumberOfElements() {
@@ -101,7 +102,8 @@ public final class Type {
     // Struct/RecordType
     private long getOffsetOf0(String fieldName) {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment cfname = scope.allocateUtf8String(fieldName);
+            var allocator = SegmentAllocator.nativeAllocator(scope);
+            MemorySegment cfname = allocator.allocateUtf8String(fieldName);
             return Index_h.clang_Type_getOffsetOf(type, cfname);
         }
     }
@@ -124,7 +126,7 @@ public final class Type {
      * for 'int', the canonical type for 'T' would be 'int'.
      */
     public Type canonicalType() {
-        return new Type(Index_h.clang_getCanonicalType(ResourceScope.newConfinedScope(), type));
+        return new Type(Index_h.clang_getCanonicalType(IMPLICIT_ALLOCATOR, type));
     }
 
     /**
@@ -146,9 +148,8 @@ public final class Type {
     }
 
     public String spelling() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            return LibClang.CXStrToString(Index_h.clang_getTypeSpelling(scope, type));
-        }
+        return LibClang.CXStrToString(allocator ->
+                Index_h.clang_getTypeSpelling(allocator, type));
     }
 
     public int kind0() {
@@ -175,7 +176,7 @@ public final class Type {
     }
 
     public Cursor getDeclarationCursor() {
-        return new Cursor(Index_h.clang_getTypeDeclaration(ResourceScope.newConfinedScope(), type));
+        return new Cursor(Index_h.clang_getTypeDeclaration(IMPLICIT_ALLOCATOR, type));
     }
 
     public boolean equalType(Type other) {

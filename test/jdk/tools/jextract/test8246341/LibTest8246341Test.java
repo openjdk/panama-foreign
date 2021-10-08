@@ -72,7 +72,7 @@ public class LibTest8246341Test {
     @Test
     public void testPointerAllocate() {
         try (var scope = ResourceScope.newConfinedScope()) {
-            var allocator = SegmentAllocator.arenaBounded(C_POINTER.byteSize(), scope);
+            var allocator = SegmentAllocator.newNativeArena(C_POINTER.byteSize(), scope);
             var addr = allocator.allocate(C_POINTER);
             addr.set(C_POINTER, 0, MemoryAddress.NULL);
             fillin(addr);

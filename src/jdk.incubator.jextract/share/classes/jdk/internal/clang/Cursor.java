@@ -26,15 +26,18 @@
 
 package jdk.internal.clang;
 
-import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.clang.libclang.CXCursorVisitor;
 import jdk.internal.clang.libclang.Index_h;
 
 import java.util.ArrayList;
 import java.util.stream.Stream;
+
+import static jdk.internal.clang.LibClang.IMPLICIT_ALLOCATOR;
 
 public final class Cursor {
 
@@ -73,24 +76,18 @@ public final class Cursor {
     }
 
     public String spelling() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            return LibClang.CXStrToString(
-                Index_h.clang_getCursorSpelling(scope, cursor));
-        }
+        return LibClang.CXStrToString(allocator ->
+            Index_h.clang_getCursorSpelling(allocator, cursor));
     }
 
     public String USR() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            return LibClang.CXStrToString(
-                Index_h.clang_getCursorUSR(scope, cursor));
-        }
+        return LibClang.CXStrToString(allocator ->
+                Index_h.clang_getCursorUSR(allocator, cursor));
     }
 
     public String prettyPrinted(PrintingPolicy policy) {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            return LibClang.CXStrToString(
-                Index_h.clang_getCursorPrettyPrinted(scope, cursor, policy.ptr()));
-        }
+        return LibClang.CXStrToString(allocator ->
+            Index_h.clang_getCursorPrettyPrinted(allocator, cursor, policy.ptr()));
     }
 
     public String prettyPrinted() {
@@ -100,10 +97,8 @@ public final class Cursor {
     }
 
     public String displayName() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            return LibClang.CXStrToString(
-                Index_h.clang_getCursorDisplayName(scope, cursor));
-        }
+        return LibClang.CXStrToString(allocator ->
+                Index_h.clang_getCursorDisplayName(allocator, cursor));
     }
 
     public boolean equalCursor(Cursor other) {
@@ -111,21 +106,22 @@ public final class Cursor {
     }
 
     public Type type() {
-        return new Type(Index_h.clang_getCursorType(ResourceScope.newConfinedScope(), cursor));
+        return new Type(Index_h.clang_getCursorType(IMPLICIT_ALLOCATOR, cursor));
     }
 
     public Type getEnumDeclIntegerType() {
-        return new Type(Index_h.clang_getEnumDeclIntegerType(ResourceScope.newConfinedScope(), cursor));
+        return new Type(Index_h.clang_getEnumDeclIntegerType(IMPLICIT_ALLOCATOR, cursor));
     }
 
     public Cursor getDefinition() {
-        return new Cursor(Index_h.clang_getCursorDefinition(ResourceScope.newConfinedScope(), cursor));
+        return new Cursor(Index_h.clang_getCursorDefinition(IMPLICIT_ALLOCATOR, cursor));
     }
 
     public SourceLocation getSourceLocation() {
-        MemorySegment loc = Index_h.clang_getCursorLocation(ResourceScope.newConfinedScope(), cursor);
+        MemorySegment loc = Index_h.clang_getCursorLocation(IMPLICIT_ALLOCATOR, cursor);
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            if (Index_h.clang_equalLocations(loc, Index_h.clang_getNullLocation(scope)) != 0) {
+            if (Index_h.clang_equalLocations(loc, Index_h.clang_getNullLocation(
+                    SegmentAllocator.nativeAllocator(scope))) != 0) {
                 return null;
             }
         }
@@ -133,7 +129,7 @@ public final class Cursor {
     }
 
     public SourceRange getExtent() {
-        MemorySegment range = Index_h.clang_getCursorExtent(ResourceScope.newConfinedScope(), cursor);
+        MemorySegment range = Index_h.clang_getCursorExtent(IMPLICIT_ALLOCATOR, cursor);
         if (Index_h.clang_Range_isNull(range) != 0) {
             return null;
         }
@@ -145,7 +141,7 @@ public final class Cursor {
     }
 
     public Cursor getArgument(int idx) {
-        return new Cursor(Index_h.clang_Cursor_getArgument(ResourceScope.newConfinedScope(), cursor, idx));
+        return new Cursor(Index_h.clang_Cursor_getArgument(IMPLICIT_ALLOCATOR, cursor, idx));
     }
 
     // C long long, 64-bit
@@ -182,13 +178,14 @@ public final class Cursor {
      * For a cursor that is a reference, retrieve a cursor representing the entity that it references.
      */
     public Cursor getCursorReferenced() {
-        return new Cursor(Index_h.clang_getCursorReferenced(ResourceScope.newConfinedScope(), cursor));
+        return new Cursor(Index_h.clang_getCursorReferenced(
+                IMPLICIT_ALLOCATOR, cursor));
     }
 
     private static class CursorChildren {
         private static final ArrayList<Cursor> children = new ArrayList<>();
-        private static final Addressable callback = CXCursorVisitor.allocate((c, p, d) -> {
-            MemorySegment copy = MemorySegment.allocateNative(c.byteSize(), ResourceScope.newConfinedScope());
+        private static final NativeSymbol callback = CXCursorVisitor.allocate((c, p, d) -> {
+            MemorySegment copy = MemorySegment.allocateNative(c.byteSize(), ResourceScope.newImplicitScope());
             copy.copyFrom(c);
             Cursor cursor = new Cursor(copy);
             children.add(cursor);
@@ -214,10 +211,8 @@ public final class Cursor {
     }
 
     public String getMangling() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            return LibClang.CXStrToString(
-                Index_h.clang_Cursor_getMangling(scope, cursor));
-        }
+        return LibClang.CXStrToString(allocator ->
+                Index_h.clang_Cursor_getMangling(allocator, cursor));
     }
 
     public TranslationUnit getTranslationUnit() {

@@ -83,12 +83,13 @@ public class Index implements AutoCloseable {
     public TranslationUnit parseTU(String file, Consumer<Diagnostic> dh, int options, String... args)
             throws ParsingFailedException {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment src = scope.allocateUtf8String(file);
-            MemorySegment cargs = args.length == 0 ? null : scope.allocateArray(C_POINTER, args.length);
+            SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
+            MemorySegment src = allocator.allocateUtf8String(file);
+            MemorySegment cargs = args.length == 0 ? null : allocator.allocateArray(C_POINTER, args.length);
             for (int i = 0 ; i < args.length ; i++) {
-                cargs.set(C_POINTER, i * C_POINTER.byteSize(), scope.allocateUtf8String(args[i]));
+                cargs.set(C_POINTER, i * C_POINTER.byteSize(), allocator.allocateUtf8String(args[i]));
             }
-            MemorySegment outAddress = scope.allocate(C_POINTER);
+            MemorySegment outAddress = allocator.allocate(C_POINTER);
             ErrorCode code = ErrorCode.valueOf(Index_h.clang_parseTranslationUnit2(
                     ptr,
                     src,

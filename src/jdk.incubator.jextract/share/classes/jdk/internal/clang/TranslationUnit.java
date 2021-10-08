@@ -26,7 +26,6 @@
 
 package jdk.internal.clang;
 
-import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -44,6 +43,8 @@ import java.util.function.Consumer;
 import static jdk.internal.clang.libclang.Index_h.C_INT;
 import static jdk.internal.clang.libclang.Index_h.C_POINTER;
 
+import static jdk.internal.clang.LibClang.IMPLICIT_ALLOCATOR;
+
 public class TranslationUnit implements AutoCloseable {
 
     private MemoryAddress tu;
@@ -53,7 +54,7 @@ public class TranslationUnit implements AutoCloseable {
     }
 
     public Cursor getCursor() {
-        return new Cursor(Index_h.clang_getTranslationUnitCursor(ResourceScope.newConfinedScope(), tu));
+        return new Cursor(Index_h.clang_getTranslationUnitCursor(IMPLICIT_ALLOCATOR, tu));
     }
 
     public Diagnostic[] getDiagnostics() {
@@ -69,7 +70,8 @@ public class TranslationUnit implements AutoCloseable {
 
     public final void save(Path path) throws TranslationUnitSaveException {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment pathStr = scope.allocateUtf8String(path.toAbsolutePath().toString());
+            var allocator = SegmentAllocator.nativeAllocator(scope);
+            MemorySegment pathStr = allocator.allocateUtf8String(path.toAbsolutePath().toString());
             SaveError res = SaveError.valueOf(Index_h.clang_saveTranslationUnit(tu, pathStr, 0));
             if (res != SaveError.None) {
                 throw new TranslationUnitSaveException(path, res);
@@ -90,13 +92,14 @@ public class TranslationUnit implements AutoCloseable {
 
     public void reparse(Index.UnsavedFile... inMemoryFiles) {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            var allocator = SegmentAllocator.newNativeArena(scope);
             MemorySegment files = inMemoryFiles.length == 0 ?
                     null :
-                    scope.allocateArray(CXUnsavedFile.$LAYOUT(), inMemoryFiles.length);
+                    allocator.allocateArray(CXUnsavedFile.$LAYOUT(), inMemoryFiles.length);
             for (int i = 0; i < inMemoryFiles.length; i++) {
                 MemorySegment start = files.asSlice(i * CXUnsavedFile.$LAYOUT().byteSize());
-                start.set(C_POINTER, FILENAME_OFFSET, scope.allocateUtf8String(inMemoryFiles[i].file));
-                start.set(C_POINTER, CONTENTS_OFFSET, scope.allocateUtf8String(inMemoryFiles[i].contents));
+                start.set(C_POINTER, FILENAME_OFFSET, allocator.allocateUtf8String(inMemoryFiles[i].file));
+                start.set(C_POINTER, CONTENTS_OFFSET, allocator.allocateUtf8String(inMemoryFiles[i].contents));
                 start.set(C_INT, LENGTH_OFFSET, inMemoryFiles[i].contents.length());
             }
             ErrorCode code = ErrorCode.valueOf(Index_h.clang_reparseTranslationUnit(
@@ -177,14 +180,13 @@ public class TranslationUnit implements AutoCloseable {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < size; i++) {
-                try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-                    MemorySegment s = Index_h.clang_getTokenSpelling(scope, tu, getTokenSegment(i));
-                    sb.append("Token[");
-                    sb.append(i);
-                    sb.append("]=");
-                    sb.append(LibClang.CXStrToString(s));
-                    sb.append("\n");
-                }
+                sb.append("Token[");
+                sb.append(i);
+                sb.append("]=");
+                int pos = i;
+                sb.append(LibClang.CXStrToString(allocator ->
+                        Index_h.clang_getTokenSpelling(allocator, tu, getTokenSegment(pos))));
+                sb.append("\n");
             }
             return sb.toString();
         }
@@ -202,20 +204,17 @@ public class TranslationUnit implements AutoCloseable {
         }
 
         public String spelling() {
-            try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-                MemorySegment s = Index_h.clang_getTokenSpelling(
-                    scope, tu, token);
-                return LibClang.CXStrToString(s);
-            }
+            return LibClang.CXStrToString(allocator ->
+                    Index_h.clang_getTokenSpelling(allocator, tu, token));
         }
 
         public SourceLocation getLocation() {
             return new SourceLocation(Index_h.clang_getTokenLocation(
-                ResourceScope.newConfinedScope(), tu, token));
+                IMPLICIT_ALLOCATOR, tu, token));
         }
 
         public SourceRange getExtent() {
-            return new SourceRange(Index_h.clang_getTokenExtent(ResourceScope.newConfinedScope(),
+            return new SourceRange(Index_h.clang_getTokenExtent(IMPLICIT_ALLOCATOR,
                     tu, token));
         }
     }

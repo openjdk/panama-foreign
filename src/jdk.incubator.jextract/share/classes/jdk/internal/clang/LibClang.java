@@ -31,10 +31,13 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.clang.libclang.Index_h;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static jdk.internal.clang.libclang.Index_h.C_INT;
 import static jdk.internal.clang.libclang.Index_h.C_POINTER;
@@ -44,8 +47,11 @@ public class LibClang {
     private static final boolean CRASH_RECOVERY = Boolean.getBoolean("libclang.crash_recovery");
     private static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
+    final static SegmentAllocator IMPLICIT_ALLOCATOR =
+            (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.newImplicitScope());
+
     private final static MemorySegment disableCrashRecovery =
-            ResourceScope.newConfinedScope().allocateUtf8String("LIBCLANG_DISABLE_CRASH_RECOVERY=" + CRASH_RECOVERY);
+            IMPLICIT_ALLOCATOR.allocateUtf8String("LIBCLANG_DISABLE_CRASH_RECOVERY=" + CRASH_RECOVERY);
 
     static {
         if (!CRASH_RECOVERY) {
@@ -71,16 +77,24 @@ public class LibClang {
         return index;
     }
 
-    public static String CXStrToString(MemorySegment cxstr) {
+    public static String CXStrToString(Function<SegmentAllocator, MemorySegment> segmentSupplier) {
+        MemorySegment cxstr = segmentSupplier.apply(STRING_ALLOCATOR);
         MemoryAddress buf = Index_h.clang_getCString(cxstr);
         String str = buf.getUtf8String(0);
         Index_h.clang_disposeString(cxstr);
         return str;
     }
 
+    /**
+     * This is an allocator for temporary CXString structs. CXStrToString needs to save the CXString somewhere,
+     * so that we can extract a Java string out of it. Once that's done, we can dispose the CXString, and the
+     * associated segment. Since jextract is single-threaded, we can use a prefix allocator, to speed up string
+     * conversion. The size of the prefix segment is set to 256, which should be enough to hold a CXString.
+     */
+    private final static SegmentAllocator STRING_ALLOCATOR = SegmentAllocator.prefixAllocator(
+            MemorySegment.allocateNative(256, 8, ResourceScope.newImplicitScope()));
+
     public static String version() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            return CXStrToString(Index_h.clang_getClangVersion(scope));
-        }
+        return CXStrToString(Index_h::clang_getClangVersion);
     }
 }

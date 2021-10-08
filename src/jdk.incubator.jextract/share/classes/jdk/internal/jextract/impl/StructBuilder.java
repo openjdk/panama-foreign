@@ -87,6 +87,8 @@ class StructBuilder extends ConstantBuilder {
             emitSizeof();
             emitAllocatorAllocate();
             emitAllocatorAllocateArray();
+            emitScopeAllocate();
+            emitScopeAllocateArray();
             emitOfAddressScoped();
             return super.classEnd();
         } else {
@@ -242,6 +244,28 @@ class StructBuilder extends ConstantBuilder {
         incrAlign();
         indent();
         append("return allocator.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+    }
+
+    private void emitScopeAllocate() {
+        incrAlign();
+        indent();
+        append(MEMBER_MODS);
+        append(" MemorySegment allocate(ResourceScope scope) { return allocate(SegmentAllocator.nativeAllocator(scope)); }\n");
+        decrAlign();
+    }
+
+    private void emitScopeAllocateArray() {
+        incrAlign();
+        indent();
+        append(MEMBER_MODS);
+        append(" MemorySegment allocateArray(int len, ResourceScope scope) {\n");
+        incrAlign();
+        indent();
+        append("return allocateArray(len, SegmentAllocator.nativeAllocator(scope));\n");
         decrAlign();
         indent();
         append("}\n");

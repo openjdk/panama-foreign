@@ -45,25 +45,26 @@ public class LibTest8241925Test {
     @Test
     public void test() {
         try (var scope = ResourceScope.newConfinedScope()) {
-            var addr = scope.allocate(C_INT, 12);
+            var allocator = SegmentAllocator.newNativeArena(scope);
+            var addr = allocator.allocate(C_INT, 12);
             assertEquals(addr.get(C_INT, 0), 12);
             square(addr);
             assertEquals(addr.get(C_INT, 0), 144);
 
-            addr = scope.allocate(C_DOUBLE, 12.0);
+            addr = allocator.allocate(C_DOUBLE, 12.0);
             assertEquals(addr.get(C_DOUBLE, 0), 12.0, 0.1);
             square_fp(addr);
             assertEquals(addr.get(C_DOUBLE, 0), 144.0, 0.1);
 
             int[] intArray = { 34, 67, 78, 8 };
-            addr = scope.allocateArray(C_INT, intArray);
+            addr = allocator.allocateArray(C_INT, intArray);
             int sum = sum(addr, intArray.length);
             assertEquals(sum, IntStream.of(intArray).sum());
             int[] convertedArray = addr.toArray(C_INT);
             assertEquals(convertedArray, intArray);
 
             double[] dblArray = { 34.5, 67.56, 78.2, 8.45 };
-            addr = scope.allocateArray(C_DOUBLE, dblArray);
+            addr = allocator.allocateArray(C_DOUBLE, dblArray);
             double sumd = sum_fp(addr, dblArray.length);
             assertEquals(sumd, DoubleStream.of(dblArray).sum(), 0.1);
             double[] convertedDblArray = addr.toArray(C_DOUBLE);
@@ -73,9 +74,9 @@ public class LibTest8241925Test {
 
             assertEquals(name().getUtf8String(0), "java");
 
-            var dest = scope.allocateArray(C_CHAR, 12);
-            dest.copyFrom(scope.allocateUtf8String("hello "));
-            var src = scope.allocateUtf8String("world");
+            var dest = allocator.allocateArray(C_CHAR, 12);
+            dest.copyFrom(allocator.allocateUtf8String("hello "));
+            var src = allocator.allocateUtf8String("world");
             assertEquals(concatenate(dest, src).getUtf8String(0), "hello world");
         }
     }
