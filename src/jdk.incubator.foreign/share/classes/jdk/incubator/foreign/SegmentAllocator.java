@@ -453,4 +453,22 @@ public interface SegmentAllocator {
         Objects.requireNonNull(scope);
         return (ResourceScopeImpl)scope;
     }
+
+    /**
+     * Returns a native allocator which allocates segments in independent {@linkplain ResourceScope#newImplicitScope() implicit scopes}.
+     * Equivalent to (but likely more efficient than) the following code:
+     * <blockquote><pre>{@code
+    ResourceScope scope = ...
+    SegmentAllocator implicitAllocator = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.newImplicitScope());
+     * }</pre></blockquote>
+     *
+     * @return a native allocator which allocates segments in independent {@linkplain ResourceScope#newImplicitScope() implicit scopes}.
+     */
+    static SegmentAllocator implicitAllocator() {
+        class Holder {
+            static final SegmentAllocator IMPLICIT_ALLOCATOR = (size, align) ->
+                    MemorySegment.allocateNative(size, align, ResourceScope.newImplicitScope());
+        }
+        return Holder.IMPLICIT_ALLOCATOR;
+    }
 }

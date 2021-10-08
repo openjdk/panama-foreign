@@ -90,9 +90,11 @@ public class TestSegmentAllocators {
                         assertTrue(isBound);
                     }
                 }
-                // addresses should be invalid now
-                for (MemorySegment address : addressList) {
-                    assertFalse(address.scope().isAlive());
+                if (allocationFactory != AllocationFactory.IMPLICIT_ALLOCATOR) {
+                    // addresses should be invalid now
+                    for (MemorySegment address : addressList) {
+                        assertFalse(address.scope().isAlive());
+                    }
                 }
             }
         }
@@ -154,196 +156,108 @@ public class TestSegmentAllocators {
 
     @DataProvider(name = "nativeScopes")
     static Object[][] nativeScopes() {
-        return new Object[][] {
-                { (byte)42, AllocationFactory.BOUNDED, ValueLayout.JAVA_BYTE,
-                        (AllocationFunction.OfByte) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { (short)42, AllocationFactory.BOUNDED, ValueLayout.JAVA_SHORT.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfShort) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { (char)42, AllocationFactory.BOUNDED, ValueLayout.JAVA_CHAR.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfChar) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { 42, AllocationFactory.BOUNDED,
-                        ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfInt) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { 42f, AllocationFactory.BOUNDED, ValueLayout.JAVA_FLOAT.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfFloat) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { 42L, AllocationFactory.BOUNDED, ValueLayout.JAVA_LONG.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfLong) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { 42d, AllocationFactory.BOUNDED, ValueLayout.JAVA_DOUBLE.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfDouble) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { MemoryAddress.ofLong(42), AllocationFactory.BOUNDED, ValueLayout.ADDRESS.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfAddress) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
+        List<Object[]> nativeScopes = new ArrayList<>();
+        for (AllocationFactory factory : AllocationFactory.values()) {
+            nativeScopes.add(new Object[] { (byte)42, factory, ValueLayout.JAVA_BYTE,
+                    (AllocationFunction.OfByte) SegmentAllocator::allocate,
+                    (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
+            nativeScopes.add(new Object[] { (short)42, factory, ValueLayout.JAVA_SHORT.withOrder(ByteOrder.BIG_ENDIAN),
+                    (AllocationFunction.OfShort) SegmentAllocator::allocate,
+                    (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
+            nativeScopes.add(new Object[] { (char)42, factory, ValueLayout.JAVA_CHAR.withOrder(ByteOrder.BIG_ENDIAN),
+                    (AllocationFunction.OfChar) SegmentAllocator::allocate,
+                    (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
+            nativeScopes.add(new Object[] { 42, factory,
+                    ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN),
+                    (AllocationFunction.OfInt) SegmentAllocator::allocate,
+                    (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
+            nativeScopes.add(new Object[] { 42f, factory, ValueLayout.JAVA_FLOAT.withOrder(ByteOrder.BIG_ENDIAN),
+                    (AllocationFunction.OfFloat) SegmentAllocator::allocate,
+                    (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
+            nativeScopes.add(new Object[] { 42L, factory, ValueLayout.JAVA_LONG.withOrder(ByteOrder.BIG_ENDIAN),
+                    (AllocationFunction.OfLong) SegmentAllocator::allocate,
+                    (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
+            nativeScopes.add(new Object[] { 42d, factory, ValueLayout.JAVA_DOUBLE.withOrder(ByteOrder.BIG_ENDIAN),
+                    (AllocationFunction.OfDouble) SegmentAllocator::allocate,
+                    (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
+            nativeScopes.add(new Object[] { MemoryAddress.ofLong(42), factory, ValueLayout.ADDRESS.withOrder(ByteOrder.BIG_ENDIAN),
+                    (AllocationFunction.OfAddress) SegmentAllocator::allocate,
+                    (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
 
-                { (short)42, AllocationFactory.BOUNDED, ValueLayout.JAVA_SHORT.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfShort) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { (char)42, AllocationFactory.BOUNDED, ValueLayout.JAVA_CHAR.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfChar) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { 42, AllocationFactory.BOUNDED,
-                        ValueLayout.JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfInt) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { 42f, AllocationFactory.BOUNDED, ValueLayout.JAVA_FLOAT.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfFloat) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { 42L, AllocationFactory.BOUNDED, ValueLayout.JAVA_LONG.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfLong) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { 42d, AllocationFactory.BOUNDED, ValueLayout.JAVA_DOUBLE.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfDouble) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { MemoryAddress.ofLong(42), AllocationFactory.BOUNDED, ValueLayout.ADDRESS.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfAddress) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-
-                { (byte)42, AllocationFactory.UNBOUNDED, ValueLayout.JAVA_BYTE,
-                        (AllocationFunction.OfByte) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { (short)42, AllocationFactory.UNBOUNDED, ValueLayout.JAVA_SHORT.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfShort) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { (char)42, AllocationFactory.UNBOUNDED, ValueLayout.JAVA_CHAR.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfChar) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { 42, AllocationFactory.UNBOUNDED,
-                        ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfInt) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { 42f, AllocationFactory.UNBOUNDED, ValueLayout.JAVA_FLOAT.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfFloat) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { 42L, AllocationFactory.UNBOUNDED, ValueLayout.JAVA_LONG.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfLong) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { 42d, AllocationFactory.UNBOUNDED, ValueLayout.JAVA_DOUBLE.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfDouble) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { MemoryAddress.ofLong(42), AllocationFactory.UNBOUNDED, ValueLayout.ADDRESS.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfAddress) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-
-                { (short)42, AllocationFactory.UNBOUNDED, ValueLayout.JAVA_SHORT.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfShort) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { (char)42, AllocationFactory.UNBOUNDED, ValueLayout.JAVA_CHAR.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfChar) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { 42, AllocationFactory.UNBOUNDED,
-                        ValueLayout.JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfInt) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { 42f, AllocationFactory.UNBOUNDED, ValueLayout.JAVA_FLOAT.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfFloat) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { 42L, AllocationFactory.UNBOUNDED, ValueLayout.JAVA_LONG.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfLong) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { 42d, AllocationFactory.UNBOUNDED, ValueLayout.JAVA_DOUBLE.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfDouble) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-                { MemoryAddress.ofLong(42), AllocationFactory.UNBOUNDED, ValueLayout.ADDRESS.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfAddress) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle() },
-        };
+            nativeScopes.add(new Object[] { (short)42, factory, ValueLayout.JAVA_SHORT.withOrder(ByteOrder.LITTLE_ENDIAN),
+                    (AllocationFunction.OfShort) SegmentAllocator::allocate,
+                    (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
+            nativeScopes.add(new Object[] { (char)42, factory, ValueLayout.JAVA_CHAR.withOrder(ByteOrder.LITTLE_ENDIAN),
+                    (AllocationFunction.OfChar) SegmentAllocator::allocate,
+                    (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
+            nativeScopes.add(new Object[] { 42, factory,
+                    ValueLayout.JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN),
+                    (AllocationFunction.OfInt) SegmentAllocator::allocate,
+                    (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
+            nativeScopes.add(new Object[] { 42f, factory, ValueLayout.JAVA_FLOAT.withOrder(ByteOrder.LITTLE_ENDIAN),
+                    (AllocationFunction.OfFloat) SegmentAllocator::allocate,
+                    (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
+            nativeScopes.add(new Object[] { 42L, factory, ValueLayout.JAVA_LONG.withOrder(ByteOrder.LITTLE_ENDIAN),
+                    (AllocationFunction.OfLong) SegmentAllocator::allocate,
+                    (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
+            nativeScopes.add(new Object[] { 42d, factory, ValueLayout.JAVA_DOUBLE.withOrder(ByteOrder.LITTLE_ENDIAN),
+                    (AllocationFunction.OfDouble) SegmentAllocator::allocate,
+                    (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
+            nativeScopes.add(new Object[] { MemoryAddress.ofLong(42), factory, ValueLayout.ADDRESS.withOrder(ByteOrder.BIG_ENDIAN),
+                    (AllocationFunction.OfAddress) SegmentAllocator::allocate,
+                    (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
+        }
+        return nativeScopes.toArray(Object[][]::new);
     }
 
     @DataProvider(name = "arrayScopes")
     static Object[][] arrayScopes() {
-        return new Object[][] {
-                { AllocationFactory.BOUNDED, ValueLayout.JAVA_BYTE,
-                        (AllocationFunction.OfByteArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toByteArray },
-                { AllocationFactory.BOUNDED, ValueLayout.JAVA_CHAR.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfCharArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toCharArray },
-                { AllocationFactory.BOUNDED, ValueLayout.JAVA_SHORT.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfShortArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toShortArray },
-                { AllocationFactory.BOUNDED,
-                        ValueLayout.JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfIntArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toIntArray },
-                { AllocationFactory.BOUNDED, ValueLayout.JAVA_FLOAT.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfFloatArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toFloatArray },
-                { AllocationFactory.BOUNDED, ValueLayout.JAVA_LONG.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfLongArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toLongArray },
-                { AllocationFactory.BOUNDED, ValueLayout.JAVA_DOUBLE.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfDoubleArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toDoubleArray },
+        List<Object[]> arrayScopes = new ArrayList<>();
+        for (AllocationFactory factory : AllocationFactory.values()) {
+            arrayScopes.add(new Object[] { factory, ValueLayout.JAVA_BYTE,
+                    (AllocationFunction.OfByteArray) SegmentAllocator::allocateArray,
+                    ToArrayHelper.toByteArray });
+            arrayScopes.add(new Object[] { factory, ValueLayout.JAVA_CHAR.withOrder(ByteOrder.LITTLE_ENDIAN),
+                    (AllocationFunction.OfCharArray) SegmentAllocator::allocateArray,
+                    ToArrayHelper.toCharArray });
+            arrayScopes.add(new Object[] { factory, ValueLayout.JAVA_SHORT.withOrder(ByteOrder.LITTLE_ENDIAN),
+                    (AllocationFunction.OfShortArray) SegmentAllocator::allocateArray,
+                    ToArrayHelper.toShortArray });
+            arrayScopes.add(new Object[] { factory,
+                    ValueLayout.JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN),
+                    (AllocationFunction.OfIntArray) SegmentAllocator::allocateArray,
+                    ToArrayHelper.toIntArray });
+            arrayScopes.add(new Object[] { factory, ValueLayout.JAVA_FLOAT.withOrder(ByteOrder.LITTLE_ENDIAN),
+                    (AllocationFunction.OfFloatArray) SegmentAllocator::allocateArray,
+                    ToArrayHelper.toFloatArray });
+            arrayScopes.add(new Object[] { factory, ValueLayout.JAVA_LONG.withOrder(ByteOrder.LITTLE_ENDIAN),
+                    (AllocationFunction.OfLongArray) SegmentAllocator::allocateArray,
+                    ToArrayHelper.toLongArray });
+            arrayScopes.add(new Object[] { factory, ValueLayout.JAVA_DOUBLE.withOrder(ByteOrder.LITTLE_ENDIAN),
+                    (AllocationFunction.OfDoubleArray) SegmentAllocator::allocateArray,
+                    ToArrayHelper.toDoubleArray });
 
-                { AllocationFactory.BOUNDED, ValueLayout.JAVA_CHAR.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfCharArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toCharArray },
-                { AllocationFactory.BOUNDED, ValueLayout.JAVA_SHORT.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfShortArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toShortArray },
-                { AllocationFactory.BOUNDED,
-                        ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfIntArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toIntArray },
-                { AllocationFactory.BOUNDED, ValueLayout.JAVA_FLOAT.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfFloatArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toFloatArray },
-                { AllocationFactory.BOUNDED, ValueLayout.JAVA_LONG.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfLongArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toLongArray },
-                { AllocationFactory.BOUNDED, ValueLayout.JAVA_DOUBLE.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfDoubleArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toDoubleArray },
-
-                { AllocationFactory.UNBOUNDED, ValueLayout.JAVA_BYTE,
-                        (AllocationFunction.OfByteArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toByteArray },
-                { AllocationFactory.UNBOUNDED, ValueLayout.JAVA_CHAR.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfCharArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toCharArray },
-                { AllocationFactory.UNBOUNDED, ValueLayout.JAVA_SHORT.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfShortArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toShortArray },
-                { AllocationFactory.UNBOUNDED,
-                        ValueLayout.JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfIntArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toIntArray },
-                { AllocationFactory.UNBOUNDED, ValueLayout.JAVA_FLOAT.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfFloatArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toFloatArray },
-                { AllocationFactory.UNBOUNDED, ValueLayout.JAVA_LONG.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfLongArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toLongArray },
-                { AllocationFactory.UNBOUNDED, ValueLayout.JAVA_DOUBLE.withOrder(ByteOrder.LITTLE_ENDIAN),
-                        (AllocationFunction.OfDoubleArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toDoubleArray },
-
-                { AllocationFactory.UNBOUNDED, ValueLayout.JAVA_CHAR.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfCharArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toCharArray },
-                { AllocationFactory.UNBOUNDED, ValueLayout.JAVA_SHORT.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfShortArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toShortArray },
-                { AllocationFactory.UNBOUNDED,
-                        ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfIntArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toIntArray },
-                { AllocationFactory.UNBOUNDED, ValueLayout.JAVA_FLOAT.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfFloatArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toFloatArray },
-                { AllocationFactory.UNBOUNDED, ValueLayout.JAVA_LONG.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfLongArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toLongArray },
-                { AllocationFactory.UNBOUNDED, ValueLayout.JAVA_DOUBLE.withOrder(ByteOrder.BIG_ENDIAN),
-                        (AllocationFunction.OfDoubleArray) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toDoubleArray },
+            arrayScopes.add(new Object[] { factory, ValueLayout.JAVA_CHAR.withOrder(ByteOrder.BIG_ENDIAN),
+                    (AllocationFunction.OfCharArray) SegmentAllocator::allocateArray,
+                    ToArrayHelper.toCharArray });
+            arrayScopes.add(new Object[] { factory, ValueLayout.JAVA_SHORT.withOrder(ByteOrder.BIG_ENDIAN),
+                    (AllocationFunction.OfShortArray) SegmentAllocator::allocateArray,
+                    ToArrayHelper.toShortArray });
+            arrayScopes.add(new Object[] { factory,
+                    ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN),
+                    (AllocationFunction.OfIntArray) SegmentAllocator::allocateArray,
+                    ToArrayHelper.toIntArray });
+            arrayScopes.add(new Object[] { factory, ValueLayout.JAVA_FLOAT.withOrder(ByteOrder.BIG_ENDIAN),
+                    (AllocationFunction.OfFloatArray) SegmentAllocator::allocateArray,
+                    ToArrayHelper.toFloatArray });
+            arrayScopes.add(new Object[] { factory, ValueLayout.JAVA_LONG.withOrder(ByteOrder.BIG_ENDIAN),
+                    (AllocationFunction.OfLongArray) SegmentAllocator::allocateArray,
+                    ToArrayHelper.toLongArray });
+            arrayScopes.add(new Object[] { factory, ValueLayout.JAVA_DOUBLE.withOrder(ByteOrder.BIG_ENDIAN),
+                    (AllocationFunction.OfDoubleArray) SegmentAllocator::allocateArray,
+                    ToArrayHelper.toDoubleArray });
         };
+        return arrayScopes.toArray(Object[][]::new);
     }
 
     interface AllocationFunction<X, L extends ValueLayout> {
@@ -368,11 +282,16 @@ public class TestSegmentAllocators {
         interface OfDoubleArray extends AllocationFunction<double[], ValueLayout.OfDouble> { }
     }
 
-    static class AllocationFactory {
+    enum AllocationFactory {
+        ARENA_BOUNDED(true, SegmentAllocator::newNativeArena),
+        ARENA_UNBOUNDED(false, (size, scope) -> SegmentAllocator.newNativeArena(scope)),
+        NATIVE_ALLOCATOR(false, (size, scope) -> SegmentAllocator.nativeAllocator(scope)),
+        IMPLICIT_ALLOCATOR(false, (size, scope) -> SegmentAllocator.implicitAllocator());
+
         private final boolean isBound;
         private final BiFunction<Long, ResourceScope, SegmentAllocator> factory;
 
-        private AllocationFactory(boolean isBound, BiFunction<Long, ResourceScope, SegmentAllocator> factory) {
+        AllocationFactory(boolean isBound, BiFunction<Long, ResourceScope, SegmentAllocator> factory) {
             this.isBound = isBound;
             this.factory = factory;
         }
@@ -384,9 +303,6 @@ public class TestSegmentAllocators {
         public boolean isBound() {
             return isBound;
         }
-
-        static AllocationFactory BOUNDED = new AllocationFactory(true, SegmentAllocator::newNativeArena);
-        static AllocationFactory UNBOUNDED = new AllocationFactory(false, (size, scope) -> SegmentAllocator.newNativeArena(scope));
     }
 
     interface ToArrayHelper<T> {
