@@ -293,30 +293,30 @@ address MacroAssembler::target_addr_for_insn(address insn_addr, unsigned insn) {
   return address(((uint64_t)insn_addr + (offset << 2)));
 }
 
-void MacroAssembler::safepoint_poll(Label& slow_path, bool at_return, bool acquire, bool in_nmethod, Register scratch) {
+void MacroAssembler::safepoint_poll(Label& slow_path, bool at_return, bool acquire, bool in_nmethod, Register tmp) {
   if (acquire) {
-    lea(scratch, Address(rthread, JavaThread::polling_word_offset()));
-    ldar(scratch, scratch);
+    lea(tmp, Address(rthread, JavaThread::polling_word_offset()));
+    ldar(tmp, tmp);
   } else {
-    ldr(scratch, Address(rthread, JavaThread::polling_word_offset()));
+    ldr(tmp, Address(rthread, JavaThread::polling_word_offset()));
   }
   if (at_return) {
     // Note that when in_nmethod is set, the stack pointer is incremented before the poll. Therefore,
     // we may safely use the sp instead to perform the stack watermark check.
-    cmp(in_nmethod ? sp : rfp, rscratch1);
+    cmp(in_nmethod ? sp : rfp, tmp);
     br(Assembler::HI, slow_path);
   } else {
-    tbnz(scratch, log2i_exact(SafepointMechanism::poll_bit()), slow_path);
+    tbnz(tmp, log2i_exact(SafepointMechanism::poll_bit()), slow_path);
   }
 }
 
-void MacroAssembler::rt_call(address dest, Register scratch) {
+void MacroAssembler::rt_call(address dest, Register tmp) {
   CodeBlob *cb = CodeCache::find_blob(dest);
   if (cb) {
     far_call(RuntimeAddress(dest));
   } else {
-    lea(scratch, RuntimeAddress(dest));
-    blr(scratch);
+    lea(tmp, RuntimeAddress(dest));
+    blr(tmp);
   }
 }
 
@@ -5118,13 +5118,13 @@ void MacroAssembler::cache_wbsync(bool is_pre) {
   }
 }
 
-void MacroAssembler::verify_sve_vector_length(Register scratch) {
+void MacroAssembler::verify_sve_vector_length(Register tmp) {
   // Make sure that native code does not change SVE vector length.
   if (!UseSVE) return;
   Label verify_ok;
-  movw(scratch, zr);
-  sve_inc(scratch, B);
-  subsw(zr, scratch, VM_Version::get_initial_sve_vector_length());
+  movw(tmp, zr);
+  sve_inc(tmp, B);
+  subsw(zr, tmp, VM_Version::get_initial_sve_vector_length());
   br(EQ, verify_ok);
   stop("Error: SVE vector length has changed since jvm startup");
   bind(verify_ok);

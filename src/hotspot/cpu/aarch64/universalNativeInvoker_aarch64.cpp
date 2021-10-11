@@ -218,24 +218,24 @@ RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
 
 void NativeInvokerGenerator::generate() {
   // we can't use rscratch1 because it is r8, and used by the ABI
-  Register scratch1 = r9;
-  Register scratch2 = r10;
-  assert(!target_uses_register(scratch1->as_VMReg()), "conflict");
-  assert(!target_uses_register(scratch2->as_VMReg()), "conflict");
+  Register tmp1 = r9;
+  Register tmp2 = r10;
+  assert(!target_uses_register(tmp1->as_VMReg()), "conflict");
+  assert(!target_uses_register(tmp2->as_VMReg()), "conflict");
   assert(!target_uses_register(rthread->as_VMReg()), "conflict");
 
   enum layout {
-    rbp_off,
-    rbp_off2,
-    return_off,
-    return_off2,
+    rfp_off,
+    rfp_off2,
+    lr_off,
+    lr_off2,
     framesize // inclusive of return address
     // The following are also computed dynamically:
     // spill area for return value
     // out arg area (e.g. for stack args)
   };
 
-  Register input_addr_reg = scratch1;
+  Register input_addr_reg = tmp1;
   JavaCallConv in_conv;
   DowncallNativeCallConv out_conv(_input_registers, input_addr_reg->as_VMReg());
   ArgumentShuffle arg_shuffle(_signature, _num_args, _signature, _num_args, &in_conv, &out_conv, r19->as_VMReg());
@@ -271,14 +271,14 @@ void NativeInvokerGenerator::generate() {
   _frame_complete = __ pc() - start;
 
   address the_pc = __ pc();
-  __ set_last_Java_frame(sp, rfp, the_pc, scratch1);
+  __ set_last_Java_frame(sp, rfp, the_pc, tmp1);
   OopMap* map = new OopMap(_framesize, 0);
   _oop_maps->add_gc_map(the_pc - start, map);
 
   // State transition
-  __ mov(scratch1, _thread_in_native);
-  __ lea(scratch2, Address(rthread, JavaThread::thread_state_offset()));
-  __ stlrw(scratch1, scratch2);
+  __ mov(tmp1, _thread_in_native);
+  __ lea(tmp2, Address(rthread, JavaThread::thread_state_offset()));
+  __ stlrw(tmp1, tmp2);
 
   __ block_comment("{ argument shuffle");
   arg_shuffle.gen_shuffle(_masm);
@@ -302,35 +302,35 @@ void NativeInvokerGenerator::generate() {
     default       : ShouldNotReachHere();
   }
 
-  __ mov(scratch1, _thread_in_native_trans);
-  __ strw(scratch1, Address(rthread, JavaThread::thread_state_offset()));
+  __ mov(tmp1, _thread_in_native_trans);
+  __ strw(tmp1, Address(rthread, JavaThread::thread_state_offset()));
 
   // Force this write out before the read below
   __ membar(Assembler::LoadLoad | Assembler::LoadStore |
             Assembler::StoreLoad | Assembler::StoreStore);
 
-  __ verify_sve_vector_length(scratch1);
+  __ verify_sve_vector_length(tmp1);
 
   Label L_after_safepoint_poll;
   Label L_safepoint_poll_slow_path;
 
-  __ safepoint_poll(L_safepoint_poll_slow_path, true /* at_return */, true /* acquire */, false /* in_nmethod */, scratch1);
+  __ safepoint_poll(L_safepoint_poll_slow_path, true /* at_return */, true /* acquire */, false /* in_nmethod */, tmp1);
 
-  __ ldrw(scratch1, Address(rthread, JavaThread::suspend_flags_offset()));
-  __ cbnzw(scratch1, L_safepoint_poll_slow_path);
+  __ ldrw(tmp1, Address(rthread, JavaThread::suspend_flags_offset()));
+  __ cbnzw(tmp1, L_safepoint_poll_slow_path);
 
   __ bind(L_after_safepoint_poll);
 
   // change thread state
-  __ mov(scratch1, _thread_in_Java);
-  __ lea(scratch2, Address(rthread, JavaThread::thread_state_offset()));
-  __ stlrw(scratch1, scratch2);
+  __ mov(tmp1, _thread_in_Java);
+  __ lea(tmp2, Address(rthread, JavaThread::thread_state_offset()));
+  __ stlrw(tmp1, tmp2);
 
   __ block_comment("reguard stack check");
   Label L_reguard;
   Label L_after_reguard;
-  __ ldrb(scratch1, Address(rthread, JavaThread::stack_guard_state_offset()));
-  __ cmpw(scratch1, StackOverflow::stack_guard_yellow_reserved_disabled);
+  __ ldrb(tmp1, Address(rthread, JavaThread::stack_guard_state_offset()));
+  __ cmpw(tmp1, StackOverflow::stack_guard_yellow_reserved_disabled);
   __ br(Assembler::EQ, L_reguard);
   __ bind(L_after_reguard);
 
@@ -349,8 +349,8 @@ void NativeInvokerGenerator::generate() {
 
   __ mov(c_rarg0, rthread);
   assert(frame::arg_reg_save_area_bytes == 0, "not expecting frame reg save area");
-  __ lea(scratch1, RuntimeAddress(CAST_FROM_FN_PTR(address, JavaThread::check_special_condition_for_native_trans)));
-  __ blr(scratch1);
+  __ lea(tmp1, RuntimeAddress(CAST_FROM_FN_PTR(address, JavaThread::check_special_condition_for_native_trans)));
+  __ blr(tmp1);
 
   out_reg_spill.gen_fill(_masm, spill_offset);
 
@@ -364,7 +364,7 @@ void NativeInvokerGenerator::generate() {
 
   out_reg_spill.gen_spill(_masm, spill_offset);
 
-  __ rt_call(CAST_FROM_FN_PTR(address, SharedRuntime::reguard_yellow_pages), scratch1);
+  __ rt_call(CAST_FROM_FN_PTR(address, SharedRuntime::reguard_yellow_pages), tmp1);
 
   out_reg_spill.gen_fill(_masm, spill_offset);
 
