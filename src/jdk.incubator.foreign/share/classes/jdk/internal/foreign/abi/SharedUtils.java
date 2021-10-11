@@ -385,7 +385,11 @@ public class SharedUtils {
             insertPos = 1;
         } else {
             closer = identity(specializedHandle.type().returnType()); // (V) -> V
-            closer = dropArguments(closer, 0, Throwable.class); // (Throwable, V) -> V
+            if (!upcall) {
+                closer = dropArguments(closer, 0, Throwable.class); // (Throwable, V) -> V
+            } else {
+                closer = collectArguments(closer, 0, MH_HANDLE_UNCAUGHT_EXCEPTION); // (Throwable, V) -> V
+            }
             insertPos = 2;
         }
 
