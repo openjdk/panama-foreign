@@ -269,12 +269,12 @@ void NativeInvokerGenerator::generate() {
   allocated_frame_size += arg_shuffle.out_arg_stack_slots() << LogBytesPerInt;
   allocated_frame_size += _shadow_space_bytes;
 
-  RegSpillFill out_reg_spill(_output_registers.data(), _output_registers.length());
+  RegSpiller out_reg_spiller(_output_registers);
   int spill_rsp_offset = 0;
 
   // spill area can be shared with the above, so we take the max of the 2
-  allocated_frame_size = out_reg_spill.spill_size_bytes() > allocated_frame_size
-    ? out_reg_spill.spill_size_bytes()
+  allocated_frame_size = out_reg_spiller.spill_size_bytes() > allocated_frame_size
+    ? out_reg_spiller.spill_size_bytes()
     : allocated_frame_size;
   allocated_frame_size = align_up(allocated_frame_size, 16);
   // _framesize is in 32-bit stack slots:
@@ -305,7 +305,7 @@ void NativeInvokerGenerator::generate() {
   __ block_comment("} thread java2native");
 
   __ block_comment("{ argument shuffle");
-  arg_shuffle.gen_shuffle(_masm);
+  arg_shuffle.generate(_masm);
   __ block_comment("} argument shuffle");
 
   __ call(input_addr_reg);
@@ -367,7 +367,7 @@ void NativeInvokerGenerator::generate() {
   __ bind(L_safepoint_poll_slow_path);
   __ vzeroupper();
 
-  out_reg_spill.gen_spill(_masm, spill_rsp_offset);
+  out_reg_spiller.generate_spill(_masm, spill_rsp_offset);
 
   __ mov(c_rarg0, r15_thread);
   __ mov(r12, rsp); // remember sp
@@ -377,7 +377,7 @@ void NativeInvokerGenerator::generate() {
   __ mov(rsp, r12); // restore sp
   __ reinit_heapbase();
 
-  out_reg_spill.gen_fill(_masm, spill_rsp_offset);
+  out_reg_spiller.generate_fill(_masm, spill_rsp_offset);
 
   __ jmp(L_after_safepoint_poll);
   __ block_comment("} L_safepoint_poll_slow_path");
@@ -388,7 +388,7 @@ void NativeInvokerGenerator::generate() {
   __ bind(L_reguard);
   __ vzeroupper();
 
-  out_reg_spill.gen_spill(_masm, spill_rsp_offset);
+  out_reg_spiller.generate_spill(_masm, spill_rsp_offset);
 
   __ mov(r12, rsp); // remember sp
   __ subptr(rsp, frame::arg_reg_save_area_bytes); // windows
@@ -397,7 +397,7 @@ void NativeInvokerGenerator::generate() {
   __ mov(rsp, r12); // restore sp
   __ reinit_heapbase();
 
-  out_reg_spill.gen_fill(_masm, spill_rsp_offset);
+  out_reg_spiller.generate_fill(_masm, spill_rsp_offset);
 
   __ jmp(L_after_reguard);
 

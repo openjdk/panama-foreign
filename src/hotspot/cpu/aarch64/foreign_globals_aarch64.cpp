@@ -101,7 +101,7 @@ enum class RegType {
   STACK = 3
 };
 
-VMReg vmstorage_to_vmreg(int type, int index) {
+VMReg ForeignGlobals::vmstorage_to_vmreg(int type, int index) {
   switch(static_cast<RegType>(type)) {
     case RegType::INTEGER: return ::as_Register(index)->as_VMReg();
     case RegType::VECTOR: return ::as_FloatRegister(index)->as_VMReg();
@@ -110,7 +110,7 @@ VMReg vmstorage_to_vmreg(int type, int index) {
   return VMRegImpl::Bad();
 }
 
-int RegSpillFill::pd_reg_size(VMReg reg) const {
+int RegSpiller::pd_reg_size(VMReg reg) {
   if (reg->is_Register()) {
     return 8;
   } else if (reg->is_FloatRegister()) {
@@ -123,7 +123,7 @@ int RegSpillFill::pd_reg_size(VMReg reg) const {
   return 0; // stack and BAD
 }
 
-void RegSpillFill::pd_store_reg(MacroAssembler* masm, int offset, VMReg reg) const {
+void RegSpiller::pd_store_reg(MacroAssembler* masm, int offset, VMReg reg) {
   if (reg->is_Register()) {
     masm->spill(reg->as_Register(), true, offset);
   } else if (reg->is_FloatRegister()) {
@@ -138,7 +138,7 @@ void RegSpillFill::pd_store_reg(MacroAssembler* masm, int offset, VMReg reg) con
   }
 }
 
-void RegSpillFill::pd_load_reg(MacroAssembler* masm, int offset, VMReg reg) const {
+void RegSpiller::pd_load_reg(MacroAssembler* masm, int offset, VMReg reg) {
   if (reg->is_Register()) {
     masm->unspill(reg->as_Register(), true, offset);
   } else if (reg->is_FloatRegister()) {
@@ -153,7 +153,7 @@ void RegSpillFill::pd_load_reg(MacroAssembler* masm, int offset, VMReg reg) cons
   }
 }
 
-void ArgumentShuffle::pd_gen_shuffle(MacroAssembler* masm) const {
+void ArgumentShuffle::pd_generate(MacroAssembler* masm) const {
   for (int i = 0; i < _moves.length(); i++) {
     Move move = _moves.at(i);
     BasicType arg_bt     = move.bt;

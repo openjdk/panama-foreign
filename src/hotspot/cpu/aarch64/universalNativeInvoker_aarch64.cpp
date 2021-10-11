@@ -249,12 +249,12 @@ void NativeInvokerGenerator::generate() {
   }
 #endif
 
-  RegSpillFill out_reg_spill(_output_registers.data(), _output_registers.length());
+  RegSpiller out_reg_spiller(_output_registers);
   int spill_offset = 0;
 
   assert(_shadow_space_bytes == 0, "not expecting shadow space on AArch64");
   _framesize = align_up(framesize
-    + (out_reg_spill.spill_size_bytes() >> LogBytesPerInt)
+    + (out_reg_spiller.spill_size_bytes() >> LogBytesPerInt)
     + arg_shuffle.out_arg_stack_slots(), 4);
   assert(is_even(_framesize/2), "sp not 16-byte aligned");
 
@@ -281,7 +281,7 @@ void NativeInvokerGenerator::generate() {
   __ stlrw(tmp1, tmp2);
 
   __ block_comment("{ argument shuffle");
-  arg_shuffle.gen_shuffle(_masm);
+  arg_shuffle.generate(_masm);
   __ block_comment("} argument shuffle");
 
   __ blr(input_addr_reg);
@@ -345,14 +345,14 @@ void NativeInvokerGenerator::generate() {
   __ bind(L_safepoint_poll_slow_path);
 
   // Need to save the native result registers around any runtime calls.
-  out_reg_spill.gen_spill(_masm, spill_offset);
+  out_reg_spiller.generate_spill(_masm, spill_offset);
 
   __ mov(c_rarg0, rthread);
   assert(frame::arg_reg_save_area_bytes == 0, "not expecting frame reg save area");
   __ lea(tmp1, RuntimeAddress(CAST_FROM_FN_PTR(address, JavaThread::check_special_condition_for_native_trans)));
   __ blr(tmp1);
 
-  out_reg_spill.gen_fill(_masm, spill_offset);
+  out_reg_spiller.generate_fill(_masm, spill_offset);
 
   __ b(L_after_safepoint_poll);
   __ block_comment("} L_safepoint_poll_slow_path");
@@ -362,11 +362,11 @@ void NativeInvokerGenerator::generate() {
   __ block_comment("{ L_reguard");
   __ bind(L_reguard);
 
-  out_reg_spill.gen_spill(_masm, spill_offset);
+  out_reg_spiller.generate_spill(_masm, spill_offset);
 
   __ rt_call(CAST_FROM_FN_PTR(address, SharedRuntime::reguard_yellow_pages), tmp1);
 
-  out_reg_spill.gen_fill(_masm, spill_offset);
+  out_reg_spiller.generate_fill(_masm, spill_offset);
 
   __ b(L_after_reguard);
 

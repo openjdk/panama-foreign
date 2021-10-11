@@ -40,7 +40,7 @@ const CallRegs ForeignGlobals::parse_call_regs_impl(jobject jconv) const {
   return {};
 }
 
-VMReg vmstorage_to_vmreg(int type, int index) {
+VMReg ForeignGlobals::vmstorage_to_vmreg(int type, int index) {
   Unimplemented();
   return VMRegImpl::Bad();
 }

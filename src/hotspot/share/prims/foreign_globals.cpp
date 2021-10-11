@@ -131,15 +131,15 @@ int CallRegs::calling_convention(BasicType* sig_bt, VMRegPair *regs, int num_arg
   return 0; // assumed unused
 }
 
-int RegSpillFill::compute_spill_area() {
+int RegSpiller::compute_spill_area(const VMReg* regs, int num_regs) {
   int result_size = 0;
-  for (int i = 0; i < _num_regs; i++) {
-    result_size += pd_reg_size(_regs[i]);
+  for (int i = 0; i < num_regs; i++) {
+    result_size += pd_reg_size(regs[i]);
   }
   return result_size;
 }
 
-void RegSpillFill::gen(MacroAssembler* masm, int rsp_offset, bool spill) const {
+void RegSpiller::generate(MacroAssembler* masm, int rsp_offset, bool spill) const {
   int offset = rsp_offset;
   for (int i = 0; i < _num_regs; i++) {
     VMReg reg = _regs[i];

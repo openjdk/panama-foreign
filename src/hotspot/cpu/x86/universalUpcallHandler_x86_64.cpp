@@ -334,16 +334,16 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   }
 
   int reg_save_area_size = compute_reg_save_area_size(abi);
-  RegSpillFill arg_spill(call_regs._arg_regs, call_regs._args_length);
-  RegSpillFill result_spill(call_regs._ret_regs, call_regs._rets_length);
+  RegSpiller arg_spilller(call_regs._arg_regs, call_regs._args_length);
+  RegSpiller result_spiller(call_regs._ret_regs, call_regs._rets_length);
   // To spill receiver during deopt
   int deopt_spill_size = 1 * BytesPerWord;
 
   int shuffle_area_offset    = 0;
   int deopt_spill_offset     = shuffle_area_offset    + out_arg_area;
   int res_save_area_offset   = deopt_spill_offset     + deopt_spill_size;
-  int arg_save_area_offset   = res_save_area_offset   + result_spill.spill_size_bytes();
-  int reg_save_area_offset   = arg_save_area_offset   + arg_spill.spill_size_bytes();
+  int arg_save_area_offset   = res_save_area_offset   + result_spiller.spill_size_bytes();
+  int reg_save_area_offset   = arg_save_area_offset   + arg_spilller.spill_size_bytes();
   int frame_data_offset      = reg_save_area_offset   + reg_save_area_size;
   int frame_bottom_offset    = frame_data_offset      + sizeof(OptimizedEntryBlob::FrameData);
 
@@ -389,7 +389,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
   // we have to always spill args since we need to do a call to get the thread
   // (and maybe attach it).
-  arg_spill.gen_spill(_masm, arg_save_area_offset);
+  arg_spilller.generate_spill(_masm, arg_save_area_offset);
 
   preserve_callee_saved_registers(_masm, abi, reg_save_area_offset);
 
@@ -403,8 +403,8 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   __ block_comment("} on_entry");
 
   __ block_comment("{ argument shuffle");
-  arg_spill.gen_fill(_masm, arg_save_area_offset);
-  arg_shuffle.gen_shuffle(_masm);
+  arg_spilller.generate_fill(_masm, arg_save_area_offset);
+  arg_shuffle.generate(_masm);
   __ block_comment("} argument shuffle");
 
   __ block_comment("{ receiver ");
@@ -418,7 +418,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
   __ call(Address(rbx, Method::from_compiled_offset()));
 
-  result_spill.gen_spill(_masm, res_save_area_offset);
+  result_spiller.generate_spill(_masm, res_save_area_offset);
 
   __ block_comment("{ on_exit");
   __ vzeroupper();
@@ -430,7 +430,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
   restore_callee_saved_registers(_masm, abi, reg_save_area_offset);
 
-  result_spill.gen_fill(_masm, res_save_area_offset);
+  result_spiller.generate_fill(_masm, res_save_area_offset);
 
   // return value shuffle
 #ifdef ASSERT

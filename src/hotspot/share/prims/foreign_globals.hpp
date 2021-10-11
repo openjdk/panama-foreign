@@ -90,9 +90,11 @@ public:
   static const ABIDescriptor parse_abi_descriptor(jobject jabi);
   static const BufferLayout parse_buffer_layout(jobject jlayout);
   static const CallRegs parse_call_regs(jobject jconv);
+
+  static VMReg vmstorage_to_vmreg(int type, int index);
 };
 
-VMReg vmstorage_to_vmreg(int type, int index);
+
 
 class JavaCallConv : public CallConvClosure {
 public:
@@ -112,26 +114,29 @@ public:
   int calling_convention(BasicType* sig_bt, VMRegPair* out_regs, int num_args) const override;
 };
 
-class RegSpillFill {
+class RegSpiller {
   const VMReg* _regs;
   int _num_regs;
   int _spill_size_bytes;
 public:
-  RegSpillFill(const VMReg* regs, int num_regs) : _regs(regs), _num_regs(num_regs) {
-    _spill_size_bytes = compute_spill_area();
+  RegSpiller(const VMReg* regs, int num_regs) :
+    _regs(regs), _num_regs(num_regs),
+    _spill_size_bytes(compute_spill_area(regs, num_regs)) {
+  }
+  RegSpiller(const GrowableArray<VMReg>& regs) : RegSpiller(regs.data(), regs.length()) {
   }
 
   int spill_size_bytes() const { return _spill_size_bytes; }
-  void gen_spill(MacroAssembler* masm, int rsp_offset) const { return gen(masm, rsp_offset, true); }
-  void gen_fill(MacroAssembler* masm, int rsp_offset) const { return gen(masm, rsp_offset, false); }
+  void generate_spill(MacroAssembler* masm, int rsp_offset) const { return generate(masm, rsp_offset, true); }
+  void generate_fill(MacroAssembler* masm, int rsp_offset) const { return generate(masm, rsp_offset, false); }
 
 private:
-  int compute_spill_area();
-  void gen(MacroAssembler* masm, int rsp_offset, bool is_spill) const;
+  static int compute_spill_area(const VMReg* regs, int num_regs);
+  void generate(MacroAssembler* masm, int rsp_offset, bool is_spill) const;
 
-  int pd_reg_size(VMReg reg) const;
-  void pd_store_reg(MacroAssembler* masm, int offset, VMReg reg) const;
-  void pd_load_reg(MacroAssembler* masm, int offset, VMReg reg) const;
+  static int pd_reg_size(VMReg reg);
+  static void pd_store_reg(MacroAssembler* masm, int offset, VMReg reg);
+  static void pd_load_reg(MacroAssembler* masm, int offset, VMReg reg);
 };
 
 struct Move {
@@ -152,13 +157,13 @@ public:
     VMReg shuffle_temp);
 
   int out_arg_stack_slots() const { return _out_arg_stack_slots; }
-  void gen_shuffle(MacroAssembler* masm) const {
-    pd_gen_shuffle(masm);
+  void generate(MacroAssembler* masm) const {
+    pd_generate(masm);
   }
 
   void print_on(outputStream* os) const;
 private:
-  void pd_gen_shuffle(MacroAssembler* masm) const;
+  void pd_generate(MacroAssembler* masm) const;
 };
 
 #endif // SHARE_PRIMS_FOREIGN_GLOBALS

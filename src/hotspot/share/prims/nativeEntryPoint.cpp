@@ -38,7 +38,7 @@
 #include "runtime/jniHandles.inline.hpp"
 
 JNI_LEAF(jlong, NEP_vmStorageToVMReg(JNIEnv* env, jclass _unused, jint type, jint index))
-  return vmstorage_to_vmreg(type, index)->value();
+  return ForeignGlobals::vmstorage_to_vmreg(type, index)->value();
 JNI_END
 
 JNI_ENTRY(jlong, NEP_makeInvoker(JNIEnv* env, jclass _unused, jobject method_type, jint shadow_space_bytes,
