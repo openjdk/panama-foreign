@@ -51,17 +51,17 @@ public class TestUpcallException {
 
     @Test
     public void testExceptionInterpreted() throws InterruptedException, IOException {
-        boolean useSpec = false;
-        run(useSpec);
+        run(/* useSpec = */ false, /* isVoid = */ true);
+        run(/* useSpec = */ false, /* isVoid = */ false);
     }
 
     @Test
     public void testExceptionSpecialized() throws IOException, InterruptedException {
-        boolean useSpec = true;
-        run(useSpec);
+        run(/* useSpec = */ true, /* isVoid = */ true);
+        run(/* useSpec = */ true, /* isVoid = */ false);
     }
 
-    private void run(boolean useSpec) throws IOException, InterruptedException {
+    private void run(boolean useSpec, boolean isVoid) throws IOException, InterruptedException {
         Process process = new ProcessBuilder()
             .command(
                 Paths.get(Utils.TEST_JDK)
@@ -74,7 +74,8 @@ public class TestUpcallException {
                 "-Djava.library.path=" + System.getProperty("java.library.path"),
                 "-Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=" + useSpec,
                 "-cp", Utils.TEST_CLASS_PATH,
-                "ThrowingUpcall")
+                "ThrowingUpcall",
+                isVoid ? "void" : "non-void")
             .start();
 
         int result = process.waitFor();
