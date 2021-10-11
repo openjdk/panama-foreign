@@ -90,9 +90,9 @@ final class ConfinedScope extends ResourceScopeImpl {
         if (Thread.currentThread() == owner) {
             lockCount--;
         } else {
-            // It is possible to end up here in two cases: this scope was the ancestor of some other confined scope
+            // It is possible to end up here in two cases: this scope was kept alive by some other confined scope
             // which is implicitly released (in which case the release call comes from the cleaner thread). Or,
-            // this scope might be the ancestor of a shared scope, which means the release call can come from any
+            // this scope might be kept alive by a shared scope, which means the release call can come from any
             // thread.
             int value;
             do {
