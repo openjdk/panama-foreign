@@ -305,7 +305,7 @@ void NativeInvokerGenerator::generate() {
   __ block_comment("} thread java2native");
 
   __ block_comment("{ argument shuffle");
-  arg_shuffle.generate(_masm);
+  arg_shuffle.generate(_masm, 0, _shadow_space_bytes);
   __ block_comment("} argument shuffle");
 
   __ call(input_addr_reg);

@@ -404,7 +404,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
   __ block_comment("{ argument shuffle");
   arg_spilller.generate_fill(_masm, arg_save_area_offset);
-  arg_shuffle.generate(_masm);
+  arg_shuffle.generate(_masm, abi._shadow_space_bytes, 0);
   __ block_comment("} argument shuffle");
 
   __ block_comment("{ receiver ");
