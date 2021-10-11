@@ -281,7 +281,7 @@ void NativeInvokerGenerator::generate() {
   __ stlrw(tmp1, tmp2);
 
   __ block_comment("{ argument shuffle");
-  arg_shuffle.generate(_masm);
+  arg_shuffle.generate(_masm, tmp2->as_VMReg(), 0, _shadow_space_bytes);
   __ block_comment("} argument shuffle");
 
   __ blr(input_addr_reg);

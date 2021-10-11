@@ -927,7 +927,7 @@ static int reg2offset_out(VMReg r) {
 }
 
 // A long move
-void MacroAssembler::long_move(VMRegPair src, VMRegPair dst, int in_stk_bias, int out_stk_bias) {
+void MacroAssembler::long_move(VMRegPair src, VMRegPair dst, Register tmp, int in_stk_bias, int out_stk_bias) {
 
   // The calling conventions assures us that each VMregpair is either
   // all really one physical register or adjacent stack slots.
@@ -947,13 +947,13 @@ void MacroAssembler::long_move(VMRegPair src, VMRegPair dst, int in_stk_bias, in
     movq(dst.first()->as_Register(), Address(rbp, reg2offset_in(src.first()) + in_stk_bias));
   } else {
     assert(src.is_single_reg() && dst.is_single_reg(), "not stack pairs");
-    movq(rax, Address(rbp, reg2offset_in(src.first()) + in_stk_bias));
-    movq(Address(rsp, reg2offset_out(dst.first()) + out_stk_bias), rax);
+    movq(tmp, Address(rbp, reg2offset_in(src.first()) + in_stk_bias));
+    movq(Address(rsp, reg2offset_out(dst.first()) + out_stk_bias), tmp);
   }
 }
 
 // A double move
-void MacroAssembler::double_move(VMRegPair src, VMRegPair dst, int in_stk_bias, int out_stk_bias) {
+void MacroAssembler::double_move(VMRegPair src, VMRegPair dst, Register tmp, int in_stk_bias, int out_stk_bias) {
 
   // The calling conventions assures us that each VMregpair is either
   // all really one physical register or adjacent stack slots.
@@ -973,14 +973,14 @@ void MacroAssembler::double_move(VMRegPair src, VMRegPair dst, int in_stk_bias, 
     movdbl(dst.first()->as_XMMRegister(), Address(rbp, reg2offset_in(src.first()) + in_stk_bias));
   } else {
     assert(src.is_single_reg() && dst.is_single_reg(), "not stack pairs");
-    movq(rax, Address(rbp, reg2offset_in(src.first()) + in_stk_bias));
-    movq(Address(rsp, reg2offset_out(dst.first()) + out_stk_bias), rax);
+    movq(tmp, Address(rbp, reg2offset_in(src.first()) + in_stk_bias));
+    movq(Address(rsp, reg2offset_out(dst.first()) + out_stk_bias), tmp);
   }
 }
 
 
 // A float arg may have to do float reg int reg conversion
-void MacroAssembler::float_move(VMRegPair src, VMRegPair dst, int in_stk_bias, int out_stk_bias) {
+void MacroAssembler::float_move(VMRegPair src, VMRegPair dst, Register tmp, int in_stk_bias, int out_stk_bias) {
   assert(!src.second()->is_valid() && !dst.second()->is_valid(), "bad float_move");
 
   // The calling conventions assures us that each VMregpair is either
@@ -988,8 +988,8 @@ void MacroAssembler::float_move(VMRegPair src, VMRegPair dst, int in_stk_bias, i
 
   if (src.first()->is_stack()) {
     if (dst.first()->is_stack()) {
-      movl(rax, Address(rbp, reg2offset_in(src.first()) + in_stk_bias));
-      movptr(Address(rsp, reg2offset_out(dst.first()) + out_stk_bias), rax);
+      movl(tmp, Address(rbp, reg2offset_in(src.first()) + in_stk_bias));
+      movptr(Address(rsp, reg2offset_out(dst.first()) + out_stk_bias), tmp);
     } else {
       // stack to reg
       assert(dst.first()->is_XMMRegister(), "only expect xmm registers as parameters");
@@ -1012,12 +1012,12 @@ void MacroAssembler::float_move(VMRegPair src, VMRegPair dst, int in_stk_bias, i
 // 64 bits items (x86_32/64 abi) even though java would only store
 // 32bits for a parameter. On 32bit it will simply be 32 bits
 // So this routine will do 32->32 on 32bit and 32->64 on 64bit
-void MacroAssembler::move32_64(VMRegPair src, VMRegPair dst, int in_stk_bias, int out_stk_bias) {
+void MacroAssembler::move32_64(VMRegPair src, VMRegPair dst, Register tmp, int in_stk_bias, int out_stk_bias) {
   if (src.first()->is_stack()) {
     if (dst.first()->is_stack()) {
       // stack to stack
-      movslq(rax, Address(rbp, reg2offset_in(src.first()) + in_stk_bias));
-      movq(Address(rsp, reg2offset_out(dst.first()) + out_stk_bias), rax);
+      movslq(tmp, Address(rbp, reg2offset_in(src.first()) + in_stk_bias));
+      movq(Address(rsp, reg2offset_out(dst.first()) + out_stk_bias), tmp);
     } else {
       // stack to reg
       movslq(dst.first()->as_Register(), Address(rbp, reg2offset_in(src.first()) + in_stk_bias));

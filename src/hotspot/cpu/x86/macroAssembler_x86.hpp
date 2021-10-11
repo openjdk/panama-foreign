@@ -214,10 +214,10 @@ class MacroAssembler: public Assembler {
   // Support for argument shuffling
 
   // bias in bytes
-  void move32_64(VMRegPair src, VMRegPair dst, int in_stk_bias = 0, int out_stk_bias = 0);
-  void long_move(VMRegPair src, VMRegPair dst, int in_stk_bias = 0, int out_stk_bias = 0);
-  void float_move(VMRegPair src, VMRegPair dst, int in_stk_bias = 0, int out_stk_bias = 0);
-  void double_move(VMRegPair src, VMRegPair dst, int in_stk_bias = 0, int out_stk_bias = 0);
+  void move32_64(VMRegPair src, VMRegPair dst, Register tmp = rax, int in_stk_bias = 0, int out_stk_bias = 0);
+  void long_move(VMRegPair src, VMRegPair dst, Register tmp = rax, int in_stk_bias = 0, int out_stk_bias = 0);
+  void float_move(VMRegPair src, VMRegPair dst, Register tmp = rax, int in_stk_bias = 0, int out_stk_bias = 0);
+  void double_move(VMRegPair src, VMRegPair dst, Register tmp = rax, int in_stk_bias = 0, int out_stk_bias = 0);
   void move_ptr(VMRegPair src, VMRegPair dst);
   void object_move(OopMap* map,
                    int oop_handle_offset,
