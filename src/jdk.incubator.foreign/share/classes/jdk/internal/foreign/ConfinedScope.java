@@ -27,6 +27,8 @@ package jdk.internal.foreign;
 
 import jdk.internal.vm.annotation.ForceInline;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.lang.ref.Cleaner;
 
 /**
@@ -39,7 +41,18 @@ final class ConfinedScope extends ResourceScopeImpl {
 
     private boolean closed; // = false
     private int lockCount = 0;
+    private int asyncReleaseCount = 0;
     private final Thread owner;
+
+    static final VarHandle ASYNC_RELEASE_COUNT;
+
+    static {
+        try {
+            ASYNC_RELEASE_COUNT = MethodHandles.lookup().findVarHandle(ConfinedScope.class, "asyncReleaseCount", int.class);
+        } catch (Throwable ex) {
+            throw new ExceptionInInitializerError(ex);
+        }
+    }
 
     public ConfinedScope(Thread owner, Cleaner cleaner) {
         super(new ConfinedResourceList(), cleaner);
@@ -74,12 +87,23 @@ final class ConfinedScope extends ResourceScopeImpl {
     @Override
     @ForceInline
     public void release0() {
-        lockCount--;
+        if (Thread.currentThread() == owner) {
+            lockCount--;
+        } else {
+            // It is possible to end up here in two cases: this scope was kept alive by some other confined scope
+            // which is implicitly released (in which case the release call comes from the cleaner thread). Or,
+            // this scope might be kept alive by a shared scope, which means the release call can come from any
+            // thread.
+            int value;
+            do {
+                value = (int)ASYNC_RELEASE_COUNT.getVolatile(this);
+            } while (!ASYNC_RELEASE_COUNT.compareAndSet(this, value, value + 1));
+        }
     }
 
     void justClose() {
         this.checkValidState();
-        if (lockCount == 0) {
+        if (lockCount == 0 || lockCount - ((int)ASYNC_RELEASE_COUNT.getVolatile(this)) == 0) {
             closed = true;
         } else {
             throw new IllegalStateException("Scope is kept alive by " + lockCount + " scopes");
