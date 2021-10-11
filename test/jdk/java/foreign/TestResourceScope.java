@@ -323,9 +323,8 @@ public class TestResourceScope {
                 // ok
             }
         });
-        // Now let's keep trying to close 'root' until we succeed. This is trickier than it seems: releases of
-        // the confined scope happen in different threads, so that the confined scope lock count is updated racily.
-        // If that happens, the following close will blow up.
+        // Now let's close 'root'. This is trickier than it seems: releases of the confined scope happen in different
+        // threads, so that the confined scope lock count is updated racily. If that happens, the following close will blow up.
         root.close();
     }
 
