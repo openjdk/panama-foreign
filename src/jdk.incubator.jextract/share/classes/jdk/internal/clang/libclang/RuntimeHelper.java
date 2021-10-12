@@ -59,6 +59,9 @@ final class RuntimeHelper {
     private final static MethodHandles.Lookup MH_LOOKUP = MethodHandles.lookup();
     private final static SymbolLookup SYMBOL_LOOKUP;
 
+    final static SegmentAllocator CONSTANT_ALLOCATOR =
+            (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.newImplicitScope());
+
     static {
         // Manual change to handle platform specific library name difference
         String libName = System.getProperty("os.name").startsWith("Windows")? "libclang" : "clang";
@@ -95,10 +98,6 @@ final class RuntimeHelper {
             throw new AssertionError("Cannot get here!");
         }
         return LINKER.downcallHandle(fdesc);
-    }
-
-    static final <Z> NativeSymbol upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc) {
-        return upcallStub(fi, z, fdesc, mtypeDesc, ResourceScope.newConfinedScope());
     }
 
     static final <Z> NativeSymbol upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc, ResourceScope scope) {

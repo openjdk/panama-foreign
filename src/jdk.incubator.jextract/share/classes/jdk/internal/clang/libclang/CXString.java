@@ -32,33 +32,47 @@ import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
 import static jdk.incubator.foreign.ValueLayout.*;
-public class CXToken {
+public class CXString {
 
     static final MemoryLayout $struct$LAYOUT = MemoryLayout.structLayout(
-        MemoryLayout.sequenceLayout(4, JAVA_INT).withName("int_data"),
-        ADDRESS.withName("ptr_data")
+        ADDRESS.withName("data"),
+        JAVA_INT.withName("private_flags"),
+        MemoryLayout.paddingLayout(32)
     );
     public static MemoryLayout $LAYOUT() {
-        return CXToken.$struct$LAYOUT;
+        return CXString.$struct$LAYOUT;
     }
-    public static MemorySegment int_data$slice(MemorySegment seg) {
-        return seg.asSlice(0, 16);
+    static final VarHandle data$VH = $struct$LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("data"));
+    public static VarHandle data$VH() {
+        return CXString.data$VH;
     }
-    static final VarHandle ptr_data$VH = $struct$LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("ptr_data"));
-    public static VarHandle ptr_data$VH() {
-        return CXToken.ptr_data$VH;
+    public static MemoryAddress data$get(MemorySegment seg) {
+        return (jdk.incubator.foreign.MemoryAddress)CXString.data$VH.get(seg);
     }
-    public static MemoryAddress ptr_data$get(MemorySegment seg) {
-        return (jdk.incubator.foreign.MemoryAddress)CXToken.ptr_data$VH.get(seg);
+    public static void data$set( MemorySegment seg, MemoryAddress x) {
+        CXString.data$VH.set(seg, x);
     }
-    public static void ptr_data$set( MemorySegment seg, MemoryAddress x) {
-        CXToken.ptr_data$VH.set(seg, x);
+    public static MemoryAddress data$get(MemorySegment seg, long index) {
+        return (jdk.incubator.foreign.MemoryAddress)CXString.data$VH.get(seg.asSlice(index*sizeof()));
     }
-    public static MemoryAddress ptr_data$get(MemorySegment seg, long index) {
-        return (jdk.incubator.foreign.MemoryAddress)CXToken.ptr_data$VH.get(seg.asSlice(index*sizeof()));
+    public static void data$set(MemorySegment seg, long index, MemoryAddress x) {
+        CXString.data$VH.set(seg.asSlice(index*sizeof()), x);
     }
-    public static void ptr_data$set(MemorySegment seg, long index, MemoryAddress x) {
-        CXToken.ptr_data$VH.set(seg.asSlice(index*sizeof()), x);
+    static final VarHandle private_flags$VH = $struct$LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("private_flags"));
+    public static VarHandle private_flags$VH() {
+        return CXString.private_flags$VH;
+    }
+    public static int private_flags$get(MemorySegment seg) {
+        return (int)CXString.private_flags$VH.get(seg);
+    }
+    public static void private_flags$set( MemorySegment seg, int x) {
+        CXString.private_flags$VH.set(seg, x);
+    }
+    public static int private_flags$get(MemorySegment seg, long index) {
+        return (int)CXString.private_flags$VH.get(seg.asSlice(index*sizeof()));
+    }
+    public static void private_flags$set(MemorySegment seg, long index, int x) {
+        CXString.private_flags$VH.set(seg.asSlice(index*sizeof()), x);
     }
     public static long sizeof() { return $LAYOUT().byteSize(); }
     public static MemorySegment allocate(SegmentAllocator allocator) { return allocator.allocate($LAYOUT()); }

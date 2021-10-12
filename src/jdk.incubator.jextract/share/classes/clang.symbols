@@ -10,6 +10,7 @@
 
 --include-function clang_disposeString
 --include-function clang_getCString
+--include-typedef CXString
 
 ###
 

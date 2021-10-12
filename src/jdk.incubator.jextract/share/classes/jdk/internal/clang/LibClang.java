@@ -32,6 +32,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
+import jdk.internal.clang.libclang.CXString;
 import jdk.internal.clang.libclang.Index_h;
 
 import java.lang.invoke.MethodHandle;
@@ -92,7 +93,7 @@ public class LibClang {
      * conversion. The size of the prefix segment is set to 256, which should be enough to hold a CXString.
      */
     private final static SegmentAllocator STRING_ALLOCATOR = SegmentAllocator.prefixAllocator(
-            MemorySegment.allocateNative(256, 8, ResourceScope.newImplicitScope()));
+            MemorySegment.allocateNative(CXString.sizeof(), 8, ResourceScope.newImplicitScope()));
 
     public static String version() {
         return CXStrToString(Index_h::clang_getClangVersion);
