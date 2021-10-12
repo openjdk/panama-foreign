@@ -190,7 +190,7 @@ public final class Cursor {
             Cursor cursor = new Cursor(copy);
             children.add(cursor);
             return Index_h.CXChildVisit_Continue();
-        });
+        }, ResourceScope.newImplicitScope());
 
         synchronized static Stream<Cursor> get(Cursor c) {
             try {
