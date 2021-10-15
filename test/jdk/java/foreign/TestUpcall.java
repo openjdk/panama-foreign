@@ -23,6 +23,30 @@
  */
 
 /*
+ * @test id=scope
+ * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
+ * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ *
+ * @run testng/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-VerifyDependencies
+ *   --enable-native-access=ALL-UNNAMED -Dgenerator.sample.factor=17
+ *   -DUPCALL_TEST_TYPE=SCOPE
+ *   TestUpcall
+ */
+
+/*
+ * @test id=no_scope
+ * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
+ * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ *
+ * @run testng/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-VerifyDependencies
+ *   --enable-native-access=ALL-UNNAMED -Dgenerator.sample.factor=17
+ *   -DUPCALL_TEST_TYPE=NO_SCOPE
+ *   TestUpcall
+ */
+
+/*
  * @test id=async
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
