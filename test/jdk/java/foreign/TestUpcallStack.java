@@ -34,10 +34,11 @@
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.SymbolLookup;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -78,7 +79,7 @@ public class TestUpcallStack extends CallGeneratorHelper {
         }
     }
 
-    static CLinker.UpcallStub dummyStub;
+    static NativeSymbol dummyStub;
 
     @BeforeClass
     void setup() {
@@ -89,10 +90,11 @@ public class TestUpcallStack extends CallGeneratorHelper {
     public void testUpcalls(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        MemoryAddress addr = LOOKUP.lookup("s" + fName).get();
-        try (NativeScope scope = new NativeScope()) {
-            MethodHandle mh = downcallHandle(abi, addr, scope, function(ret, paramTypes, fields));
-            Object[] args = makeArgs(scope.scope(), ret, paramTypes, fields, returnChecks, argChecks);
+        NativeSymbol addr = LOOKUP.lookup("s" + fName).get();
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
+            MethodHandle mh = downcallHandle(abi, addr, allocator, function(ret, paramTypes, fields));
+            Object[] args = makeArgs(scope, ret, paramTypes, fields, returnChecks, argChecks);
             Object[] callArgs = args;
             Object res = mh.invokeWithArguments(callArgs);
             argChecks.forEach(c -> c.accept(args));
@@ -131,7 +133,7 @@ public class TestUpcallStack extends CallGeneratorHelper {
     }
 
     @SuppressWarnings("unchecked")
-    static CLinker.UpcallStub makeCallback(ResourceScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) {
+    static NativeSymbol makeCallback(ResourceScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) {
         if (params.isEmpty()) {
             return dummyStub;
         }
