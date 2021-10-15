@@ -178,9 +178,17 @@ int DowncallNativeCallConv::calling_convention(BasicType* sig_bt, VMRegPair* out
   out_regs[0].set2(_input_addr_reg); // address
   out_regs[1].set_bad(); // upper half
 
+  int bt_start_idx = 2; // skip address (2)
+
+  if (_is_imr) {
+    out_regs[2].set2(_imr_reg); // address
+    out_regs[3].set_bad(); // upper half
+    bt_start_idx += 2;
+  }
+
   int src_pos = 0;
   int stk_slots = 0;
-  for (int i = 2; i < num_args; i++) { // skip address (2)
+  for (int i = bt_start_idx; i < num_args; i++) {
     switch (sig_bt[i]) {
       case T_BOOLEAN:
       case T_CHAR:

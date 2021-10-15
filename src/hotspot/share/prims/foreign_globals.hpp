@@ -106,10 +106,14 @@ public:
 class DowncallNativeCallConv : public CallConvClosure {
   const GrowableArray<VMReg>& _input_regs;
   VMReg _input_addr_reg;
+  bool _is_imr;
+  VMReg _imr_reg;
 public:
-  DowncallNativeCallConv(const GrowableArray<VMReg>& input_regs, VMReg input_addr_reg)
+  DowncallNativeCallConv(const GrowableArray<VMReg>& input_regs, VMReg input_addr_reg, bool is_imr, VMReg imr_reg)
    : _input_regs(input_regs),
-   _input_addr_reg(input_addr_reg) {}
+   _input_addr_reg(input_addr_reg),
+   _is_imr(is_imr),
+   _imr_reg(imr_reg) {}
 
   int calling_convention(BasicType* sig_bt, VMRegPair* out_regs, int num_args) const override;
 };

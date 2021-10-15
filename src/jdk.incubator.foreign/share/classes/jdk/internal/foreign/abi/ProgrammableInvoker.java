@@ -86,7 +86,7 @@ public class ProgrammableInvoker {
             MH_INVOKE_MOVES = lookup.findVirtual(ProgrammableInvoker.class, "invokeMoves",
                     methodType(Object.class, long.class, Object[].class, Binding.VMStore[].class, Binding.VMLoad[].class));
             MH_INVOKE_INTERP_BINDINGS = lookup.findVirtual(ProgrammableInvoker.class, "invokeInterpBindings",
-                    methodType(Object.class, NativeSymbol.class, SegmentAllocator.class, Object[].class, MethodHandle.class, Map.class, Map.class));
+                    methodType(Object.class, NativeSymbol.class, SegmentAllocator.class, Object[].class, InvocationData.class));
             MH_WRAP_ALLOCATOR = lookup.findStatic(Binding.Context.class, "ofAllocator",
                     methodType(Binding.Context.class, SegmentAllocator.class));
             MH_ADDR_TO_LONG = lookup.findStatic(ProgrammableInvoker.class, "unboxTargetAddress", methodType(long.class, NativeSymbol.class));
@@ -126,26 +126,31 @@ public class ProgrammableInvoker {
         Class<?>[] argMoveTypes = Arrays.stream(argMoves).map(Binding.VMStore::type).toArray(Class<?>[]::new);
 
         Binding.VMLoad[] retMoves = retMoveBindings(callingSequence);
+        boolean isImr = retMoves.length > 1;
         Class<?> returnType = retMoves.length == 0
                 ? void.class
                 : retMoves.length == 1
                     ? retMoves[0].type()
-                    : Object[].class;
+                    : void.class;
 
         MethodType leafType = methodType(returnType, argMoveTypes);
+        if (isImr) {
+            leafType = leafType.insertParameterTypes(0, long.class);
+        }
         MethodType leafTypeWithAddress = leafType.insertParameterTypes(0, long.class);
 
         MethodHandle handle;
 
         boolean isSimple = !(retMoves.length > 1);
-        if (USE_INTRINSICS && isSimple && supportsNativeInvoker()) {
+        if (/* USE_INTRINSICS && isSimple && supportsNativeInvoker() */ true) {
             NativeEntryPoint nep = NativeEntryPoint.make(
                 "native_invoker_" + leafType.descriptorString(),
                 abi,
                 toStorageArray(argMoves),
                 toStorageArray(retMoves),
                 !callingSequence.isTrivial(),
-                leafTypeWithAddress
+                leafTypeWithAddress,
+                isImr
             );
 
             handle = JLIA.nativeMethodHandle(nep);
@@ -157,13 +162,15 @@ public class ProgrammableInvoker {
         }
         handle = filterArguments(handle, 0, MH_ADDR_TO_LONG);
 
-        if (USE_SPEC && isSimple) {
+        if (/* USE_SPEC && isSimple */ false) {
             handle = specialize(handle);
          } else {
             Map<VMStorage, Integer> argIndexMap = SharedUtils.indexMap(argMoves);
             Map<VMStorage, Integer> retIndexMap = SharedUtils.indexMap(retMoves);
+            int imrSize = retIndexMap.keySet().stream().mapToInt(vms -> abi.arch.typeSize(vms.type())).sum();
 
-            handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 3, handle, argIndexMap, retIndexMap);
+            InvocationData invData = new InvocationData(handle, argIndexMap, retIndexMap, isImr, imrSize);
+            handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 3, invData);
             MethodHandle collectorInterp = makeCollectorHandle(callingSequence.methodType());
             handle = collectArguments(handle, 2, collectorInterp);
             handle = handle.asType(handle.type().changeReturnType(callingSequence.methodType().returnType()));
@@ -312,34 +319,53 @@ public class ProgrammableInvoker {
         }
     }
 
-    Object invokeInterpBindings(NativeSymbol symbol, SegmentAllocator allocator, Object[] args, MethodHandle leaf,
-                                Map<VMStorage, Integer> argIndexMap,
-                                Map<VMStorage, Integer> retIndexMap) throws Throwable {
+    private record InvocationData(MethodHandle leaf, Map<VMStorage, Integer> argIndexMap, Map<VMStorage, Integer> retIndexMap, boolean isImr, int imrSize) {}
+
+    Object invokeInterpBindings(NativeSymbol address, SegmentAllocator allocator, Object[] args, InvocationData invData) throws Throwable {
         Binding.Context unboxContext = bufferCopySize != 0
                 ? Binding.Context.ofBoundedAllocator(bufferCopySize)
                 : Binding.Context.DUMMY;
         try (unboxContext) {
+            MemorySegment imrSegment = null;
+
             // do argument processing, get Object[] as result
-            Object[] leafArgs = new Object[leaf.type().parameterCount()];
+            Object[] leafArgs = new Object[invData.leaf.type().parameterCount()];
             leafArgs[0] = symbol; // symbol
+            int argOffset = 1;
+            if (invData.isImr) {
+                imrSegment = MemorySegment.allocateNative(invData.imrSize, ResourceScope.newConfinedScope());
+                leafArgs[argOffset++] = imrSegment.address().toRawLongValue();
+            }
+            int finalArgOffset = argOffset;
             for (int i = 0; i < args.length; i++) {
                 Object arg = args[i];
                 BindingInterpreter.unbox(arg, callingSequence.argumentBindings(i),
                         (storage, type, value) -> {
-                            leafArgs[argIndexMap.get(storage) + 1] = value; // +1 to skip symbol
+                            leafArgs[invData.argIndexMap.get(storage) + finalArgOffset] = value;
                         }, unboxContext);
             }
 
             // call leaf
-            Object o = leaf.invokeWithArguments(leafArgs);
+            Object o = invData.leaf.invokeWithArguments(leafArgs);
 
             // return value processing
             if (o == null) {
-                return null;
-            } else if (o instanceof Object[]) {
-                Object[] oArr = (Object[]) o;
-                return BindingInterpreter.box(callingSequence.returnBindings(),
-                        (storage, type) -> oArr[retIndexMap.get(storage)], Binding.Context.ofAllocator(allocator));
+                if (!invData.isImr) {
+                    return null;
+                }
+                MemorySegment finalImrSegment = imrSegment;
+                Object result = BindingInterpreter.box(callingSequence.returnBindings(),
+                        new BindingInterpreter.LoadFunc() {
+                            int imrReadOffset = 0;
+                            @Override
+                            public Object load(VMStorage storage, Class<?> type) {
+                                Object result = SharedUtils.read(finalImrSegment.asSlice(imrReadOffset), type);
+                                imrReadOffset += abi.arch.typeSize(storage.type());
+                                return result;
+                            }
+                        }, Binding.Context.ofAllocator(allocator));
+                imrSegment.scope().close();
+                return result;
             } else {
                 return BindingInterpreter.box(callingSequence.returnBindings(), (storage, type) -> o,
                         Binding.Context.ofAllocator(allocator));

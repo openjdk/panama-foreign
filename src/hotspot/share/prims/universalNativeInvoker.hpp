@@ -52,7 +52,8 @@ public:
                                           BasicType ret_bt,
                                           int shadow_space_bytes,
                                           const GrowableArray<VMReg>& input_registers,
-                                          const GrowableArray<VMReg>& output_registers);
+                                          const GrowableArray<VMReg>& output_registers,
+                                          bool is_imr);
   static bool supports_native_invoker();
 };
 
