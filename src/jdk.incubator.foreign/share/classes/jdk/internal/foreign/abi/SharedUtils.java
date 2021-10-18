@@ -333,7 +333,8 @@ public class SharedUtils {
         }
         MethodType newType = oldType.dropParameterTypes(destIndex, destIndex + 1);
         int[] reorder = new int[oldType.parameterCount()];
-        assert destIndex > sourceIndex;
+        if (destIndex < sourceIndex)
+            sourceIndex--;
         for (int i = 0, index = 0; i < reorder.length; i++) {
             if (i != destIndex) {
                 reorder[i] = index++;
@@ -371,7 +372,7 @@ public class SharedUtils {
     }
 
     static MethodHandle wrapWithAllocator(MethodHandle specializedHandle,
-                                          int allocatorPos, long bufferCopySize,
+                                          int allocatorPos, long allocationSize,
                                           boolean upcall) {
         // insert try-finally to close the NativeScope used for Binding.Copy
         MethodHandle closer;
@@ -403,8 +404,8 @@ public class SharedUtils {
 
         MethodHandle contextFactory;
 
-        if (bufferCopySize > 0) {
-            contextFactory = MethodHandles.insertArguments(MH_MAKE_CONTEXT_BOUNDED_ALLOCATOR, 0, bufferCopySize);
+        if (allocationSize > 0) {
+            contextFactory = MethodHandles.insertArguments(MH_MAKE_CONTEXT_BOUNDED_ALLOCATOR, 0, allocationSize);
         } else if (upcall) {
             contextFactory = MH_MAKE_CONTEXT_NO_ALLOCATOR;
         } else {
