@@ -321,7 +321,7 @@ public class ProgrammableInvoker {
 
     private record InvocationData(MethodHandle leaf, Map<VMStorage, Integer> argIndexMap, Map<VMStorage, Integer> retIndexMap, boolean isImr, int imrSize) {}
 
-    Object invokeInterpBindings(NativeSymbol address, SegmentAllocator allocator, Object[] args, InvocationData invData) throws Throwable {
+    Object invokeInterpBindings(NativeSymbol symbol, SegmentAllocator allocator, Object[] args, InvocationData invData) throws Throwable {
         Binding.Context unboxContext = bufferCopySize != 0
                 ? Binding.Context.ofBoundedAllocator(bufferCopySize)
                 : Binding.Context.DUMMY;
