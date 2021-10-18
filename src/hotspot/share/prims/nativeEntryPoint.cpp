@@ -30,6 +30,7 @@
 #include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/typeArrayOop.hpp"
+#include "oops/typeArrayOop.inline.hpp"
 #include "oops/oopCast.inline.hpp"
 #include "prims/foreign_globals.hpp"
 #include "prims/foreign_globals.inline.hpp"
