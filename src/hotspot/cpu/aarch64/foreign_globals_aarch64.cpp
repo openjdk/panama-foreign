@@ -154,7 +154,7 @@ void RegSpiller::pd_load_reg(MacroAssembler* masm, int offset, VMReg reg) {
 }
 
 void ArgumentShuffle::pd_generate(MacroAssembler* masm, VMReg tmp, int in_stk_bias, int out_stk_bias) const {
-  assert(in_stk_bias == 0 && out_stk_bias == 0, "bias not expected");
+  assert(in_stk_bias == 0 && out_stk_bias == 0, "bias not implemented");
   Register tmp_reg = tmp->as_Register();
   for (int i = 0; i < _moves.length(); i++) {
     Move move = _moves.at(i);
