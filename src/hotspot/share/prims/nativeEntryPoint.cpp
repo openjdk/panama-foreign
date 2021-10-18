@@ -24,18 +24,14 @@
 
 #include "precompiled.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
-#include "classfile/javaClasses.hpp"
 #include "classfile/javaClasses.inline.hpp"
 #include "code/vmreg.hpp"
 #include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
-#include "oops/typeArrayOop.hpp"
 #include "oops/typeArrayOop.inline.hpp"
 #include "oops/oopCast.inline.hpp"
-#include "prims/foreign_globals.hpp"
 #include "prims/foreign_globals.inline.hpp"
 #include "prims/universalNativeInvoker.hpp"
-#include "runtime/jniHandles.hpp"
 #include "runtime/jniHandles.inline.hpp"
 
 JNI_LEAF(jlong, NEP_vmStorageToVMReg(JNIEnv* env, jclass _unused, jint type, jint index))
