@@ -42,7 +42,3 @@ RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
   Unimplemented();
   return nullptr;
 }
-
-bool ProgrammableInvoker::supports_native_invoker() {
-  return false;
-}

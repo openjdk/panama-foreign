@@ -29,128 +29,10 @@
 #include "prims/foreign_globals.inline.hpp"
 #include "prims/universalNativeInvoker.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "runtime/stubCodeGenerator.hpp"
 #include "utilities/formatBuffer.hpp"
 
 #define __ _masm->
-
-void ProgrammableInvoker::Generator::generate() {
-  __ enter();
-
-  // Put the context pointer in ebx/rbx - it's going to be heavily used below both before and after the call
-  Register ctxt_reg = rbx;
-  Register used_regs[] = { ctxt_reg, rcx, rsi, rdi };
-  GrowableArray<Register> preserved_regs;
-
-  for (size_t i = 0; i < sizeof(used_regs)/sizeof(Register); i++) {
-    Register used_reg = used_regs[i];
-    if (!_abi->is_volatile_reg(used_reg)) {
-      preserved_regs.push(used_reg);
-    }
-  }
-
-  __ block_comment("init_and_alloc_stack");
-
-  for (int i = 0; i < preserved_regs.length(); i++) {
-    __ push(preserved_regs.at(i));
-  }
-
-  __ movptr(ctxt_reg, c_rarg0); // FIXME c args? or java?
-
-  __ block_comment("allocate_stack");
-  __ movptr(rcx, Address(ctxt_reg, (int) _layout->stack_args_bytes));
-  __ subptr(rsp, rcx);
-  __ andptr(rsp, -_abi->_stack_alignment_bytes);
-
-  // Note: rcx is used below!
-
-
-  __ block_comment("load_arguments");
-
-  __ shrptr(rcx, LogBytesPerWord); // bytes -> words
-  __ movptr(rsi, Address(ctxt_reg, (int) _layout->stack_args));
-  __ movptr(rdi, rsp);
-  __ rep_mov();
-
-
-  for (int i = 0; i < _abi->_vector_argument_registers.length(); i++) {
-    // [1] -> 64 bit -> xmm
-    // [2] -> 128 bit -> xmm
-    // [4] -> 256 bit -> ymm
-    // [8] -> 512 bit -> zmm
-
-    XMMRegister reg = _abi->_vector_argument_registers.at(i);
-    size_t offs = _layout->arguments_vector + i * xmm_reg_size;
-    __ movdqu(reg, Address(ctxt_reg, (int)offs));
-  }
-
-  for (int i = 0; i < _abi->_integer_argument_registers.length(); i++) {
-    size_t offs = _layout->arguments_integer + i * sizeof(uintptr_t);
-    __ movptr(_abi->_integer_argument_registers.at(i), Address(ctxt_reg, (int)offs));
-  }
-
-  if (_abi->_shadow_space_bytes != 0) {
-    __ block_comment("allocate shadow space for argument register spill");
-    __ subptr(rsp, _abi->_shadow_space_bytes);
-  }
-
-  // call target function
-  __ block_comment("call target function");
-  __ call(Address(ctxt_reg, (int) _layout->arguments_next_pc));
-
-  if (_abi->_shadow_space_bytes != 0) {
-    __ block_comment("pop shadow space");
-    __ addptr(rsp, _abi->_shadow_space_bytes);
-  }
-
-  __ block_comment("store_registers");
-  for (int i = 0; i < _abi->_integer_return_registers.length(); i++) {
-    ssize_t offs = _layout->returns_integer + i * sizeof(uintptr_t);
-    __ movptr(Address(ctxt_reg, offs), _abi->_integer_return_registers.at(i));
-  }
-
-  for (int i = 0; i < _abi->_vector_return_registers.length(); i++) {
-    // [1] -> 64 bit -> xmm
-    // [2] -> 128 bit -> xmm (SSE)
-    // [4] -> 256 bit -> ymm (AVX)
-    // [8] -> 512 bit -> zmm (AVX-512, aka AVX3)
-
-    XMMRegister reg = _abi->_vector_return_registers.at(i);
-    size_t offs = _layout->returns_vector + i * xmm_reg_size;
-    __ movdqu(Address(ctxt_reg, (int)offs), reg);
-  }
-
-  for (size_t i = 0; i < _abi->_X87_return_registers_noof; i++) {
-    size_t offs = _layout->returns_x87 + i * (sizeof(long double));
-    __ fstp_x(Address(ctxt_reg, (int)offs)); //pop ST(0)
-  }
-
-  // Restore backed up preserved register
-  for (int i = 0; i < preserved_regs.length(); i++) {
-    __ movptr(preserved_regs.at(i), Address(rbp, -(int)(sizeof(uintptr_t) * (i + 1))));
-  }
-
-  __ leave();
-  __ ret(0);
-
-  __ flush();
-}
-
-address ProgrammableInvoker::generate_adapter(jobject jabi, jobject jlayout) {
-  ResourceMark rm;
-  const ABIDescriptor abi = ForeignGlobals::parse_abi_descriptor(jabi);
-  const BufferLayout layout = ForeignGlobals::parse_buffer_layout(jlayout);
-
-  BufferBlob* _invoke_native_blob = BufferBlob::create("invoke_native_blob", native_invoker_size);
-
-  CodeBuffer code2(_invoke_native_blob);
-  ProgrammableInvoker::Generator g2(&code2, &abi, &layout);
-  g2.generate();
-  code2.log_section_sizes("InvokeNativeBlob");
-
-  return _invoke_native_blob->code_begin();
-}
-
-static const int native_invoker_code_size = 1024;
 
 class NativeInvokerGenerator : public StubCodeGenerator {
   BasicType* _signature;
@@ -209,6 +91,8 @@ bool target_uses_register(VMReg reg) {
 }
 #endif
 };
+
+static const int native_invoker_code_size = 1024;
 
 RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
                                                       int num_args,
@@ -302,8 +186,6 @@ void NativeInvokerGenerator::generate() {
   assert(is_even(_framesize/2), "sp not 16-byte aligned");
 
   _oop_maps  = new OopMapSet();
-  MacroAssembler* masm = _masm;
-
   address start = __ pc();
 
   __ enter();
@@ -456,8 +338,4 @@ void NativeInvokerGenerator::generate() {
   //////////////////////////////////////////////////////////////////////////////
 
   __ flush();
-}
-
-bool ProgrammableInvoker::supports_native_invoker() {
-  return true;
 }

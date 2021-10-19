@@ -62,33 +62,22 @@ import static sun.security.action.GetBooleanAction.privilegedGetProperty;
  * expected by the system ABI.
  */
 public class ProgrammableInvoker {
-    private static final boolean DEBUG =
-        privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.DEBUG");
     private static final boolean USE_SPEC = Boolean.parseBoolean(
         GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.USE_SPEC", "true"));
-    private static final boolean USE_INTRINSICS = Boolean.parseBoolean(
-        GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS", "true"));
 
     private static final JavaLangInvokeAccess JLIA = SharedSecrets.getJavaLangInvokeAccess();
 
-    private static final VarHandle VH_LONG = ValueLayout.JAVA_LONG.varHandle();
-
-    private static final MethodHandle MH_INVOKE_MOVES;
     private static final MethodHandle MH_INVOKE_INTERP_BINDINGS;
     private static final MethodHandle MH_SYM_TO_LONG;
     private static final MethodHandle MH_SEG_TO_LONG;
     private static final MethodHandle MH_WRAP_ALLOCATOR;
     private static final MethodHandle MH_ALLOCATE_IMR_SEGMENT;
 
-    private static final Map<ABIDescriptor, Long> adapterStubs = new ConcurrentHashMap<>();
-
     private static final MethodHandle EMPTY_OBJECT_ARRAY_HANDLE = MethodHandles.constant(Object[].class, new Object[0]);
 
     static {
         try {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
-            MH_INVOKE_MOVES = lookup.findVirtual(ProgrammableInvoker.class, "invokeMoves",
-                    methodType(Object.class, long.class, Object[].class, Binding.VMStore[].class, Binding.VMLoad[].class));
             MH_INVOKE_INTERP_BINDINGS = lookup.findVirtual(ProgrammableInvoker.class, "invokeInterpBindings",
                     methodType(Object.class, NativeSymbol.class, SegmentAllocator.class, Object[].class, InvocationData.class));
             MH_WRAP_ALLOCATOR = lookup.findStatic(Binding.Context.class, "ofAllocator",
@@ -102,28 +91,15 @@ public class ProgrammableInvoker {
     }
 
     private final ABIDescriptor abi;
-    private final BufferLayout layout;
-    private final long stackArgsBytes;
 
     private final CallingSequence callingSequence;
-
-    private final long stubAddress;
 
     private final long imrSize;
     private final long allocationSize;
 
     public ProgrammableInvoker(ABIDescriptor abi, CallingSequence callingSequence) {
         this.abi = abi;
-        this.layout = BufferLayout.of(abi);
-        this.stubAddress = adapterStubs.computeIfAbsent(abi, key -> generateAdapter(key, layout));
-
         this.callingSequence = callingSequence;
-
-        this.stackArgsBytes = argMoveBindingsStream(callingSequence)
-                .map(Binding.VMStore::storage)
-                .filter(s -> abi.arch.isStackType(s.type()))
-                .count()
-                * abi.arch.typeSize(abi.arch.stackType());
 
         List<Binding.VMLoad> retMoves = retMoveBindingsStream(callingSequence).toList();
         imrSize = retMoves.size() > 1
@@ -155,26 +131,17 @@ public class ProgrammableInvoker {
         }
         MethodType leafTypeWithAddress = leafType.insertParameterTypes(0, long.class);
 
-        MethodHandle handle;
+        NativeEntryPoint nep = NativeEntryPoint.make(
+            "native_invoker_" + leafType.descriptorString(),
+            abi,
+            toStorageArray(argMoves),
+            toStorageArray(retMoves),
+            !callingSequence.isTrivial(),
+            leafTypeWithAddress,
+            isImr
+        );
+        MethodHandle handle = JLIA.nativeMethodHandle(nep);
 
-        if (/* USE_INTRINSICS && isSimple && supportsNativeInvoker() */ true) {
-            NativeEntryPoint nep = NativeEntryPoint.make(
-                "native_invoker_" + leafType.descriptorString(),
-                abi,
-                toStorageArray(argMoves),
-                toStorageArray(retMoves),
-                !callingSequence.isTrivial(),
-                leafTypeWithAddress,
-                isImr
-            );
-
-            handle = JLIA.nativeMethodHandle(nep);
-        } else {
-            handle = insertArguments(MH_INVOKE_MOVES.bindTo(this), 2, argMoves, retMoves);
-            MethodHandle collector = makeCollectorHandle(leafType);
-            handle = collectArguments(handle, 1, collector);
-            handle = handle.asType(leafTypeWithAddress);
-        }
         handle = filterArguments(handle, 0, MH_SYM_TO_LONG);
         if (isImr) {
             handle = filterArguments(handle, 1, MH_SEG_TO_LONG);
@@ -338,66 +305,6 @@ public class ProgrammableInvoker {
         return specializedHandle;
     }
 
-    /**
-     * Does a native invocation by moving primitive values from the arg array into an intermediate buffer
-     * and calling the assembly stub that forwards arguments from the buffer to the target function
-     *
-     * @param args an array of primitive values to be copied in to the buffer
-     * @param argBindings Binding.Move values describing how arguments should be copied
-     * @param returnBindings Binding.Move values describing how return values should be copied
-     * @return null, a single primitive value, or an Object[] of primitive values
-     */
-    Object invokeMoves(long addr, Object[] args, Binding.VMStore[] argBindings, Binding.VMLoad[] returnBindings) {
-        MemorySegment stackArgsSeg = null;
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment argBuffer = MemorySegment.allocateNative(layout.size, 64, scope);
-            if (stackArgsBytes > 0) {
-                stackArgsSeg = MemorySegment.allocateNative(stackArgsBytes, 8, scope);
-            }
-
-            VH_LONG.set(argBuffer.asSlice(layout.arguments_next_pc), addr);
-            VH_LONG.set(argBuffer.asSlice(layout.stack_args_bytes), stackArgsBytes);
-            VH_LONG.set(argBuffer.asSlice(layout.stack_args), stackArgsSeg == null ? 0L : stackArgsSeg.address().toRawLongValue());
-
-            for (int i = 0; i < argBindings.length; i++) {
-                Binding.VMStore binding = argBindings[i];
-                VMStorage storage = binding.storage();
-                MemorySegment ptr = abi.arch.isStackType(storage.type())
-                    ? stackArgsSeg.asSlice(storage.index() * abi.arch.typeSize(abi.arch.stackType()))
-                    : argBuffer.asSlice(layout.argOffset(storage));
-                SharedUtils.writeOverSized(ptr, binding.type(), args[i]);
-            }
-
-            if (DEBUG) {
-                System.err.println("Buffer state before:");
-                layout.dump(abi.arch, argBuffer, System.err);
-            }
-
-            invokeNative(stubAddress, argBuffer.address().toRawLongValue());
-
-            if (DEBUG) {
-                System.err.println("Buffer state after:");
-                layout.dump(abi.arch, argBuffer, System.err);
-            }
-
-            if (returnBindings.length == 0) {
-                return null;
-            } else if (returnBindings.length == 1) {
-                Binding.VMLoad move = returnBindings[0];
-                VMStorage storage = move.storage();
-                return SharedUtils.read(argBuffer.asSlice(layout.retOffset(storage)), move.type());
-            } else { // length > 1
-                Object[] returns = new Object[returnBindings.length];
-                for (int i = 0; i < returnBindings.length; i++) {
-                    Binding.VMLoad move = returnBindings[i];
-                    VMStorage storage = move.storage();
-                    returns[i] = SharedUtils.read(argBuffer.asSlice(layout.retOffset(storage)), move.type());
-                }
-                return returns;
-            }
-        }
-    }
-
     private record InvocationData(MethodHandle leaf, Map<VMStorage, Integer> argIndexMap, Map<VMStorage, Integer> retIndexMap, boolean isImr, long imrSize) {}
 
     Object invokeInterpBindings(NativeSymbol symbol, SegmentAllocator allocator, Object[] args, InvocationData invData) throws Throwable {
@@ -448,17 +355,6 @@ public class ProgrammableInvoker {
                         Binding.Context.ofAllocator(allocator));
             }
         }
-    }
-
-    //natives
-
-    static native void invokeNative(long adapterStub, long buff);
-    static native long generateAdapter(ABIDescriptor abi, BufferLayout layout);
-    static native boolean supportsNativeInvoker();
-
-    private static native void registerNatives();
-    static {
-        registerNatives();
     }
 }
 
