@@ -96,7 +96,7 @@ public class CallArranger {
         }
     }
 
-    public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
+    public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall, boolean varArgsOnStack) {
         CallingSequenceBuilder csb = new CallingSequenceBuilder(forUpcall);
 
         BindingCalculator argCalc = forUpcall ? new BoxBindingCalculator(true) : new UnboxBindingCalculator(true);
@@ -116,7 +116,7 @@ public class CallArranger {
             Class<?> carrier = mt.parameterType(i);
             MemoryLayout layout = cDesc.argumentLayouts().get(i);
             if (SharedUtils.isVarargsIndex(cDesc, i)) {
-                argCalc.storageCalculator.adjustForVarArgs();
+                argCalc.storageCalculator.adjustForVarArgs(varArgsOnStack);
             }
             csb.addArgumentBindings(carrier, layout, argCalc.getBindings(carrier, layout));
         }
@@ -126,8 +126,8 @@ public class CallArranger {
         return new Bindings(csb.build(), returnInMemory);
     }
 
-    public static MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc) {
-        Bindings bindings = getBindings(mt, cDesc, false);
+    public static MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc, boolean varArgsOnStack) {
+        Bindings bindings = getBindings(mt, cDesc, false, varArgsOnStack);
 
         MethodHandle handle = new ProgrammableInvoker(C, bindings.callingSequence).getBoundMethodHandle();
 
@@ -138,8 +138,8 @@ public class CallArranger {
         return handle;
     }
 
-    public static NativeSymbol arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, ResourceScope scope) {
-        Bindings bindings = getBindings(mt, cDesc, true);
+    public static NativeSymbol arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, ResourceScope scope, boolean varArgsOnStack) {
+        Bindings bindings = getBindings(mt, cDesc, true, varArgsOnStack);
 
         if (bindings.isInMemoryReturn) {
             target = SharedUtils.adaptUpcallForIMR(target, true /* drop return, since we don't have bindings for it */);
@@ -210,11 +210,13 @@ public class CallArranger {
             return storage[0];
         }
 
-        void adjustForVarArgs() {
-            // This system passes all variadic parameters on the stack. Ensure
-            // no further arguments are allocated to registers.
-            nRegs[StorageClasses.INTEGER] = MAX_REGISTER_ARGUMENTS;
-            nRegs[StorageClasses.VECTOR] = MAX_REGISTER_ARGUMENTS;
+        void adjustForVarArgs(boolean varArgsOnStack) {
+            if (varArgsOnStack) {
+                // This system passes all variadic parameters on the stack. Ensure
+                // no further arguments are allocated to registers.
+                nRegs[StorageClasses.INTEGER] = MAX_REGISTER_ARGUMENTS;
+                nRegs[StorageClasses.VECTOR] = MAX_REGISTER_ARGUMENTS;
+            }
         }
     }
 
