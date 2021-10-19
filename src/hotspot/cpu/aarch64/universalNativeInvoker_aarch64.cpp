@@ -141,6 +141,8 @@ class NativeInvokerGenerator : public StubCodeGenerator {
   const GrowableArray<VMReg>& _input_registers;
   const GrowableArray<VMReg>& _output_registers;
 
+  bool _is_imr;
+
   int _frame_complete;
   int _framesize;
   OopMapSet* _oop_maps;
@@ -151,7 +153,8 @@ public:
                          BasicType ret_bt,
                          int shadow_space_bytes,
                          const GrowableArray<VMReg>& input_registers,
-                         const GrowableArray<VMReg>& output_registers)
+                         const GrowableArray<VMReg>& output_registers,
+                         bool is_imr)
    : StubCodeGenerator(buffer, PrintMethodHandleStubs),
      _signature(signature),
      _num_args(num_args),
@@ -159,11 +162,10 @@ public:
      _shadow_space_bytes(shadow_space_bytes),
      _input_registers(input_registers),
      _output_registers(output_registers),
+     _is_imr(is_imr),
      _frame_complete(0),
      _framesize(0),
      _oop_maps(NULL) {
-    assert(_output_registers.length() <= 1
-           || (_output_registers.length() == 2 && !_output_registers.at(1)->is_valid()), "no multi-reg returns");
   }
 
   void generate();
@@ -195,10 +197,11 @@ RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
                                                       BasicType ret_bt,
                                                       int shadow_space_bytes,
                                                       const GrowableArray<VMReg>& input_registers,
-                                                      const GrowableArray<VMReg>& output_registers) {
+                                                      const GrowableArray<VMReg>& output_registers,
+                                                      bool is_imr) {
   int locs_size  = 64;
   CodeBuffer code("nep_invoker_blob", native_invoker_code_size, locs_size);
-  NativeInvokerGenerator g(&code, signature, num_args, ret_bt, shadow_space_bytes, input_registers, output_registers);
+  NativeInvokerGenerator g(&code, signature, num_args, ret_bt, shadow_space_bytes, input_registers, output_registers, is_imr);
   g.generate();
   code.log_section_sizes("nep_invoker_blob");
 
@@ -236,9 +239,10 @@ void NativeInvokerGenerator::generate() {
   };
 
   Register input_addr_reg = tmp1;
+  Register imr_addr_reg = tmp2;
   Register shuffle_reg = r19;
   JavaCallConv in_conv;
-  DowncallNativeCallConv out_conv(_input_registers, input_addr_reg->as_VMReg());
+  DowncallNativeCallConv out_conv(_input_registers, input_addr_reg->as_VMReg(), _is_imr, imr_addr_reg->as_VMReg());
   ArgumentShuffle arg_shuffle(_signature, _num_args, _signature, _num_args, &in_conv, &out_conv, shuffle_reg->as_VMReg());
 
 #ifdef ASSERT
@@ -250,13 +254,31 @@ void NativeInvokerGenerator::generate() {
   }
 #endif
 
+  int allocated_frame_size = 0;
+  if (_is_imr) {
+    allocated_frame_size += 8; // for address spill
+  }
+  allocated_frame_size += arg_shuffle.out_arg_stack_slots() <<LogBytesPerInt;
+  assert(_shadow_space_bytes == 0, "not expecting shadow space on AArch64");
+
+  int imr_addr_sp_offset = -1;
+  if (_is_imr) {
+     // in sync with the above
+     imr_addr_sp_offset = allocated_frame_size - 8;
+  }
+
   RegSpiller out_reg_spiller(_output_registers);
   int spill_offset = 0;
 
-  assert(_shadow_space_bytes == 0, "not expecting shadow space on AArch64");
+  if (!_is_imr) {
+    // spill area can be shared with the above, so we take the max of the 2
+    allocated_frame_size = out_reg_spiller.spill_size_bytes() > allocated_frame_size
+      ? out_reg_spiller.spill_size_bytes()
+      : allocated_frame_size;
+  }
+
   _framesize = align_up(framesize
-    + (out_reg_spiller.spill_size_bytes() >> LogBytesPerInt)
-    + arg_shuffle.out_arg_stack_slots(), 4);
+    + (allocated_frame_size >> LogBytesPerInt), 4);
   assert(is_even(_framesize/2), "sp not 16-byte aligned");
 
   _oop_maps  = new OopMapSet();
@@ -283,24 +305,44 @@ void NativeInvokerGenerator::generate() {
 
   __ block_comment("{ argument shuffle");
   arg_shuffle.generate(_masm, shuffle_reg->as_VMReg(), 0, _shadow_space_bytes);
+  if (_is_imr) {
+    assert(imr_addr_sp_offset != -1, "no imr addr spill");
+    __ str(imr_addr_reg, Address(sp, imr_addr_sp_offset));
+  }
   __ block_comment("} argument shuffle");
 
   __ blr(input_addr_reg);
 
-  // Unpack native results.
-  switch (_ret_bt) {
-    case T_BOOLEAN: __ c2bool(r0);                     break;
-    case T_CHAR   : __ ubfx(r0, r0, 0, 16);            break;
-    case T_BYTE   : __ sbfx(r0, r0, 0, 8);             break;
-    case T_SHORT  : __ sbfx(r0, r0, 0, 16);            break;
-    case T_INT    : __ sbfx(r0, r0, 0, 32);            break;
-    case T_DOUBLE :
-    case T_FLOAT  :
-      // Result is in v0 we'll save as needed
-      break;
-    case T_VOID: break;
-    case T_LONG: break;
-    default       : ShouldNotReachHere();
+  if (!_is_imr) {
+    // Unpack native results.
+    switch (_ret_bt) {
+      case T_BOOLEAN: __ c2bool(r0);                     break;
+      case T_CHAR   : __ ubfx(r0, r0, 0, 16);            break;
+      case T_BYTE   : __ sbfx(r0, r0, 0, 8);             break;
+      case T_SHORT  : __ sbfx(r0, r0, 0, 16);            break;
+      case T_INT    : __ sbfx(r0, r0, 0, 32);            break;
+      case T_DOUBLE :
+      case T_FLOAT  :
+	// Result is in v0 we'll save as needed
+	break;
+      case T_VOID: break;
+      case T_LONG: break;
+      default       : ShouldNotReachHere();
+    }
+  } else {
+    assert(imr_addr_sp_offset != -1, "no imr addr spill");
+    __ ldr(tmp1, Address(sp, imr_addr_sp_offset));
+    int offset = 0;
+    for (int i = 0; i < _output_registers.length(); i++) {
+      VMReg reg = _output_registers.at(i);
+      if (reg->is_Register()) {
+        __ str(reg->as_Register(), Address(tmp1, offset));
+        offset += 8;
+      } else if(reg->is_FloatRegister()) {
+        __ strd(reg->as_FloatRegister(), Address(tmp1, offset));
+        offset += 16;
+      }
+    }
   }
 
   __ mov(tmp1, _thread_in_native_trans);
@@ -345,15 +387,19 @@ void NativeInvokerGenerator::generate() {
   __ block_comment("{ L_safepoint_poll_slow_path");
   __ bind(L_safepoint_poll_slow_path);
 
-  // Need to save the native result registers around any runtime calls.
-  out_reg_spiller.generate_spill(_masm, spill_offset);
+  if (!_is_imr) {
+    // Need to save the native result registers around any runtime calls.
+    out_reg_spiller.generate_spill(_masm, spill_offset);
+  }
 
   __ mov(c_rarg0, rthread);
   assert(frame::arg_reg_save_area_bytes == 0, "not expecting frame reg save area");
   __ lea(tmp1, RuntimeAddress(CAST_FROM_FN_PTR(address, JavaThread::check_special_condition_for_native_trans)));
   __ blr(tmp1);
 
-  out_reg_spiller.generate_fill(_masm, spill_offset);
+  if (!_is_imr) {
+    out_reg_spiller.generate_fill(_masm, spill_offset);
+  }
 
   __ b(L_after_safepoint_poll);
   __ block_comment("} L_safepoint_poll_slow_path");
@@ -363,11 +409,15 @@ void NativeInvokerGenerator::generate() {
   __ block_comment("{ L_reguard");
   __ bind(L_reguard);
 
-  out_reg_spiller.generate_spill(_masm, spill_offset);
+  if (!_is_imr) {
+    out_reg_spiller.generate_spill(_masm, spill_offset);
+  }
 
   __ rt_call(CAST_FROM_FN_PTR(address, SharedRuntime::reguard_yellow_pages), tmp1);
 
-  out_reg_spiller.generate_fill(_masm, spill_offset);
+  if (!_is_imr) {
+    out_reg_spiller.generate_fill(_masm, spill_offset);
+  }
 
   __ b(L_after_reguard);
 
