@@ -106,7 +106,7 @@ public class PanamaPoint extends CLayouts implements AutoCloseable {
 
     public double distanceToPtrs(PanamaPoint other) {
         try {
-            return (double) MH_distance_ptrs.invokeExact((Addressable)segment.address(), (Addressable)other.segment.address());
+            return (double) MH_distance_ptrs.invokeExact((Addressable)segment, (Addressable)other.segment);
         } catch (Throwable throwable) {
             throw new InternalError(throwable);
         }
