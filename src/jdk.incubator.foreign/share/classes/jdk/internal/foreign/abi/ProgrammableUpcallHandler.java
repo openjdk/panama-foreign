@@ -115,10 +115,7 @@ public class ProgrammableUpcallHandler {
         }
 
         long entryPoint;
-        boolean usesStackArgs = argMoveBindingsStream(callingSequence)
-                .map(Binding.VMLoad::storage)
-                .anyMatch(s -> abi.arch.isStackType(s.type()));
-        if (USE_INTRINSICS && isSimple && !usesStackArgs && supportsOptimizedUpcalls()) {
+        if (USE_INTRINSICS && isSimple && supportsOptimizedUpcalls()) {
             checkPrimitive(doBindings.type());
             doBindings = insertArguments(exactInvoker(doBindings.type()), 0, doBindings);
             VMStorage[] args = Arrays.stream(argMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
