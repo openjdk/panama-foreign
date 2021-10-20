@@ -37,14 +37,12 @@ public:
   virtual int calling_convention(BasicType* sig_bt, VMRegPair* regs, int num_args) const = 0;
 };
 
-struct CallRegs : public CallConvClosure {
+struct CallRegs {
   VMReg* _arg_regs;
   int _args_length;
 
   VMReg* _ret_regs;
   int _rets_length;
-
-  int calling_convention(BasicType* sig_bt, VMRegPair* regs, int num_args) const override;
 };
 
 class ForeignGlobals {
@@ -103,17 +101,16 @@ public:
   }
 };
 
-class DowncallNativeCallConv : public CallConvClosure {
-  const GrowableArray<VMReg>& _input_regs;
-  VMReg _input_addr_reg;
-  bool _is_imr;
-  VMReg _imr_reg;
+class NativeCallConv : public CallConvClosure {
+  const VMReg* _input_regs;
+  int _input_regs_length;
 public:
-  DowncallNativeCallConv(const GrowableArray<VMReg>& input_regs, VMReg input_addr_reg, bool is_imr, VMReg imr_reg)
-   : _input_regs(input_regs),
-   _input_addr_reg(input_addr_reg),
-   _is_imr(is_imr),
-   _imr_reg(imr_reg) {}
+  NativeCallConv(const VMReg* input_regs, int input_regs_length) :
+    _input_regs(input_regs),
+    _input_regs_length(input_regs_length) {
+  }
+  NativeCallConv(const GrowableArray<VMReg>& input_regs)
+   : NativeCallConv(input_regs.data(), input_regs.length()) {}
 
   int calling_convention(BasicType* sig_bt, VMRegPair* out_regs, int num_args) const override;
 };

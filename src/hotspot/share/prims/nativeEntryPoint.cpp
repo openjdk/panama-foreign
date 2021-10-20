@@ -41,51 +41,27 @@ JNI_END
 JNI_ENTRY(jlong, NEP_makeInvoker(JNIEnv* env, jclass _unused, jobject method_type, jint shadow_space_bytes,
                                  jlongArray arg_moves, jlongArray ret_moves, jboolean is_imr))
   ResourceMark rm;
-
-  // Note: the method_type's first param is the target address, but we don't have
-  // and entry for that in the arg_moves array.
-  // we need an entry for that in the basic type at least, so we can later
-  // generate the right argument shuffle
-
   oop type = JNIHandles::resolve(method_type);
-  // does not contain entry for address (or IMR address):
   typeArrayOop arg_moves_oop = oop_cast<typeArrayOop>(JNIHandles::resolve(arg_moves));
   typeArrayOop ret_moves_oop = oop_cast<typeArrayOop>(JNIHandles::resolve(ret_moves));
-  // contains address (and maybe IMR address):
   int pcount = java_lang_invoke_MethodType::ptype_count(type);
   int pslots = java_lang_invoke_MethodType::ptype_slot_count(type);
-  // contains address (and maybe IMR address):
   BasicType* basic_type = NEW_RESOURCE_ARRAY(BasicType, pslots);
-  // address
-  basic_type[0] = T_LONG;
-  basic_type[1] = T_VOID;
 
-  // does not contain entry for address:
-  GrowableArray<VMReg> input_regs(pslots);
-
-  int bt_idx = 2; // skip address
-  int start_idx = 1;
-
-  if (is_imr) {
-    // imr address
-    basic_type[2] = T_LONG;
-    basic_type[3] = T_VOID;
-    bt_idx += 2; // skip imr address
-    start_idx++;
-  }
-
-  for (int i = start_idx; i < pcount; i++) {
+  GrowableArray<VMReg> input_regs(pcount);
+  int bt_idx = 0;
+  for (int i = 0; i < pcount; i++) {
     oop type_oop = java_lang_invoke_MethodType::ptype(type, i);
     assert(java_lang_Class::is_primitive(type_oop), "Only primitives expected");
     BasicType bt = java_lang_Class::primitive_type(type_oop);
-    basic_type[bt_idx] = bt;
-    input_regs.push(VMRegImpl::as_VMReg(arg_moves_oop->long_at(i - start_idx))); // address missing in moves
-    bt_idx++;
+    basic_type[bt_idx++] = bt;
+    input_regs.push(VMRegImpl::as_VMReg(arg_moves_oop->long_at(i)));
 
     if (bt == BasicType::T_DOUBLE || bt == BasicType::T_LONG) {
-      basic_type[bt_idx] = T_VOID;
-      input_regs.push(VMRegImpl::Bad()); // half of double/long
-      bt_idx++;
+      basic_type[bt_idx++] = T_VOID;
+      // we only need these in the basic type
+      // NativeCallConv ignores them, but they are needed
+      // for JavaCallConv
     }
   }
 

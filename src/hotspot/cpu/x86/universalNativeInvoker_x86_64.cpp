@@ -83,13 +83,6 @@ public:
   OopMapSet* oop_maps() const {
     return _oop_maps;
   }
-
-private:
-#ifdef ASSERT
-bool target_uses_register(VMReg reg) {
-  return _input_registers.contains(reg) || _output_registers.contains(reg);
-}
-#endif
 };
 
 static const int native_invoker_code_size = 1024;
@@ -122,10 +115,6 @@ RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
 }
 
 void NativeInvokerGenerator::generate() {
-  assert(!target_uses_register(rscratch1->as_VMReg()), "Register conflict");
-  assert(!target_uses_register(rscratch2->as_VMReg()), "Register conflict");
-  assert(!target_uses_register(r15_thread->as_VMReg()), "Register conflict");
-
   enum layout {
     rbp_off,
     rbp_off2,
@@ -142,8 +131,7 @@ void NativeInvokerGenerator::generate() {
   Register imr_addr_reg = rscratch2;
   Register shufffle_reg = rbx;
   JavaCallConv in_conv;
-  // rscratch1 is used for the target address, rbx is used to break
-  DowncallNativeCallConv out_conv(_input_registers, input_addr_reg->as_VMReg(), _is_imr, imr_addr_reg->as_VMReg());
+  NativeCallConv out_conv(_input_registers);
   ArgumentShuffle arg_shuffle(_signature, _num_args, _signature, _num_args, &in_conv, &out_conv, shufffle_reg->as_VMReg());
 
 #ifdef ASSERT
@@ -216,6 +204,7 @@ void NativeInvokerGenerator::generate() {
   __ block_comment("} argument shuffle");
 
   __ call(input_addr_reg);
+  // this call is assumed not to have killed r15_thread
 
   if (!_is_imr) {
     // FIXME: this assumes we return in rax/xmm0, which might not be the case

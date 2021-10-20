@@ -84,13 +84,6 @@ public:
   OopMapSet* oop_maps() const {
     return _oop_maps;
   }
-
-private:
-#ifdef ASSERT
-  bool target_uses_register(VMReg reg) {
-    return _input_registers.contains(reg) || _output_registers.contains(reg);
-  }
-#endif
 };
 
 static const int native_invoker_code_size = 1024;
@@ -123,13 +116,6 @@ RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
 }
 
 void NativeInvokerGenerator::generate() {
-  // we can't use rscratch1 because it is r8, and used by the ABI
-  Register tmp1 = r9;
-  Register tmp2 = r10;
-  assert(!target_uses_register(tmp1->as_VMReg()), "conflict");
-  assert(!target_uses_register(tmp2->as_VMReg()), "conflict");
-  assert(!target_uses_register(rthread->as_VMReg()), "conflict");
-
   enum layout {
     rfp_off,
     rfp_off2,
@@ -141,11 +127,15 @@ void NativeInvokerGenerator::generate() {
     // out arg area (e.g. for stack args)
   };
 
+  // we can't use rscratch1 because it is r8, and used by the ABI
+  Register tmp1 = r9;
+  Register tmp2 = r10;
+
   Register input_addr_reg = tmp1;
   Register imr_addr_reg = tmp2;
   Register shuffle_reg = r19;
   JavaCallConv in_conv;
-  DowncallNativeCallConv out_conv(_input_registers, input_addr_reg->as_VMReg(), _is_imr, imr_addr_reg->as_VMReg());
+  NativeCallConv out_conv(_input_registers);
   ArgumentShuffle arg_shuffle(_signature, _num_args, _signature, _num_args, &in_conv, &out_conv, shuffle_reg->as_VMReg());
 
 #ifdef ASSERT
@@ -213,6 +203,7 @@ void NativeInvokerGenerator::generate() {
   __ block_comment("} argument shuffle");
 
   __ blr(input_addr_reg);
+  // this call is assumed not to have killed rthread
 
   if (!_is_imr) {
     // Unpack native results.

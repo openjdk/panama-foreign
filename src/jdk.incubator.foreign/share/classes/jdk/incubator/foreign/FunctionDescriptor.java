@@ -124,10 +124,25 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
      * @return the new function descriptor.
      */
     public FunctionDescriptor withAppendedArgumentLayouts(MemoryLayout... addedLayouts) {
+        return withInsertedArgumentLayouts(argLayouts.length, addedLayouts);
+    }
+
+    /**
+     * Create a new function descriptor with the given argument layouts inserted at the given index, into the argument
+     * layout array of this function descriptor.
+     * @param index the index at which to insert the arguments
+     * @param addedLayouts the argument layouts to append.
+     * @return the new function descriptor.
+     * @throws IllegalArgumentException if {@code index < 0 || index > argumentLayouts().size()}.
+     */
+    public FunctionDescriptor withInsertedArgumentLayouts(int index, MemoryLayout... addedLayouts) {
         Objects.requireNonNull(addedLayouts);
         Arrays.stream(addedLayouts).forEach(Objects::requireNonNull);
+        if (index < 0 || index > argLayouts.length)
+            throw new IllegalArgumentException("Index out of bounds: " + index);
         MemoryLayout[] newLayouts = Arrays.copyOf(argLayouts, argLayouts.length + addedLayouts.length);
-        System.arraycopy(addedLayouts, 0, newLayouts, argLayouts.length, addedLayouts.length);
+        System.arraycopy(newLayouts, index, newLayouts, index + addedLayouts.length, argLayouts.length - index);
+        System.arraycopy(addedLayouts, 0, newLayouts, index, addedLayouts.length);
         return new FunctionDescriptor(resLayout, newLayouts);
     }
 

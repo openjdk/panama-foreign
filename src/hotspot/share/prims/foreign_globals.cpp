@@ -100,37 +100,6 @@ ForeignGlobals::ForeignGlobals() {
   CallConvOffsets.ret_regs_offset = field_offset(k_CC, "retRegs", symVMSArray);
 }
 
-int CallRegs::calling_convention(BasicType* sig_bt, VMRegPair *regs, int num_args) const {
-  int src_pos = 0;
-  for (int i = 0; i < num_args; i++) {
-    switch (sig_bt[i]) {
-      case T_BOOLEAN:
-      case T_CHAR:
-      case T_BYTE:
-      case T_SHORT:
-      case T_INT:
-      case T_FLOAT:
-        assert(src_pos < _args_length, "oob");
-        regs[i].set1(_arg_regs[src_pos++]);
-        break;
-      case T_LONG:
-      case T_DOUBLE:
-        assert((i + 1) < num_args && sig_bt[i + 1] == T_VOID, "expecting half");
-        assert(src_pos < _args_length, "oob");
-        regs[i].set2(_arg_regs[src_pos++]);
-        break;
-      case T_VOID: // Halves of longs and doubles
-        assert(i != 0 && (sig_bt[i - 1] == T_LONG || sig_bt[i - 1] == T_DOUBLE), "expecting half");
-        regs[i].set_bad();
-        break;
-      default:
-        ShouldNotReachHere();
-        break;
-    }
-  }
-  return 0; // assumed unused
-}
-
 int RegSpiller::compute_spill_area(const VMReg* regs, int num_regs) {
   int result_size = 0;
   for (int i = 0; i < num_regs; i++) {
@@ -174,21 +143,10 @@ void ArgumentShuffle::print_on(outputStream* os) const {
   os->print_cr("}");
 }
 
-int DowncallNativeCallConv::calling_convention(BasicType* sig_bt, VMRegPair* out_regs, int num_args) const {
-  out_regs[0].set2(_input_addr_reg); // address
-  out_regs[1].set_bad(); // upper half
-
-  int bt_start_idx = 2; // skip address (2)
-
-  if (_is_imr) {
-    out_regs[2].set2(_imr_reg); // address
-    out_regs[3].set_bad(); // upper half
-    bt_start_idx += 2;
-  }
-
+int NativeCallConv::calling_convention(BasicType* sig_bt, VMRegPair* out_regs, int num_args) const {
   int src_pos = 0;
   int stk_slots = 0;
-  for (int i = bt_start_idx; i < num_args; i++) {
+  for (int i = 0; i < num_args; i++) {
     switch (sig_bt[i]) {
       case T_BOOLEAN:
       case T_CHAR:
@@ -196,7 +154,8 @@ int DowncallNativeCallConv::calling_convention(BasicType* sig_bt, VMRegPair* out
       case T_SHORT:
       case T_INT:
       case T_FLOAT: {
-        VMReg reg = _input_regs.at(src_pos++);
+        assert(src_pos < _input_regs_length, "oob");
+        VMReg reg = _input_regs[src_pos++];
         out_regs[i].set1(reg);
         if (reg->is_stack())
           stk_slots += 2;
@@ -205,9 +164,9 @@ int DowncallNativeCallConv::calling_convention(BasicType* sig_bt, VMRegPair* out
       case T_LONG:
       case T_DOUBLE: {
         assert((i + 1) < num_args && sig_bt[i + 1] == T_VOID, "expecting half");
-        VMReg reg = _input_regs.at(src_pos);
+        assert(src_pos < _input_regs_length, "oob");
+        VMReg reg = _input_regs[src_pos++];
         out_regs[i].set2(reg);
-        src_pos += 2; // skip BAD as well
         if (reg->is_stack())
           stk_slots += 2;
         break;

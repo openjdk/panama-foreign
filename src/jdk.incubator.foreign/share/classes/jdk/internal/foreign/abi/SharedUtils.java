@@ -396,11 +396,15 @@ public class SharedUtils {
 
         // downcalls get the leading NativeSymbol/SegmentAllocator param as well
         if (!upcall) {
-            closer = collectArguments(closer, insertPos++, reachabilityFenceHandle(NativeSymbol.class));
-            closer = dropArguments(closer, insertPos++, SegmentAllocator.class); // (Throwable, V?, NativeSymbol, SegmentAllocator) -> V/void
+            closer = dropArguments(closer, insertPos++, SegmentAllocator.class); // (Throwable, V?, SegmentAllocator, NativeSymbol) -> V/void
         }
 
-        closer = collectArguments(closer, insertPos++, MH_CLOSE_CONTEXT); // (Throwable, V?, NativeSymbol?, BindingContext) -> V/void
+        closer = collectArguments(closer, insertPos++, MH_CLOSE_CONTEXT); // (Throwable, V?, SegmentAllocator?, BindingContext) -> V/void
+
+        if (!upcall) {
+            // FIXME is this still needed?
+            closer = collectArguments(closer, insertPos, reachabilityFenceHandle(NativeSymbol.class));
+        }
 
         MethodHandle contextFactory;
 
@@ -557,6 +561,14 @@ public class SharedUtils {
         if (exceptions != null && exceptions.length != 0) {
             throw new IllegalArgumentException("Target handle may throw exceptions: " + Arrays.toString(exceptions));
         }
+    }
+
+    public static MethodHandle maybeInsertAllocator(MethodHandle handle) {
+        if (!handle.type().returnType().equals(MemorySegment.class)) {
+            // not returning segment, just insert a throwing allocator
+            handle = insertArguments(handle, 1, THROWING_ALLOCATOR);
+        }
+        return handle;
     }
 
     // lazy init MH_ALLOC and MH_FREE handles

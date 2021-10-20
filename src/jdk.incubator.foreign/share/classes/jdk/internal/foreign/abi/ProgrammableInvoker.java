@@ -28,7 +28,6 @@ import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeSymbol;
-import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.access.JavaLangInvokeAccess;
@@ -45,16 +44,14 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import static java.lang.invoke.MethodHandles.collectArguments;
 import static java.lang.invoke.MethodHandles.dropArguments;
-import static java.lang.invoke.MethodHandles.filterArguments;
+import static java.lang.invoke.MethodHandles.foldArguments;
 import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodType.methodType;
-import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
 /**
  * This class implements native call invocation through a so called 'universal adapter'. A universal adapter takes
@@ -68,10 +65,9 @@ public class ProgrammableInvoker {
     private static final JavaLangInvokeAccess JLIA = SharedSecrets.getJavaLangInvokeAccess();
 
     private static final MethodHandle MH_INVOKE_INTERP_BINDINGS;
-    private static final MethodHandle MH_SYM_TO_LONG;
-    private static final MethodHandle MH_SEG_TO_LONG;
     private static final MethodHandle MH_WRAP_ALLOCATOR;
     private static final MethodHandle MH_ALLOCATE_IMR_SEGMENT;
+    private static final MethodHandle MH_CHECK_SYMBOL;
 
     private static final MethodHandle EMPTY_OBJECT_ARRAY_HANDLE = MethodHandles.constant(Object[].class, new Object[0]);
 
@@ -79,12 +75,13 @@ public class ProgrammableInvoker {
         try {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
             MH_INVOKE_INTERP_BINDINGS = lookup.findVirtual(ProgrammableInvoker.class, "invokeInterpBindings",
-                    methodType(Object.class, NativeSymbol.class, SegmentAllocator.class, Object[].class, InvocationData.class));
+                    methodType(Object.class, SegmentAllocator.class, Object[].class, InvocationData.class));
             MH_WRAP_ALLOCATOR = lookup.findStatic(Binding.Context.class, "ofAllocator",
                     methodType(Binding.Context.class, SegmentAllocator.class));
-            MH_SYM_TO_LONG = lookup.findStatic(ProgrammableInvoker.class, "unboxTargetAddress", methodType(long.class, NativeSymbol.class));
-            MH_SEG_TO_LONG = lookup.findStatic(ProgrammableInvoker.class, "unboxSegment", methodType(long.class, MemorySegment.class));
-            MH_ALLOCATE_IMR_SEGMENT = lookup.findStatic(ProgrammableInvoker.class, "allocateIMRSegment", methodType(MemorySegment.class, Binding.Context.class, long.class));
+            MH_ALLOCATE_IMR_SEGMENT = lookup.findStatic(ProgrammableInvoker.class, "allocateIMRSegment",
+                    methodType(MemorySegment.class, Binding.Context.class, long.class));
+            MH_CHECK_SYMBOL = lookup.findStatic(SharedUtils.class, "checkSymbol",
+                    methodType(void.class, NativeSymbol.class));
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -94,6 +91,7 @@ public class ProgrammableInvoker {
 
     private final CallingSequence callingSequence;
 
+    private final boolean isImr;
     private final long imrSize;
     private final long allocationSize;
 
@@ -102,15 +100,18 @@ public class ProgrammableInvoker {
         this.callingSequence = callingSequence;
 
         List<Binding.VMLoad> retMoves = retMoveBindingsStream(callingSequence).toList();
-        imrSize = retMoves.size() > 1
-                ? retMoves.stream()
-                    .map(Binding.VMLoad::storage)
-                    .map(VMStorage::type)
-                    .mapToInt(abi.arch::typeSize)
-                    .sum()
-                : 0;
+        isImr = retMoves.size() > 1;
+        imrSize = isImr ? computeImrSize(abi, retMoves) : 0;
 
         this.allocationSize = SharedUtils.bufferCopySize(callingSequence) + imrSize;
+    }
+
+    private static long computeImrSize(ABIDescriptor abi, List<Binding.VMLoad> retMoves) {
+        return retMoves.stream()
+                .map(Binding.VMLoad::storage)
+                .map(VMStorage::type)
+                .mapToLong(abi.arch::typeSize)
+                .sum();
     }
 
     public MethodHandle getBoundMethodHandle() {
@@ -118,7 +119,6 @@ public class ProgrammableInvoker {
         Class<?>[] argMoveTypes = Arrays.stream(argMoves).map(Binding.VMStore::type).toArray(Class<?>[]::new);
 
         Binding.VMLoad[] retMoves = retMoveBindings(callingSequence);
-        boolean isImr = retMoves.length > 1;
         Class<?> returnType = retMoves.length == 0
                 ? void.class
                 : retMoves.length == 1
@@ -126,10 +126,6 @@ public class ProgrammableInvoker {
                     : void.class;
 
         MethodType leafType = methodType(returnType, argMoveTypes);
-        if (isImr) {
-            leafType = leafType.insertParameterTypes(0, long.class);
-        }
-        MethodType leafTypeWithAddress = leafType.insertParameterTypes(0, long.class);
 
         NativeEntryPoint nep = NativeEntryPoint.make(
             "native_invoker_" + leafType.descriptorString(),
@@ -137,39 +133,37 @@ public class ProgrammableInvoker {
             toStorageArray(argMoves),
             toStorageArray(retMoves),
             !callingSequence.isTrivial(),
-            leafTypeWithAddress,
+            leafType,
             isImr
         );
         MethodHandle handle = JLIA.nativeMethodHandle(nep);
 
-        handle = filterArguments(handle, 0, MH_SYM_TO_LONG);
-        if (isImr) {
-            handle = filterArguments(handle, 1, MH_SEG_TO_LONG);
-        }
-
         if (USE_SPEC) {
-            handle = specialize(handle, isImr);
+            handle = specialize(handle);
          } else {
             Map<VMStorage, Integer> argIndexMap = SharedUtils.indexMap(argMoves);
             Map<VMStorage, Integer> retIndexMap = SharedUtils.indexMap(retMoves);
 
-            InvocationData invData = new InvocationData(handle, argIndexMap, retIndexMap, isImr, imrSize);
-            handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 3, invData);
-            MethodHandle collectorInterp = makeCollectorHandle(callingSequence.methodType());
-            handle = collectArguments(handle, 2, collectorInterp);
-            handle = handle.asType(handle.type().changeReturnType(callingSequence.methodType().returnType()));
+            InvocationData invData = new InvocationData(handle, argIndexMap, retIndexMap);
+            handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 2, invData);
+            MethodType interpType = callingSequence.methodType();
+            if (isImr) {
+                // IMR segment is supplied by invokeInterpBindings
+                assert interpType.parameterType(0) == MemorySegment.class;
+                interpType.dropParameterTypes(0, 1);
+            }
+            MethodHandle collectorInterp = makeCollectorHandle(interpType);
+            handle = collectArguments(handle, 1, collectorInterp);
+            handle = handle.asType(handle.type().changeReturnType(interpType.returnType()));
          }
 
+        assert handle.type().parameterType(0) == SegmentAllocator.class;
+        assert handle.type().parameterType(1) == NativeSymbol.class;
+        handle = foldArguments(handle, 1, MH_CHECK_SYMBOL);
+
+        handle = SharedUtils.swapArguments(handle, 0, 1); // normalize parameter order
+
         return handle;
-    }
-
-    private static long unboxTargetAddress(NativeSymbol addr) {
-        SharedUtils.checkSymbol(addr);
-        return addr.address().toRawLongValue();
-    }
-
-    private static long unboxSegment(MemorySegment seg) {
-        return seg.address().toRawLongValue();
     }
 
     private static MemorySegment allocateIMRSegment(Binding.Context context, long size) {
@@ -205,19 +199,13 @@ public class ProgrammableInvoker {
         return Arrays.stream(moves).map(Binding.Move::storage).toArray(VMStorage[]::new);
     }
 
-    private MethodHandle specialize(MethodHandle leafHandle, boolean isImr) {
+    private MethodHandle specialize(MethodHandle leafHandle) {
         MethodType highLevelType = callingSequence.methodType();
 
-        int argInsertPos = 1;
-        int argContextPos = 1;
-
-        if (isImr) {
-            argInsertPos++;
-            argContextPos++;
-        }
+        int argInsertPos = 0;
+        int argContextPos = 0;
 
         MethodHandle specializedHandle = dropArguments(leafHandle, argContextPos, Binding.Context.class);
-
         for (int i = 0; i < highLevelType.parameterCount(); i++) {
             List<Binding> bindings = callingSequence.argumentBindings(i);
             argInsertPos += bindings.stream().filter(Binding.VMStore.class::isInstance).count() + 1;
@@ -276,26 +264,23 @@ public class ProgrammableInvoker {
                     }
                 }
             }
-            // (R, Context (ret)) -> (MemorySegment?, Context (ret), NativeSymbol, MemorySegment?, Context (arg), ...)
+            // (R, Context (ret)) -> (MemorySegment?, Context (ret), MemorySegment?, Context (arg), ...)
             specializedHandle = MethodHandles.collectArguments(returnFilter, retInsertPos, specializedHandle);
             if (isImr) {
-                // (MemorySegment, Context (ret), NativeSymbol, MemorySegment, Context (arg), ...) -> (MemorySegment, Context (ret), NativeSymbol, Context (arg), ...)
+                // (MemorySegment, Context (ret), Context (arg), MemorySegment,  ...) -> (MemorySegment, Context (ret), Context (arg), ...)
                 specializedHandle = SharedUtils.mergeArguments(specializedHandle, retImrSegPos, retImrSegPos + 3);
 
                 // allocate the IMR memory segment from the binding context, and then merge the 2 allocator args
                 MethodHandle imrAllocHandle = MethodHandles.insertArguments(MH_ALLOCATE_IMR_SEGMENT, 1, imrSize);
-                // (MemorySegment, Context (ret), NativeSymbol, Context (arg), ...) -> (Context (arg), Context (ret), NativeSymbol, Context (arg), ...)
+                // (MemorySegment, Context (ret), Context (arg), ...) -> (Context (arg), Context (ret), Context (arg), ...)
                 specializedHandle = MethodHandles.filterArguments(specializedHandle, retImrSegPos, imrAllocHandle);
-                // (Context (arg), Context (ret), NativeSymbol, Context (arg), ...) -> (Context (ret), NativeSymbol, Context (arg), ...)
+                // (Context (arg), Context (ret), Context (arg), ...) -> (Context (ret), Context (arg), ...)
                 specializedHandle = SharedUtils.mergeArguments(specializedHandle, argContextPos + 1, retImrSegPos); // +1 to skip return context
-                argContextPos--; // update this for wrapWithAllocator call below
             }
-            // (Context (ret), NativeSymbol, Context (arg), ...) -> (SegmentAllocator, NativeSymbol, Context (arg), ...)
+            // (Context (ret), Context (arg), ...) -> (SegmentAllocator, Context (arg), ...)
             specializedHandle = MethodHandles.filterArguments(specializedHandle, 0, MH_WRAP_ALLOCATOR);
-            // (SegmentAllocator, NativeSymbol, Context (arg), ...) -> (NativeSymbol, SegmentAllocator, Context (arg), ...)
-            specializedHandle = SharedUtils.swapArguments(specializedHandle, 0, 1); // normalize parameter order
         } else {
-            specializedHandle = MethodHandles.dropArguments(specializedHandle, 1, SegmentAllocator.class);
+            specializedHandle = MethodHandles.dropArguments(specializedHandle, 0, SegmentAllocator.class);
         }
 
         // now bind the internal context parameter
@@ -305,9 +290,9 @@ public class ProgrammableInvoker {
         return specializedHandle;
     }
 
-    private record InvocationData(MethodHandle leaf, Map<VMStorage, Integer> argIndexMap, Map<VMStorage, Integer> retIndexMap, boolean isImr, long imrSize) {}
+    private record InvocationData(MethodHandle leaf, Map<VMStorage, Integer> argIndexMap, Map<VMStorage, Integer> retIndexMap) {}
 
-    Object invokeInterpBindings(NativeSymbol symbol, SegmentAllocator allocator, Object[] args, InvocationData invData) throws Throwable {
+    Object invokeInterpBindings(SegmentAllocator allocator, Object[] args, InvocationData invData) throws Throwable {
         Binding.Context unboxContext = allocationSize != 0
                 ? Binding.Context.ofBoundedAllocator(allocationSize)
                 : Binding.Context.DUMMY;
@@ -316,18 +301,19 @@ public class ProgrammableInvoker {
 
             // do argument processing, get Object[] as result
             Object[] leafArgs = new Object[invData.leaf.type().parameterCount()];
-            leafArgs[0] = symbol; // symbol
-            int argOffset = 1;
-            if (invData.isImr) {
-                imrSegment = unboxContext.allocator().allocate(invData.imrSize);
-                leafArgs[argOffset++] = imrSegment;
+            if (isImr) {
+                // in case of IMR, we supply the segment (argument array does not contain it)
+                Object[] prefixedArgs = new Object[args.length + 1];
+                imrSegment = unboxContext.allocator().allocate(imrSize);
+                prefixedArgs[0] = imrSegment;
+                System.arraycopy(args, 0, prefixedArgs, 1, args.length);
+                args = prefixedArgs;
             }
-            int finalArgOffset = argOffset;
             for (int i = 0; i < args.length; i++) {
                 Object arg = args[i];
                 BindingInterpreter.unbox(arg, callingSequence.argumentBindings(i),
                         (storage, type, value) -> {
-                            leafArgs[invData.argIndexMap.get(storage) + finalArgOffset] = value;
+                            leafArgs[invData.argIndexMap.get(storage)] = value;
                         }, unboxContext);
             }
 
@@ -336,7 +322,7 @@ public class ProgrammableInvoker {
 
             // return value processing
             if (o == null) {
-                if (!invData.isImr) {
+                if (!isImr) {
                     return null;
                 }
                 MemorySegment finalImrSegment = imrSegment;
