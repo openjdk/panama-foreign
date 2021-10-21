@@ -214,8 +214,8 @@ void NativeInvokerGenerator::generate() {
       case T_INT    : __ sbfx(r0, r0, 0, 32);            break;
       case T_DOUBLE :
       case T_FLOAT  :
-	// Result is in v0 we'll save as needed
-	break;
+        // Result is in v0 we'll save as needed
+        break;
       case T_VOID: break;
       case T_LONG: break;
       default       : ShouldNotReachHere();
