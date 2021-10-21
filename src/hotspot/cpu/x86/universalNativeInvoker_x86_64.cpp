@@ -38,8 +38,8 @@ class NativeInvokerGenerator : public StubCodeGenerator {
   BasicType* _signature;
   int _num_args;
   BasicType _ret_bt;
-  int _shadow_space_bytes;
 
+  const ABIDescriptor& _abi;
   const GrowableArray<VMReg>& _input_registers;
   const GrowableArray<VMReg>& _output_registers;
 
@@ -53,7 +53,7 @@ public:
                          BasicType* signature,
                          int num_args,
                          BasicType ret_bt,
-                         int shadow_space_bytes,
+                         const ABIDescriptor& abi,
                          const GrowableArray<VMReg>& input_registers,
                          const GrowableArray<VMReg>& output_registers,
                          bool is_imr)
@@ -61,7 +61,7 @@ public:
      _signature(signature),
      _num_args(num_args),
      _ret_bt(ret_bt),
-     _shadow_space_bytes(shadow_space_bytes),
+     _abi(abi),
      _input_registers(input_registers),
      _output_registers(output_registers),
      _is_imr(is_imr),
@@ -90,13 +90,13 @@ static const int native_invoker_code_size = 1024;
 RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
                                                       int num_args,
                                                       BasicType ret_bt,
-                                                      int shadow_space_bytes,
+                                                      const ABIDescriptor& abi,
                                                       const GrowableArray<VMReg>& input_registers,
                                                       const GrowableArray<VMReg>& output_registers,
                                                       bool is_imr) {
   int locs_size  = 64;
   CodeBuffer code("nep_invoker_blob", native_invoker_code_size, locs_size);
-  NativeInvokerGenerator g(&code, signature, num_args, ret_bt, shadow_space_bytes, input_registers, output_registers, is_imr);
+  NativeInvokerGenerator g(&code, signature, num_args, ret_bt, abi, input_registers, output_registers, is_imr);
   g.generate();
   code.log_section_sizes("nep_invoker_blob");
 
@@ -127,8 +127,6 @@ void NativeInvokerGenerator::generate() {
     // out arg area (e.g. for stack args)
   };
 
-  Register input_addr_reg = rscratch1;
-  Register imr_addr_reg = rscratch2;
   Register shufffle_reg = rbx;
   JavaCallConv in_conv;
   NativeCallConv out_conv(_input_registers);
@@ -149,7 +147,7 @@ void NativeInvokerGenerator::generate() {
     allocated_frame_size += 8; // store address
   }
   allocated_frame_size += arg_shuffle.out_arg_stack_slots() << LogBytesPerInt;
-  allocated_frame_size += _shadow_space_bytes;
+  allocated_frame_size += _abi._shadow_space_bytes;
 
   int imr_addr_rsp_offset = -1;
   if (_is_imr) {
@@ -160,9 +158,10 @@ void NativeInvokerGenerator::generate() {
   // in the not IMR case we need to spill the return value around our slowpath calls
   // in the IMR case this SHOULD be unused.
   RegSpiller out_reg_spiller(_output_registers);
-  int spill_rsp_offset = 0;
+  int spill_rsp_offset = -1;
 
   if (!_is_imr) {
+    spill_rsp_offset = 0;
     // spill area can be shared with the above, so we take the max of the 2
     allocated_frame_size = out_reg_spiller.spill_size_bytes() > allocated_frame_size
       ? out_reg_spiller.spill_size_bytes()
@@ -195,15 +194,15 @@ void NativeInvokerGenerator::generate() {
   __ block_comment("} thread java2native");
 
   __ block_comment("{ argument shuffle");
-  arg_shuffle.generate(_masm, shufffle_reg->as_VMReg(), 0, _shadow_space_bytes);
+  arg_shuffle.generate(_masm, shufffle_reg->as_VMReg(), 0, _abi._shadow_space_bytes);
   if (_is_imr) {
     // spill our imr address
     assert(imr_addr_rsp_offset != -1, "no imr addr spill");
-    __ movptr(Address(rsp, imr_addr_rsp_offset), imr_addr_reg);
+    __ movptr(Address(rsp, imr_addr_rsp_offset), _abi._imr_addr_reg);
   }
   __ block_comment("} argument shuffle");
 
-  __ call(input_addr_reg);
+  __ call(_abi._target_addr_reg);
   // this call is assumed not to have killed r15_thread
 
   if (!_is_imr) {
@@ -235,6 +234,8 @@ void NativeInvokerGenerator::generate() {
       } else if (reg->is_XMMRegister()) {
         __ movdqu(Address(rscratch1, offset), reg->as_XMMRegister());
         offset += 16;
+      } else {
+        ShouldNotReachHere();
       }
     }
   }

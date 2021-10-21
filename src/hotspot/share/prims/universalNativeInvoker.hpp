@@ -33,7 +33,7 @@ public:
   static RuntimeStub* make_native_invoker(BasicType*,
                                           int num_args,
                                           BasicType ret_bt,
-                                          int shadow_space_bytes,
+                                          const ABIDescriptor& abi,
                                           const GrowableArray<VMReg>& input_registers,
                                           const GrowableArray<VMReg>& output_registers,
                                           bool is_imr);

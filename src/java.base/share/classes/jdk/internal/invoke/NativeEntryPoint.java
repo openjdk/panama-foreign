@@ -85,7 +85,7 @@ public class NativeEntryPoint {
         CacheKey key = new CacheKey(methodType, abi.shadowSpaceBytes(),
                 Arrays.asList(argMoves), Arrays.asList(returnMoves));
         long invoker = INVOKER_CACHE.computeIfAbsent(key, k ->
-            makeInvoker(methodType, shadowSpaceBytes, encArgMoves, encRetMoves, isImr));
+            makeInvoker(methodType, abi, encArgMoves, encRetMoves, isImr));
 
         return new NativeEntryPoint(shadowSpaceBytes, encArgMoves, encRetMoves,
                 needTransition, methodType, name, invoker);
@@ -101,7 +101,7 @@ public class NativeEntryPoint {
 
     private static native long vmStorageToVMReg(int type, int index);
 
-    private static native long makeInvoker(MethodType methodType, int shadowSpaceBytes, long[] encArgMoves, long[] encRetMoves, boolean isImr);
+    private static native long makeInvoker(MethodType methodType, ABIDescriptorProxy abi, long[] encArgMoves, long[] encRetMoves, boolean isImr);
 
     public MethodType type() {
         return methodType;

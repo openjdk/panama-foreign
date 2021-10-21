@@ -38,9 +38,11 @@ JNI_LEAF(jlong, NEP_vmStorageToVMReg(JNIEnv* env, jclass _unused, jint type, jin
   return ForeignGlobals::vmstorage_to_vmreg(type, index)->value();
 JNI_END
 
-JNI_ENTRY(jlong, NEP_makeInvoker(JNIEnv* env, jclass _unused, jobject method_type, jint shadow_space_bytes,
+JNI_ENTRY(jlong, NEP_makeInvoker(JNIEnv* env, jclass _unused, jobject method_type, jobject jabi,
                                  jlongArray arg_moves, jlongArray ret_moves, jboolean is_imr))
   ResourceMark rm;
+  const ABIDescriptor abi = ForeignGlobals::parse_abi_descriptor(jabi);
+
   oop type = JNIHandles::resolve(method_type);
   typeArrayOop arg_moves_oop = oop_cast<typeArrayOop>(JNIHandles::resolve(arg_moves));
   typeArrayOop ret_moves_oop = oop_cast<typeArrayOop>(JNIHandles::resolve(ret_moves));
@@ -49,8 +51,7 @@ JNI_ENTRY(jlong, NEP_makeInvoker(JNIEnv* env, jclass _unused, jobject method_typ
   BasicType* basic_type = NEW_RESOURCE_ARRAY(BasicType, pslots);
 
   GrowableArray<VMReg> input_regs(pcount);
-  int bt_idx = 0;
-  for (int i = 0; i < pcount; i++) {
+  for (int i = 0, bt_idx = 0; i < pcount; i++) {
     oop type_oop = java_lang_invoke_MethodType::ptype(type, i);
     assert(java_lang_Class::is_primitive(type_oop), "Only primitives expected");
     BasicType bt = java_lang_Class::primitive_type(type_oop);
@@ -87,7 +88,7 @@ JNI_ENTRY(jlong, NEP_makeInvoker(JNIEnv* env, jclass _unused, jobject method_typ
       ls.print("%s, ", null_safe_string(type2name(basic_type[i])));
     }
     ls.print_cr("}");
-    ls.print_cr("shadow_space_bytes = %d", shadow_space_bytes);
+    ls.print_cr("shadow_space_bytes = %d", abi._shadow_space_bytes);
     ls.print("input_registers { ");
     for (int i = 0; i < input_regs.length(); i++) {
       VMReg reg = input_regs.at(i);
@@ -105,7 +106,7 @@ JNI_ENTRY(jlong, NEP_makeInvoker(JNIEnv* env, jclass _unused, jobject method_typ
 #endif
 
   return (jlong) ProgrammableInvoker::make_native_invoker(
-    basic_type, pslots, ret_bt, shadow_space_bytes, input_regs, output_regs, is_imr)->code_begin();
+    basic_type, pslots, ret_bt, abi, input_regs, output_regs, is_imr)->code_begin();
 JNI_END
 
 #define CC (char*)  /*cast a literal from (const char*)*/
@@ -113,7 +114,7 @@ JNI_END
 
 static JNINativeMethod NEP_methods[] = {
   {CC "vmStorageToVMReg", CC "(II)J", FN_PTR(NEP_vmStorageToVMReg)},
-  {CC "makeInvoker", CC "(Ljava/lang/invoke/MethodType;I[J[JZ)J", FN_PTR(NEP_makeInvoker)},
+  {CC "makeInvoker", CC "(Ljava/lang/invoke/MethodType;Ljdk/internal/invoke/ABIDescriptorProxy;[J[JZ)J", FN_PTR(NEP_makeInvoker)},
 };
 
 JNI_ENTRY(void, JVM_RegisterNativeEntryPointMethods(JNIEnv *env, jclass NEP_class))

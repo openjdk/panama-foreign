@@ -53,6 +53,8 @@ private:
     int volatileStorage_offset;
     int stackAlignment_offset;
     int shadowSpace_offset;
+    int targetAddrStorage_offset;
+    int imrAddrStorage_offset;
   } ABI;
 
   struct {
@@ -84,6 +86,8 @@ private:
   const ABIDescriptor parse_abi_descriptor_impl(jobject jabi) const;
   const BufferLayout parse_buffer_layout_impl(jobject jlayout) const;
   const CallRegs parse_call_regs_impl(jobject jconv) const;
+
+  VMReg parse_vmstorage(oop storage) const;
 public:
   static const ABIDescriptor parse_abi_descriptor(jobject jabi);
   static const BufferLayout parse_buffer_layout(jobject jlayout);

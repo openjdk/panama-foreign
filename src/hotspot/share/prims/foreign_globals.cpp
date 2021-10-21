@@ -77,6 +77,10 @@ ForeignGlobals::ForeignGlobals() {
   ABI.volatileStorage_offset = field_offset(k_ABI, "volatileStorage", symVMSArrayArray);
   ABI.stackAlignment_offset = field_offset(k_ABI, "stackAlignment", vmSymbols::int_signature());
   ABI.shadowSpace_offset = field_offset(k_ABI, "shadowSpace", vmSymbols::int_signature());
+  const char* strVMS = "L" FOREIGN_ABI "VMStorage;";
+  Symbol* symVMS = SymbolTable::new_symbol(strVMS);
+  ABI.targetAddrStorage_offset = field_offset(k_ABI, "targetAddrStorage", symVMS);
+  ABI.imrAddrStorage_offset = field_offset(k_ABI, "imrAddrStorage", symVMS);
 
   // VMStorage
   InstanceKlass* k_VMS = find_InstanceKlass(FOREIGN_ABI "VMStorage", current_thread);
@@ -100,6 +104,12 @@ ForeignGlobals::ForeignGlobals() {
   CallConvOffsets.ret_regs_offset = field_offset(k_CC, "retRegs", symVMSArray);
 }
 
+VMReg ForeignGlobals::parse_vmstorage(oop storage) const {
+  jint index = storage->int_field(VMS.index_offset);
+  jint type = storage->int_field(VMS.type_offset);
+  return vmstorage_to_vmreg(type, index);
+}
+
 int RegSpiller::compute_spill_area(const VMReg* regs, int num_regs) {
   int result_size = 0;
   for (int i = 0; i < num_regs; i++) {
@@ -109,6 +119,7 @@ int RegSpiller::compute_spill_area(const VMReg* regs, int num_regs) {
 }
 
 void RegSpiller::generate(MacroAssembler* masm, int rsp_offset, bool spill) const {
+  assert(rsp_offset != -1, "rsp_offset should be set");
   int offset = rsp_offset;
   for (int i = 0; i < _num_regs; i++) {
     VMReg reg = _regs[i];
