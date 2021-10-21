@@ -41,6 +41,8 @@ import jdk.internal.foreign.abi.ProgrammableInvoker;
 import jdk.internal.foreign.abi.ProgrammableUpcallHandler;
 import jdk.internal.foreign.abi.VMStorage;
 import jdk.internal.foreign.abi.SharedUtils;
+import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64CallArranger;
+import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64CallArranger;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -55,8 +57,12 @@ import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.*;
  * to translate a C FunctionDescriptor into a CallingSequence2, which can then be turned into a MethodHandle.
  *
  * This includes taking care of synthetic arguments like pointers to return buffers for 'in-memory' returns.
+ *
+ * There are minor differences between the ABIs implemented on Linux, macOS, and Windows
+ * which are handled in sub-classes. Clients should access these through the provided
+ * public constants CallArranger.LINUX and CallArranger.MACOS.
  */
-public class CallArranger {
+public abstract class CallArranger {
     private static final int STACK_SLOT_SIZE = 8;
     public static final int MAX_REGISTER_ARGUMENTS = 8;
 
@@ -96,7 +102,20 @@ public class CallArranger {
         }
     }
 
-    public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall, boolean varArgsOnStack) {
+    public static final CallArranger LINUX = new LinuxAArch64CallArranger();
+    public static final CallArranger MACOS = new MacOsAArch64CallArranger();
+
+    /**
+     * Are variadic arguments assigned to registers as in the standard calling
+     * convention, or always passed on the stack?
+     *
+     * @returns true if variadic arguments should be spilled to the stack.
+     */
+    protected abstract boolean varArgsOnStack();
+
+    protected CallArranger() {}
+
+    public Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
         CallingSequenceBuilder csb = new CallingSequenceBuilder(forUpcall);
 
         BindingCalculator argCalc = forUpcall ? new BoxBindingCalculator(true) : new UnboxBindingCalculator(true);
@@ -115,8 +134,8 @@ public class CallArranger {
         for (int i = 0; i < mt.parameterCount(); i++) {
             Class<?> carrier = mt.parameterType(i);
             MemoryLayout layout = cDesc.argumentLayouts().get(i);
-            if (SharedUtils.isVarargsIndex(cDesc, i)) {
-                argCalc.storageCalculator.adjustForVarArgs(varArgsOnStack);
+            if (varArgsOnStack() && SharedUtils.isVarargsIndex(cDesc, i)) {
+                argCalc.storageCalculator.adjustForVarArgs();
             }
             csb.addArgumentBindings(carrier, layout, argCalc.getBindings(carrier, layout));
         }
@@ -126,8 +145,8 @@ public class CallArranger {
         return new Bindings(csb.build(), returnInMemory);
     }
 
-    public static MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc, boolean varArgsOnStack) {
-        Bindings bindings = getBindings(mt, cDesc, false, varArgsOnStack);
+    public MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc) {
+        Bindings bindings = getBindings(mt, cDesc, false);
 
         MethodHandle handle = new ProgrammableInvoker(C, bindings.callingSequence).getBoundMethodHandle();
 
@@ -138,8 +157,8 @@ public class CallArranger {
         return handle;
     }
 
-    public static NativeSymbol arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, ResourceScope scope, boolean varArgsOnStack) {
-        Bindings bindings = getBindings(mt, cDesc, true, varArgsOnStack);
+    public NativeSymbol arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, ResourceScope scope) {
+        Bindings bindings = getBindings(mt, cDesc, true);
 
         if (bindings.isInMemoryReturn) {
             target = SharedUtils.adaptUpcallForIMR(target, true /* drop return, since we don't have bindings for it */);
@@ -210,13 +229,11 @@ public class CallArranger {
             return storage[0];
         }
 
-        void adjustForVarArgs(boolean varArgsOnStack) {
-            if (varArgsOnStack) {
-                // This system passes all variadic parameters on the stack. Ensure
-                // no further arguments are allocated to registers.
-                nRegs[StorageClasses.INTEGER] = MAX_REGISTER_ARGUMENTS;
-                nRegs[StorageClasses.VECTOR] = MAX_REGISTER_ARGUMENTS;
-            }
+        void adjustForVarArgs() {
+            // This system passes all variadic parameters on the stack. Ensure
+            // no further arguments are allocated to registers.
+            nRegs[StorageClasses.INTEGER] = MAX_REGISTER_ARGUMENTS;
+            nRegs[StorageClasses.VECTOR] = MAX_REGISTER_ARGUMENTS;
         }
     }
 
