@@ -91,13 +91,13 @@ static const int native_invoker_code_size = 1024;
 RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
                                                       int num_args,
                                                       BasicType ret_bt,
-                                                      int shadow_space_bytes,
+                                                      const ABIDescriptor& abi,
                                                       const GrowableArray<VMReg>& input_registers,
                                                       const GrowableArray<VMReg>& output_registers,
                                                       bool is_imr) {
   int locs_size  = 64;
   CodeBuffer code("nep_invoker_blob", native_invoker_code_size, locs_size);
-  NativeInvokerGenerator g(&code, signature, num_args, ret_bt, shadow_space_bytes, input_registers, output_registers, is_imr);
+  NativeInvokerGenerator g(&code, signature, num_args, ret_bt, abi, input_registers, output_registers, is_imr);
   g.generate();
   code.log_section_sizes("nep_invoker_blob");
 
@@ -197,7 +197,7 @@ void NativeInvokerGenerator::generate() {
   arg_shuffle.generate(_masm, shuffle_reg->as_VMReg(), 0, _abi._shadow_space_bytes);
   if (_is_imr) {
     assert(imr_addr_sp_offset != -1, "no imr addr spill");
-    __ str(imr_addr_reg, Address(sp, _abi._imr_addr_sp_offset));
+    __ str(_abi._imr_addr_reg, Address(sp, imr_addr_sp_offset));
   }
   __ block_comment("} argument shuffle");
 
