@@ -296,27 +296,6 @@ public class SharedUtils {
         throw new IllegalArgumentException("String too large");
     }
 
-    static long bufferCopySize(CallingSequence callingSequence) {
-        // FIXME: > 16 bytes alignment might need extra space since the
-        // starting address of the allocator might be un-aligned.
-        long size = 0;
-        for (int i = 0; i < callingSequence.argumentCount(); i++) {
-            List<Binding> bindings = callingSequence.argumentBindings(i);
-            for (Binding b : bindings) {
-                if (b instanceof Binding.Copy) {
-                    Binding.Copy c = (Binding.Copy) b;
-                    size = Utils.alignUp(size, c.alignment());
-                    size += c.size();
-                } else if (b instanceof Binding.Allocate) {
-                    Binding.Allocate c = (Binding.Allocate) b;
-                    size = Utils.alignUp(size, c.alignment());
-                    size += c.size();
-                }
-            }
-        }
-        return size;
-    }
-
     static Map<VMStorage, Integer> indexMap(Binding.Move[] moves) {
         return IntStream.range(0, moves.length)
                         .boxed()
@@ -394,17 +373,12 @@ public class SharedUtils {
             insertPos = 2;
         }
 
-        // downcalls get the leading NativeSymbol/SegmentAllocator param as well
+        // downcalls get the leading SegmentAllocator param as well
         if (!upcall) {
             closer = dropArguments(closer, insertPos++, SegmentAllocator.class); // (Throwable, V?, SegmentAllocator, NativeSymbol) -> V/void
         }
 
-        closer = collectArguments(closer, insertPos++, MH_CLOSE_CONTEXT); // (Throwable, V?, SegmentAllocator?, BindingContext) -> V/void
-
-        if (!upcall) {
-            // FIXME is this still needed?
-            closer = collectArguments(closer, insertPos, reachabilityFenceHandle(NativeSymbol.class));
-        }
+        closer = collectArguments(closer, insertPos, MH_CLOSE_CONTEXT); // (Throwable, V?, SegmentAllocator?, BindingContext) -> V/void
 
         MethodHandle contextFactory;
 

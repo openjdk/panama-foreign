@@ -35,14 +35,27 @@ public class CallingSequence {
     private final FunctionDescriptor desc;
     private final boolean isTrivial;
 
+    // is IMR (In Memory Return).
+    // Note that this is implementation-level IMR used to
+    // support multi-register returns. A particular ABI
+    // might add it's own IMR on top of this as well
+    // (see SharedUtils::adaptDowncallForIMR & SharedUtils::adaptUpcallForIMR)
+    private final boolean isImr;
+    private final long imrSize;
+    private final long allocationSize;
+
     private final List<Binding> returnBindings;
     private final List<List<Binding>> argumentBindings;
 
     public CallingSequence(MethodType mt, FunctionDescriptor desc,
-                           boolean isTrivial, List<List<Binding>> argumentBindings, List<Binding> returnBindings) {
+                           boolean isTrivial, boolean isImr, long imrSize, long allocationSize,
+                           List<List<Binding>> argumentBindings, List<Binding> returnBindings) {
         this.mt = mt;
         this.desc = desc;
         this.isTrivial = isTrivial;
+        this.isImr = isImr;
+        this.imrSize = imrSize;
+        this.allocationSize = allocationSize;
         this.returnBindings = returnBindings;
         this.argumentBindings = argumentBindings;
     }
@@ -91,5 +104,17 @@ public class CallingSequence {
 
     public boolean isTrivial() {
         return isTrivial;
+    }
+
+    public boolean isImr() {
+        return isImr;
+    }
+
+    public long imrSize() {
+        return imrSize;
+    }
+
+    public long allocationSize() {
+        return allocationSize;
     }
 }

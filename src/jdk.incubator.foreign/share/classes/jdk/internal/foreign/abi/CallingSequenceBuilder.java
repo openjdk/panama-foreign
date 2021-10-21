@@ -29,6 +29,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ValueLayout;
+import jdk.internal.foreign.Utils;
 import sun.security.action.GetPropertyAction;
 
 import java.lang.invoke.MethodType;
@@ -89,22 +90,53 @@ public class CallingSequenceBuilder {
 
     private boolean isImr() {
         return outputBindings.stream()
-            .filter((forUpcall ? Binding.VMStore.class : Binding.VMLoad.class)::isInstance)
+            .filter(Binding.Move.class::isInstance)
             .count() > 1;
     }
 
     public CallingSequence build() {
+        boolean isImr = isImr();
+        long imrSize = isImr ? computeImrSize() : 0;
+        long allocationSize = computeAllocationSize() + imrSize;
         if (!forUpcall) {
             addArgumentBinding(0, NativeSymbol.class, ValueLayout.ADDRESS, List.of(
                 Binding.unboxAddress(NativeSymbol.class),
                 Binding.vmStore(abi.targetAddrStorage(), long.class)));
-            if (isImr()) {
+            if (isImr) {
                 addArgumentBinding(0, MemorySegment.class, ValueLayout.ADDRESS, List.of(
                     Binding.unboxAddress(MemorySegment.class),
                     Binding.vmStore(abi.imrAddrStorage(), long.class)));
             }
         }
-        return new CallingSequence(mt, desc, isTrivial, inputBindings, outputBindings);
+        return new CallingSequence(mt, desc, isTrivial, isImr, imrSize, allocationSize, inputBindings, outputBindings);
+    }
+
+    private long computeAllocationSize() {
+        // FIXME: > 16 bytes alignment might need extra space since the
+        // starting address of the allocator might be un-aligned.
+        long size = 0;
+        for (List<Binding> bindings : inputBindings) {
+            for (Binding b : bindings) {
+                if (b instanceof Binding.Copy copy) {
+                    size = Utils.alignUp(size, copy.alignment());
+                    size += copy.size();
+                } else if (b instanceof Binding.Allocate allocate) {
+                    size = Utils.alignUp(size, allocate.alignment());
+                    size += allocate.size();
+                }
+            }
+        }
+        return size;
+    }
+
+    private long computeImrSize() {
+        return outputBindings.stream()
+                .filter(Binding.Move.class ::isInstance)
+                .map(Binding.Move.class::cast)
+                .map(Binding.Move::storage)
+                .map(VMStorage::type)
+                .mapToLong(abi.arch::typeSize)
+                .sum();
     }
 
     private void verifyBindings(boolean forArguments, Class<?> carrier, List<Binding> bindings) {
