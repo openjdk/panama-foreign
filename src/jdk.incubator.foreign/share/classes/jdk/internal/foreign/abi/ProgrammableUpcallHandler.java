@@ -78,8 +78,7 @@ public class ProgrammableUpcallHandler {
                     methodType(void.class, MemoryAddress.class, MethodHandle.class,
                                Binding.VMLoad[].class, Binding.VMStore[].class, ABIDescriptor.class, BufferLayout.class));
             MH_invokeInterpBindings = lookup.findStatic(ProgrammableUpcallHandler.class, "invokeInterpBindings",
-                    methodType(Object.class, Object[].class, MethodHandle.class, Map.class, Map.class,
-                            CallingSequence.class, long.class));
+                    methodType(Object.class, Object[].class, InvocationData.class));
         } catch (ReflectiveOperationException e) {
             throw new InternalError(e);
         }
@@ -91,36 +90,36 @@ public class ProgrammableUpcallHandler {
 
         boolean isSimple = !(retMoves.length > 1);
 
-        Class<?> llReturn = !isSimple
-            ? Object[].class
-            : retMoves.length == 1
-                ? retMoves[0].type()
-                : void.class;
+        Class<?> llReturn = retMoves.length == 1 ? retMoves[0].type() : void.class;
         Class<?>[] llParams = Arrays.stream(argMoves).map(Binding.Move::type).toArray(Class<?>[]::new);
         MethodType llType = MethodType.methodType(llReturn, llParams);
 
         MethodHandle doBindings;
-        if (USE_SPEC && isSimple) {
-            doBindings = specializedBindingHandle(target, callingSequence, llReturn, callingSequence.allocationSize());
+        if (/* USE_SPEC && isSimple */ false) {
+            doBindings = specializedBindingHandle(target, callingSequence, llReturn);
             assert doBindings.type() == llType;
         } else {
             Map<VMStorage, Integer> argIndices = SharedUtils.indexMap(argMoves);
             Map<VMStorage, Integer> retIndices = SharedUtils.indexMap(retMoves);
-            target = target.asSpreader(Object[].class, callingSequence.methodType().parameterCount());
-            doBindings = insertArguments(MH_invokeInterpBindings, 1, target, argIndices, retIndices, callingSequence,
-                    callingSequence.allocationSize());
+            int spreaderCount = callingSequence.methodType().parameterCount();
+            if (callingSequence.isImr()) {
+                spreaderCount--; // imr segment is dropped from the argument list
+            }
+            target = target.asSpreader(Object[].class, spreaderCount);
+            InvocationData invData = new InvocationData(target, argIndices, retIndices, callingSequence, retMoves, abi);
+            doBindings = insertArguments(MH_invokeInterpBindings, 1, invData);
             doBindings = doBindings.asCollector(Object[].class, llType.parameterCount());
             doBindings = doBindings.asType(llType);
         }
 
         long entryPoint;
-        if (USE_INTRINSICS && isSimple && supportsOptimizedUpcalls()) {
+        if (/* USE_INTRINSICS && isSimple && supportsOptimizedUpcalls() */ true) {
             checkPrimitive(doBindings.type());
             doBindings = insertArguments(exactInvoker(doBindings.type()), 0, doBindings);
             VMStorage[] args = Arrays.stream(argMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
             VMStorage[] rets = Arrays.stream(retMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
             CallRegs conv = new CallRegs(args, rets);
-            entryPoint = allocateOptimizedUpcallStub(doBindings, abi, conv);
+            entryPoint = allocateOptimizedUpcallStub(doBindings, abi, conv, callingSequence.isImr(), callingSequence.imrSize());
         } else {
             BufferLayout layout = BufferLayout.of(abi);
             MethodHandle doBindingsErased = doBindings.asSpreader(Object[].class, doBindings.type().parameterCount());
@@ -155,7 +154,7 @@ public class ProgrammableUpcallHandler {
     }
 
     private static MethodHandle specializedBindingHandle(MethodHandle target, CallingSequence callingSequence,
-                                                         Class<?> llReturn, long allocationSize) {
+                                                         Class<?> llReturn) {
         MethodType highLevelType = callingSequence.methodType();
 
         MethodHandle specializedHandle = target; // initial
@@ -191,7 +190,7 @@ public class ProgrammableUpcallHandler {
             specializedHandle = filterReturnValue(specializedHandle, filter);
         }
 
-        specializedHandle = SharedUtils.wrapWithAllocator(specializedHandle, argAllocatorPos, allocationSize, true);
+        specializedHandle = SharedUtils.wrapWithAllocator(specializedHandle, argAllocatorPos, callingSequence.allocationSize(), true);
 
         return specializedHandle;
     }
@@ -246,47 +245,74 @@ public class ProgrammableUpcallHandler {
         }
     }
 
-    private static Object invokeInterpBindings(Object[] moves, MethodHandle leaf,
-                                               Map<VMStorage, Integer> argIndexMap,
-                                               Map<VMStorage, Integer> retIndexMap,
-                                               CallingSequence callingSequence,
-                                               long allocationSize) throws Throwable {
-        Binding.Context allocator = allocationSize != 0
-                ? Binding.Context.ofBoundedAllocator(allocationSize)
+    private record InvocationData(MethodHandle leaf,
+                                  Map<VMStorage, Integer> argIndexMap,
+                                  Map<VMStorage, Integer> retIndexMap,
+                                  CallingSequence callingSequence,
+                                  Binding.VMStore[] retMoves,
+                                  ABIDescriptor abi) {}
+
+    private static Object invokeInterpBindings(Object[] lowLevelArgs, InvocationData invData) throws Throwable {
+        Binding.Context allocator = invData.callingSequence.allocationSize() != 0
+                ? Binding.Context.ofBoundedAllocator(invData.callingSequence.allocationSize())
                 : Binding.Context.ofScope();
         try (allocator) {
             /// Invoke interpreter, got array of high-level arguments back
-            Object[] args = new Object[callingSequence.methodType().parameterCount()];
-            for (int i = 0; i < args.length; i++) {
-                args[i] = BindingInterpreter.box(callingSequence.argumentBindings(i),
-                        (storage, type) -> moves[argIndexMap.get(storage)], allocator);
+            Object[] highLevelArgs = new Object[invData.callingSequence.methodType().parameterCount()];
+            for (int i = 0; i < highLevelArgs.length; i++) {
+                highLevelArgs[i] = BindingInterpreter.box(invData.callingSequence.argumentBindings(i),
+                        (storage, type) -> lowLevelArgs[invData.argIndexMap.get(storage)], allocator);
+            }
+
+            MemorySegment imrSegment = null;
+            if (invData.callingSequence.isImr()) {
+                // this one is for us
+                imrSegment = (MemorySegment) highLevelArgs[0];
+                Object[] newArgs = new Object[highLevelArgs.length - 1];
+                System.arraycopy(highLevelArgs, 1, newArgs, 0, newArgs.length);
+                highLevelArgs = newArgs;
             }
 
             if (DEBUG) {
                 System.err.println("Java arguments:");
-                System.err.println(Arrays.toString(args).indent(2));
+                System.err.println(Arrays.toString(highLevelArgs).indent(2));
             }
 
             // invoke our target
-            Object o = leaf.invoke(args);
+            Object o = invData.leaf.invoke(highLevelArgs);
 
             if (DEBUG) {
                 System.err.println("Java return:");
                 System.err.println(Objects.toString(o).indent(2));
             }
 
-            Object[] returnMoves = new Object[retIndexMap.size()];
-            if (leaf.type().returnType() != void.class) {
-                BindingInterpreter.unbox(o, callingSequence.returnBindings(),
-                        (storage, type, value) -> returnMoves[retIndexMap.get(storage)] = value, null);
+            Object[] returnValues = new Object[invData.retIndexMap.size()];
+            if (invData.leaf.type().returnType() != void.class) {
+                BindingInterpreter.unbox(o, invData.callingSequence.returnBindings(),
+                        (storage, type, value) -> returnValues[invData.retIndexMap.get(storage)] = value, null);
             }
 
-            if (returnMoves.length == 0) {
+            if (returnValues.length == 0) {
                 return null;
-            } else if (returnMoves.length == 1) {
-                return returnMoves[0];
+            } else if (returnValues.length == 1) {
+                return returnValues[0];
             } else {
-                return returnMoves;
+                assert invData.callingSequence.isImr();
+
+                Binding.VMStore[] retMoves = invData.callingSequence.returnBindings().stream()
+                        .filter(Binding.VMStore.class::isInstance)
+                        .map(Binding.VMStore.class::cast)
+                        .toArray(Binding.VMStore[]::new);
+
+                assert returnValues.length == retMoves.length;
+                int imrWriteOffset = 0;
+                for (int i = 0; i < retMoves.length; i++) {
+                    Binding.VMStore store = retMoves[i];
+                    Object value = returnValues[i];
+                    SharedUtils.writeOverSized(imrSegment.asSlice(imrWriteOffset), store.type(), value);
+                    imrWriteOffset += invData.abi.arch.typeSize(store.storage().type());
+                }
+                return null;
             }
         } catch(Throwable t) {
             SharedUtils.handleUncaughtException(t);
@@ -297,7 +323,7 @@ public class ProgrammableUpcallHandler {
     // used for transporting data into native code
     private static record CallRegs(VMStorage[] argRegs, VMStorage[] retRegs) {}
 
-    static native long allocateOptimizedUpcallStub(MethodHandle mh, ABIDescriptor abi, CallRegs conv);
+    static native long allocateOptimizedUpcallStub(MethodHandle mh, ABIDescriptor abi, CallRegs conv, boolean isImr, long imrSize);
     static native long allocateUpcallStub(MethodHandle mh, ABIDescriptor abi, BufferLayout layout);
     static native boolean supportsOptimizedUpcalls();
 

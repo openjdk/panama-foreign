@@ -31,6 +31,7 @@
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/jniHandles.inline.hpp"
+#include "utilities/globalDefinitions.hpp"
 
 #define FOREIGN_ABI "jdk/internal/foreign/abi/"
 
@@ -183,7 +184,8 @@ JVM_ENTRY(jlong, PUH_AllocateUpcallStub(JNIEnv *env, jclass unused, jobject rec,
   return (jlong) ProgrammableUpcallHandler::generate_upcall_stub(global_rec, abi, buffer_layout);
 JNI_END
 
-JVM_ENTRY(jlong, PUH_AllocateOptimizedUpcallStub(JNIEnv *env, jclass unused, jobject mh, jobject abi, jobject conv))
+JVM_ENTRY(jlong, PUH_AllocateOptimizedUpcallStub(JNIEnv *env, jclass unused, jobject mh, jobject abi, jobject conv,
+                                                 jboolean is_imr, jlong imr_size))
   Handle mh_h(THREAD, JNIHandles::resolve(mh));
   jobject mh_j = JNIHandles::make_global(mh_h);
 
@@ -195,7 +197,30 @@ JVM_ENTRY(jlong, PUH_AllocateOptimizedUpcallStub(JNIEnv *env, jclass unused, job
   assert(entry->method_holder()->is_initialized(), "no clinit barrier");
   CompilationPolicy::compile_if_required(mh_entry, CHECK_0);
 
-  return (jlong) ProgrammableUpcallHandler::generate_optimized_upcall_stub(mh_j, entry, abi, conv);
+  assert(entry->is_static(), "static only");
+  // Fill in the signature array, for the calling-convention call.
+  const int total_out_args = entry->size_of_parameters();
+  assert(total_out_args > 0, "receiver arg");
+
+  BasicType* out_sig_bt = NEW_RESOURCE_ARRAY(BasicType, total_out_args);
+  BasicType ret_type;
+  {
+    int i = 0;
+    SignatureStream ss(entry->signature());
+    for (; !ss.at_return_type(); ss.next()) {
+      out_sig_bt[i++] = ss.type();  // Collect remaining bits of signature
+      if (ss.type() == T_LONG || ss.type() == T_DOUBLE)
+        out_sig_bt[i++] = T_VOID;   // Longs & doubles take 2 Java slots
+    }
+    assert(i == total_out_args, "");
+    ret_type = ss.type();
+  }
+  // skip receiver
+  BasicType* in_sig_bt = out_sig_bt + 1;
+  int total_in_args = total_out_args - 1;
+
+  return (jlong) ProgrammableUpcallHandler::generate_optimized_upcall_stub(
+    mh_j, entry, in_sig_bt, total_in_args, out_sig_bt, total_out_args, ret_type, abi, conv, is_imr, checked_cast<int>(imr_size));
 JVM_END
 
 JVM_ENTRY(jboolean, PUH_SupportsOptimizedUpcalls(JNIEnv *env, jclass unused))
@@ -207,7 +232,7 @@ JVM_END
 
 static JNINativeMethod PUH_methods[] = {
   {CC "allocateUpcallStub", CC "(" "Ljava/lang/invoke/MethodHandle;" "L" FOREIGN_ABI "ABIDescriptor;" "L" FOREIGN_ABI "BufferLayout;" ")J", FN_PTR(PUH_AllocateUpcallStub)},
-  {CC "allocateOptimizedUpcallStub", CC "(" "Ljava/lang/invoke/MethodHandle;" "L" FOREIGN_ABI "ABIDescriptor;" "L" FOREIGN_ABI "ProgrammableUpcallHandler$CallRegs;" ")J", FN_PTR(PUH_AllocateOptimizedUpcallStub)},
+  {CC "allocateOptimizedUpcallStub", CC "(" "Ljava/lang/invoke/MethodHandle;" "L" FOREIGN_ABI "ABIDescriptor;" "L" FOREIGN_ABI "ProgrammableUpcallHandler$CallRegs;" "ZJ)J", FN_PTR(PUH_AllocateOptimizedUpcallStub)},
   {CC "supportsOptimizedUpcalls", CC "()Z", FN_PTR(PUH_SupportsOptimizedUpcalls)},
 };
 

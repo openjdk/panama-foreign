@@ -54,7 +54,12 @@ private:
   static JavaThread* on_entry(OptimizedEntryBlob::FrameData* context);
   static void on_exit(OptimizedEntryBlob::FrameData* context);
 public:
-  static address generate_optimized_upcall_stub(jobject mh, Method* entry, jobject jabi, jobject jconv);
+  static address generate_optimized_upcall_stub(jobject mh, Method* entry,
+                                                BasicType* in_sig_bt, int total_in_args,
+                                                BasicType* out_sig_bt, int total_out_args,
+                                                BasicType ret_type,
+                                                jobject jabi, jobject jconv,
+                                                bool is_imr, int imr_size);
   static address generate_upcall_stub(jobject rec, jobject abi, jobject buffer_layout);
   static bool supports_optimized_upcalls();
 };
