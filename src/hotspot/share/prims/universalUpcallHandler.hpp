@@ -60,8 +60,6 @@ public:
                                                 BasicType ret_type,
                                                 jobject jabi, jobject jconv,
                                                 bool is_imr, int imr_size);
-  static address generate_upcall_stub(jobject rec, jobject abi, jobject buffer_layout);
-  static bool supports_optimized_upcalls();
 };
 
 #endif // SHARE_VM_PRIMS_UNIVERSALUPCALLHANDLER_HPP

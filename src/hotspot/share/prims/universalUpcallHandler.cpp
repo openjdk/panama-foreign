@@ -178,12 +178,6 @@ void ProgrammableUpcallHandler::handle_uncaught_exception(oop exception) {
   ShouldNotReachHere();
 }
 
-JVM_ENTRY(jlong, PUH_AllocateUpcallStub(JNIEnv *env, jclass unused, jobject rec, jobject abi, jobject buffer_layout))
-  Handle receiver(THREAD, JNIHandles::resolve(rec));
-  jobject global_rec = JNIHandles::make_global(receiver);
-  return (jlong) ProgrammableUpcallHandler::generate_upcall_stub(global_rec, abi, buffer_layout);
-JNI_END
-
 JVM_ENTRY(jlong, PUH_AllocateOptimizedUpcallStub(JNIEnv *env, jclass unused, jobject mh, jobject abi, jobject conv,
                                                  jboolean is_imr, jlong imr_size))
   Handle mh_h(THREAD, JNIHandles::resolve(mh));
@@ -223,17 +217,11 @@ JVM_ENTRY(jlong, PUH_AllocateOptimizedUpcallStub(JNIEnv *env, jclass unused, job
     mh_j, entry, in_sig_bt, total_in_args, out_sig_bt, total_out_args, ret_type, abi, conv, is_imr, checked_cast<int>(imr_size));
 JVM_END
 
-JVM_ENTRY(jboolean, PUH_SupportsOptimizedUpcalls(JNIEnv *env, jclass unused))
-  return (jboolean) ProgrammableUpcallHandler::supports_optimized_upcalls();
-JVM_END
-
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 
 static JNINativeMethod PUH_methods[] = {
-  {CC "allocateUpcallStub", CC "(" "Ljava/lang/invoke/MethodHandle;" "L" FOREIGN_ABI "ABIDescriptor;" "L" FOREIGN_ABI "BufferLayout;" ")J", FN_PTR(PUH_AllocateUpcallStub)},
   {CC "allocateOptimizedUpcallStub", CC "(" "Ljava/lang/invoke/MethodHandle;" "L" FOREIGN_ABI "ABIDescriptor;" "L" FOREIGN_ABI "ProgrammableUpcallHandler$CallRegs;" "ZJ)J", FN_PTR(PUH_AllocateOptimizedUpcallStub)},
-  {CC "supportsOptimizedUpcalls", CC "()Z", FN_PTR(PUH_SupportsOptimizedUpcalls)},
 };
 
 /**

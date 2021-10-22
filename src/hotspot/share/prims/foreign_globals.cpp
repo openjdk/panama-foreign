@@ -56,9 +56,6 @@ const ForeignGlobals& ForeignGlobals::instance() {
 const ABIDescriptor ForeignGlobals::parse_abi_descriptor(jobject jabi) {
   return instance().parse_abi_descriptor_impl(jabi);
 }
-const BufferLayout ForeignGlobals::parse_buffer_layout(jobject jlayout) {
-  return instance().parse_buffer_layout_impl(jlayout);
-}
 
 const CallRegs ForeignGlobals::parse_call_regs(jobject jconv) {
   return instance().parse_call_regs_impl(jconv);
@@ -86,15 +83,6 @@ ForeignGlobals::ForeignGlobals() {
   InstanceKlass* k_VMS = find_InstanceKlass(FOREIGN_ABI "VMStorage", current_thread);
   VMS.index_offset = field_offset(k_VMS, "index", vmSymbols::int_signature());
   VMS.type_offset = field_offset(k_VMS, "type", vmSymbols::int_signature());
-
-  // BufferLayout
-  InstanceKlass* k_BL = find_InstanceKlass(FOREIGN_ABI "BufferLayout", current_thread);
-  BL.size_offset = field_offset(k_BL, "size", vmSymbols::long_signature());
-  BL.arguments_next_pc_offset = field_offset(k_BL, "arguments_next_pc", vmSymbols::long_signature());
-  BL.stack_args_bytes_offset = field_offset(k_BL, "stack_args_bytes", vmSymbols::long_signature());
-  BL.stack_args_offset = field_offset(k_BL, "stack_args", vmSymbols::long_signature());
-  BL.input_type_offsets_offset = field_offset(k_BL, "input_type_offsets", vmSymbols::long_array_signature());
-  BL.output_type_offsets_offset = field_offset(k_BL, "output_type_offsets", vmSymbols::long_array_signature());
 
   // CallRegs
   const char* strVMSArray = "[L" FOREIGN_ABI "VMStorage;";

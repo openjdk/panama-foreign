@@ -68,20 +68,14 @@ public class ProgrammableUpcallHandler {
         privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.DEBUG");
     private static final boolean USE_SPEC = Boolean.parseBoolean(
         GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC", "true"));
-    private static final boolean USE_INTRINSICS = Boolean.parseBoolean(
-        GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS", "true"));
 
     private static final VarHandle VH_LONG = ValueLayout.JAVA_LONG.varHandle();
 
-    private static final MethodHandle MH_invokeMoves;
     private static final MethodHandle MH_invokeInterpBindings;
 
     static {
         try {
             MethodHandles.Lookup lookup = lookup();
-            MH_invokeMoves = lookup.findStatic(ProgrammableUpcallHandler.class, "invokeMoves",
-                    methodType(void.class, MemoryAddress.class, MethodHandle.class,
-                               Binding.VMLoad[].class, Binding.VMStore[].class, ABIDescriptor.class, BufferLayout.class));
             MH_invokeInterpBindings = lookup.findStatic(ProgrammableUpcallHandler.class, "invokeInterpBindings",
                     methodType(Object.class, Object[].class, InvocationData.class));
         } catch (ReflectiveOperationException e) {
@@ -115,20 +109,12 @@ public class ProgrammableUpcallHandler {
             doBindings = doBindings.asType(llType);
         }
 
-        long entryPoint;
-        if (/* USE_INTRINSICS && isSimple && supportsOptimizedUpcalls() */ true) {
-            checkPrimitive(doBindings.type());
-            doBindings = insertArguments(exactInvoker(doBindings.type()), 0, doBindings);
-            VMStorage[] args = Arrays.stream(argMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
-            VMStorage[] rets = Arrays.stream(retMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
-            CallRegs conv = new CallRegs(args, rets);
-            entryPoint = allocateOptimizedUpcallStub(doBindings, abi, conv, callingSequence.isImr(), callingSequence.imrSize());
-        } else {
-            BufferLayout layout = BufferLayout.of(abi);
-            MethodHandle doBindingsErased = doBindings.asSpreader(Object[].class, doBindings.type().parameterCount());
-            MethodHandle invokeMoves = insertArguments(MH_invokeMoves, 1, doBindingsErased, argMoves, retMoves, abi, layout);
-            entryPoint = allocateUpcallStub(invokeMoves, abi, layout);
-        }
+        checkPrimitive(doBindings.type());
+        doBindings = insertArguments(exactInvoker(doBindings.type()), 0, doBindings);
+        VMStorage[] args = Arrays.stream(argMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
+        VMStorage[] rets = Arrays.stream(retMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
+        CallRegs conv = new CallRegs(args, rets);
+        long entryPoint = allocateOptimizedUpcallStub(doBindings, abi, conv, callingSequence.isImr(), callingSequence.imrSize());
         return UpcallStubs.makeUpcall(entryPoint, scope);
     }
 
@@ -222,52 +208,6 @@ public class ProgrammableUpcallHandler {
         mh.invokeExact(MemoryAddress.ofLong(address));
     }
 
-    private static void invokeMoves(MemoryAddress buffer, MethodHandle leaf,
-                                    Binding.VMLoad[] argBindings, Binding.VMStore[] returnBindings,
-                                    ABIDescriptor abi, BufferLayout layout) throws Throwable {
-        MemorySegment bufferBase = MemoryAddressImpl.ofLongUnchecked(buffer.toRawLongValue(), layout.size);
-
-        if (DEBUG) {
-            System.err.println("Buffer state before:");
-            layout.dump(abi.arch, bufferBase, System.err);
-        }
-
-        MemorySegment stackArgsBase = MemoryAddressImpl.ofLongUnchecked((long)VH_LONG.get(bufferBase.asSlice(layout.stack_args)));
-        Object[] moves = new Object[argBindings.length];
-        for (int i = 0; i < moves.length; i++) {
-            Binding.VMLoad binding = argBindings[i];
-            VMStorage storage = binding.storage();
-            MemorySegment ptr = abi.arch.isStackType(storage.type())
-                ? stackArgsBase.asSlice(storage.index() * abi.arch.typeSize(abi.arch.stackType()))
-                : bufferBase.asSlice(layout.argOffset(storage));
-            moves[i] = SharedUtils.read(ptr, binding.type());
-        }
-
-        // invokeInterpBindings, and then actual target
-        Object o = leaf.invoke(moves);
-
-        if (o == null) {
-            // nop
-        } else if (o instanceof Object[] returns) {
-            for (int i = 0; i < returnBindings.length; i++) {
-                Binding.VMStore binding = returnBindings[i];
-                VMStorage storage = binding.storage();
-                MemorySegment ptr = bufferBase.asSlice(layout.retOffset(storage));
-                SharedUtils.writeOverSized(ptr, binding.type(), returns[i]);
-            }
-        } else { // single Object
-            Binding.VMStore binding = returnBindings[0];
-            VMStorage storage = binding.storage();
-            MemorySegment ptr = bufferBase.asSlice(layout.retOffset(storage));
-            SharedUtils.writeOverSized(ptr, binding.type(), o);
-        }
-
-        if (DEBUG) {
-            System.err.println("Buffer state after:");
-            layout.dump(abi.arch, bufferBase, System.err);
-        }
-    }
-
     private record InvocationData(MethodHandle leaf,
                                   Map<VMStorage, Integer> argIndexMap,
                                   Map<VMStorage, Integer> retIndexMap,
@@ -347,8 +287,6 @@ public class ProgrammableUpcallHandler {
     private static record CallRegs(VMStorage[] argRegs, VMStorage[] retRegs) {}
 
     static native long allocateOptimizedUpcallStub(MethodHandle mh, ABIDescriptor abi, CallRegs conv, boolean isImr, long imrSize);
-    static native long allocateUpcallStub(MethodHandle mh, ABIDescriptor abi, BufferLayout layout);
-    static native boolean supportsOptimizedUpcalls();
 
     private static native void registerNatives();
     static {
