@@ -32,9 +32,11 @@ import jdk.internal.foreign.abi.VMStorage;
 public class AArch64Architecture implements Architecture {
     public static final Architecture INSTANCE = new AArch64Architecture();
 
+    private static final short REG64_MASK = 0b0000_0000_0000_0001;
+    private static final short V128_MASK = 0b0000_0000_0000_0001;
+
     private static final int INTEGER_REG_SIZE = 8;
     private static final int VECTOR_REG_SIZE = 16;
-    private static final int STACK_SLOT_SIZE = 8;
 
     @Override
     public boolean isStackType(int cls) {
@@ -46,21 +48,16 @@ public class AArch64Architecture implements Architecture {
         switch (cls) {
             case StorageClasses.INTEGER: return INTEGER_REG_SIZE;
             case StorageClasses.VECTOR: return VECTOR_REG_SIZE;
-            case StorageClasses.STACK: return STACK_SLOT_SIZE;
+            // STACK is deliberately omitted
         }
 
         throw new IllegalArgumentException("Invalid Storage Class: " + cls);
     }
 
-    @Override
-    public int stackType() {
-        return StorageClasses.STACK;
-    }
-
     public interface StorageClasses {
-        int INTEGER = 0;
-        int VECTOR = 1;
-        int STACK = 3;
+        byte STACK = 0; // STACK must be 0
+        byte INTEGER = 1;
+        byte VECTOR = 2;
     }
 
     public static final VMStorage r0  = integerRegister(0);
@@ -130,15 +127,15 @@ public class AArch64Architecture implements Architecture {
     public static final VMStorage v31 = vectorRegister(31);
 
     private static VMStorage integerRegister(int index) {
-        return new VMStorage(StorageClasses.INTEGER, index, "r" + index);
+        return VMStorage.regStorage(StorageClasses.INTEGER, REG64_MASK, index, "r" + index);
     }
 
     private static VMStorage vectorRegister(int index) {
-        return new VMStorage(StorageClasses.VECTOR, index, "v" + index);
+        return VMStorage.regStorage(StorageClasses.VECTOR, V128_MASK, index, "v" + index);
     }
 
-    public static VMStorage stackStorage(int index) {
-        return new VMStorage(StorageClasses.STACK, index, "Stack@" + index);
+    public static VMStorage stackStorage(short size, int byteOffset) {
+        return VMStorage.stackStorage(size, byteOffset);
     }
 
     public static ABIDescriptor abiFor(VMStorage[] inputIntRegs,
