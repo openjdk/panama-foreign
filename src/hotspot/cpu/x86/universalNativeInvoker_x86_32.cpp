@@ -24,21 +24,13 @@
 #include "precompiled.hpp"
 #include "prims/universalNativeInvoker.hpp"
 
-void ProgrammableInvoker::Generator::generate() {
-  Unimplemented();
-}
-
-address ProgrammableInvoker::generate_adapter(jobject jabi, jobject jlayout) {
-  Unimplemented();
-  return nullptr;
-}
-
 RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
                                                       int num_args,
                                                       BasicType ret_bt,
-                                                      int shadow_space_bytes,
+                                                      const ABIDescriptor& abi,
                                                       const GrowableArray<VMReg>& input_registers,
-                                                      const GrowableArray<VMReg>& output_registers) {
+                                                      const GrowableArray<VMReg>& output_registers,
+                                                      bool is_imr) {
   Unimplemented();
   return nullptr;
 }
