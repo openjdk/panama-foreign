@@ -204,11 +204,12 @@ public abstract class CallArranger {
                     && !forVarArgs) // varargs are given a pass on all aarch64 ABIs
                 throw new UnsupportedOperationException("Call type not supported on this platform");
 
-            stackOffset = alignedStackOffset;
+            short encodedSize = (short) size;
+            assert (encodedSize & 0xFFFF) == size;
 
             VMStorage storage =
-                stackStorage((int)(stackOffset / STACK_SLOT_SIZE));
-            stackOffset += size;
+                AArch64Architecture.stackStorage(encodedSize, (int)alignedStackOffset);
+            stackOffset = alignedStackOffset + size;
             return storage;
         }
 
@@ -217,18 +218,18 @@ public abstract class CallArranger {
         }
 
         VMStorage[] regAlloc(int type, int count) {
-            if (nRegs[type] + count <= MAX_REGISTER_ARGUMENTS) {
+            if (nRegs[type - 1] + count <= MAX_REGISTER_ARGUMENTS) {
                 VMStorage[] source =
-                    (forArguments ? C.inputStorage : C.outputStorage)[type];
+                    (forArguments ? C.inputStorage : C.outputStorage)[type - 1];
                 VMStorage[] result = new VMStorage[count];
                 for (int i = 0; i < count; i++) {
-                    result[i] = source[nRegs[type]++];
+                    result[i] = source[nRegs[type - 1]++];
                 }
                 return result;
             } else {
                 // Any further allocations for this register type must
                 // be from the stack.
-                nRegs[type] = MAX_REGISTER_ARGUMENTS;
+                nRegs[type - 1] = MAX_REGISTER_ARGUMENTS;
                 return null;
             }
         }
@@ -249,8 +250,8 @@ public abstract class CallArranger {
         void adjustForVarArgs() {
             // This system passes all variadic parameters on the stack. Ensure
             // no further arguments are allocated to registers.
-            nRegs[StorageClasses.INTEGER] = MAX_REGISTER_ARGUMENTS;
-            nRegs[StorageClasses.VECTOR] = MAX_REGISTER_ARGUMENTS;
+            nRegs[StorageClasses.INTEGER - 1] = MAX_REGISTER_ARGUMENTS;
+            nRegs[StorageClasses.VECTOR - 1] = MAX_REGISTER_ARGUMENTS;
             forVarArgs = true;
         }
     }

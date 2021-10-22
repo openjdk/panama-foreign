@@ -166,19 +166,19 @@ public class CallArranger {
                 long alignment = Math.max(SharedUtils.alignment(layout, true), STACK_SLOT_SIZE);
                 stackOffset = Utils.alignUp(stackOffset, alignment);
 
-                VMStorage storage = X86_64Architecture.stackStorage((int) (stackOffset / STACK_SLOT_SIZE));
+                VMStorage storage = X86_64Architecture.stackStorage((short) STACK_SLOT_SIZE, (int) stackOffset);
                 stackOffset += STACK_SLOT_SIZE;
                 return storage;
             }
             return (forArguments
                     ? CWindows.inputStorage
                     : CWindows.outputStorage)
-                 [type][nRegs++];
+                 [type - 1][nRegs++];
         }
 
         public VMStorage extraVarargsStorage() {
             assert forArguments;
-            return CWindows.inputStorage[StorageClasses.INTEGER][nRegs - 1];
+            return CWindows.inputStorage[StorageClasses.INTEGER - 1][nRegs - 1];
         }
     }
 

@@ -32,10 +32,20 @@ import java.util.stream.IntStream;
 
 public class X86_64Architecture implements Architecture {
     public static final Architecture INSTANCE = new X86_64Architecture();
+
+    private static final short REG8_H_MASK = 0b0000_0000_0000_0010;
+    private static final short REG8_L_MASK = 0b0000_0000_0000_0001;
+    private static final short REG16_MASK = 0b0000_0000_0000_0011;
+    private static final short REG32_MASK = 0b0000_0000_0000_0111;
+    private static final short REG64_MASK = 0b0000_0000_0000_1111;
+    private static final short XMM_MASK = 0b0000_0000_0000_0001;
+    private static final short YMM_MASK = 0b0000_0000_0000_0011;
+    private static final short ZMM_MASK = 0b0000_0000_0000_0111;
+    private static final short STP_MASK = 0b0000_0000_0000_0001;
+
     private static final int INTEGER_REG_SIZE = 8; // bytes
     private static final int VECTOR_REG_SIZE = 16; // size of XMM register
     private static final int X87_REG_SIZE = 16;
-    private static final int STACK_SLOT_SIZE = 8;
 
     @Override
     public boolean isStackType(int cls) {
@@ -48,22 +58,17 @@ public class X86_64Architecture implements Architecture {
             case StorageClasses.INTEGER: return INTEGER_REG_SIZE;
             case StorageClasses.VECTOR: return VECTOR_REG_SIZE;
             case StorageClasses.X87: return X87_REG_SIZE;
-            case StorageClasses.STACK: return STACK_SLOT_SIZE;
+            // STACK is deliberately omitted
         }
 
         throw new IllegalArgumentException("Invalid Storage Class: " +cls);
     }
 
-    @Override
-    public int stackType() {
-        return StorageClasses.STACK;
-    }
-
     public interface StorageClasses {
-        int INTEGER = 0;
-        int VECTOR = 1;
-        int X87 = 2;
-        int STACK = 3;
+        byte STACK = 0;
+        byte INTEGER = 1;
+        byte VECTOR = 2;
+        byte X87 = 3;
     }
 
     public static final VMStorage rax = integerRegister(0, "rax");
@@ -117,19 +122,19 @@ public class X86_64Architecture implements Architecture {
     public static final VMStorage xmm31 = vectorRegister(31, "xmm31");
 
     private static VMStorage integerRegister(int index, String debugName) {
-        return new VMStorage(StorageClasses.INTEGER, index, debugName);
+        return VMStorage.regStorage(StorageClasses.INTEGER, REG64_MASK, index, debugName);
     }
 
     private static VMStorage vectorRegister(int index, String debugName) {
-        return new VMStorage(StorageClasses.VECTOR, index, debugName);
+        return VMStorage.regStorage(StorageClasses.VECTOR, XMM_MASK, index, debugName);
     }
 
-    public static VMStorage stackStorage(int index) {
-        return new VMStorage(StorageClasses.STACK, index, "Stack@" + index);
+    public static VMStorage stackStorage(short size, int byteOffset) {
+        return VMStorage.stackStorage(size, byteOffset);
     }
 
     public static VMStorage x87Storage(int index) {
-        return new VMStorage(StorageClasses.X87, index, "X87(" + index + ")");
+        return VMStorage.regStorage(StorageClasses.X87, STP_MASK, index, "X87(" + index + ")");
     }
 
     public static ABIDescriptor abiFor(VMStorage[] inputIntRegs, VMStorage[] inputVectorRegs, VMStorage[] outputIntRegs,

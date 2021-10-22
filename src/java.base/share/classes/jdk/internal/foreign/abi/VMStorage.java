@@ -27,19 +27,42 @@ package jdk.internal.foreign.abi;
 import java.util.Objects;
 
 public class VMStorage {
-    private final int type;
+    private static final byte STACK_TYPE = 0;
+
+    private final byte type;
+    private final short segmentMaskOrSize;
     private final int index;
 
     private final String debugName;
 
-    public VMStorage(int type, int index, String debugName) {
+    private VMStorage(byte type, short segmentMaskOrSize, int index, String debugName) {
         this.type = type;
+        this.segmentMaskOrSize = segmentMaskOrSize;
         this.index = index;
         this.debugName = debugName;
     }
 
-    public int type() {
+    public static VMStorage stackStorage(short size, int byteOffset) {
+        return new VMStorage(STACK_TYPE, size, byteOffset, "Stack@" + byteOffset);
+    }
+
+    public static VMStorage regStorage(byte type, short segmentMask, int index, String debugName) {
+        assert type != STACK_TYPE;
+        return new VMStorage(type, segmentMask, index, debugName);
+    }
+
+    public byte type() {
         return type;
+    }
+
+    public short segmentMask() {
+        assert isReg();
+        return segmentMaskOrSize;
+    }
+
+    public short size() {
+        assert isStack();
+        return segmentMaskOrSize;
     }
 
     public int index() {
@@ -50,24 +73,32 @@ public class VMStorage {
         return debugName;
     }
 
+    public boolean isStack() {
+        return type == STACK_TYPE;
+    }
+
+    public boolean isReg() {
+        return !isStack();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         VMStorage vmStorage = (VMStorage) o;
-        return type == vmStorage.type &&
-                index == vmStorage.index;
+        return type == vmStorage.type && segmentMaskOrSize == vmStorage.segmentMaskOrSize && index == vmStorage.index && Objects.equals(debugName, vmStorage.debugName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, index);
+        return Objects.hash(type, segmentMaskOrSize, index, debugName);
     }
 
     @Override
     public String toString() {
         return "VMStorage{" +
                 "type=" + type +
+                ", segmentMaskOrSize=" + segmentMaskOrSize +
                 ", index=" + index +
                 ", debugName='" + debugName + '\'' +
                 '}';
