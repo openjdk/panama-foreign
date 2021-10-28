@@ -125,8 +125,7 @@ class ToplevelBuilder extends JavaSourceBuilder {
 
     @Override
     public String addFunctionalInterface(String name, FunctionInfo functionInfo) {
-        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this,
-                name, functionInfo.methodType(), functionInfo.descriptor());
+        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name, functionInfo);
         builders.add(builder);
         builder.classBegin();
         builder.classEnd();

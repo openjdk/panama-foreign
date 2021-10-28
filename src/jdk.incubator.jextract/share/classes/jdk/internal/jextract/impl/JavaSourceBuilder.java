@@ -47,16 +47,17 @@ public abstract class JavaSourceBuilder {
 
     public static record FunctionInfo(
             MethodType methodType,
+            MethodType reverseMethodType,
             FunctionDescriptor descriptor,
             boolean isVarargs,
             Optional<List<String>> parameterNames) {
 
         static FunctionInfo ofFunction(MethodType methodType, FunctionDescriptor functionDescriptor, boolean isVarargs, List<String> parameterNames) {
-            return new FunctionInfo(methodType, functionDescriptor, isVarargs, Optional.of(parameterNames));
+            return new FunctionInfo(methodType, null, functionDescriptor, isVarargs, Optional.of(parameterNames));
         }
 
-        static FunctionInfo ofFunctionPointer(MethodType methodType, FunctionDescriptor functionDescriptor) {
-            return new FunctionInfo(methodType, functionDescriptor, false, Optional.empty());
+        static FunctionInfo ofFunctionPointer(MethodType upcallType, MethodType downcallType, FunctionDescriptor functionDescriptor) {
+            return new FunctionInfo(upcallType, downcallType, functionDescriptor, false, Optional.empty());
         }
     }
 

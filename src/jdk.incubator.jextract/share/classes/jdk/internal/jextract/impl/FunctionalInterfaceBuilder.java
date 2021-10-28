@@ -39,13 +39,15 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
     private static final String MEMBER_MODS = "static";
 
     private final MethodType fiType;
+    private final MethodType downcallType;
     private final FunctionDescriptor fiDesc;
 
     FunctionalInterfaceBuilder(JavaSourceBuilder enclosing, String className,
-                               MethodType fiType, FunctionDescriptor fiDesc) {
+                               FunctionInfo functionInfo) {
         super(enclosing, Kind.INTERFACE, className);
-        this.fiType = fiType;
-        this.fiDesc = fiDesc;
+        this.fiType = functionInfo.methodType();
+        this.downcallType = functionInfo.reverseMethodType();
+        this.fiDesc = functionInfo.descriptor();
     }
 
     @Override
@@ -90,14 +92,14 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
 
     private void emitFunctionalFactoryForPointer() {
         emitWithConstantClass(constantBuilder -> {
-            Constant mhConstant = constantBuilder.addMethodHandle(className(), className(), FunctionInfo.ofFunctionPointer(fiType, fiDesc), true);
+            Constant mhConstant = constantBuilder.addMethodHandle(className(), className(), FunctionInfo.ofFunctionPointer(downcallType, fiType, fiDesc), true);
             incrAlign();
             indent();
             append(MEMBER_MODS + " " + className() + " ofAddress(MemoryAddress addr, ResourceScope scope) {\n");
             incrAlign();
             indent();
             append("NativeSymbol symbol = NativeSymbol.ofAddress(");
-            append("\"" + className() + "::\" + Long.toHexString(addr.toRawLongValue()), addr, scope);");
+            append("\"" + className() + "::\" + Long.toHexString(addr.toRawLongValue()), addr, scope);\n");
             append("return (");
             String delim = "";
             for (int i = 0 ; i < fiType.parameterCount(); i++) {
@@ -112,11 +114,23 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
             indent();
             if (!fiType.returnType().equals(void.class)) {
                 append("return (" + fiType.returnType().getName() + ")");
+                if (fiType.returnType() != downcallType.returnType()) {
+                    // add cast for invokeExact
+                    append("(" + downcallType.returnType().getName() + ")");
+                }
             }
             append(mhConstant.accessExpression() + ".invokeExact(symbol");
             if (fiType.parameterCount() > 0) {
                 String params = IntStream.range(0, fiType.parameterCount())
-                        .mapToObj(i -> "x" + i)
+                        .mapToObj(i -> {
+                            String paramExpr = "x" + i;
+                            if (fiType.parameterType(i) != downcallType.parameterType(i)) {
+                                // add cast for invokeExact
+                                return "(" + downcallType.parameterType(i).getName() + ")" + paramExpr;
+                            } else {
+                                return paramExpr;
+                            }
+                        })
                         .collect(Collectors.joining(", "));
                 append(", " + params);
             }
