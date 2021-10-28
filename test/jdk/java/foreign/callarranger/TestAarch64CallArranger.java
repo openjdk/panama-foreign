@@ -402,11 +402,12 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt);
-        assertEquals(callingSequence.functionDesc(), fd);
+        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.functionDesc(), fd.withInsertedArgumentLayouts(0, ADDRESS));
 
         // This is identical to the non-variadic calling sequence
         checkArgumentBindings(callingSequence, new Binding[][]{
+            { unboxAddress(NativeSymbol.class), vmStore(r9, long.class) },
             { vmStore(r0, int.class) },
             { vmStore(r1, int.class) },
             { vmStore(v0, float.class) },
@@ -423,11 +424,12 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt);
-        assertEquals(callingSequence.functionDesc(), fd);
+        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.functionDesc(), fd.withInsertedArgumentLayouts(0, ADDRESS));
 
         // The two variadic arguments should be allocated on the stack
         checkArgumentBindings(callingSequence, new Binding[][]{
+            { unboxAddress(NativeSymbol.class), vmStore(r9, long.class) },
             { vmStore(r0, int.class) },
             { vmStore(stackStorage(0), int.class) },
             { vmStore(stackStorage(1), float.class) },
