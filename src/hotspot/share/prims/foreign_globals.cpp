@@ -80,7 +80,7 @@ ForeignGlobals::ForeignGlobals() {
   const char* strVMS = "L" FOREIGN_ABI "VMStorage;";
   Symbol* symVMS = SymbolTable::new_symbol(strVMS);
   ABI.targetAddrStorage_offset = field_offset(k_ABI, "targetAddrStorage", symVMS);
-  ABI.imrAddrStorage_offset = field_offset(k_ABI, "imrAddrStorage", symVMS);
+  ABI.retBufAddrStorage_offset = field_offset(k_ABI, "retBufAddrStorage", symVMS);
 
   // VMStorage
   InstanceKlass* k_VMS = find_InstanceKlass(FOREIGN_ABI "VMStorage", current_thread);

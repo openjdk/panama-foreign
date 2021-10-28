@@ -135,7 +135,7 @@ public class X86_64Architecture implements Architecture {
     public static ABIDescriptor abiFor(VMStorage[] inputIntRegs, VMStorage[] inputVectorRegs, VMStorage[] outputIntRegs,
                                        VMStorage[] outputVectorRegs, int numX87Outputs, VMStorage[] volatileIntRegs,
                                        VMStorage[] volatileVectorRegs, int stackAlignment, int shadowSpace,
-                                       VMStorage targetAddrStorage, VMStorage imrAddrStorage) {
+                                       VMStorage targetAddrStorage, VMStorage retBufAddrStorage) {
         return new ABIDescriptor(
             INSTANCE,
             new VMStorage[][] {
@@ -153,7 +153,7 @@ public class X86_64Architecture implements Architecture {
             },
             stackAlignment,
             shadowSpace,
-                targetAddrStorage, imrAddrStorage);
+                targetAddrStorage, retBufAddrStorage);
     }
 
 }

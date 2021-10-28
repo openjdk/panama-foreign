@@ -90,7 +90,7 @@ public abstract class CallArranger {
         16,  // Stack is always 16 byte aligned on AArch64
         0,   // No shadow space
         r9,  // target addr reg
-        r10  // imr addr reg
+        r10  // return buffer addr reg
     );
 
     // record

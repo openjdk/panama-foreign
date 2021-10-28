@@ -36,7 +36,7 @@ public:
                                           const ABIDescriptor& abi,
                                           const GrowableArray<VMReg>& input_registers,
                                           const GrowableArray<VMReg>& output_registers,
-                                          bool is_imr);
+                                          bool needs_return_buffer);
 };
 
 #endif // SHARE_VM_PRIMS_UNIVERSALNATIVEINVOKER_HPP

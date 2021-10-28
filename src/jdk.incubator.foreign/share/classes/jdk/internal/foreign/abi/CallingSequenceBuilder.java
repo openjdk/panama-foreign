@@ -88,27 +88,27 @@ public class CallingSequenceBuilder {
         return this;
     }
 
-    private boolean isImr() {
+    private boolean needsReturnBuffer() {
         return outputBindings.stream()
             .filter(Binding.Move.class::isInstance)
             .count() > 1;
     }
 
     public CallingSequence build() {
-        boolean isImr = isImr();
-        long imrSize = isImr ? computeImrSize() : 0;
-        long allocationSize = computeAllocationSize() + imrSize;
+        boolean needsReturnBuffer = needsReturnBuffer();
+        long returnBufferSize = needsReturnBuffer ? computeReturnBuferSize() : 0;
+        long allocationSize = computeAllocationSize() + returnBufferSize;
         if (!forUpcall) {
             addArgumentBinding(0, NativeSymbol.class, ValueLayout.ADDRESS, List.of(
                 Binding.unboxAddress(NativeSymbol.class),
                 Binding.vmStore(abi.targetAddrStorage(), long.class)));
-            if (isImr) {
+            if (needsReturnBuffer) {
                 addArgumentBinding(0, MemorySegment.class, ValueLayout.ADDRESS, List.of(
                     Binding.unboxAddress(MemorySegment.class),
-                    Binding.vmStore(abi.imrAddrStorage(), long.class)));
+                    Binding.vmStore(abi.retBufAddrStorage(), long.class)));
             }
         }
-        return new CallingSequence(mt, desc, isTrivial, isImr, imrSize, allocationSize, inputBindings, outputBindings);
+        return new CallingSequence(mt, desc, isTrivial, needsReturnBuffer, returnBufferSize, allocationSize, inputBindings, outputBindings);
     }
 
     private long computeAllocationSize() {
@@ -129,7 +129,7 @@ public class CallingSequenceBuilder {
         return size;
     }
 
-    private long computeImrSize() {
+    private long computeReturnBuferSize() {
         return outputBindings.stream()
                 .filter(Binding.Move.class::isInstance)
                 .map(Binding.Move.class::cast)

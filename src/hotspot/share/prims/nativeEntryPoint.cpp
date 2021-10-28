@@ -39,7 +39,7 @@ JNI_LEAF(jlong, NEP_vmStorageToVMReg(JNIEnv* env, jclass _unused, jint type, jin
 JNI_END
 
 JNI_ENTRY(jlong, NEP_makeInvoker(JNIEnv* env, jclass _unused, jobject method_type, jobject jabi,
-                                 jlongArray arg_moves, jlongArray ret_moves, jboolean is_imr))
+                                 jlongArray arg_moves, jlongArray ret_moves, jboolean needs_return_buffer))
   ResourceMark rm;
   const ABIDescriptor abi = ForeignGlobals::parse_abi_descriptor(jabi);
 
@@ -106,7 +106,7 @@ JNI_ENTRY(jlong, NEP_makeInvoker(JNIEnv* env, jclass _unused, jobject method_typ
 #endif
 
   return (jlong) ProgrammableInvoker::make_native_invoker(
-    basic_type, pslots, ret_bt, abi, input_regs, output_regs, is_imr)->code_begin();
+    basic_type, pslots, ret_bt, abi, input_regs, output_regs, needs_return_buffer)->code_begin();
 JNI_END
 
 #define CC (char*)  /*cast a literal from (const char*)*/

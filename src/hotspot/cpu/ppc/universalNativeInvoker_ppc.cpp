@@ -32,7 +32,7 @@ RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
                                                       const ABIDescriptor& abi,
                                                       const GrowableArray<VMReg>& input_registers,
                                                       const GrowableArray<VMReg>& output_registers,
-                                                      bool is_imr) {
+                                                      bool needs_return_buffer) {
   Unimplemented();
   return nullptr;
 }

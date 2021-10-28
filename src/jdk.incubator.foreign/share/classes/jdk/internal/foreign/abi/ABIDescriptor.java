@@ -38,11 +38,11 @@ public class ABIDescriptor implements ABIDescriptorProxy {
     final int shadowSpace;
 
     final VMStorage targetAddrStorage;
-    final VMStorage imrAddrStorage;
+    final VMStorage retBufAddrStorage;
 
     public ABIDescriptor(Architecture arch, VMStorage[][] inputStorage, VMStorage[][] outputStorage,
                          VMStorage[][] volatileStorage, int stackAlignment, int shadowSpace,
-                         VMStorage targetAddrStorage, VMStorage imrAddrStorage) {
+                         VMStorage targetAddrStorage, VMStorage retBufAddrStorage) {
         this.arch = arch;
         this.inputStorage = inputStorage;
         this.outputStorage = outputStorage;
@@ -50,7 +50,7 @@ public class ABIDescriptor implements ABIDescriptorProxy {
         this.stackAlignment = stackAlignment;
         this.shadowSpace = shadowSpace;
         this.targetAddrStorage = targetAddrStorage;
-        this.imrAddrStorage = imrAddrStorage;
+        this.retBufAddrStorage = retBufAddrStorage;
     }
 
     @Override
@@ -62,7 +62,7 @@ public class ABIDescriptor implements ABIDescriptorProxy {
         return targetAddrStorage;
     }
 
-    public VMStorage imrAddrStorage() {
-        return imrAddrStorage;
+    public VMStorage retBufAddrStorage() {
+        return retBufAddrStorage;
     }
 }

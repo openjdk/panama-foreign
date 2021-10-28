@@ -44,7 +44,7 @@ class NativeInvokerGenerator : public StubCodeGenerator {
   const GrowableArray<VMReg>& _input_registers;
   const GrowableArray<VMReg>& _output_registers;
 
-  bool _is_imr;
+  bool _needs_return_buffer;
 
   int _frame_complete;
   int _framesize;
@@ -57,7 +57,7 @@ public:
                          const ABIDescriptor& abi,
                          const GrowableArray<VMReg>& input_registers,
                          const GrowableArray<VMReg>& output_registers,
-                         bool is_imr)
+                         bool needs_return_buffer)
    : StubCodeGenerator(buffer, PrintMethodHandleStubs),
      _signature(signature),
      _num_args(num_args),
@@ -65,7 +65,7 @@ public:
      _abi(abi),
      _input_registers(input_registers),
      _output_registers(output_registers),
-     _is_imr(is_imr),
+     _needs_return_buffer(needs_return_buffer),
      _frame_complete(0),
      _framesize(0),
      _oop_maps(NULL) {
@@ -94,10 +94,10 @@ RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
                                                       const ABIDescriptor& abi,
                                                       const GrowableArray<VMReg>& input_registers,
                                                       const GrowableArray<VMReg>& output_registers,
-                                                      bool is_imr) {
+                                                      bool needs_return_buffer) {
   int locs_size  = 64;
   CodeBuffer code("nep_invoker_blob", native_invoker_code_size, locs_size);
-  NativeInvokerGenerator g(&code, signature, num_args, ret_bt, abi, input_registers, output_registers, is_imr);
+  NativeInvokerGenerator g(&code, signature, num_args, ret_bt, abi, input_registers, output_registers, needs_return_buffer);
   g.generate();
   code.log_section_sizes("nep_invoker_blob");
 
@@ -146,22 +146,22 @@ void NativeInvokerGenerator::generate() {
 #endif
 
   int allocated_frame_size = 0;
-  if (_is_imr) {
+  if (_needs_return_buffer) {
     allocated_frame_size += 8; // for address spill
   }
   allocated_frame_size += arg_shuffle.out_arg_stack_slots() <<LogBytesPerInt;
   assert(_abi._shadow_space_bytes == 0, "not expecting shadow space on AArch64");
 
-  int imr_addr_sp_offset = -1;
-  if (_is_imr) {
+  int ret_buf_addr_sp_offset = -1;
+  if (_needs_return_buffer) {
      // in sync with the above
-     imr_addr_sp_offset = allocated_frame_size - 8;
+     ret_buf_addr_sp_offset = allocated_frame_size - 8;
   }
 
   RegSpiller out_reg_spiller(_output_registers);
   int spill_offset = -1;
 
-  if (!_is_imr) {
+  if (!_needs_return_buffer) {
     spill_offset = 0;
     // spill area can be shared with the above, so we take the max of the 2
     allocated_frame_size = out_reg_spiller.spill_size_bytes() > allocated_frame_size
@@ -195,16 +195,16 @@ void NativeInvokerGenerator::generate() {
 
   __ block_comment("{ argument shuffle");
   arg_shuffle.generate(_masm, shuffle_reg->as_VMReg(), 0, _abi._shadow_space_bytes);
-  if (_is_imr) {
-    assert(imr_addr_sp_offset != -1, "no imr addr spill");
-    __ str(_abi._imr_addr_reg, Address(sp, imr_addr_sp_offset));
+  if (_needs_return_buffer) {
+    assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
+    __ str(_abi._ret_buf_addr_reg, Address(sp, ret_buf_addr_sp_offset));
   }
   __ block_comment("} argument shuffle");
 
   __ blr(_abi._target_addr_reg);
   // this call is assumed not to have killed rthread
 
-  if (!_is_imr) {
+  if (!_needs_return_buffer) {
     // Unpack native results.
     switch (_ret_bt) {
       case T_BOOLEAN: __ c2bool(r0);                     break;
@@ -221,8 +221,8 @@ void NativeInvokerGenerator::generate() {
       default       : ShouldNotReachHere();
     }
   } else {
-    assert(imr_addr_sp_offset != -1, "no imr addr spill");
-    __ ldr(tmp1, Address(sp, imr_addr_sp_offset));
+    assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
+    __ ldr(tmp1, Address(sp, ret_buf_addr_sp_offset));
     int offset = 0;
     for (int i = 0; i < _output_registers.length(); i++) {
       VMReg reg = _output_registers.at(i);
@@ -280,7 +280,7 @@ void NativeInvokerGenerator::generate() {
   __ block_comment("{ L_safepoint_poll_slow_path");
   __ bind(L_safepoint_poll_slow_path);
 
-  if (!_is_imr) {
+  if (!_needs_return_buffer) {
     // Need to save the native result registers around any runtime calls.
     out_reg_spiller.generate_spill(_masm, spill_offset);
   }
@@ -290,7 +290,7 @@ void NativeInvokerGenerator::generate() {
   __ lea(tmp1, RuntimeAddress(CAST_FROM_FN_PTR(address, JavaThread::check_special_condition_for_native_trans)));
   __ blr(tmp1);
 
-  if (!_is_imr) {
+  if (!_needs_return_buffer) {
     out_reg_spiller.generate_fill(_masm, spill_offset);
   }
 
@@ -302,13 +302,13 @@ void NativeInvokerGenerator::generate() {
   __ block_comment("{ L_reguard");
   __ bind(L_reguard);
 
-  if (!_is_imr) {
+  if (!_needs_return_buffer) {
     out_reg_spiller.generate_spill(_masm, spill_offset);
   }
 
   __ rt_call(CAST_FROM_FN_PTR(address, SharedRuntime::reguard_yellow_pages), tmp1);
 
-  if (!_is_imr) {
+  if (!_needs_return_buffer) {
     out_reg_spiller.generate_fill(_masm, spill_offset);
   }
 

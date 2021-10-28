@@ -54,7 +54,7 @@ private:
     int stackAlignment_offset;
     int shadowSpace_offset;
     int targetAddrStorage_offset;
-    int imrAddrStorage_offset;
+    int retBufAddrStorage_offset;
   } ABI;
 
   struct {
