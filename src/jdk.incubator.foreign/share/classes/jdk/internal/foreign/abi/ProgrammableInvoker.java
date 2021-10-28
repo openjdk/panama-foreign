@@ -229,7 +229,7 @@ public class ProgrammableInvoker {
                     returnFilter = SharedUtils.mergeArguments(returnFilter, retImrSegPos, retInsertPos);
                     // to (... MemorySegment, MemorySegment, <primitive>, ...)
                     // from (... MemorySegment, MemorySegment, ...)
-                    retInsertPos -= 2; // set insert pos back the the first MS (later DUP binding will merge the 2 MS)
+                    retInsertPos -= 2; // set insert pos back to the first MS (later DUP binding will merge the 2 MS)
                 } else {
                     returnFilter = binding.specialize(returnFilter, retInsertPos, retContextPos);
                     if (callingSequence.isImr() && binding.tag() == Binding.Tag.BUFFER_STORE) {

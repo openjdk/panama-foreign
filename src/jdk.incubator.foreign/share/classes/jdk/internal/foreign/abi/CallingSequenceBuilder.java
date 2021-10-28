@@ -71,7 +71,7 @@ public class CallingSequenceBuilder {
         verifyBindings(true, carrier, bindings);
         inputBindings.add(index, bindings);
         mt = mt.insertParameterTypes(index, carrier);
-        desc = desc.withInsertedArgumentLayouts(index, layout);
+        desc = desc.insertedArgumentLayouts(index, layout);
     }
 
     public CallingSequenceBuilder setReturnBindings(Class<?> carrier, MemoryLayout layout,
@@ -131,7 +131,7 @@ public class CallingSequenceBuilder {
 
     private long computeImrSize() {
         return outputBindings.stream()
-                .filter(Binding.Move.class ::isInstance)
+                .filter(Binding.Move.class::isInstance)
                 .map(Binding.Move.class::cast)
                 .map(Binding.Move::storage)
                 .map(VMStorage::type)
