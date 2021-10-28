@@ -34,19 +34,6 @@ class ProgrammableUpcallHandler {
 private:
   static constexpr CodeBuffer::csize_t upcall_stub_size = 1024;
 
-  struct UpcallMethod {
-    Klass* klass;
-    Symbol* name;
-    Symbol* sig;
-  } upcall_method;
-
-  ProgrammableUpcallHandler();
-
-  static const ProgrammableUpcallHandler& instance();
-
-  static void upcall_helper(JavaThread* thread, jobject rec, address buff);
-  static void attach_thread_and_do_upcall(jobject rec, address buff);
-
   static void handle_uncaught_exception(oop exception);
   static JavaThread* maybe_attach_and_get_thread(bool* should_detach);
   static void detach_current_thread();

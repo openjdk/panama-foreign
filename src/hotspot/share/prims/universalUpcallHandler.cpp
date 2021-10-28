@@ -37,21 +37,6 @@
 
 extern struct JavaVM_ main_vm;
 
-void ProgrammableUpcallHandler::upcall_helper(JavaThread* thread, jobject rec, address buff) {
-  JavaThread* THREAD = thread; // For exception macros.
-  ThreadInVMfromNative tiv(THREAD);
-  const UpcallMethod& upcall_method = instance().upcall_method;
-
-  ResourceMark rm(THREAD);
-  JavaValue result(T_VOID);
-  JavaCallArguments args(2); // long = 2 slots
-
-  args.push_jobject(rec);
-  args.push_long((jlong) buff);
-
-  JavaCalls::call_static(&result, upcall_method.klass, upcall_method.name, upcall_method.sig, &args, CATCH);
-}
-
 JavaThread* ProgrammableUpcallHandler::maybe_attach_and_get_thread(bool* should_detach) {
   JavaThread* thread = JavaThread::current_or_null();
   if (thread == nullptr) {
@@ -133,41 +118,6 @@ void ProgrammableUpcallHandler::on_exit(OptimizedEntryBlob::FrameData* context) 
   if (context->should_detach) {
     detach_current_thread();
   }
-}
-
-void ProgrammableUpcallHandler::attach_thread_and_do_upcall(jobject rec, address buff) {
-  bool should_detach = false;
-  JavaThread* thread = maybe_attach_and_get_thread(&should_detach);
-
-  {
-    MACOS_AARCH64_ONLY(ThreadWXEnable wx(WXWrite, thread));
-    upcall_helper(thread, rec, buff);
-  }
-
-  if (should_detach) {
-    detach_current_thread();
-  }
-}
-
-const ProgrammableUpcallHandler& ProgrammableUpcallHandler::instance() {
-  static ProgrammableUpcallHandler handler;
-  return handler;
-}
-
-ProgrammableUpcallHandler::ProgrammableUpcallHandler() {
-  JavaThread* THREAD = JavaThread::current(); // For exception macros.
-  ResourceMark rm(THREAD);
-  Symbol* sym = SymbolTable::new_symbol(FOREIGN_ABI "ProgrammableUpcallHandler");
-  Klass* k = SystemDictionary::resolve_or_null(sym, Handle(), Handle(), CATCH);
-  k->initialize(CATCH);
-
-  upcall_method.klass = k;
-  upcall_method.name = SymbolTable::new_symbol("invoke");
-  upcall_method.sig = SymbolTable::new_symbol("(Ljava/lang/invoke/MethodHandle;J)V");
-
-  assert(upcall_method.klass->lookup_method(upcall_method.name, upcall_method.sig) != nullptr,
-    "Could not find upcall method: %s.%s%s", upcall_method.klass->external_name(),
-    upcall_method.name->as_C_string(), upcall_method.sig->as_C_string());
 }
 
 void ProgrammableUpcallHandler::handle_uncaught_exception(oop exception) {

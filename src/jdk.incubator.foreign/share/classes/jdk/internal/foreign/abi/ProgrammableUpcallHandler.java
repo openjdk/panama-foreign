@@ -25,14 +25,12 @@
 
 package jdk.internal.foreign.abi;
 
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.ValueLayout;
-import jdk.internal.foreign.MemoryAddressImpl;
 import sun.security.action.GetPropertyAction;
 
 import java.lang.invoke.MethodHandle;
@@ -50,7 +48,6 @@ import static java.lang.invoke.MethodHandles.collectArguments;
 import static java.lang.invoke.MethodHandles.dropArguments;
 import static java.lang.invoke.MethodHandles.empty;
 import static java.lang.invoke.MethodHandles.exactInvoker;
-import static java.lang.invoke.MethodHandles.filterReturnValue;
 import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodHandles.lookup;
@@ -58,18 +55,11 @@ import static java.lang.invoke.MethodType.methodType;
 import static jdk.internal.foreign.abi.SharedUtils.mergeArguments;
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
-/**
- * This class implements upcall invocation from native code through a so called 'universal adapter'. A universal upcall adapter
- * takes an array of storage pointers, which describes the state of the CPU at the time of the upcall. This can be used
- * by the Java code to fetch the upcall arguments and to store the results to the desired location, as per system ABI.
- */
 public class ProgrammableUpcallHandler {
     private static final boolean DEBUG =
         privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.DEBUG");
     private static final boolean USE_SPEC = Boolean.parseBoolean(
         GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC", "true"));
-
-    private static final VarHandle VH_LONG = ValueLayout.JAVA_LONG.varHandle();
 
     private static final MethodHandle MH_invokeInterpBindings;
 
@@ -202,10 +192,6 @@ public class ProgrammableUpcallHandler {
         specializedHandle = SharedUtils.wrapWithAllocator(specializedHandle, argAllocatorPos, callingSequence.allocationSize(), true);
 
         return specializedHandle;
-    }
-
-    public static void invoke(MethodHandle mh, long address) throws Throwable {
-        mh.invokeExact(MemoryAddress.ofLong(address));
     }
 
     private record InvocationData(MethodHandle leaf,
