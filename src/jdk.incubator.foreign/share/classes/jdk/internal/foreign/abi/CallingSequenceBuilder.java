@@ -71,7 +71,7 @@ public class CallingSequenceBuilder {
         verifyBindings(true, carrier, bindings);
         inputBindings.add(index, bindings);
         mt = mt.insertParameterTypes(index, carrier);
-        desc = desc.insertedArgumentLayouts(index, layout);
+        desc = desc.insertArgumentLayouts(index, layout);
     }
 
     public CallingSequenceBuilder setReturnBindings(Class<?> carrier, MemoryLayout layout,

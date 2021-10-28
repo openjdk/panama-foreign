@@ -65,7 +65,7 @@ public class TestFunctionDescriptor extends NativeTestHelper {
     @Test
     public void testAppendArgumentLayouts() {
         FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_DOUBLE, C_LONG_LONG);
-        fd = fd.appendedArgumentLayouts(C_POINTER);
+        fd = fd.appendArgumentLayouts(C_POINTER);
 
         assertEquals(fd.argumentLayouts(), List.of(C_DOUBLE, C_LONG_LONG, C_POINTER));
         Optional<MemoryLayout> returnLayoutOp = fd.returnLayout();
