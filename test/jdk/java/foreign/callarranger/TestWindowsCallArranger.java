@@ -186,12 +186,14 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
                 int.class, double.class, int.class, double.class, double.class);
         FunctionDescriptor fd = FunctionDescriptor.ofVoid(
                 C_INT, C_DOUBLE).asVariadic(C_INT, C_DOUBLE, C_DOUBLE);
+        FunctionDescriptor fdExpected = FunctionDescriptor.ofVoid(
+                ADDRESS, C_INT, C_DOUBLE).asVariadic(C_INT, C_DOUBLE, C_DOUBLE);
         CallArranger.Bindings bindings = CallArranger.getBindings(mt, fd, false);
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
         assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
-        assertEquals(callingSequence.functionDesc(), fd.insertedArgumentLayouts(0, ADDRESS));
+        assertEquals(callingSequence.functionDesc(), fdExpected);
 
         checkArgumentBindings(callingSequence, new Binding[][]{
             { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
