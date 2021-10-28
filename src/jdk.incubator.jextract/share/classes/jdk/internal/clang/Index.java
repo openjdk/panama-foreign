@@ -70,12 +70,12 @@ public class Index implements AutoCloseable {
 
     public static class ParsingFailedException extends RuntimeException {
         private static final long serialVersionUID = -1L;
-        private final Path srcFile;
+        private final String srcFile;
         private final ErrorCode code;
 
         public ParsingFailedException(Path srcFile, ErrorCode code) {
             super("Failed to parse " + srcFile.toAbsolutePath().toString() + ": " + code);
-            this.srcFile = srcFile;
+            this.srcFile = srcFile.toAbsolutePath().toString();
             this.code = code;
         }
     }
