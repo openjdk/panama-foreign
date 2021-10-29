@@ -49,7 +49,7 @@ import static java.lang.invoke.MethodHandles.lookup;
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "--enable-native-access=ALL-UNNAMED" })
-public class Upcalls extends CLayouts {
+public class Upcalls extends org.openjdk.bench.jdk.incubator.foreign.CLayouts {
 
     static final CLinker abi = CLinker.systemCLinker();
     static final MethodHandle blank;
@@ -71,10 +71,10 @@ public class Upcalls extends CLayouts {
         System.loadLibrary("UpcallsJNI");
 
         String className = "org/openjdk/bench/jdk/incubator/foreign/Upcalls";
-        cb_blank_jni = JNICB.makeCB(className, "blank", "()V");
-        cb_identity_jni = JNICB.makeCB(className, "identity", "(I)I");
-        cb_args5_jni = JNICB.makeCB(className, "args5", "(JDJDJ)V");
-        cb_args10_jni = JNICB.makeCB(className, "args10", "(JDJDJDJDJD)V");
+        cb_blank_jni = org.openjdk.bench.jdk.incubator.foreign.JNICB.makeCB(className, "blank", "()V");
+        cb_identity_jni = org.openjdk.bench.jdk.incubator.foreign.JNICB.makeCB(className, "identity", "(I)I");
+        cb_args5_jni = org.openjdk.bench.jdk.incubator.foreign.JNICB.makeCB(className, "args5", "(JDJDJ)V");
+        cb_args10_jni = org.openjdk.bench.jdk.incubator.foreign.JNICB.makeCB(className, "args10", "(JDJDJDJDJD)V");
 
         try {
             System.loadLibrary("Upcalls");
@@ -124,7 +124,7 @@ public class Upcalls extends CLayouts {
     static MethodHandle linkFunc(String name, FunctionDescriptor baseDesc) {
         return abi.downcallHandle(
             SymbolLookup.loaderLookup().lookup(name).orElseThrow(),
-                baseDesc.withAppendedArgumentLayouts(C_POINTER)
+                baseDesc.appendArgumentLayouts(C_POINTER)
         );
     }
 
