@@ -59,6 +59,10 @@ ifeq ($(INCLUDE_SA), false)
   MODULES_FILTER += jdk.hotspot.agent
 endif
 
+ifeq ($(INCLUDE_JEXTRACT), false)
+  MODULES_FILTER += jdk.incubator.jextract
+endif
+
 # Filter out jvmci specific modules if jvmci is disabled
 ifeq ($(INCLUDE_JVMCI), false)
   MODULES_FILTER += jdk.internal.vm.ci
