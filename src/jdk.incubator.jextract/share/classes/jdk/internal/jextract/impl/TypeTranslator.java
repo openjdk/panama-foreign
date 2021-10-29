@@ -25,6 +25,7 @@
 
 package jdk.internal.jextract.impl;
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.incubator.jextract.Type.Primitive;
 import jdk.incubator.jextract.Type;
@@ -34,9 +35,9 @@ import jdk.incubator.foreign.MemorySegment;
 
 import java.lang.invoke.MethodType;
 
-public class TypeTranslator implements Type.Visitor<Class<?>, Void> {
+public class TypeTranslator implements Type.Visitor<Class<?>, Boolean> {
     @Override
-    public Class<?> visitPrimitive(Type.Primitive t, Void aVoid) {
+    public Class<?> visitPrimitive(Type.Primitive t, Boolean isArg) {
         if (t.kind().layout().isEmpty()) {
             return void.class;
         } else {
@@ -74,32 +75,28 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Void> {
     }
 
     @Override
-    public Class<?> visitDelegated(Type.Delegated t, Void aVoid) {
+    public Class<?> visitDelegated(Type.Delegated t, Boolean isArg) {
         return t.kind() == Type.Delegated.Kind.POINTER ?
-                MemoryAddress.class :
-                t.type().accept(this, null);
+                (isArg ? Addressable.class : MemoryAddress.class) :
+                t.type().accept(this, isArg);
     }
 
     @Override
-    public Class<?> visitFunction(Type.Function t, Void aVoid) {
-        return MemoryAddress.class; // function pointer
+    public Class<?> visitFunction(Type.Function t, Boolean isArg) {
+        return isArg ? Addressable.class : MemoryAddress.class; // function pointer
     }
 
     @Override
-    public Class<?> visitDeclared(Type.Declared t, Void aVoid) {
-        switch (t.tree().kind()) {
-            case UNION:
-            case STRUCT:
-                return MemorySegment.class;
-            case ENUM:
-                return layoutToClass(false, t.tree().layout().orElseThrow(UnsupportedOperationException::new));
-            default:
-                throw new UnsupportedOperationException("declaration kind: " + t.tree().kind());
-        }
+    public Class<?> visitDeclared(Type.Declared t, Boolean isArg) {
+        return switch (t.tree().kind()) {
+            case UNION, STRUCT -> MemorySegment.class;
+            case ENUM -> layoutToClass(false, t.tree().layout().orElseThrow(UnsupportedOperationException::new));
+            default -> throw new UnsupportedOperationException("declaration kind: " + t.tree().kind());
+        };
     }
 
     @Override
-    public Class<?> visitArray(Type.Array t, Void aVoid) {
+    public Class<?> visitArray(Type.Array t, Boolean isArg) {
         if (t.kind() == Type.Array.Kind.VECTOR) {
             throw new UnsupportedOperationException("vector");
         } else {
@@ -108,24 +105,20 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Void> {
     }
 
     @Override
-    public Class<?> visitType(Type t, Void aVoid) {
+    public Class<?> visitType(Type t, Boolean isArg) {
         throw new UnsupportedOperationException(t.getClass().toString());
     }
 
-    Class<?> getJavaType(Type t) {
-        return t.accept(this, null);
+    Class<?> getJavaType(Type t, boolean isArg) {
+        return t.accept(this, isArg);
     }
 
-    MethodType getMethodType(Type.Function type) {
-        return getMethodType(type, true);
-    }
-
-    MethodType getMethodType(Type.Function type, boolean varargsCheck) {
-        MethodType mtype = MethodType.methodType(getJavaType(type.returnType()));
+    MethodType getMethodType(Type.Function type, boolean downcall) {
+        MethodType mtype = MethodType.methodType(getJavaType(type.returnType(), !downcall));
         for (Type arg : type.argumentTypes()) {
-            mtype = mtype.appendParameterTypes(getJavaType(arg));
+            mtype = mtype.appendParameterTypes(getJavaType(arg, downcall));
         }
-        if (varargsCheck && type.varargs()) {
+        if (downcall && type.varargs()) {
             mtype = mtype.appendParameterTypes(Object[].class);
         }
         return mtype;

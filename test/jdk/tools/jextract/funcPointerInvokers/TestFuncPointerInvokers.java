@@ -21,6 +21,7 @@
  * questions.
  */
 
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
@@ -128,6 +129,14 @@ public class TestFuncPointerInvokers {
             fp$set(fp.allocate((i) -> val.set(i), scope).address());
             fp.ofAddress(fp$get(), scope).apply(42);
             assertEquals(val.get(), 42);
+        }
+    }
+
+    @Test
+    public void testGlobalFIFunctionPointerAddress() {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            fp_addr$set(fp_addr.allocate((addr) -> MemoryAddress.ofLong(addr.toRawLongValue() + 1), scope).address());
+            assertEquals(fp_addr.ofAddress(fp_addr$get(), scope).apply(MemoryAddress.ofLong(42)), MemoryAddress.ofLong(43));
         }
     }
 }

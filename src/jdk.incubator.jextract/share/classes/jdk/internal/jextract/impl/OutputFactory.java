@@ -190,7 +190,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
         toplevelBuilder.addConstant(Utils.javaSafeIdentifier(constant.name()),
                 constant.value() instanceof String ? MemorySegment.class :
-                typeTranslator.getJavaType(constant.type()), constant.value());
+                getJavaType(constant.type()), constant.value());
         return null;
     }
 
@@ -228,7 +228,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     private String generateFunctionalInterface(Type.Function func, String name) {
-        return functionInfo(func, name, false, FunctionInfo::ofFunctionPointer)
+        return functionInfo(func, name, false, (mtype, desc) -> FunctionInfo.ofFunctionPointer(mtype, getMethodType(func, true), desc))
                 .map(fInfo -> currentBuilder.addFunctionalInterface(Utils.javaSafeIdentifier(name), fInfo))
                 .orElse(null);
     }
@@ -432,7 +432,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return null;
     }
 
-    private Optional<FunctionInfo> functionInfo(Type.Function funcPtr, String nativeName, boolean allowVarargs,
+    private Optional<FunctionInfo> functionInfo(Type.Function funcPtr, String nativeName, boolean downcall,
                                                 BiFunction<MethodType, FunctionDescriptor, FunctionInfo> functionInfoFactory) {
         FunctionDescriptor descriptor = Type.descriptorFor(funcPtr).orElse(null);
         if (descriptor == null) {
@@ -441,7 +441,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
 
         //generate functional interface
-        if (!allowVarargs && funcPtr.varargs() && !funcPtr.argumentTypes().isEmpty()) {
+        if (!downcall && funcPtr.varargs() && !funcPtr.argumentTypes().isEmpty()) {
             warn("varargs in callbacks is not supported: " + funcPtr);
             return Optional.empty();
         }
@@ -453,7 +453,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return Optional.empty();
         }
 
-        MethodType mtype = getMethodType(funcPtr, allowVarargs);
+        MethodType mtype = getMethodType(funcPtr, downcall);
         return mtype != null ?
                 Optional.of(functionInfoFactory.apply(mtype, descriptor)) :
                 Optional.empty();
@@ -477,7 +477,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     private Class<?> getJavaType(Type type) {
         try {
-            return typeTranslator.getJavaType(type);
+            return typeTranslator.getJavaType(type, false);
         } catch (UnsupportedOperationException uoe) {
             warn(uoe.toString());
             if (JextractTool.DEBUG) {
@@ -487,21 +487,9 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
     }
 
-    private MethodType getMethodType(Type.Function type) {
+    private MethodType getMethodType(Type.Function type, boolean downcall) {
         try {
-            return typeTranslator.getMethodType(type);
-        } catch (UnsupportedOperationException uoe) {
-            warn(uoe.toString());
-            if (JextractTool.DEBUG) {
-                uoe.printStackTrace();
-            }
-            return null;
-        }
-    }
-
-    private MethodType getMethodType(Type.Function type, boolean varargsCheck) {
-        try {
-            return typeTranslator.getMethodType(type, varargsCheck);
+            return typeTranslator.getMethodType(type, downcall);
         } catch (UnsupportedOperationException uoe) {
             warn(uoe.toString());
             if (JextractTool.DEBUG) {

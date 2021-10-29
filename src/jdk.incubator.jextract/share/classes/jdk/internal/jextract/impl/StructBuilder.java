@@ -116,7 +116,7 @@ class StructBuilder extends ConstantBuilder {
 
     @Override
     public String addFunctionalInterface(String name, FunctionInfo functionInfo) {
-        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name, functionInfo.methodType(), functionInfo.descriptor());
+        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name, functionInfo);
         builder.classBegin();
         builder.classEnd();
         return builder.className();

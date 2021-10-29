@@ -192,9 +192,6 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
             }
             pExprs.add(pName);
             Class<?> pType = methodType.parameterType(i);
-            if (pType.equals(MemoryAddress.class)) {
-                pType = Addressable.class;
-            }
             append(delim + " " + pType.getSimpleName() + " " + pName);
             delim = ", ";
         }

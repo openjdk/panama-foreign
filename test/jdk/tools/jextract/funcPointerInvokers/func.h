@@ -45,6 +45,8 @@ struct Baz {
 
 EXPORT void (*fp)(int arg);
 
+EXPORT int* (*fp_addr)(int *arg);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
