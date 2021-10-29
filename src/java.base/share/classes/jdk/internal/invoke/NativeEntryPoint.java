@@ -70,13 +70,13 @@ public class NativeEntryPoint {
 
     public static NativeEntryPoint make(String name, ABIDescriptorProxy abi,
                                         VMStorageProxy[] argMoves, VMStorageProxy[] returnMoves,
-                                        boolean needTransition, MethodType methodType, boolean isImr) {
-        if (returnMoves.length > 1 != isImr) {
-            throw new IllegalArgumentException("Multiple register return, but isImr was false");
+                                        boolean needTransition, MethodType methodType, boolean needsReturnBuffer) {
+        if (returnMoves.length > 1 != needsReturnBuffer) {
+            throw new IllegalArgumentException("Multiple register return, but needsReturnBuffer was false");
         }
 
         assert (methodType.parameterType(0) == long.class) : "Address expected";
-        assert (!isImr || methodType.parameterType(1) == long.class) : "IMR address expected";
+        assert (!needsReturnBuffer || methodType.parameterType(1) == long.class) : "IMR address expected";
 
         int shadowSpaceBytes = abi.shadowSpaceBytes();
         long[] encArgMoves = encodeVMStorages(argMoves);
@@ -85,7 +85,7 @@ public class NativeEntryPoint {
         CacheKey key = new CacheKey(methodType, abi.shadowSpaceBytes(),
                 Arrays.asList(argMoves), Arrays.asList(returnMoves));
         long invoker = INVOKER_CACHE.computeIfAbsent(key, k ->
-            makeInvoker(methodType, abi, encArgMoves, encRetMoves, isImr));
+            makeInvoker(methodType, abi, encArgMoves, encRetMoves, needsReturnBuffer));
 
         return new NativeEntryPoint(shadowSpaceBytes, encArgMoves, encRetMoves,
                 needTransition, methodType, name, invoker);
@@ -101,7 +101,7 @@ public class NativeEntryPoint {
 
     private static native long vmStorageToVMReg(int type, int index);
 
-    private static native long makeInvoker(MethodType methodType, ABIDescriptorProxy abi, long[] encArgMoves, long[] encRetMoves, boolean isImr);
+    private static native long makeInvoker(MethodType methodType, ABIDescriptorProxy abi, long[] encArgMoves, long[] encRetMoves, boolean needsReturnBuffer);
 
     public MethodType type() {
         return methodType;
