@@ -40,7 +40,6 @@
 #include "opto/runtime.hpp"
 #include "opto/subnode.hpp"
 #include "runtime/sharedRuntime.hpp"
-#include "ci/ciNativeEntryPoint.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/decoder.hpp"
 #include "utilities/ostream.hpp"
