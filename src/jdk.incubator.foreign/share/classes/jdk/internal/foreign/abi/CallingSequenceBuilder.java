@@ -107,11 +107,11 @@ public class CallingSequenceBuilder {
                     Binding.unboxAddress(MemorySegment.class),
                     Binding.vmStore(abi.retBufAddrStorage(), long.class)));
             }
-        } else if (isImr) { // forUpcall == true
+        } else if (needsReturnBuffer) { // forUpcall == true
             addArgumentBinding(0, MemorySegment.class, ValueLayout.ADDRESS, List.of(
-                Binding.vmLoad(abi.imrAddrStorage(), long.class),
+                Binding.vmLoad(abi.retBufAddrStorage(), long.class),
                 Binding.boxAddress(),
-                Binding.toSegment(imrSize)));
+                Binding.toSegment(returnBufferSize)));
         }
         return new CallingSequence(mt, desc, isTrivial, needsReturnBuffer, returnBufferSize, allocationSize, inputBindings, outputBindings);
     }

@@ -37,7 +37,7 @@
 
 #define __ _masm->
 
-address ProgrammableUpcallHandler::generate_optimized_upall_stub(jobject receiver, Method* entry,
+
 
 // for callee saved regs, according to the caller's ABI
 static int compute_reg_save_area_size(const ABIDescriptor& abi) {

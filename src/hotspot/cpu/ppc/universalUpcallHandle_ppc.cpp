@@ -31,7 +31,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
                                                                   BasicType* out_sig_bt, int total_out_args,
                                                                   BasicType ret_type,
                                                                   jobject jabi, jobject jconv,
-                                                                  bool is_imr, int imr_size) {
+                                                                  bool needs_return_buffer, int ret_buf_size) {
   ShouldNotCallThis();
   return nullptr;
 }

@@ -32,8 +32,6 @@ class JavaThread;
 
 class ProgrammableUpcallHandler {
 private:
-  static constexpr CodeBuffer::csize_t upcall_stub_size = 1024;
-
   static void handle_uncaught_exception(oop exception);
   static JavaThread* maybe_attach_and_get_thread(bool* should_detach);
   static void detach_current_thread();
@@ -46,7 +44,7 @@ public:
                                                 BasicType* out_sig_bt, int total_out_args,
                                                 BasicType ret_type,
                                                 jobject jabi, jobject jconv,
-                                                bool is_imr, int imr_size);
+                                                bool needs_return_buffer, int ret_buf_size);
 };
 
 #endif // SHARE_VM_PRIMS_UNIVERSALUPCALLHANDLER_HPP

@@ -129,7 +129,8 @@ void ProgrammableUpcallHandler::handle_uncaught_exception(oop exception) {
 }
 
 JVM_ENTRY(jlong, PUH_AllocateOptimizedUpcallStub(JNIEnv *env, jclass unused, jobject mh, jobject abi, jobject conv,
-                                                 jboolean is_imr, jlong imr_size))
+                                                 jboolean needs_return_buffer, jlong ret_buf_size))
+  ResourceMark rm(THREAD);
   Handle mh_h(THREAD, JNIHandles::resolve(mh));
   jobject mh_j = JNIHandles::make_global(mh_h);
 
@@ -164,7 +165,7 @@ JVM_ENTRY(jlong, PUH_AllocateOptimizedUpcallStub(JNIEnv *env, jclass unused, job
   int total_in_args = total_out_args - 1;
 
   return (jlong) ProgrammableUpcallHandler::generate_optimized_upcall_stub(
-    mh_j, entry, in_sig_bt, total_in_args, out_sig_bt, total_out_args, ret_type, abi, conv, is_imr, checked_cast<int>(imr_size));
+    mh_j, entry, in_sig_bt, total_in_args, out_sig_bt, total_out_args, ret_type, abi, conv, needs_return_buffer, checked_cast<int>(ret_buf_size));
 JVM_END
 
 #define CC (char*)  /*cast a literal from (const char*)*/

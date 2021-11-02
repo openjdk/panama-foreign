@@ -173,8 +173,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
                                                                   BasicType* out_sig_bt, int total_out_args,
                                                                   BasicType ret_type,
                                                                   jobject jabi, jobject jconv,
-                                                                  bool is_imr, int imr_size) {
-  ResourceMark rm;
+                                                                  bool needs_return_buffer, int ret_buf_size) {
   const ABIDescriptor abi = ForeignGlobals::parse_abi_descriptor(jabi);
   const CallRegs call_regs = ForeignGlobals::parse_call_regs(jconv);
   CodeBuffer buffer("upcall_stub_linkToNative", /* code_size = */ 2048, /* locs_size = */ 1024);
@@ -215,10 +214,10 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   int frame_data_offset      = reg_save_area_offset   + reg_save_area_size;
   int frame_bottom_offset    = frame_data_offset      + sizeof(OptimizedEntryBlob::FrameData);
 
-  int imr_area_offset = -1;
-  if (is_imr) {
-    imr_area_offset = frame_bottom_offset;
-    frame_bottom_offset += imr_size;
+  int ret_buf_offset = -1;
+  if (needs_return_buffer) {
+    ret_buf_offset = frame_bottom_offset;
+    frame_bottom_offset += ret_buf_size;
   }
 
   int frame_size = frame_bottom_offset;
@@ -230,8 +229,8 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   // FP-> |                     |
   //      |---------------------| = frame_bottom_offset = frame_size
   //      | (optional)          |
-  //      | imr_area            |
-  //      |---------------------| = imr_area_offset
+  //      | ret_buf             |
+  //      |---------------------| = ret_buf_offset
   //      |                     |
   //      | FrameData           |
   //      |---------------------| = frame_data_offset
@@ -281,9 +280,9 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
   __ block_comment("{ argument shuffle");
   arg_spilller.generate_fill(_masm, arg_save_area_offset);
-  if (is_imr) {
-    assert(imr_area_offset != -1, "no imr area allocated");
-    __ lea(abi._imr_addr_reg, Address(rsp, imr_area_offset));
+  if (needs_return_buffer) {
+    assert(ret_buf_offset != -1, "no return buffer allocated");
+    __ lea(abi._ret_buf_addr_reg, Address(rsp, ret_buf_offset));
   }
   arg_shuffle.generate(_masm, shuffle_reg->as_VMReg(), abi._shadow_space_bytes, 0);
   __ block_comment("} argument shuffle");
@@ -300,7 +299,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   __ call(Address(rbx, Method::from_compiled_offset()));
 
   // return value shuffle
-  if (!is_imr) {
+  if (!needs_return_buffer) {
 #ifdef ASSERT
     if (call_regs._rets_length == 1) { // 0 or 1
       VMReg j_expected_result_reg;
@@ -327,8 +326,8 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
     }
 #endif
   } else {
-    assert(imr_area_offset != -1, "no imr area allocated");
-    __ lea(rscratch1, Address(rsp, imr_area_offset));
+    assert(ret_buf_offset != -1, "no return buffer allocated");
+    __ lea(rscratch1, Address(rsp, ret_buf_offset));
     int offset = 0;
     for (int i = 0; i < call_regs._rets_length; i++) {
       VMReg reg = call_regs._ret_regs[i];

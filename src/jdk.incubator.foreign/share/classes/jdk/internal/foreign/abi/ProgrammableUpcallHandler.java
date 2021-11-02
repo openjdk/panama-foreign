@@ -89,8 +89,8 @@ public class ProgrammableUpcallHandler {
             Map<VMStorage, Integer> argIndices = SharedUtils.indexMap(argMoves);
             Map<VMStorage, Integer> retIndices = SharedUtils.indexMap(retMoves);
             int spreaderCount = callingSequence.methodType().parameterCount();
-            if (callingSequence.isImr()) {
-                spreaderCount--; // imr segment is dropped from the argument list
+            if (callingSequence.needsReturnBuffer()) {
+                spreaderCount--; // return buffer is dropped from the argument list
             }
             target = target.asSpreader(Object[].class, spreaderCount);
             InvocationData invData = new InvocationData(target, argIndices, retIndices, callingSequence, retMoves, abi);
@@ -104,7 +104,8 @@ public class ProgrammableUpcallHandler {
         VMStorage[] args = Arrays.stream(argMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
         VMStorage[] rets = Arrays.stream(retMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
         CallRegs conv = new CallRegs(args, rets);
-        long entryPoint = allocateOptimizedUpcallStub(doBindings, abi, conv, callingSequence.isImr(), callingSequence.imrSize());
+        long entryPoint = allocateOptimizedUpcallStub(doBindings, abi, conv,
+                callingSequence.needsReturnBuffer(), callingSequence.returnBufferSize());
         return UpcallStubs.makeUpcall(entryPoint, scope);
     }
 
@@ -139,27 +140,27 @@ public class ProgrammableUpcallHandler {
         MethodHandle specializedHandle = target; // initial
 
         // we handle returns first since IMR adds an extra parameter that needs to be specialized as well
-        if (llReturn != void.class || callingSequence.isImr()) {
+        if (llReturn != void.class || callingSequence.needsReturnBuffer()) {
             int retAllocatorPos = -1; // assumed not needed
             int retInsertPos;
             MethodHandle filter;
-            if (callingSequence.isImr()) {
+            if (callingSequence.needsReturnBuffer()) {
                 retInsertPos = 1;
                 filter = empty(methodType(void.class, MemorySegment.class));
             } else {
                 retInsertPos = 0;
                 filter = identity(llReturn);
             }
-            long imrWriteOffset = callingSequence.imrSize();
+            long retBufWriteOffset = callingSequence.returnBufferSize();
             List<Binding> bindings = callingSequence.returnBindings();
             for (int j = bindings.size() - 1; j >= 0; j--) {
                 Binding binding = bindings.get(j);
-                if (callingSequence.isImr() && binding.tag() == Binding.Tag.VM_STORE) {
+                if (callingSequence.needsReturnBuffer() && binding.tag() == Binding.Tag.VM_STORE) {
                     Binding.VMStore store = (Binding.VMStore) binding;
                     ValueLayout layout = MemoryLayout.valueLayout(store.type(), ByteOrder.nativeOrder()).withBitAlignment(8);
                     // since we iterate the bindings in reverse, we have to compute the offset in reverse as well
-                    imrWriteOffset -= abi.arch.typeSize(store.storage().type());
-                    MethodHandle storeHandle = MemoryHandles.insertCoordinates(MemoryHandles.varHandle(layout), 1, imrWriteOffset)
+                    retBufWriteOffset -= abi.arch.typeSize(store.storage().type());
+                    MethodHandle storeHandle = MemoryHandles.insertCoordinates(MemoryHandles.varHandle(layout), 1, retBufWriteOffset)
                             .toMethodHandle(VarHandle.AccessMode.SET);
                     filter = collectArguments(filter, retInsertPos, storeHandle);
                     filter = mergeArguments(filter, retInsertPos - 1, retInsertPos);
@@ -213,10 +214,10 @@ public class ProgrammableUpcallHandler {
                         (storage, type) -> lowLevelArgs[invData.argIndexMap.get(storage)], allocator);
             }
 
-            MemorySegment imrSegment = null;
-            if (invData.callingSequence.isImr()) {
+            MemorySegment returnBuffer = null;
+            if (invData.callingSequence.needsReturnBuffer()) {
                 // this one is for us
-                imrSegment = (MemorySegment) highLevelArgs[0];
+                returnBuffer = (MemorySegment) highLevelArgs[0];
                 Object[] newArgs = new Object[highLevelArgs.length - 1];
                 System.arraycopy(highLevelArgs, 1, newArgs, 0, newArgs.length);
                 highLevelArgs = newArgs;
@@ -246,7 +247,7 @@ public class ProgrammableUpcallHandler {
             } else if (returnValues.length == 1) {
                 return returnValues[0];
             } else {
-                assert invData.callingSequence.isImr();
+                assert invData.callingSequence.needsReturnBuffer();
 
                 Binding.VMStore[] retMoves = invData.callingSequence.returnBindings().stream()
                         .filter(Binding.VMStore.class::isInstance)
@@ -254,12 +255,12 @@ public class ProgrammableUpcallHandler {
                         .toArray(Binding.VMStore[]::new);
 
                 assert returnValues.length == retMoves.length;
-                int imrWriteOffset = 0;
+                int retBufWriteOffset = 0;
                 for (int i = 0; i < retMoves.length; i++) {
                     Binding.VMStore store = retMoves[i];
                     Object value = returnValues[i];
-                    SharedUtils.writeOverSized(imrSegment.asSlice(imrWriteOffset), store.type(), value);
-                    imrWriteOffset += invData.abi.arch.typeSize(store.storage().type());
+                    SharedUtils.writeOverSized(returnBuffer.asSlice(retBufWriteOffset), store.type(), value);
+                    retBufWriteOffset += invData.abi.arch.typeSize(store.storage().type());
                 }
                 return null;
             }
@@ -272,7 +273,8 @@ public class ProgrammableUpcallHandler {
     // used for transporting data into native code
     private static record CallRegs(VMStorage[] argRegs, VMStorage[] retRegs) {}
 
-    static native long allocateOptimizedUpcallStub(MethodHandle mh, ABIDescriptor abi, CallRegs conv, boolean isImr, long imrSize);
+    static native long allocateOptimizedUpcallStub(MethodHandle mh, ABIDescriptor abi, CallRegs conv,
+                                                   boolean needsReturnBuffer, long returnBufferSize);
 
     private static native void registerNatives();
     static {
