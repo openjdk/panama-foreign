@@ -28,11 +28,11 @@
 
 JVM_ENTRY(static jboolean, UH_FreeUpcallStub0(JNIEnv *env, jobject _unused, jlong addr))
   // safe to call 'find_blob' without code cache lock, because stub is always alive
-  OptimizedEntryBlob* cb = CodeCache::find_blob((char*)addr)->as_optimized_entry_blob();
+  CodeBlob* cb = CodeCache::find_blob((char*)addr);
   if (cb == nullptr) {
     return false;
   }
-  OptimizedEntryBlob::free(cb);
+  OptimizedEntryBlob::free(cb->as_optimized_entry_blob());
   return true;
 JVM_END
 
