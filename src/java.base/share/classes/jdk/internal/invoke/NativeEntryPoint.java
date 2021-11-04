@@ -26,12 +26,10 @@
 package jdk.internal.invoke;
 
 import java.lang.invoke.MethodType;
-import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 
 /**
  * This class describes a 'native invoker', which is used as an appendix argument to linkToNative calls.
@@ -44,7 +42,7 @@ public class NativeEntryPoint {
     private final MethodType methodType;
     private final long invoker;
 
-    private static final WeakReferenceCache<CacheKey, NativeEntryPoint> CACHE = new WeakReferenceCache<>();
+    private static final Map<CacheKey, Long> INVOKER_CACHE = new ConcurrentHashMap<>();
     private record CacheKey(MethodType methodType, ABIDescriptorProxy abi,
                             List<VMStorageProxy> argMoves, List<VMStorageProxy> retMoves,
                             boolean needsReturnBuffer) {}
@@ -65,10 +63,10 @@ public class NativeEntryPoint {
         assert (!needsReturnBuffer || methodType.parameterType(1) == long.class) : "return buffer address expected";
 
         CacheKey key = new CacheKey(methodType, abi, Arrays.asList(argMoves), Arrays.asList(returnMoves), needsReturnBuffer);
-        return CACHE.get(key, k -> {
-            long invoker = makeInvoker(k.methodType(), k.abi(), argMoves, returnMoves, k.needsReturnBuffer());
-            return new NativeEntryPoint(k.methodType(), invoker);
-        });
+        long invoker = INVOKER_CACHE.computeIfAbsent(key, k ->
+            makeInvoker(methodType, abi, argMoves, returnMoves, needsReturnBuffer));
+
+        return new NativeEntryPoint(methodType, invoker);
     }
 
     private static native long makeInvoker(MethodType methodType, ABIDescriptorProxy abi,
@@ -80,33 +78,4 @@ public class NativeEntryPoint {
     }
 
     private static native void registerNatives();
-}
-
-class WeakReferenceCache<K, V> {
-    private final Map<K, Node> cache = new ConcurrentHashMap<>();
-
-    public V get(K key, Function<K, V> valueFactory) {
-        return cache
-            .computeIfAbsent(key, k -> new Node()) // cheap lock (has to be according to ConcurrentHashMap)
-            .get(key, valueFactory); // expensive lock, but just for the particular key
-    }
-
-    private class Node {
-        private WeakReference<V> ref;
-
-        public Node() {}
-
-        public V get(K key, Function<K, V> valueFactory) {
-            V result;
-            if (ref == null || (result = ref.get()) == null) {
-                synchronized (this) { // don't let threads race on the valueFactory::apply call
-                    if (ref == null || (result = ref.get()) == null) {
-                        result = valueFactory.apply(key); // keep alive
-                        ref = new WeakReference<>(result);
-                    }
-                }
-            }
-            return result;
-        }
-    }
 }
