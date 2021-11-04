@@ -45,9 +45,9 @@ public class NativeEntryPoint {
     private final long invoker;
 
     private static final WeakReferenceCache<CacheKey, NativeEntryPoint> CACHE = new WeakReferenceCache<>();
-    private record CacheKey(MethodType mt, ABIDescriptorProxy abi,
+    private record CacheKey(MethodType methodType, ABIDescriptorProxy abi,
                             List<VMStorageProxy> argMoves, List<VMStorageProxy> retMoves,
-                            boolean isImr) {}
+                            boolean needsReturnBuffer) {}
 
     private NativeEntryPoint(MethodType methodType, long invoker) {
         this.methodType = methodType;
@@ -62,12 +62,12 @@ public class NativeEntryPoint {
         }
 
         assert (methodType.parameterType(0) == long.class) : "Address expected";
-        assert (!needsReturnBuffer || methodType.parameterType(1) == long.class) : "IMR address expected";
+        assert (!needsReturnBuffer || methodType.parameterType(1) == long.class) : "return buffer address expected";
 
-        CacheKey key = new CacheKey(methodType, abi, Arrays.asList(argMoves), Arrays.asList(returnMoves), isImr);
+        CacheKey key = new CacheKey(methodType, abi, Arrays.asList(argMoves), Arrays.asList(returnMoves), needsReturnBuffer);
         return CACHE.get(key, k -> {
-            long invoker = makeInvoker(k.mt(), k.abi(), argMoves, returnMoves, k.isImr());
-            return new NativeEntryPoint(k.mt(), invoker);
+            long invoker = makeInvoker(k.methodType(), k.abi(), argMoves, returnMoves, k.needsReturnBuffer());
+            return new NativeEntryPoint(k.methodType(), invoker);
         });
     }
 
@@ -88,7 +88,7 @@ class WeakReferenceCache<K, V> {
     public V get(K key, Function<K, V> valueFactory) {
         return cache
             .computeIfAbsent(key, k -> new Node()) // cheap lock (has to be according to ConcurrentHashMap)
-            .get(key, valueFactory); // expensive lock
+            .get(key, valueFactory); // expensive lock, but just for the particular key
     }
 
     private class Node {
