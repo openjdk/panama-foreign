@@ -41,8 +41,6 @@
 #include "opto/subnode.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "utilities/debug.hpp"
-#include "utilities/decoder.hpp"
-#include "utilities/ostream.hpp"
 
 // Utility function.
 const TypeFunc* CallGenerator::tf() const {
