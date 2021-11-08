@@ -106,17 +106,11 @@ const CallRegs ForeignGlobals::parse_call_regs_impl(jobject jconv) const {
   result._ret_regs = NEW_RESOURCE_ARRAY(VMReg, result._rets_length);
 
   for (int i = 0; i < result._args_length; i++) {
-    oop storage = arg_regs_oop->obj_at(i);
-    jint index = storage->int_field(VMS.index_offset);
-    jint type = storage->int_field(VMS.type_offset);
-    result._arg_regs[i] = vmstorage_to_vmreg(type, index);
+    result._arg_regs[i] = parse_vmstorage(arg_regs_oop->obj_at(i));
   }
 
   for (int i = 0; i < result._rets_length; i++) {
-    oop storage = ret_regs_oop->obj_at(i);
-    jint index = storage->int_field(VMS.index_offset);
-    jint type = storage->int_field(VMS.type_offset);
-    result._ret_regs[i] = vmstorage_to_vmreg(type, index);
+    result._ret_regs[i] = parse_vmstorage(ret_regs_oop->obj_at(i));
   }
 
   return result;

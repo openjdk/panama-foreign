@@ -24,7 +24,6 @@
 
 #include "precompiled.hpp"
 #include "asm/macroAssembler.hpp"
-#include "compiler/disassembler.hpp"
 #include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
 #include "prims/universalUpcallHandler.hpp"
@@ -391,7 +390,6 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
   if (TraceOptimizedUpcallStubs) {
     blob->print_on(tty);
-    Disassembler::decode(blob, tty);
   }
 
   return blob->code_begin();
