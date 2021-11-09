@@ -37,8 +37,6 @@
 
 #define __ _masm->
 
-
-
 // for callee saved regs, according to the caller's ABI
 static int compute_reg_save_area_size(const ABIDescriptor& abi) {
   int size = 0;
@@ -117,34 +115,16 @@ static void restore_callee_saved_registers(MacroAssembler* _masm, const ABIDescr
   __ block_comment("} restore_callee_saved_regs ");
 }
 
-address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiver, Method* entry, jobject jabi, jobject jconv) {
+address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject mh, Method* entry,
+                                                                  BasicType* in_sig_bt, int total_in_args,
+                                                                  BasicType* out_sig_bt, int total_out_args,
+                                                                  BasicType ret_type,
+                                                                  jobject jabi, jobject jconv,
+                                                                  bool needs_return_buffer, int ret_buf_size) {
   ResourceMark rm;
   const ABIDescriptor abi = ForeignGlobals::parse_abi_descriptor(jabi);
   const CallRegs call_regs = ForeignGlobals::parse_call_regs(jconv);
-  assert(call_regs._rets_length <= 1, "no multi reg returns");
   CodeBuffer buffer("upcall_stub_linkToNative", /* code_size = */ 2048, /* locs_size = */ 1024);
-
-  assert(entry->is_static(), "static only");
-  // Fill in the signature array, for the calling-convention call.
-  const int total_out_args = entry->size_of_parameters();
-  assert(total_out_args > 0, "receiver arg");
-
-  BasicType* out_sig_bt = NEW_RESOURCE_ARRAY(BasicType, total_out_args);
-  BasicType ret_type;
-  {
-    int i = 0;
-    SignatureStream ss(entry->signature());
-    for (; !ss.at_return_type(); ss.next()) {
-      out_sig_bt[i++] = ss.type();  // Collect remaining bits of signature
-      if (ss.type() == T_LONG || ss.type() == T_DOUBLE)
-        out_sig_bt[i++] = T_VOID;   // Longs & doubles take 2 Java slots
-    }
-    assert(i == total_out_args, "");
-    ret_type = ss.type();
-  }
-  // skip receiver
-  BasicType* in_sig_bt = out_sig_bt + 1;
-  int total_in_args = total_out_args - 1;
 
   Register shuffle_reg = r19;
   JavaCallConv out_conv;
@@ -182,6 +162,12 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   int frame_data_offset      = reg_save_area_offset   + reg_save_area_size;
   int frame_bottom_offset    = frame_data_offset      + sizeof(OptimizedEntryBlob::FrameData);
 
+  int ret_buf_offset = -1;
+  if (needs_return_buffer) {
+    ret_buf_offset = frame_bottom_offset;
+    frame_bottom_offset += ret_buf_size;
+  }
+
   int frame_size = frame_bottom_offset;
   frame_size = align_up(frame_size, StackAlignmentInBytes);
 
@@ -190,6 +176,9 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   //
   // FP-> |                     |
   //      |---------------------| = frame_bottom_offset = frame_size
+  //      | (optional)          |
+  //      | ret_buf             |
+  //      |---------------------| = ret_buf_offset
   //      |                     |
   //      | FrameData           |
   //      |---------------------| = frame_data_offset
@@ -234,6 +223,10 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
   __ block_comment("{ argument shuffle");
   arg_spilller.generate_fill(_masm, arg_save_area_offset);
+  if (needs_return_buffer) {
+    assert(ret_buf_offset != -1, "no return buffer allocated");
+    __ lea(abi._ret_buf_addr_reg, Address(sp, ret_buf_offset));
+  }
   arg_shuffle.generate(_masm, shuffle_reg->as_VMReg(), abi._shadow_space_bytes, 0);
   __ block_comment("} argument shuffle");
 
@@ -249,6 +242,51 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   __ ldr(rscratch1, Address(rmethod, Method::from_compiled_offset()));
   __ blr(rscratch1);
 
+    // return value shuffle
+  if (!needs_return_buffer) {
+#ifdef ASSERT
+    if (call_regs._rets_length == 1) { // 0 or 1
+      VMReg j_expected_result_reg;
+      switch (ret_type) {
+        case T_BOOLEAN:
+        case T_BYTE:
+        case T_SHORT:
+        case T_CHAR:
+        case T_INT:
+        case T_LONG:
+        j_expected_result_reg = r0->as_VMReg();
+        break;
+        case T_FLOAT:
+        case T_DOUBLE:
+          j_expected_result_reg = v0->as_VMReg();
+          break;
+        default:
+          fatal("unexpected return type: %s", type2name(ret_type));
+      }
+      // No need to move for now, since CallArranger can pick a return type
+      // that goes in the same reg for both CCs. But, at least assert they are the same
+      assert(call_regs._ret_regs[0] == j_expected_result_reg,
+      "unexpected result register: %s != %s", call_regs._ret_regs[0]->name(), j_expected_result_reg->name());
+    }
+#endif
+  } else {
+    assert(ret_buf_offset != -1, "no return buffer allocated");
+    __ lea(rscratch1, Address(sp, ret_buf_offset));
+    int offset = 0;
+    for (int i = 0; i < call_regs._rets_length; i++) {
+      VMReg reg = call_regs._ret_regs[i];
+      if (reg->is_Register()) {
+        __ ldr(reg->as_Register(), Address(rscratch1, offset));
+        offset += 8;
+      } else if (reg->is_FloatRegister()) {
+        __ ldrd(reg->as_FloatRegister(), Address(rscratch1, offset));
+        offset += 16; // needs to match VECTOR_REG_SIZE in AArch64Architecture (Java)
+      } else {
+        ShouldNotReachHere();
+      }
+    }
+  }
+
   result_spiller.generate_spill(_masm, res_save_area_offset);
 
   __ block_comment("{ on_exit");
@@ -261,33 +299,6 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   restore_callee_saved_registers(_masm, abi, reg_save_area_offset);
 
   result_spiller.generate_fill(_masm, res_save_area_offset);
-
-  // return value shuffle
-#ifdef ASSERT
-  if (call_regs._rets_length == 1) { // 0 or 1
-    VMReg j_expected_result_reg;
-    switch (ret_type) {
-      case T_BOOLEAN:
-      case T_BYTE:
-      case T_SHORT:
-      case T_CHAR:
-      case T_INT:
-      case T_LONG:
-       j_expected_result_reg = r0->as_VMReg();
-       break;
-      case T_FLOAT:
-      case T_DOUBLE:
-        j_expected_result_reg = v0->as_VMReg();
-        break;
-      default:
-        fatal("unexpected return type: %s", type2name(ret_type));
-    }
-    // No need to move for now, since CallArranger can pick a return type
-    // that goes in the same reg for both CCs. But, at least assert they are the same
-    assert(call_regs._ret_regs[0] == j_expected_result_reg,
-     "unexpected result register: %s != %s", call_regs._ret_regs[0]->name(), j_expected_result_reg->name());
-  }
-#endif
 
   __ leave();
   __ ret(lr);
@@ -317,7 +328,12 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   const char* name = "optimized_upcall_stub";
 #endif // PRODUCT
 
-  OptimizedEntryBlob* blob = OptimizedEntryBlob::create(name, &buffer, exception_handler_offset, receiver, in_ByteSize(frame_data_offset));
+  OptimizedEntryBlob* blob
+    = OptimizedEntryBlob::create(name,
+                                 &buffer,
+                                 exception_handler_offset,
+                                 receiver,
+                                 in_ByteSize(frame_data_offset));
 
   if (TraceOptimizedUpcallStubs) {
     blob->print_on(tty);
