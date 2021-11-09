@@ -115,7 +115,7 @@ static void restore_callee_saved_registers(MacroAssembler* _masm, const ABIDescr
   __ block_comment("} restore_callee_saved_regs ");
 }
 
-address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject mh, Method* entry,
+address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiver, Method* entry,
                                                                   BasicType* in_sig_bt, int total_in_args,
                                                                   BasicType* out_sig_bt, int total_out_args,
                                                                   BasicType ret_type,
