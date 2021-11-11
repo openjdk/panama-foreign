@@ -24,7 +24,6 @@
  */
 package jdk.internal.foreign.abi.x64.windows;
 
-import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.NativeSymbol;
@@ -32,14 +31,17 @@ import java.lang.foreign.ResourceScope;
 import java.lang.foreign.VaList;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.util.Objects;
 import java.util.function.Consumer;
-import jdk.internal.foreign.abi.SharedUtils;
+
+import jdk.internal.foreign.abi.AbstractLinker;
+import jdk.internal.foreign.abi.DowncallLinkEvent;
+import jdk.internal.foreign.abi.UpcallLinkEvent;
+import jdk.jfr.FlightRecorder;
 
 /**
  * ABI implementation based on Windows ABI AMD64 supplement v.0.99.6
  */
-public final class Windowsx64Linker implements CLinker {
+public final class Windowsx64Linker extends AbstractLinker {
 
     public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 4;
     public static final int MAX_INTEGER_RETURN_REGISTERS = 1;
@@ -50,8 +52,6 @@ public final class Windowsx64Linker implements CLinker {
 
     private static Windowsx64Linker instance;
 
-    static final long ADDRESS_SIZE = 64; // bits
-
     public static Windowsx64Linker getInstance() {
         if (instance == null) {
             instance = new Windowsx64Linker();
@@ -59,32 +59,20 @@ public final class Windowsx64Linker implements CLinker {
         return instance;
     }
 
+    @Override
+    protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function) {
+        return CallArranger.arrangeDowncall(inferredMethodType, function);
+    }
+
+    @Override
+    protected NativeSymbol arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, ResourceScope scope) {
+        return CallArranger.arrangeUpcall(target, targetType, function, scope);
+    }
+
     public static VaList newVaList(Consumer<VaList.Builder> actions, ResourceScope scope) {
         WinVaList.Builder builder = WinVaList.builder(scope);
         actions.accept(builder);
         return builder.build();
-    }
-
-    @Override
-    public final MethodHandle downcallHandle(FunctionDescriptor function) {
-        Objects.requireNonNull(function);
-        MethodType type = SharedUtils.inferMethodType(function, false);
-        MethodHandle handle = CallArranger.arrangeDowncall(type, function);
-        handle = SharedUtils.maybeInsertAllocator(handle);
-        return SharedUtils.wrapDowncall(handle, function);
-    }
-
-    @Override
-    public final NativeSymbol upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope) {
-        Objects.requireNonNull(scope);
-        Objects.requireNonNull(target);
-        Objects.requireNonNull(function);
-        SharedUtils.checkExceptions(target);
-        MethodType type = SharedUtils.inferMethodType(function, true);
-        if (!type.equals(target.type())) {
-            throw new IllegalArgumentException("Wrong method handle type: " + target.type());
-        }
-        return CallArranger.arrangeUpcall(target, target.type(), function, scope);
     }
 
     public static VaList newVaListOfAddress(MemoryAddress ma, ResourceScope scope) {
@@ -95,3 +83,4 @@ public final class Windowsx64Linker implements CLinker {
         return WinVaList.empty();
     }
 }
+

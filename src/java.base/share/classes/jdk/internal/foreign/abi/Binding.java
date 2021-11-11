@@ -636,8 +636,8 @@ public abstract class Binding {
 
     /**
      * BUFFER_STORE([offset into memory region], [type])
-     * Pops a MemorySegment from the operand stack, loads a [type] from
-     * [offset into memory region] from it, and pushes it onto the operand stack.
+     * Pops a [type] from the operand stack, then pops a MemorySegment from the operand stack.
+     * Stores the [type] to [offset into memory region].
      * The [type] must be one of byte, short, char, int, long, float, or double
      */
     public static class BufferStore extends Dereference {
@@ -738,8 +738,7 @@ public abstract class Binding {
             this.alignment = alignment;
         }
 
-        private static MemorySegment copyBuffer(MemorySegment operand, long size, long alignment,
-                                                    Context context) {
+        private static MemorySegment copyBuffer(MemorySegment operand, long size, long alignment, Context context) {
             return context.allocator().allocate(size, alignment)
                             .copyFrom(operand.asSlice(0, size));
         }
@@ -967,6 +966,10 @@ public abstract class Binding {
         public ToSegment(long size) {
             super(Tag.TO_SEGMENT);
             this.size = size;
+        }
+
+        public long size() {
+            return size;
         }
 
         private static MemorySegment toSegment(MemoryAddress operand, long size, Context context) {

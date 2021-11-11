@@ -28,30 +28,22 @@ package jdk.internal.foreign.abi;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
-import java.lang.foreign.ValueLayout;
 import sun.security.action.GetPropertyAction;
 
+import java.lang.foreign.ResourceScope;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import static java.lang.invoke.MethodHandles.collectArguments;
 import static java.lang.invoke.MethodHandles.dropArguments;
-import static java.lang.invoke.MethodHandles.empty;
 import static java.lang.invoke.MethodHandles.exactInvoker;
-import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.lang.invoke.MethodType.methodType;
-import static jdk.internal.foreign.abi.SharedUtils.mergeArguments;
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
 public class ProgrammableUpcallHandler {
@@ -73,21 +65,20 @@ public class ProgrammableUpcallHandler {
     }
 
     public static NativeSymbol make(ABIDescriptor abi, MethodHandle target, CallingSequence callingSequence, ResourceScope scope) {
+        assert callingSequence.forUpcall();
         Binding.VMLoad[] argMoves = argMoveBindings(callingSequence);
         Binding.VMStore[] retMoves = retMoveBindings(callingSequence);
 
-        Class<?> llReturn = retMoves.length == 1 ? retMoves[0].type() : void.class;
-        Class<?>[] llParams = Arrays.stream(argMoves).map(Binding.Move::type).toArray(Class<?>[]::new);
-        MethodType llType = methodType(llReturn, llParams);
+        MethodType llType = callingSequence.callerMethodType();
 
         MethodHandle doBindings;
         if (USE_SPEC) {
-            doBindings = specializedBindingHandle(target, callingSequence, llReturn, abi);
+            doBindings = Specializer.specialize(target, callingSequence, abi);
             assert doBindings.type() == llType;
         } else {
             Map<VMStorage, Integer> argIndices = SharedUtils.indexMap(argMoves);
             Map<VMStorage, Integer> retIndices = SharedUtils.indexMap(retMoves);
-            int spreaderCount = callingSequence.methodType().parameterCount();
+            int spreaderCount = callingSequence.calleeMethodType().parameterCount();
             if (callingSequence.needsReturnBuffer()) {
                 spreaderCount--; // return buffer is dropped from the argument list
             }
@@ -132,68 +123,6 @@ public class ProgrammableUpcallHandler {
                 .toArray(Binding.VMStore[]::new);
     }
 
-    private static MethodHandle specializedBindingHandle(MethodHandle target, CallingSequence callingSequence,
-                                                         Class<?> llReturn, ABIDescriptor abi) {
-        MethodType highLevelType = callingSequence.methodType();
-
-        MethodHandle specializedHandle = target; // initial
-
-        // we handle returns first since IMR adds an extra parameter that needs to be specialized as well
-        if (llReturn != void.class || callingSequence.needsReturnBuffer()) {
-            int retAllocatorPos = -1; // assumed not needed
-            int retInsertPos;
-            MethodHandle filter;
-            if (callingSequence.needsReturnBuffer()) {
-                retInsertPos = 1;
-                filter = empty(methodType(void.class, MemorySegment.class));
-            } else {
-                retInsertPos = 0;
-                filter = identity(llReturn);
-            }
-            long retBufWriteOffset = callingSequence.returnBufferSize();
-            List<Binding> bindings = callingSequence.returnBindings();
-            for (int j = bindings.size() - 1; j >= 0; j--) {
-                Binding binding = bindings.get(j);
-                if (callingSequence.needsReturnBuffer() && binding.tag() == Binding.Tag.VM_STORE) {
-                    Binding.VMStore store = (Binding.VMStore) binding;
-                    ValueLayout layout = MemoryLayout.valueLayout(store.type(), ByteOrder.nativeOrder()).withBitAlignment(8);
-                    // since we iterate the bindings in reverse, we have to compute the offset in reverse as well
-                    retBufWriteOffset -= abi.arch.typeSize(store.storage().type());
-                    MethodHandle storeHandle = MethodHandles.insertCoordinates(MethodHandles.memoryAccessVarHandle(layout), 1, retBufWriteOffset)
-                            .toMethodHandle(VarHandle.AccessMode.SET);
-                    filter = collectArguments(filter, retInsertPos, storeHandle);
-                    filter = mergeArguments(filter, retInsertPos - 1, retInsertPos);
-                } else {
-                    filter = binding.specialize(filter, retInsertPos, retAllocatorPos);
-                }
-            }
-            specializedHandle = collectArguments(filter, retInsertPos, specializedHandle);
-        }
-
-        int argAllocatorPos = 0;
-        int argInsertPos = 1;
-        specializedHandle = dropArguments(specializedHandle, argAllocatorPos, Binding.Context.class);
-        for (int i = 0; i < highLevelType.parameterCount(); i++) {
-            MethodHandle filter = identity(highLevelType.parameterType(i));
-            int filterAllocatorPos = 0;
-            int filterInsertPos = 1; // +1 for allocator
-            filter = dropArguments(filter, filterAllocatorPos, Binding.Context.class);
-
-            List<Binding> bindings = callingSequence.argumentBindings(i);
-            for (int j = bindings.size() - 1; j >= 0; j--) {
-                Binding binding = bindings.get(j);
-                filter = binding.specialize(filter, filterInsertPos, filterAllocatorPos);
-            }
-            specializedHandle = MethodHandles.collectArguments(specializedHandle, argInsertPos, filter);
-            specializedHandle = mergeArguments(specializedHandle, argAllocatorPos, argInsertPos + filterAllocatorPos);
-            argInsertPos += filter.type().parameterCount() - 1; // -1 for allocator
-        }
-
-        specializedHandle = SharedUtils.wrapWithAllocator(specializedHandle, argAllocatorPos, callingSequence.allocationSize(), true);
-
-        return specializedHandle;
-    }
-
     private record InvocationData(MethodHandle leaf,
                                   Map<VMStorage, Integer> argIndexMap,
                                   Map<VMStorage, Integer> retIndexMap,
@@ -207,7 +136,7 @@ public class ProgrammableUpcallHandler {
                 : Binding.Context.ofScope();
         try (allocator) {
             /// Invoke interpreter, got array of high-level arguments back
-            Object[] highLevelArgs = new Object[invData.callingSequence.methodType().parameterCount()];
+            Object[] highLevelArgs = new Object[invData.callingSequence.calleeMethodType().parameterCount()];
             for (int i = 0; i < highLevelArgs.length; i++) {
                 highLevelArgs[i] = BindingInterpreter.box(invData.callingSequence.argumentBindings(i),
                         (storage, type) -> lowLevelArgs[invData.argIndexMap.get(storage)], allocator);

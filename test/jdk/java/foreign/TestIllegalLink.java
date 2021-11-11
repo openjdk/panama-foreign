@@ -69,11 +69,11 @@ public class TestIllegalLink extends NativeTestHelper {
             },
             {
                     FunctionDescriptor.of(MemoryLayout.sequenceLayout(C_INT)),
-                    "Unsupported layout: [:b32]"
+                    "Unsupported layout: [:b32(I)]"
             },
             {
                     FunctionDescriptor.ofVoid(MemoryLayout.sequenceLayout(C_INT)),
-                    "Unsupported layout: [:b32]"
+                    "Unsupported layout: [:b32(I)]"
             },
         };
     }

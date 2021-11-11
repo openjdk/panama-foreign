@@ -104,9 +104,10 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     @Override
     public String toString() {
-        return decorateLayoutString(String.format("%s%d",
+        return decorateLayoutString(String.format("%s%d(%s)",
                 order == ByteOrder.BIG_ENDIAN ? "B" : "b",
-                bitSize()));
+                bitSize(),
+                carrier == MemoryAddress.class ? "MA" : carrier.descriptorString()));
     }
 
     @Override
