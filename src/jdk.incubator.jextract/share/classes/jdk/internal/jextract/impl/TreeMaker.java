@@ -26,7 +26,6 @@
 package jdk.internal.jextract.impl;
 
 import java.lang.constant.Constable;
-import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -109,18 +108,6 @@ class TreeMaker {
         }
     }
 
-    static Position toPos(Cursor cursor) {
-        SourceLocation loc = cursor.getSourceLocation();
-        if (loc == null) {
-            return Position.NO_POSITION;
-        }
-        SourceLocation.Location sloc = loc.getFileLocation();
-        if (sloc == null) {
-            return Position.NO_POSITION;
-        }
-        return new CursorPosition(cursor);
-    }
-
     static class CursorPosition implements Position {
         private final Cursor cursor;
         private final Path path;
@@ -133,6 +120,18 @@ class TreeMaker {
             this.path = loc.path();
             this.line = loc.line();
             this.column = loc.column();
+        }
+
+        static Position of(Cursor cursor) {
+            SourceLocation loc = cursor.getSourceLocation();
+            if (loc == null) {
+                return NO_POSITION;
+            }
+            SourceLocation.Location sloc = loc.getFileLocation();
+            if (sloc == null) {
+                return NO_POSITION;
+            }
+            return new CursorPosition(cursor);
         }
 
         @Override
@@ -168,21 +167,21 @@ class TreeMaker {
         }
         Type type = toType(c);
         Type funcType = type instanceof Type.Delegated? ((Type.Delegated)type).type() : type;
-        return Declaration.function(toPos(c), c.spelling(), (Type.Function)funcType,
+        return Declaration.function(CursorPosition.of(c), c.spelling(), (Type.Function)funcType,
                 params.toArray(new Declaration.Variable[0]));
     }
 
     public Declaration.Constant createMacro(Cursor c, String name, Type type, Object value) {
         checkCursorAny(c, CursorKind.MacroDefinition);
-        return Declaration.constant(toPos(c), name, value, type);
+        return Declaration.constant(CursorPosition.of(c), name, value, type);
     }
 
     public Declaration.Constant createEnumConstant(Cursor c) {
-        return Declaration.constant(toPos(c), c.spelling(), c.getEnumConstantValue(), typeMaker.makeType(c.type()));
+        return Declaration.constant(CursorPosition.of(c), c.spelling(), c.getEnumConstantValue(), typeMaker.makeType(c.type()));
     }
 
     public Declaration.Scoped createHeader(Cursor c, List<Declaration> decls) {
-        return Declaration.toplevel(toPos(c), filterNestedDeclarations(decls).toArray(new Declaration[0]));
+        return Declaration.toplevel(CursorPosition.of(c), filterNestedDeclarations(decls).toArray(new Declaration[0]));
     }
 
     public Declaration.Scoped createRecord(Cursor c, Declaration.Scoped.Kind scopeKind, ScopedFactoryLayout factoryLayout, ScopedFactoryNoLayout factoryNoLayout) {
@@ -190,7 +189,7 @@ class TreeMaker {
         List<Declaration> decls = filterNestedDeclarations(t.tree().members());
         if (c.isDefinition()) {
             //just a declaration AND definition, we have a layout
-            return factoryLayout.make(toPos(c), c.spelling(), t.tree().layout().get(), decls.toArray(new Declaration[0]));
+            return factoryLayout.make(CursorPosition.of(c), c.spelling(), t.tree().layout().get(), decls.toArray(new Declaration[0]));
         } else {
             //just a declaration
             if (scopeKind == Declaration.Scoped.Kind.STRUCT ||
@@ -201,7 +200,7 @@ class TreeMaker {
                     return null;
                 }
             }
-            return factoryNoLayout.make(toPos(c), c.spelling(), decls.toArray(new Declaration[0]));
+            return factoryNoLayout.make(CursorPosition.of(c), c.spelling(), decls.toArray(new Declaration[0]));
         }
     }
 
@@ -218,14 +217,14 @@ class TreeMaker {
         if (c.isDefinition()) {
             //just a declaration AND definition, we have a layout
             MemoryLayout layout = TypeMaker.valueLayoutForSize(c.type().size() * 8).layout().orElseThrow();
-            return factoryLayout.make(toPos(c), c.spelling(), layout, decls.toArray(new Declaration[0]));
+            return factoryLayout.make(CursorPosition.of(c), c.spelling(), layout, decls.toArray(new Declaration[0]));
         } else {
             //just a declaration
             //if there's a real definition somewhere else, skip this redundant declaration
             if (!c.getDefinition().isInvalid()) {
                 return null;
             }
-            return factoryNoLayout.make(toPos(c), c.spelling(), decls.toArray(new Declaration[0]));
+            return factoryNoLayout.make(CursorPosition.of(c), c.spelling(), decls.toArray(new Declaration[0]));
         }
     }
 
@@ -260,13 +259,13 @@ class TreeMaker {
                 return null;
             }
         }
-        return Declaration.typedef(toPos(c), c.spelling(), canonicalType);
+        return Declaration.typedef(CursorPosition.of(c), c.spelling(), canonicalType);
     }
 
     private Declaration.Variable createVar(Declaration.Variable.Kind kind, Cursor c, VarFactoryNoLayout varFactory) {
         checkCursorAny(c, CursorKind.VarDecl, CursorKind.FieldDecl, CursorKind.ParmDecl);
         if (c.isBitField()) {
-            return Declaration.bitfield(toPos(c), c.spelling(), toType(c),
+            return Declaration.bitfield(CursorPosition.of(c), c.spelling(), toType(c),
                     MemoryLayout.paddingLayout(c.getBitFieldWidth()));
         } else {
             Type type = null;
@@ -277,7 +276,7 @@ class TreeMaker {
                 System.err.println("WARNING: ignoring variable: " + c.spelling());
                 return null;
             }
-            return varFactory.make(toPos(c), c.spelling(), type);
+            return varFactory.make(CursorPosition.of(c), c.spelling(), type);
         }
     }
 
