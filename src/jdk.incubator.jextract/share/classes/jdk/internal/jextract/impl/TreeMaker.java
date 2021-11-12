@@ -109,7 +109,7 @@ class TreeMaker {
         }
     }
 
-    Position toPos(Cursor cursor) {
+    static Position toPos(Cursor cursor) {
         SourceLocation loc = cursor.getSourceLocation();
         if (loc == null) {
             return Position.NO_POSITION;
@@ -127,7 +127,7 @@ class TreeMaker {
         private final int line;
         private final int column;
 
-        CursorPosition(Cursor cursor) {
+        private CursorPosition(Cursor cursor) {
             this.cursor = cursor;
             SourceLocation.Location loc = cursor.getSourceLocation().getFileLocation();
             this.path = loc.path();

@@ -151,11 +151,11 @@ abstract class RecordLayoutComputer {
         String name = c.spelling();
         if (c.isBitField()) {
             MemoryLayout sublayout = MemoryLayout.paddingLayout(c.getBitFieldWidth());
-            return Declaration.bitfield(new TreeMaker.CursorPosition(c), name, type, sublayout.withName(name));
+            return Declaration.bitfield(TreeMaker.toPos(c), name, type, sublayout.withName(name));
         } else if (c.isAnonymousStruct() && type instanceof jdk.incubator.jextract.Type.Declared decl) {
             return decl.tree();
         } else {
-            return Declaration.field(new TreeMaker.CursorPosition(c), name, type);
+            return Declaration.field(TreeMaker.toPos(c), name, type);
         }
     }
 
