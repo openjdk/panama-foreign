@@ -28,13 +28,11 @@ package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Declaration;
-import jdk.incubator.jextract.Position;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
 
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -151,11 +149,11 @@ abstract class RecordLayoutComputer {
         String name = c.spelling();
         if (c.isBitField()) {
             MemoryLayout sublayout = MemoryLayout.paddingLayout(c.getBitFieldWidth());
-            return Declaration.bitfield(new TreeMaker.CursorPosition(c), name, type, sublayout.withName(name));
+            return Declaration.bitfield(TreeMaker.CursorPosition.of(c), name, type, sublayout.withName(name));
         } else if (c.isAnonymousStruct() && type instanceof jdk.incubator.jextract.Type.Declared decl) {
             return decl.tree();
         } else {
-            return Declaration.field(new TreeMaker.CursorPosition(c), name, type);
+            return Declaration.field(TreeMaker.CursorPosition.of(c), name, type);
         }
     }
 

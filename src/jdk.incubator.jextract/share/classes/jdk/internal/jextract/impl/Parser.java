@@ -91,7 +91,7 @@ public class Parser {
                 } else if (isMacro(c) && src.path() != null) {
                     SourceRange range = c.getExtent();
                     String[] tokens = c.getTranslationUnit().tokens(range);
-                    Optional<Declaration.Constant> constant = macroParser.parseConstant(treeMaker.toPos(c), c.spelling(), tokens);
+                    Optional<Declaration.Constant> constant = macroParser.parseConstant(TreeMaker.CursorPosition.of(c), c.spelling(), tokens);
                     if (constant.isPresent()) {
                         decls.add(constant.get());
                     }

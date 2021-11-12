@@ -102,6 +102,6 @@ final class UnionLayoutComputer extends RecordLayoutComputer {
         } else if (anonName != null) {
             g = g.withName(anonName);
         }
-        return jdk.incubator.jextract.Type.declared(Declaration.union(new TreeMaker.CursorPosition(cursor), cursor.spelling(), g, fieldDecls.stream().toArray(Declaration[]::new)));
+        return jdk.incubator.jextract.Type.declared(Declaration.union(TreeMaker.CursorPosition.of(cursor), cursor.spelling(), g, fieldDecls.stream().toArray(Declaration[]::new)));
     }
 }
