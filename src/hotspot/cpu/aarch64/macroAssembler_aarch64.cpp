@@ -5166,6 +5166,24 @@ void MacroAssembler::verify_cross_modify_fence_not_required() {
 }
 #endif
 
+void MacroAssembler::spin_wait() {
+  for (int i = 0; i < VM_Version::spin_wait_desc().inst_count(); ++i) {
+    switch (VM_Version::spin_wait_desc().inst()) {
+      case SpinWait::NOP:
+        nop();
+        break;
+      case SpinWait::ISB:
+        isb();
+        break;
+      case SpinWait::YIELD:
+        yield();
+        break;
+      default:
+        ShouldNotReachHere();
+    }
+  }
+}
+
 // The java_calling_convention describes stack locations as ideal slots on
 // a frame with no abi restrictions. Since we must observe abi restrictions
 // (like the placement of the register window) the slots must be biased by
@@ -5327,7 +5345,7 @@ void MacroAssembler::long_move(VMRegPair src, VMRegPair dst, Register tmp) {
 
 // A double move
 void MacroAssembler::double_move(VMRegPair src, VMRegPair dst, Register tmp) {
- if (src.first()->is_stack()) {
+  if (src.first()->is_stack()) {
     if (dst.first()->is_stack()) {
       ldr(tmp, Address(rfp, reg2offset_in(src.first())));
       str(tmp, Address(sp, reg2offset_out(dst.first())));
