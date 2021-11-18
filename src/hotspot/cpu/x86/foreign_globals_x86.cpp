@@ -27,6 +27,7 @@
 #include "oops/oopCast.inline.hpp"
 #include "prims/foreign_globals.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "utilities/formatBuffer.hpp"
 
 bool ABIDescriptor::is_volatile_reg(Register reg) const {
     return _integer_argument_registers.contains(reg)
