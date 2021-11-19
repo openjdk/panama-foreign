@@ -401,8 +401,8 @@ class BufferBlob: public RuntimeBlob {
 
  private:
   // Creation support
-  BufferBlob(const char* name, int size);
-  BufferBlob(const char* name, int size, CodeBuffer* cb);
+  BufferBlob(const char* name, int header_size, int size);
+  BufferBlob(const char* name, int header_size, int size, CodeBuffer* cb);
 
   // This ordinary operator delete is needed even though not used, so the
   // below two-argument operator delete will be treated as a placement
@@ -465,7 +465,7 @@ public:
 
 class MethodHandlesAdapterBlob: public BufferBlob {
 private:
-  MethodHandlesAdapterBlob(int size)                 : BufferBlob("MethodHandles adapters", size) {}
+  MethodHandlesAdapterBlob(int size): BufferBlob("MethodHandles adapters", sizeof(MethodHandlesAdapterBlob), size) {}
 
 public:
   // Creation
@@ -765,6 +765,8 @@ class OptimizedEntryBlob: public BufferBlob {
   static OptimizedEntryBlob* create(const char* name, CodeBuffer* cb,
                                     intptr_t exception_handler_offset, jobject receiver,
                                     ByteSize frame_data_offset);
+
+  static void free(OptimizedEntryBlob* blob);
 
   address exception_handler() { return code_begin() + _exception_handler_offset; }
   jobject receiver() { return _receiver; }

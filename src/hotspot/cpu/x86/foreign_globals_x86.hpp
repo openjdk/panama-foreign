@@ -27,35 +27,28 @@
 #include "asm/macroAssembler.hpp"
 #include "utilities/growableArray.hpp"
 
+class outputStream;
+
 constexpr size_t xmm_reg_size = 16; // size of XMM reg
 
 struct ABIDescriptor {
-    GrowableArray<Register> _integer_argument_registers;
-    GrowableArray<Register> _integer_return_registers;
-    GrowableArray<XMMRegister> _vector_argument_registers;
-    GrowableArray<XMMRegister> _vector_return_registers;
-    size_t _X87_return_registers_noof;
+  GrowableArray<Register> _integer_argument_registers;
+  GrowableArray<Register> _integer_return_registers;
+  GrowableArray<XMMRegister> _vector_argument_registers;
+  GrowableArray<XMMRegister> _vector_return_registers;
+  size_t _X87_return_registers_noof;
 
-    GrowableArray<Register> _integer_additional_volatile_registers;
-    GrowableArray<XMMRegister> _vector_additional_volatile_registers;
+  GrowableArray<Register> _integer_additional_volatile_registers;
+  GrowableArray<XMMRegister> _vector_additional_volatile_registers;
 
-    int32_t _stack_alignment_bytes;
-    int32_t _shadow_space_bytes;
+  int32_t _stack_alignment_bytes;
+  int32_t _shadow_space_bytes;
 
-    bool is_volatile_reg(Register reg) const;
-    bool is_volatile_reg(XMMRegister reg) const;
-};
+  Register _target_addr_reg;
+  Register _ret_buf_addr_reg;
 
-struct BufferLayout {
-  size_t stack_args_bytes;
-  size_t stack_args;
-  size_t arguments_vector;
-  size_t arguments_integer;
-  size_t arguments_next_pc;
-  size_t returns_vector;
-  size_t returns_integer;
-  size_t returns_x87;
-  size_t buffer_size;
+  bool is_volatile_reg(Register reg) const;
+  bool is_volatile_reg(XMMRegister reg) const;
 };
 
 #endif // CPU_X86_VM_FOREIGN_GLOBALS_X86_HPP
