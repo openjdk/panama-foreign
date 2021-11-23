@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,15 +25,15 @@
  * @test
  * @modules jdk.incubator.jextract
  * @library /test/lib
- * @build BadBitfieldTest
- * @run testng/othervm --enable-native-access=jdk.incubator.jextract BadBitfieldTest
+ * @build TestAttributedPointerTypedef
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract TestAttributedPointerTypedef
  */
 
 import org.testng.annotations.Test;
 
 public class TestAttributedPointerTypedef extends JextractToolRunner {
     @Test
-    public void testBadBitfield() {
+    public void testAttributedPointerTypedef() {
         run("-C-fms-extensions", "-d", getOutputFilePath("attributedPointerTypedef").toString(),
                 getInputFilePath("attributedPointerTypedef.h").toString()).checkSuccess();
     }
