@@ -166,7 +166,7 @@ class TreeMaker {
             params.add((Declaration.Variable)createTree(c.getArgument(i)));
         }
         Type type = toType(c);
-        Type funcType = type instanceof Type.Delegated? ((Type.Delegated)type).type() : type;
+        Type funcType = canonicalType(type);
         return Declaration.function(CursorPosition.of(c), c.spelling(), (Type.Function)funcType,
                 params.toArray(new Declaration.Variable[0]));
     }
@@ -249,9 +249,7 @@ class TreeMaker {
 
     private Declaration.Typedef createTypedef(Cursor c) {
         Type cursorType = toType(c);
-        Type canonicalType = cursorType instanceof Type.Function
-            ? cursorType
-            : ((Type.Delegated) cursorType).type(); // normal typedef
+        Type canonicalType = canonicalType(cursorType);
         if (canonicalType instanceof Type.Declared) {
             Declaration.Scoped s = ((Type.Declared) canonicalType).tree();
             if (s.name().equals(c.spelling())) {
@@ -260,6 +258,15 @@ class TreeMaker {
             }
         }
         return Declaration.typedef(CursorPosition.of(c), c.spelling(), canonicalType);
+    }
+
+    private Type canonicalType(Type t) {
+        if (t instanceof Type.Delegated delegated &&
+           delegated.kind() == Type.Delegated.Kind.TYPEDEF) {
+            return delegated.type();
+        } else {
+            return t;
+        }
     }
 
     private Declaration.Variable createVar(Declaration.Variable.Kind kind, Cursor c, VarFactoryNoLayout varFactory) {
