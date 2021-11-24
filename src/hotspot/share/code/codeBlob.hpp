@@ -753,6 +753,8 @@ class OptimizedEntryBlob: public RuntimeBlob {
                      intptr_t exception_handler_offset,
                      jobject receiver, ByteSize frame_data_offset);
 
+  void* operator new(size_t s, unsigned size) throw();
+
   struct FrameData {
     JavaFrameAnchor jfa;
     JavaThread* thread;
@@ -768,12 +770,6 @@ class OptimizedEntryBlob: public RuntimeBlob {
   static OptimizedEntryBlob* create(const char* name, CodeBuffer* cb,
                                     intptr_t exception_handler_offset,
                                     jobject receiver, ByteSize frame_data_offset);
-
-  // This ordinary operator delete is needed even though not used, so the
-  // below two-argument operator delete will be treated as a placement
-  // delete rather than an ordinary sized delete; see C++14 3.7.4.2/p2.
-  void operator delete(void* p);
-  void* operator new(size_t s, unsigned size) throw();
 
   static void free(OptimizedEntryBlob* blob);
 
