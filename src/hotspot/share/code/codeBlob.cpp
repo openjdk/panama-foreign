@@ -726,7 +726,7 @@ void DeoptimizationBlob::print_value_on(outputStream* st) const {
 OptimizedEntryBlob::OptimizedEntryBlob(const char* name, CodeBuffer* cb, int size,
                                        intptr_t exception_handler_offset,
                                        jobject receiver, ByteSize frame_data_offset) :
-  RuntimeBlob(name, cb, sizeof(OptimizedEntryBlob), size, CodeOffsets::frame_never_safe, no_frame_size,
+  RuntimeBlob(name, cb, sizeof(OptimizedEntryBlob), size, CodeOffsets::frame_never_safe, 0 /* no frame size */,
               /* oop maps = */ nullptr, /* caller must gc arguments = */ false),
   _exception_handler_offset(exception_handler_offset),
   _receiver(receiver),
