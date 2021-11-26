@@ -490,7 +490,7 @@ public abstract class Binding {
         }
     }
 
-    static abstract class Move extends Binding {
+    abstract static class Move extends Binding {
         private final VMStorage storage;
         private final Class<?> type;
 
@@ -596,7 +596,7 @@ public abstract class Binding {
         }
     }
 
-    private static abstract class Dereference extends Binding {
+    private abstract static class Dereference extends Binding {
         private final long offset;
         private final Class<?> type;
 

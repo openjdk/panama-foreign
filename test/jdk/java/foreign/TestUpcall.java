@@ -58,7 +58,6 @@
  *   TestUpcall
  */
 
-import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.NativeSymbol;
@@ -162,7 +161,7 @@ public class TestUpcall extends CallGeneratorHelper {
         try (ResourceScope scope = ResourceScope.newSharedScope()) {
             SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
             FunctionDescriptor descriptor = function(ret, paramTypes, fields);
-            MethodHandle mh = reverse(downcallHandle(abi, addr, allocator, descriptor));
+            MethodHandle mh = downcallHandle(abi, addr, allocator, descriptor);
             Object[] args = makeArgs(ResourceScope.newImplicitScope(), ret, paramTypes, fields, returnChecks, argChecks);
 
             mh = mh.asSpreader(Object[].class, args.length);
@@ -170,7 +169,7 @@ public class TestUpcall extends CallGeneratorHelper {
             FunctionDescriptor callbackDesc = descriptor.returnLayout()
                     .map(FunctionDescriptor::of)
                     .orElse(FunctionDescriptor.ofVoid());
-            NativeSymbol callback = abi.upcallStub(mh, callbackDesc, scope);
+            NativeSymbol callback = abi.upcallStub(mh.asType(CLinker.upcallType(callbackDesc)), callbackDesc, scope);
 
             MethodHandle invoker = asyncInvoker(ret, ret == Ret.VOID ? null : paramTypes.get(0), fields);
 
@@ -326,18 +325,5 @@ public class TestUpcall extends CallGeneratorHelper {
 
     static void dummy() {
         //do nothing
-    }
-
-    static MethodHandle reverse(MethodHandle handle) {
-        MethodType type = handle.type();
-        if (type.returnType().equals(MemoryAddress.class)) {
-            type = type.changeReturnType(Addressable.class);
-        }
-        for (int i = 0 ; i < type.parameterCount() ; i++) {
-            if (type.parameterType(i).equals(Addressable.class)) {
-                type.changeParameterType(i, MemoryAddress.class);
-            }
-        }
-        return handle.asType(type);
     }
 }

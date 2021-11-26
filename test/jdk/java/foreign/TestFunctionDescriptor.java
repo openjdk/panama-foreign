@@ -32,8 +32,10 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
 import org.testng.annotations.Test;
 
+import java.lang.constant.Constable;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;

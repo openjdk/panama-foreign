@@ -188,7 +188,7 @@ public class StdLibTest extends NativeTestHelper {
             try {
                 //qsort upcall handle
                 qsortCompar = MethodHandles.lookup().findStatic(StdLibTest.StdLibHelper.class, "qsortCompare",
-                        MethodType.methodType(int.class, MemoryAddress.class, MemoryAddress.class));
+                        CLinker.upcallType(qsortComparFunction));
             } catch (ReflectiveOperationException ex) {
                 throw new IllegalStateException(ex);
             }
@@ -245,7 +245,7 @@ public class StdLibTest extends NativeTestHelper {
             static final long SIZE = 56;
 
             Tm(MemoryAddress addr) {
-                this.base = MemorySegment.ofAddressNative(addr, SIZE, ResourceScope.globalScope());
+                this.base = MemorySegment.ofAddress(addr, SIZE, ResourceScope.globalScope());
             }
 
             int sec() {
