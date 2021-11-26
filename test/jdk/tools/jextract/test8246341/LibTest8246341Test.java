@@ -57,7 +57,7 @@ public class LibTest8246341Test {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             var callback = func$callback.allocate((argc, argv) -> {
                 callbackCalled[0] = true;
-                var addr = MemorySegment.ofAddressNative(argv, C_POINTER.byteSize() * argc, scope);
+                var addr = MemorySegment.ofAddress(argv, C_POINTER.byteSize() * argc, scope);
                 assertEquals(argc, 4);
                 assertEquals(addr.get(C_POINTER, 0).getUtf8String(0), "java");
                 assertEquals(addr.get(C_POINTER, C_POINTER.byteSize() * 1).getUtf8String(0), "python");
