@@ -45,7 +45,7 @@ public class SystemLookup implements SymbolLookup {
 
     private SystemLookup() { }
 
-    final static SystemLookup INSTANCE = new SystemLookup();
+    static final SystemLookup INSTANCE = new SystemLookup();
 
     /*
      * On POSIX systems, dlsym will allow us to lookup symbol in library dependencies; the same trick doesn't work
@@ -71,7 +71,7 @@ public class SystemLookup implements SymbolLookup {
             SymbolLookup fallbackLibLookup = libLookup(libs -> libs.loadLibrary("WinFallbackLookup"));
 
             int numSymbols = WindowsFallbackSymbols.values().length;
-            MemorySegment funcs = MemorySegment.ofAddressNative(fallbackLibLookup.lookup("funcs").orElseThrow().address(),
+            MemorySegment funcs = MemorySegment.ofAddress(fallbackLibLookup.lookup("funcs").orElseThrow().address(),
                 ADDRESS.byteSize() * numSymbols, ResourceScope.globalScope());
 
             SymbolLookup fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.valueOfOrNull(name))

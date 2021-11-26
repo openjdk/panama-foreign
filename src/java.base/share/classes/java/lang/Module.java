@@ -28,8 +28,6 @@ package java.lang;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.VarHandle;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
@@ -112,8 +110,7 @@ public final class Module implements AnnotatedElement {
     // the module descriptor
     private final ModuleDescriptor descriptor;
 
-    // true, if this module allows restricted native access; @Stable makes sure that modules that allow native
-    // access capture this property as a constant.
+    // true, if this module allows restricted native access
     @Stable
     private boolean enableNativeAccess;
 

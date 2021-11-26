@@ -66,8 +66,6 @@ int value = address.get(ValueLayout.JAVA_INT.withOrder(BIG_ENDIAN), 0);
  * programmers should treat instances that are {@linkplain #equals(Object) equal} as interchangeable and should not
  * use instances for synchronization, or unpredictable behavior may occur. For example, in a future release,
  * synchronization may fail. The {@code equals} method should be used for comparisons.
- * <p>
- * Non-platform classes should not implement {@linkplain MemoryAddress} directly.
  *
  * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
  * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
@@ -104,7 +102,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param offset offset in bytes (relative to this address). The final address of this read operation can be expressed as {@code toRowLongValue() + offset}.
-     * @return a Java UTF-8 string containing all the bytes read from the given starting address ({@code toRowLongValue() + offset})
+     * @return a Java string constructed from the bytes read from the given starting address ({@code toRowLongValue() + offset})
      * up to (but not including) the first {@code '\0'} terminator character (assuming one is found).
      * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
@@ -115,7 +113,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     String getUtf8String(long offset);
 
     /**
-     * Writes a UTF-8 encoded, null-terminated string to this address at given offset.
+     * Writes the given string to this address at given offset, converting it to a null-terminated byte sequence using UTF-8 encoding.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement string.  The {@link

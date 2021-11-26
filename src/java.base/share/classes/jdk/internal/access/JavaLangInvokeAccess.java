@@ -136,11 +136,11 @@ public interface JavaLangInvokeAccess {
     MethodHandle nativeMethodHandle(NativeEntryPoint nep);
 
     /**
-     * A best-effort method that tries to find any exceptions thrown by the given method handle.
-     * @param handle the handle to check
-     * @return an array of exceptions, or {@code null}.
+     * Ensure given method handle is customized
+     *
+     * @param mh the method handle
      */
-    Class<?>[] exceptionTypes(MethodHandle handle);
+    void ensureCustomized(MethodHandle mh);
 
     /**
      * Produces a method handle unreflecting from a {@code Constructor} with
@@ -180,4 +180,11 @@ public interface JavaLangInvokeAccess {
      * The given bytes is trusted.
      */
     Lookup defineHiddenClassWithClassData(Lookup caller, String name, byte[] bytes, Object classData, boolean initialize);
+
+    /**
+     * A best-effort method that tries to find any exceptions thrown by the given method handle.
+     * @param handle the handle to check
+     * @return an array of exceptions, or {@code null}.
+     */
+    Class<?>[] exceptionTypes(MethodHandle handle);
 }

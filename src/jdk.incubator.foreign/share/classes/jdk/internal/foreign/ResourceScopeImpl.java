@@ -114,6 +114,7 @@ public abstract non-sealed class ResourceScopeImpl implements ResourceScope, Seg
 
     @Override
     public void keepAlive(ResourceScope target) {
+        Objects.requireNonNull(target);
         if (target == this) {
             throw new IllegalArgumentException("Invalid target scope.");
         }
@@ -188,8 +189,11 @@ public abstract non-sealed class ResourceScopeImpl implements ResourceScope, Seg
      */
     static class GlobalScopeImpl extends SharedScope {
 
-        public GlobalScopeImpl() {
+        final Object ref;
+
+        public GlobalScopeImpl(Object ref) {
             super(null);
+            this.ref = ref;
         }
 
         @Override
@@ -215,7 +219,11 @@ public abstract non-sealed class ResourceScopeImpl implements ResourceScope, Seg
         }
     }
 
-    public static final ResourceScopeImpl GLOBAL = new GlobalScopeImpl();
+    public static final ResourceScopeImpl GLOBAL = new GlobalScopeImpl(null);
+
+    public static ResourceScopeImpl heapScope(Object ref) {
+        return new GlobalScopeImpl(ref);
+    }
 
     /**
      * A list of all cleanup actions associated with a resource scope. Cleanup actions are modelled as instances
@@ -242,7 +250,7 @@ public abstract non-sealed class ResourceScopeImpl implements ResourceScope, Seg
             }
         }
 
-        public static abstract class ResourceCleanup {
+        public abstract static class ResourceCleanup {
             ResourceCleanup next;
 
             public abstract void cleanup();

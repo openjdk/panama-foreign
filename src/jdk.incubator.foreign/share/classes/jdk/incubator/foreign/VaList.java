@@ -129,7 +129,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
 
     /**
      * Copies this variable argument list at its current position into a new variable argument list associated
-     * with the same scope as this variable argument list. using the segment provided allocator. Copying is useful to
+     * with the same scope as this variable argument list. Copying is useful to
      * traverse the variable argument list elements, starting from the current position, without affecting the state
      * of the original variable argument list, essentially allowing the elements to be traversed multiple times.
      *
@@ -141,7 +141,6 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
 
     /**
      * Returns the memory address associated with this variable argument list.
-     * @throws UnsupportedOperationException if this variable argument list has been allocated using heap segments.
      * @throws IllegalStateException if the scope associated with this variable argument list has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
      * @return The memory address associated with this variable argument list.

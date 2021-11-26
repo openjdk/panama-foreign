@@ -1581,6 +1581,11 @@ abstract class MethodHandleImpl {
             }
 
             @Override
+            public void ensureCustomized(MethodHandle mh) {
+                mh.customize();
+            }
+
+            @Override
             public VarHandle memoryAccessVarHandle(Class<?> carrier, boolean skipAlignmentMaskCheck, long alignmentMask,
                                                    ByteOrder order) {
                 return VarHandles.makeMemoryAddressViewHandle(carrier, skipAlignmentMaskCheck, alignmentMask, order);
@@ -1620,6 +1625,7 @@ abstract class MethodHandleImpl {
             public VarHandle insertCoordinates(VarHandle target, int pos, Object... values) {
                 return VarHandles.insertCoordinates(target, pos, values);
             }
+
 
             @Override
             public MethodHandle unreflectConstructor(Constructor<?> ctor) throws IllegalAccessException {
@@ -2271,16 +2277,16 @@ abstract class MethodHandleImpl {
 
     // Indexes into constant method handles:
     static final int
-            MH_cast                               = 0,
-            MH_selectAlternative                  = 1,
-            MH_countedLoopPred                    = 2,
-            MH_countedLoopStep                    = 3,
-            MH_initIterator                       = 4,
-            MH_iteratePred                        = 5,
-            MH_iterateNext                        = 6,
-            MH_Array_newInstance                  = 7,
+            MH_cast                  =              0,
+            MH_selectAlternative     =              1,
+            MH_countedLoopPred       =              2,
+            MH_countedLoopStep       =              3,
+            MH_initIterator          =              4,
+            MH_iteratePred           =              5,
+            MH_iterateNext           =              6,
+            MH_Array_newInstance     =              7,
             MH_VarHandles_handleCheckedExceptions = 8,
-            MH_LIMIT                              = 9;
+            MH_LIMIT                 =              9;
 
     static MethodHandle getConstantHandle(int idx) {
         MethodHandle handle = HANDLES[idx];

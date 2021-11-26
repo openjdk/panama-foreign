@@ -112,10 +112,10 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
     }
 
     private static LinuxAArch64VaList readFromSegment(MemorySegment segment) {
-        MemorySegment gpRegsArea = MemorySegment.ofAddressNative(grTop(segment).addOffset(-MAX_GP_OFFSET),
+        MemorySegment gpRegsArea = MemorySegment.ofAddress(grTop(segment).addOffset(-MAX_GP_OFFSET),
                 MAX_GP_OFFSET, segment.scope());
 
-        MemorySegment fpRegsArea = MemorySegment.ofAddressNative(vrTop(segment).addOffset(-MAX_FP_OFFSET),
+        MemorySegment fpRegsArea = MemorySegment.ofAddress(vrTop(segment).addOffset(-MAX_FP_OFFSET),
                 MAX_FP_OFFSET, segment.scope());
         return new LinuxAArch64VaList(segment, gpRegsArea, fpRegsArea);
     }
@@ -124,7 +124,7 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
         long ptr = U.allocateMemory(LAYOUT.byteSize());
         ResourceScope scope = ResourceScope.newImplicitScope();
         scope.addCloseAction(() -> U.freeMemory(ptr));
-        MemorySegment ms = MemorySegment.ofAddressNative(MemoryAddress.ofLong(ptr),
+        MemorySegment ms = MemorySegment.ofAddress(MemoryAddress.ofLong(ptr),
                 LAYOUT.byteSize(), scope);
         VH_stack.set(ms, MemoryAddress.NULL);
         VH_gr_top.set(ms, MemoryAddress.NULL);
@@ -247,7 +247,7 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
             preAlignStack(layout);
             return switch (typeClass) {
                 case STRUCT_REGISTER, STRUCT_HFA, STRUCT_REFERENCE -> {
-                    MemorySegment slice = MemorySegment.ofAddressNative(stackPtr(), layout.byteSize(), scope());
+                    MemorySegment slice = MemorySegment.ofAddress(stackPtr(), layout.byteSize(), scope());
                     MemorySegment seg = allocator.allocate(layout);
                     seg.copyFrom(slice);
                     postAlignStack(layout);
@@ -255,7 +255,7 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = layout.varHandle();
-                    MemorySegment slice = MemorySegment.ofAddressNative(stackPtr(), layout.byteSize(), scope());
+                    MemorySegment slice = MemorySegment.ofAddress(stackPtr(), layout.byteSize(), scope());
                     Object res = reader.get(slice);
                     postAlignStack(layout);
                     yield res;
@@ -297,7 +297,7 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
                         gpRegsArea.asSlice(currentGPOffset()));
                     consumeGPSlots(1);
 
-                    MemorySegment slice = MemorySegment.ofAddressNative(ptr, layout.byteSize(), scope());
+                    MemorySegment slice = MemorySegment.ofAddress(ptr, layout.byteSize(), scope());
                     MemorySegment seg = allocator.allocate(layout);
                     seg.copyFrom(slice);
                     yield seg;
@@ -343,7 +343,7 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
     }
 
     public static VaList ofAddress(MemoryAddress ma, ResourceScope scope) {
-        return readFromSegment(MemorySegment.ofAddressNative(ma, LAYOUT.byteSize(), scope));
+        return readFromSegment(MemorySegment.ofAddress(ma, LAYOUT.byteSize(), scope));
     }
 
     @Override
