@@ -402,7 +402,7 @@ public abstract class TypeImpl implements Type {
         @Override
         public MemoryLayout visitDelegated(jdk.incubator.jextract.Type.Delegated t, Void _ignored) {
             if (t.kind() == jdk.incubator.jextract.Type.Delegated.Kind.POINTER) {
-                return ADDRESS;
+                return ADDRESS.withBitAlignment(64);
             } else {
                 return t.type().accept(this, null);
             }

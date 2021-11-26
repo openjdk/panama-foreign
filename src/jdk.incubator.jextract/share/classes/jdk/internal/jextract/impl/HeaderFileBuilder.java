@@ -228,7 +228,8 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
             append(primType.kind().layout().orElseThrow().getClass().getSimpleName());
             append(" " + uniqueNestedClassName(name));
             append(" = ");
-            append(TypeTranslator.typeToLayoutName(kind));
+            append("(" + primType.kind().layout().orElseThrow().getClass().getSimpleName() + ")");
+            append(ConstantBuilder.primitiveLayoutConstants.get(kind.layout().get()).accessExpression());
             append(";\n");
             decrAlign();
         }

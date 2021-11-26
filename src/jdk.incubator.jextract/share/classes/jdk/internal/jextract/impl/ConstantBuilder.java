@@ -248,9 +248,17 @@ public class ConstantBuilder extends ClassSourceBuilder {
         return new Constant(className(), javaName, Constant.Kind.LAYOUT);
     }
 
+    // initialized by TopLevelBuilder
+    public static HashMap<ValueLayout, Constant> primitiveLayoutConstants = new HashMap<>();
+
     private void emitLayoutString(MemoryLayout l) {
         if (l instanceof ValueLayout val) {
-            append(typeToLayoutName(val));
+            Constant constant = primitiveLayoutConstants.get(val);
+            if (constant == null) {
+                append(Utils.layoutToConstant(val));
+            } else {
+                append(constant.accessExpression());
+            }
         } else if (l instanceof SequenceLayout seq) {
             append("MemoryLayout.sequenceLayout(");
             if (seq.elementCount().isPresent()) {
@@ -348,10 +356,6 @@ public class ConstantBuilder extends ClassSourceBuilder {
         append("L);\n");
         decrAlign();
         return new Constant(className(), javaName, Constant.Kind.ADDRESS);
-    }
-
-    private static String typeToLayoutName(ValueLayout vl) {
-        return Utils.layoutToConstant(vl);
     }
 
     private Constant emitSegmentField(String javaName, String nativeName, MemoryLayout layout) {

@@ -58,10 +58,6 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Boolean> {
         }
     }
 
-    static String typeToLayoutName(Primitive.Kind type) {
-        return Utils.layoutToConstant((ValueLayout)type.layout().orElseThrow());
-    }
-
     static Class<?> layoutToClass(boolean fp, MemoryLayout layout) {
         switch ((int)layout.bitSize()) {
             case 8: return byte.class;

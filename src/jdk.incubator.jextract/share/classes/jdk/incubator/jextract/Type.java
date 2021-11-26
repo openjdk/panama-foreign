@@ -107,19 +107,21 @@ public interface Type {
             /**
              * {@code short} type.
              */
-            Short("short", ValueLayout.JAVA_SHORT),
+            Short("short", ValueLayout.JAVA_SHORT.withBitAlignment(16)),
             /**
              * {@code int} type.
              */
-            Int("int", ValueLayout.JAVA_INT),
+            Int("int", ValueLayout.JAVA_INT.withBitAlignment(32)),
             /**
              * {@code long} type.
              */
-            Long("long", TypeImpl.IS_WINDOWS ? ValueLayout.JAVA_INT : ValueLayout.JAVA_LONG),
+            Long("long", TypeImpl.IS_WINDOWS ?
+                    ValueLayout.JAVA_INT.withBitAlignment(32) :
+                    ValueLayout.JAVA_LONG.withBitAlignment(64)),
             /**
              * {@code long long} type.
              */
-            LongLong("long long", ValueLayout.JAVA_LONG),
+            LongLong("long long", ValueLayout.JAVA_LONG.withBitAlignment(64)),
             /**
              * {@code int128} type.
              */
@@ -127,11 +129,11 @@ public interface Type {
             /**
              * {@code float} type.
              */
-            Float("float", ValueLayout.JAVA_FLOAT),
+            Float("float", ValueLayout.JAVA_FLOAT.withBitAlignment(32)),
             /**
              * {@code double} type.
              */
-            Double("double", ValueLayout.JAVA_DOUBLE),
+            Double("double", ValueLayout.JAVA_DOUBLE.withBitAlignment(64)),
             /**
               * {@code long double} type.
               */

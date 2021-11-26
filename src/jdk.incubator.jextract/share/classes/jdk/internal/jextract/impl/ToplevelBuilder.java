@@ -25,6 +25,8 @@
 package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.ValueLayout;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
@@ -176,15 +178,47 @@ class ToplevelBuilder extends JavaSourceBuilder {
             super.classBegin();
             emitConstructor();
             // emit basic primitive types
-            emitPrimitiveTypedef(Type.primitive(Type.Primitive.Kind.Bool), "C_BOOL");
-            emitPrimitiveTypedef(Type.primitive(Type.Primitive.Kind.Char), "C_CHAR");
-            emitPrimitiveTypedef(Type.primitive(Type.Primitive.Kind.Short), "C_SHORT");
-            emitPrimitiveTypedef(Type.primitive(Type.Primitive.Kind.Int), "C_INT");
-            emitPrimitiveTypedef(Type.primitive(Type.Primitive.Kind.Long), "C_LONG");
-            emitPrimitiveTypedef(Type.primitive(Type.Primitive.Kind.LongLong), "C_LONG_LONG");
-            emitPrimitiveTypedef(Type.primitive(Type.Primitive.Kind.Float), "C_FLOAT");
-            emitPrimitiveTypedef(Type.primitive(Type.Primitive.Kind.Double), "C_DOUBLE");
-            emitPointerTypedef("C_POINTER");
+            emitWithConstantClass(constantBuilder -> {
+                class PrimitiveLayoutDeclaration {
+                    private final String declName;
+                    private final MemoryLayout layout;
+                    private final ConstantBuilder.Constant constant;
+
+                    PrimitiveLayoutDeclaration(String declName, MemoryLayout layout) {
+                        this.declName = declName;
+                        this.layout = layout;
+                        constant = constantBuilder.addLayout(declName, layout);
+                        ConstantBuilder.primitiveLayoutConstants.put((ValueLayout)layout, constant);
+                    }
+
+                    PrimitiveLayoutDeclaration(String declName, Type.Primitive.Kind kind) {
+                        this(declName, kind.layout().get());
+                    }
+
+                    void emit() {
+                        incrAlign();
+                        indent();
+                        append(MEMBER_MODS);
+                        append(" ValueLayout.");
+                        append(layout.getClass().getSimpleName());
+                        append(" " + uniqueNestedClassName(declName));
+                        append(" = ");
+                        append("(" + layout.getClass().getSimpleName() + ")" + constant.accessExpression());
+                        append(";\n");
+                        decrAlign();
+                    }
+                }
+
+                new PrimitiveLayoutDeclaration("C_BOOL", Type.Primitive.Kind.Bool).emit();
+                new PrimitiveLayoutDeclaration("C_CHAR", Type.Primitive.Kind.Char).emit();
+                new PrimitiveLayoutDeclaration("C_SHORT", Type.Primitive.Kind.Short).emit();
+                new PrimitiveLayoutDeclaration("C_INT", Type.Primitive.Kind.Int).emit();
+                new PrimitiveLayoutDeclaration("C_LONG", Type.Primitive.Kind.Long).emit();
+                new PrimitiveLayoutDeclaration("C_LONG_LONG", Type.Primitive.Kind.LongLong).emit();
+                new PrimitiveLayoutDeclaration("C_FLOAT", Type.Primitive.Kind.Float).emit();
+                new PrimitiveLayoutDeclaration("C_DOUBLE", Type.Primitive.Kind.Double).emit();
+                new PrimitiveLayoutDeclaration("C_POINTER", ValueLayout.ADDRESS.withBitAlignment(ValueLayout.ADDRESS.bitSize())).emit();
+            });
         }
 
         void emitConstructor() {
