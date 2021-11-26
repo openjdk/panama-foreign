@@ -34,6 +34,7 @@ import jdk.internal.foreign.abi.aarch64.*;
 import jdk.internal.misc.Unsafe;
 
 import java.lang.invoke.VarHandle;
+import java.lang.ref.Cleaner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

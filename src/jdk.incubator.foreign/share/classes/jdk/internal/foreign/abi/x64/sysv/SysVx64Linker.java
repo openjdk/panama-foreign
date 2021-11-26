@@ -28,14 +28,12 @@ package jdk.internal.foreign.abi.x64.sysv;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.VaList;
 import jdk.internal.foreign.abi.SharedUtils;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -72,10 +70,7 @@ public final class SysVx64Linker implements CLinker {
         Objects.requireNonNull(function);
         MethodType type = SharedUtils.inferMethodType(function, false);
         MethodHandle handle = CallArranger.arrangeDowncall(type, function);
-        if (!type.returnType().equals(MemorySegment.class)) {
-            // not returning segment, just insert a throwing allocator
-            handle = MethodHandles.insertArguments(handle, 1, SharedUtils.THROWING_ALLOCATOR);
-        }
+        handle = SharedUtils.maybeInsertAllocator(handle);
         return SharedUtils.wrapDowncall(handle, function);
     }
 

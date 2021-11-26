@@ -123,7 +123,19 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
      * @param addedLayouts the argument layouts to append.
      * @return the new function descriptor.
      */
-    public FunctionDescriptor withAppendedArgumentLayouts(MemoryLayout... addedLayouts) {
+    public FunctionDescriptor appendArgumentLayouts(MemoryLayout... addedLayouts) {
+        return insertArgumentLayouts(argLayouts.size(), addedLayouts);
+    }
+
+    /**
+     * Create a new function descriptor with the given argument layouts inserted at the given index, into the argument
+     * layout array of this function descriptor.
+     * @param index the index at which to insert the arguments
+     * @param addedLayouts the argument layouts to append.
+     * @return the new function descriptor.
+     * @throws IllegalArgumentException if {@code index < 0 || index > argumentLayouts().size()}.
+     */
+    public FunctionDescriptor insertArgumentLayouts(int index, MemoryLayout... addedLayouts) {
         Objects.requireNonNull(addedLayouts);
         Arrays.stream(addedLayouts).forEach(Objects::requireNonNull);
         List<MemoryLayout> newLayouts = Stream.concat(argLayouts.stream(), Stream.of(addedLayouts)).toList();
@@ -231,7 +243,12 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
         }
 
         @Override
-        public FunctionDescriptor withAppendedArgumentLayouts(MemoryLayout... addedLayouts) {
+        public FunctionDescriptor appendArgumentLayouts(MemoryLayout... addedLayouts) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public FunctionDescriptor insertArgumentLayouts(int index, MemoryLayout... addedLayouts) {
             throw new UnsupportedOperationException();
         }
 

@@ -296,27 +296,6 @@ public class SharedUtils {
         throw new IllegalArgumentException("String too large");
     }
 
-    static long bufferCopySize(CallingSequence callingSequence) {
-        // FIXME: > 16 bytes alignment might need extra space since the
-        // starting address of the allocator might be un-aligned.
-        long size = 0;
-        for (int i = 0; i < callingSequence.argumentCount(); i++) {
-            List<Binding> bindings = callingSequence.argumentBindings(i);
-            for (Binding b : bindings) {
-                if (b instanceof Binding.Copy) {
-                    Binding.Copy c = (Binding.Copy) b;
-                    size = Utils.alignUp(size, c.alignment());
-                    size += c.size();
-                } else if (b instanceof Binding.Allocate) {
-                    Binding.Allocate c = (Binding.Allocate) b;
-                    size = Utils.alignUp(size, c.alignment());
-                    size += c.size();
-                }
-            }
-        }
-        return size;
-    }
-
     static Map<VMStorage, Integer> indexMap(Binding.Move[] moves) {
         return IntStream.range(0, moves.length)
                         .boxed()
@@ -333,7 +312,8 @@ public class SharedUtils {
         }
         MethodType newType = oldType.dropParameterTypes(destIndex, destIndex + 1);
         int[] reorder = new int[oldType.parameterCount()];
-        assert destIndex > sourceIndex;
+        if (destIndex < sourceIndex)
+            sourceIndex--;
         for (int i = 0, index = 0; i < reorder.length; i++) {
             if (i != destIndex) {
                 reorder[i] = index++;
@@ -371,7 +351,7 @@ public class SharedUtils {
     }
 
     static MethodHandle wrapWithAllocator(MethodHandle specializedHandle,
-                                          int allocatorPos, long bufferCopySize,
+                                          int allocatorPos, long allocationSize,
                                           boolean upcall) {
         // insert try-finally to close the NativeScope used for Binding.Copy
         MethodHandle closer;
@@ -393,18 +373,17 @@ public class SharedUtils {
             insertPos = 2;
         }
 
-        // downcalls get the leading NativeSymbol/SegmentAllocator param as well
+        // downcalls get the leading SegmentAllocator param as well
         if (!upcall) {
-            closer = collectArguments(closer, insertPos++, reachabilityFenceHandle(NativeSymbol.class));
-            closer = dropArguments(closer, insertPos++, SegmentAllocator.class); // (Throwable, V?, NativeSymbol, SegmentAllocator) -> V/void
+            closer = dropArguments(closer, insertPos++, SegmentAllocator.class); // (Throwable, V?, SegmentAllocator, NativeSymbol) -> V/void
         }
 
-        closer = collectArguments(closer, insertPos++, MH_CLOSE_CONTEXT); // (Throwable, V?, NativeSymbol?, BindingContext) -> V/void
+        closer = collectArguments(closer, insertPos, MH_CLOSE_CONTEXT); // (Throwable, V?, SegmentAllocator?, BindingContext) -> V/void
 
         MethodHandle contextFactory;
 
-        if (bufferCopySize > 0) {
-            contextFactory = MethodHandles.insertArguments(MH_MAKE_CONTEXT_BOUNDED_ALLOCATOR, 0, bufferCopySize);
+        if (allocationSize > 0) {
+            contextFactory = MethodHandles.insertArguments(MH_MAKE_CONTEXT_BOUNDED_ALLOCATOR, 0, allocationSize);
         } else if (upcall) {
             contextFactory = MH_MAKE_CONTEXT_NO_ALLOCATOR;
         } else {
@@ -556,6 +535,14 @@ public class SharedUtils {
         if (exceptions != null && exceptions.length != 0) {
             throw new IllegalArgumentException("Target handle may throw exceptions: " + Arrays.toString(exceptions));
         }
+    }
+
+    public static MethodHandle maybeInsertAllocator(MethodHandle handle) {
+        if (!handle.type().returnType().equals(MemorySegment.class)) {
+            // not returning segment, just insert a throwing allocator
+            handle = insertArguments(handle, 1, THROWING_ALLOCATOR);
+        }
+        return handle;
     }
 
     // lazy init MH_ALLOC and MH_FREE handles

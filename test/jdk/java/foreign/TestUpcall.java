@@ -23,6 +23,18 @@
  */
 
 /*
+ * @test id=scope
+ * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
+ * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ *
+ * @run testng/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-VerifyDependencies
+ *   --enable-native-access=ALL-UNNAMED -Dgenerator.sample.factor=17
+ *   -DUPCALL_TEST_TYPE=SCOPE
+ *   TestUpcall
+ */
+
+/*
  * @test id=async
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
@@ -34,7 +46,18 @@
  *   TestUpcall
  */
 
-import jdk.incubator.foreign.Addressable;
+/*
+ * @test id=stack
+ * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
+ * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ *
+ * @run testng/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-VerifyDependencies
+ *   --enable-native-access=ALL-UNNAMED -Dgenerator.sample.factor=17
+ *   -DUPCALL_TEST_TYPE=STACK
+ *   TestUpcall
+ */
+
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.NativeSymbol;
@@ -59,23 +82,24 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static org.testng.Assert.assertEquals;
-
 
 public class TestUpcall extends CallGeneratorHelper {
 
     private enum TestType {
         SCOPE,
-        NO_SCOPE,
-        ASYNC
+        ASYNC,
+        STACK
     }
 
     private static final TestType UPCALL_TEST_TYPE = TestType.valueOf(System.getProperty("UPCALL_TEST_TYPE"));
 
     static {
         System.loadLibrary("TestUpcall");
+        System.loadLibrary("TestUpcallStack");
         System.loadLibrary("AsyncInvokers");
     }
     static CLinker abi = CLinker.systemCLinker();
@@ -89,7 +113,7 @@ public class TestUpcall extends CallGeneratorHelper {
         try {
             DUMMY = MethodHandles.lookup().findStatic(TestUpcall.class, "dummy", MethodType.methodType(void.class));
             PASS_AND_SAVE = MethodHandles.lookup().findStatic(TestUpcall.class, "passAndSave",
-                    MethodType.methodType(Object.class, Object[].class, AtomicReference.class));
+                    MethodType.methodType(Object.class, Object[].class, AtomicReference.class, int.class));
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
@@ -104,7 +128,7 @@ public class TestUpcall extends CallGeneratorHelper {
 
     private static void checkSelected(TestType type) {
         if (UPCALL_TEST_TYPE != type)
-            return;//throw new SkipException("Skipping tests that were not selected");
+            throw new SkipException("Skipping tests that were not selected");
     }
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
@@ -130,6 +154,7 @@ public class TestUpcall extends CallGeneratorHelper {
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testUpcallsAsync(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         checkSelected(TestType.ASYNC);
+
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         NativeSymbol addr = LOOKUP.lookup(fName).get();
@@ -158,15 +183,35 @@ public class TestUpcall extends CallGeneratorHelper {
         }
     }
 
+    @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
+    public void testUpcallsStack(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
+        checkSelected(TestType.STACK);
+
+        List<Consumer<Object>> returnChecks = new ArrayList<>();
+        List<Consumer<Object[]>> argChecks = new ArrayList<>();
+        NativeSymbol addr = LOOKUP.lookup("s" + fName).get();
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
+            MethodHandle mh = downcallHandle(abi, addr, allocator, functionStack(ret, paramTypes, fields));
+            Object[] args = makeArgsStack(scope, ret, paramTypes, fields, returnChecks, argChecks);
+            Object[] callArgs = args;
+            Object res = mh.invokeWithArguments(callArgs);
+            argChecks.forEach(c -> c.accept(args));
+            if (ret == Ret.NON_VOID) {
+                returnChecks.forEach(c -> c.accept(res));
+            }
+        }
+    }
+
     private static final Map<String, MethodHandle> INVOKERS = new HashMap<>();
 
     private MethodHandle asyncInvoker(Ret ret, ParamType returnType, List<StructFieldType> fields) {
         if (ret == Ret.VOID) {
             String name = "call_async_V";
             return INVOKERS.computeIfAbsent(name, symbol ->
-                abi.downcallHandle(
-                    LOOKUP.lookup(symbol).orElseThrow(),
-                        FunctionDescriptor.ofVoid(C_POINTER)));
+                    abi.downcallHandle(
+                            LOOKUP.lookup(symbol).orElseThrow(),
+                            FunctionDescriptor.ofVoid(C_POINTER)));
         }
 
         String name = "call_async_" + returnType.name().charAt(0)
@@ -181,41 +226,64 @@ public class TestUpcall extends CallGeneratorHelper {
         });
     }
 
+    static FunctionDescriptor functionStack(Ret ret, List<ParamType> params, List<StructFieldType> fields) {
+        return function(ret, params, fields, STACK_PREFIX_LAYOUTS);
+    }
+
     static FunctionDescriptor function(Ret ret, List<ParamType> params, List<StructFieldType> fields) {
+        return function(ret, params, fields, List.of());
+    }
+
+    static FunctionDescriptor function(Ret ret, List<ParamType> params, List<StructFieldType> fields, List<MemoryLayout> prefix) {
         List<MemoryLayout> paramLayouts = params.stream().map(p -> p.layout(fields)).collect(Collectors.toList());
         paramLayouts.add(C_POINTER); // the callback
-        MemoryLayout[] layouts = paramLayouts.toArray(new MemoryLayout[0]);
+        MemoryLayout[] layouts = Stream.concat(prefix.stream(), paramLayouts.stream()).toArray(MemoryLayout[]::new);
         return ret == Ret.VOID ?
                 FunctionDescriptor.ofVoid(layouts) :
-                FunctionDescriptor.of(layouts[0], layouts);
+                FunctionDescriptor.of(layouts[prefix.size()], layouts);
+    }
+
+    static Object[] makeArgsStack(ResourceScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) throws ReflectiveOperationException {
+        return makeArgs(scope, ret, params, fields, checks, argChecks, STACK_PREFIX_LAYOUTS);
     }
 
     static Object[] makeArgs(ResourceScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) throws ReflectiveOperationException {
-        Object[] args = new Object[params.size() + 1];
-        for (int i = 0 ; i < params.size() ; i++) {
-            args[i] = makeArg(params.get(i).layout(fields), checks, i == 0);
+        return makeArgs(scope, ret, params, fields, checks, argChecks, List.of());
+    }
+
+    static Object[] makeArgs(ResourceScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks, List<MemoryLayout> prefix) throws ReflectiveOperationException {
+        Object[] args = new Object[prefix.size() + params.size() + 1];
+        int argNum = 0;
+        for (MemoryLayout layout : prefix) {
+            args[argNum++] = makeArg(layout, null, false);
         }
-        args[params.size()] = makeCallback(scope, ret, params, fields, checks, argChecks);
+        for (int i = 0 ; i < params.size() ; i++) {
+            args[argNum++] = makeArg(params.get(i).layout(fields), checks, i == 0);
+        }
+        args[argNum] = makeCallback(scope, ret, params, fields, checks, argChecks, prefix);
         return args;
     }
 
-    @SuppressWarnings("unchecked")
-    static NativeSymbol makeCallback(ResourceScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) {
+    static NativeSymbol makeCallback(ResourceScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks, List<MemoryLayout> prefix) {
         if (params.isEmpty()) {
             return dummyStub;
         }
 
         AtomicReference<Object[]> box = new AtomicReference<>();
-        MethodHandle mh = insertArguments(PASS_AND_SAVE, 1, box);
-        mh = mh.asCollector(Object[].class, params.size());
+        MethodHandle mh = insertArguments(PASS_AND_SAVE, 1, box, prefix.size());
+        mh = mh.asCollector(Object[].class, prefix.size() + params.size());
+
+        for(int i = 0; i < prefix.size(); i++) {
+            mh = mh.asType(mh.type().changeParameterType(i, carrier(prefix.get(i), false)));
+        }
 
         for (int i = 0; i < params.size(); i++) {
             ParamType pt = params.get(i);
             MemoryLayout layout = pt.layout(fields);
             Class<?> carrier = carrier(layout, false);
-            mh = mh.asType(mh.type().changeParameterType(i, carrier));
+            mh = mh.asType(mh.type().changeParameterType(prefix.size() + i, carrier));
 
-            final int finalI = i;
+            final int finalI = prefix.size() + i;
             if (carrier == MemorySegment.class) {
                 argChecks.add(o -> assertStructEquals((MemorySegment) box.get()[finalI], (MemorySegment) o[finalI], layout));
             } else {
@@ -228,21 +296,21 @@ public class TestUpcall extends CallGeneratorHelper {
         Class<?> firstCarrier = carrier(firstlayout, true);
 
         if (firstCarrier == MemorySegment.class) {
-            checks.add(o -> assertStructEquals((MemorySegment) box.get()[0], (MemorySegment) o, firstlayout));
+            checks.add(o -> assertStructEquals((MemorySegment) box.get()[prefix.size()], (MemorySegment) o, firstlayout));
         } else {
-            checks.add(o -> assertEquals(o, box.get()[0]));
+            checks.add(o -> assertEquals(o, box.get()[prefix.size()]));
         }
 
         mh = mh.asType(mh.type().changeReturnType(ret == Ret.VOID ? void.class : firstCarrier));
 
-        MemoryLayout[] paramLayouts = params.stream().map(p -> p.layout(fields)).toArray(MemoryLayout[]::new);
+        MemoryLayout[] paramLayouts = Stream.concat(prefix.stream(), params.stream().map(p -> p.layout(fields))).toArray(MemoryLayout[]::new);
         FunctionDescriptor func = ret != Ret.VOID
                 ? FunctionDescriptor.of(firstlayout, paramLayouts)
                 : FunctionDescriptor.ofVoid(paramLayouts);
         return abi.upcallStub(mh, func, scope);
     }
 
-    static Object passAndSave(Object[] o, AtomicReference<Object[]> ref) {
+    static Object passAndSave(Object[] o, AtomicReference<Object[]> ref, int retArg) {
         for (int i = 0; i < o.length; i++) {
             if (o[i] instanceof MemorySegment) {
                 MemorySegment ms = (MemorySegment) o[i];
@@ -252,7 +320,7 @@ public class TestUpcall extends CallGeneratorHelper {
             }
         }
         ref.set(o);
-        return o[0];
+        return o[retArg];
     }
 
     static void dummy() {
