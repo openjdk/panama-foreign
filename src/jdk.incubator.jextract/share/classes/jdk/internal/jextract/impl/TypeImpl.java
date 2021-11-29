@@ -34,6 +34,7 @@ import java.util.function.Supplier;
 
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.ValueLayout;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
@@ -181,6 +182,8 @@ public abstract class TypeImpl implements Type {
     }
 
     public static final class PointerImpl extends DelegatedBase {
+        public static final ValueLayout.OfAddress POINTER_LAYOUT = ADDRESS.withBitAlignment(64);
+
         private final Supplier<Type> pointeeFactory;
 
         public PointerImpl(Supplier<Type> pointeeFactory) {
@@ -402,7 +405,7 @@ public abstract class TypeImpl implements Type {
         @Override
         public MemoryLayout visitDelegated(jdk.incubator.jextract.Type.Delegated t, Void _ignored) {
             if (t.kind() == jdk.incubator.jextract.Type.Delegated.Kind.POINTER) {
-                return ADDRESS.withBitAlignment(64);
+                return PointerImpl.POINTER_LAYOUT;
             } else {
                 return t.type().accept(this, null);
             }
@@ -416,7 +419,7 @@ public abstract class TypeImpl implements Type {
              * typedef void CB(int);
              * void func(CB cb);
              */
-            return ADDRESS;
+            return PointerImpl.POINTER_LAYOUT;
         }
 
         @Override

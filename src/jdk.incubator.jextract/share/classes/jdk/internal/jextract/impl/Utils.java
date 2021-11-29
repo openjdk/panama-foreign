@@ -328,28 +328,4 @@ class Utils {
     private static boolean isPrintableAscii(char ch) {
         return ch >= ' ' && ch <= '~';
     }
-
-    public static String layoutToConstant(ValueLayout vl) {
-        if (vl.carrier() == boolean.class) {
-            return "JAVA_BOOLEAN";
-        } else if (vl.carrier() == char.class) {
-            return "JAVA_CHAR.withBitAlignment(" + vl.bitAlignment() + ")";
-        } else if (vl.carrier() == byte.class) {
-            return "JAVA_BYTE";
-        } else if (vl.carrier() == short.class) {
-            return "JAVA_SHORT.withBitAlignment(" + vl.bitAlignment() + ")";
-        } else if (vl.carrier() == int.class) {
-            return "JAVA_INT.withBitAlignment(" + vl.bitAlignment() + ")";
-        } else if (vl.carrier() == float.class) {
-            return "JAVA_FLOAT.withBitAlignment(" + vl.bitAlignment() + ")";
-        } else if (vl.carrier() == long.class) {
-            return "JAVA_LONG.withBitAlignment(" + vl.bitAlignment() + ")";
-        } else if (vl.carrier() == double.class) {
-            return "JAVA_DOUBLE.withBitAlignment(" + vl.bitAlignment() + ")";
-        } else if (vl.carrier() == MemoryAddress.class) {
-            return "ADDRESS.withBitAlignment(" + vl.bitAlignment() + ")";
-        } else {
-            return "MemoryLayout.paddingLayout(" + vl.bitSize() +  ")";
-        }
-    }
 }

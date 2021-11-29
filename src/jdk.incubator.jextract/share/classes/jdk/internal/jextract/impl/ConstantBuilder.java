@@ -25,7 +25,6 @@
 
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
@@ -248,17 +247,13 @@ public class ConstantBuilder extends ClassSourceBuilder {
         return new Constant(className(), javaName, Constant.Kind.LAYOUT);
     }
 
-    // initialized by TopLevelBuilder
-    public static HashMap<ValueLayout, Constant> primitiveLayoutConstants = new HashMap<>();
+    protected String primitiveLayoutString(ValueLayout layout) {
+        return toplevel().rootConstants().resolvePrimitiveLayout(layout).accessExpression();
+    }
 
     private void emitLayoutString(MemoryLayout l) {
         if (l instanceof ValueLayout val) {
-            Constant constant = primitiveLayoutConstants.get(val);
-            if (constant == null) {
-                append(Utils.layoutToConstant(val));
-            } else {
-                append(constant.accessExpression());
-            }
+            append(primitiveLayoutString(val));
         } else if (l instanceof SequenceLayout seq) {
             append("MemoryLayout.sequenceLayout(");
             if (seq.elementCount().isPresent()) {
