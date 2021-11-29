@@ -222,11 +222,9 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
             incrAlign();
             indent();
             append(MEMBER_MODS);
-            append(" ValueLayout.");
-            append(primType.kind().layout().orElseThrow().getClass().getSimpleName());
+            append(" " + primType.kind().layout().orElseThrow().getClass().getSimpleName());
             append(" " + uniqueNestedClassName(name));
             append(" = ");
-            append("(" + primType.kind().layout().orElseThrow().getClass().getSimpleName() + ")");
             append(toplevel().rootConstants().resolvePrimitiveLayout((ValueLayout)kind.layout().get()).accessExpression());
             append(";\n");
             decrAlign();
@@ -237,10 +235,9 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
         incrAlign();
         indent();
         append(MEMBER_MODS);
-        append(" ValueLayout.OfAddress ");
+        append(" OfAddress ");
         append(uniqueNestedClassName(name));
         append(" = ");
-        append("(" + TypeImpl.PointerImpl.POINTER_LAYOUT.getClass().getSimpleName() + ")");
         append(toplevel().rootConstants().resolvePrimitiveLayout(TypeImpl.PointerImpl.POINTER_LAYOUT).accessExpression());
         append(";\n");
         decrAlign();

@@ -240,7 +240,8 @@ public class ConstantBuilder extends ClassSourceBuilder {
         String fieldName = Constant.Kind.LAYOUT.fieldName(javaName);
         incrAlign();
         indent();
-        append(memberMods() + "MemoryLayout " + fieldName + " = ");
+        String layoutClassName = layout.getClass().getSimpleName();
+        append(memberMods() + " " + layoutClassName + " " + fieldName + " = ");
         emitLayoutString(layout);
         append(";\n");
         decrAlign();
