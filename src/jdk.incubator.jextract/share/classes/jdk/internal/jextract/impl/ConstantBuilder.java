@@ -25,7 +25,6 @@
 
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
@@ -241,16 +240,21 @@ public class ConstantBuilder extends ClassSourceBuilder {
         String fieldName = Constant.Kind.LAYOUT.fieldName(javaName);
         incrAlign();
         indent();
-        append(memberMods() + "MemoryLayout " + fieldName + " = ");
+        String layoutClassName = layout.getClass().getSimpleName();
+        append(memberMods() + " " + layoutClassName + " " + fieldName + " = ");
         emitLayoutString(layout);
         append(";\n");
         decrAlign();
         return new Constant(className(), javaName, Constant.Kind.LAYOUT);
     }
 
+    protected String primitiveLayoutString(ValueLayout layout) {
+        return toplevel().rootConstants().resolvePrimitiveLayout(layout).accessExpression();
+    }
+
     private void emitLayoutString(MemoryLayout l) {
         if (l instanceof ValueLayout val) {
-            append(typeToLayoutName(val));
+            append(primitiveLayoutString(val));
         } else if (l instanceof SequenceLayout seq) {
             append("MemoryLayout.sequenceLayout(");
             if (seq.elementCount().isPresent()) {
@@ -348,10 +352,6 @@ public class ConstantBuilder extends ClassSourceBuilder {
         append("L);\n");
         decrAlign();
         return new Constant(className(), javaName, Constant.Kind.ADDRESS);
-    }
-
-    private static String typeToLayoutName(ValueLayout vl) {
-        return Utils.layoutToConstant(vl);
     }
 
     private Constant emitSegmentField(String javaName, String nativeName, MemoryLayout layout) {

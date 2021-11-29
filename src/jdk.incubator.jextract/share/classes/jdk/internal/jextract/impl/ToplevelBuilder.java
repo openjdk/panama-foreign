@@ -25,11 +25,13 @@
 package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.ValueLayout;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
 import javax.tools.JavaFileObject;
-import java.io.File;
 import java.lang.constant.ClassDesc;
 import java.util.*;
 import java.util.function.Consumer;
@@ -45,6 +47,7 @@ class ToplevelBuilder extends JavaSourceBuilder {
     private int declCount;
     private final List<JavaSourceBuilder> builders = new ArrayList<>();
     private SplitHeader lastHeader;
+    private RootConstants rootConstants;
     private int headersCount;
     private final ClassDesc headerDesc;
 
@@ -53,8 +56,13 @@ class ToplevelBuilder extends JavaSourceBuilder {
     ToplevelBuilder(String packageName, String headerClassName) {
         this.headerDesc = ClassDesc.of(packageName, headerClassName);
         SplitHeader first = lastHeader = new FirstHeader(headerClassName);
+        rootConstants = new RootConstants();
         first.classBegin();
         builders.add(first);
+    }
+
+    public RootConstants rootConstants() {
+        return rootConstants;
     }
 
     public List<JavaFileObject> toFiles() {
@@ -63,6 +71,7 @@ class ToplevelBuilder extends JavaSourceBuilder {
         }
         lastHeader.classEnd();
         builders.addAll(constantBuilders);
+        builders.add(rootConstants);
         List<JavaFileObject> files = new ArrayList<>();
         files.addAll(builders.stream()
                 .flatMap(b -> b.toFiles().stream())
@@ -206,6 +215,74 @@ class ToplevelBuilder extends JavaSourceBuilder {
     }
 
     // constant support
+
+    class RootConstants extends ConstantBuilder {
+
+        private final Map<ValueLayout, Constant> primitiveLayouts = new HashMap<>();
+
+        public RootConstants() {
+            super(ToplevelBuilder.this, "Constants$root");
+            classBegin();
+            addPrimitiveLayout("C_BOOL", Type.Primitive.Kind.Bool);
+            addPrimitiveLayout("C_CHAR", Type.Primitive.Kind.Char);
+            addPrimitiveLayout("C_SHORT", Type.Primitive.Kind.Short);
+            addPrimitiveLayout("C_INT", Type.Primitive.Kind.Int);
+            addPrimitiveLayout("C_LONG", Type.Primitive.Kind.Long);
+            addPrimitiveLayout("C_LONG_LONG", Type.Primitive.Kind.LongLong);
+            addPrimitiveLayout("C_FLOAT", Type.Primitive.Kind.Float);
+            addPrimitiveLayout("C_DOUBLE", Type.Primitive.Kind.Double);
+            addPrimitiveLayout("C_POINTER", TypeImpl.PointerImpl.POINTER_LAYOUT);
+            classEnd();
+        }
+
+        @Override
+        protected String primitiveLayoutString(ValueLayout vl) {
+            if (vl.carrier() == boolean.class) {
+                return "JAVA_BOOLEAN";
+            } else if (vl.carrier() == char.class) {
+                return "JAVA_CHAR.withBitAlignment(" + vl.bitAlignment() + ")";
+            } else if (vl.carrier() == byte.class) {
+                return "JAVA_BYTE";
+            } else if (vl.carrier() == short.class) {
+                return "JAVA_SHORT.withBitAlignment(" + vl.bitAlignment() + ")";
+            } else if (vl.carrier() == int.class) {
+                return "JAVA_INT.withBitAlignment(" + vl.bitAlignment() + ")";
+            } else if (vl.carrier() == float.class) {
+                return "JAVA_FLOAT.withBitAlignment(" + vl.bitAlignment() + ")";
+            } else if (vl.carrier() == long.class) {
+                return "JAVA_LONG.withBitAlignment(" + vl.bitAlignment() + ")";
+            } else if (vl.carrier() == double.class) {
+                return "JAVA_DOUBLE.withBitAlignment(" + vl.bitAlignment() + ")";
+            } else if (vl.carrier() == MemoryAddress.class) {
+                return "ADDRESS.withBitAlignment(" + vl.bitAlignment() + ")";
+            } else {
+                return "MemoryLayout.paddingLayout(" + vl.bitSize() +  ")";
+            }
+        }
+
+        private Constant addPrimitiveLayout(String javaName, ValueLayout layout) {
+            ValueLayout layoutNoName = layoutNoName(layout);
+            Constant layoutConstant = super.addLayout(javaName, layoutNoName);
+            primitiveLayouts.put(layoutNoName, layoutConstant);
+            return layoutConstant;
+        }
+
+        private Constant addPrimitiveLayout(String javaName, Type.Primitive.Kind kind) {
+            return addPrimitiveLayout(javaName, (ValueLayout)kind.layout().get());
+        }
+
+        private ValueLayout layoutNoName(ValueLayout layout) {
+            // drop name if present
+            return MemoryLayout.valueLayout(layout.carrier(), layout.order())
+                    .withBitAlignment(layout.bitAlignment());
+        }
+
+        public Constant resolvePrimitiveLayout(ValueLayout layout) {
+            return primitiveLayouts.get(layoutNoName(layout));
+        }
+    }
+
+    // other constants
 
     int constant_counter = 0;
     int constant_class_index = 0;

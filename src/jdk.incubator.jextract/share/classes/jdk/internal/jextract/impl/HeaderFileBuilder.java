@@ -24,7 +24,6 @@
  */
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
@@ -37,7 +36,6 @@ import jdk.internal.jextract.impl.ConstantBuilder.Constant;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * A helper class to generate header interface class in source form.
@@ -224,11 +222,10 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
             incrAlign();
             indent();
             append(MEMBER_MODS);
-            append(" ValueLayout.");
-            append(primType.kind().layout().orElseThrow().getClass().getSimpleName());
+            append(" " + primType.kind().layout().orElseThrow().getClass().getSimpleName());
             append(" " + uniqueNestedClassName(name));
             append(" = ");
-            append(TypeTranslator.typeToLayoutName(kind));
+            append(toplevel().rootConstants().resolvePrimitiveLayout((ValueLayout)kind.layout().get()).accessExpression());
             append(";\n");
             decrAlign();
         }
@@ -238,9 +235,11 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
         incrAlign();
         indent();
         append(MEMBER_MODS);
-        append(" ValueLayout.OfAddress ");
+        append(" OfAddress ");
         append(uniqueNestedClassName(name));
-        append(" = ValueLayout.ADDRESS;\n");
+        append(" = ");
+        append(toplevel().rootConstants().resolvePrimitiveLayout(TypeImpl.PointerImpl.POINTER_LAYOUT).accessExpression());
+        append(";\n");
         decrAlign();
     }
 
