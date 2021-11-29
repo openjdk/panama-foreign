@@ -67,7 +67,7 @@ public class LibUnsupportedTest {
     @Test
     public void testGetFoo() {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            var seg = MemorySegment.ofAddressNative(getFoo(), Foo.sizeof(), scope);
+            var seg = MemorySegment.ofAddress(getFoo(), Foo.sizeof(), scope);
             Foo.i$set(seg, 42);
             Foo.c$set(seg, (byte)'j');
             assertEquals(Foo.i$get(seg), 42);
