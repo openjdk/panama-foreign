@@ -58,7 +58,7 @@ import java.util.stream.Stream;
  * <p>
  * For instance, consider the following struct declaration in C:
  *
- * {@snippet :
+ * {@snippet lang=java :
  * typedef struct {
  *     char kind;
  *     int value;
@@ -67,7 +67,7 @@ import java.util.stream.Stream;
  *
  * The above declaration can be modelled using a layout object, as follows:
  *
- * {@snippet :
+ * {@snippet lang=java :
  * SequenceLayout taggedValues = MemoryLayout.sequenceLayout(5,
  *     MemoryLayout.structLayout(
  *         ValueLayout.JAVA_BYTE.withName("kind"),
@@ -129,25 +129,25 @@ import java.util.stream.Stream;
  * Such <em>layout paths</em> can be constructed programmatically using the methods in this class.
  * For instance, given the {@code taggedValues} layout instance constructed as above, we can obtain the offset,
  * in bits, of the member layout named <code>value</code> in the <em>first</em> sequence element, as follows:
- * {@snippet :
+ * {@snippet lang=java :
  * long valueOffset = taggedValues.bitOffset(PathElement.sequenceElement(0),
  *                                           PathElement.groupElement("value")); // yields 32
  * }
  *
  * Similarly, we can select the member layout named {@code value}, as follows:
- * {@snippet :
+ * {@snippet lang=java :
  * MemoryLayout value = taggedValues.select(PathElement.sequenceElement(),
  *                                          PathElement.groupElement("value"));
  * }
  *
  * And, we can also replace the layout named {@code value} with another layout, as follows:
- * {@snippet :
+ * {@snippet lang=java :
  * MemoryLayout taggedValuesWithHole = taggedValues.map(l -> MemoryLayout.paddingLayout(32),
  *                                             PathElement.sequenceElement(), PathElement.groupElement("value"));
  * }
  *
  * That is, the above declaration is identical to the following, more verbose one:
- * {@snippet :
+ * {@snippet lang=java :
  * MemoryLayout taggedValuesWithHole = MemoryLayout.sequenceLayout(5,
  *     MemoryLayout.structLayout(
  *         ValueLayout.JAVA_BYTE.withName("kind"),
@@ -161,7 +161,7 @@ import java.util.stream.Stream;
  * {@link PathElement#sequenceElement()} method) features an additional free dimension, which will have to be bound at runtime.
  * This is important when obtaining memory access var handle from layouts, as in the following code:
  *
- * {@snippet :
+ * {@snippet lang=java :
  * VarHandle valueHandle = taggedValues.varHandle(PathElement.sequenceElement(),
  *                                                PathElement.groupElement("value"));
  * }
@@ -177,7 +177,7 @@ import java.util.stream.Stream;
  * offsets of elements of a sequence at different indices, by supplying these indices when invoking the method handle.
  * For instance:
  *
- * {@snippet :
+ * {@snippet lang=java :
  * MethodHandle offsetHandle = taggedValues.byteOffsetHandle(PathElement.sequenceElement(),
  *                                                           PathElement.groupElement("kind"));
  * long offset1 = (long) offsetHandle.invokeExact(1L); // 8
@@ -468,7 +468,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * the layout path.
      *
      * <p>After the offset is computed, the returned segment is created as if by calling:
-     * {@snippet :
+     * {@snippet lang=java :
      * segment.asSlice(offset, layout.byteSize());
      * }
      *

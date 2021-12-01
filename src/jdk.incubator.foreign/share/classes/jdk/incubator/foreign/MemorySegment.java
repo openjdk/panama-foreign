@@ -119,14 +119,14 @@ import java.util.stream.Stream;
  * Each dereference method takes a {@linkplain jdk.incubator.foreign.ValueLayout value layout}, which specifies the size,
  * alignment constraints, byte order as well as the Java type associated with the dereference operation, and an offset.
  * For instance, to read an int from a segment, using {@link ByteOrder#nativeOrder() default endianness}, the following code can be used:
- * {@snippet :
+ * {@snippet lang=java :
  * MemorySegment segment = ...
  * int value = segment.get(ValueLayout.JAVA_INT, 0);
  * }
  *
  * If the value to be read is stored in memory using {@link ByteOrder#BIG_ENDIAN big-endian} encoding, the dereference operation
  * can be expressed as follows:
- * {@snippet :
+ * {@snippet lang=java :
  * MemorySegment segment = ...
  * int value = segment.get(ValueLayout.JAVA_INT.withOrder(BIG_ENDIAN), 0);
  * }
@@ -145,7 +145,7 @@ import java.util.stream.Stream;
  * the {@link #scope()} method. As for all resources associated with a resource scope, a segment cannot be
  * accessed after its corresponding scope has been closed. For instance, the following code will result in an
  * exception:
- * {@snippet :
+ * {@snippet lang=java :
  * MemorySegment segment = null;
  * try (ResourceScope scope = ResourceScope.newConfinedScope()) {
  *     segment = MemorySegment.allocateNative(8, scope);
@@ -162,7 +162,7 @@ import java.util.stream.Stream;
  * <h2>Memory segment views</h2>
  *
  * Memory segments support <em>views</em>. For instance, it is possible to create an <em>immutable</em> view of a memory segment, as follows:
- * {@snippet :
+ * {@snippet lang=java :
  * MemorySegment segment = ...
  * MemorySegment roSegment = segment.asReadOnly();
  * }
@@ -184,7 +184,7 @@ import java.util.stream.Stream;
  * (to do this, the segment has to be associated with a shared scope). The following code can be used to sum all int
  * values in a memory segment in parallel:
  *
- * {@snippet :
+ * {@snippet lang=java :
  * try (ResourceScope scope = ResourceScope.newSharedScope()) {
  *     SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.sequenceLayout(1024, ValueLayout.JAVA_INT);
  *     MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT, scope);
@@ -233,7 +233,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     /**
      * Returns a sequential {@code Stream} over disjoint slices (whose size matches that of the specified layout)
      * in this segment. Calling this method is equivalent to the following code:
-     * {@snippet :
+     * {@snippet lang=java :
      * StreamSupport.stream(segment.spliterator(elementLayout), false);
      * }
      *
@@ -274,7 +274,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * and whose new size is computed by subtracting the specified offset from this segment size.
      * <p>
      * Equivalent to the following code:
-     * {@snippet :
+     * {@snippet lang=java :
      * asSlice(offset, byteSize() - offset);
      * }
      *
@@ -343,7 +343,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * a negative or positive value. For instance, if both segments are native
      * segments, the resulting offset can be computed as follows:
      *
-     * {@snippet :
+     * {@snippet lang=java :
      * other.baseAddress().toRawLongValue() - segment.baseAddress().toRawLongValue()
      * }
      *
@@ -362,7 +362,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * More specifically, the given value is filled into each address of this
      * segment. Equivalent to (but likely more efficient than) the following code:
      *
-     * {@snippet :
+     * {@snippet lang=java :
      * byteHandle = MemoryLayout.ofSequence(ValueLayout.JAVA_BYTE)
      *         .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
      * for (long l = 0; l < segment.byteSize(); l++) {
@@ -389,7 +389,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * at offset {@code 0} through {@code src.byteSize() - 1}.
      * <p>
      * Calling this method is equivalent to the following code:
-     * {@snippet :
+     * {@snippet lang=java :
      * MemorySegment.copy(src, 0, this, 0, src.byteSize);
      * }
      * @param src the source segment.
@@ -800,7 +800,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
      * This is equivalent to the following code:
-     * {@snippet :
+     * {@snippet lang=java :
      * allocateNative(layout.bytesSize(), layout.bytesAlignment(), scope);
      * }
      * <p>
@@ -825,7 +825,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
      * This is equivalent to the following code:
-     * {@snippet :
+     * {@snippet lang=java :
      * allocateNative(bytesSize, 1, scope);
      * }
      * <p>
@@ -934,7 +934,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * For example, this may occur if the same file is {@linkplain MemorySegment#mapFile mapped} to two segments.
      * <p>
      * Calling this method is equivalent to the following code:
-     * {@snippet :
+     * {@snippet lang=java :
      * MemorySegment.copy(srcSegment, ValueLayout.JAVA_BYTE, srcOffset, dstSegment, ValueLayout.JAVA_BYTE, dstOffset, bytes);
      * }
      * @param srcSegment the source segment.

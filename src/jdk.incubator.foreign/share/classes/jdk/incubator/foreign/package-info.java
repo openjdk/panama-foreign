@@ -43,7 +43,7 @@
  * For example, to allocate an off-heap memory region big enough to hold 10 values of the primitive type {@code int}, and fill it with values
  * ranging from {@code 0} to {@code 9}, we can use the following code:
  *
- * {@snippet :
+ * {@snippet lang=java :
  * MemorySegment segment = MemorySegment.allocateNative(10 * 4, ResourceScope.newImplicitScope());
  * for (int i = 0 ; i < 10 ; i++) {
  *     segment.setAtIndex(ValueLayout.JAVA_INT, i, i);
@@ -69,7 +69,7 @@
  * Clients that operate under these assumptions might want to programmatically release the memory associated
  * with a memory segment. This can be done, using the {@link jdk.incubator.foreign.ResourceScope} abstraction, as shown below:
  *
- * {@snippet :
+ * {@snippet lang=java :
  * try (ResourceScope scope = ResourceScope.newConfinedScope()) {
  *     MemorySegment segment = MemorySegment.allocateNative(10 * 4, scope);
  *     for (int i = 0 ; i < 10 ; i++) {
@@ -107,7 +107,7 @@
  * For example, to compute the length of a string using the C standard library function {@code strlen} on a Linux x64 platform,
  * we can use the following code:
  *
- * {@snippet :
+ * {@snippet lang=java :
  * var linker = CLinker.systemCLinker();
  * MethodHandle strlen = linker.downcallHandle(
  *     linker.lookup("strlen").get(),
@@ -148,7 +148,7 @@
  * {@linkplain jdk.incubator.foreign.MemoryAddress#get(jdk.incubator.foreign.ValueLayout.OfInt, long) dereference methods}
  * provided:
  *
- * {@snippet :
+ * {@snippet lang=java :
  * MemoryAddress addr = ... //obtain address from native code
  * int x = addr.get(ValueLayout.JAVA_INT, 0);
  * }
@@ -159,7 +159,7 @@
  * for instance, be available in the documentation of the foreign function which produced the native address.
  * Here is how an unsafe segment can be created from a native address:
  *
- * {@snippet :
+ * {@snippet lang=java :
  * ResourceScope scope = ... // initialize a resource scope object
  * MemoryAddress addr = ... //obtain address from native code
  * MemorySegment segment = MemorySegment.ofAddress(addr, 4, scope); // segment is 4 bytes long
@@ -171,7 +171,7 @@
  * to a Java method) into a memory address, so that Java code can effectively be passed to other foreign functions.
  * For instance, we can write a method that compares two integer values, as follows:
  *
- * {@snippet :
+ * {@snippet lang=java :
  * class IntComparator {
  *     static int intCompare(MemoryAddress addr1, MemoryAddress addr2) {
  *         return addr1.get(ValueLayout.JAVA_INT, 0) - addr2.get(ValueLayout.JAVA_INT, 0);
@@ -183,7 +183,7 @@
  * by returning the difference between such values. We can then obtain a method handle which targets the above static
  * method, as follows:
  *
- * {@snippet :
+ * {@snippet lang=java :
  * FunctionDescriptor intCompareDescriptor = FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS);
  * MethodHandle intCompareHandle = MethodHandles.lookup().findStatic(IntComparator.class,
  *                                                 "intCompare",
@@ -198,7 +198,7 @@
  * Now that we have a method handle instance, we can turn it into a fresh function pointer,
  * using the {@link jdk.incubator.foreign.CLinker} interface, as follows:
  *
- * {@snippet :
+ * {@snippet lang=java :
  * ResourceScope scope = ...
  * Addressable comparFunc = CLinker.systemCLinker().upcallStub(
  *     intCompareHandle, intCompareDescriptor, scope);

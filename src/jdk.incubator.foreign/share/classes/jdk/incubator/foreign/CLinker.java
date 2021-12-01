@@ -181,7 +181,7 @@ public sealed interface CLinker extends SymbolLookup permits Windowsx64Linker, S
      * to allocate structs returned by-value.
      * <p>
      * Calling this method is equivalent to the following code:
-     * {@snippet :
+     * {@snippet lang=java :
      * linker.downcallHandle(function).bindTo(symbol);
      * }
      *

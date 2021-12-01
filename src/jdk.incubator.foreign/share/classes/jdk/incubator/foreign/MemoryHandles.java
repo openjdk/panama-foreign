@@ -47,14 +47,14 @@ import java.util.Objects;
  * to the segment, at which dereference should occur.
  * <p>
  * As an example, consider the memory layout expressed by a {@link GroupLayout} instance constructed as follows:
- * {@snippet :
+ * {@snippet lang=java :
  * GroupLayout seq = MemoryLayout.structLayout(
  *         MemoryLayout.paddingLayout(32),
  *         ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN).withName("value")
  * );
  * }
  * To access the member layout named {@code value}, we can construct a memory access var handle as follows:
- * {@snippet :
+ * {@snippet lang=java :
  * VarHandle handle = MemoryHandles.varHandle(ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN)); //(MemorySegment, long) -> int
  * handle = MemoryHandles.insertCoordinates(handle, 1, 4); //(MemorySegment) -> int
  * }
@@ -177,7 +177,7 @@ public final class MemoryHandles {
      * example, it is often convenient to model an <i>unsigned short</i> as a
      * Java {@code int} to avoid dealing with negative values, which would be
      * the case if modeled as a Java {@code short}. This is illustrated in the following example:
-     * {@snippet :
+     * {@snippet lang=java :
      * MemorySegment segment = MemorySegment.allocateNative(2, ResourceScope.newImplicitScope());
      * VarHandle SHORT_VH = ValueLayout.JAVA_SHORT.varHandle();
      * VarHandle INT_VH = MemoryHandles.asUnsigned(SHORT_VH, int.class);

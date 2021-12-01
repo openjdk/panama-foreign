@@ -37,13 +37,13 @@ import java.util.OptionalLong;
  * A finite sequence layout can be thought of as a group layout where the sequence layout's element layout is repeated a number of times
  * that is equal to the sequence layout's element count. In other words this layout:
  *
- * {@snippet :
+ * {@snippet lang=java :
  * MemoryLayout.sequenceLayout(3, ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN));
  * }
  *
  * is equivalent to the following layout:
  *
- * {@snippet :
+ * {@snippet lang=java :
  * MemoryLayout.structLayout(
  *     ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN),
  *     ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN),
@@ -119,11 +119,11 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
      * as the flattened projection of this sequence layout.
      * <p>
      * For instance, given a sequence layout of the kind:
-     * {@snippet :
+     * {@snippet lang=java :
      * var seq = MemoryLayout.sequenceLayout(4, MemoryLayout.sequenceLayout(3, ValueLayout.JAVA_INT));
      * }
      * calling {@code seq.reshape(2, 6)} will yield the following sequence layout:
-     * {@snippet :
+     * {@snippet lang=java :
      * var reshapeSeq = MemoryLayout.sequenceLayout(2, MemoryLayout.sequenceLayout(6, ValueLayout.JAVA_INT));
      * }
      * <p>
@@ -131,7 +131,7 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
      * count in that position will be inferred from the remaining element counts and the
      * element count of the flattened projection of this layout. For instance, a layout equivalent to
      * the above {@code reshapeSeq} can also be computed in the following ways:
-     * {@snippet :
+     * {@snippet lang=java :
      * var reshapeSeqImplicit1 = seq.reshape(-1, 6);
      * var reshapeSeqImplicit2 = seq.reshape(2, -1);
      * }
@@ -195,11 +195,11 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
      * This transformation preserves the layout size; nested sequence layout in this sequence layout will
      * be dropped and their element counts will be incorporated into that of the returned sequence layout.
      * For instance, given a sequence layout of the kind:
-     * {@snippet :
+     * {@snippet lang=java :
      * var seq = MemoryLayout.sequenceLayout(4, MemoryLayout.sequenceLayout(3, ValueLayout.JAVA_INT));
      * }
      * calling {@code seq.flatten()} will yield the following sequence layout:
-     * {@snippet :
+     * {@snippet lang=java :
      * var flattenedSeq = MemoryLayout.sequenceLayout(12, ValueLayout.JAVA_INT);
      * }
      * @return a new sequence layout with the same size as this layout (but, possibly, with different

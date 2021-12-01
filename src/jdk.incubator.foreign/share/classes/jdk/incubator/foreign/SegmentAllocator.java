@@ -339,7 +339,7 @@ public interface SegmentAllocator {
     /**
      * Returns a native unbounded arena-based allocator, with predefined block size and maximum arena size,
      * associated with the provided scope. Equivalent to the following code:
-     * {@snippet :
+     * {@snippet lang=java :
      * SegmentAllocator.newNativeArena(Long.MAX_VALUE, predefinedBlockSize, scope);
      * }
      *
@@ -355,7 +355,7 @@ public interface SegmentAllocator {
     /**
      * Returns a native unbounded arena-based allocator, with block size set to the specified arena size, associated with
      * the provided scope, with given arena size. Equivalent to the following code:
-     * {@snippet :
+     * {@snippet lang=java :
      * SegmentAllocator.newNativeArena(arenaSize, arenaSize, scope);
      * }
      *
@@ -416,7 +416,7 @@ public interface SegmentAllocator {
      * each new allocation request will return a new slice starting at the segment offset {@code 0} (alignment
      * constraints are ignored by this allocator), hence the name <em>prefix allocator</em>.
      * Equivalent to (but likely more efficient than) the following code:
-     * {@snippet :
+     * {@snippet lang=java :
      * MemorySegment segment = ...
      * SegmentAllocator prefixAllocator = (size, align) -> segment.asSlice(0, size);
      * }
@@ -439,7 +439,7 @@ public interface SegmentAllocator {
     /**
      * Returns a native allocator, associated with the provided scope. Equivalent to (but likely more efficient than)
      * the following code:
-     * {@snippet :
+     * {@snippet lang=java :
      * ResourceScope scope = ...
      * SegmentAllocator nativeAllocator = (size, align) -> MemorySegment.allocateNative(size, align, scope);
      * }
@@ -455,7 +455,7 @@ public interface SegmentAllocator {
     /**
      * Returns a native allocator which allocates segments in independent {@linkplain ResourceScope#newImplicitScope() implicit scopes}.
      * Equivalent to (but likely more efficient than) the following code:
-     * {@snippet :
+     * {@snippet lang=java :
      * ResourceScope scope = ...
      * SegmentAllocator implicitAllocator = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.newImplicitScope());
      * }
