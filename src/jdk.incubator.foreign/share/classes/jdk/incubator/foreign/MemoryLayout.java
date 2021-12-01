@@ -329,9 +329,9 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      *
      * <p>The final offset returned by the method handle is computed as follows:
      *
-     * {@snippet :
+     * <blockquote><pre>{@code
      * offset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
-     * }
+     * }</pre></blockquote>
      *
      * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
      * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
@@ -380,10 +380,10 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      *
      * <p>The final offset returned by the method handle is computed as follows:
      *
-     * {@snippet :
+     * <blockquote><pre>{@code
      * bitOffset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
      * offset = bitOffset / 8
-     * }
+     * }</pre></blockquote>
      *
      * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
      * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
@@ -412,17 +412,17 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * <p>
      * The final memory location accessed by the returned memory access var handle can be computed as follows:
      *
-     * {@snippet :
+     * <blockquote><pre>{@code
      * address = base + offset
-     * }
+     * }</pre></blockquote>
      *
      * where {@code base} denotes the base address expressed by the {@link MemorySegment} access coordinate
      * (see {@link MemorySegment#address()} and {@link MemoryAddress#toRawLongValue()}) and {@code offset}
      * can be expressed in the following form:
      *
-     * {@snippet :
+     * <blockquote><pre>{@code
      * offset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
-     * }
+     * }</pre></blockquote>
      *
      * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
      * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
@@ -457,10 +457,10 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      *
      * <p>The offset of the returned segment is computed as follows:
      *
-     * {@snippet :
+     * <blockquote><pre>{@code
      * bitOffset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
      * offset = bitOffset / 8
-     * }
+     * }</pre></blockquote>
      *
      * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
      * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
@@ -598,9 +598,11 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
          * the number of free dimensions of the resulting path will be {@code 1 + n}. If the free dimension associated
          * with this path is bound by an index {@code I}, the resulting accessed offset can be obtained with the following
          * formula:
-         * {@snippet :
+         *
+         * <blockquote><pre>{@code
          * E * (S + I * F)
-         * }
+         * }</pre></blockquote>
+         *
          * where {@code E} is the size (in bytes) of the sequence element layout.
          *
          * @param start the index of the first sequence element to be selected.

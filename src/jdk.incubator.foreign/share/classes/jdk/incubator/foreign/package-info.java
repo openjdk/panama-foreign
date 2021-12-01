@@ -149,7 +149,6 @@
  * provided:
  *
  * {@snippet :
- * ...
  * MemoryAddress addr = ... //obtain address from native code
  * int x = addr.get(ValueLayout.JAVA_INT, 0);
  * }
