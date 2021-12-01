@@ -58,7 +58,7 @@ import java.util.stream.Stream;
  * <p>
  * For instance, consider the following struct declaration in C:
  *
- * {@snippet lang=java :
+ * {@snippet lang=c :
  * typedef struct {
  *     char kind;
  *     int value;
