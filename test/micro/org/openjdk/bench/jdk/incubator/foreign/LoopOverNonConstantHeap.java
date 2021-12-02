@@ -67,8 +67,14 @@ public class LoopOverNonConstantHeap {
     static final int UNSAFE_BYTE_BASE = unsafe.arrayBaseOffset(byte[].class);
 
     static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(sequenceElement());
-    MemorySegment segment;
+
+    static final ValueLayout.OfInt JAVA_INT_ALIGNED = JAVA_INT.withBitAlignment(32);
+    static final VarHandle VH_int_aligned = MemoryLayout.sequenceLayout(JAVA_INT_ALIGNED).varHandle(sequenceElement());
+    static final int UNSAFE_INT_BASE = unsafe.arrayBaseOffset(int[].class);
+
+    MemorySegment segment, alignedSegment;
     byte[] base;
+    int[] alignedBase;
 
     ByteBuffer byteBuffer;
 
@@ -96,7 +102,12 @@ public class LoopOverNonConstantHeap {
         for (int i = 0; i < ELEM_SIZE; i++) {
             unsafe.putInt(base, UNSAFE_BYTE_BASE + (i * CARRIER_SIZE) , i);
         }
+        alignedBase = new int[ELEM_SIZE];
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            unsafe.putInt(base, UNSAFE_INT_BASE + (i * CARRIER_SIZE) , i);
+        }
         segment = MemorySegment.ofArray(base);
+        alignedSegment = MemorySegment.ofArray(alignedBase);
         byteBuffer = ByteBuffer.wrap(base).order(ByteOrder.nativeOrder());
     }
 
@@ -137,6 +148,15 @@ public class LoopOverNonConstantHeap {
     }
 
     @Benchmark
+    public int segment_loop_aligned() {
+        int sum = 0;
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            sum += (int) VH_int_aligned.get(alignedSegment, (long) i);
+        }
+        return sum;
+    }
+
+    @Benchmark
     public int segment_loop_instance() {
         int res = 0;
         for (int i = 0; i < ELEM_SIZE; i ++) {
@@ -145,13 +165,11 @@ public class LoopOverNonConstantHeap {
         return res;
     }
 
-    static final ValueLayout.OfInt JAVA_INT_ALIGNED = JAVA_INT.withBitAlignment(32);
-
     @Benchmark
     public int segment_loop_instance_aligned() {
         int res = 0;
         for (int i = 0; i < ELEM_SIZE; i ++) {
-            res += segment.get(JAVA_INT_ALIGNED, i * CARRIER_SIZE);
+            res += alignedSegment.get(JAVA_INT_ALIGNED, i * CARRIER_SIZE);
         }
         return res;
     }

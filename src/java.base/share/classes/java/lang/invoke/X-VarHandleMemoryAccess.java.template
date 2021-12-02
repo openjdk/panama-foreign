@@ -116,9 +116,9 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         long base = bb.unsafeGetOffset();
         long address = base + offset;
         long maxAlignMask = bb.maxAlignMask();
-        if (skipAlignmentMaskCheck && maxAlignMask == 0) {
+        if (skipAlignmentMaskCheck) {
             //note: the offset portion has already been aligned-checked, by construction
-            if ((base & alignmentMask) != 0) {
+            if (((base | maxAlignMask) & alignmentMask) != 0) {
                 throw MemoryAccessVarHandleBase.newIllegalArgumentExceptionForMisalignedAccess(address);
             }
         } else {

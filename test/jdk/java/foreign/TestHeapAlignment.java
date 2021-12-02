@@ -29,6 +29,7 @@
  */
 
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.ValueLayout;
@@ -47,6 +48,9 @@ public class TestHeapAlignment {
     public void testHeapAlignment(MemorySegment segment, int align, Object val, Object arr, ValueLayout layout, Function<Object, MemorySegment> segmentFactory) {
         assertAligned(align, layout, () -> layout.varHandle().get(segment));
         assertAligned(align, layout, () -> layout.varHandle().set(segment, val));
+        MemoryLayout seq = MemoryLayout.sequenceLayout(10, layout);
+        assertAligned(align, layout, () -> seq.varHandle(MemoryLayout.PathElement.sequenceElement()).get(segment, 0L));
+        assertAligned(align, layout, () -> seq.varHandle(MemoryLayout.PathElement.sequenceElement()).set(segment, 0L, val));
         assertAligned(align, layout, () -> segment.spliterator(layout));
         if (arr != null) {
             assertAligned(align, layout, () -> MemorySegment.copy(arr, 0, segment, layout, 0, 1));
