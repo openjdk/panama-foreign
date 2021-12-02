@@ -25,6 +25,7 @@ package org.openjdk.bench.jdk.incubator.foreign;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.ValueLayout;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -140,6 +141,17 @@ public class LoopOverNonConstantHeap {
         int res = 0;
         for (int i = 0; i < ELEM_SIZE; i ++) {
             res += segment.get(JAVA_INT, i * CARRIER_SIZE);
+        }
+        return res;
+    }
+
+    static final ValueLayout.OfInt JAVA_INT_ALIGNED = JAVA_INT.withBitAlignment(32);
+
+    @Benchmark
+    public int segment_loop_instance_aligned() {
+        int res = 0;
+        for (int i = 0; i < ELEM_SIZE; i ++) {
+            res += segment.get(JAVA_INT_ALIGNED, i * CARRIER_SIZE);
         }
         return res;
     }
