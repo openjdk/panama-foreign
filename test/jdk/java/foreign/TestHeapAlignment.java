@@ -80,11 +80,7 @@ public class TestHeapAlignment {
                 fail("Unexpected exception: " + ex);
             }
         } catch (Throwable ex) {
-            if (!shouldFail) {
-                fail("Should not get here!");
-            } else {
-                fail("Unexpected exception" + ex);
-            }
+            fail("Unexpected exception" + ex);
         }
     }
 
