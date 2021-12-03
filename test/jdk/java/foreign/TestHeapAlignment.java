@@ -54,14 +54,17 @@ public class TestHeapAlignment {
         assertAligned(align, layout, () -> segment.spliterator(layout));
         if (arr != null) {
             assertAligned(align, layout, () -> MemorySegment.copy(arr, 0, segment, layout, 0, 1));
-            assertAligned(align, layout, () -> MemorySegment.copy(arr, 0, segment, layout, 0, 1));
+            assertAligned(align, layout, () -> MemorySegment.copy(segment, layout, 0, arr, 0, 1));
             assertAligned(align, layout, () -> {
                 MemorySegment other = segmentFactory.apply(arr);
                 MemorySegment.copy(other, layout, 0, segment, layout, 0, 1);
             });
+            MemorySegment other = segmentFactory.apply(arr);
             assertAligned(align, layout, () -> {
-                MemorySegment other = segmentFactory.apply(arr);
                 MemorySegment.copy(segment, layout, 0, other, layout, 0, 1);
+            });
+            assertAligned(align, layout, () -> {
+                MemorySegment.copy(other, layout, 0, segment, layout, 0, 1);
             });
         }
     }
@@ -79,8 +82,6 @@ public class TestHeapAlignment {
             } else if (!ex.getMessage().contains("alignment") && !ex.getMessage().contains("Misaligned")) {
                 fail("Unexpected exception: " + ex);
             }
-        } catch (Throwable ex) {
-            fail("Unexpected exception" + ex);
         }
     }
 
@@ -92,23 +93,29 @@ public class TestHeapAlignment {
     static final ValueLayout.OfDouble JAVA_DOUBLE_ALIGNED = ValueLayout.JAVA_DOUBLE.withBitAlignment(64);
     static final ValueLayout.OfAddress ADDRESS_ALIGNED = ValueLayout.ADDRESS.withBitAlignment(ValueLayout.ADDRESS.bitSize());
 
-    record SegmentsAndAlignment(MemorySegment segment, int align) {
-        static SegmentsAndAlignment[] HEAP_SEGMENTS_AND_ALIGNMENTS = {
-                new SegmentsAndAlignment(MemorySegment.ofArray(new byte[8]), 1),
-                new SegmentsAndAlignment(MemorySegment.ofArray(new short[4]), 2),
-                new SegmentsAndAlignment(MemorySegment.ofArray(new char[4]), 2),
-                new SegmentsAndAlignment(MemorySegment.ofArray(new int[2]), 4),
-                new SegmentsAndAlignment(MemorySegment.ofArray(new float[2]), 4),
-                new SegmentsAndAlignment(MemorySegment.ofArray(new long[1]), 8),
-                new SegmentsAndAlignment(MemorySegment.ofArray(new double[1]), 8),
-                new SegmentsAndAlignment(MemorySegment.allocateNative(8, ResourceScope.newImplicitScope()), -1),
-        };
+    enum SegmentAndAlignment {
+        HEAP_BYTE(MemorySegment.ofArray(new byte[8]), 1),
+        HEAP_SHORT(MemorySegment.ofArray(new short[4]), 2),
+        HEAP_CHAR(MemorySegment.ofArray(new char[4]), 2),
+        HEAP_INT(MemorySegment.ofArray(new int[2]), 4),
+        HEAP_FLOAT(MemorySegment.ofArray(new float[2]), 4),
+        HEAP_LONG(MemorySegment.ofArray(new long[1]), 8),
+        HEAP_DOUBLE(MemorySegment.ofArray(new double[1]), 8),
+        NATIVE(MemorySegment.allocateNative(8, ResourceScope.newImplicitScope()), -1);
+
+        final MemorySegment segment;
+        final int align;
+
+        SegmentAndAlignment(MemorySegment segment, int align) {
+            this.segment = segment;
+            this.align = align;
+        }
     }
 
     @DataProvider
     public static Object[][] layouts() {
         List<Object[]> layouts = new ArrayList<>();
-        for (SegmentsAndAlignment testCase : SegmentsAndAlignment.HEAP_SEGMENTS_AND_ALIGNMENTS) {
+        for (SegmentAndAlignment testCase : SegmentAndAlignment.values()) {
             layouts.add(new Object[] { testCase.segment, testCase.align, (byte) 42, new byte[]{42}, ValueLayout.JAVA_BYTE, (Function<byte[], MemorySegment>)MemorySegment::ofArray });
             layouts.add(new Object[] { testCase.segment, testCase.align, true, null, ValueLayout.JAVA_BOOLEAN, null });
             layouts.add(new Object[] { testCase.segment, testCase.align, (char) 42, new char[]{42}, JAVA_CHAR_ALIGNED, (Function<char[], MemorySegment>)MemorySegment::ofArray });

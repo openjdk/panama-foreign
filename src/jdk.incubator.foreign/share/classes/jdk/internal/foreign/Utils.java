@@ -178,4 +178,11 @@ public final class Utils {
     public static boolean isAligned(long offset, long align) {
         return (offset & (align - 1)) == 0;
     }
+
+    @ForceInline
+    public static void checkNotHyperAligned(MemoryLayout layout, String msg) {
+        if (layout.byteAlignment() > layout.byteSize()) {
+            throw new IllegalArgumentException(msg);
+        }
+    }
 }

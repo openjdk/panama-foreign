@@ -124,9 +124,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
         if (elementLayout.byteSize() == 0) {
             throw new IllegalArgumentException("Element layout size cannot be zero");
         }
-        if (elementLayout.byteAlignment() > elementLayout.byteSize()) {
-            throw new IllegalArgumentException("Element layout alignment greater than its size");
-        }
+        Utils.checkNotHyperAligned(elementLayout, "Element layout alignment greater than its size");
         if (!isAlignedForElement(0, elementLayout)) {
             throw new IllegalArgumentException("Incompatible alignment constraints");
         }

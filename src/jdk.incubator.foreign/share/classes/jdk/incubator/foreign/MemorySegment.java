@@ -155,19 +155,35 @@ boolean isAligned(MemorySegment segment, long offset, MemoryLayout layout) {
  * If, however, the segment being dereferenced is a heap segment, the above function will not work: a heap
  * segment's base address is <em>virtualized</em> and, as such, cannot be used to construct an alignment check. Instead,
  * heap segments are assumed to produce addresses which are never more aligned than the element size of the Java array from which
- * they have originated from. Let {@code H} be a heap segment, and {@code AT} be the type of the Java array
- * backing {@code H} and {@code A} be the alignment of the addresses produced by {@code H}; then:
+ * they have originated from, as shown in the following table:
  *
- * <ul>
- *     <li>if {@code AT = boolean[]}, then {@code A = 1}
- *     <li>if {@code AT = byte[]}, then {@code A = 1}
- *     <li>if {@code AT = short[]}, then {@code A = 2}
- *     <li>if {@code AT = char[]}, then {@code A = 2}
- *     <li>if {@code AT = int[]}, then {@code A = 4}
- *     <li>if {@code AT = float[]}, then {@code A = 4}
- *     <li>if {@code AT = long[]}, then {@code A = 8}
- *     <li>if {@code AT = double[]}, then {@code A = 8}
- * </ul>
+ * <blockquote><table class="plain">
+ * <caption style="display:none">Array type of an array backing a segment and its address alignment</caption>
+ * <thead>
+ * <tr>
+ *     <th scope="col">Array type</th>
+ *     <th scope="col">Alignment</th>
+ * </tr>
+ * </thead>
+ * <tbody>
+ * <tr><th scope="row" style="font-weight:normal">{@code boolean[]}</th>
+ *     <td style="text-align:center;">{@code 1}</td></tr>
+ * <tr><th scope="row" style="font-weight:normal">{@code byte[]}</th>
+ *     <td style="text-align:center;">{@code 1}</td></tr>
+ * <tr><th scope="row" style="font-weight:normal">{@code char[]}</th>
+ *     <td style="text-align:center;">{@code 2}</td></tr>
+ * <tr><th scope="row" style="font-weight:normal">{@code short[]}</th>
+ *     <td style="text-align:center;">{@code 2}</td></tr>
+ * <tr><th scope="row" style="font-weight:normal">{@code int[]}</th>
+ *     <td style="text-align:center;">{@code 4}</td></tr>
+ * <tr><th scope="row" style="font-weight:normal">{@code float[]}</th>
+ *     <td style="text-align:center;">{@code 4}</td></tr>
+ * <tr><th scope="row" style="font-weight:normal">{@code long[]}</th>
+ *     <td style="text-align:center;">{@code 8}</td></tr>
+ * <tr><th scope="row" style="font-weight:normal">{@code double[]}</th>
+ *     <td style="text-align:center;">{@code 8}</td></tr>
+ * </tbody>
+ * </table></blockquote>
  *
  * Note that the above definition is conservative: it might be possible, for instance, that a heap segment
  * constructed from a {@code byte[]} might have a subset of addresses {@code S} which happen to be 8-byte aligned. But determining
@@ -1042,12 +1058,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
         if (srcElementLayout.byteSize() != dstElementLayout.byteSize()) {
             throw new IllegalArgumentException("Source and destination layouts must have same size");
         }
-        if (srcElementLayout.byteAlignment() > srcElementLayout.byteSize()) {
-            throw new IllegalArgumentException("Source layout alignment greater than its size");
-        }
-        if (dstElementLayout.byteAlignment() > dstElementLayout.byteSize()) {
-            throw new IllegalArgumentException("Destination layout alignment greater than its size");
-        }
+        Utils.checkNotHyperAligned(srcElementLayout, "Source layout alignment greater than its size");
+        Utils.checkNotHyperAligned(dstElementLayout, "Destination layout alignment greater than its size");
         if (!srcImpl.isAlignedForElement(srcOffset, srcElementLayout)) {
             throw new IllegalArgumentException("Source segment incompatible with alignment constraints");
         }
@@ -1399,6 +1411,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default char getAtIndex(ValueLayout.OfChar layout, long index) {
+        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
         return (char)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
     }
 
@@ -1415,6 +1428,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfChar layout, long index, char value) {
+        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
         layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
     }
 
@@ -1435,6 +1449,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default short getAtIndex(ValueLayout.OfShort layout, long index) {
+        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
         return (short)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
     }
 
@@ -1451,6 +1466,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfShort layout, long index, short value) {
+        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
         layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
     }
 
@@ -1470,6 +1486,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default int getAtIndex(ValueLayout.OfInt layout, long index) {
+        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
         return (int)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
     }
 
@@ -1486,6 +1503,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfInt layout, long index, int value) {
+        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
         layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
     }
 
@@ -1505,6 +1523,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default float getAtIndex(ValueLayout.OfFloat layout, long index) {
+        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
         return (float)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
     }
 
@@ -1521,6 +1540,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfFloat layout, long index, float value) {
+        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
         layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
     }
 
@@ -1540,6 +1560,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default long getAtIndex(ValueLayout.OfLong layout, long index) {
+        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
         return (long)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
     }
 
@@ -1556,6 +1577,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfLong layout, long index, long value) {
+        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
         layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
     }
 
@@ -1575,6 +1597,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default double getAtIndex(ValueLayout.OfDouble layout, long index) {
+        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
         return (double)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
     }
 
@@ -1591,6 +1614,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfDouble layout, long index, double value) {
+        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
         layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
     }
 
@@ -1610,6 +1634,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default MemoryAddress getAtIndex(ValueLayout.OfAddress layout, long index) {
+        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
         return (MemoryAddress)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
     }
 
@@ -1626,6 +1651,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfAddress layout, long index, Addressable value) {
+        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
         layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value.address());
     }
 
@@ -1660,9 +1686,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
         int dstBase = (int)baseAndScale;
         int dstWidth = (int)(baseAndScale >> 32);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        if (srcLayout.byteAlignment() > srcLayout.byteSize()) {
-            throw new IllegalArgumentException("Source layout alignment greater than its size");
-        }
+        Utils.checkNotHyperAligned(srcLayout, "Source layout alignment greater than its size");
         if (!srcImpl.isAlignedForElement(srcOffset, srcLayout)) {
             throw new IllegalArgumentException("Source segment incompatible with alignment constraints");
         }
@@ -1710,9 +1734,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
         int srcWidth = (int)(baseAndScale >> 32);
         Objects.checkFromIndexSize(srcIndex, elementCount, Array.getLength(srcArray));
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
-        if (dstLayout.byteAlignment() > dstLayout.byteSize()) {
-            throw new IllegalArgumentException("Destination layout alignment greater than its size");
-        }
+        Utils.checkNotHyperAligned(dstLayout, "Source layout alignment greater than its size");
         if (!destImpl.isAlignedForElement(dstOffset, dstLayout)) {
             throw new IllegalArgumentException("Target segment incompatible with alignment constraints");
         }
