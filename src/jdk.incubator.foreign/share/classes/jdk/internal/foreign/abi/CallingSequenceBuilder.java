@@ -79,7 +79,7 @@ public class CallingSequenceBuilder {
         verifyBindings(false, carrier, bindings);
         this.outputBindings = bindings;
         mt = mt.changeReturnType(carrier);
-        desc = desc.withReturnLayout(layout);
+        desc = desc.changeReturnLayout(layout);
         return this;
     }
 
