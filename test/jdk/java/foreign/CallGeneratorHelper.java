@@ -42,12 +42,18 @@ import java.util.Stack;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.testng.annotations.*;
 
 import static org.testng.Assert.*;
 
 public class CallGeneratorHelper extends NativeTestHelper {
+
+    static final List<MemoryLayout> STACK_PREFIX_LAYOUTS = Stream.concat(
+            Stream.generate(() -> (MemoryLayout) C_LONG_LONG).limit(8),
+            Stream.generate(() -> (MemoryLayout)  C_DOUBLE).limit(8)
+        ).toList();
 
     static SegmentAllocator THROWING_ALLOCATOR = (size, align) -> {
         throw new UnsupportedOperationException();
