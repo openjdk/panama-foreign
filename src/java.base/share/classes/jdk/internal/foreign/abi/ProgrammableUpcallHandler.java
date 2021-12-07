@@ -30,8 +30,6 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.ResourceScope;
 import java.lang.foreign.ValueLayout;
-import jdk.internal.access.JavaLangInvokeAccess;
-import jdk.internal.access.SharedSecrets;
 import sun.security.action.GetPropertyAction;
 
 import java.lang.invoke.MethodHandle;
@@ -62,8 +60,6 @@ public class ProgrammableUpcallHandler {
         GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC", "true"));
 
     private static final MethodHandle MH_invokeInterpBindings;
-
-    private static final JavaLangInvokeAccess JLI = SharedSecrets.getJavaLangInvokeAccess();
 
     static {
         try {
@@ -102,7 +98,7 @@ public class ProgrammableUpcallHandler {
         }
 
         checkPrimitive(doBindings.type());
-        JLI.ensureCustomized(doBindings);
+        doBindings = insertArguments(exactInvoker(doBindings.type()), 0, doBindings);
         VMStorage[] args = Arrays.stream(argMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
         VMStorage[] rets = Arrays.stream(retMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
         CallRegs conv = new CallRegs(args, rets);
