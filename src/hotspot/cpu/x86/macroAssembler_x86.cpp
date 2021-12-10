@@ -2547,6 +2547,15 @@ void MacroAssembler::vmovdqu(XMMRegister dst, AddressLiteral src, Register scrat
   }
 }
 
+void MacroAssembler::vmovdqu(XMMRegister dst, AddressLiteral src, Register scratch_reg, int vector_len) {
+  assert(vector_len <= AVX_256bit, "AVX2 vector length");
+  if (vector_len == AVX_256bit) {
+    vmovdqu(dst, src, scratch_reg);
+  } else {
+    movdqu(dst, src, scratch_reg);
+  }
+}
+
 void MacroAssembler::kmov(KRegister dst, Address src) {
   if (VM_Version::supports_avx512bw()) {
     kmovql(dst, src);
@@ -5013,7 +5022,7 @@ void MacroAssembler::xmm_clear_mem(Register base, Register cnt, Register rtmp, X
   // cnt - number of qwords (8-byte words).
   // base - start address, qword aligned.
   Label L_zero_64_bytes, L_loop, L_sloop, L_tail, L_end;
-  bool use64byteVector = MaxVectorSize == 64 && AVX3Threshold == 0;
+  bool use64byteVector = (MaxVectorSize == 64) && (VM_Version::avx3_threshold() == 0);
   if (use64byteVector) {
     vpxor(xtmp, xtmp, xtmp, AVX_512bit);
   } else if (MaxVectorSize >= 32) {
@@ -5077,7 +5086,7 @@ void MacroAssembler::xmm_clear_mem(Register base, Register cnt, Register rtmp, X
 // Clearing constant sized memory using YMM/ZMM registers.
 void MacroAssembler::clear_mem(Register base, int cnt, Register rtmp, XMMRegister xtmp, KRegister mask) {
   assert(UseAVX > 2 && VM_Version::supports_avx512vlbw(), "");
-  bool use64byteVector = MaxVectorSize > 32 && AVX3Threshold == 0;
+  bool use64byteVector = (MaxVectorSize > 32) && (VM_Version::avx3_threshold() == 0);
 
   int vector64_count = (cnt & (~0x7)) >> 3;
   cnt = cnt & 0x7;
@@ -5320,8 +5329,8 @@ void MacroAssembler::generate_fill(BasicType t, bool aligned,
           // Fill 64-byte chunks
           Label L_fill_64_bytes_loop_avx3, L_check_fill_64_bytes_avx2;
 
-          // If number of bytes to fill < AVX3Threshold, perform fill using AVX2
-          cmpl(count, AVX3Threshold);
+          // If number of bytes to fill < VM_Version::avx3_threshold(), perform fill using AVX2
+          cmpl(count, VM_Version::avx3_threshold());
           jccb(Assembler::below, L_check_fill_64_bytes_avx2);
 
           vpbroadcastd(xtmp, xtmp, Assembler::AVX_512bit);
@@ -8709,6 +8718,7 @@ void MacroAssembler::generate_fill_avx3(BasicType type, Register to, Register va
   Label L_fill_zmm_sequence;
 
   int shift = -1;
+  int avx3threshold = VM_Version::avx3_threshold();
   switch(type) {
     case T_BYTE:  shift = 0;
       break;
@@ -8724,10 +8734,10 @@ void MacroAssembler::generate_fill_avx3(BasicType type, Register to, Register va
       fatal("Unhandled type: %s\n", type2name(type));
   }
 
-  if (AVX3Threshold != 0  || MaxVectorSize == 32) {
+  if ((avx3threshold != 0)  || (MaxVectorSize == 32)) {
 
     if (MaxVectorSize == 64) {
-      cmpq(count, AVX3Threshold >> shift);
+      cmpq(count, avx3threshold >> shift);
       jcc(Assembler::greater, L_fill_zmm_sequence);
     }
 
@@ -9037,5 +9047,6 @@ void MacroAssembler::get_thread(Register thread) {
     pop(rax);
   }
 }
+
 
 #endif // !WIN32 || _LP64
