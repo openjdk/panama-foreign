@@ -180,7 +180,7 @@ public final class Utils {
     }
 
     @ForceInline
-    public static void checkNotHyperAligned(MemoryLayout layout, String msg) {
+    public static void checkElementAlignment(MemoryLayout layout, String msg) {
         if (layout.byteAlignment() > layout.byteSize()) {
             throw new IllegalArgumentException(msg);
         }

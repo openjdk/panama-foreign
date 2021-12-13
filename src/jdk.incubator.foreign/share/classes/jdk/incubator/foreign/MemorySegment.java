@@ -1059,13 +1059,13 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
         if (srcElementLayout.byteSize() != dstElementLayout.byteSize()) {
             throw new IllegalArgumentException("Source and destination layouts must have same size");
         }
-        Utils.checkNotHyperAligned(srcElementLayout, "Source layout alignment greater than its size");
-        Utils.checkNotHyperAligned(dstElementLayout, "Destination layout alignment greater than its size");
+        Utils.checkElementAlignment(srcElementLayout, "Source layout alignment greater than its size");
+        Utils.checkElementAlignment(dstElementLayout, "Destination layout alignment greater than its size");
         if (!srcImpl.isAlignedForElement(srcOffset, srcElementLayout)) {
             throw new IllegalArgumentException("Source segment incompatible with alignment constraints");
         }
         if (!dstImpl.isAlignedForElement(dstOffset, dstElementLayout)) {
-            throw new IllegalArgumentException("Target segment incompatible with alignment constraints");
+            throw new IllegalArgumentException("Destination segment incompatible with alignment constraints");
         }
         long size = elementCount * srcElementLayout.byteSize();
         srcImpl.checkAccess(srcOffset, size, true);
@@ -1109,6 +1109,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param value the byte value to be written.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
+     * @throws IllegalArgumentException if the dereference operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
@@ -1146,6 +1148,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param value the boolean value to be written.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
+     * @throws IllegalArgumentException if the dereference operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
@@ -1183,6 +1187,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param value the char value to be written.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
+     * @throws IllegalArgumentException if the dereference operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
@@ -1220,6 +1226,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param value the short value to be written.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
+     * @throws IllegalArgumentException if the dereference operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
@@ -1257,6 +1265,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param value the int value to be written.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
+     * @throws IllegalArgumentException if the dereference operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
@@ -1294,6 +1304,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param value the float value to be written.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
+     * @throws IllegalArgumentException if the dereference operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
@@ -1331,6 +1343,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param value the long value to be written.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
+     * @throws IllegalArgumentException if the dereference operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
@@ -1368,6 +1382,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param value the double value to be written.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
+     * @throws IllegalArgumentException if the dereference operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
@@ -1405,6 +1421,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param value the address value to be written.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
+     * @throws IllegalArgumentException if the dereference operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
@@ -1430,7 +1448,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default char getAtIndex(ValueLayout.OfChar layout, long index) {
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return (char)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
     }
 
@@ -1443,13 +1461,15 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param value the char value to be written.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
+     * @throws IllegalArgumentException if the dereference operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfChar layout, long index, char value) {
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
     }
 
@@ -1466,11 +1486,10 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
-     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default short getAtIndex(ValueLayout.OfShort layout, long index) {
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return (short)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
     }
 
@@ -1483,13 +1502,15 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param value the short value to be written.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
+     * @throws IllegalArgumentException if the dereference operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfShort layout, long index, short value) {
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
     }
 
@@ -1509,7 +1530,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default int getAtIndex(ValueLayout.OfInt layout, long index) {
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return (int)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
     }
 
@@ -1522,13 +1543,15 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param value the int value to be written.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
+     * @throws IllegalArgumentException if the dereference operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfInt layout, long index, int value) {
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
     }
 
@@ -1548,7 +1571,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default float getAtIndex(ValueLayout.OfFloat layout, long index) {
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return (float)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
     }
 
@@ -1561,13 +1584,15 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param value the float value to be written.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
+     * @throws IllegalArgumentException if the dereference operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfFloat layout, long index, float value) {
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
     }
 
@@ -1587,7 +1612,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default long getAtIndex(ValueLayout.OfLong layout, long index) {
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return (long)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
     }
 
@@ -1600,13 +1625,15 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param value the long value to be written.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
+     * @throws IllegalArgumentException if the dereference operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfLong layout, long index, long value) {
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
     }
 
@@ -1626,7 +1653,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default double getAtIndex(ValueLayout.OfDouble layout, long index) {
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return (double)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
     }
 
@@ -1639,13 +1666,15 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param value the double value to be written.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
+     * @throws IllegalArgumentException if the dereference operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfDouble layout, long index, double value) {
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
     }
 
@@ -1665,7 +1694,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @ForceInline
     default MemoryAddress getAtIndex(ValueLayout.OfAddress layout, long index) {
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return (MemoryAddress)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
     }
 
@@ -1678,13 +1707,15 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param value the address value to be written.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
+     * @throws IllegalArgumentException if the dereference operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfAddress layout, long index, Addressable value) {
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value.address());
     }
 
@@ -1719,7 +1750,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
         int dstBase = (int)baseAndScale;
         int dstWidth = (int)(baseAndScale >> 32);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        Utils.checkNotHyperAligned(srcLayout, "Source layout alignment greater than its size");
+        Utils.checkElementAlignment(srcLayout, "Source layout alignment greater than its size");
         if (!srcImpl.isAlignedForElement(srcOffset, srcLayout)) {
             throw new IllegalArgumentException("Source segment incompatible with alignment constraints");
         }
@@ -1767,9 +1798,9 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
         int srcWidth = (int)(baseAndScale >> 32);
         Objects.checkFromIndexSize(srcIndex, elementCount, Array.getLength(srcArray));
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
-        Utils.checkNotHyperAligned(dstLayout, "Source layout alignment greater than its size");
+        Utils.checkElementAlignment(dstLayout, "Destination layout alignment greater than its size");
         if (!destImpl.isAlignedForElement(dstOffset, dstLayout)) {
-            throw new IllegalArgumentException("Target segment incompatible with alignment constraints");
+            throw new IllegalArgumentException("Destination segment incompatible with alignment constraints");
         }
         destImpl.checkAccess(dstOffset, elementCount * srcWidth, false);
         if (srcWidth == 1 || dstLayout.order() == ByteOrder.nativeOrder()) {

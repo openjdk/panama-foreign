@@ -267,7 +267,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @CallerSensitive
     public char getAtIndex(ValueLayout.OfChar layout, long index) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + (index * layout.byteSize()));
     }
 
@@ -276,7 +276,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @CallerSensitive
     public void setAtIndex(ValueLayout.OfChar layout, long index, char value) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + (index * layout.byteSize()), value);
     }
 
@@ -285,7 +285,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @CallerSensitive
     public short getAtIndex(ValueLayout.OfShort layout, long index) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + (index * layout.byteSize()));
     }
 
@@ -294,7 +294,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @CallerSensitive
     public void setAtIndex(ValueLayout.OfShort layout, long index, short value) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + (index * layout.byteSize()), value);
     }
 
@@ -303,7 +303,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @CallerSensitive
     public int getAtIndex(ValueLayout.OfInt layout, long index) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + (index * layout.byteSize()));
     }
 
@@ -312,7 +312,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @CallerSensitive
     public void setAtIndex(ValueLayout.OfInt layout, long index, int value) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + (index * layout.byteSize()), value);
     }
 
@@ -321,7 +321,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @CallerSensitive
     public float getAtIndex(ValueLayout.OfFloat layout, long index) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + (index * layout.byteSize()));
     }
 
@@ -330,7 +330,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @CallerSensitive
     public void setAtIndex(ValueLayout.OfFloat layout, long index, float value) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + (index * layout.byteSize()), value);
     }
 
@@ -339,7 +339,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @CallerSensitive
     public long getAtIndex(ValueLayout.OfLong layout, long index) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + (index * layout.byteSize()));
     }
 
@@ -348,7 +348,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @CallerSensitive
     public void setAtIndex(ValueLayout.OfLong layout, long index, long value) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + (index * layout.byteSize()), value);
     }
 
@@ -357,7 +357,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @CallerSensitive
     public double getAtIndex(ValueLayout.OfDouble layout, long index) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + (index * layout.byteSize()));
     }
 
@@ -366,7 +366,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @CallerSensitive
     public void setAtIndex(ValueLayout.OfDouble layout, long index, double value) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + (index * layout.byteSize()), value);
     }
 
@@ -375,7 +375,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @CallerSensitive
     public MemoryAddress getAtIndex(ValueLayout.OfAddress layout, long index) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + (index * layout.byteSize()));
     }
 
@@ -384,7 +384,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @CallerSensitive
     public void setAtIndex(ValueLayout.OfAddress layout, long index, Addressable value) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Utils.checkNotHyperAligned(layout, "Layout alignment greater than its size");
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + (index * layout.byteSize()), value.address());
     }
 }
