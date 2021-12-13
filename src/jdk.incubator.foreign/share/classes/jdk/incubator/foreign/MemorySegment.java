@@ -705,6 +705,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform.
      * @throws IllegalStateException if the size of the native string is greater than the size of this segment,
      * or if the scope associated with this segment has been closed, or if access occurs from a thread other than the thread owning that scope.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     default void setUtf8String(long offset, String str) {
         Utils.toCString(str.getBytes(StandardCharsets.UTF_8), SegmentAllocator.prefixAllocator(asSlice(offset)));
@@ -1110,6 +1111,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * a thread other than the thread owning that scope.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void set(ValueLayout.OfByte layout, long offset, byte value) {
@@ -1146,6 +1148,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * a thread other than the thread owning that scope.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void set(ValueLayout.OfBoolean layout, long offset, boolean value) {
@@ -1182,6 +1185,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * a thread other than the thread owning that scope.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void set(ValueLayout.OfChar layout, long offset, char value) {
@@ -1218,6 +1222,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * a thread other than the thread owning that scope.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void set(ValueLayout.OfShort layout, long offset, short value) {
@@ -1254,6 +1259,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * a thread other than the thread owning that scope.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void set(ValueLayout.OfInt layout, long offset, int value) {
@@ -1290,6 +1296,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * a thread other than the thread owning that scope.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void set(ValueLayout.OfFloat layout, long offset, float value) {
@@ -1326,6 +1333,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * a thread other than the thread owning that scope.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void set(ValueLayout.OfLong layout, long offset, long value) {
@@ -1362,6 +1370,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * a thread other than the thread owning that scope.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void set(ValueLayout.OfDouble layout, long offset, double value) {
@@ -1398,6 +1407,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * a thread other than the thread owning that scope.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void set(ValueLayout.OfAddress layout, long offset, Addressable value) {
@@ -1435,6 +1445,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * a thread other than the thread owning that scope.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfChar layout, long index, char value) {
@@ -1474,6 +1485,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * a thread other than the thread owning that scope.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfShort layout, long index, short value) {
@@ -1512,6 +1524,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * a thread other than the thread owning that scope.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfInt layout, long index, int value) {
@@ -1550,6 +1563,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * a thread other than the thread owning that scope.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfFloat layout, long index, float value) {
@@ -1588,6 +1602,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * a thread other than the thread owning that scope.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfLong layout, long index, long value) {
@@ -1626,6 +1641,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * a thread other than the thread owning that scope.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfDouble layout, long index, double value) {
@@ -1664,6 +1680,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * a thread other than the thread owning that scope.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
     default void setAtIndex(ValueLayout.OfAddress layout, long index, Addressable value) {
