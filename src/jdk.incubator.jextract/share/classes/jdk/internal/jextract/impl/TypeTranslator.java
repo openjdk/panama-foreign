@@ -27,7 +27,6 @@ package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.ValueLayout;
-import jdk.incubator.jextract.Type.Primitive;
 import jdk.incubator.jextract.Type;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -41,32 +40,15 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Boolean> {
         if (t.kind().layout().isEmpty()) {
             return void.class;
         } else {
-            return layoutToClass(isFloatingPoint(t), t.kind().layout().orElseThrow(UnsupportedOperationException::new));
+            return layoutToClass(t.kind().layout().orElseThrow(UnsupportedOperationException::new));
         }
     }
 
-    private boolean isFloatingPoint(Type.Primitive t) {
-        switch (t.kind()) {
-            case Float:
-            case Float128:
-            case HalfFloat:
-            case Double:
-            case LongDouble:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    static Class<?> layoutToClass(boolean fp, MemoryLayout layout) {
-        switch ((int)layout.bitSize()) {
-            case 8: return byte.class;
-            case 16: return short.class;
-            case 32: return !fp ? int.class : float.class;
-            case 64:
-            case 128: return !fp ? long.class : double.class;
-            default:
-                throw new UnsupportedOperationException("size: " + (int)layout.bitSize());
+    static Class<?> layoutToClass(MemoryLayout layout) {
+        if (layout instanceof ValueLayout valueLayout) {
+            return valueLayout.carrier();
+        } else {
+            throw new UnsupportedOperationException("size: " + (int)layout.bitSize());
         }
     }
 
@@ -86,7 +68,7 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Boolean> {
     public Class<?> visitDeclared(Type.Declared t, Boolean isArg) {
         return switch (t.tree().kind()) {
             case UNION, STRUCT -> MemorySegment.class;
-            case ENUM -> layoutToClass(false, t.tree().layout().orElseThrow(UnsupportedOperationException::new));
+            case ENUM -> layoutToClass(t.tree().layout().orElseThrow(UnsupportedOperationException::new));
             default -> throw new UnsupportedOperationException("declaration kind: " + t.tree().kind());
         };
     }

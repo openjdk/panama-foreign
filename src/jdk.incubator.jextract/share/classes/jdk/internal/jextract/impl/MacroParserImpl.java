@@ -37,6 +37,7 @@ import jdk.internal.clang.EvalResult;
 import jdk.internal.clang.Index;
 import jdk.internal.clang.LibClang;
 import jdk.internal.clang.TranslationUnit;
+import jdk.internal.clang.TypeKind;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -322,7 +323,12 @@ class MacroParserImpl {
                 Entry newEntry = switch (result.getKind()) {
                     case Integral -> {
                         long value = result.getAsInt();
-                        yield entry.success(typeMaker.makeType(decl.type()), value);
+                        if (decl.type().spelling().equals("_Bool")) {
+                            // special case boolean constants
+                            yield entry.success(typeMaker.makeType(decl.type()), value == 0L);
+                        } else {
+                            yield entry.success(typeMaker.makeType(decl.type()), value);
+                        }
                     }
                     case FloatingPoint -> {
                         double value = result.getAsFloat();

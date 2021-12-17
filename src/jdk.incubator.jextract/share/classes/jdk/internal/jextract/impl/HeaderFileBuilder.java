@@ -252,7 +252,9 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
 
     private String getConstantString(Class<?> type, Object value) {
         StringBuilder buf = new StringBuilder();
-        if (type == float.class) {
+        if (type == boolean.class) {
+            buf.append(value);
+        } else if (type == float.class) {
             float f = ((Number)value).floatValue();
             if (Float.isFinite(f)) {
                 buf.append(value);
