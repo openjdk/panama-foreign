@@ -598,9 +598,11 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
          * the number of free dimensions of the resulting path will be {@code 1 + n}. If the free dimension associated
          * with this path is bound by an index {@code I}, the resulting accessed offset can be obtained with the following
          * formula:
+         *
          * <blockquote><pre>{@code
          * E * (S + I * F)
          * }</pre></blockquote>
+         *
          * where {@code E} is the size (in bytes) of the sequence element layout.
          *
          * @param start the index of the first sequence element to be selected.

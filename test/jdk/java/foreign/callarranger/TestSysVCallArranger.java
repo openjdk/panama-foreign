@@ -36,6 +36,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.x64.sysv.CallArranger;
@@ -44,6 +45,7 @@ import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodType;
 
+import static jdk.incubator.foreign.ValueLayout.ADDRESS;
 import static jdk.internal.foreign.PlatformLayouts.SysV.*;
 import static jdk.internal.foreign.abi.Binding.*;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
@@ -61,10 +63,11 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class));
-        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG));
+        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
+            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
             { vmStore(rax, long.class) }
         });
 
@@ -88,13 +91,14 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class));
-        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG));
+        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-                { dup(), bufferLoad(0, long.class), vmStore(rdi, long.class),
-                  bufferLoad(8, int.class), vmStore(rsi, int.class)},
-                { vmStore(rax, long.class) },
+            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
+            { dup(), bufferLoad(0, long.class), vmStore(rdi, long.class),
+              bufferLoad(8, int.class), vmStore(rsi, int.class)},
+            { vmStore(rax, long.class) },
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -118,13 +122,14 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class));
-        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG));
+        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-                { dup(), bufferLoad(0, long.class), vmStore(rdi, long.class),
-                        bufferLoad(8, long.class), vmStore(rsi, long.class)},
-                { vmStore(rax, long.class) },
+            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
+            { dup(), bufferLoad(0, long.class), vmStore(rdi, long.class),
+                    bufferLoad(8, long.class), vmStore(rsi, long.class)},
+            { vmStore(rax, long.class) },
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -147,13 +152,14 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class));
-        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG));
+        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-                { dup(), bufferLoad(0, long.class), vmStore(stackStorage(0), long.class),
-                        bufferLoad(8, long.class), vmStore(stackStorage(1), long.class)},
-                { vmStore(rax, long.class) },
+            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
+            { dup(), bufferLoad(0, long.class), vmStore(stackStorage(0), long.class),
+                    bufferLoad(8, long.class), vmStore(stackStorage(1), long.class)},
+            { vmStore(rax, long.class) },
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -176,13 +182,14 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class));
-        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG));
+        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-                { dup(), bufferLoad(0, long.class), vmStore(stackStorage(0), long.class),
-                        bufferLoad(8, int.class), vmStore(stackStorage(1), int.class)},
-                { vmStore(rax, long.class) },
+            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
+            { dup(), bufferLoad(0, long.class), vmStore(stackStorage(0), long.class),
+                    bufferLoad(8, int.class), vmStore(stackStorage(1), int.class)},
+            { vmStore(rax, long.class) },
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -200,10 +207,11 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class));
-        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG));
+        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
+            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
             { vmStore(rdi, int.class) },
             { vmStore(rsi, int.class) },
             { vmStore(rdx, int.class) },
@@ -230,10 +238,11 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class));
-        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG));
+        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
+            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
             { vmStore(xmm0, double.class) },
             { vmStore(xmm1, double.class) },
             { vmStore(xmm2, double.class) },
@@ -264,10 +273,11 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class));
-        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG));
+        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
+            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
             { vmStore(rdi, long.class) },
             { vmStore(rsi, long.class) },
             { vmStore(rdx, long.class) },
@@ -320,10 +330,11 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class));
-        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG));
+        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
+            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
             { vmStore(rdi, int.class) },
             { vmStore(rsi, int.class) },
             {
@@ -362,10 +373,11 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class));
-        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG));
+        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
+            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
             { unboxAddress(), vmStore(rdi, long.class) },
             { vmStore(rax, long.class) },
         });
@@ -383,10 +395,11 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class));
-        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG));
+        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
+            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
             expectedBindings,
             { vmStore(rax, long.class) },
         });
@@ -441,10 +454,12 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class));
-        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG));
+        assertEquals(callingSequence.methodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, MemorySegment.class, NativeSymbol.class));
+        assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
+            { unboxAddress(MemorySegment.class), vmStore(r11, long.class) },
+            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
             { vmStore(rax, long.class) }
         });
 
@@ -471,10 +486,11 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertTrue(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), MethodType.methodType(void.class, MemoryAddress.class, long.class));
-        assertEquals(callingSequence.functionDesc(), FunctionDescriptor.ofVoid(C_POINTER, C_LONG));
+        assertEquals(callingSequence.methodType(), MethodType.methodType(void.class, NativeSymbol.class, MemoryAddress.class, long.class));
+        assertEquals(callingSequence.functionDesc(), FunctionDescriptor.ofVoid(ADDRESS, C_POINTER, C_LONG));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
+            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
             { unboxAddress(), vmStore(rdi, long.class) },
             { vmStore(rax, long.class) }
         });
