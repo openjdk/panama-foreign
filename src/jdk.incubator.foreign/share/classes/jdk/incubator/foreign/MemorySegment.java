@@ -1442,7 +1442,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
      * @throws IllegalArgumentException if the dereference operation is
-     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
@@ -1462,7 +1463,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
      * @throws IllegalArgumentException if the dereference operation is
-     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
@@ -1483,7 +1485,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
      * @throws IllegalArgumentException if the dereference operation is
-     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
@@ -1503,7 +1506,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
      * @throws IllegalArgumentException if the dereference operation is
-     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
@@ -1524,7 +1528,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
      * @throws IllegalArgumentException if the dereference operation is
-     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
@@ -1544,7 +1549,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
      * @throws IllegalArgumentException if the dereference operation is
-     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
@@ -1565,7 +1571,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
      * @throws IllegalArgumentException if the dereference operation is
-     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
@@ -1585,7 +1592,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
      * @throws IllegalArgumentException if the dereference operation is
-     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
@@ -1606,7 +1614,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
      * @throws IllegalArgumentException if the dereference operation is
-     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
@@ -1626,7 +1635,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
      * @throws IllegalArgumentException if the dereference operation is
-     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
@@ -1647,7 +1657,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
      * @throws IllegalArgumentException if the dereference operation is
-     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
@@ -1667,7 +1678,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
      * @throws IllegalArgumentException if the dereference operation is
-     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
@@ -1688,7 +1700,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
      * @throws IllegalArgumentException if the dereference operation is
-     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
@@ -1708,7 +1721,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
      * @throws IllegalArgumentException if the dereference operation is
-     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
      * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
