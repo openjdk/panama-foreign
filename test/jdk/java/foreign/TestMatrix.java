@@ -26,7 +26,7 @@
  * libraries compiled, and then execute it with plain jtreg, like:
  *
  *  $ bin/jtreg -jdk:<path-to-tested-jdk> \
- *              -nativepath:<path-to-build-dir>/support/test/jdk/jtreg/native/manual/lib/ \
+ *              -nativepath:<path-to-build-dir>/support/test/jdk/jtreg/native/lib/ \
  *              -concurrency:auto \
  *              ./test/jdk/java/foreign/TestMatrix.java
  */
@@ -36,7 +36,7 @@
  * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
  *
- * @run testng/othervm/native/manual
+ * @run testng/othervm/native
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
@@ -48,7 +48,7 @@
  * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
  *
- * @run testng/othervm/native/manual
+ * @run testng/othervm/native
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
@@ -60,7 +60,7 @@
  * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
  *
- * @run testng/othervm/native/manual
+ * @run testng/othervm/native
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
@@ -72,7 +72,7 @@
  * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
  *
- * @run testng/othervm/native/manual
+ * @run testng/othervm/native
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
@@ -84,7 +84,7 @@
  * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestDowncall
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
  *   TestDowncall
@@ -95,165 +95,153 @@
  * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestDowncall
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
  *   TestDowncall
  */
 
-/* @test id=Upcall-SCOPE-FF
+/* @test id=UpcallScope-FF
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native
  *   --enable-native-access=ALL-UNNAMED
- *   -DUPCALL_TEST_TYPE=SCOPE
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   TestUpcall
+ *   TestUpcallScope
  */
 
-/* @test id=Upcall-SCOPE-TF
+/* @test id=UpcallScope-TF
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native
  *   --enable-native-access=ALL-UNNAMED
- *   -DUPCALL_TEST_TYPE=SCOPE
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   TestUpcall
+ *   TestUpcallScope
  */
 
-/* @test id=Upcall-SCOPE-FT
+/* @test id=UpcallScope-FT
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native
  *   --enable-native-access=ALL-UNNAMED
- *   -DUPCALL_TEST_TYPE=SCOPE
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   TestUpcall
+ *   TestUpcallScope
  */
 
-/* @test id=Upcall-SCOPE-TT
+/* @test id=UpcallScope-TT
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native
  *   --enable-native-access=ALL-UNNAMED
- *   -DUPCALL_TEST_TYPE=SCOPE
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   TestUpcall
+ *   TestUpcallScope
  */
 
-/* @test id=Upcall-ASYNC-FF
+/* @test id=UpcallAsync-FF
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native/timeout=960
  *   --enable-native-access=ALL-UNNAMED
- *   -DUPCALL_TEST_TYPE=ASYNC
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   TestUpcall
+ *   TestUpcallAsync
  */
 
-/* @test id=Upcall-ASYNC-TF
+/* @test id=UpcallAsync-TF
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native/timeout=960
  *   --enable-native-access=ALL-UNNAMED
- *   -DUPCALL_TEST_TYPE=ASYNC
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   TestUpcall
+ *   TestUpcallAsync
  */
 
-/* @test id=Upcall-ASYNC-FT
+/* @test id=UpcallAsync-FT
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native/timeout=960
  *   --enable-native-access=ALL-UNNAMED
- *   -DUPCALL_TEST_TYPE=ASYNC
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   TestUpcall
+ *   TestUpcallAsync
  */
 
-/* @test id=Upcall-ASYNC-TT
+/* @test id=UpcallAsync-TT
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native/timeout=960
  *   --enable-native-access=ALL-UNNAMED
- *   -DUPCALL_TEST_TYPE=ASYNC
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   TestUpcall
+ *   TestUpcallAsync
  */
 
-/* @test id=Upcall-STACK-FF
+/* @test id=UpcallStack-FF
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native
  *   --enable-native-access=ALL-UNNAMED
- *   -DUPCALL_TEST_TYPE=STACK
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   TestUpcall
+ *   TestUpcallStack
  */
 
-/* @test id=Upcall-STACK-TF
+/* @test id=UpcallStack-TF
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native
  *   --enable-native-access=ALL-UNNAMED
- *   -DUPCALL_TEST_TYPE=STACK
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   TestUpcall
+ *   TestUpcallStack
  */
 
-/* @test id=Upcall-STACK-FT
+/* @test id=UpcallStack-FT
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native
  *   --enable-native-access=ALL-UNNAMED
- *   -DUPCALL_TEST_TYPE=STACK
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   TestUpcall
+ *   TestUpcallStack
  */
 
-/* @test id=Upcall-STACK-TT
+/* @test id=UpcallStack-TT
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native
  *   --enable-native-access=ALL-UNNAMED
- *   -DUPCALL_TEST_TYPE=STACK
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   TestUpcall
+ *   TestUpcallStack
  */
 
