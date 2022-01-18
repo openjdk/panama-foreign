@@ -45,6 +45,10 @@ import java.util.function.Consumer;
 
 public class TestUpcallStack extends TestUpcallBase {
 
+    static {
+        System.loadLibrary("TestUpcallStack");
+    }
+
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testUpcallsStack(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
@@ -52,7 +56,7 @@ public class TestUpcallStack extends TestUpcallBase {
         NativeSymbol addr = LOOKUP.lookup("s" + fName).get();
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
-            MethodHandle mh = downcallHandle(abi, addr, allocator, functionStack(ret, paramTypes, fields));
+            MethodHandle mh = downcallHandle(ABI, addr, allocator, functionStack(ret, paramTypes, fields));
             Object[] args = makeArgsStack(scope, ret, paramTypes, fields, returnChecks, argChecks);
             Object[] callArgs = args;
             Object res = mh.invokeWithArguments(callArgs);

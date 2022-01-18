@@ -46,17 +46,11 @@ import static org.testng.Assert.assertEquals;
 
 public abstract class TestUpcallBase extends CallGeneratorHelper {
 
-    static {
-        System.loadLibrary("TestUpcall");
-        System.loadLibrary("TestUpcallStack");
-        System.loadLibrary("AsyncInvokers");
-    }
-    static CLinker abi = CLinker.systemCLinker();
-
+    static CLinker ABI = CLinker.systemCLinker();
     static final SymbolLookup LOOKUP = SymbolLookup.loaderLookup();
 
-    static MethodHandle DUMMY;
-    static MethodHandle PASS_AND_SAVE;
+    private static MethodHandle DUMMY;
+    private static MethodHandle PASS_AND_SAVE;
 
     static {
         try {
@@ -68,11 +62,11 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
         }
     }
 
-    static NativeSymbol dummyStub;
+    private static NativeSymbol DUMMY_STUB;
 
     @BeforeClass
     void setup() {
-        dummyStub = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), ResourceScope.newImplicitScope());
+        DUMMY_STUB = ABI.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), ResourceScope.newImplicitScope());
     }
 
     static FunctionDescriptor function(Ret ret, List<ParamType> params, List<StructFieldType> fields) {
@@ -107,7 +101,7 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
 
     static NativeSymbol makeCallback(ResourceScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks, List<MemoryLayout> prefix) {
         if (params.isEmpty()) {
-            return dummyStub;
+            return DUMMY_STUB;
         }
 
         AtomicReference<Object[]> box = new AtomicReference<>();
@@ -148,7 +142,7 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
         FunctionDescriptor func = ret != Ret.VOID
                 ? FunctionDescriptor.of(firstlayout, paramLayouts)
                 : FunctionDescriptor.ofVoid(paramLayouts);
-        return abi.upcallStub(mh, func, scope);
+        return ABI.upcallStub(mh, func, scope);
     }
 
     static Object passAndSave(Object[] o, AtomicReference<Object[]> ref, int retArg) {

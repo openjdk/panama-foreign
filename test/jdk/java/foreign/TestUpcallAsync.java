@@ -51,6 +51,11 @@ import java.util.function.Consumer;
 
 public class TestUpcallAsync extends TestUpcallBase {
 
+    static {
+        System.loadLibrary("TestUpcall");
+        System.loadLibrary("AsyncInvokers");
+    }
+
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testUpcallsAsync(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
@@ -59,7 +64,7 @@ public class TestUpcallAsync extends TestUpcallBase {
         try (ResourceScope scope = ResourceScope.newSharedScope()) {
             SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
             FunctionDescriptor descriptor = function(ret, paramTypes, fields);
-            MethodHandle mh = downcallHandle(abi, addr, allocator, descriptor);
+            MethodHandle mh = downcallHandle(ABI, addr, allocator, descriptor);
             Object[] args = makeArgs(ResourceScope.newImplicitScope(), ret, paramTypes, fields, returnChecks, argChecks);
 
             mh = mh.asSpreader(Object[].class, args.length);
@@ -67,7 +72,7 @@ public class TestUpcallAsync extends TestUpcallBase {
             FunctionDescriptor callbackDesc = descriptor.returnLayout()
                     .map(FunctionDescriptor::of)
                     .orElse(FunctionDescriptor.ofVoid());
-            NativeSymbol callback = abi.upcallStub(mh.asType(CLinker.upcallType(callbackDesc)), callbackDesc, scope);
+            NativeSymbol callback = ABI.upcallStub(mh.asType(CLinker.upcallType(callbackDesc)), callbackDesc, scope);
 
             MethodHandle invoker = asyncInvoker(ret, ret == Ret.VOID ? null : paramTypes.get(0), fields);
 
@@ -87,7 +92,7 @@ public class TestUpcallAsync extends TestUpcallBase {
         if (ret == Ret.VOID) {
             String name = "call_async_V";
             return INVOKERS.computeIfAbsent(name, symbol ->
-                    abi.downcallHandle(
+                    ABI.downcallHandle(
                             LOOKUP.lookup(symbol).orElseThrow(),
                             FunctionDescriptor.ofVoid(C_POINTER)));
         }
@@ -100,7 +105,7 @@ public class TestUpcallAsync extends TestUpcallBase {
             MemoryLayout returnLayout = returnType.layout(fields);
             FunctionDescriptor desc = FunctionDescriptor.of(returnLayout, C_POINTER);
 
-            return abi.downcallHandle(invokerSymbol, desc);
+            return ABI.downcallHandle(invokerSymbol, desc);
         });
     }
 
