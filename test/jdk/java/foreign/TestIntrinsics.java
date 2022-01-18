@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@
  * @requires os.arch=="amd64" | os.arch=="x86_64" | os.arch=="aarch64"
  * @run testng/othervm
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
  *   --enable-native-access=ALL-UNNAMED
  *   -Xbatch
  *   TestIntrinsics

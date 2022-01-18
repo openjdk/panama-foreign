@@ -33,16 +33,6 @@
  *   -Xbootclasspath/a:.
  *   -XX:+UnlockDiagnosticVMOptions
  *   -XX:+WhiteBoxAPI
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   --enable-native-access=ALL-UNNAMED
- *   -Xbatch
- *   TestStackWalk
- *
- * @run main/othervm
- *   -Xbootclasspath/a:.
- *   -XX:+UnlockDiagnosticVMOptions
- *   -XX:+WhiteBoxAPI
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
  *   --enable-native-access=ALL-UNNAMED
  *   -Xbatch
  *   TestStackWalk
@@ -61,17 +51,6 @@
  *   -Xbootclasspath/a:.
  *   -XX:+UnlockDiagnosticVMOptions
  *   -XX:+WhiteBoxAPI
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   --enable-native-access=ALL-UNNAMED
- *   -Xbatch
- *   -XX:+UseZGC
- *   TestStackWalk
- *
- * @run main/othervm
- *   -Xbootclasspath/a:.
- *   -XX:+UnlockDiagnosticVMOptions
- *   -XX:+WhiteBoxAPI
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
  *   --enable-native-access=ALL-UNNAMED
  *   -Xbatch
  *   -XX:+UseZGC
@@ -90,17 +69,6 @@
  *   -Xbootclasspath/a:.
  *   -XX:+UnlockDiagnosticVMOptions
  *   -XX:+WhiteBoxAPI
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   --enable-native-access=ALL-UNNAMED
- *   -Xbatch
- *   -XX:+UseShenandoahGC
- *   TestStackWalk
- *
- * @run main/othervm
- *   -Xbootclasspath/a:.
- *   -XX:+UnlockDiagnosticVMOptions
- *   -XX:+WhiteBoxAPI
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
  *   --enable-native-access=ALL-UNNAMED
  *   -Xbatch
  *   -XX:+UseShenandoahGC
