@@ -173,7 +173,7 @@ try (ResourceScope scope = ResourceScope.newConfinedScope()) {
 
 Here we are using a native segment allocator to convert a Java string into an off-heap memory segment which contains a `NULL` terminated C string. We then pass that segment to the method handle and retrieve our result in a Java `long`. Note how all this is possible *without* any piece of intervening native code — all the interop code can be expressed in (low level) Java. Note also how we use an explicit resource scope to control the lifecycle of the allocated C string, which ensures timely deallocation of the memory segment holding the native string.
 
-The `CLinker` interface also supports linking of native function without an address known at link time; when that happens, an address (of type `Addressable`) must be provided when the method handle returned by the linker is invoked — this is very useful to support *virtual calls*. For instance, the above code can be rewritten as follows:
+The `CLinker` interface also supports linking of native functions without an address known at link time; when that happens, an address (of type `Addressable`) must be provided when the method handle returned by the linker is invoked — this is very useful to support *virtual calls*. For instance, the above code can be rewritten as follows:
 
 ```java
 MethodHandle strlen_virtual = linker.downcallHandle( // address parameter missing!
