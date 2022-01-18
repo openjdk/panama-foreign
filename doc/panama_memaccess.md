@@ -220,7 +220,7 @@ The memory access API provides basic safety guarantees for all memory segments c
 
 That said, it is sometimes necessary to create a segment out of an existing memory source, which might be managed by native code. This is the case, for instance, if we want to create a segment out of a memory region managed by a *custom allocator*.
 
-The ByteBuffer API allows such a move, through a JNI [method](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/spec/functions.html#NewDirectByteBuffer), namely `NewDirectByteBuffer`. This native method can be used to wrap a long address in a fresh byte direct buffer instance which is then returned to unsuspecting Java code.
+The ByteBuffer API allows such a move, through a JNI [method](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/spec/functions.html#NewDirectByteBuffer), namely `NewDirectByteBuffer`. This native method can be used to wrap a long address in a fresh direct byte buffer instance which is then returned to unsuspecting Java code.
 
 Memory segments provide a similar capability — that is, given an address (which might have been obtained through some native calls), it is possible to wrap a segment around it, with given spatial bounds and resource scope, as follows:
 
