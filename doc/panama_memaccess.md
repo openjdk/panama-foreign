@@ -1,6 +1,6 @@
 ## State of foreign memory support
 
-**September 2021**
+**January 2022**
 
 **Maurizio Cimadamore**
 
@@ -13,15 +13,15 @@ Memory segments are abstractions which can be used to model contiguous memory re
 For instance, the following snippet allocates 100 bytes off-heap:
 
 ```java
-MemorySegment segment = MemorySegment.allocateNative(100, ResourceScope.newConfinedScope());
+MemorySegment segment = MemorySegment.allocateNative(100, ResourceScope.newImplicitScope());
 ```
 
-The above code allocates a 100-bytes long memory segment. The lifecycle of a memory segment is controlled by an abstraction called `ResourceScope`, which can be used to deallocate the memory associated with the memory segment (we will cover that in a later section of this document). Resource scopes feature (by default) an *implicit deallocation* mechanism, which allow memory segments such as the one above to be used pretty much in the same way as a `ByteBuffer` allocated with the `allocateDirect` factory. That is, the memory associated with the segment is deallocated when the resource scope, and hence, the segment, becomes unreacheable.
+The above code allocates a 100-bytes long memory segment. The lifecycle of a memory segment is controlled by an abstraction called `ResourceScope`. In this example, the segment memory will not be *freed* as long as the segment instance is deemed *reachable*, as specified by the `newImplicitScope()` parameter. In other words, the above factory creates a segment whose behavior closely matches that of a `ByteBuffer` allocated with the `allocateDirect` factory. Of course, the memory access API also supports deterministic memory release; we will cover that in a later section of this document.
 
 Memory segments support *slicing* — that is, given a segment, it is possible to create a new segment whose spatial bounds are stricter than that of the original segment:
 
 ```java
-MemorySegment segment = MemorySement.allocateNative(10, ResourceScope.newConfinedScope());
+MemorySegment segment = MemorySement.allocateNative(10, ResourceScope.newImplicitScope());
 MemorySegment slice = segment.asSlice(4, 4);
 ```
 
@@ -38,7 +38,7 @@ For instance, the layout constant `ValueLayout.JAVA_INT` is four bytes wide, has
 
 ```java
 record Point(int x, int y);
-MemorySegment segment = MemorySement.allocateNative(10 * 4 * 2, ResourceScope.newConfinedScope());
+MemorySegment segment = MemorySement.allocateNative(10 * 4 * 2, ResourceScope.newImplicitScope());
 Point[] values = new Point[10];
 for (int i = 0 ; i < values.length ; i++) {
     int x = segment.getAtIndex(JAVA_INT, i * 2);
@@ -47,7 +47,7 @@ for (int i = 0 ; i < values.length ; i++) {
 }
 ```
 
-The above snippet allocates a flat array of 80 bytes using `MemorySegment::allocateNative`. Then, inside the loop, elements in the array are accessed using the `MemorySegment::getAtIndex` method, which accesses `int` elements in a segment at a certain *logical* index (in other words, the segment offset being accessed is obtained by multiplying the index by 4, which is the stride of a Java `int` array). Thus, all coordinates `x` and `y` are collected into instances of a `Point` record.
+The above snippet allocates a flat array of 80 bytes using `MemorySegment::allocateNative`. Then, inside the loop, elements in the array are accessed using the `MemorySegment::getAtIndex` method, which accesses `int` elements in a segment at a certain *logical* index (under the hood, the segment offset being accessed is obtained by multiplying the logical index by 4, which is the stride of a Java `int` array). Thus, all coordinates `x` and `y` are collected into instances of a `Point` record.
 
 Memory segments are pretty flexible when it comes to interacting with existing memory sources and APIs. For instance, it is possible to create a `ByteBuffer` *view* out of an existing memory segment, as follows:
 
@@ -76,7 +76,7 @@ MemoryLayout points = MemoryLayout.sequenceLayout(10,
 );            
 ```
 
-That is, our layout is a repetition of 10 *struct* elements, each struct element containing two 32-bit values each. The advantage of defining a memory layout upfront, using an API, is that we can then query the layout — for instance we can compute the offset of the `y` coordinate in the 4th element of the points array:
+That is, our layout is a repetition of 10 *struct* elements, each struct element containing two 32-bit values each. The advantage of defining a memory layout upfront, using an API, is that we can then query the layout — for instance we can compute the offset of the `y` coordinate in the 4th element of the `points` array:
 
 ```java
 long y3 = points.byteOffset(PathElement.sequenceElement(3), PathElement.groupElement("y")); // 28
@@ -87,7 +87,7 @@ To specify which nested layout element should be used for the offset calculation
 One of the things that can be derived from a layout is a *memory access var handle*. A memory access var handle is a special kind of var handle which takes a memory segment access coordinate, together with a byte offset — the offset, relative to the segment's base address at which the dereference operation should occur. With memory access var handles we can rewrite our example above as follows:
 
 ```java
-MemorySegment segment = MemorySegment.allocateNative(points, ResourceScope.newConfinedScope());
+MemorySegment segment = MemorySegment.allocateNative(points, ResourceScope.newImplicitScope());
 VarHandle xHandle = points.varHandle(PathElement.sequenceElement(), PathElement.groupElement("x"));
 VarHandle yHandle = points.varHandle(PathElement.sequenceElement(), PathElement.groupElement("y"));
 Point[] values = new Point[10];
@@ -110,7 +110,7 @@ In other words, manual offset computation is no longer needed — offsets and st
 
 In addition to spatial bounds, memory segments also feature temporal bounds as well as thread-confinement. In the examples shown so far, we have always used the API in its simpler form, leaving the runtime to handle details such as whether it was safe or not to reclaim memory associated with a given memory segment. But there are cases where this behavior is not desirable: consider the case where a large memory segment is mapped from a file (this is possible using `MemorySegment::map`); in this case, an application would probably prefer to deterministically release (e.g. unmap) the memory associated with this segment, to ensure that memory doesn't remain available for longer than in needs to (and therefore potentially impacting the performance of the application).
 
-Memory segments support deterministic deallocation, through an abstraction called `ResourceScope`. A resource scope models the lifecycle associated with one or more resources (in this document, by resources we mean mostly memory segments); a resource scope has a state: it starts off in the *alive* state, which means that all the resources it manages can be safely accessed — and, at the user request, it can be *closed*. After a resource scope is closed, access to resources managed by that scope is no longer allowed. Resource scope support the `AutoCloseable` interface, which means that user can use resource scopes with the *try-with-resources* construct, as demonstrated in the following code:
+Memory segments support deterministic deallocation, through an abstraction called `ResourceScope`. A resource scope models the lifecycle associated with one or more resources (in this document, by resources we mean mostly memory segments); a resource scope has a state: it starts off in the *alive* state, which means that all the resources it manages can be safely accessed — and, at the user's request, it can be *closed*. After a resource scope is closed, access to resources managed by that scope is no longer allowed. Resource scopes implement the `AutoCloseable` interface, and can therefore be used with the *try-with-resources* construct, as demonstrated in the following code:
 
 ```java
 try (ResourceScope scope = ResourceScope.newConfinedScope()) {
@@ -118,11 +118,9 @@ try (ResourceScope scope = ResourceScope.newConfinedScope()) {
 } // segment is unmapped here
 ```
 
-Here, we create a new *confined* resource scope, which is then used when creating a mapped segment; this means that the lifecycle of the `mapped` segment will be tied to that of the resource scope, and that accessing the segment (e.g. dereference) *after* `scope` has been closed will not be possible.
+Here, we create a new *confined* resource scope, which is then used when creating a mapped segment; this means that the lifecycle of the `mapped` segment is tied to that of the resource scope, and that accessing the segment (e.g. dereference) *after* `scope` has been closed will not be possible.
 
-As this example alludes to, resource scopes can come in two flavors: they can be *confined* (where access is restricted to the thread which created the scope) or *shared* <a href="#3"><sup>3</sup></a> (where access can occur in any thread). By default, all resources scopes are associated with an internal `Cleaner` object, which would take care of performing implicit deallocation (in case `close` is never called). Optionally, clients can provide a custom `Cleaner` object, or decide not to use a `Cleaner` all together. While this latter option provides slightly better scope creation performance, it must be used with caution: any scope that becomes unreachable before its `close` method has been called will end up leaking memory resources.
-
-Resource scopes are very handy when managing the lifecycle of multiple resources:
+As this example alludes to, resource scopes can come in many flavors: they can be *confined* (where access is restricted to the thread which created the scope), *shared* <a href="#3"><sup>3</sup></a> (where access can occur in any thread) and can be optionally associated with a `Cleaner` object (as in the case of `newImplicitScope`), which performs *implicit* deallocation when the resource scope becomes *unreachable* (if the `close` method has not been called by the user). Resource scopes are very handy when managing the lifecycle of multiple resources:
 
 ```java
 try (ResourceScope scope = ResourceScope.newConfinedScope()) {
@@ -197,7 +195,7 @@ VarHandle intHandle = MemoryHandles.varHandle(JAVA_INT); // (MS, J) -> I
 
 The above code creates a memory access var handle which reads/writes `int` values at a certain byte offset in a segment. To create this var handle we have to specify a carrier type — the type we want to use e.g. to extract values from memory, as well as whether any byte swapping should be applied when contents are read from or stored to memory. Additionally, the user might want to impose additional constraints on how memory dereferences should occur; for instance, a client might want to prevent access to misaligned 32 bit values. Of course, all this information can be succinctly derived from the provided value layout (`JAVA_INT` in the above example).
 
-The attentive reader might have noted how rich the var handles returned by the layout API are, compared to the simple memory access var handle we have constructed above. How do we go from a simple access var handle that takes a byte offset to a var handle that can dereference a complex layout path? The answer is, by using var handle *combinators*. Developers familiar with the method handle API know how simpler method handles can be combined into more complex ones using the various combinator methods in the `MethodHandles` API. These methods allow, for instance, to insert (or bind) arguments into a target method handle, filter return values, permute arguments and much more.
+The attentive reader might have noted how rich the var handles returned by the layout API are, compared to the simple memory access var handle we have constructed here. How do we go from a simple access var handle that takes a byte offset to a var handle that can dereference a complex layout path? The answer is, by using var handle *combinators*. Developers familiar with the method handle API know how simpler method handles can be combined into more complex ones using the various combinator methods in the `MethodHandles` API. These methods allow, for instance, to insert (or bind) arguments into a target method handle, filter return values, permute arguments and much more.
 
 Sadly, none of these features are available when working with var handles. The Foreign Memory Access API rectifies this, by adding a rich set of var handle combinators in the `MemoryHandles` class; with these tools, developers can express var handle transformations such as:
 
@@ -218,20 +216,18 @@ We have been able to derive, from a basic memory access var handle, a new var ha
 
 ### Unsafe segments
 
-The memory access API provides basic safety guarantees for all memory segments created using the API. More specifically, dereferencing memory should either succeed, or result in a runtime exception — but, crucially, should never result in a VM crash, or, more subtly, in memory corruption occurring *outside* the region of memory associated with a memory segment. This is possible, since all segments have immutable *spatial bounds*, and, as we have seen, are associated with a resource scope which make sure that the segment cannot be dereferenced after the scope has been closed, or, in case of a confined scope, that the segment is dereferenced from the very same thread which created the scope.
+The memory access API provides basic safety guarantees for all memory segments created using the API. More specifically, a memory dereference operation should either succeed, or result in a runtime exception — but, crucially, should never result in a VM crash, or, more subtly, in memory corruption occurring *outside* the region of memory associated with a memory segment. This is indeed the case, as all memory segments feature immutable *spatial bounds*, and, as we have seen, are associated with a resource scope which make sure that segments cannot be dereferenced after their scope has been closed, or, in case of a confined scope, that segments cannot be dereferenced from a thread other than the one which created the scope.
 
-That said, it is sometimes necessary to create a segment out of an existing memory source, which might be managed by native code. This is the case, for instance, if we want to create a segment out of memory managed by a custom allocator.
+That said, it is sometimes necessary to create a segment out of an existing memory source, which might be managed by native code. This is the case, for instance, if we want to create a segment out of a memory region managed by a *custom allocator*.
 
-The ByteBuffer API allows such a move, through a JNI [method](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/spec/functions.html#NewDirectByteBuffer), namely `NewDirectByteBuffer`. This native method can be used to wrap a long address in a fresh byte buffer instance which is then returned to unsuspecting Java code.
+The ByteBuffer API allows such a move, through a JNI [method](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/spec/functions.html#NewDirectByteBuffer), namely `NewDirectByteBuffer`. This native method can be used to wrap a long address in a fresh direct byte buffer instance which is then returned to unsuspecting Java code.
 
-Memory segments provide a similar capability — that is, given an address (which might have been obtained through some native calls), it is possible to wrap a segment around it, with given spatial bounds and resource scope; a cleanup action to be executed when the segment is closed might also be specified.
-
-For instance, assuming we have an address pointing at some externally managed memory block, we can construct an *unsafe* segment, as follows:
+Memory segments provide a similar capability — that is, given an address (which might have been obtained through some native calls), it is possible to wrap a segment around it, with given spatial bounds and resource scope, as follows:
 
 ```java
 try (ResourceScope scope = ResourceScope.newSharedScope()) {
     MemoryAddress addr = MemoryAddress.ofLong(someLongAddr);
-    var unsafeSegment = MemorySegment.ofAddressNative(addr, 10, scope);
+    var unsafeSegment = MemorySegment.ofAddress(addr, 10, scope);
     ...
 }
 ```
