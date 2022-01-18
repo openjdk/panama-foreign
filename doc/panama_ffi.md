@@ -106,7 +106,7 @@ At the core of Panama foreign function support we find the `CLinker` abstraction
 
 ```java
 interface CLinker {
-    MethodHandle downcallHandle(NativeSymbol func, MethodType type, FunctionDescriptor function);
+    MethodHandle downcallHandle(NativeSymbol func, FunctionDescriptor function);
     NativeSymbol upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);    
     ... // some overloads omitted here
 
