@@ -4,7 +4,7 @@
 
 **Maurizio Cimadamore**
 
-Panama support foreign functions through the Foreign Memory Access API, which has been available as an [incubating](https://openjdk.java.net/jeps/11) API since Java [16](https://openjdk.java.net/jeps/389). The central abstraction in the Foreign Linker API is the *foreign linker*, which allows clients to construct *downcall* method handles — that is, method handles whose invocation targets a native function defined in some native library. In other words, Panama foreign function support is completely expressed in terms of Java code and no intermediate native code is required.
+Panama supports foreign functions through the Foreign Linker API, which has been available as an [incubating](https://openjdk.java.net/jeps/11) API since Java [16](https://openjdk.java.net/jeps/389). The central abstraction in the Foreign Linker API is the *foreign linker*, which allows clients to construct *downcall* method handles — that is, method handles whose invocation targets a native function defined in some native library. In other words, Panama foreign function support is completely expressed in terms of Java code and no intermediate native code is required.
 
 ### Native addresses
 
