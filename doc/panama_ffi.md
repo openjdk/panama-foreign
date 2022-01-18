@@ -285,7 +285,7 @@ Then we can call the specialized downcall handle as usual:
 ```java
 try (ResourceScope scope = ResourceScope.newConfinedScope()) {
     SegmentAllocator malloc = SegmentAllocator.nativeAllocator(scope);
-	printf.invoke(malloc.allocateUtf8String("%d plus %d equals %d"), 2, 2, 4); //prints "2 plus 2 equals 4"
+    printf.invoke(malloc.allocateUtf8String("%d plus %d equals %d"), 2, 2, 4); //prints "2 plus 2 equals 4"
 }
 ```
 
