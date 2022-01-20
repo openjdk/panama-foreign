@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -23,26 +23,27 @@
 
 /*
  * @test
+ * @enablePreview
  * @run testng TestMemoryDereference
  */
 
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemorySegment;
+import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.MemorySegment;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import jdk.incubator.foreign.ValueLayout;
+import java.lang.foreign.ValueLayout;
 import org.testng.annotations.*;
 
-import static jdk.incubator.foreign.ValueLayout.ADDRESS;
-import static jdk.incubator.foreign.ValueLayout.JAVA_BOOLEAN;
-import static jdk.incubator.foreign.ValueLayout.JAVA_BYTE;
-import static jdk.incubator.foreign.ValueLayout.JAVA_CHAR;
-import static jdk.incubator.foreign.ValueLayout.JAVA_DOUBLE;
-import static jdk.incubator.foreign.ValueLayout.JAVA_FLOAT;
-import static jdk.incubator.foreign.ValueLayout.JAVA_INT;
-import static jdk.incubator.foreign.ValueLayout.JAVA_SHORT;
+import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_BOOLEAN;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.JAVA_CHAR;
+import static java.lang.foreign.ValueLayout.JAVA_DOUBLE;
+import static java.lang.foreign.ValueLayout.JAVA_FLOAT;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_SHORT;
 import static org.testng.Assert.*;
 
 public class TestMemoryDereference {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -23,15 +23,15 @@
 
 /*
  * @test
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules java.base/jdk.internal.ref
- *          jdk.incubator.foreign
  * @run testng/othervm
  *     --enable-native-access=ALL-UNNAMED
  *     TestNulls
  */
 
-import jdk.incubator.foreign.*;
+import java.lang.foreign.*;
 import jdk.internal.ref.CleanerFactory;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.NoInjection;
@@ -60,8 +60,8 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static jdk.incubator.foreign.ValueLayout.JAVA_INT;
-import static jdk.incubator.foreign.ValueLayout.JAVA_LONG;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
 import static org.testng.Assert.*;
 import static org.testng.Assert.fail;
 
@@ -95,8 +95,6 @@ public class TestNulls {
             ValueLayout.OfAddress.class,
             GroupLayout.class,
             Addressable.class,
-            SymbolLookup.class,
-            MemoryHandles.class,
             CLinker.class,
             VaList.class,
             VaList.Builder.class,
@@ -107,23 +105,22 @@ public class TestNulls {
     };
 
     static final Set<String> EXCLUDE_LIST = Set.of(
-            "jdk.incubator.foreign.ResourceScope/newConfinedScope(java.lang.ref.Cleaner)/0/0",
-            "jdk.incubator.foreign.ResourceScope/newSharedScope(java.lang.ref.Cleaner)/0/0",
-            "jdk.incubator.foreign.MemoryLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "jdk.incubator.foreign.SequenceLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "jdk.incubator.foreign.ValueLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "jdk.incubator.foreign.ValueLayout$OfAddress/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "jdk.incubator.foreign.ValueLayout$OfBoolean/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "jdk.incubator.foreign.ValueLayout$OfByte/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "jdk.incubator.foreign.ValueLayout$OfChar/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "jdk.incubator.foreign.ValueLayout$OfShort/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "jdk.incubator.foreign.ValueLayout$OfInt/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "jdk.incubator.foreign.ValueLayout$OfFloat/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "jdk.incubator.foreign.ValueLayout$OfLong/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "jdk.incubator.foreign.ValueLayout$OfDouble/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "jdk.incubator.foreign.GroupLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "jdk.incubator.foreign.MemoryHandles/insertCoordinates(java.lang.invoke.VarHandle,int,java.lang.Object[])/2/1",
-            "jdk.incubator.foreign.FunctionDescriptor/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0"
+            "java.lang.foreign.ResourceScope/newConfinedScope(java.lang.ref.Cleaner)/0/0",
+            "java.lang.foreign.ResourceScope/newSharedScope(java.lang.ref.Cleaner)/0/0",
+            "java.lang.foreign.MemoryLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
+            "java.lang.foreign.SequenceLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
+            "java.lang.foreign.ValueLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
+            "java.lang.foreign.ValueLayout$OfAddress/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
+            "java.lang.foreign.ValueLayout$OfBoolean/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
+            "java.lang.foreign.ValueLayout$OfByte/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
+            "java.lang.foreign.ValueLayout$OfChar/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
+            "java.lang.foreign.ValueLayout$OfShort/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
+            "java.lang.foreign.ValueLayout$OfInt/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
+            "java.lang.foreign.ValueLayout$OfFloat/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
+            "java.lang.foreign.ValueLayout$OfLong/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
+            "java.lang.foreign.ValueLayout$OfDouble/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
+            "java.lang.foreign.GroupLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
+            "java.lang.foreign.FunctionDescriptor/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0"
     );
 
     static final Set<String> OBJECT_METHODS = Stream.of(Object.class.getMethods())
@@ -157,7 +154,7 @@ public class TestNulls {
         addDefaultMapping(Class.class, String.class);
         addDefaultMapping(Runnable.class, () -> {});
         addDefaultMapping(Object.class, new Object());
-        addDefaultMapping(VarHandle.class, MemoryHandles.varHandle(JAVA_INT));
+        addDefaultMapping(VarHandle.class, MethodHandles.memoryAccessVarHandle(JAVA_INT));
         addDefaultMapping(MethodHandle.class, MethodHandles.identity(int.class));
         addDefaultMapping(List.class, List.of());
         addDefaultMapping(Charset.class, Charset.defaultCharset());
@@ -187,7 +184,6 @@ public class TestNulls {
         addDefaultMapping(SegmentAllocator.class, SegmentAllocator.prefixAllocator(MemorySegment.ofArray(new byte[10])));
         addDefaultMapping(Supplier.class, () -> null);
         addDefaultMapping(ClassLoader.class, TestNulls.class.getClassLoader());
-        addDefaultMapping(SymbolLookup.class, CLinker.systemCLinker());
         addDefaultMapping(NativeSymbol.class, NativeSymbol.ofAddress("dummy", MemoryAddress.ofLong(1), ResourceScope.globalScope()));
     }
 

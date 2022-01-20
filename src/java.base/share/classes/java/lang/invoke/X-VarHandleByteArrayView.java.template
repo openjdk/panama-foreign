@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,13 +26,13 @@ package java.lang.invoke;
 
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
-import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.misc.ScopedMemoryAccess;
-import jdk.internal.misc.ScopedMemoryAccess.Scope;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.util.Preconditions;
 import jdk.internal.vm.annotation.ForceInline;
 
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ResourceScope;
 import java.nio.ByteBuffer;
 import java.nio.ReadOnlyBufferException;
 import java.util.List;
@@ -607,15 +607,15 @@ final class VarHandleByteArrayAs$Type$s extends VarHandleByteArrayBase {
 
         @ForceInline
         static int index(ByteBuffer bb, int index) {
-            MemorySegmentProxy segmentProxy = NIO_ACCESS.bufferSegment(bb);
+            MemorySegment segment = NIO_ACCESS.bufferSegment(bb);
             return Preconditions.checkIndex(index, UNSAFE.getInt(bb, BUFFER_LIMIT) - ALIGN, null);
         }
 
         @ForceInline
-        static Scope scope(ByteBuffer bb) {
-            MemorySegmentProxy segmentProxy = NIO_ACCESS.bufferSegment(bb);
-            return segmentProxy != null ?
-                    segmentProxy.scope() : null;
+        static ResourceScope scope(ByteBuffer bb) {
+            MemorySegment segment = NIO_ACCESS.bufferSegment(bb);
+            return segment != null ?
+                    segment.scope() : null;
         }
 
         @ForceInline

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @enablePreview
  * @requires os.arch=="amd64" | os.arch=="x86_64" | os.arch=="aarch64"
  * @run testng/othervm
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
@@ -32,21 +33,20 @@
  *   TestIntrinsics
  */
 
-import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.FunctionDescriptor;
+import java.lang.foreign.CLinker;
+import java.lang.foreign.FunctionDescriptor;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.NativeSymbol;
-import jdk.incubator.foreign.SymbolLookup;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.NativeSymbol;
 import org.testng.annotations.*;
 
 import static java.lang.invoke.MethodType.methodType;
-import static jdk.incubator.foreign.ValueLayout.JAVA_CHAR;
+import static java.lang.foreign.ValueLayout.JAVA_CHAR;
 import static org.testng.Assert.assertEquals;
 
 public class TestIntrinsics extends NativeTestHelper {
@@ -55,8 +55,6 @@ public class TestIntrinsics extends NativeTestHelper {
     static {
         System.loadLibrary("Intrinsics");
     }
-
-    static final SymbolLookup LOOKUP = SymbolLookup.loaderLookup();
 
     private interface RunnableX {
         void run() throws Throwable;
@@ -87,7 +85,7 @@ public class TestIntrinsics extends NativeTestHelper {
         }
 
         AddIdentity addIdentity = (name, carrier, layout, arg) -> {
-            NativeSymbol ma = LOOKUP.lookup(name).get();
+            NativeSymbol ma = this.getClass().getClassLoader().findNative(name).get();
             MethodType mt = methodType(carrier, carrier);
             FunctionDescriptor fd = FunctionDescriptor.of(layout, layout);
 
@@ -96,7 +94,7 @@ public class TestIntrinsics extends NativeTestHelper {
         };
 
         { // empty
-            NativeSymbol ma = LOOKUP.lookup("empty").get();
+            NativeSymbol ma = this.getClass().getClassLoader().findNative("empty").get();
             MethodType mt = methodType(void.class);
             FunctionDescriptor fd = FunctionDescriptor.ofVoid();
             tests.add(abi.downcallHandle(ma, fd), null);
@@ -111,7 +109,7 @@ public class TestIntrinsics extends NativeTestHelper {
         addIdentity.add("identity_double", double.class,  C_DOUBLE,        10D);
 
         { // identity_va
-            NativeSymbol ma = LOOKUP.lookup("identity_va").get();
+            NativeSymbol ma = this.getClass().getClassLoader().findNative("identity_va").get();
             MethodType mt = methodType(int.class, int.class, double.class, int.class, float.class, long.class);
             FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT).asVariadic(C_DOUBLE, C_INT, C_FLOAT, C_LONG_LONG);
             tests.add(abi.downcallHandle(ma, fd), 1, 1, 10D, 2, 3F, 4L);
@@ -124,7 +122,7 @@ public class TestIntrinsics extends NativeTestHelper {
                     C_SHORT, JAVA_CHAR);
             Object[] args = {1, 10D, 2L, 3F, (byte) 0, (short) 13, 'a'};
             for (int i = 0; i < args.length; i++) {
-                NativeSymbol ma = LOOKUP.lookup("invoke_high_arity" + i).get();
+                NativeSymbol ma = this.getClass().getClassLoader().findNative("invoke_high_arity" + i).get();
                 MethodType mt = baseMT.changeReturnType(baseMT.parameterType(i));
                 FunctionDescriptor fd = baseFD.changeReturnLayout(baseFD.argumentLayouts().get(i));
                 Object expected = args[i];

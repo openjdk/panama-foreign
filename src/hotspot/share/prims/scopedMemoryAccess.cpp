@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -155,11 +155,12 @@ JVM_END
 
 /// JVM_RegisterUnsafeMethods
 
-#define PKG "Ljdk/internal/misc/"
+#define PKG_MISC "Ljdk/internal/misc/"
+#define PKG_FOREIGN "Ljava/lang/foreign/"
 
 #define MEMACCESS "ScopedMemoryAccess"
-#define SCOPE PKG MEMACCESS "$Scope;"
-#define SCOPED_ERR PKG MEMACCESS "$Scope$ScopedAccessError;"
+#define SCOPE PKG_FOREIGN "ResourceScope;"
+#define SCOPED_ERR PKG_MISC MEMACCESS "$ScopedAccessError;"
 
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
@@ -171,10 +172,11 @@ static JNINativeMethod jdk_internal_misc_ScopedMemoryAccess_methods[] = {
 #undef CC
 #undef FN_PTR
 
-#undef PKG
+#undef PKG_MISC
+#undef PKG_FOREIGN
 #undef MEMACCESS
 #undef SCOPE
-#undef SCOPED_EXC
+#undef SCOPED_ERR
 
 // This function is exported, used by NativeLookup.
 

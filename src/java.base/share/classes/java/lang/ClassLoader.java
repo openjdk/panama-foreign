@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2019, Azul Systems, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,6 +30,9 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.File;
+import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.NativeSymbol;
+import java.lang.foreign.ResourceScope;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -46,6 +49,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -55,6 +59,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.ClassLoaders;
@@ -2444,6 +2449,26 @@ public abstract class ClassLoader {
             return loader.libraries.find(entryName);
         }
     }
+
+    /**
+     * Finds a native library symbol with the given name that is associated
+     * with this classloader.
+     *
+     * @param name the symbol name.
+     * @return the symbol (if any).
+     * @throws NullPointerException if name is null.
+     */
+    public final Optional<NativeSymbol> findNative(String name) {
+        Objects.requireNonNull(name);
+
+        MemoryAddress addr = MemoryAddress.ofLong(findNative(this, name));
+        return addr == MemoryAddress.NULL? Optional.empty()
+                : Optional.of(NativeSymbol.ofAddress(name, addr, loaderScope));
+    }
+
+    // A resource scope which keeps this loader reachable. Useful when returning
+    // native symbols associated with libraries loaded by this loader.
+    final ResourceScope loaderScope = ResourceScopeImpl.heapScope(this);
 
     // -- Assertion management --
 

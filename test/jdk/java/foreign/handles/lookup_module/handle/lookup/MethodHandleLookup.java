@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,20 +23,19 @@
 
 package handle.lookup;
 
-import jdk.incubator.foreign.CLinker;
+import java.lang.foreign.CLinker;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
-import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.SymbolLookup;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ResourceScope;
+import java.lang.foreign.Addressable;
+import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ResourceScope;
 
-import jdk.incubator.foreign.VaList;
-import jdk.incubator.foreign.ValueLayout;
+import java.lang.foreign.VaList;
+import java.lang.foreign.ValueLayout;
 import org.testng.annotations.*;
 
 public class MethodHandleLookup {
@@ -55,9 +54,6 @@ public class MethodHandleLookup {
                     { MethodHandles.lookup().findStatic(VaList.class, "ofAddress",
                             MethodType.methodType(VaList.class, MemoryAddress.class, ResourceScope.class)),
                             "VaList::ofAddress/1" },
-                    { MethodHandles.lookup().findStatic(SymbolLookup.class, "loaderLookup",
-                            MethodType.methodType(SymbolLookup.class)),
-                            "SymbolLookup::loaderLookup" },
                     { MethodHandles.lookup().findStatic(MemorySegment.class, "ofAddress",
                             MethodType.methodType(MemorySegment.class, MemoryAddress.class, long.class, ResourceScope.class)),
                             "MemorySegment::ofAddress" },

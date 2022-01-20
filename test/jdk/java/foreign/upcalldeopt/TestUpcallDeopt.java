@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 
 /*
  * @test id=default_gc
+ * @enablePreview
  * @bug 8277602
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @library /test/lib
@@ -39,18 +40,16 @@
  *   TestUpcallDeopt
  */
 
-import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.NativeSymbol;
-import jdk.incubator.foreign.SymbolLookup;
-import jdk.incubator.foreign.MemoryAddress;
+import java.lang.foreign.Addressable;
+import java.lang.foreign.CLinker;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.NativeSymbol;
+import java.lang.foreign.ResourceScope;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.ref.Reference;
 
-import jdk.incubator.foreign.ResourceScope;
 import sun.hotspot.WhiteBox;
 
 import static java.lang.invoke.MethodHandles.lookup;
@@ -66,9 +65,8 @@ public class TestUpcallDeopt extends NativeTestHelper {
     static {
         try {
             System.loadLibrary("UpcallDeopt");
-            SymbolLookup lookup = SymbolLookup.loaderLookup();
             MH_foo = linker.downcallHandle(
-                    lookup.lookup("foo").orElseThrow(),
+                    TestUpcallDeopt.class.getClassLoader().findNative("foo").orElseThrow(),
                     FunctionDescriptor.ofVoid(C_POINTER, C_INT, C_INT, C_INT, C_INT));
             MH_m = lookup().findStatic(TestUpcallDeopt.class, "m",
                     MethodType.methodType(void.class, int.class, int.class, int.class, int.class));

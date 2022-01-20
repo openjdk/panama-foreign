@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -24,19 +24,23 @@
 
 /*
  * @test
+ * @enablePreview
  * @library ../
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
- *          jdk.incubator.foreign/jdk.internal.foreign.abi
- *          jdk.incubator.foreign/jdk.internal.foreign.abi.aarch64.linux
- *          jdk.incubator.foreign/jdk.internal.foreign.abi.aarch64.macos
- *          jdk.incubator.foreign/jdk.internal.foreign.abi.x64.windows
- *          jdk.incubator.foreign/jdk.internal.foreign.abi.x64.sysv
+ * @modules java.base/jdk.internal.foreign
+ *          java.base/jdk.internal.foreign.abi
+ *          java.base/jdk.internal.foreign.abi.x64
+ *          java.base/jdk.internal.foreign.abi.x64.sysv
+ *          java.base/jdk.internal.foreign.abi.x64.windows
+ *          java.base/jdk.internal.foreign.abi.aarch64
+ *          java.base/jdk.internal.foreign.abi.aarch64.linux
+ *          java.base/jdk.internal.foreign.abi.aarch64.macos
+ *          java.base/jdk.internal.foreign.abi.aarch64.windows
  * @run testng/othervm --enable-native-access=ALL-UNNAMED VaListTest
  */
 
-import jdk.incubator.foreign.*;
-import jdk.incubator.foreign.VaList;
+import java.lang.foreign.*;
+import java.lang.foreign.VaList;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
@@ -55,10 +59,10 @@ import java.util.function.Function;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
-import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
-import static jdk.incubator.foreign.ValueLayout.JAVA_DOUBLE;
-import static jdk.incubator.foreign.ValueLayout.JAVA_INT;
-import static jdk.incubator.foreign.ValueLayout.JAVA_LONG;
+import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
+import static java.lang.foreign.ValueLayout.JAVA_DOUBLE;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
 import static jdk.internal.foreign.PlatformLayouts.*;
 import static org.testng.Assert.*;
 
@@ -68,8 +72,6 @@ public class VaListTest extends NativeTestHelper {
     static {
         System.loadLibrary("VaList");
     }
-
-    static final SymbolLookup LOOKUP = SymbolLookup.loaderLookup();
 
     private static final MethodHandle ADDRESS_TO_VALIST;
 
@@ -109,7 +111,7 @@ public class VaListTest extends NativeTestHelper {
 
 
     private static MethodHandle linkInternal(String symbol, FunctionDescriptor fd) {
-        return abi.downcallHandle(LOOKUP.lookup(symbol).get(), fd);
+        return abi.downcallHandle(VaListTest.class.getClassLoader().findNative(symbol).get(), fd);
     }
 
     private static MethodHandle linkVaListCB(String symbol) {

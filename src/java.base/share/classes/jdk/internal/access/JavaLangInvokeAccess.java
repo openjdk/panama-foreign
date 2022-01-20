@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,44 +84,44 @@ public interface JavaLangInvokeAccess {
     /**
      * Returns a var handle view of a given memory address.
      * Used by {@code jdk.internal.foreign.LayoutPath} and
-     * {@code jdk.incubator.foreign.MemoryHandles}.
+     * {@code java.lang.invoke.MethodHandles}.
      */
     VarHandle memoryAccessVarHandle(Class<?> carrier, boolean skipAlignmentMaskCheck, long alignmentMask,
                                     ByteOrder order);
 
     /**
      * Var handle carrier combinator.
-     * Used by {@code jdk.incubator.foreign.MemoryHandles}.
+     * Used by {@code java.lang.invoke.MethodHandles}.
      */
     VarHandle filterValue(VarHandle target, MethodHandle filterToTarget, MethodHandle filterFromTarget);
 
     /**
      * Var handle filter coordinates combinator.
-     * Used by {@code jdk.incubator.foreign.MemoryHandles}.
+     * Used by {@code java.lang.invoke.MethodHandles}.
      */
     VarHandle filterCoordinates(VarHandle target, int pos, MethodHandle... filters);
 
     /**
      * Var handle drop coordinates combinator.
-     * Used by {@code jdk.incubator.foreign.MemoryHandles}.
+     * Used by {@code java.lang.invoke.MethodHandles}.
      */
     VarHandle dropCoordinates(VarHandle target, int pos, Class<?>... valueTypes);
 
     /**
      * Var handle permute coordinates combinator.
-     * Used by {@code jdk.incubator.foreign.MemoryHandles}.
+     * Used by {@code java.lang.invoke.MethodHandles}.
      */
     VarHandle permuteCoordinates(VarHandle target, List<Class<?>> newCoordinates, int... reorder);
 
     /**
      * Var handle collect coordinates combinator.
-     * Used by {@code jdk.incubator.foreign.MemoryHandles}.
+     * Used by {@code java.lang.invoke.MethodHandles}.
      */
     VarHandle collectCoordinates(VarHandle target, int pos, MethodHandle filter);
 
     /**
      * Var handle insert coordinates combinator.
-     * Used by {@code jdk.incubator.foreign.MemoryHandles}.
+     * Used by {@code java.lang.invoke.MethodHandles}.
      */
     VarHandle insertCoordinates(VarHandle target, int pos, Object... values);
 
@@ -131,10 +131,9 @@ public interface JavaLangInvokeAccess {
      * Will allow JIT to intrinsify.
      *
      * @param nep the native entry point
-     * @param fallback the fallback handle
      * @return the native method handle
      */
-    MethodHandle nativeMethodHandle(NativeEntryPoint nep, MethodHandle fallback);
+    MethodHandle nativeMethodHandle(NativeEntryPoint nep);
 
     /**
      * Ensure given method handle is customized
