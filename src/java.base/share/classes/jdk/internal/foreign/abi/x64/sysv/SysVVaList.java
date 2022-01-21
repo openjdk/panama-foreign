@@ -295,8 +295,8 @@ public non-sealed class SysVVaList implements VaList, Scoped {
         }
     }
 
-    static Builder builder(ResourceScope scope) {
-        return new Builder(scope);
+    static SysVVaList.Builder builder(ResourceScope scope) {
+        return new SysVVaList.Builder(scope);
     }
 
     public static VaList ofAddress(MemoryAddress ma, ResourceScope scope) {

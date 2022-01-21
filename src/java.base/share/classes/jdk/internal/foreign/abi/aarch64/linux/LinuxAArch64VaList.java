@@ -343,8 +343,8 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
         }
     }
 
-    static Builder builder(ResourceScope scope) {
-        return new Builder(scope);
+    static LinuxAArch64VaList.Builder builder(ResourceScope scope) {
+        return new LinuxAArch64VaList.Builder(scope);
     }
 
     public static VaList ofAddress(MemoryAddress ma, ResourceScope scope) {
