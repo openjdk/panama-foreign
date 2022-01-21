@@ -190,13 +190,13 @@
  *                                                 CLinker.upcallType(comparFunction));
  * }
  *
- * As before, we need to create a {@link jdk.incubator.foreign.FunctionDescriptor} instance, this time describing the signature
+ * As before, we need to create a {@link java.lang.foreign.FunctionDescriptor} instance, this time describing the signature
  * of the function pointer we want to create. The descriptor can be used to
- * {@linkplain jdk.incubator.foreign.CLinker#upcallType(jdk.incubator.foreign.FunctionDescriptor) derive} a method type
+ * {@linkplain java.lang.foreign.CLinker#upcallType(java.lang.foreign.FunctionDescriptor) derive} a method type
  * that can be used to look up the method handle for {@code IntComparator.intCompare}.
  * <p>
  * Now that we have a method handle instance, we can turn it into a fresh function pointer,
- * using the {@link jdk.incubator.foreign.CLinker} interface, as follows:
+ * using the {@link java.lang.foreign.CLinker} interface, as follows:
  *
  * {@snippet lang=java :
  * ResourceScope scope = ...
