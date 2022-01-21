@@ -49,7 +49,7 @@ bool ABIDescriptor::is_volatile_reg(FloatRegister reg) const {
 const ABIDescriptor ForeignGlobals::parse_abi_descriptor_impl(jobject jabi) const {
   oop abi_oop = JNIHandles::resolve_non_null(jabi);
   ABIDescriptor abi;
-  const Register (*to_Register)(int) = as_Register;
+  constexpr Register (*to_Register)(int) = as_Register;
 
   objArrayOop inputStorage = oop_cast<objArrayOop>(abi_oop->obj_field(ABI.inputStorage_offset));
   loadArray(inputStorage, INTEGER_TYPE, abi._integer_argument_registers, to_Register);
