@@ -39,9 +39,13 @@ import jdk.internal.vm.annotation.ForceInline;
  * a base object (typically an array). To enhance performances, the access to the base object needs to feature
  * sharp type information, as well as sharp null-check information. For this reason, many concrete subclasses
  * of {@link HeapMemorySegmentImpl} are defined (e.g. {@link OfFloat}, so that each subclass can override the
- * {@link HeapMemorySegmentImpl#base()} method so that it returns an array of the correct (sharp) type.
+ * {@link HeapMemorySegmentImpl#base()} method so that it returns an array of the correct (sharp) type. Note that
+ * the field type storing the 'base' coordinate is just Object; similarly, all the constructor in the subclasses
+ * accept an Object 'base' parameter instead of a sharper type (e.g. {@code byte[]}). This is deliberate, as
+ * using sharper types would require use of type-conversions, which in turn would inhibit some C2 optimizations,
+ * such as the elimination of store barriers in methods like {@link HeapMemorySegmentImpl#dup(long, long, int, ResourceScopeImpl)}.
  */
-public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl {
+public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
     private static final int BYTE_ARR_BASE = UNSAFE.arrayBaseOffset(byte[].class);
@@ -52,17 +56,17 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
     private static final long MAX_ALIGN_8 = 8;
 
     final long offset;
-    final H base;
+    final Object base;
 
     @ForceInline
-    HeapMemorySegmentImpl(long offset, H base, long length, int mask) {
+    HeapMemorySegmentImpl(long offset, Object base, long length, int mask) {
         super(length, mask, ResourceScopeImpl.GLOBAL);
         this.offset = offset;
         this.base = base;
     }
 
     @Override
-    abstract H base();
+    abstract Object base();
 
     @Override
     long min() {
@@ -70,7 +74,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
     }
 
     @Override
-    abstract HeapMemorySegmentImpl<H> dup(long offset, long size, int mask, ResourceScopeImpl scope);
+    abstract HeapMemorySegmentImpl dup(long offset, long size, int mask, ResourceScopeImpl scope);
 
     @Override
     ByteBuffer makeByteBuffer() {
@@ -83,9 +87,9 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
 
     // factories
 
-    public static class OfByte extends HeapMemorySegmentImpl<byte[]> {
+    public static class OfByte extends HeapMemorySegmentImpl {
 
-        OfByte(long offset, byte[] base, long length, int mask) {
+        OfByte(long offset, Object base, long length, int mask) {
             super(offset, base, length, mask);
         }
 
@@ -96,7 +100,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
 
         @Override
         byte[] base() {
-            return Objects.requireNonNull(base);
+            return (byte[])Objects.requireNonNull(base);
         }
 
         public static MemorySegment fromArray(byte[] arr) {
@@ -111,9 +115,9 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
         }
     }
 
-    public static class OfChar extends HeapMemorySegmentImpl<char[]> {
+    public static class OfChar extends HeapMemorySegmentImpl {
 
-        OfChar(long offset, char[] base, long length, int mask) {
+        OfChar(long offset, Object base, long length, int mask) {
             super(offset, base, length, mask);
         }
 
@@ -124,7 +128,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
 
         @Override
         char[] base() {
-            return Objects.requireNonNull(base);
+            return (char[])Objects.requireNonNull(base);
         }
 
         public static MemorySegment fromArray(char[] arr) {
@@ -139,9 +143,9 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
         }
     }
 
-    public static class OfShort extends HeapMemorySegmentImpl<short[]> {
+    public static class OfShort extends HeapMemorySegmentImpl {
 
-        OfShort(long offset, short[] base, long length, int mask) {
+        OfShort(long offset, Object base, long length, int mask) {
             super(offset, base, length, mask);
         }
 
@@ -152,7 +156,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
 
         @Override
         short[] base() {
-            return Objects.requireNonNull(base);
+            return (short[])Objects.requireNonNull(base);
         }
 
         public static MemorySegment fromArray(short[] arr) {
@@ -167,9 +171,9 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
         }
     }
 
-    public static class OfInt extends HeapMemorySegmentImpl<int[]> {
+    public static class OfInt extends HeapMemorySegmentImpl {
 
-        OfInt(long offset, int[] base, long length, int mask) {
+        OfInt(long offset, Object base, long length, int mask) {
             super(offset, base, length, mask);
         }
 
@@ -180,7 +184,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
 
         @Override
         int[] base() {
-            return Objects.requireNonNull(base);
+            return (int[])Objects.requireNonNull(base);
         }
 
         public static MemorySegment fromArray(int[] arr) {
@@ -195,9 +199,9 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
         }
     }
 
-    public static class OfLong extends HeapMemorySegmentImpl<long[]> {
+    public static class OfLong extends HeapMemorySegmentImpl {
 
-        OfLong(long offset, long[] base, long length, int mask) {
+        OfLong(long offset, Object base, long length, int mask) {
             super(offset, base, length, mask);
         }
 
@@ -208,7 +212,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
 
         @Override
         long[] base() {
-            return Objects.requireNonNull(base);
+            return (long[])Objects.requireNonNull(base);
         }
 
         public static MemorySegment fromArray(long[] arr) {
@@ -223,9 +227,9 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
         }
     }
 
-    public static class OfFloat extends HeapMemorySegmentImpl<float[]> {
+    public static class OfFloat extends HeapMemorySegmentImpl {
 
-        OfFloat(long offset, float[] base, long length, int mask) {
+        OfFloat(long offset, Object base, long length, int mask) {
             super(offset, base, length, mask);
         }
 
@@ -236,7 +240,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
 
         @Override
         float[] base() {
-            return Objects.requireNonNull(base);
+            return (float[])Objects.requireNonNull(base);
         }
 
         public static MemorySegment fromArray(float[] arr) {
@@ -251,9 +255,9 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
         }
     }
 
-    public static class OfDouble extends HeapMemorySegmentImpl<double[]> {
+    public static class OfDouble extends HeapMemorySegmentImpl {
 
-        OfDouble(long offset, double[] base, long length, int mask) {
+        OfDouble(long offset, Object base, long length, int mask) {
             super(offset, base, length, mask);
         }
 
@@ -264,7 +268,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
 
         @Override
         double[] base() {
-            return Objects.requireNonNull(base);
+            return (double[])Objects.requireNonNull(base);
         }
 
         public static MemorySegment fromArray(double[] arr) {

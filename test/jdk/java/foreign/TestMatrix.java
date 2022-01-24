@@ -1,15 +1,37 @@
 /*
+ * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+
+/*
  * Note: to run this test manually, you need to build the tests first to get native
  * libraries compiled, and then execute it with plain jtreg, like:
  *
  *  $ bin/jtreg -jdk:<path-to-tested-jdk> \
- *              -nativepath:<path-to-build-dir>/support/test/jdk/jtreg/native/lib/ \
+ *              -nativepath:<path-to-build-dir>/support/test/jdk/jtreg/native/manual/lib/ \
  *              -concurrency:auto \
  *              ./test/jdk/java/foreign/TestMatrix.java
  */
 
-/*
- * @test id=UpcallHighArity-FFTT
+/* @test id=UpcallHighArity-FF
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
@@ -17,13 +39,11 @@
  * @run testng/othervm/native/manual
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=true
+ *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
  *   TestUpcallHighArity
  */
 
-/* @test id=UpcallHighArity-TFTT
+/* @test id=UpcallHighArity-TF
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
@@ -31,13 +51,11 @@
  * @run testng/othervm/native/manual
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=true
+ *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
  *   TestUpcallHighArity
  */
 
-/* @test id=UpcallHighArity-FTTT
+/* @test id=UpcallHighArity-FT
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
@@ -45,13 +63,11 @@
  * @run testng/othervm/native/manual
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=true
  *   TestUpcallHighArity
  */
 
-/* @test id=UpcallHighArity-TTTT
+/* @test id=UpcallHighArity-TT
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
@@ -59,392 +75,176 @@
  * @run testng/othervm/native/manual
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=true
  *   TestUpcallHighArity
  */
 
-/* @test id=UpcallHighArity-FFTF
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
- *
- * @run testng/othervm/native/manual
- *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=false
- *   TestUpcallHighArity
- */
-
-/* @test id=UpcallHighArity-TFTF
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
- *
- * @run testng/othervm/native/manual
- *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=false
- *   TestUpcallHighArity
- */
-
-/* @test id=UpcallHighArity-FTTF
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
- *
- * @run testng/othervm/native/manual
- *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=false
- *   TestUpcallHighArity
- */
-
-/* @test id=UpcallHighArity-TTTF
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
- *
- * @run testng/othervm/native/manual
- *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=false
- *   TestUpcallHighArity
- */
-
-/* @test id=UpcallHighArity-FFFT
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
- *
- * @run testng/othervm/native/manual
- *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=true
- *   TestUpcallHighArity
- */
-
-/* @test id=UpcallHighArity-TFFT
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
- *
- * @run testng/othervm/native/manual
- *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=true
- *   TestUpcallHighArity
- */
-
-/* @test id=UpcallHighArity-FTFT
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
- *
- * @run testng/othervm/native/manual
- *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=true
- *   TestUpcallHighArity
- */
-
-/* @test id=UpcallHighArity-TTFT
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
- *
- * @run testng/othervm/native/manual
- *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=true
- *   TestUpcallHighArity
- */
-
-/* @test id=UpcallHighArity-FFFF
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
- *
- * @run testng/othervm/native/manual
- *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=false
- *   TestUpcallHighArity
- */
-
-/* @test id=UpcallHighArity-TFFF
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
- *
- * @run testng/othervm/native/manual
- *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=false
- *   TestUpcallHighArity
- */
-
-/* @test id=UpcallHighArity-FTFF
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
- *
- * @run testng/othervm/native/manual
- *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=false
- *   TestUpcallHighArity
- */
-
-/* @test id=UpcallHighArity-TTFF
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
- *
- * @run testng/othervm/native/manual
- *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=false
- *   TestUpcallHighArity
- */
-
-/* @test id=Downcall-FF
+/* @test id=Downcall-F
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build NativeTestHelper CallGeneratorHelper TestDowncall
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native/manual
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
  *   TestDowncall
  */
 
-/* @test id=Downcall-TF
+/* @test id=Downcall-T
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build NativeTestHelper CallGeneratorHelper TestDowncall
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native/manual
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
  *   TestDowncall
  */
 
-/* @test id=Downcall-FT
+/* @test id=UpcallScope-FF
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestDowncall
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native/manual
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   TestDowncall
+ *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
+ *   TestUpcallScope
  */
 
-/* @test id=Downcall-TT
+/* @test id=UpcallScope-TF
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestDowncall
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native/manual
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   TestDowncall
+ *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
+ *   TestUpcallScope
  */
 
-/* @test id=Upcall-TFTT
+/* @test id=UpcallScope-FT
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
- *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=true
- *   TestUpcall
- */
-
-/* @test id=Upcall-FTTT
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
- *
- * @run testng/othervm/manual
+ * @run testng/othervm/native/manual
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=true
- *   TestUpcall
+ *   TestUpcallScope
  */
 
-/* @test id=Upcall-TTTT
+/* @test id=UpcallScope-TT
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native/manual
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=true
- *   TestUpcall
+ *   TestUpcallScope
  */
 
-/* @test id=Upcall-TFTF
+/* @test id=UpcallAsync-FF
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
- *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=false
- *   TestUpcall
- */
-
-/* @test id=Upcall-FTTF
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
- *
- * @run testng/othervm/manual
+ * @run testng/othervm/native/manual/timeout=960
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=false
- *   TestUpcall
- */
-
-/* @test id=Upcall-TTTF
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
- *
- * @run testng/othervm/manual
- *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=false
- *   TestUpcall
- */
-
-/* @test id=Upcall-TFFT
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
- *
- * @run testng/othervm/manual
- *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=true
- *   TestUpcall
+ *   TestUpcallAsync
  */
 
-/* @test id=Upcall-FTFT
+/* @test id=UpcallAsync-TF
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native/manual/timeout=960
+ *   --enable-native-access=ALL-UNNAMED
+ *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
+ *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
+ *   TestUpcallAsync
+ */
+
+/* @test id=UpcallAsync-FT
+ * @enablePreview
+ * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
+ *
+ * @run testng/othervm/native/manual/timeout=960
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=true
- *   TestUpcall
+ *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
+ *   TestUpcallAsync
  */
 
-/* @test id=Upcall-TTFT
+/* @test id=UpcallAsync-TT
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native/manual/timeout=960
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=true
- *   TestUpcall
+ *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
+ *   TestUpcallAsync
  */
 
-/* @test id=Upcall-TFFF
+/* @test id=UpcallStack-FF
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
- *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=false
- *   TestUpcall
- */
-
-/* @test id=Upcall-FTFF
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
- *
- * @run testng/othervm/manual
+ * @run testng/othervm/native/manual
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=false
- *   TestUpcall
+ *   TestUpcallStack
  */
 
-/* @test id=Upcall-TTFF
+/* @test id=UpcallStack-TF
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/manual
+ * @run testng/othervm/native/manual
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS=false
- *   TestUpcall
+ *   TestUpcallStack
+ */
+
+/* @test id=UpcallStack-FT
+ * @enablePreview
+ * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
+ *
+ * @run testng/othervm/native/manual
+ *   --enable-native-access=ALL-UNNAMED
+ *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
+ *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
+ *   TestUpcallStack
+ */
+
+/* @test id=UpcallStack-TT
+ * @enablePreview
+ * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
+ * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
+ *
+ * @run testng/othervm/native/manual
+ *   --enable-native-access=ALL-UNNAMED
+ *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
+ *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
+ *   TestUpcallStack
  */
