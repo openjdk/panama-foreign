@@ -46,6 +46,7 @@ import java.util.stream.Stream;
 import static java.lang.invoke.MethodHandles.collectArguments;
 import static java.lang.invoke.MethodHandles.dropArguments;
 import static java.lang.invoke.MethodHandles.empty;
+import static java.lang.invoke.MethodHandles.exactInvoker;
 import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodHandles.lookup;
