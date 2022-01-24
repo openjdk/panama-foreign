@@ -22,14 +22,13 @@
  *
  */
 
-import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.NativeSymbol;
-import jdk.incubator.foreign.SymbolLookup;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
+import java.lang.foreign.CLinker;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.NativeSymbol;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
 
-import jdk.incubator.foreign.ResourceScope;
+import java.lang.foreign.ResourceScope;
 import org.testng.annotations.BeforeClass;
 
 import java.lang.invoke.MethodHandle;
@@ -47,7 +46,6 @@ import static org.testng.Assert.assertEquals;
 public abstract class TestUpcallBase extends CallGeneratorHelper {
 
     static CLinker ABI = CLinker.systemCLinker();
-    static final SymbolLookup LOOKUP = SymbolLookup.loaderLookup();
 
     private static MethodHandle DUMMY;
     private static MethodHandle PASS_AND_SAVE;

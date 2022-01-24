@@ -23,8 +23,8 @@
 
 /*
  * @test
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
  * @run testng/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-VerifyDependencies
@@ -32,13 +32,13 @@
  *   TestUpcallAsync
  */
 
-import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeSymbol;
-import jdk.incubator.foreign.ResourceScope;
-import jdk.incubator.foreign.SegmentAllocator;
+import java.lang.foreign.CLinker;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.NativeSymbol;
+import java.lang.foreign.ResourceScope;
+import java.lang.foreign.SegmentAllocator;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
@@ -60,7 +60,7 @@ public class TestUpcallAsync extends TestUpcallBase {
     public void testUpcallsAsync(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        NativeSymbol addr = LOOKUP.lookup(fName).get();
+        NativeSymbol addr = TestUpcallAsync.class.getClassLoader().findNative(fName).get();
         try (ResourceScope scope = ResourceScope.newSharedScope()) {
             SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
             FunctionDescriptor descriptor = function(ret, paramTypes, fields);
@@ -93,7 +93,7 @@ public class TestUpcallAsync extends TestUpcallBase {
             String name = "call_async_V";
             return INVOKERS.computeIfAbsent(name, symbol ->
                     ABI.downcallHandle(
-                            LOOKUP.lookup(symbol).orElseThrow(),
+                            TestUpcallAsync.class.getClassLoader().findNative(symbol).orElseThrow(),
                             FunctionDescriptor.ofVoid(C_POINTER)));
         }
 
@@ -101,7 +101,7 @@ public class TestUpcallAsync extends TestUpcallBase {
                 + (returnType == ParamType.STRUCT ? "_" + sigCode(fields) : "");
 
         return INVOKERS.computeIfAbsent(name, symbol -> {
-            NativeSymbol invokerSymbol = LOOKUP.lookup(symbol).orElseThrow();
+            NativeSymbol invokerSymbol = TestUpcallAsync.class.getClassLoader().findNative(symbol).orElseThrow();
             MemoryLayout returnLayout = returnType.layout(fields);
             FunctionDescriptor desc = FunctionDescriptor.of(returnLayout, C_POINTER);
 
