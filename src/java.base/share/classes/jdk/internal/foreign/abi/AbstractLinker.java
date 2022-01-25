@@ -28,7 +28,6 @@ import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
-import jdk.jfr.FlightRecorder;
 
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
@@ -45,11 +44,6 @@ import java.util.function.Function;
 public abstract sealed class AbstractLinker implements CLinker permits LinuxAArch64Linker, MacOsAArch64Linker,
                                                                        SysVx64Linker, Windowsx64Linker {
 
-    static {
-        FlightRecorder.register(DowncallLinkEvent.class);
-        FlightRecorder.register(UpcallLinkEvent.class);
-    }
-
     private final SoftReferenceCache<FunctionDescriptor, MethodHandle> DOWNCALL_CACHE = new SoftReferenceCache<>();
 
     @Override
@@ -57,22 +51,10 @@ public abstract sealed class AbstractLinker implements CLinker permits LinuxAArc
         Objects.requireNonNull(function);
 
         return DOWNCALL_CACHE.get(function, fd -> {
-            DowncallLinkEvent dle = new DowncallLinkEvent();
-            dle.begin();
-
             MethodType type = SharedUtils.inferMethodType(fd, false);
             MethodHandle handle = arrangeDowncall(type, fd);
             handle = SharedUtils.maybeInsertAllocator(handle);
             MethodHandle mh = SharedUtils.wrapDowncall(handle, fd);
-
-            dle.end();
-            if (dle.shouldCommit()) {
-                dle.functionDescriptor = fd.toString();
-                dle.inferredMethodType = type.descriptorString();
-                dle.resultMethodType = mh.type().descriptorString();
-
-                dle.commit();
-            }
             return mh;
         });
     }
@@ -86,22 +68,11 @@ public abstract sealed class AbstractLinker implements CLinker permits LinuxAArc
         Objects.requireNonNull(function);
         SharedUtils.checkExceptions(target);
 
-        UpcallLinkEvent ule = new UpcallLinkEvent();
-        ule.begin();
-
         MethodType type = SharedUtils.inferMethodType(function, true);
         if (!type.equals(target.type())) {
             throw new IllegalArgumentException("Wrong method handle type: " + target.type());
         }
         NativeSymbol symb =  arrangeUpcall(target, target.type(), function, scope);
-
-        ule.end();
-        if (ule.shouldCommit()) {
-            ule.functionDescriptor = function.toString();
-            ule.methodType = type.descriptorString();
-
-            ule.commit();
-        }
         return symb;
     }
 
