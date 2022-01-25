@@ -1,11 +1,5 @@
 package jdk.internal.foreign.abi;
 
-import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ResourceScope;
-import jdk.incubator.foreign.SegmentAllocator;
-import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.misc.VM;
@@ -24,6 +18,12 @@ import sun.security.action.GetPropertyAction;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.constant.ConstantDescs;
+import java.lang.foreign.Addressable;
+import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ResourceScope;
+import java.lang.foreign.SegmentAllocator;
+import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -39,9 +39,9 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
 public class Specializer {
     private static final String DUMP_CLASSES_DIR
-        = GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.abi.SpecializerASM.DUMP_CLASSES_DIR");
+        = GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.abi.Specializer.DUMP_CLASSES_DIR");
     private static final boolean PERFORM_VERIFICATION
-        = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.abi.SpecializerASM.PERFORM_VERIFICATION");
+        = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.abi.Specializer.PERFORM_VERIFICATION");
 
     private static final int CLASSFILE_VERSION = VM.classFileVersion();
 

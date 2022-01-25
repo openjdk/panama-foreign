@@ -34,9 +34,6 @@ import java.lang.invoke.MethodType;
 import java.util.function.Consumer;
 
 import jdk.internal.foreign.abi.AbstractLinker;
-import jdk.internal.foreign.abi.DowncallLinkEvent;
-import jdk.internal.foreign.abi.UpcallLinkEvent;
-import jdk.jfr.FlightRecorder;
 
 /**
  * ABI implementation based on Windows ABI AMD64 supplement v.0.99.6
