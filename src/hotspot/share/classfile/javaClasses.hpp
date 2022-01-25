@@ -74,7 +74,7 @@ class RecordComponent;
   f(java_lang_StackFrameInfo) \
   f(java_lang_LiveStackFrameInfo) \
   f(java_util_concurrent_locks_AbstractOwnableSynchronizer) \
-  f(jdk_internal_invoke_NativeEntryPoint) \
+  f(jdk_internal_foreign_abi_NativeEntryPoint) \
   f(jdk_internal_misc_UnsafeConstants) \
   f(java_lang_boxing_object) \
   f(vector_VectorPayload) \
@@ -1038,7 +1038,7 @@ class java_lang_invoke_LambdaForm: AllStatic {
 // Interface to java.lang.invoke.NativeEntryPoint objects
 // (These are a private interface for managing adapter code generation.)
 
-class jdk_internal_invoke_NativeEntryPoint: AllStatic {
+class jdk_internal_foreign_abi_NativeEntryPoint: AllStatic {
   friend class JavaClasses;
 
  private:

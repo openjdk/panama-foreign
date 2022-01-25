@@ -3858,33 +3858,33 @@ bool java_lang_invoke_LambdaForm::is_instance(oop obj) {
   return obj != NULL && is_subclass(obj->klass());
 }
 
-int jdk_internal_invoke_NativeEntryPoint::_method_type_offset;
-int jdk_internal_invoke_NativeEntryPoint::_invoker_offset;
+int jdk_internal_foreign_abi_NativeEntryPoint::_method_type_offset;
+int jdk_internal_foreign_abi_NativeEntryPoint::_invoker_offset;
 
 #define NEP_FIELDS_DO(macro) \
   macro(_method_type_offset,     k, "methodType",     java_lang_invoke_MethodType_signature, false); \
   macro(_invoker_offset,         k, "invoker",        long_signature, false);
 
-bool jdk_internal_invoke_NativeEntryPoint::is_instance(oop obj) {
+bool jdk_internal_foreign_abi_NativeEntryPoint::is_instance(oop obj) {
   return obj != NULL && is_subclass(obj->klass());
 }
 
-void jdk_internal_invoke_NativeEntryPoint::compute_offsets() {
+void jdk_internal_foreign_abi_NativeEntryPoint::compute_offsets() {
   InstanceKlass* k = vmClasses::NativeEntryPoint_klass();
   NEP_FIELDS_DO(FIELD_COMPUTE_OFFSET);
 }
 
 #if INCLUDE_CDS
-void jdk_internal_invoke_NativeEntryPoint::serialize_offsets(SerializeClosure* f) {
+void jdk_internal_foreign_abi_NativeEntryPoint::serialize_offsets(SerializeClosure* f) {
   NEP_FIELDS_DO(FIELD_SERIALIZE_OFFSET);
 }
 #endif
 
-oop jdk_internal_invoke_NativeEntryPoint::method_type(oop entry) {
+oop jdk_internal_foreign_abi_NativeEntryPoint::method_type(oop entry) {
   return entry->obj_field(_method_type_offset);
 }
 
-jlong jdk_internal_invoke_NativeEntryPoint::invoker(oop entry) {
+jlong jdk_internal_foreign_abi_NativeEntryPoint::invoker(oop entry) {
   return entry->long_field(_invoker_offset);
 }
 

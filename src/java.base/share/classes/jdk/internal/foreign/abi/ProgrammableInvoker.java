@@ -40,8 +40,6 @@ import java.util.Map;
 import java.util.stream.Stream;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
-import jdk.internal.invoke.NativeEntryPoint;
-import jdk.internal.invoke.VMStorageProxy;
 import sun.security.action.GetPropertyAction;
 import static java.lang.invoke.MethodHandles.collectArguments;
 import static java.lang.invoke.MethodHandles.dropArguments;
@@ -167,7 +165,7 @@ public class ProgrammableInvoker {
                 .map(Binding.VMLoad.class::cast);
     }
 
-    private VMStorageProxy[] toStorageArray(Binding.Move[] moves) {
+    private VMStorage[] toStorageArray(Binding.Move[] moves) {
         return Arrays.stream(moves).map(Binding.Move::storage).toArray(VMStorage[]::new);
     }
 
