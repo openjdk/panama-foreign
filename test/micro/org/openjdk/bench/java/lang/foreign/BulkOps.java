@@ -66,8 +66,8 @@ public class BulkOps {
     final MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, ResourceScope.newConfinedScope());
     final IntBuffer buffer = IntBuffer.allocate(ELEM_SIZE);
 
-    final int[] bytes = new int[ELEM_SIZE];
-    final MemorySegment bytesSegment = MemorySegment.ofArray(bytes);
+    final int[] ints = new int[ELEM_SIZE];
+    final MemorySegment bytesSegment = MemorySegment.ofArray(ints);
     final int UNSAFE_INT_OFFSET = unsafe.arrayBaseOffset(int[].class);
 
     // large(ish) segments/buffers with same content, 0, for mismatch, non-multiple-of-8 sized
@@ -101,8 +101,8 @@ public class BulkOps {
         if (bi != 0)
             throw new AssertionError("Unexpected mismatch index:" + bi);
 
-        for (int i = 0 ; i < bytes.length ; i++) {
-            bytes[i] = i;
+        for (int i = 0; i < ints.length ; i++) {
+            ints[i] = i;
         }
     }
 
@@ -126,7 +126,7 @@ public class BulkOps {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void unsafe_copy() {
-        unsafe.copyMemory(bytes, UNSAFE_INT_OFFSET, null, unsafe_addr, ALLOC_SIZE);
+        unsafe.copyMemory(ints, UNSAFE_INT_OFFSET, null, unsafe_addr, ALLOC_SIZE);
     }
 
     @Benchmark
@@ -138,45 +138,45 @@ public class BulkOps {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void segment_copy_static() {
-        MemorySegment.copy(bytes, 0, segment, JAVA_BYTE, 0, bytes.length);
+        MemorySegment.copy(ints, 0, segment, JAVA_BYTE, 0, ints.length);
     }
 
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void segment_copy_static_small() {
-        MemorySegment.copy(bytes, 0, segment, JAVA_BYTE, 0, 10);
+        MemorySegment.copy(ints, 0, segment, JAVA_BYTE, 0, 10);
     }
 
     @Benchmark
     @CompilerControl(CompilerControl.Mode.DONT_INLINE)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void segment_copy_static_small_dontinline() {
-        MemorySegment.copy(bytes, 0, segment, JAVA_BYTE, 0, 10);
+        MemorySegment.copy(ints, 0, segment, JAVA_BYTE, 0, 10);
     }
 
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void unsafe_copy_small() {
-        unsafe.copyMemory(bytes, UNSAFE_INT_OFFSET, null, unsafe_addr, 10 * CARRIER_SIZE);
+        unsafe.copyMemory(ints, UNSAFE_INT_OFFSET, null, unsafe_addr, 10 * CARRIER_SIZE);
     }
 
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void buffer_copy_small() {
-        buffer.put(0, bytes, 0, 10);
+        buffer.put(0, ints, 0, 10);
     }
 
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void buffer_copy() {
-        buffer.put(0, bytes, 0, bytes.length);
+        buffer.put(0, ints, 0, ints.length);
     }
 
     @Benchmark
     @CompilerControl(CompilerControl.Mode.DONT_INLINE)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void segment_copy_static_dontinline() {
-        MemorySegment.copy(bytes, 0, segment, JAVA_BYTE, 0, bytes.length);
+        MemorySegment.copy(ints, 0, segment, JAVA_BYTE, 0, ints.length);
     }
 
     @Benchmark

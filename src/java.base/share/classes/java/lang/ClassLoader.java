@@ -2468,7 +2468,7 @@ public abstract class ClassLoader {
 
     // A resource scope which keeps this loader reachable. Useful when returning
     // native symbols associated with libraries loaded by this loader.
-    final ResourceScope loaderScope = ResourceScopeImpl.heapScope(this);
+    private final ResourceScope loaderScope = ResourceScopeImpl.heapScope(this);
 
     // -- Assertion management --
 

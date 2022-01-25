@@ -363,11 +363,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     }
 
     void checkValidState() {
-        try {
-            scope.checkValidStateSlow();
-        } catch (ScopedMemoryAccess.ScopedAccessError ex) {
-            throw new IllegalStateException("This segment is already closed");
-        }
+        scope.checkValidStateSlow();
     }
 
     public long unsafeGetOffset() {

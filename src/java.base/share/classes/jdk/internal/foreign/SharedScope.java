@@ -44,16 +44,6 @@ class SharedScope extends ResourceScopeImpl {
 
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-    private static final VarHandle STATE;
-
-    static {
-        try {
-            STATE = MethodHandles.lookup().findVarHandle(SharedScope.class, "state", int.class);
-        } catch (Throwable ex) {
-            throw new ExceptionInInitializerError(ex);
-        }
-    }
-
     SharedScope(Cleaner cleaner) {
         super(null, new SharedResourceList(), cleaner);
     }

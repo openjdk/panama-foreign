@@ -29,6 +29,7 @@ package java.lang.foreign;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Array;
+import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -135,7 +136,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * access var handles can be obtained from {@linkplain MemoryLayout#varHandle(MemoryLayout.PathElement...) memory layouts}
  * by providing a so called <a href="MemoryLayout.html#layout-paths"><em>layout path</em></a>.
  * Alternatively, clients can obtain raw memory access var handles from a given
- * {@linkplain java.lang.invoke.MethodHandles#memoryAccessVarHandle(ValueLayout) value layout}, and then adapt it using the var handle combinator
+ * {@linkplain MethodHandles#memoryAccessVarHandle(ValueLayout) value layout}, and then adapt it using the var handle combinator
  * functions defined in the {@link java.lang.invoke.MethodHandles} class.
  *
  * <h2 id="segment-alignment">Alignment</h2>

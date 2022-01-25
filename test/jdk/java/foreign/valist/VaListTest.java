@@ -111,7 +111,7 @@ public class VaListTest extends NativeTestHelper {
 
 
     private static MethodHandle linkInternal(String symbol, FunctionDescriptor fd) {
-        return abi.downcallHandle(VaListTest.class.getClassLoader().findNative(symbol).get(), fd);
+        return abi.downcallHandle(findNativeOrThrow(VaListTest.class, symbol), fd);
     }
 
     private static MethodHandle linkVaListCB(String symbol) {

@@ -67,7 +67,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
         try {
             System.loadLibrary("TestUpcallHighArity");
             MH_do_upcall = LINKER.downcallHandle(
-                    TestUpcallHighArity.class.getClassLoader().findNative("do_upcall").get(),
+                    findNativeOrThrow(TestUpcallHighArity.class, "do_upcall"),
                     FunctionDescriptor.ofVoid(C_POINTER,
                     S_PDI_LAYOUT, C_INT, C_DOUBLE, C_POINTER,
                     S_PDI_LAYOUT, C_INT, C_DOUBLE, C_POINTER,

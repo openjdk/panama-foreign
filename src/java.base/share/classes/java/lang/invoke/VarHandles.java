@@ -27,7 +27,6 @@ package java.lang.invoke;
 
 import sun.invoke.util.Wrapper;
 
-import java.lang.foreign.MemoryAddress;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -45,26 +44,6 @@ import static java.lang.invoke.MethodHandleStatics.VAR_HANDLE_IDENTITY_ADAPT;
 import static java.lang.invoke.MethodHandleStatics.newIllegalArgumentException;
 
 final class VarHandles {
-
-    static final MethodHandle BYTE_TO_BOOL;
-    static final MethodHandle BOOL_TO_BYTE;
-    static final MethodHandle ADDRESS_TO_LONG;
-    static final MethodHandle LONG_TO_ADDRESS;
-
-    static {
-        try {
-            BYTE_TO_BOOL = MethodHandles.lookup().findStatic(VarHandles.class, "byteToBoolean",
-                    MethodType.methodType(boolean.class, byte.class));
-            BOOL_TO_BYTE = MethodHandles.lookup().findStatic(VarHandles.class, "booleanToByte",
-                    MethodType.methodType(byte.class, boolean.class));
-            ADDRESS_TO_LONG = MethodHandles.lookup().findVirtual(MemoryAddress.class, "toRawLongValue",
-                    MethodType.methodType(long.class));
-            LONG_TO_ADDRESS = MethodHandles.lookup().findStatic(MemoryAddress.class, "ofLong",
-                    MethodType.methodType(MemoryAddress.class, long.class));
-        } catch (Throwable ex) {
-            throw new ExceptionInInitializerError(ex);
-        }
-    }
 
     static ClassValue<ConcurrentMap<Integer, MethodHandle>> ADDRESS_FACTORIES = new ClassValue<>() {
         @Override

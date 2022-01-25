@@ -26,6 +26,7 @@
 package java.lang.invoke;
 
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.foreign.Utils;
 import jdk.internal.javac.PreviewFeature;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;
@@ -45,8 +46,6 @@ import sun.security.util.SecurityConstants;
 import java.lang.constant.ConstantDescs;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryAddress;
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.LambdaForm.BasicType;
 import java.lang.reflect.Constructor;
@@ -54,7 +53,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.ReflectPermission;
 import java.nio.ByteOrder;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
@@ -7928,29 +7926,7 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
     @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
     public static VarHandle memoryAccessVarHandle(ValueLayout layout) {
         Objects.requireNonNull(layout);
-        Class<?> carrier = layout.carrier();
-        Class<?> baseCarrier = carrier;
-        if (carrier == MemoryAddress.class) {
-            baseCarrier = switch ((int) ValueLayout.ADDRESS.byteSize()) {
-                case 8 -> long.class;
-                case 4 -> int.class;
-                default -> throw new UnsupportedOperationException("Unsupported address layout");
-            };
-        } else if (carrier == boolean.class) {
-            baseCarrier = byte.class;
-        }
-
-        VarHandle handle = VarHandles.makeMemoryAddressViewHandle(baseCarrier, false, layout.byteAlignment() - 1, layout.order());
-
-        if (carrier == boolean.class) {
-            return MethodHandles.filterValue(handle, VarHandles.BOOL_TO_BYTE, VarHandles.BYTE_TO_BOOL);
-        } else if (carrier == MemoryAddress.class) {
-            return MethodHandles.filterValue(handle,
-                    MethodHandles.explicitCastArguments(VarHandles.ADDRESS_TO_LONG, MethodType.methodType(baseCarrier, MemoryAddress.class)),
-                    MethodHandles.explicitCastArguments(VarHandles.LONG_TO_ADDRESS, MethodType.methodType(MemoryAddress.class, baseCarrier)));
-        } else {
-            return handle;
-        }
+        return Utils.makeMemoryAccessVarHandle(layout, false);
     }
 
     /**

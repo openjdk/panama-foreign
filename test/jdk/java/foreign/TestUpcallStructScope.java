@@ -68,7 +68,7 @@ public class TestUpcallStructScope extends NativeTestHelper {
     static {
         System.loadLibrary("TestUpcallStructScope");
         MH_do_upcall = LINKER.downcallHandle(
-                TestUpcallStructScope.class.getClassLoader().findNative("do_upcall").get(),
+                findNativeOrThrow(TestUpcallStructScope.class, "do_upcall"),
                 FunctionDescriptor.ofVoid(C_POINTER, S_PDI_LAYOUT)
         );
 

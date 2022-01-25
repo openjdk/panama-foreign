@@ -39,20 +39,17 @@
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 
+import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
-
-import staticjava.lang.foreign.CLinker.C_INT;
 
 public class TestLinkToNativeRBP {
     static {
         System.loadLibrary("LinkToNativeRBP");
     }
 
-    final static CLinker abi = CLinker.getInstance();
-    final static MethodHandle foo = abi.downcallHandle(ClassLoader.findNative("foo").get(),
-            MethodType.methodType(int.class),
-            FunctionDescriptor.of(C_INT));
+    final static CLinker abi = CLinker.systemCLinker();
+    final static MethodHandle foo = abi.downcallHandle(TestLinkToNativeRBP.class.getClassLoader().findNative("foo").get(),
+            FunctionDescriptor.of(ValueLayout.JAVA_INT));
 
     static int foo() throws Throwable {
         return (int)foo.invokeExact();
