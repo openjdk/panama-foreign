@@ -657,14 +657,6 @@ final class VarHandles {
                 !Error.class.isAssignableFrom(clazz);
     }
 
-    private static boolean byteToBoolean(byte b) {
-        return b != 0;
-    }
-
-    private static byte booleanToByte(boolean b) {
-        return b ? (byte)1 : (byte)0;
-    }
-
 //    /**
 //     * A helper program to generate the VarHandleGuards class with a set of
 //     * static guard methods each of which corresponds to a particular shape and

@@ -65,7 +65,7 @@ public class TestVarArgs extends NativeTestHelper {
         System.loadLibrary("VarArgs");
     }
 
-    static final NativeSymbol VARARGS_ADDR = findNativeOrThrow(TestVarArgs.class, "varargs");
+    static final NativeSymbol VARARGS_ADDR = new NativeTestHelper().findNativeOrThrow("varargs");
 
     static final int WRITEBACK_BYTES_PER_ARG = 8;
 

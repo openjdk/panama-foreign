@@ -60,7 +60,7 @@ public class TestUpcallAsync extends TestUpcallBase {
     public void testUpcallsAsync(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        NativeSymbol addr = findNativeOrThrow(TestUpcallAsync.class, fName);
+        NativeSymbol addr = findNativeOrThrow(fName);
         try (ResourceScope scope = ResourceScope.newSharedScope()) {
             SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
             FunctionDescriptor descriptor = function(ret, paramTypes, fields);

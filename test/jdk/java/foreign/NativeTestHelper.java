@@ -107,7 +107,7 @@ public class NativeTestHelper {
         }
     }
 
-    public static NativeSymbol findNativeOrThrow(Class<?> clazz, String name) {
-        return clazz.getClassLoader().findNative(name).orElseThrow();
+    public NativeSymbol findNativeOrThrow(String name) {
+        return this.getClass().getClassLoader().findNative(name).orElseThrow();
     }
 }

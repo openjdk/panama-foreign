@@ -55,9 +55,9 @@ public class TestVirtualCalls extends NativeTestHelper {
                 FunctionDescriptor.of(C_INT));
 
         System.loadLibrary("Virtual");
-        funcA = findNativeOrThrow(TestVirtualCalls.class, "funcA");
-        funcB = findNativeOrThrow(TestVirtualCalls.class, "funcB");
-        funcC = findNativeOrThrow(TestVirtualCalls.class, "funcC");
+        funcA = new NativeTestHelper().findNativeOrThrow("funcA");
+        funcB = new NativeTestHelper().findNativeOrThrow("funcB");
+        funcC = new NativeTestHelper().findNativeOrThrow("funcC");
     }
 
     @Test
