@@ -52,7 +52,7 @@ public class TestUpcallScope extends TestUpcallBase {
     public void testUpcalls(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        NativeSymbol addr = findNativeOrThrow(fName);
+        NativeSymbol addr = findNativeOrThrow(TestUpcallScope.class, fName);
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
             MethodHandle mh = downcallHandle(ABI, addr, allocator, function(ret, paramTypes, fields));

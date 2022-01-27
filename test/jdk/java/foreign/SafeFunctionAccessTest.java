@@ -62,7 +62,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
         }
         assertFalse(segment.scope().isAlive());
         MethodHandle handle = CLinker.systemCLinker().downcallHandle(
-                findNativeOrThrow("struct_func"),
+                findNativeOrThrow(SafeFunctionAccessTest.class,"struct_func"),
                 FunctionDescriptor.ofVoid(POINT));
 
         handle.invokeExact(segment);
@@ -71,7 +71,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     @Test
     public void testClosedStructAddr_6() throws Throwable {
         MethodHandle handle = CLinker.systemCLinker().downcallHandle(
-                findNativeOrThrow("addr_func_6"),
+                findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func_6"),
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
         for (int i = 0 ; i < 6 ; i++) {
             MemorySegment[] segments = new MemorySegment[]{
@@ -113,7 +113,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
         }
         assertFalse(list.scope().isAlive());
         MethodHandle handle = CLinker.systemCLinker().downcallHandle(
-                findNativeOrThrow("addr_func"),
+                findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func"),
                 FunctionDescriptor.ofVoid(C_POINTER));
 
         handle.invokeExact((Addressable)list);
@@ -128,7 +128,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
         }
         assertFalse(upcall.scope().isAlive());
         MethodHandle handle = CLinker.systemCLinker().downcallHandle(
-                findNativeOrThrow("addr_func"),
+                findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func"),
                 FunctionDescriptor.ofVoid(C_POINTER));
 
         handle.invokeExact((Addressable)upcall);
@@ -139,7 +139,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     @Test
     public void testClosedVaListCallback() throws Throwable {
         MethodHandle handle = CLinker.systemCLinker().downcallHandle(
-                findNativeOrThrow("addr_func_cb"),
+                findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func_cb"),
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
 
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
@@ -151,7 +151,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     @Test
     public void testClosedStructCallback() throws Throwable {
         MethodHandle handle = CLinker.systemCLinker().downcallHandle(
-                findNativeOrThrow("addr_func_cb"),
+                findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func_cb"),
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
 
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
@@ -163,7 +163,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     @Test
     public void testClosedUpcallCallback() throws Throwable {
         MethodHandle handle = CLinker.systemCLinker().downcallHandle(
-                findNativeOrThrow("addr_func_cb"),
+                findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func_cb"),
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
 
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
