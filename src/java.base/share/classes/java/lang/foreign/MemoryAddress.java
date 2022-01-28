@@ -82,8 +82,7 @@ import java.lang.invoke.MethodHandle;
 public sealed interface MemoryAddress extends Addressable permits MemoryAddressImpl {
 
     /**
-     * Returns the raw long value associated with this memory address.
-     * @return The raw long value associated with this memory address.
+     * {@return the raw long value associated with this memory address}
      */
     long toRawLongValue();
 
@@ -145,8 +144,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     boolean equals(Object that);
 
     /**
-     * Returns the hash code value for this address.
-     * @return the hash code value for this address.
+     * {@return the hash code value for this address}
      */
     @Override
     int hashCode();

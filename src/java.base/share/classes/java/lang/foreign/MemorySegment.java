@@ -253,11 +253,10 @@ boolean isAligned(MemorySegment segment, long offset, MemoryLayout layout) {
 public sealed interface MemorySegment extends Addressable permits AbstractMemorySegmentImpl {
 
     /**
-     * The base memory address associated with this native memory segment.
+     * {@return the base memory address associated with this native memory segment}
      * @throws UnsupportedOperationException if this segment is not a {@linkplain #isNative() native} segment.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
      * a thread other than the thread owning that scope.
-     * @return The base memory address.
      */
     @Override
     MemoryAddress address();
@@ -302,14 +301,12 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     Stream<MemorySegment> elements(MemoryLayout elementLayout);
 
     /**
-     * Returns the resource scope associated with this memory segment.
-     * @return the resource scope associated with this memory segment.
+     * {@return the resource scope associated with this memory segment}
      */
     ResourceScope scope();
 
     /**
-     * The size (in bytes) of this memory segment.
-     * @return The size (in bytes) of this memory segment.
+     * {@return the size (in bytes) of this memory segment}
      */
     long byteSize();
 
@@ -346,8 +343,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Is this segment read-only?
-     * @return {@code true}, if this segment is read-only.
+     * {@return {@code true}, if this segment is read-only}
      * @see #asReadOnly()
      */
     boolean isReadOnly();
@@ -361,7 +357,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     MemorySegment asReadOnly();
 
     /**
-     * Is this a native segment? Returns true if this segment is a native memory segment,
+     * Returns {@code true} if this segment is a native segment. A native memory segment is
      * created using the {@link #allocateNative(long, ResourceScope)} (and related) factory, or a buffer segment
      * derived from a direct {@link java.nio.ByteBuffer} using the {@link #ofByteBuffer(ByteBuffer)} factory,
      * or if this is a {@linkplain #isMapped() mapped} segment.
@@ -370,7 +366,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     boolean isNative();
 
     /**
-     * Is this a mapped segment? Returns true if this segment is a mapped memory segment,
+     * Returns {@code true} if this segment is a mapped segment. A mapped memory segment is
      * created using the {@link #mapFile(Path, long, long, FileChannel.MapMode, ResourceScope)} factory, or a buffer segment
      * derived from a {@link java.nio.MappedByteBuffer} using the {@link #ofByteBuffer(ByteBuffer)} factory.
      * @return {@code true} if this segment is a mapped segment.
@@ -487,7 +483,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     long mismatch(MemorySegment other);
 
     /**
-     * Tells whether the contents of this mapped segment is resident in physical
+     * Determines whether the contents of this mapped segment is resident in physical
      * memory.
      *
      * <p> A return value of {@code true} implies that it is highly likely

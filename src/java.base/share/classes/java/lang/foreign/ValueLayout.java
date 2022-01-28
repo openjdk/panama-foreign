@@ -42,9 +42,9 @@ import sun.invoke.util.Wrapper;
 
 /**
  * A value layout. A value layout is used to model the memory layout associated with values of basic data types, such as <em>integral</em> types
- * (either signed or unsigned) and <em>floating-point</em> types. Each value layout has a size, an alignment, a {@linkplain ByteOrder byte order})
- * and a <em>carrier</em>, that is, the Java type that should be used when {@linkplain MemorySegment#get(OfInt, long) accessing}
- * a memory region using the value layout.
+ * (either signed or unsigned) and <em>floating-point</em> types. Each value layout has a size, an alignment (in bits),
+ * a {@linkplain ByteOrder byte order}, and a <em>carrier</em>, that is, the Java type that should be used when
+ * {@linkplain MemorySegment#get(OfInt, long) accessing} a memory region using the value layout.
  * <p>
  * This class defines useful value layout constants for Java primitive types and addresses.
  * The layout constants in this class make implicit alignment and byte-ordering assumption: all layout
@@ -86,9 +86,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
     }
 
     /**
-     * Returns the value's byte order.
-     *
-     * @return the value's  byte order.
+     * {@return the value's byte order}
      */
     public ByteOrder order() {
         return order;
@@ -129,8 +127,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
     }
 
     /**
-     * Returns the carrier associated with this value layout.
-     * @return the carrier associated with this value layout.
+     * {@return the carrier associated with this value layout}
      */
     public Class<?> carrier() {
         return carrier;
@@ -544,8 +541,8 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
     }
 
     /**
-     * A value layout constant whose size is the same as that of a machine address (e.g. {@code size_t}),
-     * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * A value layout constant whose size is the same as that of a machine address ({@code size_t}),
+     * bit alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
      * MemoryLayout.valueLayout(MemoryAddress.class, ByteOrder.nativeOrder()).withBitAlignment(8);
@@ -555,7 +552,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code byte},
-     * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * bit alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
      * MemoryLayout.valueLayout(byte.class, ByteOrder.nativeOrder()).withBitAlignment(8);
@@ -565,7 +562,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code boolean},
-     * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * bit alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
      * MemoryLayout.valueLayout(boolean.class, ByteOrder.nativeOrder()).withBitAlignment(8);
@@ -575,7 +572,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code char},
-     * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * bit alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
      * MemoryLayout.valueLayout(char.class, ByteOrder.nativeOrder()).withBitAlignment(8);
@@ -585,7 +582,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code short},
-     * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * bit alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
      * MemoryLayout.valueLayout(short.class, ByteOrder.nativeOrder()).withBitAlignment(8);
@@ -595,7 +592,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code int},
-     * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * bit alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
      * MemoryLayout.valueLayout(int.class, ByteOrder.nativeOrder()).withBitAlignment(8);
@@ -605,7 +602,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code long},
-     * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * bit alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
      * MemoryLayout.valueLayout(long.class, ByteOrder.nativeOrder()).withBitAlignment(8);
@@ -616,7 +613,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code float},
-     * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * bit alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
      * MemoryLayout.valueLayout(float.class, ByteOrder.nativeOrder()).withBitAlignment(8);
@@ -626,7 +623,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code double},
-     * bit-alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * bit alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
      * MemoryLayout.valueLayout(double.class, ByteOrder.nativeOrder()).withBitAlignment(8);

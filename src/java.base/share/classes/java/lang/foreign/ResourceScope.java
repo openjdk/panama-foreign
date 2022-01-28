@@ -150,8 +150,7 @@ import jdk.internal.ref.CleanerFactory;
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
 public sealed interface ResourceScope extends AutoCloseable permits ResourceScopeImpl {
     /**
-     * Is this resource scope alive?
-     * @return true, if this resource scope is alive.
+     * {@return {@code true}, if this resource scope is alive}
      * @see ResourceScope#close()
      */
     boolean isAlive();

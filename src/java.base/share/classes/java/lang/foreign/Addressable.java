@@ -45,8 +45,7 @@ import jdk.internal.javac.PreviewFeature;
 public sealed interface Addressable permits MemorySegment, MemoryAddress, NativeSymbol, VaList {
 
     /**
-     * Returns the memory address associated with this addressable.
-     * @return The memory address associated with this addressable.
+     * {@return the {@linkplain MemoryAddress memory address} associated with this addressable}
      */
     MemoryAddress address();
 }
