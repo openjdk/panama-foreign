@@ -58,7 +58,6 @@ public abstract sealed class AbstractLinker implements CLinker permits LinuxAArc
             return mh;
         });
     }
-    
     protected abstract MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function);
 
     @Override
