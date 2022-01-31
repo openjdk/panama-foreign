@@ -78,8 +78,6 @@ public:
    : NativeCallConv(input_regs.data(), input_regs.length()) {}
 
   int calling_convention(BasicType* sig_bt, VMRegPair* out_regs, int num_args) const override;
-
-  void print_on(outputStream* os) const;
 };
 
 class RegSpiller {
