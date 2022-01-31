@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,8 +27,8 @@
 
 package java.nio;
 
+import java.lang.foreign.MemorySegment;
 import java.util.Objects;
-import jdk.internal.access.foreign.MemorySegmentProxy;
 
 /**
 #if[rw]
@@ -59,7 +59,7 @@ class Heap$Type$Buffer$RW$
 #end[rw]
     */
 
-    Heap$Type$Buffer$RW$(int cap, int lim, MemorySegmentProxy segment) {            // package-private
+    Heap$Type$Buffer$RW$(int cap, int lim, MemorySegment segment) {            // package-private
 #if[rw]
         super(-1, 0, lim, cap, new $type$[cap], 0, segment);
         /*
@@ -73,7 +73,7 @@ class Heap$Type$Buffer$RW$
 #end[rw]
     }
 
-    Heap$Type$Buffer$RW$($type$[] buf, int off, int len, MemorySegmentProxy segment) { // package-private
+    Heap$Type$Buffer$RW$($type$[] buf, int off, int len, MemorySegment segment) { // package-private
 #if[rw]
         super(-1, off, off + len, buf.length, buf, 0, segment);
         /*
@@ -89,7 +89,7 @@ class Heap$Type$Buffer$RW$
 
     protected Heap$Type$Buffer$RW$($type$[] buf,
                                    int mark, int pos, int lim, int cap,
-                                   int off, MemorySegmentProxy segment)
+                                   int off, MemorySegment segment)
     {
 #if[rw]
         super(mark, pos, lim, cap, buf, off, segment);

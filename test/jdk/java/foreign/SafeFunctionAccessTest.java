@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2021, 2022, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -23,24 +23,24 @@
 
 /*
  * @test
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @run testng/othervm --enable-native-access=ALL-UNNAMED SafeFunctionAccessTest
  */
 
-import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.NativeSymbol;
-import jdk.incubator.foreign.SymbolLookup;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ResourceScope;
+import java.lang.foreign.Addressable;
+import java.lang.foreign.CLinker;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.NativeSymbol;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ResourceScope;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
-import jdk.incubator.foreign.VaList;
+import java.lang.foreign.VaList;
 import org.testng.annotations.*;
 
 import static org.testng.Assert.*;
@@ -54,8 +54,6 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
             C_INT, C_INT
     );
 
-    static final SymbolLookup LOOKUP = SymbolLookup.loaderLookup();
-
     @Test(expectedExceptions = IllegalStateException.class)
     public void testClosedStruct() throws Throwable {
         MemorySegment segment;
@@ -64,7 +62,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
         }
         assertFalse(segment.scope().isAlive());
         MethodHandle handle = CLinker.systemCLinker().downcallHandle(
-                LOOKUP.lookup("struct_func").get(),
+                findNativeOrThrow(SafeFunctionAccessTest.class,"struct_func"),
                 FunctionDescriptor.ofVoid(POINT));
 
         handle.invokeExact(segment);
@@ -73,7 +71,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     @Test
     public void testClosedStructAddr_6() throws Throwable {
         MethodHandle handle = CLinker.systemCLinker().downcallHandle(
-                LOOKUP.lookup("addr_func_6").get(),
+                findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func_6"),
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
         for (int i = 0 ; i < 6 ; i++) {
             MemorySegment[] segments = new MemorySegment[]{
@@ -115,7 +113,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
         }
         assertFalse(list.scope().isAlive());
         MethodHandle handle = CLinker.systemCLinker().downcallHandle(
-                LOOKUP.lookup("addr_func").get(),
+                findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func"),
                 FunctionDescriptor.ofVoid(C_POINTER));
 
         handle.invokeExact((Addressable)list);
@@ -130,7 +128,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
         }
         assertFalse(upcall.scope().isAlive());
         MethodHandle handle = CLinker.systemCLinker().downcallHandle(
-                LOOKUP.lookup("addr_func").get(),
+                findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func"),
                 FunctionDescriptor.ofVoid(C_POINTER));
 
         handle.invokeExact((Addressable)upcall);
@@ -141,7 +139,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     @Test
     public void testClosedVaListCallback() throws Throwable {
         MethodHandle handle = CLinker.systemCLinker().downcallHandle(
-                LOOKUP.lookup("addr_func_cb").get(),
+                findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func_cb"),
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
 
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
@@ -153,7 +151,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     @Test
     public void testClosedStructCallback() throws Throwable {
         MethodHandle handle = CLinker.systemCLinker().downcallHandle(
-                LOOKUP.lookup("addr_func_cb").get(),
+                findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func_cb"),
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
 
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
@@ -165,7 +163,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     @Test
     public void testClosedUpcallCallback() throws Throwable {
         MethodHandle handle = CLinker.systemCLinker().downcallHandle(
-                LOOKUP.lookup("addr_func_cb").get(),
+                findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func_cb"),
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
 
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {

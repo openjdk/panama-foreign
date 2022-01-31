@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 
 /**
  * @test id=panama_enable_native_access
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
  * @run main/othervm --enable-native-access=panama_module panama_module/org.openjdk.foreigntest.PanamaMain
@@ -32,6 +33,7 @@
 
 /**
  * @test id=panama_enable_native_access_reflection
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
  * @run main/othervm --enable-native-access=panama_module panama_module/org.openjdk.foreigntest.PanamaMainReflection
@@ -40,6 +42,7 @@
 
 /**
  * @test id=panama_enable_native_access_invoke
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
  * @run main/othervm --enable-native-access=panama_module panama_module/org.openjdk.foreigntest.PanamaMainInvoke
@@ -48,6 +51,7 @@
 
 /**
  * @test id=panama_comma_separated_enable
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
  * @run main/othervm --enable-native-access=com.acme,panama_module panama_module/org.openjdk.foreigntest.PanamaMain
@@ -56,6 +60,7 @@
 
 /**
  * @test id=panama_comma_separated_enable_reflection
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
  * @run main/othervm --enable-native-access=com.acme,panama_module panama_module/org.openjdk.foreigntest.PanamaMainReflection
@@ -64,6 +69,7 @@
 
 /**
  * @test id=panama_comma_separated_enable_invoke
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
  * @run main/othervm --enable-native-access=com.acme,panama_module panama_module/org.openjdk.foreigntest.PanamaMainInvoke
@@ -72,6 +78,7 @@
 
 /**
  * @test id=panama_no_enable_native_access_fail
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
  * @run main/othervm/fail panama_module/org.openjdk.foreigntest.PanamaMain
@@ -80,6 +87,7 @@
 
 /**
  * @test id=panama_no_enable_native_access_fail_reflection
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
  * @run main/othervm/fail panama_module/org.openjdk.foreigntest.PanamaMainReflection
@@ -88,6 +96,7 @@
 
 /**
  * @test id=panama_no_enable_native_access_fail_invoke
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
  * @run main/othervm/fail panama_module/org.openjdk.foreigntest.PanamaMainInvoke
@@ -96,6 +105,7 @@
 
 /**
  * @test id=panama_no_all_module_path_blanket_native_access
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
  * @run main/othervm/fail --enable-native-access=ALL-MODULE-PATH panama_module/org.openjdk.foreigntest.PanamaMain
@@ -104,6 +114,7 @@
 
 /**
  * @test id=panama_no_unnamed_module_native_access
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build org.openjdk.foreigntest.PanamaMainUnnamedModule
  * @run testng/othervm/fail org.openjdk.foreigntest.PanamaMainUnnamedModule
@@ -112,6 +123,7 @@
 
 /**
  * @test id=panama_all_unnamed_module_native_access
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build org.openjdk.foreigntest.PanamaMainUnnamedModule
  * @run testng/othervm --enable-native-access=ALL-UNNAMED org.openjdk.foreigntest.PanamaMainUnnamedModule

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,8 +27,8 @@
 
 package java.nio;
 
+import java.lang.foreign.MemorySegment;
 import java.util.Objects;
-import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.misc.Unsafe;
 
 class ByteBufferAs$Type$Buffer$RW$$BO$                  // package-private
@@ -41,7 +41,7 @@ class ByteBufferAs$Type$Buffer$RW$$BO$                  // package-private
 
 #end[rw]
 
-    ByteBufferAs$Type$Buffer$RW$$BO$(ByteBuffer bb, MemorySegmentProxy segment) {   // package-private
+    ByteBufferAs$Type$Buffer$RW$$BO$(ByteBuffer bb, MemorySegment segment) {   // package-private
 #if[rw]
         super(-1, 0,
               bb.remaining() >> $LG_BYTES_PER_VALUE$,
@@ -60,7 +60,7 @@ class ByteBufferAs$Type$Buffer$RW$$BO$                  // package-private
 
     ByteBufferAs$Type$Buffer$RW$$BO$(ByteBuffer bb,
                                      int mark, int pos, int lim, int cap,
-                                     long addr, MemorySegmentProxy segment)
+                                     long addr, MemorySegment segment)
     {
 #if[rw]
         super(mark, pos, lim, cap, segment);

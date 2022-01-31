@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,8 @@
 
 /*
  * @test
- * @modules jdk.incubator.foreign java.base/jdk.internal.vm.annotation java.base/jdk.internal.misc
+ * @enablePreview
+ * @modules java.base/jdk.internal.vm.annotation java.base/jdk.internal.misc
  * @key randomness
  * @run testng/othervm TestHandshake
  * @run testng/othervm -Xint TestHandshake
@@ -31,8 +32,8 @@
  * @run testng/othervm -XX:-TieredCompilation TestHandshake
  */
 
-import jdk.incubator.foreign.MemorySegment;
-
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ResourceScope;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
@@ -44,11 +45,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static jdk.incubator.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static org.testng.Assert.*;
 
 public class TestHandshake {

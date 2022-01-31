@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,8 @@
 
 /*
  * @test
- * @modules jdk.incubator.foreign
- *          java.base/jdk.internal.access.foreign
+ * @enablePreview
+ * @modules java.base/jdk.internal.access.foreign
  *
  * @run testng/othervm -Xverify:all
  *   -Djdk.internal.foreign.SHOULD_ADAPT_HANDLES=false
@@ -46,10 +46,9 @@
  *   VarHandleTestExact
  */
 
-import jdk.incubator.foreign.MemoryHandles;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ResourceScope;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ResourceScope;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import org.testng.SkipException;
 import org.testng.annotations.DataProvider;
@@ -171,7 +170,7 @@ public class VarHandleTestExact {
 
     @Test(dataProvider = "dataSetMemorySegment")
     public void testExactSegmentSet(Class<?> carrier, Object testValue, SetSegmentX setter) {
-        VarHandle vh = MemoryHandles.varHandle(MemoryLayout.valueLayout(carrier, ByteOrder.nativeOrder()));
+        VarHandle vh = MethodHandles.memoryAccessVarHandle(MemoryLayout.valueLayout(carrier, ByteOrder.nativeOrder()));
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment seg = MemorySegment.allocateNative(8, scope);
             doTest(vh,

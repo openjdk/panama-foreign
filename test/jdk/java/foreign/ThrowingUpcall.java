@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,11 +21,10 @@
  * questions.
  */
 
-import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.NativeSymbol;
-import jdk.incubator.foreign.ResourceScope;
-import jdk.incubator.foreign.SymbolLookup;
+import java.lang.foreign.CLinker;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.NativeSymbol;
+import java.lang.foreign.ResourceScope;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -39,13 +38,12 @@ public class ThrowingUpcall extends NativeTestHelper {
 
     static {
         System.loadLibrary("TestUpcall");
-        SymbolLookup lookup = SymbolLookup.loaderLookup();
         downcallVoid = CLinker.systemCLinker().downcallHandle(
-            lookup.lookup("f0_V__").orElseThrow(),
+            ThrowingUpcall.class.getClassLoader().findNative("f0_V__").orElseThrow(),
                 FunctionDescriptor.ofVoid(C_POINTER)
         );
         downcallNonVoid = CLinker.systemCLinker().downcallHandle(
-            lookup.lookup("f10_I_I_").orElseThrow(),
+                ThrowingUpcall.class.getClassLoader().findNative("f10_I_I_").orElseThrow(),
                 FunctionDescriptor.of(C_INT, C_INT, C_POINTER)
         );
 

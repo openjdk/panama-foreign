@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -24,19 +24,20 @@
 
 /*
  * @test
- * @modules jdk.incubator.foreign/jdk.internal.foreign
- *          jdk.incubator.foreign/jdk.internal.foreign.abi
- *          jdk.incubator.foreign/jdk.internal.foreign.abi.x64
- *          jdk.incubator.foreign/jdk.internal.foreign.abi.x64.windows
+ * @enablePreview
+ * @modules java.base/jdk.internal.foreign
+ *          java.base/jdk.internal.foreign.abi
+ *          java.base/jdk.internal.foreign.abi.x64
+ *          java.base/jdk.internal.foreign.abi.x64.windows
  * @build CallArrangerTestBase
  * @run testng TestWindowsCallArranger
  */
 
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeSymbol;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.NativeSymbol;
 import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.x64.windows.CallArranger;
@@ -44,7 +45,7 @@ import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodType;
 
-import static jdk.incubator.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.ADDRESS;
 import static jdk.internal.foreign.PlatformLayouts.Win64.*;
 import static jdk.internal.foreign.abi.Binding.*;
 import static jdk.internal.foreign.abi.Binding.copy;

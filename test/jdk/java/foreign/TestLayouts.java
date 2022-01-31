@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -23,10 +23,11 @@
 
 /*
  * @test
+ * @enablePreview
  * @run testng TestLayouts
  */
 
-import jdk.incubator.foreign.*;
+import java.lang.foreign.*;
 
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
@@ -35,10 +36,10 @@ import java.util.stream.Stream;
 
 import org.testng.annotations.*;
 
-import static jdk.incubator.foreign.ValueLayout.JAVA_BYTE;
-import static jdk.incubator.foreign.ValueLayout.JAVA_INT;
-import static jdk.incubator.foreign.ValueLayout.JAVA_LONG;
-import static jdk.incubator.foreign.ValueLayout.JAVA_SHORT;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
+import static java.lang.foreign.ValueLayout.JAVA_SHORT;
 import static org.testng.Assert.*;
 
 public class TestLayouts {
