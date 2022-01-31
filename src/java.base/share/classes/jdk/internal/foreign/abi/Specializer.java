@@ -67,6 +67,7 @@ public class Specializer {
     private static final boolean PERFORM_VERIFICATION
         = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.abi.Specializer.PERFORM_VERIFICATION");
 
+    // Bunch of helper constants
     private static final int CLASSFILE_VERSION = VM.classFileVersion();
 
     private static final String OBJECT_DESC = Object.class.descriptorString();
@@ -140,35 +141,9 @@ public class Specializer {
     private static final String CLASS_NAME_UPCALL = "jdk/internal/foreign/abi/UpcallStub";
     private static final String METHOD_NAME = "invoke";
 
-    /** Name of its super class*/
     private static final String SUPER_NAME = OBJECT_INTRN;
 
-    private enum BasicType {
-        Z, B, S, C, I, J, F, D, L;
-
-        static BasicType of(Class<?> cls) {
-            if (cls == boolean.class) {
-                return Z;
-            } else if (cls == byte.class) {
-                return B;
-            } else if (cls == short.class) {
-                return S;
-            } else if (cls == char.class) {
-                return C;
-            } else if (cls == int.class) {
-                return I;
-            } else if (cls == long.class) {
-                return J;
-            } else if (cls == float.class) {
-                return F;
-            } else if (cls == double.class) {
-                return D;
-            } else {
-                return L;
-            }
-        }
-    }
-
+    // Instance fields start here
     private final MethodVisitor mv;
     private final MethodType callerMethodType;
     private final CallingSequence callingSequence;
@@ -279,6 +254,7 @@ public class Specializer {
             RETURN_ALLOCATOR_IDX = 0; // first param
         }
 
+        // create a Binding.Context for this call
         if (callingSequence.allocationSize() != 0) {
             emitConst(callingSequence.allocationSize());
             mv.visitMethodInsn(INVOKESTATIC, BINDING_CONTEXT_INTRN, OF_BOUNDED_ALLOCATOR_NAME, OF_BOUNDED_ALLOCATOR_DESC, false);
@@ -290,12 +266,13 @@ public class Specializer {
         CONTEXT_IDX = newLocal(BasicType.L);
         emitStore(BasicType.L, CONTEXT_IDX);
 
+        // in case the call needs a return buffer, allocate it here.
+        // for upcalls the VM wrapper stub allocates the buffer.
         if (callingSequence.needsReturnBuffer() && callingSequence.forDowncall()) {
             emitLoadInteralAllocator();
             emitAllocateCall(callingSequence.returnBufferSize(), 1);
             RETURN_BUFFER_IDX = newLocal(BasicType.L);
             emitStore(BasicType.L, RETURN_BUFFER_IDX);
-            // for upcalls the wrapper stub allocates the buffer
         }
 
         Label tryStart = new Label();
@@ -304,13 +281,18 @@ public class Specializer {
 
         mv.visitLabel(tryStart);
 
+        // stack to keep track of types on the bytecode stack between bindings.
+        // this is needed to e.g. emit the right DUP instruction,
+        // but also used for type checking.
         typeStack = new ArrayDeque<>();
+        // leaf arg types are the types of the args passed to the leaf handle.
+        // these are collected from VM_STORE instructions for downcalls, and
+        // recipe outputs for upcalls (see uses emitSetOutput for both)
         leafArgTypes = new ArrayList<>();
-        // Return buffer does not appear in the parameter list
         paramIndex = callingSequence.forDowncall() ? 1 : 0; // +1 to skip SegmentAllocator
         for (int i = 0; i < callingSequence.argumentBindingsCount(); i++) {
             if (callingSequence.forDowncall()) {
-                // for downcalls we need to pre-load args
+                // for downcalls, recipes have an input value, which we set up here
                 if (callingSequence.needsReturnBuffer() && i == 0) {
                     assert RETURN_BUFFER_IDX != -1;
                     emitLoad(BasicType.L, RETURN_BUFFER_IDX);
@@ -320,17 +302,18 @@ public class Specializer {
                 }
             }
 
+            // emit code according to binding recipe
             doBindings(callingSequence.argumentBindings(i));
 
             if (callingSequence.forUpcall()) {
-                // for upcalls we need to post-store args
+                // for upcalls, recipes have a result, which we handle here
                 if (callingSequence.needsReturnBuffer() && i == 0) {
-                    // return buffer is wrapped above, but not passed to the leaf handle
+                    // return buffer ptr is wrapped in a MemorySegment above, but not passed to the leaf handle
                     assert typeStack.pop() == MemorySegment.class;
                     RETURN_BUFFER_IDX = newLocal(BasicType.L);
                     emitStore(BasicType.L, RETURN_BUFFER_IDX);
                 } else {
-                    // for upcalls the result is an argument to the leaf handle
+                    // for upcalls the recipe result is an argument to the leaf handle
                     emitSetOutput(typeStack.pop());
                 }
             }
@@ -339,21 +322,23 @@ public class Specializer {
 
         assert leafArgTypes.equals(leafType.parameterList());
 
+        // load the leaf MethodHandle
         mv.visitLdcInsn(CLASS_DATA_CONDY);
         mv.visitTypeInsn(CHECKCAST, METHOD_HANDLE_INTRN);
-
-        // now re-load all the low-level args
+        // load all the leaf args
         for (int i = 0; i < leafArgSlots.length; i++) {
             emitLoad(leafArgTypes.get(i), leafArgSlots[i]);
         }
-
         // call leaf MH
         mv.visitMethodInsn(INVOKEVIRTUAL, METHOD_HANDLE_INTRN, INVOKE_EXACT_NAME, leafType.descriptorString(), false);
+
+        // for downcalls, store the result of the leaf handle call away, until
+        // it is requested by a VM_LOAD in the return recipe.
         if (callingSequence.forDowncall() && leafType.returnType() != void.class) {
-            // for upcalls this happens lazily through a VM_STORE
             emitSaveReturnValue(leafType.returnType());
         }
-        // in the case of upcalls we leave the return value on the stack to pick up below
+        // for upcalls we leave the return value on the stack to be picked up
+        // as an input of the return recipe.
 
         // return value processing
         if (callingSequence.hasReturnBindings()) {
@@ -361,7 +346,7 @@ public class Specializer {
                 typeStack.push(leafType.returnType());
             }
 
-            retBufOffset = 0;
+            retBufOffset = 0; // offset for reading from return buffer
             doBindings(callingSequence.returnBindings());
 
             if (callingSequence.forUpcall() && !callingSequence.needsReturnBuffer()) {
@@ -614,7 +599,6 @@ public class Specializer {
         // operand/srcSegment is on the stack
         // copy(MemorySegment srcSegment, long srcOffset, MemorySegment dstSegment, long dstOffset, long bytes)
         emitConst(0L);
-
         // create the dstSegment by allocating it
         // context.allocator().allocate(size, alignment)
         emitLoadInteralAllocator();
@@ -622,7 +606,6 @@ public class Specializer {
         emitDup(BasicType.L);
         int storeIdx = newLocal(BasicType.L);
         emitStore(BasicType.L, storeIdx);
-
         emitConst(0L);
         emitConst(size);
         mv.visitMethodInsn(INVOKESTATIC, MEMORY_SEGMENT_INTRN, COPY_NAME, COPY_DESC, true);
@@ -841,5 +824,31 @@ public class Specializer {
             case D -> DRETURN;
             case L -> ARETURN;
         };
+    }
+
+    private enum BasicType {
+        Z, B, S, C, I, J, F, D, L;
+
+        static BasicType of(Class<?> cls) {
+            if (cls == boolean.class) {
+                return Z;
+            } else if (cls == byte.class) {
+                return B;
+            } else if (cls == short.class) {
+                return S;
+            } else if (cls == char.class) {
+                return C;
+            } else if (cls == int.class) {
+                return I;
+            } else if (cls == long.class) {
+                return J;
+            } else if (cls == float.class) {
+                return F;
+            } else if (cls == double.class) {
+                return D;
+            } else {
+                return L;
+            }
+        }
     }
 }
