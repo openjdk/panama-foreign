@@ -99,7 +99,7 @@ public class ProgrammableInvoker {
         MethodHandle handle = JLIA.nativeMethodHandle(nep);
 
         if (USE_SPEC) {
-            handle = Specializer.specialize(handle, callingSequence, abi);
+            handle = BindingSpecializer.specialize(handle, callingSequence, abi);
          } else {
             Map<VMStorage, Integer> argIndexMap = SharedUtils.indexMap(argMoves);
             Map<VMStorage, Integer> retIndexMap = SharedUtils.indexMap(retMoves);

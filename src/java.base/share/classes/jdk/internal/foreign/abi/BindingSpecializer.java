@@ -61,7 +61,7 @@ import java.util.List;
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
-public class Specializer {
+public class BindingSpecializer {
     private static final String DUMP_CLASSES_DIR
         = GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.abi.Specializer.DUMP_CLASSES_DIR");
     private static final boolean PERFORM_VERIFICATION
@@ -75,61 +75,44 @@ public class Specializer {
 
     private static final String BINDING_CONTEXT_DESC = Binding.Context.class.descriptorString();
     private static final String BINDING_CONTEXT_INTRN = Type.getInternalName(Binding.Context.class);
-    private static final String OF_BOUNDED_ALLOCATOR_NAME = "ofBoundedAllocator";
     private static final String OF_BOUNDED_ALLOCATOR_DESC = methodType(Binding.Context.class, long.class).descriptorString();
-    private static final String OF_SCOPE_NAME = "ofScope";
     private static final String OF_SCOPE_DESC = methodType(Binding.Context.class).descriptorString();
-    private static final String DUMMY_CONTEXT_NAME = "DUMMY";
-    private static final String ALLOCATOR_NAME = "allocator";
     private static final String ALLOCATOR_DESC = methodType(SegmentAllocator.class).descriptorString();
-    private static final String SCOPE_NAME = "scope";
     private static final String SCOPE_DESC = methodType(ResourceScope.class).descriptorString();
-    private static final String CLOSE_NAME = "close";
     private static final String CLOSE_DESC = methodType(void.class).descriptorString();
 
     private static final String ADDRESSABLE_INTRN = Type.getInternalName(Addressable.class);
-    private static final String ADDRESS_NAME = "address";
     private static final String ADDRESS_DESC = methodType(MemoryAddress.class).descriptorString();
 
     private static final String MEMORY_SEGMENT_INTRN = Type.getInternalName(MemorySegment.class);
-    private static final String GET_NAME = "get";
-    private static final String SET_NAME = "set";
-    private static final String COPY_NAME = "copy";
     private static final String COPY_DESC = methodType(void.class, MemorySegment.class, long.class, MemorySegment.class, long.class, long.class).descriptorString();
 
     private static final String MEMORY_ADDRESS_INTRN = Type.getInternalName(MemoryAddress.class);
-    private static final String TO_RAW_LONG_VALUE_NAME = "toRawLongValue";
     private static final String TO_RAW_LONG_VALUE_DESC = methodType(long.class).descriptorString();
-    private static final String OF_LONG_NAME = "ofLong";
     private static final String OF_LONG_DESC = methodType(MemoryAddress.class, long.class).descriptorString();
 
     private static final String MEMORY_ADDRESS_IMPL_INTRN = Type.getInternalName(MemoryAddressImpl.class);
-    private static final String OF_LONG_UNCHECKED_NAME = "ofLongUnchecked";
     private static final String OF_LONG_UNCHECKED_DESC = methodType(MemorySegment.class, long.class, long.class, ResourceScopeImpl.class).descriptorString();
 
     private static final String VALUE_LAYOUT_INTRN = Type.getInternalName(ValueLayout.class);
 
     private static final String SEGMENT_ALLOCATOR_INTRN = Type.getInternalName(SegmentAllocator.class);
-    private static final String ALLOCATE_NAME = "allocate";
     private static final String ALLOCATE_DESC = methodType(MemorySegment.class, long.class, long.class).descriptorString();
 
     private static final String RESOURCE_SCOPE_IMPL_INTRN = Type.getInternalName(ResourceScopeImpl.class);
 
     private static final String SHARED_UTILS_INTRN = Type.getInternalName(SharedUtils.class);
-    private static final String HANDLE_UNCAUGHT_EXCEPTION_NAME = "handleUncaughtException";
     private static final String HANDLE_UNCAUGHT_EXCEPTION_DESC = methodType(void.class, Throwable.class).descriptorString();
 
     private static final String METHOD_HANDLES_INTRN = Type.getInternalName(MethodHandles.class);
-    private static final String CLASS_DATA_NAME = "classData";
     private static final String CLASS_DATA_DESC = methodType(Object.class, MethodHandles.Lookup.class, String.class, Class.class).descriptorString();
 
     private static final String METHOD_HANDLE_INTRN = Type.getInternalName(MethodHandle.class);
-    private static final String INVOKE_EXACT_NAME = "invokeExact";
 
     private static final Handle BSM_CLASS_DATA = new Handle(
             H_INVOKESTATIC,
             METHOD_HANDLES_INTRN,
-            CLASS_DATA_NAME,
+            "classData",
             CLASS_DATA_DESC,
             false);
     private static final ConstantDynamic CLASS_DATA_CONDY = new ConstantDynamic(
@@ -162,7 +145,7 @@ public class Specializer {
     private int paramIndex;
     private long retBufOffset; // for needsReturnBuffer
 
-    private Specializer(MethodVisitor mv, MethodType callerMethodType, CallingSequence callingSequence, ABIDescriptor abi, MethodType leafType) {
+    private BindingSpecializer(MethodVisitor mv, MethodType callerMethodType, CallingSequence callingSequence, ABIDescriptor abi, MethodType leafType) {
         this.mv = mv;
         this.callerMethodType = callerMethodType;
         this.callingSequence = callingSequence;
@@ -185,7 +168,7 @@ public class Specializer {
         String descriptor = callerMethodType.descriptorString();
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, METHOD_NAME, descriptor, null, null);
 
-        new Specializer(mv, callerMethodType, callingSequence, abi, leafHandle.type()).specialize();
+        new BindingSpecializer(mv, callerMethodType, callingSequence, abi, leafHandle.type()).specialize();
 
         mv.visitMaxs(0, 0);
         mv.visitEnd();
@@ -257,11 +240,11 @@ public class Specializer {
         // create a Binding.Context for this call
         if (callingSequence.allocationSize() != 0) {
             emitConst(callingSequence.allocationSize());
-            mv.visitMethodInsn(INVOKESTATIC, BINDING_CONTEXT_INTRN, OF_BOUNDED_ALLOCATOR_NAME, OF_BOUNDED_ALLOCATOR_DESC, false);
+            emitInvokeStatic(BINDING_CONTEXT_INTRN, "ofBoundedAllocator", OF_BOUNDED_ALLOCATOR_DESC);
         } else if (callingSequence.forDowncall()) {
-            mv.visitFieldInsn(GETSTATIC, BINDING_CONTEXT_INTRN, DUMMY_CONTEXT_NAME, BINDING_CONTEXT_DESC);
+            emitGetStatic(BINDING_CONTEXT_INTRN, "DUMMY", BINDING_CONTEXT_DESC);
         } else {
-            mv.visitMethodInsn(INVOKESTATIC, BINDING_CONTEXT_INTRN, OF_SCOPE_NAME, OF_SCOPE_DESC, false);
+            emitInvokeStatic(BINDING_CONTEXT_INTRN, "ofScope", OF_SCOPE_DESC);
         }
         CONTEXT_IDX = newLocal(BasicType.L);
         emitStore(BasicType.L, CONTEXT_IDX);
@@ -269,7 +252,7 @@ public class Specializer {
         // in case the call needs a return buffer, allocate it here.
         // for upcalls the VM wrapper stub allocates the buffer.
         if (callingSequence.needsReturnBuffer() && callingSequence.forDowncall()) {
-            emitLoadInteralAllocator();
+            emitLoadInternalAllocator();
             emitAllocateCall(callingSequence.returnBufferSize(), 1);
             RETURN_BUFFER_IDX = newLocal(BasicType.L);
             emitStore(BasicType.L, RETURN_BUFFER_IDX);
@@ -330,7 +313,7 @@ public class Specializer {
             emitLoad(leafArgTypes.get(i), leafArgSlots[i]);
         }
         // call leaf MH
-        mv.visitMethodInsn(INVOKEVIRTUAL, METHOD_HANDLE_INTRN, INVOKE_EXACT_NAME, leafType.descriptorString(), false);
+        emitInvokeVirtual(METHOD_HANDLE_INTRN, "invokeExact", leafType.descriptorString());
 
         // for downcalls, store the result of the leaf handle call away, until
         // it is requested by a VM_LOAD in the return recipe.
@@ -381,7 +364,7 @@ public class Specializer {
         if (callingSequence.forDowncall()) {
             mv.visitInsn(ATHROW);
         } else {
-           mv.visitMethodInsn(INVOKESTATIC, SHARED_UTILS_INTRN, HANDLE_UNCAUGHT_EXCEPTION_NAME, HANDLE_UNCAUGHT_EXCEPTION_DESC, false);
+           emitInvokeStatic(SHARED_UTILS_INTRN, "handleUncaughtException", HANDLE_UNCAUGHT_EXCEPTION_DESC);
            if (callerMethodType.returnType() != void.class) {
                emitConstZero(callerMethodType.returnType());
                emitReturn(callerMethodType.returnType());
@@ -446,19 +429,19 @@ public class Specializer {
     private void emitLoadInternalScope() {
         assert CONTEXT_IDX != -1;
         emitLoad(BasicType.L, CONTEXT_IDX);
-        mv.visitMethodInsn(INVOKEVIRTUAL, BINDING_CONTEXT_INTRN, SCOPE_NAME, SCOPE_DESC, false);
+        emitInvokeVirtual(BINDING_CONTEXT_INTRN, "scope", SCOPE_DESC);
     }
 
-    private void emitLoadInteralAllocator() {
+    private void emitLoadInternalAllocator() {
         assert CONTEXT_IDX != -1;
         emitLoad(BasicType.L, CONTEXT_IDX);
-        mv.visitMethodInsn(INVOKEVIRTUAL, BINDING_CONTEXT_INTRN, ALLOCATOR_NAME, ALLOCATOR_DESC, false);
+        emitInvokeVirtual(BINDING_CONTEXT_INTRN, "allocator", ALLOCATOR_DESC);
     }
 
     private void emitCloseContext() {
         assert CONTEXT_IDX != -1;
         emitLoad(BasicType.L, CONTEXT_IDX);
-        mv.visitMethodInsn(INVOKEVIRTUAL, BINDING_CONTEXT_INTRN, CLOSE_NAME, CLOSE_DESC, false);
+        emitInvokeVirtual(BINDING_CONTEXT_INTRN, "close", CLOSE_DESC);
     }
 
     private void emitToSegment(Binding.ToSegment binding) {
@@ -469,18 +452,18 @@ public class Specializer {
         emitConst(size);
         emitLoadInternalScope();
         mv.visitTypeInsn(CHECKCAST, RESOURCE_SCOPE_IMPL_INTRN);
-        mv.visitMethodInsn(INVOKESTATIC, MEMORY_ADDRESS_IMPL_INTRN, OF_LONG_UNCHECKED_NAME, OF_LONG_UNCHECKED_DESC, false);
+        emitInvokeStatic(MEMORY_ADDRESS_IMPL_INTRN, "ofLongUnchecked", OF_LONG_UNCHECKED_DESC);
 
         typeStack.push(MemorySegment.class);
     }
 
     private void emitToRawLongValue() {
-        mv.visitMethodInsn(INVOKEINTERFACE, MEMORY_ADDRESS_INTRN, TO_RAW_LONG_VALUE_NAME, TO_RAW_LONG_VALUE_DESC, true);
+        emitInvokeInterface(MEMORY_ADDRESS_INTRN, "toRawLongValue", TO_RAW_LONG_VALUE_DESC);
     }
 
     private void emitBoxAddress() {
         assert typeStack.pop() == long.class;
-        mv.visitMethodInsn(INVOKESTATIC, MEMORY_ADDRESS_INTRN, OF_LONG_NAME, OF_LONG_DESC, true);
+        emitInvokeInterfaceStatic(MEMORY_ADDRESS_INTRN, "ofLong", OF_LONG_DESC);
         typeStack.push(MemoryAddress.class);
     }
 
@@ -489,7 +472,7 @@ public class Specializer {
             assert RETURN_ALLOCATOR_IDX != -1;
             emitLoad(BasicType.L, RETURN_ALLOCATOR_IDX);
         } else {
-            emitLoadInteralAllocator();
+            emitLoadInternalAllocator();
         }
         emitAllocateCall(binding.size(), binding.alignment());
         typeStack.push(MemorySegment.class);
@@ -509,7 +492,7 @@ public class Specializer {
         emitConst(offset);
         emitLoad(basicStoreType, valueIdx);
         String descriptor = methodType(void.class, valueLayoutType, long.class, storeType).descriptorString();
-        mv.visitMethodInsn(INVOKEINTERFACE, MEMORY_SEGMENT_INTRN, SET_NAME, descriptor, true);
+        emitInvokeInterface(MEMORY_SEGMENT_INTRN, "set", descriptor);
     }
 
     // VM_STORE and VM_LOAD are emulated, which is different for down/upcalls
@@ -536,7 +519,7 @@ public class Specializer {
                 emitConst(retBufOffset);
                 emitLoad(basicStoreType, valueIdx);
                 String descriptor = methodType(void.class, valueLayoutType, long.class, storeType).descriptorString();
-                mv.visitMethodInsn(INVOKEINTERFACE, MEMORY_SEGMENT_INTRN, SET_NAME, descriptor, true);
+                emitInvokeInterface(MEMORY_SEGMENT_INTRN, "set", descriptor);
                 retBufOffset += abi.arch.typeSize(vmStore.storage().type());
             }
         }
@@ -554,7 +537,7 @@ public class Specializer {
                 Class<?> valueLayoutType = emitLoadLayoutConstant(loadType);
                 emitConst(retBufOffset);
                 String descriptor = methodType(loadType, valueLayoutType, long.class).descriptorString();
-                mv.visitMethodInsn(INVOKEINTERFACE, MEMORY_SEGMENT_INTRN, GET_NAME, descriptor, true);
+                emitInvokeInterface(MEMORY_SEGMENT_INTRN, "get", descriptor);
                 retBufOffset += abi.arch.typeSize(vmLoad.storage().type());
                 typeStack.push(loadType);
             }
@@ -572,7 +555,7 @@ public class Specializer {
 
     private void emitUnboxAddress() {
         assert Addressable.class.isAssignableFrom(typeStack.pop());
-        mv.visitMethodInsn(INVOKEINTERFACE, ADDRESSABLE_INTRN, ADDRESS_NAME, ADDRESS_DESC, true);
+        emitInvokeInterface(ADDRESSABLE_INTRN, "address", ADDRESS_DESC);
         emitToRawLongValue();
         typeStack.push(long.class);
     }
@@ -586,7 +569,7 @@ public class Specializer {
         Class<?> valueLayoutType = emitLoadLayoutConstant(loadType);
         emitConst(offset);
         String descriptor = methodType(loadType, valueLayoutType, long.class).descriptorString();
-        mv.visitMethodInsn(INVOKEINTERFACE, MEMORY_SEGMENT_INTRN, GET_NAME, descriptor, true);
+        emitInvokeInterface(MEMORY_SEGMENT_INTRN, "get", descriptor);
         typeStack.push(loadType);
     }
 
@@ -597,18 +580,19 @@ public class Specializer {
         assert typeStack.pop() == MemorySegment.class;
 
         // operand/srcSegment is on the stack
-        // copy(MemorySegment srcSegment, long srcOffset, MemorySegment dstSegment, long dstOffset, long bytes)
+        // generating a call to:
+        //   MemorySegment::copy(MemorySegment srcSegment, long srcOffset, MemorySegment dstSegment, long dstOffset, long bytes)
         emitConst(0L);
-        // create the dstSegment by allocating it
-        // context.allocator().allocate(size, alignment)
-        emitLoadInteralAllocator();
+        // create the dstSegment by allocating it. Similar to:
+        //   context.allocator().allocate(size, alignment)
+        emitLoadInternalAllocator();
         emitAllocateCall(size, alignment);
         emitDup(BasicType.L);
         int storeIdx = newLocal(BasicType.L);
         emitStore(BasicType.L, storeIdx);
         emitConst(0L);
         emitConst(size);
-        mv.visitMethodInsn(INVOKESTATIC, MEMORY_SEGMENT_INTRN, COPY_NAME, COPY_DESC, true);
+        emitInvokeInterfaceStatic(MEMORY_SEGMENT_INTRN, "copy", COPY_DESC);
 
         emitLoad(BasicType.L, storeIdx);
         typeStack.push(MemorySegment.class);
@@ -617,13 +601,13 @@ public class Specializer {
     private void emitAllocateCall(long size, long alignment) {
         emitConst(size);
         emitConst(alignment);
-        mv.visitMethodInsn(INVOKEINTERFACE, SEGMENT_ALLOCATOR_INTRN, ALLOCATE_NAME, ALLOCATE_DESC, true);
+        emitInvokeInterface(SEGMENT_ALLOCATOR_INTRN, "allocate", ALLOCATE_DESC);
     }
 
     private Class<?> emitLoadLayoutConstant(Class<?> type) {
         Class<?> valueLayoutType = valueLayoutTypeFor(type);
         String valueLayoutConstantName = valueLayoutConstantFor(type);
-        mv.visitFieldInsn(GETSTATIC, VALUE_LAYOUT_INTRN, valueLayoutConstantName, valueLayoutType.descriptorString());
+        emitGetStatic(VALUE_LAYOUT_INTRN, valueLayoutConstantName, valueLayoutType.descriptorString());
         return valueLayoutType;
     }
 
@@ -673,6 +657,26 @@ public class Specializer {
         } else {
             throw new IllegalStateException("Unknown type: " + type);
         }
+    }
+
+    private void emitInvokeStatic(String ownerInternalName, String methodName, String descriptor) {
+        mv.visitMethodInsn(INVOKESTATIC, ownerInternalName, methodName, descriptor, false);
+    }
+
+    private void emitInvokeInterfaceStatic(String ownerInternalName, String methodName, String descriptor) {
+        mv.visitMethodInsn(INVOKESTATIC, ownerInternalName, methodName, descriptor, true);
+    }
+
+    private void emitInvokeInterface(String ownerInternalName, String methodName, String descriptor) {
+        mv.visitMethodInsn(INVOKEINTERFACE, ownerInternalName, methodName, descriptor, true);
+    }
+
+    private void emitInvokeVirtual(String ownerInternalName, String methodName, String descriptor) {
+        mv.visitMethodInsn(INVOKEVIRTUAL, ownerInternalName, methodName, descriptor, false);
+    }
+
+    private void emitGetStatic(String ownerInternalName, String fieldName, String descriptor) {
+        mv.visitFieldInsn(GETSTATIC, ownerInternalName, fieldName, descriptor);
     }
 
     private void emitDup(BasicType type) {

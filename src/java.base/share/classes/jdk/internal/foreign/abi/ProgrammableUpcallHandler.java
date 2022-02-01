@@ -25,7 +25,6 @@
 
 package jdk.internal.foreign.abi;
 
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.NativeSymbol;
 import sun.security.action.GetPropertyAction;
@@ -73,7 +72,7 @@ public class ProgrammableUpcallHandler {
 
         MethodHandle doBindings;
         if (USE_SPEC) {
-            doBindings = Specializer.specialize(target, callingSequence, abi);
+            doBindings = BindingSpecializer.specialize(target, callingSequence, abi);
             assert doBindings.type() == llType;
         } else {
             Map<VMStorage, Integer> argIndices = SharedUtils.indexMap(argMoves);
