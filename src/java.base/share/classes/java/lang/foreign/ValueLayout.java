@@ -29,6 +29,7 @@ import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -104,10 +105,11 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     @Override
     public String toString() {
-        return decorateLayoutString(String.format("%s%d(%s)",
-                order == ByteOrder.BIG_ENDIAN ? "B" : "b",
-                bitSize(),
-                carrier == MemoryAddress.class ? "MA" : carrier.descriptorString()));
+        char descriptor = carrier == MemoryAddress.class ? 'A' : carrier.descriptorString().charAt(0);
+        if (order == ByteOrder.LITTLE_ENDIAN) {
+            descriptor = Character.toLowerCase(descriptor);
+        }
+        return decorateLayoutString(String.format("%s%d", descriptor, bitSize()));
     }
 
     @Override
