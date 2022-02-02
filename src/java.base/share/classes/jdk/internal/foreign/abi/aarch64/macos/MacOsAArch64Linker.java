@@ -25,7 +25,6 @@
  */
 package jdk.internal.foreign.abi.aarch64.macos;
 
-import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.NativeSymbol;
@@ -33,16 +32,16 @@ import java.lang.foreign.ResourceScope;
 import java.lang.foreign.VaList;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.util.Objects;
 import java.util.function.Consumer;
-import jdk.internal.foreign.abi.SharedUtils;
+
+import jdk.internal.foreign.abi.AbstractLinker;
 import jdk.internal.foreign.abi.aarch64.CallArranger;
 
 /**
  * ABI implementation for macOS on Apple silicon. Based on AAPCS with
  * changes to va_list and passing arguments on the stack.
  */
-public final class MacOsAArch64Linker implements CLinker {
+public final class MacOsAArch64Linker extends AbstractLinker {
     private static MacOsAArch64Linker instance;
 
     static final long ADDRESS_SIZE = 64; // bits
@@ -55,24 +54,13 @@ public final class MacOsAArch64Linker implements CLinker {
     }
 
     @Override
-    public final MethodHandle downcallHandle(FunctionDescriptor function) {
-        Objects.requireNonNull(function);
-        MethodType type = SharedUtils.inferMethodType(function, false);
-        MethodHandle handle = CallArranger.MACOS.arrangeDowncall(type, function);
-        handle = SharedUtils.maybeInsertAllocator(handle);
-        return SharedUtils.wrapDowncall(handle, function);
+    protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function) {
+        return CallArranger.MACOS.arrangeDowncall(inferredMethodType, function);
     }
 
     @Override
-    public final NativeSymbol upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope) {
-        Objects.requireNonNull(scope);
-        Objects.requireNonNull(target);
-        Objects.requireNonNull(function);
-        MethodType type = SharedUtils.inferMethodType(function, true);
-        if (!type.equals(target.type())) {
-            throw new IllegalArgumentException("Wrong method handle type: " + target.type());
-        }
-        return CallArranger.MACOS.arrangeUpcall(target, target.type(), function, scope);
+    protected NativeSymbol arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, ResourceScope scope) {
+        return CallArranger.MACOS.arrangeUpcall(target, targetType, function, scope);
     }
 
     public static VaList newVaList(Consumer<VaList.Builder> actions, ResourceScope scope) {

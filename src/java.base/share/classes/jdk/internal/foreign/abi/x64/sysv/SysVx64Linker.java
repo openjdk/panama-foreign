@@ -25,7 +25,6 @@
 package jdk.internal.foreign.abi.x64.sysv;
 
 
-import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.NativeSymbol;
@@ -33,14 +32,14 @@ import java.lang.foreign.ResourceScope;
 import java.lang.foreign.VaList;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.util.Objects;
 import java.util.function.Consumer;
-import jdk.internal.foreign.abi.SharedUtils;
+
+import jdk.internal.foreign.abi.AbstractLinker;
 
 /**
  * ABI implementation based on System V ABI AMD64 supplement v.0.99.6
  */
-public final class SysVx64Linker implements CLinker {
+public final class SysVx64Linker extends AbstractLinker {
     public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 6;
     public static final int MAX_INTEGER_RETURN_REGISTERS = 2;
     public static final int MAX_VECTOR_ARGUMENT_REGISTERS = 8;
@@ -58,32 +57,20 @@ public final class SysVx64Linker implements CLinker {
         return instance;
     }
 
+    @Override
+    protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function) {
+        return CallArranger.arrangeDowncall(inferredMethodType, function);
+    }
+
+    @Override
+    protected NativeSymbol arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, ResourceScope scope) {
+        return CallArranger.arrangeUpcall(target, targetType, function, scope);
+    }
+
     public static VaList newVaList(Consumer<VaList.Builder> actions, ResourceScope scope) {
         SysVVaList.Builder builder = SysVVaList.builder(scope);
         actions.accept(builder);
         return builder.build();
-    }
-
-    @Override
-    public final MethodHandle downcallHandle(FunctionDescriptor function) {
-        Objects.requireNonNull(function);
-        MethodType type = SharedUtils.inferMethodType(function, false);
-        MethodHandle handle = CallArranger.arrangeDowncall(type, function);
-        handle = SharedUtils.maybeInsertAllocator(handle);
-        return SharedUtils.wrapDowncall(handle, function);
-    }
-
-    @Override
-    public final NativeSymbol upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope) {
-        Objects.requireNonNull(scope);
-        Objects.requireNonNull(target);
-        Objects.requireNonNull(function);
-        SharedUtils.checkExceptions(target);
-        MethodType type = SharedUtils.inferMethodType(function, true);
-        if (!type.equals(target.type())) {
-            throw new IllegalArgumentException("Wrong method handle type: " + target.type());
-        }
-        return CallArranger.arrangeUpcall(target, target.type(), function, scope);
     }
 
     public static VaList newVaListOfAddress(MemoryAddress ma, ResourceScope scope) {
