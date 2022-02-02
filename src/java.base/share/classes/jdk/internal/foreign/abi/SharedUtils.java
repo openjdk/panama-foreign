@@ -347,52 +347,6 @@ public class SharedUtils {
         }
     }
 
-    static MethodHandle wrapWithAllocator(MethodHandle specializedHandle,
-                                          int allocatorPos, long allocationSize,
-                                          boolean upcall) {
-        // insert try-finally to close the NativeScope used for Binding.Copy
-        MethodHandle closer;
-        int insertPos;
-        if (specializedHandle.type().returnType() == void.class) {
-            if (!upcall) {
-                closer = empty(methodType(void.class, Throwable.class)); // (Throwable) -> void
-            } else {
-                closer = MH_HANDLE_UNCAUGHT_EXCEPTION;
-            }
-            insertPos = 1;
-        } else {
-            closer = identity(specializedHandle.type().returnType()); // (V) -> V
-            if (!upcall) {
-                closer = dropArguments(closer, 0, Throwable.class); // (Throwable, V) -> V
-            } else {
-                closer = collectArguments(closer, 0, MH_HANDLE_UNCAUGHT_EXCEPTION); // (Throwable, V) -> V
-            }
-            insertPos = 2;
-        }
-
-        // downcalls get the leading SegmentAllocator param as well
-        if (!upcall) {
-            closer = dropArguments(closer, insertPos++, SegmentAllocator.class); // (Throwable, V?, SegmentAllocator, NativeSymbol) -> V/void
-        }
-
-        closer = collectArguments(closer, insertPos, MH_CLOSE_CONTEXT); // (Throwable, V?, SegmentAllocator?, BindingContext) -> V/void
-
-        MethodHandle contextFactory;
-
-        if (allocationSize > 0) {
-            contextFactory = MethodHandles.insertArguments(MH_MAKE_CONTEXT_BOUNDED_ALLOCATOR, 0, allocationSize);
-        } else if (upcall) {
-            contextFactory = MH_MAKE_CONTEXT_NO_ALLOCATOR;
-        } else {
-            // this path is probably never used now, since ProgrammableInvoker never calls this routine with bufferCopySize == 0
-            contextFactory = constant(Binding.Context.class, Binding.Context.DUMMY);
-        }
-
-        specializedHandle = tryFinally(specializedHandle, closer);
-        specializedHandle = collectArguments(specializedHandle, allocatorPos, contextFactory);
-        return specializedHandle;
-    }
-
     @ForceInline
     @SuppressWarnings("fallthrough")
     public static void acquire(Scoped[] args) {
