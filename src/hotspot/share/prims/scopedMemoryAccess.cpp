@@ -160,13 +160,12 @@ JVM_END
 
 #define MEMACCESS "ScopedMemoryAccess"
 #define SCOPE PKG_FOREIGN "ResourceScope;"
-#define SCOPED_ERR PKG_MISC MEMACCESS "$ScopedAccessError;"
 
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 
 static JNINativeMethod jdk_internal_misc_ScopedMemoryAccess_methods[] = {
-    {CC "closeScope0",   CC "(" SCOPE SCOPED_ERR ")Z",           FN_PTR(ScopedMemoryAccess_closeScope)},
+    {CC "closeScope0",   CC "(" SCOPE ")Z",           FN_PTR(ScopedMemoryAccess_closeScope)},
 };
 
 #undef CC
@@ -176,7 +175,6 @@ static JNINativeMethod jdk_internal_misc_ScopedMemoryAccess_methods[] = {
 #undef PKG_FOREIGN
 #undef MEMACCESS
 #undef SCOPE
-#undef SCOPED_ERR
 
 // This function is exported, used by NativeLookup.
 
