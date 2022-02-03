@@ -70,15 +70,13 @@ public:
 
 class CloseScopedMemoryClosure : public HandshakeClosure {
   jobject _deopt;
-  jobject _exception;
 
 public:
   jboolean _found;
 
-  CloseScopedMemoryClosure(jobject deopt, jobject exception)
+  CloseScopedMemoryClosure(jobject deopt)
     : HandshakeClosure("CloseScopedMemory")
     , _deopt(deopt)
-    , _exception(exception)
     , _found(false) {}
 
   void do_thread(Thread* thread) {
@@ -147,8 +145,8 @@ public:
  * a less common slow path instead.
  * Top frames containg obj will be deoptimized.
  */
-JVM_ENTRY(jboolean, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, jobject deopt, jobject exception))
-  CloseScopedMemoryClosure cl(deopt, exception);
+JVM_ENTRY(jboolean, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, jobject deopt))
+  CloseScopedMemoryClosure cl(deopt);
   Handshake::execute(&cl);
   return !cl._found;
 JVM_END
