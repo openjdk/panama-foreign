@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @enablePreview
  * @modules jdk.incubator.vector java.base/jdk.internal.vm.annotation
  * @run testng/othervm --add-opens jdk.incubator.vector/jdk.incubator.vector=ALL-UNNAMED
  *      -XX:-TieredCompilation FloatMaxVectorLoadStoreTests
