@@ -79,8 +79,7 @@ import jdk.internal.ref.CleanerFactory;
  *     <li>heap segments created from {@linkplain MemorySegment#ofArray(int[]) arrays} or
  *     {@linkplain MemorySegment#ofByteBuffer(ByteBuffer) buffers};</li>
  *     <li>variable arity lists {@linkplain VaList#ofAddress(MemoryAddress, ResourceScope) obtained} from raw memory addresses;
- *     <li>native symbols {@linkplain SymbolLookup#lookup(String) obtained} from a {@linkplain SymbolLookup#loaderLookup() loader lookup},
- *     or from the {@link CLinker}.</li>
+ *     <li>native symbols obtained from {@linkplain ClassLoader#findNative(String)}, or from {@link CLinker#lookup(String)}.</li>
  * </ul>
  * In other words, the global scope is used to indicate that the lifecycle of one or more resources must, where
  * needed, be managed independently by clients.

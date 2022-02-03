@@ -30,7 +30,7 @@
  * <h2>Foreign memory access</h2>
  *
  * <p>
- * The main abstraction introduced to support foreign memory access is {@link jdk.incubator.foreign.MemorySegment}, which
+ * The main abstraction introduced to support foreign memory access is {@link java.lang.foreign.MemorySegment}, which
  * models a contiguous memory region, which can reside either inside or outside the Java heap.
  * A memory segment represents the main access coordinate of a memory access var handle, which can be obtained
  * using the combinator methods defined in the {@link java.lang.invoke.MethodHandles} class; a set of
@@ -97,10 +97,10 @@
  * operation either succeeds - and accesses a valid memory location - or fails.
  *
  * <h2>Foreign function access</h2>
- * The key abstractions introduced to support foreign function access are {@link java.lang.foreign.SymbolLookup},
- * {@link java.lang.foreign.MemoryAddress} and {@link java.lang.foreign.CLinker}.
- * The first is used to look up symbols inside native libraries; the second is used to model native addresses (more on that later),
- * while the third provides linking capabilities which allows modelling foreign functions as {@link java.lang.invoke.MethodHandle} instances,
+ * The key abstractions introduced to support foreign function access are {@link java.lang.foreign.MemoryAddress} and
+ * {@link java.lang.foreign.CLinker}.
+ * The first is used to model native addresses (more on that later), while the second provides linking capabilities
+ * which allows modelling foreign functions as {@link java.lang.invoke.MethodHandle} instances,
  * so that clients can perform foreign function calls directly in Java, without the need for intermediate layers of native
  * code (as is the case with the <a href="{@docRoot}/../specs/jni/index.html">Java Native Interface (JNI)</a>).
  * <p>
@@ -217,11 +217,11 @@
  * <h2>Restricted methods</h2>
  * Some methods in this package are considered <em>restricted</em>. Restricted methods are typically used to bind native
  * foreign data and/or functions to first-class Java API elements which can then be used directly by clients. For instance
- * the restricted method {@link MemorySegment#ofAddress(MemoryAddress, long, ResourceScope)}
+ * the restricted method {@link java.lang.foreign.MemorySegment#ofAddress(MemoryAddress, long, ResourceScope)}
  * can be used to create a fresh segment with given spatial bounds out of a native address.
  * <p>
  * Binding foreign data and/or functions is generally unsafe and, if done incorrectly, can result in VM crashes, or memory corruption when the bound Java API element is accessed.
- * For instance, in the case of {@link MemorySegment#ofAddress(MemoryAddress, long, ResourceScope)},
+ * For instance, in the case of {@link java.lang.foreign.MemorySegment#ofAddress(MemoryAddress, long, ResourceScope)},
  * if the provided spatial bounds are incorrect, a client of the segment returned by that method might crash the VM, or corrupt
  * memory when attempting to dereference said segment. For these reasons, it is crucial for code that calls a restricted method
  * to never pass arguments that might cause incorrect binding of foreign data and/or functions to a Java API.
