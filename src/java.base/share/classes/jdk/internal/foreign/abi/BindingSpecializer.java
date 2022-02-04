@@ -150,7 +150,7 @@ public class BindingSpecializer {
 
         new BindingSpecializer(mv, callerMethodType, callingSequence, abi, leafHandle.type()).specialize();
 
-        mv.visitMaxs(-1, -1);
+        mv.visitMaxs(0, 0);
         mv.visitEnd();
 
         cw.visitEnd();
@@ -218,7 +218,7 @@ public class BindingSpecializer {
         }
         return found;
     }
-    
+
     // specialization
 
     private void specialize() {
