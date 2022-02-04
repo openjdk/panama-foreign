@@ -57,6 +57,9 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
@@ -205,19 +208,22 @@ public class BindingSpecializer {
         typeStack.push(type);
     }
 
-    private Class<?> popType() {
-        return typeStack.pop();
+    private Class<?> popType(Class<?> expected) {
+        return popType(expected, ASSERT_EQUALS);
     }
 
-    private Class<?> popType(Class<?> expected) {
+    private Class<?> popType(Class<?> expected, BiPredicate<Class<?>, Class<?>> typePredicate) {
         Class<?> found;
-        if ((found = popType()) != expected) {
+        if (!typePredicate.test(expected, found = typeStack.pop())) {
             throw new IllegalStateException(
                     String.format("Invalid type on binding operand stack; found %s - expected %s",
                             found.descriptorString(), expected.descriptorString()));
         }
         return found;
     }
+
+    private static final BiPredicate<Class<?>, Class<?>> ASSERT_EQUALS = Class::equals;
+    private static final BiPredicate<Class<?>, Class<?>> ASSERT_ASSIGNABLE = Class::isAssignableFrom;
 
     // specialization
 
@@ -556,8 +562,7 @@ public class BindingSpecializer {
     }
 
     private void emitUnboxAddress() {
-        Class<?> stackType = popType();
-        assert Addressable.class.isAssignableFrom(stackType);
+        popType(Addressable.class, ASSERT_ASSIGNABLE);
         emitInvokeInterface(Addressable.class, "address", ADDRESS_DESC);
         emitToRawLongValue();
         pushType(long.class);
