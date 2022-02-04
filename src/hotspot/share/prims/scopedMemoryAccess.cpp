@@ -70,15 +70,13 @@ public:
 
 class CloseScopedMemoryClosure : public HandshakeClosure {
   jobject _deopt;
-  jobject _exception;
 
 public:
   jboolean _found;
 
-  CloseScopedMemoryClosure(jobject deopt, jobject exception)
+  CloseScopedMemoryClosure(jobject deopt)
     : HandshakeClosure("CloseScopedMemory")
     , _deopt(deopt)
-    , _exception(exception)
     , _found(false) {}
 
   void do_thread(Thread* thread) {
@@ -147,8 +145,8 @@ public:
  * a less common slow path instead.
  * Top frames containg obj will be deoptimized.
  */
-JVM_ENTRY(jboolean, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, jobject deopt, jobject exception))
-  CloseScopedMemoryClosure cl(deopt, exception);
+JVM_ENTRY(jboolean, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, jobject deopt))
+  CloseScopedMemoryClosure cl(deopt);
   Handshake::execute(&cl);
   return !cl._found;
 JVM_END
@@ -160,13 +158,12 @@ JVM_END
 
 #define MEMACCESS "ScopedMemoryAccess"
 #define SCOPE PKG_FOREIGN "ResourceScope;"
-#define SCOPED_ERR PKG_MISC MEMACCESS "$ScopedAccessError;"
 
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 
 static JNINativeMethod jdk_internal_misc_ScopedMemoryAccess_methods[] = {
-    {CC "closeScope0",   CC "(" SCOPE SCOPED_ERR ")Z",           FN_PTR(ScopedMemoryAccess_closeScope)},
+    {CC "closeScope0",   CC "(" SCOPE ")Z",           FN_PTR(ScopedMemoryAccess_closeScope)},
 };
 
 #undef CC
@@ -176,7 +173,6 @@ static JNINativeMethod jdk_internal_misc_ScopedMemoryAccess_methods[] = {
 #undef PKG_FOREIGN
 #undef MEMACCESS
 #undef SCOPE
-#undef SCOPED_ERR
 
 // This function is exported, used by NativeLookup.
 
