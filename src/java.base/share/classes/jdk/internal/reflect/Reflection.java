@@ -26,14 +26,23 @@
 package jdk.internal.reflect;
 
 import java.lang.reflect.*;
+import java.net.URL;
+import java.security.AccessController;
+import java.security.CodeSource;
+import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.VM;
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.IntrinsicCandidate;
+
+import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
 /** Common utility routines used by both java.lang and
     java.lang.reflect */
@@ -107,12 +116,58 @@ public class Reflection {
         }
     }
 
-    @ForceInline
-    public static void ensureNativeAccess(Class<?> currentClass) {
-        Module module = currentClass.getModule();
-        if (!SharedSecrets.getJavaLangAccess().isEnableNativeAccess(module)) {
-            throw new IllegalCallerException("Illegal native access from: " + module);
+    static class NativeAccessLogger {
+        static AtomicBoolean firstNativeAccessWarning = new AtomicBoolean();
+
+        static boolean shouldThrow = privilegedGetProperty("jdk.internal.foreign.native.access.throw");
+
+        @ForceInline
+        static void logNativeAccessIfNeeded(Class<?> currentClass, Class<?> owner, String methodName) {
+            Module module = currentClass.getModule();
+            if (!SharedSecrets.getJavaLangAccess().isEnableNativeAccess(module)) {
+                if (shouldThrow) {
+                    // used for testing
+                    throw new IllegalCallerException("Illegal native access from: " + module);
+                }
+                synchronized (module) {
+                    if (module.isNamed()) {
+                        SharedSecrets.getJavaLangAccess().addEnableNativeAccess(module);
+                    } else {
+                        SharedSecrets.getJavaLangAccess().addEnableNativeAccessAllUnnamed();
+                    }
+                }
+                boolean isFirst = firstNativeAccessWarning.compareAndSet(false, true);
+                if (isFirst) {
+                    System.err.println("WARNING: A restricted native access operation has occurred");
+                }
+                URL url = codeSource(currentClass);
+                String source = currentClass.getName();
+                if (url != null)
+                    source += " (" + url + ")";
+                String what = owner.getName() + "." + methodName;
+                System.err.println("WARNING: Restricted native access by " + source + " to " + what);
+                if (isFirst) {
+                    System.err.println("""
+                            WARNING: Use --enable-native-access to prevent warnings about restricted native access by trusted modules
+                            WARNING: All restricted native access operations by untrusted modules will be denied in a future release""");
+                }
+            }
         }
+
+        /**
+         * Returns the code source for the given class or null if there is no code source
+         */
+        private static URL codeSource(Class<?> clazz) {
+            PrivilegedAction<ProtectionDomain> pa = clazz::getProtectionDomain;
+            @SuppressWarnings("removal")
+            CodeSource cs = AccessController.doPrivileged(pa).getCodeSource();
+            return (cs != null) ? cs.getLocation() : null;
+        }
+    }
+
+    @ForceInline
+    public static void ensureNativeAccess(Class<?> currentClass, Class<?> owner, String methodName) {
+        NativeAccessLogger.logNativeAccessIfNeeded(currentClass, owner, methodName);
     }
 
     /**

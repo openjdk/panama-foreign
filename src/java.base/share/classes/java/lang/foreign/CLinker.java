@@ -157,7 +157,7 @@ public sealed interface CLinker permits AbstractLinker {
      */
     @CallerSensitive
     static CLinker systemCLinker() {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), CLinker.class, "systemCLinker");
         return SharedUtils.getSystemLinker();
     }
 

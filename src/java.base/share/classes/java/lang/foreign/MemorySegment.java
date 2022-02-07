@@ -839,7 +839,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     @CallerSensitive
     static MemorySegment ofAddress(MemoryAddress address, long bytesSize, ResourceScope scope) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddressNative");
         Objects.requireNonNull(address);
         Objects.requireNonNull(scope);
         if (bytesSize <= 0) {

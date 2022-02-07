@@ -103,7 +103,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @CallerSensitive
     @ForceInline
     public String getUtf8String(long offset) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "getUtf8String");
         SharedUtils.checkAddress(this);
         return NativeMemorySegmentImpl.EVERYTHING.getUtf8String(toRawLongValue() + offset);
     }
@@ -112,7 +112,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @CallerSensitive
     @ForceInline
     public void setUtf8String(long offset, String str) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "setUtf8String");
         SharedUtils.checkAddress(this);
         NativeMemorySegmentImpl.EVERYTHING.setUtf8String(toRawLongValue() + offset, str);
     }
@@ -121,7 +121,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public byte get(ValueLayout.OfByte layout, long offset) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "get");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + offset);
     }
 
@@ -129,7 +129,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public void set(ValueLayout.OfByte layout, long offset, byte value) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "set");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + offset, value);
     }
 
@@ -137,7 +137,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public boolean get(ValueLayout.OfBoolean layout, long offset) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "get");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + offset);
     }
 
@@ -145,7 +145,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public void set(ValueLayout.OfBoolean layout, long offset, boolean value) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "set");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + offset, value);
     }
 
@@ -153,7 +153,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public char get(ValueLayout.OfChar layout, long offset) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "get");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + offset);
     }
 
@@ -161,7 +161,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public void set(ValueLayout.OfChar layout, long offset, char value) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "set");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + offset, value);
     }
 
@@ -169,7 +169,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public short get(ValueLayout.OfShort layout, long offset) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "get");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + offset);
     }
 
@@ -177,7 +177,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public void set(ValueLayout.OfShort layout, long offset, short value) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "set");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + offset, value);
     }
 
@@ -185,7 +185,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public int get(ValueLayout.OfInt layout, long offset) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "get");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + offset);
     }
 
@@ -193,7 +193,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public void set(ValueLayout.OfInt layout, long offset, int value) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "set");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + offset, value);
     }
 
@@ -201,7 +201,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public float get(ValueLayout.OfFloat layout, long offset) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "get");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + offset);
     }
 
@@ -209,7 +209,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public void set(ValueLayout.OfFloat layout, long offset, float value) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "set");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + offset, value);
     }
 
@@ -217,7 +217,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public long get(ValueLayout.OfLong layout, long offset) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "set");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + offset);
     }
 
@@ -225,7 +225,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public void set(ValueLayout.OfLong layout, long offset, long value) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "set");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + offset, value);
     }
 
@@ -233,7 +233,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public double get(ValueLayout.OfDouble layout, long offset) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "get");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + offset);
     }
 
@@ -241,7 +241,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public void set(ValueLayout.OfDouble layout, long offset, double value) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "set");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + offset, value);
     }
 
@@ -249,7 +249,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public MemoryAddress get(ValueLayout.OfAddress layout, long offset) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "get");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + offset);
     }
 
@@ -257,7 +257,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public void set(ValueLayout.OfAddress layout, long offset, Addressable value) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "set");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + offset, value.address());
     }
 
@@ -265,7 +265,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public char getAtIndex(ValueLayout.OfChar layout, long index) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "getAtIndex");
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + (index * layout.byteSize()));
     }
@@ -274,7 +274,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public void setAtIndex(ValueLayout.OfChar layout, long index, char value) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "setAtIndex");
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + (index * layout.byteSize()), value);
     }
@@ -283,7 +283,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public short getAtIndex(ValueLayout.OfShort layout, long index) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "getAtIndex");
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + (index * layout.byteSize()));
     }
@@ -292,7 +292,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public void setAtIndex(ValueLayout.OfShort layout, long index, short value) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "setAtIndex");
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + (index * layout.byteSize()), value);
     }
@@ -301,7 +301,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public int getAtIndex(ValueLayout.OfInt layout, long index) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "getAtIndex");
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + (index * layout.byteSize()));
     }
@@ -310,7 +310,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public void setAtIndex(ValueLayout.OfInt layout, long index, int value) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "setAtIndex");
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + (index * layout.byteSize()), value);
     }
@@ -319,7 +319,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public float getAtIndex(ValueLayout.OfFloat layout, long index) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "getAtIndex");
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + (index * layout.byteSize()));
     }
@@ -328,7 +328,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public void setAtIndex(ValueLayout.OfFloat layout, long index, float value) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "setAtIndex");
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + (index * layout.byteSize()), value);
     }
@@ -337,7 +337,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public long getAtIndex(ValueLayout.OfLong layout, long index) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "getAtIndex");
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + (index * layout.byteSize()));
     }
@@ -346,7 +346,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public void setAtIndex(ValueLayout.OfLong layout, long index, long value) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "setAtIndex");
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + (index * layout.byteSize()), value);
     }
@@ -355,7 +355,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public double getAtIndex(ValueLayout.OfDouble layout, long index) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "getAtIndex");
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + (index * layout.byteSize()));
     }
@@ -364,7 +364,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public void setAtIndex(ValueLayout.OfDouble layout, long index, double value) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "getAtIndex");
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + (index * layout.byteSize()), value);
     }
@@ -373,7 +373,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public MemoryAddress getAtIndex(ValueLayout.OfAddress layout, long index) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "getAtIndex");
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + (index * layout.byteSize()));
     }
@@ -382,7 +382,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public void setAtIndex(ValueLayout.OfAddress layout, long index, Addressable value) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "setAtIndex");
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + (index * layout.byteSize()), value.address());
     }

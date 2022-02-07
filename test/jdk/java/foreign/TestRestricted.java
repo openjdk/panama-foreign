@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
 /*
  * @test
  * @enablePreview
- * @run testng TestRestricted
+ * @run testng/othervm -Djdk.internal.foreign.native.access.throw=true TestRestricted
  */
 public class TestRestricted {
     @Test(expectedExceptions = InvocationTargetException.class)
