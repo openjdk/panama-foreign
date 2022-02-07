@@ -543,7 +543,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
             bufferScope = bufferSegment.scope;
             modes = bufferSegment.mask;
         } else {
-            bufferScope = ResourceScopeImpl.GLOBAL;
+            bufferScope = ResourceScopeImpl.heapScope(bb);
             modes = defaultAccessModes(size);
         }
         if (bb.isReadOnly()) {
