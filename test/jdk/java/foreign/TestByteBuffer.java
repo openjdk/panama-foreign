@@ -41,6 +41,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Cleaner;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -65,6 +66,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -605,6 +607,28 @@ public class TestByteBuffer {
             ByteBuffer roBuffer = rwBuffer.asReadOnlyBuffer();
             MemorySegment segment = MemorySegment.ofByteBuffer(roBuffer);
             assertTrue(segment.isReadOnly());
+        }
+    }
+
+    @Test
+    public void testOfBufferScopeReachable() throws InterruptedException {
+        ByteBuffer buffer = ByteBuffer.allocateDirect(1000);
+        MemorySegment segment = MemorySegment.ofByteBuffer(buffer);
+        try {
+            AtomicBoolean reachable = new AtomicBoolean(true);
+            Cleaner.create().register(buffer, () -> {
+                reachable.set(false);
+            });
+            buffer = null;
+            System.gc();
+            // let's sleep to let cleaner run
+            Thread.sleep(100);
+            segment.get(JAVA_BYTE, 0);
+            if (!reachable.get()) {
+                throw new IllegalStateException();
+            }
+        } finally {
+            Reference.reachabilityFence(segment);
         }
     }
 
