@@ -24,10 +24,10 @@
 package org.openjdk.foreigntest;
 
 import java.lang.foreign.*;
-import org.testng.annotations.Test;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import org.testng.annotations.Test;
 
 public class PanamaMainUnnamedModule {
    @Test

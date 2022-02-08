@@ -23,8 +23,8 @@
 
 package org.openjdk.foreigntest;
 
-import java.lang.invoke.*;
 import java.lang.foreign.*;
+import java.lang.invoke.*;
 
 public class PanamaMainInvoke {
    public static void main(String[] args) throws Throwable {

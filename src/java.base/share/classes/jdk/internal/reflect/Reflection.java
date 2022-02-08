@@ -119,7 +119,7 @@ public class Reflection {
     static class NativeAccessLogger {
         static AtomicBoolean firstNativeAccessWarning = new AtomicBoolean();
 
-        static boolean shouldThrow = privilegedGetProperty("jdk.internal.foreign.native.access.throw");
+        static boolean shouldThrow = privilegedGetProperty("java.lang.foreign.native.access.throw");
 
         @ForceInline
         static void logNativeAccessIfNeeded(Class<?> currentClass, Class<?> owner, String methodName) {
