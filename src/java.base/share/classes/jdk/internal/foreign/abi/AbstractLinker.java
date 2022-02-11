@@ -24,6 +24,7 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
@@ -31,8 +32,8 @@ import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.ref.SoftReference;
@@ -61,8 +62,8 @@ public abstract sealed class AbstractLinker implements CLinker permits LinuxAArc
     protected abstract MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function);
 
     @Override
-    public NativeSymbol upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope) {
-        Objects.requireNonNull(scope);
+    public NativeSymbol upcallStub(MethodHandle target, FunctionDescriptor function, MemorySession session) {
+        Objects.requireNonNull(session);
         Objects.requireNonNull(target);
         Objects.requireNonNull(function);
         SharedUtils.checkExceptions(target);
@@ -71,12 +72,12 @@ public abstract sealed class AbstractLinker implements CLinker permits LinuxAArc
         if (!type.equals(target.type())) {
             throw new IllegalArgumentException("Wrong method handle type: " + target.type());
         }
-        NativeSymbol symb =  arrangeUpcall(target, target.type(), function, scope);
+        NativeSymbol symb =  arrangeUpcall(target, target.type(), function, Scoped.toSessionImpl(session));
         return symb;
     }
 
     protected abstract NativeSymbol arrangeUpcall(MethodHandle target, MethodType targetType,
-                                                  FunctionDescriptor function, ResourceScope scope);
+                                                  FunctionDescriptor function, MemorySession session);
 
     private static class SoftReferenceCache<K, V> {
         private final Map<K, Node> cache = new ConcurrentHashMap<>();

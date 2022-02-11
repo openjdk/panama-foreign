@@ -30,7 +30,7 @@ import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.List;
@@ -131,14 +131,14 @@ public class CallArranger {
         return handle;
     }
 
-    public static NativeSymbol arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, ResourceScope scope) {
+    public static NativeSymbol arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, MemorySession session) {
         Bindings bindings = getBindings(mt, cDesc, true);
 
         if (bindings.isInMemoryReturn) {
             target = SharedUtils.adaptUpcallForIMR(target, false /* need the return value as well */);
         }
 
-        return ProgrammableUpcallHandler.make(CWindows, target, bindings.callingSequence, scope);
+        return ProgrammableUpcallHandler.make(CWindows, target, bindings.callingSequence, session);
     }
 
     private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {

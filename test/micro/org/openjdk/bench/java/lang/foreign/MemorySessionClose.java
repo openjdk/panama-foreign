@@ -23,7 +23,7 @@
 package org.openjdk.bench.java.lang.foreign;
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Fork(value = 3, jvmArgsAppend = "--enable-preview")
-public class ResourceScopeClose {
+public class MemorySessionClose {
 
     static final int ALLOC_SIZE = 1024;
 
@@ -104,27 +104,27 @@ public class ResourceScopeClose {
 
     @Benchmark
     public MemorySegment confined_close() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            return MemorySegment.allocateNative(ALLOC_SIZE, 4, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            return MemorySegment.allocateNative(ALLOC_SIZE, 4, session);
         }
     }
 
     @Benchmark
     public MemorySegment shared_close() {
-        try (ResourceScope scope = ResourceScope.newSharedScope()) {
-            return MemorySegment.allocateNative(ALLOC_SIZE, 4, scope);
+        try (MemorySession session = MemorySession.openShared()) {
+            return MemorySegment.allocateNative(ALLOC_SIZE, 4, session);
         }
     }
 
     @Benchmark
     public MemorySegment implicit_close() {
-        return MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newImplicitScope());
+        return MemorySegment.allocateNative(ALLOC_SIZE, 4, MemorySession.openImplicit());
     }
 
     @Benchmark
     public MemorySegment implicit_close_systemgc() {
         if (gcCount++ == 0) System.gc(); // GC when we overflow
-        return MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newImplicitScope());
+        return MemorySegment.allocateNative(ALLOC_SIZE, 4, MemorySession.openImplicit());
     }
 
     // keep

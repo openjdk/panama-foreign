@@ -29,7 +29,7 @@
 
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SequenceLayout;
 
 import java.lang.invoke.VarHandle;
@@ -58,8 +58,8 @@ public class TestSpliterator {
         SequenceLayout layout = MemoryLayout.sequenceLayout(size, ValueLayout.JAVA_INT);
 
         //setup
-        try (ResourceScope scope = ResourceScope.newSharedScope()) {
-            MemorySegment segment = MemorySegment.allocateNative(layout, scope);
+        try (MemorySession session = MemorySession.openShared()) {
+            MemorySegment segment = MemorySegment.allocateNative(layout, session);
             for (int i = 0; i < layout.elementCount().getAsLong(); i++) {
                 INT_HANDLE.set(segment, (long) i, i);
             }
@@ -85,7 +85,7 @@ public class TestSpliterator {
         SequenceLayout layout = MemoryLayout.sequenceLayout(1024, ValueLayout.JAVA_INT);
 
         //setup
-        MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.newImplicitScope());
+        MemorySegment segment = MemorySegment.allocateNative(layout, MemorySession.openImplicit());
         for (int i = 0; i < layout.elementCount().getAsLong(); i++) {
             INT_HANDLE.set(segment, (long) i, i);
         }

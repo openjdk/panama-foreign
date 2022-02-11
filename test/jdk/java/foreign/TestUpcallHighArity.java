@@ -39,7 +39,7 @@ import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -85,7 +85,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
         for (int i = 0; i < o.length; i++) {
             if (o[i] instanceof MemorySegment) {
                 MemorySegment ms = (MemorySegment) o[i];
-                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), ResourceScope.newImplicitScope());
+                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), MemorySession.openImplicit());
                 copy.copyFrom(ms);
                 o[i] = copy;
             }
@@ -100,8 +100,8 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
         MethodHandle target = MethodHandles.insertArguments(MH_passAndSave, 1, capturedArgs)
                                          .asCollector(Object[].class, upcallType.parameterCount())
                                          .asType(upcallType);
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            NativeSymbol upcallStub = LINKER.upcallStub(target, upcallDescriptor, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            NativeSymbol upcallStub = LINKER.upcallStub(target, upcallDescriptor, session);
             Object[] args = new Object[upcallType.parameterCount() + 1];
             args[0] = upcallStub;
             List<MemoryLayout> argLayouts = upcallDescriptor.argumentLayouts();

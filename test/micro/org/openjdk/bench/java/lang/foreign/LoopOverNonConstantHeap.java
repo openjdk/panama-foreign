@@ -24,7 +24,7 @@ package org.openjdk.bench.java.lang.foreign;
 
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -88,7 +88,7 @@ public class LoopOverNonConstantHeap {
             MemorySegment intI = MemorySegment.ofArray(new int[ALLOC_SIZE]);
             MemorySegment intD = MemorySegment.ofArray(new double[ALLOC_SIZE]);
             MemorySegment intF = MemorySegment.ofArray(new float[ALLOC_SIZE]);
-            MemorySegment s = MemorySegment.allocateNative(ALLOC_SIZE, 1, ResourceScope.newConfinedScope());
+            MemorySegment s = MemorySegment.allocateNative(ALLOC_SIZE, 1, MemorySession.openConfined());
             for (int i = 0; i < ALLOC_SIZE; i++) {
                 intB.set(JAVA_BYTE, i, (byte)i);
                 intI.setAtIndex(JAVA_INT, i, i);

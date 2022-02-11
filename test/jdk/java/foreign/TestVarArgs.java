@@ -35,7 +35,7 @@ import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -71,10 +71,10 @@ public class TestVarArgs extends NativeTestHelper {
 
     @Test(dataProvider = "args")
     public void testVarArgs(List<VarArg> args) throws Throwable {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment writeBack = MemorySegment.allocateNative(args.size() * WRITEBACK_BYTES_PER_ARG, WRITEBACK_BYTES_PER_ARG, scope);
-            MemorySegment callInfo = MemorySegment.allocateNative(ML_CallInfo, scope);
-            MemorySegment argIDs = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(args.size(), C_INT), scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment writeBack = MemorySegment.allocateNative(args.size() * WRITEBACK_BYTES_PER_ARG, WRITEBACK_BYTES_PER_ARG, session);
+            MemorySegment callInfo = MemorySegment.allocateNative(ML_CallInfo, session);
+            MemorySegment argIDs = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(args.size(), C_INT), session);
 
             MemoryAddress callInfoPtr = callInfo.address();
 

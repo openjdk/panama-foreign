@@ -33,7 +33,7 @@ import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.ValueLayout;
 import org.testng.annotations.DataProvider;
@@ -145,8 +145,8 @@ public class TestNative extends NativeTestHelper {
 
     @Test(dataProvider="nativeAccessOps")
     public void testNativeAccess(Consumer<MemorySegment> checker, Consumer<MemorySegment> initializer, SequenceLayout seq) {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment segment = MemorySegment.allocateNative(seq, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(seq, session);
             initializer.accept(segment);
             checker.accept(segment);
         }
@@ -155,8 +155,8 @@ public class TestNative extends NativeTestHelper {
     @Test(dataProvider="buffers")
     public void testNativeCapacity(Function<ByteBuffer, Buffer> bufferFunction, int elemSize) {
         int capacity = (int)doubles.byteSize();
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment segment = MemorySegment.allocateNative(doubles, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(doubles, session);
             ByteBuffer bb = segment.asByteBuffer();
             Buffer buf = bufferFunction.apply(bb);
             int expected = capacity / elemSize;
@@ -168,9 +168,9 @@ public class TestNative extends NativeTestHelper {
     @Test
     public void testDefaultAccessModes() {
         MemoryAddress addr = allocateMemory(12);
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            scope.addCloseAction(() -> freeMemory(addr));
-            MemorySegment mallocSegment = MemorySegment.ofAddress(addr, 12, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            session.addCloseAction(() -> freeMemory(addr));
+            MemorySegment mallocSegment = MemorySegment.ofAddress(addr, 12, session);
             assertFalse(mallocSegment.isReadOnly());
         }
     }
@@ -179,13 +179,13 @@ public class TestNative extends NativeTestHelper {
     public void testMallocSegment() {
         MemoryAddress addr = allocateMemory(12);
         MemorySegment mallocSegment = null;
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            scope.addCloseAction(() -> freeMemory(addr));
-            mallocSegment = MemorySegment.ofAddress(addr, 12, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            session.addCloseAction(() -> freeMemory(addr));
+            mallocSegment = MemorySegment.ofAddress(addr, 12, session);
             assertEquals(mallocSegment.byteSize(), 12);
             //free here
         }
-        assertTrue(!mallocSegment.scope().isAlive());
+        assertTrue(!mallocSegment.session().isAlive());
     }
 
     @Test
@@ -198,9 +198,9 @@ public class TestNative extends NativeTestHelper {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadResize() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment segment = MemorySegment.allocateNative(4, 1, scope);
-            MemorySegment.ofAddress(segment.address(), 0, ResourceScope.globalScope());
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(4, 1, session);
+            MemorySegment.ofAddress(segment.address(), 0, MemorySession.global());
         }
     }
 

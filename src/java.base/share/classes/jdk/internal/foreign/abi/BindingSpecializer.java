@@ -25,7 +25,7 @@
 package jdk.internal.foreign.abi;
 
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.ResourceScopeImpl;
+import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.misc.VM;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -45,7 +45,7 @@ import java.lang.constant.ConstantDescs;
 import java.lang.foreign.Addressable;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
@@ -76,15 +76,15 @@ public class BindingSpecializer {
 
     private static final String BINDING_CONTEXT_DESC = Binding.Context.class.descriptorString();
     private static final String OF_BOUNDED_ALLOCATOR_DESC = methodType(Binding.Context.class, long.class).descriptorString();
-    private static final String OF_SCOPE_DESC = methodType(Binding.Context.class).descriptorString();
+    private static final String OF_SESSION_DESC = methodType(Binding.Context.class).descriptorString();
     private static final String ALLOCATOR_DESC = methodType(SegmentAllocator.class).descriptorString();
-    private static final String SCOPE_DESC = methodType(ResourceScope.class).descriptorString();
+    private static final String SESSION_DESC = methodType(MemorySession.class).descriptorString();
     private static final String CLOSE_DESC = methodType(void.class).descriptorString();
     private static final String ADDRESS_DESC = methodType(MemoryAddress.class).descriptorString();
     private static final String COPY_DESC = methodType(void.class, MemorySegment.class, long.class, MemorySegment.class, long.class, long.class).descriptorString();
     private static final String TO_RAW_LONG_VALUE_DESC = methodType(long.class).descriptorString();
     private static final String OF_LONG_DESC = methodType(MemoryAddress.class, long.class).descriptorString();
-    private static final String OF_LONG_UNCHECKED_DESC = methodType(MemorySegment.class, long.class, long.class, ResourceScopeImpl.class).descriptorString();
+    private static final String OF_LONG_UNCHECKED_DESC = methodType(MemorySegment.class, long.class, long.class, MemorySessionImpl.class).descriptorString();
     private static final String ALLOCATE_DESC = methodType(MemorySegment.class, long.class, long.class).descriptorString();
     private static final String HANDLE_UNCAUGHT_EXCEPTION_DESC = methodType(void.class, Throwable.class).descriptorString();
     private static final String METHOD_HANDLES_INTRN = Type.getInternalName(MethodHandles.class);
@@ -250,7 +250,7 @@ public class BindingSpecializer {
         } else if (callingSequence.forDowncall()) {
             emitGetStatic(Binding.Context.class, "DUMMY", BINDING_CONTEXT_DESC);
         } else {
-            emitInvokeStatic(Binding.Context.class, "ofScope", OF_SCOPE_DESC);
+            emitInvokeStatic(Binding.Context.class, "ofSession", OF_SESSION_DESC);
         }
         CONTEXT_IDX = newLocal(BasicType.L);
         emitStore(BasicType.L, CONTEXT_IDX);
@@ -432,10 +432,10 @@ public class BindingSpecializer {
         return idx;
     }
 
-    private void emitLoadInternalScope() {
+    private void emitLoadInternalSession() {
         assert CONTEXT_IDX != -1;
         emitLoad(BasicType.L, CONTEXT_IDX);
-        emitInvokeVirtual(Binding.Context.class, "scope", SCOPE_DESC);
+        emitInvokeVirtual(Binding.Context.class, "session", SESSION_DESC);
     }
 
     private void emitLoadInternalAllocator() {
@@ -456,8 +456,8 @@ public class BindingSpecializer {
 
         emitToRawLongValue();
         emitConst(size);
-        emitLoadInternalScope();
-        emitCheckCast(ResourceScopeImpl.class);
+        emitLoadInternalSession();
+        emitCheckCast(MemorySessionImpl.class);
         emitInvokeStatic(MemoryAddressImpl.class, "ofLongUnchecked", OF_LONG_UNCHECKED_DESC);
 
         pushType(MemorySegment.class);

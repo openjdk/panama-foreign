@@ -188,7 +188,7 @@ public abstract class MappedByteBuffer
         if (fd == null) {
             return true;
         }
-        return SCOPED_MEMORY_ACCESS.isLoaded(scope(), address, isSync, capacity());
+        return SCOPED_MEMORY_ACCESS.isLoaded(session(), address, isSync, capacity());
     }
 
     /**
@@ -206,7 +206,7 @@ public abstract class MappedByteBuffer
             return this;
         }
         try {
-            SCOPED_MEMORY_ACCESS.load(scope(), address, isSync, capacity());
+            SCOPED_MEMORY_ACCESS.load(session(), address, isSync, capacity());
         } finally {
             Reference.reachabilityFence(this);
         }
@@ -306,7 +306,7 @@ public abstract class MappedByteBuffer
         if ((address != 0) && (capacity != 0)) {
             // check inputs
             Objects.checkFromIndexSize(index, length, capacity);
-            SCOPED_MEMORY_ACCESS.force(scope(), fd, address, isSync, index, length);
+            SCOPED_MEMORY_ACCESS.force(session(), fd, address, isSync, index, length);
         }
         return this;
     }

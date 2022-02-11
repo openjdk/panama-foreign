@@ -24,7 +24,7 @@ package org.openjdk.bench.java.lang.foreign;
 
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -58,6 +58,8 @@ public class LoopOverPollutedSegments {
 
     static final Unsafe unsafe = Utils.unsafe;
 
+
+    MemorySession session;
     MemorySegment nativeSegment, nativeSharedSegment, heapSegmentBytes, heapSegmentFloats;
     byte[] arr;
     long addr;
@@ -72,8 +74,8 @@ public class LoopOverPollutedSegments {
             unsafe.putInt(addr + (i * 4), i);
         }
         arr = new byte[ALLOC_SIZE];
-        nativeSegment = MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newConfinedScope());
-        nativeSharedSegment = MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newSharedScope());
+        nativeSegment = MemorySegment.allocateNative(ALLOC_SIZE, 4, session = MemorySession.openConfined());
+        nativeSharedSegment = MemorySegment.allocateNative(ALLOC_SIZE, 4, session);
         heapSegmentBytes = MemorySegment.ofArray(new byte[ALLOC_SIZE]);
         heapSegmentFloats = MemorySegment.ofArray(new float[ELEM_SIZE]);
 
@@ -97,7 +99,7 @@ public class LoopOverPollutedSegments {
 
     @TearDown
     public void tearDown() {
-        nativeSegment.scope().close();
+        session.close();
         heapSegmentBytes = null;
         heapSegmentFloats = null;
         arr = null;

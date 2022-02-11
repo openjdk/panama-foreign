@@ -31,8 +31,8 @@ import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.VaList;
@@ -57,18 +57,16 @@ import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.Scoped;
+import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 import jdk.internal.vm.annotation.ForceInline;
 import static java.lang.invoke.MethodHandles.collectArguments;
-import static java.lang.invoke.MethodHandles.constant;
 import static java.lang.invoke.MethodHandles.dropArguments;
 import static java.lang.invoke.MethodHandles.dropReturn;
-import static java.lang.invoke.MethodHandles.empty;
 import static java.lang.invoke.MethodHandles.foldArguments;
 import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
@@ -110,7 +108,7 @@ public class SharedUtils {
                     methodType(MemoryAddress.class));
             MH_BUFFER_COPY = lookup.findStatic(SharedUtils.class, "bufferCopy",
                     methodType(MemoryAddress.class, MemoryAddress.class, MemorySegment.class));
-            MH_MAKE_CONTEXT_NO_ALLOCATOR = lookup.findStatic(Binding.Context.class, "ofScope",
+            MH_MAKE_CONTEXT_NO_ALLOCATOR = lookup.findStatic(Binding.Context.class, "ofSession",
                     methodType(Binding.Context.class));
             MH_MAKE_CONTEXT_BOUNDED_ALLOCATOR = lookup.findStatic(Binding.Context.class, "ofBoundedAllocator",
                     methodType(Binding.Context.class, long.class));
@@ -350,37 +348,37 @@ public class SharedUtils {
     @ForceInline
     @SuppressWarnings("fallthrough")
     public static void acquire(Scoped[] args) {
-        ResourceScope scope4 = null;
-        ResourceScope scope3 = null;
-        ResourceScope scope2 = null;
-        ResourceScope scope1 = null;
-        ResourceScope scope0 = null;
+        MemorySessionImpl session4 = null;
+        MemorySessionImpl session3 = null;
+        MemorySessionImpl session2 = null;
+        MemorySessionImpl session1 = null;
+        MemorySessionImpl session0 = null;
         switch (args.length) {
             default:
                 // slow path, acquire all remaining addressable parameters in isolation
                 for (int i = 5 ; i < args.length ; i++) {
-                    acquire(args[i].scope());
+                    acquire(args[i].sessionImpl());
                 }
-            // fast path, acquire only scopes not seen in other parameters
+            // fast path, acquire only sessions not seen in other parameters
             case 5:
-                scope4 = args[4].scope();
-                acquire(scope4);
+                session4 = args[4].sessionImpl();
+                acquire(session4);
             case 4:
-                scope3 = args[3].scope();
-                if (scope3 != scope4)
-                    acquire(scope3);
+                session3 = args[3].sessionImpl();
+                if (session3 != session4)
+                    acquire(session3);
             case 3:
-                scope2 = args[2].scope();
-                if (scope2 != scope3 && scope2 != scope4)
-                    acquire(scope2);
+                session2 = args[2].sessionImpl();
+                if (session2 != session3 && session2 != session4)
+                    acquire(session2);
             case 2:
-                scope1 = args[1].scope();
-                if (scope1 != scope2 && scope1 != scope3 && scope1 != scope4)
-                    acquire(scope1);
+                session1 = args[1].sessionImpl();
+                if (session1 != session2 && session1 != session3 && session1 != session4)
+                    acquire(session1);
             case 1:
-                scope0 = args[0].scope();
-                if (scope0 != scope1 && scope0 != scope2 && scope0 != scope3 && scope0 != scope4)
-                    acquire(scope0);
+                session0 = args[0].sessionImpl();
+                if (session0 != session1 && session0 != session2 && session0 != session3 && session0 != session4)
+                    acquire(session0);
             case 0: break;
         }
     }
@@ -388,49 +386,49 @@ public class SharedUtils {
     @ForceInline
     @SuppressWarnings("fallthrough")
     public static void release(Scoped[] args) {
-        ResourceScope scope4 = null;
-        ResourceScope scope3 = null;
-        ResourceScope scope2 = null;
-        ResourceScope scope1 = null;
-        ResourceScope scope0 = null;
+        MemorySessionImpl session4 = null;
+        MemorySessionImpl session3 = null;
+        MemorySessionImpl session2 = null;
+        MemorySessionImpl session1 = null;
+        MemorySessionImpl session0 = null;
         switch (args.length) {
             default:
                 // slow path, release all remaining addressable parameters in isolation
                 for (int i = 5 ; i < args.length ; i++) {
-                    release(args[i].scope());
+                    release(args[i].sessionImpl());
                 }
-            // fast path, release only scopes not seen in other parameters
+            // fast path, release only sessions not seen in other parameters
             case 5:
-                scope4 = args[4].scope();
-                release(scope4);
+                session4 = args[4].sessionImpl();
+                release(session4);
             case 4:
-                scope3 = args[3].scope();
-                if (scope3 != scope4)
-                    release(scope3);
+                session3 = args[3].sessionImpl();
+                if (session3 != session4)
+                    release(session3);
             case 3:
-                scope2 = args[2].scope();
-                if (scope2 != scope3 && scope2 != scope4)
-                    release(scope2);
+                session2 = args[2].sessionImpl();
+                if (session2 != session3 && session2 != session4)
+                    release(session2);
             case 2:
-                scope1 = args[1].scope();
-                if (scope1 != scope2 && scope1 != scope3 && scope1 != scope4)
-                    release(scope1);
+                session1 = args[1].sessionImpl();
+                if (session1 != session2 && session1 != session3 && session1 != session4)
+                    release(session1);
             case 1:
-                scope0 = args[0].scope();
-                if (scope0 != scope1 && scope0 != scope2 && scope0 != scope3 && scope0 != scope4)
-                    release(scope0);
+                session0 = args[0].sessionImpl();
+                if (session0 != session1 && session0 != session2 && session0 != session3 && session0 != session4)
+                    release(session0);
             case 0: break;
         }
     }
 
     @ForceInline
-    private static void acquire(ResourceScope scope) {
-        ((ResourceScopeImpl)scope).acquire0();
+    private static void acquire(MemorySessionImpl session) {
+        session.acquire0();
     }
 
     @ForceInline
-    private static void release(ResourceScope scope) {
-        ((ResourceScopeImpl)scope).release0();
+    private static void release(MemorySessionImpl session) {
+        session.release0();
     }
 
     /*
@@ -538,21 +536,21 @@ public class SharedUtils {
         }
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions, ResourceScope scope) {
+    public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession session) {
         return switch (CABI.current()) {
-            case Win64 -> Windowsx64Linker.newVaList(actions, scope);
-            case SysV -> SysVx64Linker.newVaList(actions, scope);
-            case LinuxAArch64 -> LinuxAArch64Linker.newVaList(actions, scope);
-            case MacOsAArch64 -> MacOsAArch64Linker.newVaList(actions, scope);
+            case Win64 -> Windowsx64Linker.newVaList(actions, session);
+            case SysV -> SysVx64Linker.newVaList(actions, session);
+            case LinuxAArch64 -> LinuxAArch64Linker.newVaList(actions, session);
+            case MacOsAArch64 -> MacOsAArch64Linker.newVaList(actions, session);
         };
     }
 
-    public static VaList newVaListOfAddress(MemoryAddress ma, ResourceScope scope) {
+    public static VaList newVaListOfAddress(MemoryAddress ma, MemorySession session) {
         return switch (CABI.current()) {
-            case Win64 -> Windowsx64Linker.newVaListOfAddress(ma, scope);
-            case SysV -> SysVx64Linker.newVaListOfAddress(ma, scope);
-            case LinuxAArch64 -> LinuxAArch64Linker.newVaListOfAddress(ma, scope);
-            case MacOsAArch64 -> MacOsAArch64Linker.newVaListOfAddress(ma, scope);
+            case Win64 -> Windowsx64Linker.newVaListOfAddress(ma, session);
+            case SysV -> SysVx64Linker.newVaListOfAddress(ma, session);
+            case LinuxAArch64 -> LinuxAArch64Linker.newVaListOfAddress(ma, session);
+            case MacOsAArch64 -> MacOsAArch64Linker.newVaListOfAddress(ma, session);
         };
     }
 
@@ -636,8 +634,8 @@ public class SharedUtils {
         }
 
         @Override
-        public ResourceScope scope() {
-            return ResourceScope.globalScope();
+        public MemorySessionImpl sessionImpl() {
+            return (MemorySessionImpl)MemorySession.global();
         }
 
         @Override
@@ -648,6 +646,11 @@ public class SharedUtils {
         @Override
         public MemoryAddress address() {
             return address;
+        }
+
+        @Override
+        public MemorySession session() {
+            return new MemorySessionImpl.NonCloseableView(sessionImpl());
         }
     }
 

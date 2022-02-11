@@ -38,7 +38,7 @@ import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -51,29 +51,29 @@ import java.util.function.Supplier;
 @Fork(value = 3, jvmArgsAppend = "--enable-preview")
 public class BulkMismatchAcquire {
 
-    public enum ScopeKind {
-        CONFINED(ResourceScope::newConfinedScope),
-        SHARED(ResourceScope::newSharedScope),
-        IMPLICIT(ResourceScope::newImplicitScope);
+    public enum SessionKind {
+        CONFINED(MemorySession::openConfined),
+        SHARED(MemorySession::openShared),
+        IMPLICIT(MemorySession::openImplicit);
 
-        final Supplier<ResourceScope> scopeFactory;
+        final Supplier<MemorySession> sessionFactory;
 
-        ScopeKind(Supplier<ResourceScope> scopeFactory) {
-            this.scopeFactory = scopeFactory;
+        SessionKind(Supplier<MemorySession> sessionFactory) {
+            this.sessionFactory = sessionFactory;
         }
 
-        ResourceScope makeScope() {
-            return scopeFactory.get();
+        MemorySession makeSession() {
+            return sessionFactory.get();
         }
     }
 
     @Param({"CONFINED", "SHARED"})
-    public ScopeKind scopeKind;
+    public BulkMismatchAcquire.SessionKind sessionKind;
 
     // large(ish) segments/buffers with same content, 0, for mismatch, non-multiple-of-8 sized
     static final int SIZE_WITH_TAIL = (1024 * 1024) + 7;
 
-    ResourceScope scope;
+    MemorySession session;
     MemorySegment mismatchSegmentLarge1;
     MemorySegment mismatchSegmentLarge2;
     ByteBuffer mismatchBufferLarge1;
@@ -85,15 +85,15 @@ public class BulkMismatchAcquire {
 
     @Setup
     public void setup() {
-        scope = scopeKind.makeScope();
-        mismatchSegmentLarge1 = MemorySegment.allocateNative(SIZE_WITH_TAIL, scope);
-        mismatchSegmentLarge2 = MemorySegment.allocateNative(SIZE_WITH_TAIL, scope);
+        session = sessionKind.makeSession();
+        mismatchSegmentLarge1 = MemorySegment.allocateNative(SIZE_WITH_TAIL, session);
+        mismatchSegmentLarge2 = MemorySegment.allocateNative(SIZE_WITH_TAIL, session);
         mismatchBufferLarge1 = ByteBuffer.allocateDirect(SIZE_WITH_TAIL);
         mismatchBufferLarge2 = ByteBuffer.allocateDirect(SIZE_WITH_TAIL);
 
         // mismatch at first byte
-        mismatchSegmentSmall1 = MemorySegment.allocateNative(7, scope);
-        mismatchSegmentSmall2 = MemorySegment.allocateNative(7, scope);
+        mismatchSegmentSmall1 = MemorySegment.allocateNative(7, session);
+        mismatchSegmentSmall2 = MemorySegment.allocateNative(7, session);
         mismatchBufferSmall1 = ByteBuffer.allocateDirect(7);
         mismatchBufferSmall2 = ByteBuffer.allocateDirect(7);
         {
@@ -117,7 +117,9 @@ public class BulkMismatchAcquire {
 
     @TearDown
     public void tearDown() {
-        scope.close();
+        if (session instanceof MemorySession) {
+            ((MemorySession) session).close();
+        }
     }
 
     @Benchmark
@@ -129,10 +131,11 @@ public class BulkMismatchAcquire {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public long mismatch_large_segment_acquire() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            scope.keepAlive(mismatchSegmentLarge1.scope());
-            return mismatchSegmentLarge1.mismatch(mismatchSegmentLarge2);
-        }
+        long[] arr = new long[1];
+        mismatchSegmentLarge1.session().whileAlive(() -> {
+            arr[0] = mismatchSegmentLarge1.mismatch(mismatchSegmentSmall2);
+        });
+        return arr[0];
     }
 
     @Benchmark
@@ -150,10 +153,11 @@ public class BulkMismatchAcquire {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public long mismatch_small_segment_acquire() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            scope.keepAlive(mismatchSegmentLarge1.scope());
-            return mismatchSegmentSmall1.mismatch(mismatchSegmentSmall2);
-        }
+        long[] arr = new long[1];
+        mismatchSegmentLarge1.session().whileAlive(() -> {
+            arr[0] = mismatchSegmentSmall1.mismatch(mismatchSegmentSmall2);
+        });
+        return arr[0];
     }
 
     @Benchmark

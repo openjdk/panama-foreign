@@ -39,7 +39,7 @@ import java.lang.foreign.GroupLayout;
 import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemoryLayout;
 
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,17 +65,17 @@ public class TestDowncall extends CallGeneratorHelper {
         NativeSymbol addr = findNativeOrThrow(TestDowncall.class, fName);
         FunctionDescriptor descriptor = function(ret, paramTypes, fields);
         Object[] args = makeArgs(paramTypes, fields, checks);
-        try (ResourceScope scope = ResourceScope.newSharedScope()) {
+        try (MemorySession session = MemorySession.openShared()) {
             boolean needsScope = descriptor.returnLayout().map(GroupLayout.class::isInstance).orElse(false);
             SegmentAllocator allocator = needsScope ?
-                    SegmentAllocator.newNativeArena(scope) :
+                    SegmentAllocator.newNativeArena(session) :
                     THROWING_ALLOCATOR;
             Object res = doCall(addr, allocator, descriptor, args);
             if (ret == Ret.NON_VOID) {
                 checks.forEach(c -> c.accept(res));
                 if (needsScope) {
                     // check that return struct has indeed been allocated in the native scope
-                    assertEquals(((MemorySegment) res).scope(), scope);
+                    assertEquals(((MemorySegment)res).session(), session);
                 }
             }
         }
@@ -87,17 +87,17 @@ public class TestDowncall extends CallGeneratorHelper {
         NativeSymbol addr = findNativeOrThrow(TestDowncall.class, "s" + fName);
         FunctionDescriptor descriptor = functionStack(ret, paramTypes, fields);
         Object[] args = makeArgsStack(paramTypes, fields, checks);
-        try (ResourceScope scope = ResourceScope.newSharedScope()) {
+        try (MemorySession session = MemorySession.openShared()) {
             boolean needsScope = descriptor.returnLayout().map(GroupLayout.class::isInstance).orElse(false);
             SegmentAllocator allocator = needsScope ?
-                    SegmentAllocator.newNativeArena(scope) :
+                    SegmentAllocator.newNativeArena(session) :
                     THROWING_ALLOCATOR;
             Object res = doCall(addr, allocator, descriptor, args);
             if (ret == Ret.NON_VOID) {
                 checks.forEach(c -> c.accept(res));
                 if (needsScope) {
                     // check that return struct has indeed been allocated in the native scope
-                    assertEquals(((MemorySegment) res).scope(), scope);
+                    assertEquals(((MemorySegment)res).session(), session);
                 }
             }
         }

@@ -24,7 +24,7 @@
 import java.lang.foreign.CLinker;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
@@ -58,19 +58,19 @@ public class TestRestricted {
 
     @Test(expectedExceptions = InvocationTargetException.class)
     public void testReflection2() throws Throwable {
-        Method method = MemorySegment.class.getDeclaredMethod("ofAddress", MemoryAddress.class, long.class, ResourceScope.class);
-        method.invoke(null, MemoryAddress.NULL, 4000L, ResourceScope.globalScope());
+        Method method = MemorySegment.class.getDeclaredMethod("ofAddress", MemoryAddress.class, long.class, MemorySession.class);
+        method.invoke(null, MemoryAddress.NULL, 4000L, MemorySession.global());
     }
 
     @Test(expectedExceptions = IllegalCallerException.class)
     public void testInvoke2() throws Throwable {
         var mh = MethodHandles.lookup().findStatic(MemorySegment.class, "ofAddress",
-            MethodType.methodType(MemorySegment.class, MemoryAddress.class, long.class, ResourceScope.class));
-        var seg = (MemorySegment)mh.invokeExact(MemoryAddress.NULL, 4000L, ResourceScope.globalScope());
+            MethodType.methodType(MemorySegment.class, MemoryAddress.class, long.class, MemorySession.class));
+        var seg = (MemorySegment)mh.invoke(MemoryAddress.NULL, 4000L, MemorySession.global());
     }
 
     @Test(expectedExceptions = IllegalCallerException.class)
     public void testDirectAccess2() throws Throwable {
-        MemorySegment.ofAddress(MemoryAddress.NULL, 4000, ResourceScope.globalScope());
+        MemorySegment.ofAddress(MemoryAddress.NULL, 4000, MemorySession.global());
     }
 }

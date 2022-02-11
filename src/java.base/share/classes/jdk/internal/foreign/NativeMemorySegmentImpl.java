@@ -40,7 +40,7 @@ import sun.security.action.GetBooleanAction;
  */
 public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
-    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE, ResourceScopeImpl.GLOBAL);
+    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE, MemorySessionImpl.GLOBAL);
 
     private static final Unsafe unsafe = Unsafe.getUnsafe();
 
@@ -53,8 +53,8 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     final long min;
 
     @ForceInline
-    NativeMemorySegmentImpl(long min, long length, int mask, ResourceScopeImpl scope) {
-        super(length, mask, scope);
+    NativeMemorySegmentImpl(long min, long length, int mask, MemorySessionImpl session) {
+        super(length, mask, session);
         this.min = min;
     }
 
@@ -66,14 +66,14 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     @Override
-    NativeMemorySegmentImpl dup(long offset, long size, int mask, ResourceScopeImpl scope) {
-        return new NativeMemorySegmentImpl(min + offset, size, mask, scope);
+    NativeMemorySegmentImpl dup(long offset, long size, int mask, MemorySessionImpl session) {
+        return new NativeMemorySegmentImpl(min + offset, size, mask, session);
     }
 
     @Override
     ByteBuffer makeByteBuffer() {
         return nioAccess.newDirectByteBuffer(min(), (int) this.length, null,
-                scope == ResourceScopeImpl.GLOBAL ? null : this);
+                session == MemorySessionImpl.GLOBAL ? null : this);
     }
 
     @Override
@@ -98,8 +98,8 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     // factories
 
-    public static MemorySegment makeNativeSegment(long bytesSize, long alignmentBytes, ResourceScopeImpl scope) {
-        scope.checkValidStateSlow();
+    public static MemorySegment makeNativeSegment(long bytesSize, long alignmentBytes, MemorySessionImpl session) {
+        session.checkValidStateSlow();
         if (VM.isDirectMemoryPageAligned()) {
             alignmentBytes = Math.max(alignmentBytes, nioAccess.pageSize());
         }
@@ -115,8 +115,8 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(buf, alignedSize,
-                defaultAccessModes(alignedSize), scope);
-        scope.addOrCleanupIfFail(new ResourceScopeImpl.ResourceList.ResourceCleanup() {
+                defaultAccessModes(alignedSize), session);
+        session.addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
             @Override
             public void cleanup() {
                 unsafe.freeMemory(buf);
@@ -130,9 +130,9 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         return segment;
     }
 
-    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, ResourceScopeImpl scope) {
-        scope.checkValidStateSlow();
-        AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize), scope);
+    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, MemorySessionImpl session) {
+        session.checkValidStateSlow();
+        AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize), session);
         return segment;
     }
 }

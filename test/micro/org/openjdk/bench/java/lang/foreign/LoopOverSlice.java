@@ -23,7 +23,7 @@
 package org.openjdk.bench.java.lang.foreign;
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -58,12 +58,12 @@ public class LoopOverSlice {
 
     MemorySegment nativeSegment, heapSegment;
     IntBuffer nativeBuffer, heapBuffer;
-    ResourceScope scope;
+    MemorySession session;
 
     @Setup
     public void setup() {
-        scope = ResourceScope.newConfinedScope();
-        nativeSegment = MemorySegment.allocateNative(ALLOC_SIZE, scope);
+        session = MemorySession.openConfined();
+        nativeSegment = MemorySegment.allocateNative(ALLOC_SIZE, session);
         heapSegment = MemorySegment.ofArray(new int[ELEM_SIZE]);
         nativeBuffer = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
         heapBuffer = IntBuffer.wrap(new int[ELEM_SIZE]);
@@ -71,7 +71,7 @@ public class LoopOverSlice {
 
     @TearDown
     public void tearDown() {
-        scope.close();
+        session.close();
     }
 
     @Benchmark

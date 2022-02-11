@@ -27,6 +27,8 @@ package java.lang.foreign;
 
 import java.util.Objects;
 import java.util.function.Consumer;
+
+import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64VaList;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64VaList;
@@ -51,7 +53,7 @@ import jdk.internal.reflect.Reflection;
  * and any other type that fits into a {@code long}.
  *
  * This class is not thread safe, and all accesses should occur within a single thread
- * (regardless of the scope associated with the variable arity list).
+ * (regardless of the memory session associated with the variable arity list).
  *
  * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
  * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
@@ -62,13 +64,18 @@ import jdk.internal.reflect.Reflection;
 sealed public interface VaList extends Addressable permits WinVaList, SysVVaList, LinuxAArch64VaList, MacOsAArch64VaList, SharedUtils.EmptyVaList {
 
     /**
+     * {@return a non-closeable view of the memory session associated with this variable argument list}
+     */
+    MemorySession session();
+
+    /**
      * Reads the next value as an {@code int} and advances this variable argument list's position. The behavior of this
      * method is equivalent to the C {@code va_arg} function.
      *
      * @param layout the layout of the value to be read.
      * @return the {@code int} value read from this variable argument list.
-     * @throws IllegalStateException if the scope associated with this variable argument list has been closed, or if access occurs from
-     * a thread other than the thread owning that scope.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with this variable argument list is not
+     * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
      */
     int nextVarg(ValueLayout.OfInt layout);
 
@@ -78,8 +85,8 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      *
      * @param layout the layout of the value to be read.
      * @return the {@code long} value read from this variable argument list.
-     * @throws IllegalStateException if the scope associated with this variable argument list has been closed, or if access occurs from
-     * a thread other than the thread owning that scope.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with this variable argument list is not
+     * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
      */
     long nextVarg(ValueLayout.OfLong layout);
 
@@ -89,8 +96,8 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      *
      * @param layout the layout of the value
      * @return the {@code double} value read from this variable argument list.
-     * @throws IllegalStateException if the scope associated with this variable argument list has been closed, or if access occurs from
-     * a thread other than the thread owning that scope.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with this variable argument list is not
+     * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
      */
     double nextVarg(ValueLayout.OfDouble layout);
 
@@ -100,8 +107,8 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      *
      * @param layout the layout of the value to be read.
      * @return the {@code MemoryAddress} value read from this variable argument list.
-     * @throws IllegalStateException if the scope associated with this variable argument list has been closed, or if access occurs from
-     * a thread other than the thread owning that scope.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with this variable argument list is not
+     * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
      */
     MemoryAddress nextVarg(ValueLayout.OfAddress layout);
 
@@ -120,8 +127,8 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * @param allocator the allocator to be used to create a segment where the contents of the variable argument list
      *                  will be copied.
      * @return the {@code MemorySegment} value read from this variable argument list.
-     * @throws IllegalStateException if the scope associated with this variable argument list has been closed, or if access occurs from
-     * a thread other than the thread owning that scope.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with this variable argument list is not
+     * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
      */
     MemorySegment nextVarg(GroupLayout layout, SegmentAllocator allocator);
 
@@ -129,19 +136,14 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * Skips a number of elements with the given memory layouts, and advances this variable argument list's position.
      *
      * @param layouts the layouts of the values to be skipped.
-     * @throws IllegalStateException if the scope associated with this variable argument list has been closed, or if access occurs from
-     * a thread other than the thread owning that scope.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with this variable argument list is not
+     * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
      */
     void skip(MemoryLayout... layouts);
 
     /**
-     * {@return the resource scope associated with this variable argument list}
-     */
-    ResourceScope scope();
-
-    /**
      * Copies this variable argument list at its current position into a new variable argument list associated
-     * with the same scope as this variable argument list. The behavior of this method is equivalent to the C
+     * with the same memory session as this variable argument list. The behavior of this method is equivalent to the C
      * {@code va_copy} function.
      * <p>
      * Copying is useful to traverse the variable argument list elements, starting from the current position,
@@ -149,22 +151,22 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * traversed multiple times.
      *
      * @return a copy of this variable argument list.
-     * @throws IllegalStateException if the scope associated with this variable argument list has been closed, or if access occurs from
-     * a thread other than the thread owning that scope.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with this variable argument list is not
+     * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
      */
     VaList copy();
 
     /**
      * {@return the {@linkplain MemoryAddress memory address} associated with this variable argument list}
-     * @throws IllegalStateException if the scope associated with this variable argument list has been closed, or if access occurs from
-     * a thread other than the thread owning that scope.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with this variable argument list is not
+     * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
      */
     @Override
     MemoryAddress address();
 
     /**
      * Constructs a new variable argument list from a memory address pointing to an existing variable argument list,
-     * with given resource scope.
+     * with given memory session.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -172,48 +174,49 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param address a memory address pointing to an existing variable argument list.
-     * @param scope the resource scope to be associated with the returned variable argument list.
+     * @param session the memory session to be associated with the returned variable argument list.
      * @return a new variable argument list backed by the memory region at {@code address}.
-     * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
-     * than the thread owning {@code scope}.
+     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
+     * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
      * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
-    static VaList ofAddress(MemoryAddress address, ResourceScope scope) {
+    static VaList ofAddress(MemoryAddress address, MemorySession session) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(address);
-        Objects.requireNonNull(scope);
-        return SharedUtils.newVaListOfAddress(address, scope);
+        Objects.requireNonNull(session);
+        return SharedUtils.newVaListOfAddress(address, Scoped.toSessionImpl(session));
     }
 
     /**
-     * Constructs a new variable argument list using a builder (see {@link Builder}), with a given resource scope.
+     * Constructs a new variable argument list using a builder (see {@link Builder}), with given
+     * memory session.
      * <p>
      * If this method needs to allocate native memory, such memory will be managed by the given
-     * {@linkplain ResourceScope resource scope}, and will be released when the resource scope is {@linkplain ResourceScope#close closed}.
+     * memory session, and will be released when the memory session is {@linkplain MemorySession#close closed}.
      * <p>
      * Note that when there are no elements added to the created va list,
      * this method will return the same as {@link #empty()}.
      *
      * @param actions a consumer for a builder (see {@link Builder}) which can be used to specify the elements
      *                of the underlying variable argument list.
-     * @param scope scope the scope to be associated with the new variable arity list.
+     * @param session the memory session to be associated with the new variable arity list.
      * @return a new variable argument list.
-     * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
-     * than the thread owning {@code scope}.
+     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
+     * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
      */
-    static VaList make(Consumer<Builder> actions, ResourceScope scope) {
+    static VaList make(Consumer<Builder> actions, MemorySession session) {
         Objects.requireNonNull(actions);
-        Objects.requireNonNull(scope);
-        return SharedUtils.newVaList(actions, scope);
+        Objects.requireNonNull(session);
+        return SharedUtils.newVaList(actions, Scoped.toSessionImpl(session));
     }
 
     /**
-     * Returns an empty variable argument list, associated with the {@linkplain ResourceScope#globalScope() global}
-     * scope. The resulting variable argument list does not contain any argument, and throws {@link UnsupportedOperationException}
-     * on all operations, except for {@link #scope()}, {@link #copy()} and {@link #address()}.
+     * Returns an empty variable argument list, associated with the {@linkplain MemorySession#global() global}
+     * memory session. The resulting variable argument list does not contain any argument, and throws {@link UnsupportedOperationException}
+     * on all operations, except for {@link VaList#address()}, {@link VaList#copy()} and {@link VaList#session()}.
      * @return an empty variable argument list.
      */
     static VaList empty() {

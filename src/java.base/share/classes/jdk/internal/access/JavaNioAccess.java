@@ -91,7 +91,7 @@ public interface JavaNioAccess {
      * scope handle. Null is returned if the buffer has no scope, or
      * acquiring is not required to guarantee safety.
      */
-    Runnable acquireScope(Buffer buffer, boolean async);
+    Runnable acquireSession(Buffer buffer, boolean async);
 
     /**
      * Used by {@code jdk.internal.foreign.MappedMemorySegmentImpl} and byte buffer var handle views.

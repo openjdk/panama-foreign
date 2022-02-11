@@ -25,7 +25,7 @@ package org.openjdk.bench.java.lang.foreign;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -63,12 +63,12 @@ public class LoopOverNew {
 
     static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(sequenceElement());
 
-    final ResourceScope scope = ResourceScope.newConfinedScope();
-    final SegmentAllocator recyclingAlloc = SegmentAllocator.prefixAllocator(MemorySegment.allocateNative(ALLOC_LAYOUT, scope));
+    final MemorySession session = MemorySession.openConfined();
+    final SegmentAllocator recyclingAlloc = SegmentAllocator.prefixAllocator(MemorySegment.allocateNative(ALLOC_LAYOUT, session));
 
     @TearDown
     public void tearDown() throws Throwable {
-        scope.close();
+        session.close();
     }
 
     @Benchmark
@@ -82,8 +82,8 @@ public class LoopOverNew {
 
     @Benchmark
     public void segment_loop_confined() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, session);
             for (int i = 0; i < ELEM_SIZE; i++) {
                 VH_int.set(segment, (long) i, i);
             }
@@ -92,8 +92,8 @@ public class LoopOverNew {
 
     @Benchmark
     public void segment_loop_shared() {
-        try (ResourceScope scope = ResourceScope.newSharedScope()) {
-            MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, scope);
+        try (MemorySession session = MemorySession.openShared()) {
+            MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, session);
             for (int i = 0; i < ELEM_SIZE; i++) {
                 VH_int.set(segment, (long) i, i);
             }
@@ -122,7 +122,7 @@ public class LoopOverNew {
     // act under significant native memory pressure, and here the ByteBuffer API has more juice, since it features
     // a complex exponential back off with multiple GC retries (see ByteBuffer::allocateDirect). Of course, we
     // don't care about those cases with segments, as if clients need to allocate/free very frequently
-    // they should just use deterministic deallocation (with confined scope) instead, which delivers much
+    // they should just use deterministic deallocation (with confined session) instead, which delivers much
     // better performances anyway.
     static byte gcCount = 0;
 
@@ -138,7 +138,7 @@ public class LoopOverNew {
     @Benchmark
     public void segment_loop_implicit() {
         if (gcCount++ == 0) System.gc(); // GC when we overflow
-        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newImplicitScope());
+        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, MemorySession.openImplicit());
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }

@@ -27,7 +27,7 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 
 import java.lang.invoke.MethodHandle;
@@ -80,12 +80,12 @@ public class CallOverheadHelper extends CLayouts {
             C_INT, C_INT
     );
 
-    static final MemorySegment sharedPoint = MemorySegment.allocateNative(POINT_LAYOUT, ResourceScope.newSharedScope());
-    static final MemorySegment confinedPoint = MemorySegment.allocateNative(POINT_LAYOUT, ResourceScope.newConfinedScope());
+    static final MemorySegment sharedPoint = MemorySegment.allocateNative(POINT_LAYOUT, MemorySession.openShared());
+    static final MemorySegment confinedPoint = MemorySegment.allocateNative(POINT_LAYOUT, MemorySession.openConfined());
 
-    static final MemorySegment point = MemorySegment.allocateNative(POINT_LAYOUT, ResourceScope.newImplicitScope());
+    static final MemorySegment point = MemorySegment.allocateNative(POINT_LAYOUT, MemorySession.openImplicit());
 
-    static final SegmentAllocator recycling_allocator = SegmentAllocator.prefixAllocator(MemorySegment.allocateNative(POINT_LAYOUT, ResourceScope.newImplicitScope()));
+    static final SegmentAllocator recycling_allocator = SegmentAllocator.prefixAllocator(MemorySegment.allocateNative(POINT_LAYOUT, MemorySession.openImplicit()));
 
     static {
         System.loadLibrary("CallOverheadJNI");

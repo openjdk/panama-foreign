@@ -26,9 +26,10 @@ package jdk.internal.foreign.abi;
 
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
+
+import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.NativeSymbolImpl;
-import jdk.internal.foreign.ResourceScopeImpl;
 
 public class UpcallStubs {
 
@@ -48,13 +49,13 @@ public class UpcallStubs {
         registerNatives();
     }
 
-    static NativeSymbol makeUpcall(long entry, ResourceScope scope) {
-        ((ResourceScopeImpl)scope).addOrCleanupIfFail(new ResourceScopeImpl.ResourceList.ResourceCleanup() {
+    static NativeSymbol makeUpcall(long entry, MemorySession session) {
+        ((MemorySessionImpl)session).addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
             @Override
             public void cleanup() {
                 freeUpcallStub(entry);
             }
         });
-        return new NativeSymbolImpl("upcall:" + Long.toHexString(entry), MemoryAddress.ofLong(entry), scope);
+        return new NativeSymbolImpl("upcall:" + Long.toHexString(entry), MemoryAddress.ofLong(entry), ((MemorySessionImpl)session));
     }
 }
