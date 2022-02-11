@@ -80,7 +80,7 @@ import jdk.internal.javac.PreviewFeature;
  * in the following example:
  *
  * {@snippet lang=java :
- * try (MemorySession.OfCloseable session = MemorySession.openConfined()) {
+ * try (MemorySession session = MemorySession.openConfined()) {
  *    MemorySegment segment1 = MemorySegment.allocateNative(100);
  *    MemorySegment segment1 = MemorySegment.allocateNative(200);
  *    ...
