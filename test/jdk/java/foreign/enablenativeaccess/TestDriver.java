@@ -23,26 +23,29 @@
 
 /**
  * @test id=panama_enable_native_access_warn
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
  * @run main/othervm panama_module/org.openjdk.foreigntest.PanamaMain
- * @summary with --enable-native-access access to comma separated list of modules
+ * @summary without --enable-native-access, access to Panama unsafe API succeeds and produces warning
  */
 
 /**
  * @test id=panama_enable_native_access_warn_reflection
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
  * @run main/othervm panama_module/org.openjdk.foreigntest.PanamaMainReflection
- * @summary with --enable-native-access access to comma separated list of modules
+ * @summary without --enable-native-access, access to Panama unsafe API succeeds and produces warning
  */
 
 /**
  * @test id=panama_enable_native_access_warn_invoke
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
  * @run main/othervm panama_module/org.openjdk.foreigntest.PanamaMainInvoke
- * @summary with --enable-native-access access to comma separated list of modules
+ * @summary without --enable-native-access, access to Panama unsafe API succeeds and produces warning
  */
 
 /**
@@ -50,8 +53,8 @@
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
- * @run main/othervm -Djava.lang.foreign.native.access.throw=true --enable-native-access=panama_module panama_module/org.openjdk.foreigntest.PanamaMain
- * @summary with --enable-native-access access to specific module Panama unsafe API succeeds
+ * @run main/othervm --enable-native-access=panama_module panama_module/org.openjdk.foreigntest.PanamaMain
+ * @summary with --enable-native-access, access to specific module Panama unsafe API succeeds
  */
 
 /**
@@ -59,8 +62,8 @@
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
- * @run main/othervm -Djava.lang.foreign.native.access.throw=true --enable-native-access=panama_module panama_module/org.openjdk.foreigntest.PanamaMainReflection
- * @summary with --enable-native-access access to specific module Panama unsafe API succeeds
+ * @run main/othervm --enable-native-access=panama_module panama_module/org.openjdk.foreigntest.PanamaMainReflection
+ * @summary with --enable-native-access. access to specific module Panama unsafe API succeeds
  */
 
 /**
@@ -68,8 +71,8 @@
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
- * @run main/othervm -Djava.lang.foreign.native.access.throw=true --enable-native-access=panama_module panama_module/org.openjdk.foreigntest.PanamaMainInvoke
- * @summary with --enable-native-access access to specific module Panama unsafe API succeeds
+ * @run main/othervm --enable-native-access=panama_module panama_module/org.openjdk.foreigntest.PanamaMainInvoke
+ * @summary with --enable-native-access, access to specific module Panama unsafe API succeeds
  */
 
 /**
@@ -77,8 +80,8 @@
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
- * @run main/othervm -Djava.lang.foreign.native.access.throw=true --enable-native-access=com.acme,panama_module panama_module/org.openjdk.foreigntest.PanamaMain
- * @summary with --enable-native-access access to comma separated list of modules
+ * @run main/othervm --enable-native-access=com.acme,panama_module panama_module/org.openjdk.foreigntest.PanamaMain
+ * @summary with --enable-native-access, access to comma separated list of modules succeeds
  */
 
 /**
@@ -86,8 +89,8 @@
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
- * @run main/othervm -Djava.lang.foreign.native.access.throw=true --enable-native-access=com.acme,panama_module panama_module/org.openjdk.foreigntest.PanamaMainReflection
- * @summary with --enable-native-access access to comma separated list of modules
+ * @run main/othervm --enable-native-access=com.acme,panama_module panama_module/org.openjdk.foreigntest.PanamaMainReflection
+ * @summary with --enable-native-access, access to comma separated list of modules succeeds
  */
 
 /**
@@ -95,35 +98,8 @@
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
- * @run main/othervm -Djava.lang.foreign.native.access.throw=true --enable-native-access=com.acme,panama_module panama_module/org.openjdk.foreigntest.PanamaMainInvoke
- * @summary with --enable-native-access access to comma separated list of modules
- */
-
-/**
- * @test id=panama_no_enable_native_access_fail
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build panama_module/*
- * @run main/othervm/fail -Djava.lang.foreign.native.access.throw=true panama_module/org.openjdk.foreigntest.PanamaMain
- * @summary without --enable-native-access access to Panama unsafe API fails
- */
-
-/**
- * @test id=panama_no_enable_native_access_fail_reflection
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build panama_module/*
- * @run main/othervm/fail -Djava.lang.foreign.native.access.throw=true panama_module/org.openjdk.foreigntest.PanamaMainReflection
- * @summary without --enable-native-access access to Panama unsafe API fails
- */
-
-/**
- * @test id=panama_no_enable_native_access_fail_invoke
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build panama_module/*
- * @run main/othervm/fail -Djava.lang.foreign.native.access.throw=true panama_module/org.openjdk.foreigntest.PanamaMainInvoke
- * @summary without --enable-native-access access to Panama unsafe API fails
+ * @run main/othervm --enable-native-access=com.acme,panama_module panama_module/org.openjdk.foreigntest.PanamaMainInvoke
+ * @summary with --enable-native-access, access to comma separated list of modules succeeds
  */
 
 /**
@@ -131,16 +107,8 @@
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build panama_module/*
- * @run main/othervm/fail -Djava.lang.foreign.native.access.throw=true --enable-native-access=ALL-MODULE-PATH panama_module/org.openjdk.foreigntest.PanamaMain
- * @summary --enable-native-access does not work with ALL-MODULE-PATH
- */
-
-/**
- * @test id=panama_no_unnamed_module_native_access_warn
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @build org.openjdk.foreigntest.PanamaMainUnnamedModule
- * @run testng/othervm org.openjdk.foreigntest.PanamaMainUnnamedModule
- * @summary --enable-native-access does not work without ALL-UNNAMED
+ * @run main/othervm/fail --enable-native-access=ALL-MODULE-PATH panama_module/org.openjdk.foreigntest.PanamaMain
+ * @summary with --enable-native-access=ALL-MODULE-PATH fails
  */
 
 /**
@@ -148,8 +116,8 @@
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build org.openjdk.foreigntest.PanamaMainUnnamedModule
- * @run testng/othervm/fail -Djava.lang.foreign.native.access.throw=true -Djava.lang.foreign.native.access.throw=true org.openjdk.foreigntest.PanamaMainUnnamedModule
- * @summary --enable-native-access does not work without ALL-UNNAMED
+ * @run testng/othervm org.openjdk.foreigntest.PanamaMainUnnamedModule
+ * @summary without --enable-native-access=ALL-UNNAMED, access to unnamed module succeeds and produces warning
  */
 
 /**
@@ -157,6 +125,6 @@
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @build org.openjdk.foreigntest.PanamaMainUnnamedModule
- * @run testng/othervm -Djava.lang.foreign.native.access.throw=true -Djava.lang.foreign.native.access.throw=true --enable-native-access=ALL-UNNAMED org.openjdk.foreigntest.PanamaMainUnnamedModule
- * @summary --enable-native-access ALL-UNNAMED works
+ * @run testng/othervm --enable-native-access=ALL-UNNAMED org.openjdk.foreigntest.PanamaMainUnnamedModule
+ * @summary with --enable-native-access=ALL-UNNAMED, access to unnamed module succeeds
  */

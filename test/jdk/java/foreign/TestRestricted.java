@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
 /*
  * @test
  * @enablePreview
- * @run testng/othervm -Djava.lang.foreign.native.access.throw=true TestRestricted
+ * @run testng/othervm TestRestricted
  */
 public class TestRestricted {
     @Test(expectedExceptions = InvocationTargetException.class)
@@ -43,6 +43,7 @@ public class TestRestricted {
         Method method = CLinker.class.getDeclaredMethod("systemCLinker");
         method.invoke(null);
     }
+    // doesn't throw
 
     @Test(expectedExceptions = IllegalCallerException.class)
     public void testInvoke() throws Throwable {
@@ -50,17 +51,20 @@ public class TestRestricted {
                 "systemCLinker", MethodType.methodType(CLinker.class));
         var seg = (CLinker)mh.invokeExact();
     }
+    // doesn't throw
 
     @Test(expectedExceptions = IllegalCallerException.class)
     public void testDirectAccess() throws Throwable {
         CLinker.systemCLinker();
     }
+    // doesn't throw
 
     @Test(expectedExceptions = InvocationTargetException.class)
     public void testReflection2() throws Throwable {
         Method method = MemorySegment.class.getDeclaredMethod("ofAddress", MemoryAddress.class, long.class, ResourceScope.class);
         method.invoke(null, MemoryAddress.NULL, 4000L, ResourceScope.globalScope());
     }
+    // doesn't throw
 
     @Test(expectedExceptions = IllegalCallerException.class)
     public void testInvoke2() throws Throwable {
@@ -68,9 +72,11 @@ public class TestRestricted {
             MethodType.methodType(MemorySegment.class, MemoryAddress.class, long.class, ResourceScope.class));
         var seg = (MemorySegment)mh.invokeExact(MemoryAddress.NULL, 4000L, ResourceScope.globalScope());
     }
+    // doesn't throw
 
     @Test(expectedExceptions = IllegalCallerException.class)
     public void testDirectAccess2() throws Throwable {
         MemorySegment.ofAddress(MemoryAddress.NULL, 4000, ResourceScope.globalScope());
     }
+    // doesn't throw
 }

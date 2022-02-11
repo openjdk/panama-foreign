@@ -772,11 +772,23 @@ public final class ModuleBootstrap {
         }
     }
 
+    private static final boolean HAS_ENABLE_NATIVE_ACCESS_FLAG;
+    private static final Set<String> NATIVE_ACCESS_MODULES;
+
+    public static boolean hasEnableNativeAccessFlag() {
+        return HAS_ENABLE_NATIVE_ACCESS_FLAG;
+    }
+
+    static {
+        NATIVE_ACCESS_MODULES = decodeEnableNativeAccess();
+        HAS_ENABLE_NATIVE_ACCESS_FLAG = !NATIVE_ACCESS_MODULES.isEmpty();
+    }
+
     /**
      * Process the --enable-native-access option to grant access to restricted methods to selected modules.
      */
     private static void addEnableNativeAccess(ModuleLayer layer) {
-        for (String name : decodeEnableNativeAccess()) {
+        for (String name : NATIVE_ACCESS_MODULES) {
             if (name.equals("ALL-UNNAMED")) {
                 JLA.addEnableNativeAccessAllUnnamed();
             } else {

@@ -39,10 +39,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.VM;
+import jdk.internal.module.ModuleBootstrap;
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.IntrinsicCandidate;
-
-import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
 /** Common utility routines used by both java.lang and
     java.lang.reflect */
@@ -119,23 +118,15 @@ public class Reflection {
     static class NativeAccessLogger {
         static AtomicBoolean firstNativeAccessWarning = new AtomicBoolean();
 
-        static boolean shouldThrow = privilegedGetProperty("java.lang.foreign.native.access.throw");
-
         @ForceInline
         static void logNativeAccessIfNeeded(Class<?> currentClass, Class<?> owner, String methodName) {
             Module module = currentClass.getModule();
-            if (!SharedSecrets.getJavaLangAccess().isEnableNativeAccess(module)) {
-                if (shouldThrow) {
-                    // used for testing
+            if (ModuleBootstrap.hasEnableNativeAccessFlag()) {
+                if (!SharedSecrets.getJavaLangAccess().isEnableNativeAccess(module)) {
+                    // native-access not enabled for module
                     throw new IllegalCallerException("Illegal native access from: " + module);
                 }
-                synchronized (module) {
-                    if (module.isNamed()) {
-                        SharedSecrets.getJavaLangAccess().addEnableNativeAccess(module);
-                    } else {
-                        SharedSecrets.getJavaLangAccess().addEnableNativeAccessAllUnnamed();
-                    }
-                }
+            } else {    // native-access unspecified, allowed for all modules with warning
                 boolean isFirst = firstNativeAccessWarning.compareAndSet(false, true);
                 if (isFirst) {
                     System.err.println("WARNING: A restricted native access operation has occurred");

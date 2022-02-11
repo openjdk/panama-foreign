@@ -80,7 +80,7 @@ sealed public interface NativeSymbol extends Addressable permits NativeSymbolImp
      */
     @CallerSensitive
     static NativeSymbol ofAddress(String name, MemoryAddress address, ResourceScope scope) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddressNative");
         Objects.requireNonNull(name);
         Objects.requireNonNull(address);
         Objects.requireNonNull(scope);
