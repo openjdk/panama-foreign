@@ -251,17 +251,17 @@ public class BindingSpecializer {
 
             // for downcalls we also acquire/release scoped parameters before/after the call
             // create a bunch of locals here to keep track of their scopes (to release later)
-            scopeSlots = new int[callerMethodType.parameterCount()];
+            int[] initialScopeSlots = new int[callerMethodType.parameterCount()];
             int numScopes = 0;
             for (int i = 0; i < callerMethodType.parameterCount(); i++) {
                 if (shouldAcquire(callerMethodType.parameterType(i))) {
                     int scopeLocal = newLocal(BasicType.L);
-                    scopeSlots[numScopes++] = scopeLocal;
+                    initialScopeSlots[numScopes++] = scopeLocal;
                     emitConst(null);
                     emitStore(BasicType.L, scopeLocal); // need to initialize all scope locals here in case an exception occurs
                 }
             }
-            scopeSlots = Arrays.copyOf(scopeSlots, numScopes); // fit to size
+            scopeSlots = Arrays.copyOf(initialScopeSlots, numScopes); // fit to size
             curScopeLocalIdx = 0; // used from emitGetInput
         }
 
