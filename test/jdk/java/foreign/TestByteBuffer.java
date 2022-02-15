@@ -385,7 +385,7 @@ public class TestByteBuffer {
 
     @Test(dataProvider = "bufferHandleOps")
     public void testScopedBufferAndVarHandle(VarHandle bufferHandle) {
-        
+
         ByteBuffer bb;
         try (MemorySession session = MemorySession.openConfined()) {
             MemorySegment segment = MemorySegment.allocateNative(bytes, session);
