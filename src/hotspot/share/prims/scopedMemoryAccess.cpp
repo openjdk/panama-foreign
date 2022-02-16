@@ -68,6 +68,12 @@ public:
   }
 };
 
+/*
+ * To store problematic threads during an handshake, we need an atomic data structure.
+ * This is because the handshake closure can run concurrently either on the thread that
+ * is the target of the handshake operation, or on the thread that is performing the
+ * handshake (e.g. if the target thread is blocked, or in native state).
+ */
 class LockFreeStackThreadsElement : public CHeapObj<mtInternal> {
   typedef LockFreeStackThreadsElement Element;
 
@@ -78,8 +84,6 @@ public:
   JavaThread* _thread;
   LockFreeStackThreadsElement(JavaThread* thread = NULL) : _entry(), _thread(thread) {}
   typedef LockFreeStack<Element, &entry_ptr> ThreadStack;
-  JavaThread* thread() const { return _thread; }
-  void set_thread(JavaThread* value) { _thread = value; }
 };
 
 typedef LockFreeStackThreadsElement::ThreadStack ThreadStack;
@@ -155,12 +159,16 @@ public:
 };
 
 /*
- * This function issues a global handshake operation with all
- * Java threads. This is useful for implementing asymmetric
- * dekker synchronization schemes, where expensive synchronization
- * in performance sensitive common paths, may be shifted to
- * a less common slow path instead.
- * Top frames containg obj will be deoptimized.
+ * This functin performs a thread-local handshake against all threads running at the time
+ * the given scope (deopt) was closed. If the handshake closure finds that a thread has
+ * safepointed inside a scoped method, whose local variables mention the scope being closed
+ * (deopt), the thread is added to a problematic stack. After the handshake, each thread in
+ * the problematic stack is handshaked again, individually, to check that it has exited
+ * the scoped method. This should happen quickly, because once we find a problematic
+ * thread, we also deoptimize it, meaning that when the thread resumes execution, it should
+ * also see the updated scope state. This function returns when the stack of problematic
+ * threads is empty. To prevent premature thread termination we take a snapshot of the live
+ * threads in the system using a ThreadsListHandle.
  */
 JVM_ENTRY(jboolean, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, jobject deopt))  
   ThreadsListHandle tlh;
