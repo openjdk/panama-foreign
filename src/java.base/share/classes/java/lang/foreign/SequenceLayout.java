@@ -34,9 +34,9 @@ import jdk.internal.javac.PreviewFeature;
 
 /**
  * A sequence layout. A sequence layout is used to denote a repetition of a given layout, also called the sequence layout's <em>element layout</em>.
- * The repetition count, where it exists (e.g. for <em>finite</em> sequence layouts) is said to be the sequence layout's <em>element count</em>.
- * A finite sequence layout can be thought of as a group layout where the sequence layout's element layout is repeated a number of times
- * that is equal to the sequence layout's element count. In other words this layout:
+ * The repetition count is said to be the sequence layout's <em>element count</em>. A finite sequence can be thought of as a
+ * group layout where the sequence layout's element layout is repeated a number of times that is equal to the sequence
+ * layout's element count. In other words this layout:
  *
  * {@snippet lang=java :
  * MemoryLayout.sequenceLayout(3, ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN));
@@ -210,10 +210,6 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
             elemLayout = elemSeq.elementLayout();
         }
         return MemoryLayout.sequenceLayout(count, elemLayout);
-    }
-
-    private UnsupportedOperationException badUnboundSequenceLayout() {
-        return new UnsupportedOperationException("Cannot flatten a sequence layout whose element count is unspecified");
     }
 
     @Override
