@@ -57,8 +57,7 @@ public abstract non-sealed class ResourceScopeImpl implements ResourceScope, Seg
     final Thread owner;
 
     static final int ALIVE = 0;
-    static final int CLOSING = -1;
-    static final int CLOSED = -2;
+    static final int CLOSED = -1;
 
     int state = ALIVE;
 
@@ -189,7 +188,7 @@ public abstract non-sealed class ResourceScopeImpl implements ResourceScope, Seg
         if (owner != null && owner != Thread.currentThread()) {
             throw new IllegalStateException("Attempted access outside owning thread");
         }
-        if (state < ALIVE) {
+        if (state == CLOSED) {
             throw ScopedMemoryAccess.ScopedAccessError.INSTANCE;
         }
     }

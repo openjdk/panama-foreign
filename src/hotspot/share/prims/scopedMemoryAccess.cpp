@@ -68,16 +68,32 @@ public:
   }
 };
 
-class CloseScopedMemoryClosure : public HandshakeClosure {
-  jobject _deopt;
+class LockFreeStackThreadsElement : public CHeapObj<mtInternal> {
+  typedef LockFreeStackThreadsElement Element;
+
+  Element* volatile _entry;
+  static Element* volatile* entry_ptr(Element& e) { return &e._entry; }
 
 public:
-  jboolean _found;
+  JavaThread* _thread;
+  LockFreeStackThreadsElement(JavaThread* thread = NULL) : _entry(), _thread(thread) {}
+  typedef LockFreeStack<Element, &entry_ptr> ThreadStack;
+  JavaThread* thread() const { return _thread; }
+  void set_thread(JavaThread* value) { _thread = value; }
+};
 
-  CloseScopedMemoryClosure(jobject deopt)
+typedef LockFreeStackThreadsElement::ThreadStack ThreadStack;
+typedef LockFreeStackThreadsElement ThreadStackElement;
+
+class CloseScopedMemoryClosure : public HandshakeClosure {
+  jobject _deopt;
+  ThreadStack *_threads;
+
+public:
+  CloseScopedMemoryClosure(jobject deopt, ThreadStack *threads)
     : HandshakeClosure("CloseScopedMemory")
     , _deopt(deopt)
-    , _found(false) {}
+    , _threads(threads) {}
 
   void do_thread(Thread* thread) {
 
@@ -120,7 +136,8 @@ public:
           if (var->type() == T_OBJECT) {
             if (var->get_obj() == JNIHandles::resolve(_deopt)) {
               assert(depth < max_critical_stack_depth, "can't have more than %d critical frames", max_critical_stack_depth);
-              _found = true;
+              ThreadStackElement *element = new ThreadStackElement(jt);
+              _threads->push(*element);
               return;
             }
           }
@@ -145,10 +162,23 @@ public:
  * a less common slow path instead.
  * Top frames containg obj will be deoptimized.
  */
-JVM_ENTRY(jboolean, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, jobject deopt))
-  CloseScopedMemoryClosure cl(deopt);
+JVM_ENTRY(jboolean, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, jobject deopt))  
+  ThreadsListHandle tlh;
+  ThreadStack threads;
+  CloseScopedMemoryClosure cl(deopt, &threads);
+  // do a first handshake and collect all problematic threads
   Handshake::execute(&cl);
-  return !cl._found;
+  // now iterate on all problematic threads, until we converge
+  ThreadStackElement *element = threads.pop();
+  while (element != NULL) {
+    JavaThread* thread = element->_thread;
+    if (tlh.list()->includes(thread)) {
+      Handshake::execute(&cl, thread);
+    }
+    delete element;
+    element = threads.pop();
+  }
+  return true;
 JVM_END
 
 /// JVM_RegisterUnsafeMethods

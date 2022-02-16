@@ -78,17 +78,13 @@ class SharedScope extends ResourceScopeImpl {
     }
 
     void justClose() {
-        int prevState = (int) STATE.compareAndExchange(this, ALIVE, CLOSING);
-        if (prevState < 0) {
+        int prevState = (int) STATE.compareAndExchange(this, ALIVE, CLOSED);
+        if (prevState == CLOSED) {
             throw new IllegalStateException("Already closed");
         } else if (prevState != ALIVE) {
             throw new IllegalStateException("Scope is kept alive by " + prevState + " scopes");
         }
-        boolean success = SCOPED_MEMORY_ACCESS.closeScope(this);
-        STATE.setVolatile(this, success ? CLOSED : ALIVE);
-        if (!success) {
-            throw new IllegalStateException("Cannot close while another thread is accessing the segment");
-        }
+        SCOPED_MEMORY_ACCESS.closeScope(this); // handshake
     }
 
     @Override

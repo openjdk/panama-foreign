@@ -89,6 +89,7 @@ public class TestHandshake {
     static abstract class AbstractSegmentAccessor implements Runnable {
         final MemorySegment segment;
         final int id;
+        final AtomicBoolean failed = new AtomicBoolean();
 
         AbstractSegmentAccessor(int id, MemorySegment segment) {
             this.id = id;
@@ -102,12 +103,14 @@ public class TestHandshake {
                 try {
                     doAccess();
                 } catch (IllegalStateException ex) {
-                    long delay = System.currentTimeMillis() - start.get();
-                    System.out.println("Accessor #" + id + " suspending - elapsed (ms): " + delay);
-                    backoff();
-                    delay = System.currentTimeMillis() - start.get();
-                    System.out.println("Accessor #" + id + " resuming - elapsed (ms): " + delay);
-                    continue outer;
+                    if (!failed.get()) {
+                        // ignore - this means segment was alive, but was closed while we were accessing it
+                        // next isAlive test should fail
+                        failed.set(true);
+                    } else {
+                        // rethrow!
+                        throw ex;
+                    }
                 }
             }
             long delay = System.currentTimeMillis() - start.get();
