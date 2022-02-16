@@ -55,7 +55,7 @@ import java.util.OptionalLong;
     }
 
     PaddingLayout(long size, long alignment, Optional<String> name) {
-        super(OptionalLong.of(size), alignment, name);
+        super(size, alignment, name);
     }
 
     @Override

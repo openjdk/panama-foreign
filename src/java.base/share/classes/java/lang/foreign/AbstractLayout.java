@@ -46,13 +46,13 @@ import static java.lang.constant.ConstantDescs.CD_long;
 
 abstract non-sealed class AbstractLayout implements MemoryLayout {
 
-    private final OptionalLong size;
+    private final long size;
     final long alignment;
     private final Optional<String> name;
     @Stable
     long cachedSize;
 
-    public AbstractLayout(OptionalLong size, long alignment, Optional<String> name) {
+    public AbstractLayout(long size, long alignment, Optional<String> name) {
         this.size = size;
         this.alignment = alignment;
         this.name = name;
@@ -109,21 +109,8 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
     }
 
     @Override
-    public boolean hasSize() {
-        return size.isPresent();
-    }
-
-    @Override
     public long bitSize() {
-        return size.orElseThrow(AbstractLayout::badSizeException);
-    }
-
-    static OptionalLong optSize(MemoryLayout layout) {
-        return ((AbstractLayout)layout).size;
-    }
-
-    private static UnsupportedOperationException badSizeException() {
-        return new UnsupportedOperationException("Cannot compute size of a layout which is, or depends on a sequence layout with unspecified size");
+        return size;
     }
 
     String decorateLayoutString(String s) {
@@ -150,7 +137,7 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
     }
 
     boolean hasNaturalAlignment() {
-        return size.isPresent() && size.getAsLong() == alignment;
+        return size == alignment;
     }
 
     @Override
@@ -200,9 +187,6 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
 
     static final MethodHandleDesc MH_SIZED_SEQUENCE = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_MEMORY_LAYOUT, "sequenceLayout",
                 MethodTypeDesc.of(CD_SEQUENCE_LAYOUT, CD_long, CD_MEMORY_LAYOUT));
-
-    static final MethodHandleDesc MH_UNSIZED_SEQUENCE = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_MEMORY_LAYOUT, "sequenceLayout",
-                MethodTypeDesc.of(CD_SEQUENCE_LAYOUT, CD_MEMORY_LAYOUT));
 
     static final MethodHandleDesc MH_STRUCT = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_MEMORY_LAYOUT, "structLayout",
                 MethodTypeDesc.of(CD_GROUP_LAYOUT, CD_MEMORY_LAYOUT.arrayType()));

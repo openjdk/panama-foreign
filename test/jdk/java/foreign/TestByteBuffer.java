@@ -162,7 +162,7 @@ public class TestByteBuffer {
     }
 
     static void initBytes(MemorySegment base, SequenceLayout seq, BiConsumer<MemorySegment, Long> handleSetter) {
-        for (long i = 0; i < seq.elementCount().getAsLong() ; i++) {
+        for (long i = 0; i < seq.elementCount() ; i++) {
             handleSetter.accept(base, i);
         }
     }
@@ -171,7 +171,7 @@ public class TestByteBuffer {
                                               Function<ByteBuffer, Z> bufFactory,
                                               BiFunction<MemorySegment, Long, Object> handleExtractor,
                                               Function<Z, Object> bufferExtractor) {
-        long nelems = layout.elementCount().getAsLong();
+        long nelems = layout.elementCount();
         long elemSize = layout.elementLayout().byteSize();
         for (long i = 0 ; i < nelems ; i++) {
             long limit = nelems - i;
@@ -196,10 +196,10 @@ public class TestByteBuffer {
     public void testOffheap() {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(tuples, scope);
-            initTuples(segment, tuples.elementCount().getAsLong());
+            initTuples(segment, tuples.elementCount());
 
             ByteBuffer bb = segment.asByteBuffer();
-            checkTuples(segment, bb, tuples.elementCount().getAsLong());
+            checkTuples(segment, bb, tuples.elementCount());
         }
     }
 
@@ -207,10 +207,10 @@ public class TestByteBuffer {
     public void testHeap() {
         byte[] arr = new byte[(int) tuples.byteSize()];
         MemorySegment region = MemorySegment.ofArray(arr);
-        initTuples(region, tuples.elementCount().getAsLong());
+        initTuples(region, tuples.elementCount());
 
         ByteBuffer bb = region.asByteBuffer();
-        checkTuples(region, bb, tuples.elementCount().getAsLong());
+        checkTuples(region, bb, tuples.elementCount());
     }
 
     @Test
@@ -223,7 +223,7 @@ public class TestByteBuffer {
         try (FileChannel channel = FileChannel.open(f.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE)) {
             withMappedBuffer(channel, FileChannel.MapMode.READ_WRITE, 0, tuples.byteSize(), mbb -> {
                 MemorySegment segment = MemorySegment.ofByteBuffer(mbb);
-                initTuples(segment, tuples.elementCount().getAsLong());
+                initTuples(segment, tuples.elementCount());
                 mbb.force();
             });
         }
@@ -232,7 +232,7 @@ public class TestByteBuffer {
         try (FileChannel channel = FileChannel.open(f.toPath(), StandardOpenOption.READ)) {
             withMappedBuffer(channel, FileChannel.MapMode.READ_ONLY, 0, tuples.byteSize(), mbb -> {
                 MemorySegment segment = MemorySegment.ofByteBuffer(mbb);
-                checkTuples(segment, mbb, tuples.elementCount().getAsLong());
+                checkTuples(segment, mbb, tuples.elementCount());
             });
         }
     }
@@ -259,14 +259,14 @@ public class TestByteBuffer {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             //write to channel
             MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_WRITE, scope);
-            initTuples(segment, tuples.elementCount().getAsLong());
+            initTuples(segment, tuples.elementCount());
             segment.force();
         }
 
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             //read from channel
             MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_ONLY, scope);
-            checkTuples(segment, segment.asByteBuffer(), tuples.elementCount().getAsLong());
+            checkTuples(segment, segment.asByteBuffer(), tuples.elementCount());
         }
     }
 

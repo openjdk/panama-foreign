@@ -58,7 +58,7 @@ public class LoopOverNewHeap {
     static final int ELEM_SIZE = 1_000_000;
     static final int CARRIER_SIZE = (int)JAVA_INT.byteSize();
 
-    static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(sequenceElement());
+    static final VarHandle VH_int = JAVA_INT.arrayElementVarHandle();
 
     @Param(value = {"false", "true"})
     boolean polluteProfile;

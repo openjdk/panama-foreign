@@ -34,7 +34,6 @@ import java.nio.ByteOrder;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
@@ -204,17 +203,6 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      */
     @Override
     Optional<? extends DynamicConstantDesc<? extends MemoryLayout>> describeConstable();
-
-    /**
-     * Returns {@code true} if this layout has a specified size. A layout does not have a specified size if it is (or contains) a sequence layout whose
-     * size is unspecified (see {@link SequenceLayout#elementCount()}).
-     *
-     * Value layouts (see {@link ValueLayout}) and padding layouts (see {@link MemoryLayout#paddingLayout(long)})
-     * <em>always</em> have a specified size, therefore this method always returns {@code true} in these cases.
-     *
-     * @return {@code true}, if this layout has a specified size.
-     */
-    boolean hasSize();
 
     /**
      * {@return the layout size, in bits}
@@ -439,6 +427,44 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     }
 
     /**
+     * Creates a memory access var handle that can be used to dereference memory at the layout selected by a given layout path,
+     * where the path is considered rooted in this layout.
+     * <p>
+     * The final memory location accessed by the returned memory access var handle can be computed as follows:
+     *
+     * <blockquote><pre>{@code
+     * address = base + offset
+     * }</pre></blockquote>
+     *
+     * where {@code base} denotes the base address expressed by the {@link MemorySegment} access coordinate
+     * (see {@link MemorySegment#address()} and {@link MemoryAddress#toRawLongValue()}) and {@code offset}
+     * can be expressed in the following form:
+     *
+     * <blockquote><pre>{@code
+     * offset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
+     * }</pre></blockquote>
+     *
+     * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
+     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
+     * and {@code s_0}, {@code s_1}, ... {@code s_n} are <em>static</em> stride constants which are derived from
+     * the layout path.
+     *
+     * @apiNote the resulting var handle will feature an additional {@code long} access coordinate for every
+     * unspecified sequence access component contained in this layout path. Moreover, the resulting var handle
+     * features certain <a href="MemoryHandles.html#memaccess-mode">access mode restrictions</a>, which are common to all memory access var handles.
+     *
+     * @param elements the layout path elements.
+     * @return a var handle which can be used to dereference memory at the (possibly nested) layout selected by the layout path in {@code elements}.
+     * @throws UnsupportedOperationException if the layout path has one or more elements with incompatible alignment constraints,
+     * or if one of the layouts traversed by the layout path has unspecified size.
+     * @throws IllegalArgumentException if the layout path in {@code elements} does not select a value layout (see {@link ValueLayout}).
+     */
+    default VarHandle arrayElementVarHandle(PathElement... elements) {
+        return computePathOp(LayoutPath.elementRootPath(this, MemoryLayout::bitSize), LayoutPath::dereferenceHandle,
+                Set.of(), elements);
+    }
+
+    /**
      * Creates a method handle which, given a memory segment, returns a {@linkplain MemorySegment#asSlice(long,long) slice}
      * corresponding to the layout selected by a given layout path, where the path is considered rooted in this layout.
      *
@@ -478,6 +504,49 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      */
     default MethodHandle sliceHandle(PathElement... elements) {
         return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::sliceHandle,
+                Set.of(), elements);
+    }
+
+    /**
+     * Creates a method handle which, given a memory segment, returns a {@linkplain MemorySegment#asSlice(long,long) slice}
+     * corresponding to the layout selected by a given layout path, where the path is considered rooted in this layout.
+     *
+     * <p>The returned method handle has a return type of {@code MemorySegment}, features a {@code MemorySegment}
+     * parameter as leading parameter representing the segment to be sliced, and features as many trailing {@code long}
+     * parameter types as there are free dimensions in the provided layout path (see {@link PathElement#sequenceElement()}),
+     * where the order of the parameters corresponds to the order of the path elements.
+     * The returned method handle can be used to create a slice similar to using {@link MemorySegment#asSlice(long, long)},
+     * but where the offset argument is dynamically compute based on indices specified when invoking the method handle.
+     *
+     * <p>The offset of the returned segment is computed as follows:
+     *
+     * <blockquote><pre>{@code
+     * bitOffset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
+     * offset = bitOffset / 8
+     * }</pre></blockquote>
+     *
+     * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
+     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
+     * and {@code s_0}, {@code s_1}, ... {@code s_n} are <em>static</em> stride constants which are derived from
+     * the layout path.
+     *
+     * <p>After the offset is computed, the returned segment is created as if by calling:
+     * {@snippet lang=java :
+     * segment.asSlice(offset, layout.byteSize());
+     * }
+     *
+     * where {@code segment} is the segment to be sliced, and where {@code layout} is the layout selected by the given
+     * layout path, as per {@link MemoryLayout#select(PathElement...)}.
+     *
+     * <p>The method handle will throw an {@link UnsupportedOperationException} if the computed
+     * offset in bits is not a multiple of 8.
+     *
+     * @param elements the layout path elements.
+     * @return a method handle which can be used to create a slice of the selected layout element, given a segment.
+     * @throws UnsupportedOperationException if the size of the selected layout in bits is not a multiple of 8.
+     */
+    default MethodHandle arrayElementSliceHandle(PathElement... elements) {
+        return computePathOp(LayoutPath.elementRootPath(this, MemoryLayout::bitSize), LayoutPath::sliceHandle,
                 Set.of(), elements);
     }
 
@@ -726,18 +795,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      */
     static SequenceLayout sequenceLayout(long elementCount, MemoryLayout elementLayout) {
         AbstractLayout.checkSize(elementCount, true);
-        OptionalLong size = OptionalLong.of(elementCount);
-        return new SequenceLayout(size, Objects.requireNonNull(elementLayout));
-    }
-
-    /**
-     * Create a new sequence layout, with unbounded element count and given element layout.
-     *
-     * @param elementLayout the element layout of the sequence layout.
-     * @return the new sequence layout with given element layout.
-     */
-    static SequenceLayout sequenceLayout(MemoryLayout elementLayout) {
-        return new SequenceLayout(OptionalLong.empty(), Objects.requireNonNull(elementLayout));
+        return new SequenceLayout(elementCount, Objects.requireNonNull(elementLayout));
     }
 
     /**

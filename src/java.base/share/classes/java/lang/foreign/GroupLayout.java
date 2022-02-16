@@ -85,16 +85,12 @@ public final class GroupLayout extends AbstractLayout implements MemoryLayout {
             this.sizeOp = sizeOp;
         }
 
-        OptionalLong sizeof(List<MemoryLayout> elems) {
+        long sizeof(List<MemoryLayout> elems) {
             long size = 0;
             for (MemoryLayout elem : elems) {
-                if (AbstractLayout.optSize(elem).isPresent()) {
-                    size = sizeOp.applyAsLong(size, elem.bitSize());
-                } else {
-                    return OptionalLong.empty();
-                }
+                size = sizeOp.applyAsLong(size, elem.bitSize());
             }
-            return OptionalLong.of(size);
+            return size;
         }
 
         long alignof(List<MemoryLayout> elems) {

@@ -220,11 +220,7 @@ public class LayoutPath {
         if (enclosing == null) {
             return newLayout;
         } else if (enclosing.layout instanceof SequenceLayout seq) {
-            if (seq.elementCount().isPresent()) {
-                return enclosing.map(l -> dup(l, MemoryLayout.sequenceLayout(seq.elementCount().getAsLong(), newLayout)));
-            } else {
-                return enclosing.map(l -> dup(l, MemoryLayout.sequenceLayout(newLayout)));
-            }
+            return enclosing.map(l -> dup(l, MemoryLayout.sequenceLayout(seq.elementCount(), newLayout)));
         } else if (enclosing.layout instanceof GroupLayout g) {
             List<MemoryLayout> newElements = new ArrayList<>(g.memberLayouts());
             //if we selected a layout in a group we must have a valid index
@@ -242,7 +238,7 @@ public class LayoutPath {
     private MemoryLayout dup(MemoryLayout oldLayout, MemoryLayout newLayout) {
         newLayout = newLayout.withBitAlignment(oldLayout.bitAlignment());
         if (oldLayout.name().isPresent()) {
-            newLayout.withName(oldLayout.name().get());
+            newLayout = newLayout.withName(oldLayout.name().get());
         }
         return newLayout;
     }
@@ -251,6 +247,10 @@ public class LayoutPath {
 
     public static LayoutPath rootPath(MemoryLayout layout, ToLongFunction<MemoryLayout> sizeFunc) {
         return new LayoutPath(layout, 0L, EMPTY_STRIDES, -1, null, sizeFunc);
+    }
+
+    public static LayoutPath elementRootPath(MemoryLayout layout, ToLongFunction<MemoryLayout> sizeFunc) {
+        return new LayoutPath(layout, 0L, new long[] { layout.bitSize() }, -1, null, sizeFunc);
     }
 
     private static LayoutPath nestedPath(MemoryLayout layout, long offset, long[] strides, long elementIndex, LayoutPath encl) {
@@ -266,8 +266,8 @@ public class LayoutPath {
     }
 
     private void checkSequenceBounds(SequenceLayout seq, long index) {
-        if (seq.elementCount().isPresent() && index >= seq.elementCount().getAsLong()) {
-            throw badLayoutPath(String.format("Sequence index out of bound; found: %d, size: %d", index, seq.elementCount().getAsLong()));
+        if (index >= seq.elementCount()) {
+            throw badLayoutPath(String.format("Sequence index out of bound; found: %d, size: %d", index, seq.elementCount()));
         }
     }
 

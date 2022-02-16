@@ -27,7 +27,6 @@
  * @run testng TestArrayCopy
  */
 
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
@@ -275,10 +274,8 @@ public class TestArrayCopy {
     }
 
     public static MemorySegment truthSegment(MemorySegment srcSeg, CopyHelper<?, ?> helper, int indexShifts, CopyMode mode) {
-        VarHandle indexedHandleNO = MemoryLayout.sequenceLayout(helper.elementLayout.withOrder(NATIVE_ORDER))
-                                                .varHandle(MemoryLayout.PathElement.sequenceElement());
-        VarHandle indexedHandleNNO = MemoryLayout.sequenceLayout(helper.elementLayout.withOrder(NON_NATIVE_ORDER))
-                                                 .varHandle(MemoryLayout.PathElement.sequenceElement());
+        VarHandle indexedHandleNO = helper.elementLayout.withOrder(NATIVE_ORDER).arrayElementVarHandle();
+        VarHandle indexedHandleNNO = helper.elementLayout.withOrder(NON_NATIVE_ORDER).arrayElementVarHandle();
         MemorySegment dstSeg = MemorySegment.ofArray(srcSeg.toArray(JAVA_BYTE));
         int indexLength = (int) dstSeg.byteSize() / (int)helper.elementLayout.byteSize();
         if (mode.direction) {

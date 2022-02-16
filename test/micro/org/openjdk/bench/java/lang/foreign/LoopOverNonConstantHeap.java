@@ -66,10 +66,10 @@ public class LoopOverNonConstantHeap {
     static final int ALLOC_SIZE = ELEM_SIZE * CARRIER_SIZE;
     static final int UNSAFE_BYTE_BASE = unsafe.arrayBaseOffset(byte[].class);
 
-    static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(sequenceElement());
+    static final VarHandle VH_int = JAVA_INT.arrayElementVarHandle();
 
     static final ValueLayout.OfInt JAVA_INT_ALIGNED = JAVA_INT.withBitAlignment(32);
-    static final VarHandle VH_int_aligned = MemoryLayout.sequenceLayout(JAVA_INT_ALIGNED).varHandle(sequenceElement());
+    static final VarHandle VH_int_aligned = JAVA_INT_ALIGNED.arrayElementVarHandle();
     static final int UNSAFE_INT_BASE = unsafe.arrayBaseOffset(int[].class);
 
     MemorySegment segment, alignedSegment;

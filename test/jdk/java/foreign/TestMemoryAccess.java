@@ -122,7 +122,7 @@ public class TestMemoryAccess {
             MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq, scope));
             boolean isRO = segment.isReadOnly();
             try {
-                for (int i = 0; i < seq.elementCount().getAsLong(); i++) {
+                for (int i = 0; i < seq.elementCount(); i++) {
                     checker.check(handle, segment, i);
                 }
                 if (isRO) {
@@ -135,7 +135,7 @@ public class TestMemoryAccess {
                 return;
             }
             try {
-                checker.check(handle, segment, seq.elementCount().getAsLong());
+                checker.check(handle, segment, seq.elementCount());
                 throw new AssertionError(); //not ok, out of bounds
             } catch (IndexOutOfBoundsException ex) {
                 //ok, should fail (out of bounds)
@@ -184,8 +184,8 @@ public class TestMemoryAccess {
             MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq, scope));
             boolean isRO = segment.isReadOnly();
             try {
-                for (int i = 0; i < seq.elementCount().getAsLong(); i++) {
-                    for (int j = 0; j < ((SequenceLayout) seq.elementLayout()).elementCount().getAsLong(); j++) {
+                for (int i = 0; i < seq.elementCount(); i++) {
+                    for (int j = 0; j < ((SequenceLayout) seq.elementLayout()).elementCount(); j++) {
                         checker.check(handle, segment, i, j);
                     }
                 }
@@ -199,8 +199,8 @@ public class TestMemoryAccess {
                 return;
             }
             try {
-                checker.check(handle, segment, seq.elementCount().getAsLong(),
-                        ((SequenceLayout)seq.elementLayout()).elementCount().getAsLong());
+                checker.check(handle, segment, seq.elementCount(),
+                        ((SequenceLayout)seq.elementLayout()).elementCount());
                 throw new AssertionError(); //not ok, out of bounds
             } catch (IndexOutOfBoundsException ex) {
                 //ok, should fail (out of bounds)

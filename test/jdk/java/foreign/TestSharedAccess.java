@@ -50,7 +50,7 @@ public class TestSharedAccess {
         SequenceLayout layout = MemoryLayout.sequenceLayout(1024, ValueLayout.JAVA_INT);
         try (ResourceScope scope = ResourceScope.newSharedScope()) {
             MemorySegment s = MemorySegment.allocateNative(layout, scope);
-            for (int i = 0 ; i < layout.elementCount().getAsLong() ; i++) {
+            for (int i = 0 ; i < layout.elementCount() ; i++) {
                 setInt(s.asSlice(i * 4), 42);
             }
             List<Thread> threads = new ArrayList<>();
