@@ -54,14 +54,14 @@ public class TestLayouts {
         MemoryLayout layout = MemoryLayout.structLayout(
                 ValueLayout.JAVA_INT.withName("size"),
                 MemoryLayout.paddingLayout(32),
-                ValueLayout.JAVA_DOUBLE.withName("arr"));
+                MemoryLayout.sequenceLayout(0, ValueLayout.JAVA_DOUBLE).withName("arr"));
         VarHandle size_handle = layout.varHandle(MemoryLayout.PathElement.groupElement("size"));
-        var concreteLayout = layout.map(l -> MemoryLayout.sequenceLayout(4, l).withName("arr"), MemoryLayout.PathElement.groupElement("arr"));
-        VarHandle array_elem_handle = concreteLayout.varHandle(
+        VarHandle array_elem_handle = layout.varHandle(
                 MemoryLayout.PathElement.groupElement("arr"),
                 MemoryLayout.PathElement.sequenceElement());
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment segment = MemorySegment.allocateNative(concreteLayout, scope);
+            MemorySegment segment = MemorySegment.allocateNative(
+                    layout.map(l -> ((SequenceLayout)l).withElementCount(4), MemoryLayout.PathElement.groupElement("arr")), scope);
             size_handle.set(segment, 4);
             for (int i = 0 ; i < 4 ; i++) {
                 array_elem_handle.set(segment, i, (double)i);
@@ -79,15 +79,15 @@ public class TestLayouts {
         MemoryLayout layout = MemoryLayout.structLayout(
                 ValueLayout.JAVA_INT.withName("size"),
                 MemoryLayout.paddingLayout(32),
-                MemoryLayout.sequenceLayout(1, ValueLayout.JAVA_DOUBLE).withName("arr"));
+                MemoryLayout.sequenceLayout(1, MemoryLayout.sequenceLayout(0, ValueLayout.JAVA_DOUBLE)).withName("arr"));
         VarHandle size_handle = layout.varHandle(MemoryLayout.PathElement.groupElement("size"));
-        var concreteLayout = layout.map(l -> MemoryLayout.sequenceLayout(4, l), MemoryLayout.PathElement.groupElement("arr"), MemoryLayout.PathElement.sequenceElement());
-        VarHandle array_elem_handle = concreteLayout.varHandle(
+        VarHandle array_elem_handle = layout.varHandle(
                 MemoryLayout.PathElement.groupElement("arr"),
                 MemoryLayout.PathElement.sequenceElement(0),
                 MemoryLayout.PathElement.sequenceElement());
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment segment = MemorySegment.allocateNative(concreteLayout, scope);
+            MemorySegment segment = MemorySegment.allocateNative(
+                    layout.map(l -> ((SequenceLayout)l).withElementCount(4), MemoryLayout.PathElement.groupElement("arr"), MemoryLayout.PathElement.sequenceElement()), scope);
             size_handle.set(segment, 4);
             for (int i = 0 ; i < 4 ; i++) {
                 array_elem_handle.set(segment, i, (double)i);
