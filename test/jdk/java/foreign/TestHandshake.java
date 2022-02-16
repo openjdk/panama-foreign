@@ -249,14 +249,7 @@ public class TestHandshake {
         @Override
         public void run() {
             start("Handshaker");
-            while (true) {
-                try {
-                    scope.close();
-                    break;
-                } catch (IllegalStateException ex) {
-                    Thread.onSpinWait();
-                }
-            }
+            scope.close(); // this should NOT throw
             long delay = System.currentTimeMillis() - start.get();
             System.out.println("Segment closed - elapsed (ms): " + delay);
         }

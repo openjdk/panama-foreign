@@ -172,6 +172,9 @@ JVM_ENTRY(jboolean, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver,
   ThreadStackElement *element = threads.pop();
   while (element != NULL) {
     JavaThread* thread = element->_thread;
+    // if the thread is not in the list handle, we can safely skip further handshakes,    
+    // as that means that the thread has been created when the scope state has already
+    // been set to CLOSED - meaning that the thread access will fail anyway.
     if (tlh.list()->includes(thread)) {
       Handshake::execute(&cl, thread);
     }
