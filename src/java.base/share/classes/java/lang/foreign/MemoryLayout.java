@@ -432,7 +432,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * @throws IllegalArgumentException if the layout path in {@code elements} does not select a value layout (see {@link ValueLayout}).
      */
     default VarHandle arrayElementVarHandle(PathElement... elements) {
-        return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::dereferenceHandle,
+        return computePathOp(LayoutPath.elementRootPath(this, MemoryLayout::bitSize), LayoutPath::dereferenceHandle,
                 Set.of(), elements);
     }
 

@@ -249,6 +249,10 @@ public class LayoutPath {
         return new LayoutPath(layout, 0L, EMPTY_STRIDES, -1, null, sizeFunc);
     }
 
+    public static LayoutPath elementRootPath(MemoryLayout layout, ToLongFunction<MemoryLayout> sizeFunc) {
+        return new LayoutPath(layout, 0L, new long[] { layout.bitSize() }, -1, null, sizeFunc);
+    }
+
     private static LayoutPath nestedPath(MemoryLayout layout, long offset, long[] strides, long elementIndex, LayoutPath encl) {
         return new LayoutPath(layout, offset, strides, elementIndex, encl, encl.sizeFunc);
     }
