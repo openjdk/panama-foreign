@@ -82,7 +82,7 @@ class LockFreeStackThreadsElement : public CHeapObj<mtInternal> {
 
 public:
   JavaThread* _thread;
-  LockFreeStackThreadsElement(JavaThread* thread = NULL) : _entry(), _thread(thread) {}
+  LockFreeStackThreadsElement(JavaThread* thread) : _entry(), _thread(thread) {}
   typedef LockFreeStack<Element, &entry_ptr> ThreadStack;
 };
 
@@ -161,7 +161,8 @@ public:
 /*
  * This functin performs a thread-local handshake against all threads running at the time
  * the given scope (deopt) was closed. If the handshake closure finds that a thread has
- * safepointed inside a scoped method, whose local variables mention the scope being closed
+ * safepointed inside a scoped method (that is, a method inside the ScopedMemoryAccess class
+ * annotated with the '@Scoped' annotation), whose local variables mention the scope being closed
  * (deopt), the thread is added to a problematic stack. After the handshake, each thread in
  * the problematic stack is handshaked again, individually, to check that it has exited
  * the scoped method. This should happen quickly, because once we find a problematic
@@ -170,7 +171,7 @@ public:
  * threads is empty. To prevent premature thread termination we take a snapshot of the live
  * threads in the system using a ThreadsListHandle.
  */
-JVM_ENTRY(jboolean, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, jobject deopt))  
+JVM_ENTRY(void, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, jobject deopt))  
   ThreadsListHandle tlh;
   ThreadStack threads;
   CloseScopedMemoryClosure cl(deopt, &threads);
@@ -189,7 +190,6 @@ JVM_ENTRY(jboolean, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver,
     delete element;
     element = threads.pop();
   }
-  return true;
 JVM_END
 
 /// JVM_RegisterUnsafeMethods
