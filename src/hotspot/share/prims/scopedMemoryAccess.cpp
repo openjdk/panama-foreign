@@ -171,7 +171,7 @@ public:
  * threads is empty. To prevent premature thread termination we take a snapshot of the live
  * threads in the system using a ThreadsListHandle.
  */
-JVM_ENTRY(void, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, jobject deopt))  
+JVM_ENTRY(void, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, jobject deopt))
   ThreadsListHandle tlh;
   ThreadStack threads;
   CloseScopedMemoryClosure cl(deopt, &threads);
@@ -181,7 +181,7 @@ JVM_ENTRY(void, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, job
   ThreadStackElement *element = threads.pop();
   while (element != NULL) {
     JavaThread* thread = element->_thread;
-    // if the thread is not in the list handle, we can safely skip further handshakes,    
+    // if the thread is not in the list handle, we can safely skip further handshakes,
     // as that means that the thread has been created when the scope state has already
     // been set to CLOSED - meaning that the thread access will fail anyway.
     if (tlh.list()->includes(thread)) {
