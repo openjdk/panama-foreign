@@ -114,11 +114,10 @@ import jdk.internal.ref.CleanerFactory;
  *
  * <p>
  * Shared resource scopes, while powerful, must be used with caution: if one or more threads accesses
- * a resource associated with a shared scope while the scope is being closed from another thread, an exception might occur on both
- * the accessing and the closing threads. Clients should refrain from attempting to close a shared resource scope repeatedly
- * (e.g. keep calling {@link #close()} until no exception is thrown). Instead, clients of shared resource scopes
- * should always ensure that proper synchronization mechanisms (e.g. using temporal dependencies, see below) are put in place
- * so that threads closing shared resource scopes can never race against threads accessing resources managed by same scopes.
+ * a resource associated with a shared scope while the scope is being closed from another thread, an exception might occur
+ * on the accessing thread. Clients of shared resource scopes should always ensure that proper synchronization mechanisms
+ * (e.g. using temporal dependencies, see below) are put in place so that threads closing shared resource scopes can
+ * never race against threads accessing resources managed by same scopes.
  *
  * <h2>Temporal dependencies</h2>
  *
@@ -174,7 +173,6 @@ public sealed interface ResourceScope extends AutoCloseable permits ResourceScop
      * <ul>
      *     <li>this resource scope is not <em>alive</em>
      *     <li>this resource scope is confined, and this method is called from a thread other than the thread owning this resource scope</li>
-     *     <li>this resource scope is shared and a resource associated with this scope is accessed while this method is called</li>
      *     <li>one or more scopes which {@linkplain #keepAlive(ResourceScope) depend} on this resource scope have not been closed.
      * </ul>
      * @throws UnsupportedOperationException if this resource scope is the {@linkplain #globalScope() global scope}.
