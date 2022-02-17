@@ -420,7 +420,9 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
 
     /**
      * Creates a <em>strided</em> memory access var handle that can be used to dereference memory at the layout selected by a given layout path,
-     * where the path is considered rooted in this layout. Equivalent to the following code:
+     * where the path is considered rooted in this layout. The returned var handle can effectively dereference multiple memory
+     * locations, using a <em>dynamic</em> index (of type {@code long}), which is multiplied by this layout size and then added
+     * to the offset of the selected layout. Equivalent to the following code:
      * {@snippet lang=java :
      * MemoryLayout.sequenceLayout(Long.MAX_VALUE, this)
      *             .varHandle(PathElement.sequenceElement());
@@ -432,8 +434,12 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * @throws IllegalArgumentException if the layout path in {@code elements} does not select a value layout (see {@link ValueLayout}).
      */
     default VarHandle arrayElementVarHandle(PathElement... elements) {
-        return computePathOp(LayoutPath.elementRootPath(this, MemoryLayout::bitSize), LayoutPath::dereferenceHandle,
-                Set.of(), elements);
+        Objects.requireNonNull(elements);
+        PathElement[] newElements = new PathElement[elements.length + 1];
+        newElements[0] = PathElement.sequenceElement();
+        System.arraycopy(elements, 0, newElements, 1, elements.length);
+        return computePathOp(LayoutPath.rootPath(MemoryLayout.sequenceLayout(Long.MAX_VALUE, this), MemoryLayout::bitSize),
+                LayoutPath::dereferenceHandle, Set.of(), newElements);
     }
 
     /**
@@ -482,6 +488,8 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     /**
      * Creates a <em>strided</em> method handle which, given a memory segment, returns a {@linkplain MemorySegment#asSlice(long,long) slice}
      * corresponding to the layout selected by a given layout path, where the path is considered rooted in this layout.
+     * The returned method handle can effectively slice a given memory segment at multiple starting offsets, using a <em>dynamic</em> index
+     * (of type {@code long}), which is multiplied by this layout size and then added to the offset of the selected layout.
      * Equivalent to the following code:
      * {@snippet lang=java :
      * MemoryLayout.sequenceLayout(Long.MAX_VALUE, this)
@@ -493,8 +501,12 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * @throws UnsupportedOperationException if the size of the selected layout in bits is not a multiple of 8.
      */
     default MethodHandle arrayElementSliceHandle(PathElement... elements) {
-        return computePathOp(LayoutPath.elementRootPath(this, MemoryLayout::bitSize), LayoutPath::sliceHandle,
-                Set.of(), elements);
+        Objects.requireNonNull(elements);
+        PathElement[] newElements = new PathElement[elements.length + 1];
+        newElements[0] = PathElement.sequenceElement();
+        System.arraycopy(elements, 0, newElements, 1, elements.length);
+        return computePathOp(LayoutPath.rootPath(MemoryLayout.sequenceLayout(Long.MAX_VALUE, this), MemoryLayout::bitSize),
+                LayoutPath::sliceHandle, Set.of(), newElements);
     }
 
 
