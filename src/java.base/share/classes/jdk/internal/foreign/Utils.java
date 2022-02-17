@@ -98,13 +98,12 @@ public final class Utils {
         }
     }
 
-    public static VarHandle makeMemoryAccessVarHandle(ValueLayout layout, boolean skipAlignmentCheck) {
+    public static VarHandle makeMemoryAccessVarHandle(ValueLayout layout) {
         class VarHandleCache {
             private static final Map<ValueLayout, VarHandle> handleMap = new ConcurrentHashMap<>();
-            private static final Map<ValueLayout, VarHandle> handleMapNoAlignCheck = new ConcurrentHashMap<>();
 
-            static VarHandle put(ValueLayout layout, VarHandle handle, boolean skipAlignmentCheck) {
-                VarHandle prev = (skipAlignmentCheck ? handleMapNoAlignCheck : handleMap).putIfAbsent(layout, handle);
+            static VarHandle put(ValueLayout layout, VarHandle handle) {
+                VarHandle prev = handleMap.putIfAbsent(layout, handle);
                 return prev != null ? prev : handle;
             }
         }
@@ -119,7 +118,7 @@ public final class Utils {
             baseCarrier = byte.class;
         }
 
-        VarHandle handle = SharedSecrets.getJavaLangInvokeAccess().memoryAccessVarHandle(baseCarrier, skipAlignmentCheck,
+        VarHandle handle = SharedSecrets.getJavaLangInvokeAccess().memoryAccessVarHandle(baseCarrier,
                 layout.byteAlignment() - 1, layout.order());
 
         if (layout.carrier() == boolean.class) {
@@ -129,7 +128,7 @@ public final class Utils {
                     MethodHandles.explicitCastArguments(ADDRESS_TO_LONG, MethodType.methodType(baseCarrier, MemoryAddress.class)),
                     MethodHandles.explicitCastArguments(LONG_TO_ADDRESS, MethodType.methodType(MemoryAddress.class, baseCarrier)));
         }
-        return VarHandleCache.put(layout, handle, skipAlignmentCheck);
+        return VarHandleCache.put(layout, handle);
     }
 
     private static boolean byteToBoolean(byte b) {
@@ -152,68 +151,10 @@ public final class Utils {
         return addr;
     }
 
-    /* Helper functions for offset computations. These are required so that we can avoid issuing long opcodes
-     * (e.g. LMUL, LADD) when we're operating on 'small' segments (segments whose length can be expressed with an int).
-     * C2 BCE code is very sensitive to the kind of opcode being emitted, and this workaround allows us to rescue
-     * BCE when working with small segments. This workaround should be dropped when JDK-8259609 is resolved.
-     */
-
     @ForceInline
     public static long scaleOffset(MemorySegment segment, long index, long size) {
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        return multiplyOffset(segment, index, (int)size);
-    }
-
-    @ForceInline
-    public static long multiplyOffset(MemorySegment segment, long op1, long op2) {
-        if (((AbstractMemorySegmentImpl)segment).isSmall()) {
-            if (op1 > Integer.MAX_VALUE || op2 > Integer.MAX_VALUE
-                    || op1 < Integer.MIN_VALUE || op2 < Integer.MIN_VALUE) {
-                throw overflowException(Integer.MIN_VALUE, Integer.MAX_VALUE);
-            }
-            // force ints for BCE
-            int i1 = (int)op1;
-            int i2 = (int)op2;
-            try {
-                return Math.multiplyExact(i1, i2);
-            } catch (ArithmeticException ex) {
-                throw overflowException(Integer.MIN_VALUE, Integer.MAX_VALUE);
-            }
-        } else {
-            try {
-                return Math.multiplyExact(op1, op2);
-            } catch (ArithmeticException ex) {
-                throw overflowException(Long.MIN_VALUE, Long.MAX_VALUE);
-            }
-        }
-    }
-
-    @ForceInline
-    public static long addOffsets(long op1, long op2, MemorySegment segment) {
-        if (((AbstractMemorySegmentImpl)segment).isSmall()) {
-            // force ints for BCE
-            if (op1 > Integer.MAX_VALUE || op2 > Integer.MAX_VALUE
-                    || op1 < Integer.MIN_VALUE || op2 < Integer.MIN_VALUE) {
-                throw overflowException(Integer.MIN_VALUE, Integer.MAX_VALUE);
-            }
-            int i1 = (int)op1;
-            int i2 = (int)op2;
-            try {
-                return Math.addExact(i1, i2);
-            } catch (ArithmeticException ex) {
-                throw overflowException(Integer.MIN_VALUE, Integer.MAX_VALUE);
-            }
-        } else {
-            try {
-                return Math.addExact(op1, op2);
-            } catch (ArithmeticException ex) {
-                throw overflowException(Long.MIN_VALUE, Long.MAX_VALUE);
-            }
-        }
-    }
-
-    private static IndexOutOfBoundsException overflowException(long min, long max) {
-        return new IndexOutOfBoundsException(String.format("Overflow occurred during offset computation ; offset exceeded range { %d .. %d }", min, max));
+        return index * size;
     }
 
     @ForceInline

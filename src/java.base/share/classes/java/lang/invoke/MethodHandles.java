@@ -7927,7 +7927,7 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
     @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
     public static VarHandle memoryAccessVarHandle(ValueLayout layout) {
         Objects.requireNonNull(layout);
-        return Utils.makeMemoryAccessVarHandle(layout, false);
+        return Utils.makeMemoryAccessVarHandle(layout);
     }
 
     /**

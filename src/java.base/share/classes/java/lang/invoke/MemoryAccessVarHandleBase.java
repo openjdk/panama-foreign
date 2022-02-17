@@ -39,12 +39,8 @@ abstract class MemoryAccessVarHandleBase extends VarHandle {
     /** alignment constraint (in bytes, expressed as a bit mask) **/
     final long alignmentMask;
 
-    /** if true, only the base part of the address will be checked for alignment **/
-    final boolean skipAlignmentMaskCheck;
-
-    MemoryAccessVarHandleBase(VarForm form, boolean skipAlignmentMaskCheck, boolean be, long length, long alignmentMask, boolean exact) {
+    MemoryAccessVarHandleBase(VarForm form, boolean be, long length, long alignmentMask, boolean exact) {
         super(form, exact);
-        this.skipAlignmentMaskCheck = skipAlignmentMaskCheck;
         this.be = be;
         this.length = length;
         this.alignmentMask = alignmentMask;
