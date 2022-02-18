@@ -2466,7 +2466,7 @@ public abstract class ClassLoader {
                 : Optional.of(NativeSymbol.ofAddress(name, addr, loaderScope));
     }
 
-    // A resource scope which keeps this loader reachable. Useful when returning
+    // A memory session which keeps this loader reachable. Useful when returning
     // native symbols associated with libraries loaded by this loader.
     private final MemorySession loaderScope = MemorySessionImpl.heapSession(this);
 
