@@ -152,12 +152,6 @@ public final class Utils {
     }
 
     @ForceInline
-    public static long scaleOffset(MemorySegment segment, long index, long size) {
-        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        return index * size;
-    }
-
-    @ForceInline
     public static boolean isAligned(long offset, long align) {
         return (offset & (align - 1)) == 0;
     }

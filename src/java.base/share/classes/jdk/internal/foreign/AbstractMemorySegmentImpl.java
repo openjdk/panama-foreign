@@ -390,8 +390,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     @ForceInline
     void checkBounds(long offset, long length) {
         if (length > 0) {
-            long checkedOffset = Objects.checkIndex(offset, this.length);
-            Objects.checkIndex(checkedOffset, this.length - length + 1);
+            Objects.checkIndex(offset, this.length - length + 1);
         } else if (length < 0 || offset < 0 ||
                 offset > this.length - length) {
             throw outOfBoundException(offset, length);
