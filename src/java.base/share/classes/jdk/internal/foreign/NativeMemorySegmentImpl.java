@@ -40,7 +40,17 @@ import sun.security.action.GetBooleanAction;
  */
 public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
-    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE, ResourceScopeImpl.GLOBAL);
+    public static final MemorySegment EVERYTHING = new NativeMemorySegmentImpl(0, Long.MAX_VALUE, 0, ResourceScopeImpl.GLOBAL) {
+        @Override
+        void checkBounds(long offset, long length) {
+            // do nothing
+        }
+
+        @Override
+        NativeMemorySegmentImpl dup(long offset, long size, int mask, ResourceScopeImpl scope) {
+            throw new IllegalStateException();
+        }
+    };
 
     private static final Unsafe unsafe = Unsafe.getUnsafe();
 
@@ -115,7 +125,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(buf, alignedSize,
-                defaultAccessModes(alignedSize), scope);
+                DEFAULT_MODES, scope);
         scope.addOrCleanupIfFail(new ResourceScopeImpl.ResourceList.ResourceCleanup() {
             @Override
             public void cleanup() {
@@ -132,7 +142,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, ResourceScopeImpl scope) {
         scope.checkValidStateSlow();
-        AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize), scope);
+        AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, DEFAULT_MODES, scope);
         return segment;
     }
 }
