@@ -31,7 +31,6 @@ import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 import jdk.internal.foreign.Utils;
 import jdk.internal.javac.PreviewFeature;

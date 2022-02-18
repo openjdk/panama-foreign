@@ -487,6 +487,28 @@ public class TestLayoutPaths {
         }
     }
 
+    @Test(dataProvider = "testLayouts")
+    public void testArrayElementSliceHandle(MemoryLayout layout, PathElement[] pathElements, long[] indexes,
+                                long expectedBitOffset) throws Throwable {
+        if (expectedBitOffset % 8 != 0)
+            throw new SkipException("Offset not a multiple of 8");
+
+        MemoryLayout selected = layout.select(pathElements);
+        MethodHandle sliceHandle = layout.arrayElementSliceHandle(pathElements);
+        sliceHandle = sliceHandle.asSpreader(long[].class, indexes.length);
+
+        long stride = layout.byteSize();
+
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            MemorySegment segment = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(5, layout), scope);
+            for (long i = 0 ; i < 5 ; i++) {
+                MemorySegment slice = (MemorySegment) sliceHandle.invokeExact(segment, i, indexes);
+                assertEquals(slice.address().toRawLongValue() - segment.address().toRawLongValue(), (expectedBitOffset / 8) + (stride * i));
+                assertEquals(slice.byteSize(), selected.byteSize());
+            }
+        }
+    }
+
     @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testSliceHandleUOEInvalidOffsetEager() throws Throwable {
         MemoryLayout layout = MemoryLayout.structLayout(

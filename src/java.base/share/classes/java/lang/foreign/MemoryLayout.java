@@ -493,7 +493,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * Equivalent to the following code:
      * {@snippet lang=java :
      * MemoryLayout.sequenceLayout(Long.MAX_VALUE, this)
-     *             .varHandle(PathElement.sequenceElement());
+     *             .sliceHandle(PathElement.sequenceElement());
      * }
      *
      * @param elements the layout path elements.

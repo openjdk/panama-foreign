@@ -29,7 +29,6 @@ import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 /**
  * A padding layout. A padding layout specifies the size of extra space which is typically not accessed by applications,
