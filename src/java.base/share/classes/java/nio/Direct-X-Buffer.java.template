@@ -301,12 +301,12 @@ class Direct$Type$Buffer$RW$$BO$
 
     public long address() {
         MemorySession session = session();
-        if (scope != null) {
-            if (scope.ownerThread() == null && scope.isCloseable()) {
+        if (session != null) {
+            if (session.ownerThread() == null && session.isCloseable()) {
                 throw new UnsupportedOperationException("ByteBuffer derived from closeable shared segments not supported");
             }
             try {
-                ((MemorySessionImpl)scope).checkValidState();
+                ((MemorySessionImpl)session).checkValidState();
             } catch (ScopedAccessError e) {
                 throw new IllegalStateException("This segment is already closed");
             }

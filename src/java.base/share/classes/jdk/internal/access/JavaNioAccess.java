@@ -86,10 +86,10 @@ public interface JavaNioAccess {
     MemorySegment bufferSegment(Buffer buffer);
 
     /**
-     * Used by I/O operations to make a buffer's resource scope non-closeable
-     * (for the duration of the I/O operation) by acquiring a new resource
-     * scope handle. Null is returned if the buffer has no scope, or
-     * acquiring is not required to guarantee safety.
+     * Used by I/O operations to make a buffer's session non-closeable
+     * (for the duration of the I/O operation) by acquiring the session.
+     * Null is returned if the buffer has no scope, or acquiring is not
+     * required to guarantee safety.
      */
     Runnable acquireSession(Buffer buffer, boolean async);
 
