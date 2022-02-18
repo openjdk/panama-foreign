@@ -300,7 +300,7 @@ class Direct$Type$Buffer$RW$$BO$
 #if[rw]
 
     public long address() {
-        MemorySession scope = session();
+        MemorySession session = session();
         if (scope != null) {
             if (scope.ownerThread() == null && scope.isCloseable()) {
                 throw new UnsupportedOperationException("ByteBuffer derived from closeable shared segments not supported");
