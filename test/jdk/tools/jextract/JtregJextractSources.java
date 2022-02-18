@@ -56,6 +56,7 @@ public class JtregJextractSources {
         System.err.println("compiling jextracted sources @ " + sourcePath.toAbsolutePath());
         List<String> commands = new ArrayList<>();
         commands.add(Paths.get(System.getProperty("test.jdk"), "bin", "javac").toString());
+        commands.add("-parameters");
         commands.add("--add-modules");
         commands.add("jdk.incubator.foreign");
         commands.add("-d");

@@ -248,7 +248,12 @@ class TreeMaker {
     }
 
     private Declaration.Typedef createTypedef(Cursor c) {
-        Type cursorType = toType(c);
+        List<Declaration.Variable> params = c.children().
+             filter(ch -> ch.kind() == CursorKind.ParmDecl).
+             map(this::createTree).
+             map(Declaration.Variable.class::cast).
+             collect(Collectors.toList());
+        Type cursorType = toType(c, params);
         Type canonicalType = canonicalType(cursorType);
         if (canonicalType instanceof Type.Declared) {
             Declaration.Scoped s = ((Type.Declared) canonicalType).tree();
@@ -287,8 +292,12 @@ class TreeMaker {
         }
     }
 
+    private Type toType(Cursor c, List<Declaration.Variable> params) {
+        return typeMaker.makeType(c.type(), params == null || params.isEmpty()? null : params);
+    }
+
     private Type toType(Cursor c) {
-        return typeMaker.makeType(c.type());
+        return toType(c, null);
     }
 
     private void checkCursor(Cursor c, CursorKind k) {

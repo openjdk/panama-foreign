@@ -241,12 +241,19 @@ public abstract class TypeImpl implements Type {
         private final boolean varargs;
         private final List<Type> argtypes;
         private final Type restype;
+        private final Optional<List<String>> paramNames;
 
-        public FunctionImpl(boolean varargs, List<Type> argtypes, Type restype) {
+        public FunctionImpl(boolean varargs, List<Type> argtypes, Type restype,
+                Optional<List<String>> paramNames) {
             super();
             this.varargs = varargs;
             this.argtypes = Objects.requireNonNull(argtypes);
             this.restype = Objects.requireNonNull(restype);
+            this.paramNames = Objects.requireNonNull(paramNames);
+        }
+
+        public FunctionImpl(boolean varargs, List<Type> argtypes, Type restype) {
+            this(varargs, argtypes, restype, Optional.empty());
         }
 
         @Override
@@ -267,6 +274,11 @@ public abstract class TypeImpl implements Type {
         @Override
         public Type returnType() {
             return restype;
+        }
+
+        @Override
+        public Optional<List<String>> parameterNames() {
+            return paramNames;
         }
 
         @Override

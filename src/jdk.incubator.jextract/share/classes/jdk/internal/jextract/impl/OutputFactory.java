@@ -228,9 +228,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     private String generateFunctionalInterface(Type.Function func, String name) {
-        return functionInfo(func, name, false, (mtype, desc) -> FunctionInfo.ofFunctionPointer(mtype, getMethodType(func, true), desc))
-                .map(fInfo -> currentBuilder.addFunctionalInterface(Utils.javaSafeIdentifier(name), fInfo))
-                .orElse(null);
+        return functionInfo(func, name, false,
+                 (mtype, desc) -> FunctionInfo.ofFunctionPointer(mtype, getMethodType(func, true), desc, func.parameterNames()))
+                 .map(fInfo -> currentBuilder.addFunctionalInterface(Utils.javaSafeIdentifier(name), fInfo))
+                 .orElse(null);
     }
 
     @Override

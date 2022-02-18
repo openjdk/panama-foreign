@@ -30,6 +30,8 @@ import jdk.incubator.foreign.*;
 import jdk.internal.jextract.impl.ConstantBuilder.Constant;
 
 import java.lang.invoke.MethodType;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -41,6 +43,7 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
     private final MethodType fiType;
     private final MethodType downcallType;
     private final FunctionDescriptor fiDesc;
+    private final Optional<List<String>> parameterNames;
 
     FunctionalInterfaceBuilder(JavaSourceBuilder enclosing, String className,
                                FunctionInfo functionInfo) {
@@ -48,6 +51,7 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
         this.fiType = functionInfo.methodType();
         this.downcallType = functionInfo.reverseMethodType();
         this.fiDesc = functionInfo.descriptor();
+        this.parameterNames = functionInfo.parameterNames();
     }
 
     @Override
@@ -60,13 +64,23 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
 
     // private generation
 
+    private String parameterName(int i) {
+        String name = "";
+        if (parameterNames.isPresent()) {
+            name = parameterNames.get().get(i);
+        }
+        return name.isEmpty()? "_x" + i : name;
+    }
+
     private void emitFunctionalInterfaceMethod() {
         incrAlign();
         indent();
         append(fiType.returnType().getName() + " apply(");
         String delim = "";
         for (int i = 0 ; i < fiType.parameterCount(); i++) {
-            append(delim + fiType.parameterType(i).getName() + " x" + i);
+            append(delim + fiType.parameterType(i).getName());
+            append(" ");
+            append(parameterName(i));
             delim = ", ";
         }
         append(");\n");
@@ -92,7 +106,8 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
 
     private void emitFunctionalFactoryForPointer() {
         emitWithConstantClass(constantBuilder -> {
-            Constant mhConstant = constantBuilder.addMethodHandle(className(), className(), FunctionInfo.ofFunctionPointer(downcallType, fiType, fiDesc), true);
+            Constant mhConstant = constantBuilder.addMethodHandle(className(), className(),
+                 FunctionInfo.ofFunctionPointer(downcallType, fiType, fiDesc, parameterNames), true);
             incrAlign();
             indent();
             append(MEMBER_MODS + " " + className() + " ofAddress(MemoryAddress addr, ResourceScope scope) {\n");
@@ -103,7 +118,9 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
             append("return (");
             String delim = "";
             for (int i = 0 ; i < fiType.parameterCount(); i++) {
-                append(delim + fiType.parameterType(i).getName() + " x" + i);
+                append(delim + fiType.parameterType(i).getName());
+                append(" ");
+                append(parameterName(i));
                 delim = ", ";
             }
             append(") -> {\n");
@@ -123,7 +140,7 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
             if (fiType.parameterCount() > 0) {
                 String params = IntStream.range(0, fiType.parameterCount())
                         .mapToObj(i -> {
-                            String paramExpr = "x" + i;
+                            String paramExpr = parameterName(i);
                             if (fiType.parameterType(i) != downcallType.parameterType(i)) {
                                 // add cast for invokeExact
                                 return "(" + downcallType.parameterType(i).getName() + ")" + paramExpr;

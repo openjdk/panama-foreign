@@ -212,6 +212,12 @@ public interface Type {
          * @return The function return type.
          */
         Type returnType();
+
+        /**
+         * Names of function parameters (from typedef), if any
+         * @return The optional list of function parameter names.
+         */
+        Optional<List<String>> parameterNames();
     }
 
     /**
@@ -464,7 +470,19 @@ public interface Type {
      * @return a new function type with given parameter types and return type.
      */
     static Type.Function function(boolean varargs, Type returnType, Type... arguments) {
-        return new TypeImpl.FunctionImpl(varargs, Stream.of(arguments).collect(Collectors.toList()), returnType);
+        return new TypeImpl.FunctionImpl(varargs, Stream.of(arguments).collect(Collectors.toList()), returnType, Optional.empty());
+    }
+
+    /**
+     * Creates a new function type with given parameter types and return type.
+     * @param varargs is this function type variable-arity?
+     * @param returnType the function type return type.
+     * @param arguments the function type formal parameter types.
+     * @param paramNames the function type formal parameter names. It can be null.
+     * @return a new function type with given parameter types and return type.
+     */
+    static Type.Function function(boolean varargs, Type returnType, List<Type> arguments, List<String> paramNames) {
+        return new TypeImpl.FunctionImpl(varargs, arguments, returnType, Optional.ofNullable(paramNames));
     }
 
     /**

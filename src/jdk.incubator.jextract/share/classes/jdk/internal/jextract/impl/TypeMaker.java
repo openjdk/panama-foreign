@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Declaration;
@@ -42,6 +43,7 @@ import jdk.incubator.jextract.Type;
 import jdk.incubator.jextract.Type.Delegated;
 import jdk.incubator.jextract.Type.Primitive;
 import jdk.internal.clang.Cursor;
+import jdk.internal.clang.TypeKind;
 
 class TypeMaker {
 
@@ -99,11 +101,15 @@ class TypeMaker {
     }
 
     Type makeType(jdk.internal.clang.Type t) {
+        return makeType(t, null);
+    }
+
+    Type makeType(jdk.internal.clang.Type t, List<Declaration.Variable> params) {
         Type rv = typeCache.get(t);
         if (rv != null) {
             return rv;
         }
-        rv = makeTypeInternal(t);
+        rv = makeTypeInternal(t, params);
         if (null != rv && typeCache.put(t, rv) != null) {
             throw new ConcurrentModificationException();
         }
@@ -118,7 +124,7 @@ class TypeMaker {
         }
     }
 
-    Type makeTypeInternal(jdk.internal.clang.Type t) {
+    Type makeTypeInternal(jdk.internal.clang.Type t, List<Declaration.Variable> params) {
         switch(t.kind()) {
             case Auto:
                 return makeType(t.canonicalType());
@@ -188,7 +194,11 @@ class TypeMaker {
                     // argument could be function pointer declared locally
                     args.add(lowerFunctionType(t.argType(i)));
                 }
-                return Type.function(t.isVariadic(), lowerFunctionType(t.resultType()), args.toArray(new Type[0]));
+                List<String> paramNames = null;
+                if (params != null) {
+                    paramNames = params.stream().map(Declaration::name).collect(Collectors.toList());
+                }
+                return Type.function(t.isVariadic(), lowerFunctionType(t.resultType()), args, paramNames);
             }
             case Enum:
             case Record: {
@@ -197,10 +207,14 @@ class TypeMaker {
             case BlockPointer:
             case Pointer: {
                 // TODO: We can always erase type for macro evaluation, should we?
-                return new TypeImpl.PointerImpl(reference(t.getPointeeType()));
+                if (t.getPointeeType().kind() == TypeKind.FunctionProto) {
+                    return new TypeImpl.PointerImpl(makeType(t.getPointeeType(), params));
+                } else {
+                    return new TypeImpl.PointerImpl(reference(t.getPointeeType()));
+                }
             }
             case Typedef: {
-                Type __type = makeType(t.canonicalType());
+                Type __type = makeType(t.canonicalType(), params);
                 return Type.typedef(t.spelling(), __type);
             }
             case Complex: {
