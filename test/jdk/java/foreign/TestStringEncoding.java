@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,15 @@
  *
  */
 
-import jdk.incubator.foreign.MemorySegment;
-
-import jdk.incubator.foreign.ResourceScope;
-import jdk.incubator.foreign.SegmentAllocator;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ResourceScope;
+import java.lang.foreign.SegmentAllocator;
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
 /*
  * @test
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @run testng TestStringEncoding
  */

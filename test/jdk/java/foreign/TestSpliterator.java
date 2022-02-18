@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,13 +23,14 @@
 
 /*
  * @test
+ * @enablePreview
  * @run testng TestSpliterator
  */
 
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ResourceScope;
-import jdk.incubator.foreign.SequenceLayout;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ResourceScope;
+import java.lang.foreign.SequenceLayout;
 
 import java.lang.invoke.VarHandle;
 import java.util.LinkedList;
@@ -40,7 +41,7 @@ import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.LongStream;
 
-import jdk.incubator.foreign.ValueLayout;
+import java.lang.foreign.ValueLayout;
 import org.testng.annotations.*;
 
 import static org.testng.Assert.*;

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2021, 2022, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -26,9 +26,9 @@ package org.openjdk.bench.jdk.incubator.vector;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.TimeUnit;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ResourceScope;
+import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ResourceScope;
 import jdk.incubator.vector.ByteVector;
 import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorSpecies;
@@ -44,7 +44,7 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
-import static jdk.incubator.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 
 @BenchmarkMode(Mode.AverageTime)
 @Warmup(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
@@ -52,7 +52,7 @@ import static jdk.incubator.foreign.ValueLayout.JAVA_BYTE;
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Fork(value = 1, jvmArgsAppend = {
-    "--add-modules=jdk.incubator.foreign,jdk.incubator.vector",
+    "--add-modules=jdk.incubator.vector",
     "-Dforeign.restricted=permit",
     "--enable-native-access", "ALL-UNNAMED",
     "-Djdk.incubator.vector.VECTOR_ACCESS_OOB_CHECK=1"})

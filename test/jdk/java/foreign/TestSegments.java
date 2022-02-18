@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -23,14 +23,15 @@
 
 /*
  * @test
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @run testng/othervm -Xmx4G -XX:MaxDirectMemorySize=1M TestSegments
  */
 
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ResourceScope;
-import jdk.incubator.foreign.ValueLayout;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ResourceScope;
+import java.lang.foreign.ValueLayout;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -41,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
-import static jdk.incubator.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static org.testng.Assert.*;
 
 public class TestSegments {

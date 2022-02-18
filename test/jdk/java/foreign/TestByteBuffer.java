@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,17 +23,17 @@
 
 /*
  * @test
- * @modules java.base/sun.nio.ch
- *          jdk.incubator.foreign/jdk.internal.foreign
+ * @enablePreview
+ * @modules java.base/sun.nio.ch java.base/jdk.internal.foreign
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestByteBuffer
  */
 
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.MemoryLayout.PathElement;
-import jdk.incubator.foreign.ResourceScope;
-import jdk.incubator.foreign.SequenceLayout;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemoryLayout.PathElement;
+import java.lang.foreign.ResourceScope;
+import java.lang.foreign.SequenceLayout;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +41,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Cleaner;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -65,6 +66,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -80,13 +82,13 @@ import org.testng.SkipException;
 import org.testng.annotations.*;
 import sun.nio.ch.DirectBuffer;
 
-import static jdk.incubator.foreign.ValueLayout.JAVA_BYTE;
-import static jdk.incubator.foreign.ValueLayout.JAVA_CHAR;
-import static jdk.incubator.foreign.ValueLayout.JAVA_DOUBLE;
-import static jdk.incubator.foreign.ValueLayout.JAVA_FLOAT;
-import static jdk.incubator.foreign.ValueLayout.JAVA_INT;
-import static jdk.incubator.foreign.ValueLayout.JAVA_LONG;
-import static jdk.incubator.foreign.ValueLayout.JAVA_SHORT;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.JAVA_CHAR;
+import static java.lang.foreign.ValueLayout.JAVA_DOUBLE;
+import static java.lang.foreign.ValueLayout.JAVA_FLOAT;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
+import static java.lang.foreign.ValueLayout.JAVA_SHORT;
 import static org.testng.Assert.*;
 
 public class TestByteBuffer {
@@ -605,6 +607,28 @@ public class TestByteBuffer {
             ByteBuffer roBuffer = rwBuffer.asReadOnlyBuffer();
             MemorySegment segment = MemorySegment.ofByteBuffer(roBuffer);
             assertTrue(segment.isReadOnly());
+        }
+    }
+
+    @Test
+    public void testOfBufferScopeReachable() throws InterruptedException {
+        ByteBuffer buffer = ByteBuffer.allocateDirect(1000);
+        MemorySegment segment = MemorySegment.ofByteBuffer(buffer);
+        try {
+            AtomicBoolean reachable = new AtomicBoolean(true);
+            Cleaner.create().register(buffer, () -> {
+                reachable.set(false);
+            });
+            buffer = null;
+            System.gc();
+            // let's sleep to let cleaner run
+            Thread.sleep(100);
+            segment.get(JAVA_BYTE, 0);
+            if (!reachable.get()) {
+                throw new IllegalStateException();
+            }
+        } finally {
+            Reference.reachabilityFence(segment);
         }
     }
 
