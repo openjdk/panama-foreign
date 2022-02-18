@@ -111,7 +111,7 @@ public class TestScopedOperations {
     static {
         // session operations
         ScopedOperation.ofScope(session -> session.addCloseAction(() -> {
-        }), "ResourceScope::addOnClose");
+        }), "MemorySession::addCloseAction");
         ScopedOperation.ofScope(session -> MemorySegment.allocateNative(100, session), "MemorySegment::allocateNative");
         ScopedOperation.ofScope(session -> {
             try {

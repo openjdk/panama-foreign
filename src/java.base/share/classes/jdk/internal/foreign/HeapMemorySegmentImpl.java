@@ -43,7 +43,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * the field type storing the 'base' coordinate is just Object; similarly, all the constructor in the subclasses
  * accept an Object 'base' parameter instead of a sharper type (e.g. {@code byte[]}). This is deliberate, as
  * using sharper types would require use of type-conversions, which in turn would inhibit some C2 optimizations,
- * such as the elimination of store barriers in methods like {@link HeapMemorySegmentImpl#dup(long, long, int, ResourceScopeImpl)}.
+ * such as the elimination of store barriers in methods like {@link HeapMemorySegmentImpl#dup(long, long, int, MemorySessionImpl)}.
  */
 public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
 

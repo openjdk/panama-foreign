@@ -378,7 +378,7 @@ class Direct$Type$Buffer$RW$$BO$
         assert (pos <= lim);
         int rem = (pos <= lim ? lim - pos : 0);
         try {
-            // null is passed as destination ResourceScope to avoid checking session() twice
+            // null is passed as destination MemorySession to avoid checking session() twice
             SCOPED_MEMORY_ACCESS.copyMemory(session(), null, null,
                     ix(pos), null, ix(0), (long)rem << $LG_BYTES_PER_VALUE$);
         } finally {
