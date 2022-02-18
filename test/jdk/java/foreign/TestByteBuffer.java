@@ -37,6 +37,7 @@ import java.lang.foreign.SequenceLayout;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
@@ -107,39 +108,26 @@ public class TestByteBuffer {
         }
     }
 
+    static final ValueLayout.OfChar BB_CHAR = JAVA_CHAR.withOrder(ByteOrder.BIG_ENDIAN).withBitAlignment(8);
+    static final ValueLayout.OfShort BB_SHORT = JAVA_SHORT.withOrder(ByteOrder.BIG_ENDIAN).withBitAlignment(8);
+    static final ValueLayout.OfInt BB_INT = JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN).withBitAlignment(8);
+    static final ValueLayout.OfLong BB_LONG = JAVA_LONG.withOrder(ByteOrder.BIG_ENDIAN).withBitAlignment(8);
+    static final ValueLayout.OfFloat BB_FLOAT = JAVA_FLOAT.withOrder(ByteOrder.BIG_ENDIAN).withBitAlignment(8);
+    static final ValueLayout.OfDouble BB_DOUBLE = JAVA_DOUBLE.withOrder(ByteOrder.BIG_ENDIAN).withBitAlignment(8);
+
     static SequenceLayout tuples = MemoryLayout.sequenceLayout(500,
             MemoryLayout.structLayout(
-                    JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN).withName("index"),
-                    JAVA_FLOAT.withOrder(ByteOrder.BIG_ENDIAN).withName("value")
+                    BB_INT.withName("index"),
+                    BB_FLOAT.withName("value")
             ));
 
-    static SequenceLayout bytes = MemoryLayout.sequenceLayout(100,
-            JAVA_BYTE
-    );
-
-    static SequenceLayout chars = MemoryLayout.sequenceLayout(100,
-            JAVA_CHAR.withOrder(ByteOrder.BIG_ENDIAN)
-    );
-
-    static SequenceLayout shorts = MemoryLayout.sequenceLayout(100,
-            JAVA_SHORT.withOrder(ByteOrder.BIG_ENDIAN)
-    );
-
-    static SequenceLayout ints = MemoryLayout.sequenceLayout(100,
-            JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN)
-    );
-
-    static SequenceLayout floats = MemoryLayout.sequenceLayout(100,
-            JAVA_FLOAT.withOrder(ByteOrder.BIG_ENDIAN)
-    );
-
-    static SequenceLayout longs = MemoryLayout.sequenceLayout(100,
-            JAVA_LONG.withOrder(ByteOrder.BIG_ENDIAN)
-    );
-
-    static SequenceLayout doubles = MemoryLayout.sequenceLayout(100,
-            JAVA_DOUBLE.withOrder(ByteOrder.BIG_ENDIAN)
-    );
+    static SequenceLayout bytes = MemoryLayout.sequenceLayout(100, JAVA_BYTE);
+    static SequenceLayout chars = MemoryLayout.sequenceLayout(100, BB_CHAR);
+    static SequenceLayout shorts = MemoryLayout.sequenceLayout(100, BB_SHORT);
+    static SequenceLayout ints = MemoryLayout.sequenceLayout(100, BB_INT);
+    static SequenceLayout floats = MemoryLayout.sequenceLayout(100, BB_FLOAT);
+    static SequenceLayout longs = MemoryLayout.sequenceLayout(100, BB_LONG);
+    static SequenceLayout doubles = MemoryLayout.sequenceLayout(100, BB_DOUBLE);
 
     static VarHandle indexHandle = tuples.varHandle(PathElement.sequenceElement(), PathElement.groupElement("index"));
     static VarHandle valueHandle = tuples.varHandle(PathElement.sequenceElement(), PathElement.groupElement("value"));
@@ -840,32 +828,32 @@ public class TestByteBuffer {
         Consumer<MemorySegment> byteInitializer =
                 (base) -> initBytes(base, bytes, (addr, pos) -> addr.set(JAVA_BYTE, pos, (byte)(long)pos));
         Consumer<MemorySegment> charInitializer =
-                (base) -> initBytes(base, chars, (addr, pos) -> addr.setAtIndex(JAVA_CHAR.withOrder(ByteOrder.BIG_ENDIAN), pos, (char)(long)pos));
+                (base) -> initBytes(base, chars, (addr, pos) -> addr.setAtIndex(BB_CHAR, pos, (char)(long)pos));
         Consumer<MemorySegment> shortInitializer =
-                (base) -> initBytes(base, shorts, (addr, pos) -> addr.setAtIndex(JAVA_SHORT.withOrder(ByteOrder.BIG_ENDIAN), pos, (short)(long)pos));
+                (base) -> initBytes(base, shorts, (addr, pos) -> addr.setAtIndex(BB_SHORT, pos, (short)(long)pos));
         Consumer<MemorySegment> intInitializer =
-                (base) -> initBytes(base, ints, (addr, pos) -> addr.setAtIndex(JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN), pos, (int)(long)pos));
+                (base) -> initBytes(base, ints, (addr, pos) -> addr.setAtIndex(BB_INT, pos, (int)(long)pos));
         Consumer<MemorySegment> floatInitializer =
-                (base) -> initBytes(base, floats, (addr, pos) -> addr.setAtIndex(JAVA_FLOAT.withOrder(ByteOrder.BIG_ENDIAN), pos, (float)(long)pos));
+                (base) -> initBytes(base, floats, (addr, pos) -> addr.setAtIndex(BB_FLOAT, pos, (float)(long)pos));
         Consumer<MemorySegment> longInitializer =
-                (base) -> initBytes(base, longs, (addr, pos) -> addr.setAtIndex(JAVA_LONG.withOrder(ByteOrder.BIG_ENDIAN), pos, (long)pos));
+                (base) -> initBytes(base, longs, (addr, pos) -> addr.setAtIndex(BB_LONG, pos, (long)pos));
         Consumer<MemorySegment> doubleInitializer =
-                (base) -> initBytes(base, doubles, (addr, pos) -> addr.setAtIndex(JAVA_DOUBLE.withOrder(ByteOrder.BIG_ENDIAN), pos, (double)(long)pos));
+                (base) -> initBytes(base, doubles, (addr, pos) -> addr.setAtIndex(BB_DOUBLE, pos, (double)(long)pos));
 
         Consumer<MemorySegment> byteChecker =
                 (base) -> checkBytes(base, bytes, Function.identity(), (addr, pos) -> addr.get(JAVA_BYTE, pos), ByteBuffer::get);
         Consumer<MemorySegment> charChecker =
-                (base) -> checkBytes(base, chars, ByteBuffer::asCharBuffer, (addr, pos) -> addr.getAtIndex(JAVA_CHAR.withOrder(ByteOrder.BIG_ENDIAN), pos), CharBuffer::get);
+                (base) -> checkBytes(base, chars, ByteBuffer::asCharBuffer, (addr, pos) -> addr.getAtIndex(BB_CHAR, pos), CharBuffer::get);
         Consumer<MemorySegment> shortChecker =
-                (base) -> checkBytes(base, shorts, ByteBuffer::asShortBuffer, (addr, pos) -> addr.getAtIndex(JAVA_SHORT.withOrder(ByteOrder.BIG_ENDIAN), pos), ShortBuffer::get);
+                (base) -> checkBytes(base, shorts, ByteBuffer::asShortBuffer, (addr, pos) -> addr.getAtIndex(BB_SHORT, pos), ShortBuffer::get);
         Consumer<MemorySegment> intChecker =
-                (base) -> checkBytes(base, ints, ByteBuffer::asIntBuffer, (addr, pos) -> addr.getAtIndex(JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN), pos), IntBuffer::get);
+                (base) -> checkBytes(base, ints, ByteBuffer::asIntBuffer, (addr, pos) -> addr.getAtIndex(BB_INT, pos), IntBuffer::get);
         Consumer<MemorySegment> floatChecker =
-                (base) -> checkBytes(base, floats, ByteBuffer::asFloatBuffer, (addr, pos) -> addr.getAtIndex(JAVA_FLOAT.withOrder(ByteOrder.BIG_ENDIAN), pos), FloatBuffer::get);
+                (base) -> checkBytes(base, floats, ByteBuffer::asFloatBuffer, (addr, pos) -> addr.getAtIndex(BB_FLOAT, pos), FloatBuffer::get);
         Consumer<MemorySegment> longChecker =
-                (base) -> checkBytes(base, longs, ByteBuffer::asLongBuffer, (addr, pos) -> addr.getAtIndex(JAVA_LONG.withOrder(ByteOrder.BIG_ENDIAN), pos), LongBuffer::get);
+                (base) -> checkBytes(base, longs, ByteBuffer::asLongBuffer, (addr, pos) -> addr.getAtIndex(BB_LONG, pos), LongBuffer::get);
         Consumer<MemorySegment> doubleChecker =
-                (base) -> checkBytes(base, doubles, ByteBuffer::asDoubleBuffer, (addr, pos) -> addr.getAtIndex(JAVA_DOUBLE.withOrder(ByteOrder.BIG_ENDIAN), pos), DoubleBuffer::get);
+                (base) -> checkBytes(base, doubles, ByteBuffer::asDoubleBuffer, (addr, pos) -> addr.getAtIndex(BB_DOUBLE, pos), DoubleBuffer::get);
 
         return new Object[][]{
                 {byteChecker, byteInitializer, bytes},
