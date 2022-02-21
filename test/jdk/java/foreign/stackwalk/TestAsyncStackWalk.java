@@ -86,7 +86,7 @@ import java.lang.foreign.MemoryAddress;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import sun.hotspot.WhiteBox;
 
 import static java.lang.invoke.MethodHandles.lookup;
@@ -116,8 +116,8 @@ public class TestAsyncStackWalk extends NativeTestHelper {
     static boolean didStackWalk;
 
     public static void main(String[] args) throws Throwable {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            NativeSymbol stub = linker.upcallStub(MH_m, FunctionDescriptor.ofVoid(), scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            NativeSymbol stub = linker.upcallStub(MH_m, FunctionDescriptor.ofVoid(), session);
             MemoryAddress stubAddress = stub.address();
             invocations = 0;
             didStackWalk = false;

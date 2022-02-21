@@ -157,7 +157,7 @@ JVM_END
 #define PKG_FOREIGN "Ljava/lang/foreign/"
 
 #define MEMACCESS "ScopedMemoryAccess"
-#define SCOPE PKG_FOREIGN "ResourceScope;"
+#define SCOPE PKG_FOREIGN "MemorySession;"
 
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)

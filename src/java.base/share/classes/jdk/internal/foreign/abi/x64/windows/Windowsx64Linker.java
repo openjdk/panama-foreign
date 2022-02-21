@@ -27,7 +27,7 @@ package jdk.internal.foreign.abi.x64.windows;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.VaList;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -62,18 +62,18 @@ public final class Windowsx64Linker extends AbstractLinker {
     }
 
     @Override
-    protected NativeSymbol arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, ResourceScope scope) {
-        return CallArranger.arrangeUpcall(target, targetType, function, scope);
+    protected NativeSymbol arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession session) {
+        return CallArranger.arrangeUpcall(target, targetType, function, session);
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions, ResourceScope scope) {
-        WinVaList.Builder builder = WinVaList.builder(scope);
+    public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession session) {
+        WinVaList.Builder builder = WinVaList.builder(session);
         actions.accept(builder);
         return builder.build();
     }
 
-    public static VaList newVaListOfAddress(MemoryAddress ma, ResourceScope scope) {
-        return WinVaList.ofAddress(ma, scope);
+    public static VaList newVaListOfAddress(MemoryAddress ma, MemorySession session) {
+        return WinVaList.ofAddress(ma, session);
     }
 
     public static VaList emptyVaList() {

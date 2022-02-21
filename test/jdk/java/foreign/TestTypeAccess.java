@@ -29,7 +29,7 @@
  */
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
 import org.testng.annotations.*;
 
@@ -53,32 +53,32 @@ public class TestTypeAccess {
 
     @Test(expectedExceptions=ClassCastException.class)
     public void testMemoryAddressValueGetAsString() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment s = MemorySegment.allocateNative(8, 8, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment s = MemorySegment.allocateNative(8, 8, session);
             String address = (String)ADDR_HANDLE.get(s.address());
         }
     }
 
     @Test(expectedExceptions=ClassCastException.class)
     public void testMemoryAddressValueSetAsString() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment s = MemorySegment.allocateNative(8, 8, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment s = MemorySegment.allocateNative(8, 8, session);
             ADDR_HANDLE.set(s.address(), "string");
         }
     }
 
     @Test(expectedExceptions=WrongMethodTypeException.class)
     public void testMemoryAddressValueGetAsPrimitive() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment s = MemorySegment.allocateNative(8, 8, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment s = MemorySegment.allocateNative(8, 8, session);
             int address = (int)ADDR_HANDLE.get(s.address());
         }
     }
 
     @Test(expectedExceptions=WrongMethodTypeException.class)
     public void testMemoryAddressValueSetAsPrimitive() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment s = MemorySegment.allocateNative(8, 8, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment s = MemorySegment.allocateNative(8, 8, session);
             ADDR_HANDLE.set(s.address(), 1);
         }
     }

@@ -83,7 +83,6 @@ public class TestCondy {
         testValues.add(MemoryLayout.unionLayout(constants));
 
         for (MemoryLayout ml : constants) {
-            testValues.add(MemoryLayout.sequenceLayout(ml));
             testValues.add(MemoryLayout.sequenceLayout(10, ml));
         }
 

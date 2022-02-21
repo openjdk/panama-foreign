@@ -34,7 +34,6 @@ import java.nio.ByteOrder;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
@@ -91,9 +90,8 @@ import jdk.internal.javac.PreviewFeature;
  * always has the same size in bits, regardless of the platform in which it is used. For derived layouts, the size is computed
  * as follows:
  * <ul>
- *     <li>for a <em>finite</em> sequence layout <em>S</em> whose element layout is <em>E</em> and size is L,
+ *     <li>for a sequence layout <em>S</em> whose element layout is <em>E</em> and size is L,
  *     the size of <em>S</em> is that of <em>E</em>, multiplied by <em>L</em></li>
- *     <li>the size of an <em>unbounded</em> sequence layout is <em>unknown</em></li>
  *     <li>for a group layout <em>G</em> with member layouts <em>M1</em>, <em>M2</em>, ... <em>Mn</em> whose sizes are
  *     <em>S1</em>, <em>S2</em>, ... <em>Sn</em>, respectively, the size of <em>G</em> is either <em>S1 + S2 + ... + Sn</em> or
  *     <em>max(S1, S2, ... Sn)</em> depending on whether the group is a <em>struct</em> or an <em>union</em>, respectively</li>
@@ -206,26 +204,13 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     Optional<? extends DynamicConstantDesc<? extends MemoryLayout>> describeConstable();
 
     /**
-     * Returns {@code true} if this layout has a specified size. A layout does not have a specified size if it is (or contains) a sequence layout whose
-     * size is unspecified (see {@link SequenceLayout#elementCount()}).
-     *
-     * Value layouts (see {@link ValueLayout}) and padding layouts (see {@link MemoryLayout#paddingLayout(long)})
-     * <em>always</em> have a specified size, therefore this method always returns {@code true} in these cases.
-     *
-     * @return {@code true}, if this layout has a specified size.
-     */
-    boolean hasSize();
-
-    /**
      * {@return the layout size, in bits}
-     * @throws UnsupportedOperationException if the layout is, or contains, a sequence layout with unspecified size (see {@link SequenceLayout}).
      */
     long bitSize();
 
     /**
      * {@return the layout size, in bytes}
-     * @throws UnsupportedOperationException if the layout is, or contains, a sequence layout with unspecified size (see {@link SequenceLayout}),
-     * or if {@code bitSize()} is not a multiple of 8.
+     * @throws UnsupportedOperationException if {@code bitSize()} is not a multiple of 8.
      */
     long byteSize();
 
@@ -302,7 +287,6 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * @throws IllegalArgumentException if the layout path does not select any layout nested in this layout, or if the
      * layout path contains one or more path elements that select multiple sequence element indices
      * (see {@link PathElement#sequenceElement()} and {@link PathElement#sequenceElement(long, long)}).
-     * @throws UnsupportedOperationException if one of the layouts traversed by the layout path has unspecified size.
      * @throws NullPointerException if either {@code elements == null}, or if any of the elements
      * in {@code elements} is {@code null}.
      */
@@ -337,7 +321,6 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * specified by the given layout path elements, when supplied with the missing sequence element indices.
      * @throws IllegalArgumentException if the layout path contains one or more path elements that select
      * multiple sequence element indices (see {@link PathElement#sequenceElement(long, long)}).
-     * @throws UnsupportedOperationException if one of the layouts traversed by the layout path has unspecified size.
      */
     default MethodHandle bitOffsetHandle(PathElement... elements) {
         return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::offsetHandle,
@@ -353,8 +336,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * @throws IllegalArgumentException if the layout path does not select any layout nested in this layout, or if the
      * layout path contains one or more path elements that select multiple sequence element indices
      * (see {@link PathElement#sequenceElement()} and {@link PathElement#sequenceElement(long, long)}).
-     * @throws UnsupportedOperationException if one of the layouts traversed by the layout path has unspecified size,
-     * or if {@code bitOffset(elements)} is not a multiple of 8.
+     * @throws UnsupportedOperationException if {@code bitOffset(elements)} is not a multiple of 8.
      * @throws NullPointerException if either {@code elements == null}, or if any of the elements
      * in {@code elements} is {@code null}.
      */
@@ -392,7 +374,6 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * specified by the given layout path elements, when supplied with the missing sequence element indices.
      * @throws IllegalArgumentException if the layout path contains one or more path elements that select
      * multiple sequence element indices (see {@link PathElement#sequenceElement(long, long)}).
-     * @throws UnsupportedOperationException if one of the layouts traversed by the layout path has unspecified size.
      */
     default MethodHandle byteOffsetHandle(PathElement... elements) {
         MethodHandle mh = bitOffsetHandle(elements);
@@ -420,7 +401,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      *
      * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
      * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
-     * and {@code s_0}, {@code s_1}, ... {@code s_n} are <em>static</em> stride constants which are derived from
+     * and {@code s_1}, {@code s_2}, ... {@code s_n} are <em>static</em> stride constants which are derived from
      * the layout path.
      *
      * @apiNote the resulting var handle will feature an additional {@code long} access coordinate for every
@@ -429,13 +410,36 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      *
      * @param elements the layout path elements.
      * @return a var handle which can be used to dereference memory at the (possibly nested) layout selected by the layout path in {@code elements}.
-     * @throws UnsupportedOperationException if the layout path has one or more elements with incompatible alignment constraints,
-     * or if one of the layouts traversed by the layout path has unspecified size.
+     * @throws UnsupportedOperationException if the layout path has one or more elements with incompatible alignment constraints.
      * @throws IllegalArgumentException if the layout path in {@code elements} does not select a value layout (see {@link ValueLayout}).
      */
     default VarHandle varHandle(PathElement... elements) {
         return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::dereferenceHandle,
                 Set.of(), elements);
+    }
+
+    /**
+     * Creates a <em>strided</em> memory access var handle that can be used to dereference memory at the layout selected by a given layout path,
+     * where the path is considered rooted in this layout. The returned var handle can effectively dereference multiple memory
+     * locations, using a <em>dynamic</em> index (of type {@code long}), which is multiplied by this layout size and then added
+     * to the offset of the selected layout. Equivalent to the following code:
+     * {@snippet lang=java :
+     * MemoryLayout.sequenceLayout(Long.MAX_VALUE, this)
+     *             .varHandle(PathElement.sequenceElement());
+     * }
+     *
+     * @param elements the layout path elements.
+     * @return a var handle which can be used to dereference memory at the (possibly nested) layout selected by the layout path in {@code elements}.
+     * @throws UnsupportedOperationException if the layout path has one or more elements with incompatible alignment constraints.
+     * @throws IllegalArgumentException if the layout path in {@code elements} does not select a value layout (see {@link ValueLayout}).
+     */
+    default VarHandle arrayElementVarHandle(PathElement... elements) {
+        Objects.requireNonNull(elements);
+        PathElement[] newElements = new PathElement[elements.length + 1];
+        newElements[0] = PathElement.sequenceElement();
+        System.arraycopy(elements, 0, newElements, 1, elements.length);
+        return computePathOp(LayoutPath.rootPath(MemoryLayout.sequenceLayout(Long.MAX_VALUE, this), MemoryLayout::bitSize),
+                LayoutPath::dereferenceHandle, Set.of(), newElements);
     }
 
     /**
@@ -458,7 +462,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      *
      * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
      * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
-     * and {@code s_0}, {@code s_1}, ... {@code s_n} are <em>static</em> stride constants which are derived from
+     * and {@code s_1}, {@code s_2}, ... {@code s_n} are <em>static</em> stride constants which are derived from
      * the layout path.
      *
      * <p>After the offset is computed, the returned segment is created as if by calling:
@@ -480,7 +484,6 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
         return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::sliceHandle,
                 Set.of(), elements);
     }
-
 
     /**
      * Selects the layout from a path rooted in this layout.
@@ -726,18 +729,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      */
     static SequenceLayout sequenceLayout(long elementCount, MemoryLayout elementLayout) {
         AbstractLayout.checkSize(elementCount, true);
-        OptionalLong size = OptionalLong.of(elementCount);
-        return new SequenceLayout(size, Objects.requireNonNull(elementLayout));
-    }
-
-    /**
-     * Create a new sequence layout, with unbounded element count and given element layout.
-     *
-     * @param elementLayout the element layout of the sequence layout.
-     * @return the new sequence layout with given element layout.
-     */
-    static SequenceLayout sequenceLayout(MemoryLayout elementLayout) {
-        return new SequenceLayout(OptionalLong.empty(), Objects.requireNonNull(elementLayout));
+        return new SequenceLayout(elementCount, Objects.requireNonNull(elementLayout));
     }
 
     /**

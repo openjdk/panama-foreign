@@ -48,7 +48,7 @@
 
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import org.testng.SkipException;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -170,8 +170,8 @@ public class VarHandleTestExact {
     @Test(dataProvider = "dataSetMemorySegment")
     public void testExactSegmentSet(Class<?> carrier, Object testValue, SetSegmentX setter) {
         VarHandle vh = MethodHandles.memoryAccessVarHandle(MemoryLayout.valueLayout(carrier, ByteOrder.nativeOrder()));
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment seg = MemorySegment.allocateNative(8, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment seg = MemorySegment.allocateNative(8, session);
             doTest(vh,
                 tvh -> tvh.set(seg, 0L, testValue),
                 tvh -> setter.set(tvh, seg, 0L, testValue),

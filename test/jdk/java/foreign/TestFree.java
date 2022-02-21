@@ -33,13 +33,13 @@
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 
 import static org.testng.Assert.assertEquals;
 
 public class TestFree extends NativeTestHelper {
     private static MemorySegment asArray(MemoryAddress addr, MemoryLayout layout, int numElements) {
-        return MemorySegment.ofAddress(addr, numElements * layout.byteSize(), ResourceScope.globalScope());
+        return MemorySegment.ofAddress(addr, numElements * layout.byteSize(), MemorySession.global());
     }
 
     public void test() throws Throwable {

@@ -86,8 +86,7 @@ public interface JavaLangInvokeAccess {
      * Used by {@code jdk.internal.foreign.LayoutPath} and
      * {@code java.lang.invoke.MethodHandles}.
      */
-    VarHandle memoryAccessVarHandle(Class<?> carrier, boolean skipAlignmentMaskCheck, long alignmentMask,
-                                    ByteOrder order);
+    VarHandle memoryAccessVarHandle(Class<?> carrier, long alignmentMask, ByteOrder order);
 
     /**
      * Var handle carrier combinator.

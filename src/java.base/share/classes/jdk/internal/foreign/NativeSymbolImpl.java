@@ -26,13 +26,18 @@
 package jdk.internal.foreign;
 
 import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
 
-public record NativeSymbolImpl(String name, MemoryAddress address, ResourceScope scope) implements NativeSymbol, Scoped {
+public record NativeSymbolImpl(String name, MemoryAddress address, MemorySessionImpl sessionImpl) implements NativeSymbol, Scoped {
     @Override
     public MemoryAddress address() {
-        ((ResourceScopeImpl)scope).checkValidStateSlow();
+        sessionImpl.checkValidStateSlow();
         return address;
+    }
+
+    @Override
+    public MemorySession session() {
+        return new MemorySessionImpl.NonCloseableView(sessionImpl());
     }
 }

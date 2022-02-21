@@ -25,16 +25,14 @@ package org.openjdk.bench.java.lang.foreign.points.support;
 import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import org.openjdk.bench.java.lang.foreign.CLayouts;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 
-import static java.lang.invoke.MethodType.methodType;
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 
 public class PanamaPoint extends CLayouts implements AutoCloseable {
@@ -62,20 +60,14 @@ public class PanamaPoint extends CLayouts implements AutoCloseable {
         );
     }
 
+    private final MemorySession session;
     private final MemorySegment segment;
 
     public PanamaPoint(int x, int y) {
-        this(MemorySegment.allocateNative(LAYOUT, ResourceScope.newConfinedScope()), x, y);
-    }
-
-    public PanamaPoint(MemorySegment segment, int x, int y) {
-        this(segment);
+        this.session = MemorySession.openConfined();
+        this.segment = MemorySegment.allocateNative(LAYOUT, session);
         setX(x);
         setY(y);
-    }
-
-    public PanamaPoint(MemorySegment segment) {
-        this.segment = segment;
     }
 
     public void setX(int x) {
@@ -112,6 +104,6 @@ public class PanamaPoint extends CLayouts implements AutoCloseable {
 
     @Override
     public void close() {
-        segment.scope().close();
+        session.close();
     }
 }
