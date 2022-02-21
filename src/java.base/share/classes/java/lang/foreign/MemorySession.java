@@ -162,7 +162,7 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
      *
      * @throws IllegalStateException if this memory session is not {@linkplain #isAlive() alive}, or if access occurs from
      * a thread other than the thread {@linkplain #ownerThread() owning} this memory session.
-     * @throws IllegalStateException this memory session is shared and a resource associated with this session is accessed while this method is called.
+     * @throws IllegalStateException if this session is {@linkplain #whileAlive(Runnable) kept alive} by another client.
      * @throws UnsupportedOperationException if this memory session is not {@linkplain #isCloseable() closeable}.
      */
     void close();
