@@ -326,8 +326,9 @@ public class TestArrayCopy {
         final L elementLayout;
         final Class<?> carrier;
 
+        @SuppressWarnings("unchecked")
         public CopyHelper(L elementLayout, Class<X> carrier) {
-            this.elementLayout = elementLayout;
+            this.elementLayout = (L)elementLayout.withBitAlignment(8);
             this.carrier = carrier;
         }
 

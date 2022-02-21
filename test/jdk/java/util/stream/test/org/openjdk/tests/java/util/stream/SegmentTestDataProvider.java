@@ -107,7 +107,7 @@ public class SegmentTestDataProvider {
 
     static Consumer<MemorySegment> segmentCopier(Consumer<MemorySegment> input) {
         return segment -> {
-            MemorySegment dest = MemorySegment.ofArray(new byte[(int)segment.byteSize()]);
+            MemorySegment dest = MemorySegment.ofArray(new long[(int)segment.byteSize() / 8]);
             dest.copyFrom(segment);
             input.accept(dest);
         };

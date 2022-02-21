@@ -81,13 +81,13 @@ public class TestMemoryAccessInstance {
 
         void test() {
             try (MemorySession session = MemorySession.openConfined()) {
-                MemorySegment segment = MemorySegment.allocateNative(64, session);
+                MemorySegment segment = MemorySegment.allocateNative(128, session);
                 ByteBuffer buffer = segment.asByteBuffer();
                 T t = transform.apply(segment);
-                segmentSetter.set(t, layout, 4, value);
-                assertEquals(bufferGetter.get(buffer, 4), value);
-                bufferSetter.set(buffer, 4, value);
-                assertEquals(value, segmentGetter.get(t, layout, 4));
+                segmentSetter.set(t, layout, 8, value);
+                assertEquals(bufferGetter.get(buffer, 8), value);
+                bufferSetter.set(buffer, 8, value);
+                assertEquals(value, segmentGetter.get(t, layout, 8));
             }
         }
 

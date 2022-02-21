@@ -72,7 +72,8 @@ public class TestVarHandleCombinators {
 
     @Test
     public void testByteOrderLE() {
-        VarHandle vh = MethodHandles.memoryAccessVarHandle(ValueLayout.JAVA_SHORT.withOrder(ByteOrder.LITTLE_ENDIAN));
+        VarHandle vh = MethodHandles.memoryAccessVarHandle(ValueLayout.JAVA_SHORT
+                .withOrder(ByteOrder.LITTLE_ENDIAN).withBitAlignment(8));
         byte[] arr = new byte[2];
         MemorySegment segment = MemorySegment.ofArray(arr);
         vh.set(segment, 0L, (short) 0xFF);
@@ -82,7 +83,8 @@ public class TestVarHandleCombinators {
 
     @Test
     public void testByteOrderBE() {
-        VarHandle vh = MethodHandles.memoryAccessVarHandle(ValueLayout.JAVA_SHORT.withOrder(ByteOrder.BIG_ENDIAN));
+        VarHandle vh = MethodHandles.memoryAccessVarHandle(ValueLayout.JAVA_SHORT
+                .withOrder(ByteOrder.BIG_ENDIAN).withBitAlignment(8));
         byte[] arr = new byte[2];
         MemorySegment segment = MemorySegment.ofArray(arr);
         vh.set(segment, 0L, (short) 0xFF);
