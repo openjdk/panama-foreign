@@ -101,15 +101,11 @@ class TypeMaker {
     }
 
     Type makeType(jdk.internal.clang.Type t) {
-        return makeType(t, null);
-    }
-
-    Type makeType(jdk.internal.clang.Type t, List<Declaration.Variable> params) {
         Type rv = typeCache.get(t);
         if (rv != null) {
             return rv;
         }
-        rv = makeTypeInternal(t, params);
+        rv = makeTypeInternal(t);
         if (null != rv && typeCache.put(t, rv) != null) {
             throw new ConcurrentModificationException();
         }
@@ -124,7 +120,7 @@ class TypeMaker {
         }
     }
 
-    Type makeTypeInternal(jdk.internal.clang.Type t, List<Declaration.Variable> params) {
+    Type makeTypeInternal(jdk.internal.clang.Type t) {
         switch(t.kind()) {
             case Auto:
                 return makeType(t.canonicalType());
@@ -194,11 +190,7 @@ class TypeMaker {
                     // argument could be function pointer declared locally
                     args.add(lowerFunctionType(t.argType(i)));
                 }
-                List<String> paramNames = null;
-                if (params != null) {
-                    paramNames = params.stream().map(Declaration::name).collect(Collectors.toList());
-                }
-                return Type.function(t.isVariadic(), lowerFunctionType(t.resultType()), args, paramNames);
+                return Type.function(t.isVariadic(), lowerFunctionType(t.resultType()), args.toArray(new Type[0]));
             }
             case Enum:
             case Record: {
@@ -208,13 +200,13 @@ class TypeMaker {
             case Pointer: {
                 // TODO: We can always erase type for macro evaluation, should we?
                 if (t.getPointeeType().kind() == TypeKind.FunctionProto) {
-                    return new TypeImpl.PointerImpl(makeType(t.getPointeeType(), params));
+                    return new TypeImpl.PointerImpl(makeType(t.getPointeeType()));
                 } else {
                     return new TypeImpl.PointerImpl(reference(t.getPointeeType()));
                 }
             }
             case Typedef: {
-                Type __type = makeType(t.canonicalType(), params);
+                Type __type = makeType(t.canonicalType());
                 return Type.typedef(t.spelling(), __type);
             }
             case Complex: {

@@ -248,18 +248,44 @@ class TreeMaker {
     }
 
     private Declaration.Typedef createTypedef(Cursor c) {
-        List<Declaration.Variable> params = c.children().
-             filter(ch -> ch.kind() == CursorKind.ParmDecl).
-             map(this::createTree).
-             map(Declaration.Variable.class::cast).
-             collect(Collectors.toList());
-        Type cursorType = toType(c, params);
+        Type cursorType = toType(c);
         Type canonicalType = canonicalType(cursorType);
         if (canonicalType instanceof Type.Declared) {
             Declaration.Scoped s = ((Type.Declared) canonicalType).tree();
             if (s.name().equals(c.spelling())) {
                 // typedef record with the same name, no need to present twice
                 return null;
+            }
+        }
+        Type.Function funcType = null;
+        boolean isFuncPtrType = false;
+        if (canonicalType instanceof Type.Function) {
+            funcType = (Type.Function)canonicalType;
+        } else if (canonicalType instanceof Type.Delegated &&
+                ((Type.Delegated)canonicalType).kind() == Type.Delegated.Kind.POINTER) {
+            Type pointeeType = null;
+            try {
+                pointeeType = ((Type.Delegated)canonicalType).type();
+            } catch (NullPointerException npe) {
+                // exception thrown for unresolved pointee type. Ignore if we hit that case.
+            }
+            if (pointeeType instanceof Type.Function) {
+                funcType = (Type.Function)pointeeType;
+                isFuncPtrType = true;
+            }
+        }
+        if (funcType != null) {
+            List<String> params = c.children().
+                filter(ch -> ch.kind() == CursorKind.ParmDecl).
+                map(this::createTree).
+                map(Declaration.Variable.class::cast).
+                map(Declaration::name).
+                collect(Collectors.toList());
+            if (!params.isEmpty()) {
+                canonicalType = funcType.withParameterNames(params);
+                if (isFuncPtrType) {
+                    canonicalType = new TypeImpl.PointerImpl(canonicalType);
+                }
             }
         }
         return Declaration.typedef(CursorPosition.of(c), c.spelling(), canonicalType);
@@ -292,12 +318,8 @@ class TreeMaker {
         }
     }
 
-    private Type toType(Cursor c, List<Declaration.Variable> params) {
-        return typeMaker.makeType(c.type(), params == null || params.isEmpty()? null : params);
-    }
-
     private Type toType(Cursor c) {
-        return toType(c, null);
+        return typeMaker.makeType(c.type());
     }
 
     private void checkCursor(Cursor c, CursorKind k) {
