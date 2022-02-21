@@ -106,7 +106,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         public static MemorySegment fromArray(byte[] arr) {
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Unsafe.ARRAY_BYTE_INDEX_SCALE;
-            return new OfByte(Unsafe.ARRAY_BYTE_BASE_OFFSET, arr, byteSize, defaultAccessModes(byteSize));
+            return new OfByte(Unsafe.ARRAY_BYTE_BASE_OFFSET, arr, byteSize, DEFAULT_MODES);
         }
 
         @Override
@@ -134,7 +134,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         public static MemorySegment fromArray(char[] arr) {
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Unsafe.ARRAY_CHAR_INDEX_SCALE;
-            return new OfChar(Unsafe.ARRAY_CHAR_BASE_OFFSET, arr, byteSize, defaultAccessModes(byteSize));
+            return new OfChar(Unsafe.ARRAY_CHAR_BASE_OFFSET, arr, byteSize, DEFAULT_MODES);
         }
 
         @Override
@@ -162,7 +162,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         public static MemorySegment fromArray(short[] arr) {
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Unsafe.ARRAY_SHORT_INDEX_SCALE;
-            return new OfShort(Unsafe.ARRAY_SHORT_BASE_OFFSET, arr, byteSize, defaultAccessModes(byteSize));
+            return new OfShort(Unsafe.ARRAY_SHORT_BASE_OFFSET, arr, byteSize, DEFAULT_MODES);
         }
 
         @Override
@@ -190,7 +190,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         public static MemorySegment fromArray(int[] arr) {
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Unsafe.ARRAY_INT_INDEX_SCALE;
-            return new OfInt(Unsafe.ARRAY_INT_BASE_OFFSET, arr, byteSize, defaultAccessModes(byteSize));
+            return new OfInt(Unsafe.ARRAY_INT_BASE_OFFSET, arr, byteSize, DEFAULT_MODES);
         }
 
         @Override
@@ -218,7 +218,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         public static MemorySegment fromArray(long[] arr) {
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Unsafe.ARRAY_LONG_INDEX_SCALE;
-            return new OfLong(Unsafe.ARRAY_LONG_BASE_OFFSET, arr, byteSize, defaultAccessModes(byteSize));
+            return new OfLong(Unsafe.ARRAY_LONG_BASE_OFFSET, arr, byteSize, DEFAULT_MODES);
         }
 
         @Override
@@ -246,7 +246,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         public static MemorySegment fromArray(float[] arr) {
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Unsafe.ARRAY_FLOAT_INDEX_SCALE;
-            return new OfFloat(Unsafe.ARRAY_FLOAT_BASE_OFFSET, arr, byteSize, defaultAccessModes(byteSize));
+            return new OfFloat(Unsafe.ARRAY_FLOAT_BASE_OFFSET, arr, byteSize, DEFAULT_MODES);
         }
 
         @Override
@@ -274,7 +274,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         public static MemorySegment fromArray(double[] arr) {
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE;
-            return new OfDouble(Unsafe.ARRAY_DOUBLE_BASE_OFFSET, arr, byteSize, defaultAccessModes(byteSize));
+            return new OfDouble(Unsafe.ARRAY_DOUBLE_BASE_OFFSET, arr, byteSize, DEFAULT_MODES);
         }
 
         @Override

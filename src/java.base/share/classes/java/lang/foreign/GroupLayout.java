@@ -33,7 +33,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.function.LongBinaryOperator;
 import java.util.stream.Collectors;
 import jdk.internal.javac.PreviewFeature;
@@ -85,16 +84,12 @@ public final class GroupLayout extends AbstractLayout implements MemoryLayout {
             this.sizeOp = sizeOp;
         }
 
-        OptionalLong sizeof(List<MemoryLayout> elems) {
+        long sizeof(List<MemoryLayout> elems) {
             long size = 0;
             for (MemoryLayout elem : elems) {
-                if (AbstractLayout.optSize(elem).isPresent()) {
-                    size = sizeOp.applyAsLong(size, elem.bitSize());
-                } else {
-                    return OptionalLong.empty();
-                }
+                size = sizeOp.applyAsLong(size, elem.bitSize());
             }
-            return OptionalLong.of(size);
+            return size;
         }
 
         long alignof(List<MemoryLayout> elems) {

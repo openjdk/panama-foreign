@@ -85,10 +85,10 @@ public class ScopedMemoryAccess {
     }
 
     public boolean closeScope(ResourceScope scope) {
-        return closeScope0(scope, ScopedAccessError.INSTANCE);
+        return closeScope0(scope);
     }
 
-    native boolean closeScope0(ResourceScope scope, ScopedAccessError exception);
+    native boolean closeScope0(ResourceScope scope);
 
     private ScopedMemoryAccess() {}
 
