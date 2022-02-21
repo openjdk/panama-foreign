@@ -189,7 +189,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
 
     static void checkSession(MemorySession session) {
         try {
-            ((MemorySession)session).close();
+            session.close();
             fail("Session closed unexpectedly!");
         } catch (IllegalStateException ex) {
             assertTrue(ex.getMessage().contains("acquired")); //if acquired, fine

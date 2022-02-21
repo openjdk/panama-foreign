@@ -117,8 +117,8 @@ public class BulkMismatchAcquire {
 
     @TearDown
     public void tearDown() {
-        if (session instanceof MemorySession) {
-            ((MemorySession) session).close();
+        if (session.isCloseable()) {
+            session.close();
         }
     }
 

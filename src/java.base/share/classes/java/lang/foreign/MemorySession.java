@@ -140,6 +140,8 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     /**
      * Add a custom cleanup action which will be executed when the memory session is closed.
      * The order in which custom cleanup actions are invoked once the memory session is closed is unspecified.
+     * @apiNote The provided action should not keep a strong reference to this memory session, so that implicitly
+     * closed sessions can be handled correctly by a {@link Cleaner} instance.
      * @param runnable the custom cleanup action to be associated with this memory session.
      * @throws IllegalStateException if this memory session is not {@linkplain #isAlive() alive}, or if access occurs from
      * a thread other than the thread {@linkplain #ownerThread() owning} this memory session.

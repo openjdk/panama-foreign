@@ -121,13 +121,13 @@ public class VaListTest extends NativeTestHelper {
     }
 
     private static final Function<Consumer<VaList.Builder>, VaList> winVaListFactory
-            = actions -> Windowsx64Linker.newVaList(actions, MemorySession.openConfined());
+            = actions -> Windowsx64Linker.newVaList(actions, MemorySession.openImplicit());
     private static final Function<Consumer<VaList.Builder>, VaList> sysvVaListFactory
-            = actions -> SysVx64Linker.newVaList(actions, MemorySession.openConfined());
+            = actions -> SysVx64Linker.newVaList(actions, MemorySession.openImplicit());
     private static final Function<Consumer<VaList.Builder>, VaList> linuxAArch64VaListFactory
-            = actions -> LinuxAArch64Linker.newVaList(actions, MemorySession.openConfined());
+            = actions -> LinuxAArch64Linker.newVaList(actions, MemorySession.openImplicit());
     private static final Function<Consumer<VaList.Builder>, VaList> macAArch64VaListFactory
-            = actions -> MacOsAArch64Linker.newVaList(actions, MemorySession.openConfined());
+            = actions -> MacOsAArch64Linker.newVaList(actions, MemorySession.openImplicit());
     private static final Function<Consumer<VaList.Builder>, VaList> platformVaListFactory
             = (builder) -> VaList.make(builder, MemorySession.openConfined());
 

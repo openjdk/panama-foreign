@@ -55,13 +55,10 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Reference;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -496,7 +493,7 @@ public class SharedUtils {
 
         @Override
         public MemorySession session() {
-            return new MemorySessionImpl.NonCloseableView(sessionImpl());
+            return MemorySessionImpl.GLOBAL;
         }
     }
 

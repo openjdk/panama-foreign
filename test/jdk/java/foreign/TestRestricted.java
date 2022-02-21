@@ -66,7 +66,7 @@ public class TestRestricted {
     public void testInvoke2() throws Throwable {
         var mh = MethodHandles.lookup().findStatic(MemorySegment.class, "ofAddress",
             MethodType.methodType(MemorySegment.class, MemoryAddress.class, long.class, MemorySession.class));
-        var seg = (MemorySegment)mh.invoke(MemoryAddress.NULL, 4000L, MemorySession.global());
+        var seg = (MemorySegment)mh.invokeExact(MemoryAddress.NULL, 4000L, MemorySession.global());
     }
 
     @Test(expectedExceptions = IllegalCallerException.class)
