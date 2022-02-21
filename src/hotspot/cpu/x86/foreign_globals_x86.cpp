@@ -40,8 +40,8 @@ bool ABIDescriptor::is_volatile_reg(XMMRegister reg) const {
 }
 
 static constexpr int INTEGER_TYPE = 0;
-static constexpr int VECTOR_TYPE = 0;
-static constexpr int X87_TYPE = 0;
+static constexpr int VECTOR_TYPE = 1;
+static constexpr int X87_TYPE = 2;
 
 const ABIDescriptor ForeignGlobals::parse_abi_descriptor(jobject jabi) {
   oop abi_oop = JNIHandles::resolve_non_null(jabi);
