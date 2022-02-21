@@ -54,8 +54,7 @@ public abstract sealed class AbstractLinker implements CLinker permits LinuxAArc
             MethodType type = SharedUtils.inferMethodType(fd, false);
             MethodHandle handle = arrangeDowncall(type, fd);
             handle = SharedUtils.maybeInsertAllocator(handle);
-            MethodHandle mh = SharedUtils.wrapDowncall(handle, fd);
-            return mh;
+            return handle;
         });
     }
     protected abstract MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function);

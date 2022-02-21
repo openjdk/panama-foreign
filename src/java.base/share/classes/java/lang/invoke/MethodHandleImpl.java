@@ -1581,9 +1581,8 @@ abstract class MethodHandleImpl {
             }
 
             @Override
-            public VarHandle memoryAccessVarHandle(Class<?> carrier, boolean skipAlignmentMaskCheck, long alignmentMask,
-                                                   ByteOrder order) {
-                return VarHandles.makeMemoryAddressViewHandle(carrier, skipAlignmentMaskCheck, alignmentMask, order);
+            public VarHandle memoryAccessVarHandle(Class<?> carrier, long alignmentMask, ByteOrder order) {
+                return VarHandles.makeMemoryAddressViewHandle(carrier, alignmentMask, order);
             }
 
             @Override

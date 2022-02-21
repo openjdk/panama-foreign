@@ -60,12 +60,10 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
 
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-    private static final boolean enableSmallSegments =
-            Boolean.parseBoolean(GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.SmallSegments", "true"));
-
     static final int READ_ONLY = 1;
-    static final int SMALL = READ_ONLY << 1;
     static final long NONCE = new Random().nextLong();
+
+    static final int DEFAULT_MODES = 0;
 
     static final JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
 
@@ -87,11 +85,6 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     abstract AbstractMemorySegmentImpl dup(long offset, long size, int mask, ResourceScopeImpl scope);
 
     abstract ByteBuffer makeByteBuffer();
-
-    static int defaultAccessModes(long size) {
-        return (enableSmallSegments && size < Integer.MAX_VALUE) ?
-                SMALL : 0;
-    }
 
     @Override
     public AbstractMemorySegmentImpl asReadOnly() {
@@ -351,10 +344,6 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
         return arr;
     }
 
-    public boolean isSmall() {
-        return isSet(SMALL);
-    }
-
     public void checkAccess(long offset, long length, boolean readOnly) {
         if (!readOnly && isSet(READ_ONLY)) {
             throw new UnsupportedOperationException("Attempt to write a read-only segment");
@@ -398,32 +387,19 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
         return (int)arraySize;
     }
 
-    private void checkBounds(long offset, long length) {
-        if (isSmall() &&
-                offset <= Integer.MAX_VALUE && length <= Integer.MAX_VALUE &&
-                offset >= Integer.MIN_VALUE && length >= Integer.MIN_VALUE) {
-            checkBoundsSmall((int)offset, (int)length);
-        } else if (this != NativeMemorySegmentImpl.EVERYTHING) { // oob not possible for everything segment
-            if (
-                    length < 0 ||
-                    offset < 0 ||
-                    offset > this.length - length) { // careful of overflow
-                throw outOfBoundException(offset, length);
-            }
+    @ForceInline
+    void checkBounds(long offset, long length) {
+        if (length > 0) {
+            Objects.checkIndex(offset, this.length - length + 1);
+        } else if (length < 0 || offset < 0 ||
+                offset > this.length - length) {
+            throw outOfBoundException(offset, length);
         }
     }
 
     @Override
     public ResourceScopeImpl scope() {
         return scope;
-    }
-
-    private void checkBoundsSmall(int offset, int length) {
-        if (length < 0 ||
-                offset < 0 ||
-                offset > (int)this.length - length) { // careful of overflow
-            throw outOfBoundException(offset, length);
-        }
     }
 
     private IndexOutOfBoundsException outOfBoundException(long offset, long length) {
@@ -489,17 +465,8 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
             if (currentIndex < elemCount) {
                 AbstractMemorySegmentImpl acquired = segment;
                 try {
-                    if (acquired.isSmall()) {
-                        int index = (int) currentIndex;
-                        int limit = (int) elemCount;
-                        int elemSize = (int) elementSize;
-                        for (; index < limit; index++) {
-                            action.accept(acquired.asSliceNoCheck(index * elemSize, elemSize));
-                        }
-                    } else {
-                        for (long i = currentIndex ; i < elemCount ; i++) {
-                            action.accept(acquired.asSliceNoCheck(i * elementSize, elementSize));
-                        }
+                    for (long i = currentIndex ; i < elemCount ; i++) {
+                        action.accept(acquired.asSliceNoCheck(i * elementSize, elementSize));
                     }
                 } finally {
                     currentIndex = elemCount;
@@ -544,7 +511,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
             modes = bufferSegment.mask;
         } else {
             bufferScope = ResourceScopeImpl.heapScope(bb);
-            modes = defaultAccessModes(size);
+            modes = DEFAULT_MODES;
         }
         if (bb.isReadOnly()) {
             modes |= READ_ONLY;
