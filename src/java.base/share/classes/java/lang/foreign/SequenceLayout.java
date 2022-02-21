@@ -29,14 +29,14 @@ import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalLong;
+
 import jdk.internal.javac.PreviewFeature;
 
 /**
  * A sequence layout. A sequence layout is used to denote a repetition of a given layout, also called the sequence layout's <em>element layout</em>.
- * The repetition count, where it exists (e.g. for <em>finite</em> sequence layouts) is said to be the sequence layout's <em>element count</em>.
- * A finite sequence layout can be thought of as a group layout where the sequence layout's element layout is repeated a number of times
- * that is equal to the sequence layout's element count. In other words this layout:
+ * The repetition count is said to be the sequence layout's <em>element count</em>. A finite sequence can be thought of as a
+ * group layout where the sequence layout's element layout is repeated a number of times that is equal to the sequence
+ * layout's element count. In other words this layout:
  *
  * {@snippet lang=java :
  * MemoryLayout.sequenceLayout(3, ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN));
@@ -70,17 +70,15 @@ import jdk.internal.javac.PreviewFeature;
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
 public final class SequenceLayout extends AbstractLayout implements MemoryLayout {
 
-    private final OptionalLong elemCount;
+    private final long elemCount;
     private final MemoryLayout elementLayout;
 
-    SequenceLayout(OptionalLong elemCount, MemoryLayout elementLayout) {
+    SequenceLayout(long elemCount, MemoryLayout elementLayout) {
         this(elemCount, elementLayout, elementLayout.bitAlignment(), Optional.empty());
     }
 
-    SequenceLayout(OptionalLong elemCount, MemoryLayout elementLayout, long alignment, Optional<String> name) {
-        super(elemCount.isPresent() && AbstractLayout.optSize(elementLayout).isPresent() ?
-                OptionalLong.of(elemCount.getAsLong() * elementLayout.bitSize()) :
-                OptionalLong.empty(), alignment, name);
+    SequenceLayout(long elemCount, MemoryLayout elementLayout, long alignment, Optional<String> name) {
+        super(elemCount * elementLayout.bitSize(), alignment, name);
         this.elemCount = elemCount;
         this.elementLayout = elementLayout;
     }
@@ -95,7 +93,7 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
     /**
      * {@return the element count of this sequence layout (if any)}
      */
-    public OptionalLong elementCount() {
+    public long elementCount() {
         return elemCount;
     }
 
@@ -108,7 +106,7 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
      */
     public SequenceLayout withElementCount(long elementCount) {
         AbstractLayout.checkSize(elementCount, true);
-        return new SequenceLayout(OptionalLong.of(elementCount), elementLayout, alignment, name());
+        return new SequenceLayout(elementCount, elementLayout, alignment, name());
     }
 
     /**
@@ -149,11 +147,8 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
         if (elementCounts.length == 0) {
             throw new IllegalArgumentException();
         }
-        if (elementCount().isEmpty()) {
-            throw new UnsupportedOperationException("Cannot reshape a sequence layout whose element count is unspecified");
-        }
         SequenceLayout flat = flatten();
-        long expectedCount = flat.elementCount().getAsLong();
+        long expectedCount = flat.elementCount();
 
         long actualCount = 1;
         int inferPosition = -1;
@@ -208,26 +203,19 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
      * flattened, does not have an element count.
      */
     public SequenceLayout flatten() {
-        if (elementCount().isEmpty()) {
-            throw badUnboundSequenceLayout();
-        }
-        long count = elementCount().getAsLong();
+        long count = elementCount();
         MemoryLayout elemLayout = elementLayout();
         while (elemLayout instanceof SequenceLayout elemSeq) {
-            count = count * elemSeq.elementCount().orElseThrow(this::badUnboundSequenceLayout);
+            count = count * elemSeq.elementCount();
             elemLayout = elemSeq.elementLayout();
         }
         return MemoryLayout.sequenceLayout(count, elemLayout);
     }
 
-    private UnsupportedOperationException badUnboundSequenceLayout() {
-        return new UnsupportedOperationException("Cannot flatten a sequence layout whose element count is unspecified");
-    }
-
     @Override
     public String toString() {
         return decorateLayoutString(String.format("[%s:%s]",
-                elemCount.isPresent() ? elemCount.getAsLong() : "", elementLayout));
+                elemCount, elementLayout));
     }
 
     @Override
@@ -241,7 +229,7 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
         if (!(other instanceof SequenceLayout s)) {
             return false;
         }
-        return elemCount.equals(s.elemCount) && elementLayout.equals(s.elementLayout);
+        return elemCount == s.elemCount && elementLayout.equals(s.elementLayout);
     }
 
     @Override
@@ -261,11 +249,9 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
 
     @Override
     public Optional<DynamicConstantDesc<SequenceLayout>> describeConstable() {
-        return Optional.of(decorateLayoutConstant(elemCount.isPresent() ?
+        return Optional.of(decorateLayoutConstant(
                 DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
-                        CD_SEQUENCE_LAYOUT, MH_SIZED_SEQUENCE, elemCount.getAsLong(), elementLayout.describeConstable().get()) :
-                DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
-                        CD_SEQUENCE_LAYOUT, MH_UNSIZED_SEQUENCE, elementLayout.describeConstable().get())));
+                        CD_SEQUENCE_LAYOUT, MH_SIZED_SEQUENCE, elemCount, elementLayout.describeConstable().get())));
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout

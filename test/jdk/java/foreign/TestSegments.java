@@ -28,13 +28,12 @@
  * @run testng/othervm -Xmx4G -XX:MaxDirectMemorySize=1M TestSegments
  */
 
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -66,8 +65,7 @@ public class TestSegments {
 
     @Test
     public void testNativeSegmentIsZeroed() {
-        VarHandle byteHandle = MemoryLayout.sequenceLayout(ValueLayout.JAVA_BYTE)
-                .varHandle(MemoryLayout.PathElement.sequenceElement());
+        VarHandle byteHandle = ValueLayout.JAVA_BYTE.arrayElementVarHandle();
         try (MemorySession session = MemorySession.openConfined()) {
             MemorySegment segment = MemorySegment.allocateNative(1000, 1, session);
             for (long i = 0 ; i < segment.byteSize() ; i++) {
@@ -78,8 +76,7 @@ public class TestSegments {
 
     @Test
     public void testSlices() {
-        VarHandle byteHandle = MemoryLayout.sequenceLayout(ValueLayout.JAVA_BYTE)
-                .varHandle(MemoryLayout.PathElement.sequenceElement());
+        VarHandle byteHandle = ValueLayout.JAVA_BYTE.arrayElementVarHandle();
         try (MemorySession session = MemorySession.openConfined()) {
             MemorySegment segment = MemorySegment.allocateNative(10, 1, session);
             //init
@@ -167,8 +164,7 @@ public class TestSegments {
 
     @Test(dataProvider = "segmentFactories")
     public void testFill(Supplier<SegmentFactory> segmentFactorySupplier) {
-        VarHandle byteHandle = MemoryLayout.sequenceLayout(ValueLayout.JAVA_BYTE)
-                .varHandle(MemoryLayout.PathElement.sequenceElement());
+        VarHandle byteHandle = ValueLayout.JAVA_BYTE.arrayElementVarHandle();
 
         for (byte value : new byte[] {(byte) 0xFF, (byte) 0x00, (byte) 0x45}) {
             SegmentFactory segmentFactory = segmentFactorySupplier.get();

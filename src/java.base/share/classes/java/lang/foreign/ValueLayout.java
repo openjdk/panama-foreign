@@ -31,7 +31,6 @@ import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 import jdk.internal.foreign.Utils;
 import jdk.internal.javac.PreviewFeature;
@@ -79,7 +78,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
     }
 
     ValueLayout(Class<?> carrier, ByteOrder order, long size, long alignment, Optional<String> name) {
-        super(OptionalLong.of(size), alignment, name);
+        super(size, alignment, name);
         this.carrier = carrier;
         this.order = order;
         checkCarrierSize(carrier, size);

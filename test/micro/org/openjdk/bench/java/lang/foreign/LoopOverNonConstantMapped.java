@@ -80,7 +80,7 @@ public class LoopOverNonConstantMapped {
         }
     }
 
-    static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(sequenceElement());
+    static final VarHandle VH_int = JAVA_INT.arrayElementVarHandle();
     MemorySession session;
     MemorySegment segment;
     long unsafe_addr;

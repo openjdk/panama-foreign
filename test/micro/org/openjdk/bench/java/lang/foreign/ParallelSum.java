@@ -65,7 +65,7 @@ public class ParallelSum {
     final static int CARRIER_SIZE = 4;
     final static int ALLOC_SIZE = CARRIER_SIZE * 1024 * 1024 * 256;
     final static int ELEM_SIZE = ALLOC_SIZE / CARRIER_SIZE;
-    static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(sequenceElement());
+    static final VarHandle VH_int = JAVA_INT.arrayElementVarHandle();
 
     final static MemoryLayout ELEM_LAYOUT = ValueLayout.JAVA_INT;
     final static int BULK_FACTOR = 512;

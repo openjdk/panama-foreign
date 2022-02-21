@@ -73,7 +73,7 @@ public class LoopOverConstant {
     //setup native memory segment
 
     static final MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, MemorySession.openImplicit());
-    static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(sequenceElement());
+    static final VarHandle VH_int = JAVA_INT.arrayElementVarHandle();
 
     static {
         for (int i = 0; i < ELEM_SIZE; i++) {

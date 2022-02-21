@@ -64,7 +64,7 @@ public class LoopOverPollutedSegments {
     byte[] arr;
     long addr;
 
-    static final VarHandle intHandle = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(MemoryLayout.PathElement.sequenceElement());
+    static final VarHandle intHandle = JAVA_INT.arrayElementVarHandle();
 
 
     @Setup

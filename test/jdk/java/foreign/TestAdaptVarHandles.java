@@ -31,7 +31,6 @@
  * @run testng/othervm -Djava.lang.invoke.VarHandle.VAR_HANDLE_GUARDS=false -Djava.lang.invoke.VarHandle.VAR_HANDLE_IDENTITY_ADAPT=true -Xverify:all TestAdaptVarHandles
  */
 
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
@@ -85,8 +84,7 @@ public class TestAdaptVarHandles {
         }
     }
 
-    static final VarHandle intHandleIndexed = MemoryLayout.sequenceLayout(ValueLayout.JAVA_INT)
-            .varHandle(MemoryLayout.PathElement.sequenceElement());
+    static final VarHandle intHandleIndexed = ValueLayout.JAVA_INT.arrayElementVarHandle();
 
     static final VarHandle intHandle = ValueLayout.JAVA_INT.varHandle();
 
