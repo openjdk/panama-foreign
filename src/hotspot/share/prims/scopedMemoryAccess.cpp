@@ -77,13 +77,13 @@ public:
 class LockFreeStackThreadsElement : public CHeapObj<mtInternal> {
   typedef LockFreeStackThreadsElement Element;
 
-  Element* volatile _entry;
-  static Element* volatile* entry_ptr(Element& e) { return &e._entry; }
+  Element* volatile _next;
+  static Element* volatile* next_ptr(Element& e) { return &e._next; }
 
 public:
   JavaThread* _thread;
-  LockFreeStackThreadsElement(JavaThread* thread) : _entry(), _thread(thread) {}
-  typedef LockFreeStack<Element, &entry_ptr> ThreadStack;
+  LockFreeStackThreadsElement(JavaThread* thread) : _next(nullptr), _thread(thread) {}
+  typedef LockFreeStack<Element, &next_ptr> ThreadStack;
 };
 
 typedef LockFreeStackThreadsElement::ThreadStack ThreadStack;
