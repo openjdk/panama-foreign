@@ -1461,7 +1461,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     @ForceInline
     default char getAtIndex(ValueLayout.OfChar layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
-        return (char)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        return (char)layout.accessHandle().get(this, index * layout.byteSize());
     }
 
     /**
@@ -1483,7 +1484,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     @ForceInline
     default void setAtIndex(ValueLayout.OfChar layout, long index, char value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
-        layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        layout.accessHandle().set(this, index * layout.byteSize(), value);
     }
 
     /**
@@ -1504,7 +1506,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     @ForceInline
     default short getAtIndex(ValueLayout.OfShort layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
-        return (short)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        return (short)layout.accessHandle().get(this, index * layout.byteSize());
     }
 
     /**
@@ -1526,7 +1529,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     @ForceInline
     default void setAtIndex(ValueLayout.OfShort layout, long index, short value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
-        layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        layout.accessHandle().set(this, index * layout.byteSize(), value);
     }
 
     /**
@@ -1547,7 +1551,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     @ForceInline
     default int getAtIndex(ValueLayout.OfInt layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
-        return (int)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        return (int)layout.accessHandle().get(this, index * layout.byteSize());
     }
 
     /**
@@ -1569,7 +1574,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     @ForceInline
     default void setAtIndex(ValueLayout.OfInt layout, long index, int value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
-        layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        layout.accessHandle().set(this, index * layout.byteSize(), value);
     }
 
     /**
@@ -1590,7 +1596,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     @ForceInline
     default float getAtIndex(ValueLayout.OfFloat layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
-        return (float)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        return (float)layout.accessHandle().get(this, index * layout.byteSize());
     }
 
     /**
@@ -1612,7 +1619,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     @ForceInline
     default void setAtIndex(ValueLayout.OfFloat layout, long index, float value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
-        layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        layout.accessHandle().set(this, index * layout.byteSize(), value);
     }
 
     /**
@@ -1633,7 +1641,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     @ForceInline
     default long getAtIndex(ValueLayout.OfLong layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
-        return (long)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        return (long)layout.accessHandle().get(this, index * layout.byteSize());
     }
 
     /**
@@ -1655,7 +1664,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     @ForceInline
     default void setAtIndex(ValueLayout.OfLong layout, long index, long value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
-        layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        layout.accessHandle().set(this, index * layout.byteSize(), value);
     }
 
     /**
@@ -1676,7 +1686,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     @ForceInline
     default double getAtIndex(ValueLayout.OfDouble layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
-        return (double)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        return (double)layout.accessHandle().get(this, index * layout.byteSize());
     }
 
     /**
@@ -1698,7 +1709,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     @ForceInline
     default void setAtIndex(ValueLayout.OfDouble layout, long index, double value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
-        layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value);
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        layout.accessHandle().set(this, index * layout.byteSize(), value);
     }
 
     /**
@@ -1719,7 +1731,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     @ForceInline
     default MemoryAddress getAtIndex(ValueLayout.OfAddress layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
-        return (MemoryAddress)layout.accessHandle().get(this, Utils.scaleOffset(this, index, layout.byteSize()));
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        return (MemoryAddress)layout.accessHandle().get(this, index * layout.byteSize());
     }
 
     /**
@@ -1741,7 +1754,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     @ForceInline
     default void setAtIndex(ValueLayout.OfAddress layout, long index, Addressable value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
-        layout.accessHandle().set(this, Utils.scaleOffset(this, index, layout.byteSize()), value.address());
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        layout.accessHandle().set(this, index * layout.byteSize(), value.address());
     }
 
 
