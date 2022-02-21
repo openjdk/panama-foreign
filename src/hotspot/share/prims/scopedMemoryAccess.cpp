@@ -180,14 +180,16 @@ JVM_ENTRY(void, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, job
     // fast-path: return if no problematic thread is found
     return;
   }
-  // now iterate on all problematic threads, until we converge
+  // now iterate on all problematic threads, until we converge. Note: from this point on,
+  // we only need to focus on the problematic threads found in the previous step, as
+  // any new thread created after the initial handshake will see the scope as CLOSED,
+  // and will fail to access memory anyway.
   ThreadsListHandle tlh;
   ThreadStackElement *element = threads.pop();
   while (element != NULL) {
     JavaThread* thread = element->_thread;
-    // if the thread is not in the list handle, we can safely skip further handshakes,
-    // as that means that the thread has been created when the scope state has already
-    // been set to CLOSED - meaning that the thread access will fail anyway.
+    // if the thread is not in the list handle, it means that the thread has died,
+    // so that we can safely skip further handshakes.
     if (tlh.list()->includes(thread)) {
       Handshake::execute(&cl, thread);
     }
