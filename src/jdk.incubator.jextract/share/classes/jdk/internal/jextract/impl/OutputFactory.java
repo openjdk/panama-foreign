@@ -282,11 +282,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     Type.Function getAsFunctionPointer(Type type) {
-        if (type instanceof Type.Delegated) {
-            Type.Delegated delegated = (Type.Delegated) type;
-            return (delegated.kind() == Type.Delegated.Kind.POINTER) ?
-                    getAsFunctionPointer(delegated.type()) : null;
-        } else if (type instanceof Type.Function) {
+        if (type instanceof Type.Function) {
             /*
              * // pointer to function declared as function like this
              *
@@ -294,6 +290,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
              * void func(CB cb);
              */
             return (Type.Function) type;
+        } else if (Utils.isPointerType(type)) {
+            return getAsFunctionPointer(((Type.Delegated)type).type());
         } else {
             return null;
         }
