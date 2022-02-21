@@ -544,7 +544,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     /**
      * A value layout constant whose size is the same as that of a machine address ({@code size_t}),
-     * bit alignment set to {@code size_t * 8}, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * bit alignment set to {@code sizeof(size_t) * 8}, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
      * MemoryLayout.valueLayout(MemoryAddress.class, ByteOrder.nativeOrder())
