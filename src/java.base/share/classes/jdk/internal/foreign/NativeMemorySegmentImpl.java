@@ -47,7 +47,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        NativeMemorySegmentImpl dup(long offset, long size, int mask, ResourceScopeImpl scope) {
+        NativeMemorySegmentImpl dup(long offset, long size, int mask, MemorySessionImpl scope) {
             throw new IllegalStateException();
         }
     };
