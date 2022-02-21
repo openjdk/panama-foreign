@@ -26,8 +26,6 @@ package jdk.internal.foreign.abi;
 
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
-import jdk.internal.invoke.NativeEntryPoint;
-import jdk.internal.invoke.VMStorageProxy;
 import sun.security.action.GetPropertyAction;
 
 import java.lang.foreign.MemorySegment;
