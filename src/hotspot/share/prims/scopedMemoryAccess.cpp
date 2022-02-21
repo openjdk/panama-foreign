@@ -171,13 +171,17 @@ public:
  * threads is empty. To prevent premature thread termination we take a snapshot of the live
  * threads in the system using a ThreadsListHandle.
  */
-JVM_ENTRY(void, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, jobject deopt))
-  ThreadsListHandle tlh;
+JVM_ENTRY(void, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, jobject deopt))  
   ThreadStack threads;
   CloseScopedMemoryClosure cl(deopt, &threads);
   // do a first handshake and collect all problematic threads
   Handshake::execute(&cl);
+  if (threads.empty()) {
+    // fast-path: return if no problematic thread is found
+    return;
+  }
   // now iterate on all problematic threads, until we converge
+  ThreadsListHandle tlh;  
   ThreadStackElement *element = threads.pop();
   while (element != NULL) {
     JavaThread* thread = element->_thread;
