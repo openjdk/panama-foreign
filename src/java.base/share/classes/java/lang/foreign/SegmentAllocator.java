@@ -33,7 +33,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.ArenaAllocator;
-import jdk.internal.foreign.ResourceScopeImpl;
+import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.Utils;
 import jdk.internal.javac.PreviewFeature;
 
@@ -42,15 +42,13 @@ import jdk.internal.javac.PreviewFeature;
  * must implement the {@link #allocate(long, long)} method. This interface defines several default methods
  * which can be useful to create segments from several kinds of Java values such as primitives and arrays.
  * This interface can be seen as a thin wrapper around the basic capabilities for
- * {@linkplain MemorySegment#allocateNative(long, long, ResourceScope) creating} native segments;
+ * {@linkplain MemorySegment#allocateNative(long, long, MemorySession) creating} native segments;
  * since {@link SegmentAllocator} is a <em>functional interface</em>,
  * clients can easily obtain a native allocator by using either a lambda expression or a method reference.
  * <p>
  * This interface also defines factories for commonly used allocators:
  * <ul>
- *     <li>{@link #nativeAllocator(ResourceScope)} creates an allocator which
- *     {@linkplain MemorySegment#allocateNative(long, long, ResourceScope) allocates} native segments, backed by a given scope;</li>
- *     <li>{@link #newNativeArena(ResourceScope)} creates a more efficient arena-style native allocator, where memory
+ *     <li>{@link #newNativeArena(MemorySession)} creates a more efficient arena-style native allocator, where memory
  *     is allocated in bigger blocks, which are then sliced accordingly to fit allocation requests;</li>
  *     <li>{@link #prefixAllocator(MemorySegment)} creates an allocator which wraps a segment (either on-heap or off-heap)
  *     and recycles its content upon each new allocation request.</li>
@@ -339,42 +337,43 @@ public interface SegmentAllocator {
 
     /**
      * Returns a native unbounded arena-based allocator, with predefined block size and maximum arena size,
-     * associated with the provided scope. Equivalent to the following code:
+     * associated with the provided memory session. Equivalent to the following code:
      * {@snippet lang=java :
-     * SegmentAllocator.newNativeArena(Long.MAX_VALUE, predefinedBlockSize, scope);
+     * SegmentAllocator.newNativeArena(Long.MAX_VALUE, predefinedBlockSize, session);
      * }
      *
-     * @param scope the scope associated with the segments returned by the arena-based allocator.
+     * @param session the memory session associated with the segments returned by the arena-based allocator.
      * @return a new unbounded arena-based allocator
-     * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
-     * than the thread owning {@code scope}.
+     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
+     * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
      */
-    static SegmentAllocator newNativeArena(ResourceScope scope) {
-        return newNativeArena(Long.MAX_VALUE, ArenaAllocator.DEFAULT_BLOCK_SIZE, scope);
+    static SegmentAllocator newNativeArena(MemorySession session) {
+        return newNativeArena(Long.MAX_VALUE, ArenaAllocator.DEFAULT_BLOCK_SIZE, session);
     }
 
     /**
      * Returns a native unbounded arena-based allocator, with block size set to the specified arena size, associated with
-     * the provided scope, with given arena size. Equivalent to the following code:
+     * the provided memory session, with given arena size. Equivalent to the following code:
      * {@snippet lang=java :
-     * SegmentAllocator.newNativeArena(arenaSize, arenaSize, scope);
+     * SegmentAllocator.newNativeArena(arenaSize, arenaSize, session);
      * }
      *
      * @param arenaSize the size (in bytes) of the allocation arena.
-     * @param scope the scope associated with the segments returned by the arena-based allocator.
+     * @param session the memory session associated with the segments returned by the arena-based allocator.
      * @return a new unbounded arena-based allocator
      * @throws IllegalArgumentException if {@code arenaSize <= 0}.
-     * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
-     * than the thread owning {@code scope}.
+     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
+     * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
      */
-    static SegmentAllocator newNativeArena(long arenaSize, ResourceScope scope) {
-        return newNativeArena(arenaSize, arenaSize, scope);
+    static SegmentAllocator newNativeArena(long arenaSize, MemorySession session) {
+        return newNativeArena(arenaSize, arenaSize, session);
     }
 
     /**
-     * Returns a native arena-based allocator, associated with the provided scope, with given arena size and block size.
+     * Returns a native arena-based allocator, associated with the provided memory session,
+     * with given arena size and block size.
      * <p>
-     * The returned allocator {@linkplain MemorySegment#allocateNative(long, ResourceScope) allocates} a memory segment
+     * The returned allocator {@linkplain MemorySegment#allocateNative(long, MemorySession) allocates} a memory segment
      * {@code S} of the specified block size and then responds to allocation requests in one of the following ways:
      * <ul>
      *     <li>if the size of the allocation requests is smaller than the size of {@code S}, and {@code S} has a <em>free</em>
@@ -395,21 +394,21 @@ public interface SegmentAllocator {
      *
      * @param arenaSize the size (in bytes) of the allocation arena.
      * @param blockSize the block size associated with the arena-based allocator.
-     * @param scope the scope associated with the segments returned by the arena-based allocator.
+     * @param session the memory session associated with the segments returned by the arena-based allocator.
      * @return a new unbounded arena-based allocator
      * @throws IllegalArgumentException if {@code blockSize <= 0}, if {@code arenaSize <= 0} or if {@code arenaSize < blockSize}.
-     * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
-     * than the thread owning {@code scope}.
+     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
+     * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
      */
-    static SegmentAllocator newNativeArena(long arenaSize, long blockSize, ResourceScope scope) {
-        Objects.requireNonNull(scope);
+    static SegmentAllocator newNativeArena(long arenaSize, long blockSize, MemorySession session) {
+        Objects.requireNonNull(session);
         if (blockSize <= 0) {
             throw new IllegalArgumentException("Invalid block size: " + blockSize);
         }
         if (arenaSize <= 0 || arenaSize < blockSize) {
             throw new IllegalArgumentException("Invalid arena size: " + arenaSize);
         }
-        return new ArenaAllocator(blockSize, arenaSize, scope);
+        return new ArenaAllocator(blockSize, arenaSize, Scoped.toSessionImpl(session));
     }
 
     /**
@@ -438,34 +437,18 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Returns a native allocator, associated with the provided scope. Equivalent to (but likely more efficient than)
-     * the following code:
-     * {@snippet lang=java :
-     * ResourceScope scope = ...
-     * SegmentAllocator nativeAllocator = (size, align) -> MemorySegment.allocateNative(size, align, scope);
-     * }
-     *
-     * @param scope the scope associated with the returned allocator.
-     * @return a native allocator, associated with the provided scope.
-     */
-    static SegmentAllocator nativeAllocator(ResourceScope scope) {
-        Objects.requireNonNull(scope);
-        return (ResourceScopeImpl)scope;
-    }
-
-    /**
-     * Returns a native allocator which allocates segments in independent {@linkplain ResourceScope#newImplicitScope() implicit scopes}.
+     * Returns a native allocator which allocates segments in independent {@linkplain MemorySession#openImplicit() implicit memory sessions}.
      * Equivalent to (but likely more efficient than) the following code:
      * {@snippet lang=java :
-     * SegmentAllocator implicitAllocator = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.newImplicitScope());
+     * SegmentAllocator implicitAllocator = (size, align) -> MemorySegment.allocateNative(size, align, MemorySession.openImplicit());
      * }
      *
-     * @return a native allocator which allocates segments in independent {@linkplain ResourceScope#newImplicitScope() implicit scopes}.
+     * @return a native allocator which allocates segments in independent {@linkplain MemorySession#openImplicit() implicit memory sessions}.
      */
     static SegmentAllocator implicitAllocator() {
         class Holder {
             static final SegmentAllocator IMPLICIT_ALLOCATOR = (size, align) ->
-                    MemorySegment.allocateNative(size, align, ResourceScope.newImplicitScope());
+                    MemorySegment.allocateNative(size, align, MemorySession.openImplicit());
         }
         return Holder.IMPLICIT_ALLOCATOR;
     }

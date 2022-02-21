@@ -28,7 +28,7 @@ package jdk.internal.foreign.abi.aarch64.linux;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import jdk.internal.foreign.abi.AbstractLinker;
 import jdk.internal.foreign.abi.aarch64.CallArranger;
 
@@ -59,18 +59,18 @@ public final class LinuxAArch64Linker extends AbstractLinker {
     }
 
     @Override
-    protected NativeSymbol arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, ResourceScope scope) {
-        return CallArranger.LINUX.arrangeUpcall(target, targetType, function, scope);
+    protected NativeSymbol arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession session) {
+        return CallArranger.LINUX.arrangeUpcall(target, targetType, function, session);
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions, ResourceScope scope) {
-        LinuxAArch64VaList.Builder builder = LinuxAArch64VaList.builder(scope);
+    public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession session) {
+        LinuxAArch64VaList.Builder builder = LinuxAArch64VaList.builder(session);
         actions.accept(builder);
         return builder.build();
     }
 
-    public static VaList newVaListOfAddress(MemoryAddress ma, ResourceScope scope) {
-        return LinuxAArch64VaList.ofAddress(ma, scope);
+    public static VaList newVaListOfAddress(MemoryAddress ma, MemorySession session) {
+        return LinuxAArch64VaList.ofAddress(ma, session);
     }
 
     public static VaList emptyVaList() {

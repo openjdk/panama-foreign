@@ -35,7 +35,7 @@ import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.ValueLayout;
 
@@ -86,8 +86,8 @@ public class TestMemoryAccess {
 
     private void testAccessInternal(Function<MemorySegment, MemorySegment> viewFactory, MemoryLayout layout, VarHandle handle, Checker checker) {
         MemorySegment outer_segment;
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(layout, scope));
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(layout, session));
             boolean isRO = segment.isReadOnly();
             try {
                 checker.check(handle, segment);
@@ -110,16 +110,16 @@ public class TestMemoryAccess {
         }
         try {
             checker.check(handle, outer_segment);
-            throw new AssertionError(); //not ok, scope is closed
+            throw new AssertionError(); //not ok, session is closed
         } catch (IllegalStateException ex) {
-            //ok, should fail (scope is closed)
+            //ok, should fail (session is closed)
         }
     }
 
     private void testArrayAccessInternal(Function<MemorySegment, MemorySegment> viewFactory, SequenceLayout seq, VarHandle handle, ArrayChecker checker) {
         MemorySegment outer_segment;
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq, scope));
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq, session));
             boolean isRO = segment.isReadOnly();
             try {
                 for (int i = 0; i < seq.elementCount(); i++) {
@@ -144,9 +144,9 @@ public class TestMemoryAccess {
         }
         try {
             checker.check(handle, outer_segment, 0);
-            throw new AssertionError(); //not ok, scope is closed
+            throw new AssertionError(); //not ok, session is closed
         } catch (IllegalStateException ex) {
-            //ok, should fail (scope is closed)
+            //ok, should fail (session is closed)
         }
     }
 
@@ -180,8 +180,8 @@ public class TestMemoryAccess {
 
     private void testMatrixAccessInternal(Function<MemorySegment, MemorySegment> viewFactory, SequenceLayout seq, VarHandle handle, MatrixChecker checker) {
         MemorySegment outer_segment;
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq, scope));
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq, session));
             boolean isRO = segment.isReadOnly();
             try {
                 for (int i = 0; i < seq.elementCount(); i++) {
@@ -209,9 +209,9 @@ public class TestMemoryAccess {
         }
         try {
             checker.check(handle, outer_segment, 0, 0);
-            throw new AssertionError(); //not ok, scope is closed
+            throw new AssertionError(); //not ok, session is closed
         } catch (IllegalStateException ex) {
-            //ok, should fail (scope is closed)
+            //ok, should fail (session is closed)
         }
     }
 

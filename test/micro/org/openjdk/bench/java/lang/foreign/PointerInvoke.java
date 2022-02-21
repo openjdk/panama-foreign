@@ -29,7 +29,7 @@ import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -53,8 +53,8 @@ import java.util.concurrent.TimeUnit;
 @Fork(value = 3, jvmArgsAppend = { "--enable-native-access=ALL-UNNAMED", "--enable-preview" })
 public class PointerInvoke extends CLayouts {
 
-    ResourceScope scope = ResourceScope.newConfinedScope();
-    MemorySegment segment = MemorySegment.allocateNative(100, scope);
+    MemorySession session = MemorySession.openConfined();
+    MemorySegment segment = MemorySegment.allocateNative(100, session);
 
     static {
         System.loadLibrary("Ptr");
@@ -72,7 +72,7 @@ public class PointerInvoke extends CLayouts {
 
     @TearDown
     public void tearDown() {
-        scope.close();
+        session.close();
     }
 
     @Benchmark
@@ -92,7 +92,7 @@ public class PointerInvoke extends CLayouts {
 
     @Benchmark
     public int panama_call_as_new_segment() throws Throwable {
-        MemorySegment newSegment = MemorySegment.ofAddress(segment.address(), 100, scope);
+        MemorySegment newSegment = MemorySegment.ofAddress(segment.address(), 100, session);
         return (int)F_PTR.invokeExact((Addressable)newSegment);
     }
 }

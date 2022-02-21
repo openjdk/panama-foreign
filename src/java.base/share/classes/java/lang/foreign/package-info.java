@@ -44,7 +44,7 @@
  * ranging from {@code 0} to {@code 9}, we can use the following code:
  *
  * {@snippet lang=java :
- * MemorySegment segment = MemorySegment.allocateNative(10 * 4, ResourceScope.newImplicitScope());
+ * MemorySegment segment = MemorySegment.allocateNative(10 * 4, MemorySession.openImplicit());
  * for (int i = 0 ; i < 10 ; i++) {
  *     segment.setAtIndex(ValueLayout.JAVA_INT, i, i);
  * }
@@ -67,18 +67,18 @@
  * and in a timely fashion. For this reason, there might be cases where waiting for the garbage collector to determine that a segment
  * is <a href="../../../java/lang/ref/package.html#reachability">unreachable</a> is not optimal.
  * Clients that operate under these assumptions might want to programmatically release the memory associated
- * with a memory segment. This can be done, using the {@link java.lang.foreign.ResourceScope} abstraction, as shown below:
+ * with a memory segment. This can be done, using the {@link java.lang.foreign.MemorySession} abstraction, as shown below:
  *
  * {@snippet lang=java :
- * try (ResourceScope scope = ResourceScope.newConfinedScope()) {
- *     MemorySegment segment = MemorySegment.allocateNative(10 * 4, scope);
+ * try (MemorySession session = MemorySession.openConfined()) {
+ *     MemorySegment segment = MemorySegment.allocateNative(10 * 4, session);
  *     for (int i = 0 ; i < 10 ; i++) {
  *         segment.setAtIndex(ValueLayout.JAVA_INT, i, i);
  *     }
  * }
  * }
  *
- * This example is almost identical to the prior one; this time we first create a so called <em>resource scope</em>,
+ * This example is almost identical to the prior one; this time we first create a so called <em>memory session</em>,
  * which is used to <em>bind</em> the life-cycle of the segment created immediately afterwards. Note the use of the
  * <em>try-with-resources</em> construct: this idiom ensures that all the memory resources associated with the segment will be released
  * at the end of the block, according to the semantics described in Section {@jls 14.20.3} of <cite>The Java Language Specification</cite>.
@@ -92,12 +92,12 @@
  * Section {@jls 15.10.4} of <cite>The Java Language Specification</cite>.
  * <p>
  * Since memory segments can be closed (see above), segments are also validated (upon access) to make sure that
- * the resource scope associated with the segment being accessed has not been closed prematurely.
+ * the memory session associated with the segment being accessed has not been closed prematurely.
  * We call this guarantee <em>temporal safety</em>. Together, spatial and temporal safety ensure that each memory access
  * operation either succeeds - and accesses a valid memory location - or fails.
  *
  * <h2>Foreign function access</h2>
- * The key abstractions introduced to support foreign function access are {@link java.lang.foreign.MemoryAddress} and
+ * The key abstractions introduced to support foreign function access are {@link java.lang.foreign.NativeSymbol} and
  * {@link java.lang.foreign.CLinker}.
  * The first is used to model native addresses (more on that later), while the second provides linking capabilities
  * which allows modelling foreign functions as {@link java.lang.invoke.MethodHandle} instances,
@@ -114,8 +114,8 @@
  *     FunctionDescriptor.of(ValueLayout.JAVA_LONG, ValueLayout.ADDRESS)
  * );
  *
- * try (var scope = ResourceScope.newConfinedScope()) {
- *     var cString = MemorySegment.allocateNative(5 + 1, scope);
+ * try (var session = MemorySession.openConfined()) {
+ *     var cString = MemorySegment.allocateNative(5 + 1, session);
  *     cString.setUtf8String("Hello");
  *     long len = (long)strlen.invoke(cString); // 5
  * }
@@ -154,15 +154,15 @@
  * }
  *
  * Alternatively, the client can
- * {@linkplain java.lang.foreign.MemorySegment#ofAddress(java.lang.foreign.MemoryAddress, long, java.lang.foreign.ResourceScope) create}
+ * {@linkplain java.lang.foreign.MemorySegment#ofAddress(java.lang.foreign.MemoryAddress, long, java.lang.foreign.MemorySession) create}
  * a memory segment <em>unsafely</em>. This allows the client to inject extra knowledge about spatial bounds which might,
  * for instance, be available in the documentation of the foreign function which produced the native address.
  * Here is how an unsafe segment can be created from a native address:
  *
  * {@snippet lang=java :
- * ResourceScope scope = ... // initialize a resource scope object
+ * MemorySession session = ... // initialize a memory session object
  * MemoryAddress addr = ... //obtain address from native code
- * MemorySegment segment = MemorySegment.ofAddress(addr, 4, scope); // segment is 4 bytes long
+ * MemorySegment segment = MemorySegment.ofAddress(addr, 4, session); // segment is 4 bytes long
  * int x = segment.get(ValueLayout.JAVA_INT, 0);
  * }
  *
@@ -199,29 +199,29 @@
  * using the {@link java.lang.foreign.CLinker} interface, as follows:
  *
  * {@snippet lang=java :
- * ResourceScope scope = ...
+ * MemorySession session = ...
  * Addressable comparFunc = CLinker.systemCLinker().upcallStub(
- *     intCompareHandle, intCompareDescriptor, scope);
+ *     intCompareHandle, intCompareDescriptor, session);
  * );
  * }
  *
  * The {@link java.lang.foreign.FunctionDescriptor} instance created in the previous step is then used to
- * {@linkplain java.lang.foreign.CLinker#upcallStub(java.lang.invoke.MethodHandle, java.lang.foreign.FunctionDescriptor, java.lang.foreign.ResourceScope) create}
+ * {@linkplain java.lang.foreign.CLinker#upcallStub(java.lang.invoke.MethodHandle, java.lang.foreign.FunctionDescriptor, java.lang.foreign.MemorySession) create}
  * a new upcall stub; the layouts in the function descriptors allow the linker to determine the sequence of steps which
  * allow foreign code to call the stub for {@code intCompareHandle} according to the rules specified by the platform C ABI.
- * The lifecycle of the upcall stub returned by is tied to the {@linkplain java.lang.foreign.ResourceScope resource scope}
- * provided when the upcall stub is created. This same scope is made available by the {@link java.lang.foreign.NativeSymbol}
+ * The lifecycle of the upcall stub is tied to the {@linkplain java.lang.foreign.MemorySession memory session}
+ * provided when the upcall stub is created. This same session is made available by the {@link java.lang.foreign.NativeSymbol}
  * instance returned by that method.
  *
  * <a id="restricted"></a>
  * <h2>Restricted methods</h2>
  * Some methods in this package are considered <em>restricted</em>. Restricted methods are typically used to bind native
  * foreign data and/or functions to first-class Java API elements which can then be used directly by clients. For instance
- * the restricted method {@link java.lang.foreign.MemorySegment#ofAddress(MemoryAddress, long, ResourceScope)}
+ * the restricted method {@link java.lang.foreign.MemorySegment#ofAddress(MemoryAddress, long, MemorySession)}
  * can be used to create a fresh segment with given spatial bounds out of a native address.
  * <p>
  * Binding foreign data and/or functions is generally unsafe and, if done incorrectly, can result in VM crashes, or memory corruption when the bound Java API element is accessed.
- * For instance, in the case of {@link java.lang.foreign.MemorySegment#ofAddress(MemoryAddress, long, ResourceScope)},
+ * For instance, in the case of {@link java.lang.foreign.MemorySegment#ofAddress(MemoryAddress, long, MemorySession)},
  * if the provided spatial bounds are incorrect, a client of the segment returned by that method might crash the VM, or corrupt
  * memory when attempting to dereference said segment. For these reasons, it is crucial for code that calls a restricted method
  * to never pass arguments that might cause incorrect binding of foreign data and/or functions to a Java API.

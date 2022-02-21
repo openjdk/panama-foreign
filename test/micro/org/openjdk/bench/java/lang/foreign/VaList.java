@@ -26,7 +26,7 @@ import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -70,11 +70,11 @@ public class VaList extends CLayouts {
 
     @Benchmark
     public void vaList() throws Throwable {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+        try (MemorySession session = MemorySession.openConfined()) {
             java.lang.foreign.VaList vaList = java.lang.foreign.VaList.make(b ->
                     b.addVarg(C_INT, 1)
                             .addVarg(C_DOUBLE, 2D)
-                            .addVarg(C_LONG_LONG, 3L), scope);
+                            .addVarg(C_LONG_LONG, 3L), session);
             MH_vaList.invokeExact(3,
                     (Addressable)vaList);
         }

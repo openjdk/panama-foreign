@@ -25,7 +25,7 @@ package org.openjdk.bench.java.lang.foreign;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -66,6 +66,7 @@ public class LoopOverNonConstant {
     static final ValueLayout.OfInt JAVA_INT_ALIGNED = JAVA_INT.withBitAlignment(32);
     static final VarHandle VH_int_aligned = JAVA_INT_ALIGNED.arrayElementVarHandle();
 
+    MemorySession session;
     MemorySegment segment;
     long unsafe_addr;
 
@@ -77,7 +78,8 @@ public class LoopOverNonConstant {
         for (int i = 0; i < ELEM_SIZE; i++) {
             unsafe.putInt(unsafe_addr + (i * CARRIER_SIZE) , i);
         }
-        segment = MemorySegment.allocateNative(ALLOC_SIZE, ResourceScope.newConfinedScope());
+        session = MemorySession.openConfined();
+        segment = MemorySegment.allocateNative(ALLOC_SIZE, session);
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }
@@ -89,7 +91,7 @@ public class LoopOverNonConstant {
 
     @TearDown
     public void tearDown() {
-        segment.scope().close();
+        session.close();
         unsafe.invokeCleaner(byteBuffer);
         unsafe.freeMemory(unsafe_addr);
     }

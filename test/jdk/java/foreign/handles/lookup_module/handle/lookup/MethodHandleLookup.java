@@ -32,7 +32,7 @@ import java.lang.invoke.MethodType;
 import java.lang.foreign.Addressable;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 
 import java.lang.foreign.VaList;
 import java.lang.foreign.ValueLayout;
@@ -52,10 +52,10 @@ public class MethodHandleLookup {
                     { MethodHandles.lookup().findStatic(CLinker.class, "systemCLinker",
                             MethodType.methodType(CLinker.class)), "ForeignLinker::systemCLinker" },
                     { MethodHandles.lookup().findStatic(VaList.class, "ofAddress",
-                            MethodType.methodType(VaList.class, MemoryAddress.class, ResourceScope.class)),
+                            MethodType.methodType(VaList.class, MemoryAddress.class, MemorySession.class)),
                             "VaList::ofAddress/1" },
                     { MethodHandles.lookup().findStatic(MemorySegment.class, "ofAddress",
-                            MethodType.methodType(MemorySegment.class, MemoryAddress.class, long.class, ResourceScope.class)),
+                            MethodType.methodType(MemorySegment.class, MemoryAddress.class, long.class, MemorySession.class)),
                             "MemorySegment::ofAddress" },
                     { MethodHandles.lookup().findVirtual(MemoryAddress.class, "getUtf8String",
                             MethodType.methodType(String.class, long.class)),

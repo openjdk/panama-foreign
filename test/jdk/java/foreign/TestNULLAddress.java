@@ -30,13 +30,13 @@
  *     TestNULLAddress
  */
 
+import org.testng.annotations.Test;
+
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
-import org.testng.annotations.Test;
-
 import java.lang.invoke.MethodHandle;
 
 public class TestNULLAddress {
@@ -46,7 +46,7 @@ public class TestNULLAddress {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testNULLLinking() {
         LINKER.downcallHandle(
-                NativeSymbol.ofAddress("nullAddress", MemoryAddress.NULL, ResourceScope.globalScope()),
+                NativeSymbol.ofAddress("nullAddress", MemoryAddress.NULL, MemorySession.global()),
                 FunctionDescriptor.ofVoid());
     }
 
@@ -54,7 +54,7 @@ public class TestNULLAddress {
     public void testNULLVirtual() throws Throwable {
         MethodHandle mh = LINKER.downcallHandle(
                 FunctionDescriptor.ofVoid());
-        mh.invokeExact(NativeSymbol.ofAddress("null", MemoryAddress.NULL, ResourceScope.globalScope()));
+        mh.invokeExact(NativeSymbol.ofAddress("null", MemoryAddress.NULL, MemorySession.global()));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)

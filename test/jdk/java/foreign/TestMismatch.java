@@ -27,13 +27,13 @@
  * @run testng TestMismatch
  */
 
+import java.lang.foreign.MemorySession;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
 import java.lang.foreign.ValueLayout;
 import java.util.function.IntFunction;
 
@@ -103,8 +103,8 @@ public class TestMismatch {
     public void testEmpty() {
         var s1 = MemorySegment.ofArray(new byte[0]);
         assertEquals(s1.mismatch(s1), -1);
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            var nativeSegment = MemorySegment.allocateNative(4, 4, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            var nativeSegment = MemorySegment.allocateNative(4, 4, session);
             var s2 = nativeSegment.asSlice(0, 0);
             assertEquals(s1.mismatch(s2), -1);
             assertEquals(s2.mismatch(s1), -1);
@@ -115,9 +115,9 @@ public class TestMismatch {
     public void testLarge() {
         // skip if not on 64 bits
         if (ValueLayout.ADDRESS.byteSize() > 32) {
-            try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-                var s1 = MemorySegment.allocateNative((long) Integer.MAX_VALUE + 10L, 8, scope);
-                var s2 = MemorySegment.allocateNative((long) Integer.MAX_VALUE + 10L, 8, scope);
+            try (MemorySession session = MemorySession.openConfined()) {
+                var s1 = MemorySegment.allocateNative((long) Integer.MAX_VALUE + 10L, 8, session);
+                var s2 = MemorySegment.allocateNative((long) Integer.MAX_VALUE + 10L, 8, session);
                 assertEquals(s1.mismatch(s1), -1);
                 assertEquals(s1.mismatch(s2), -1);
                 assertEquals(s2.mismatch(s1), -1);
@@ -154,9 +154,9 @@ public class TestMismatch {
     @Test
     public void testClosed() {
         MemorySegment s1, s2;
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            s1 = MemorySegment.allocateNative(4, 1, scope);
-            s2 = MemorySegment.allocateNative(4, 1, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            s1 = MemorySegment.allocateNative(4, 1, session);
+            s2 = MemorySegment.allocateNative(4, 1, session);
         }
         assertThrows(ISE, () -> s1.mismatch(s1));
         assertThrows(ISE, () -> s1.mismatch(s2));
@@ -165,8 +165,8 @@ public class TestMismatch {
 
     @Test
     public void testThreadAccess() throws Exception {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            var segment = MemorySegment.allocateNative(4, 1, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            var segment = MemorySegment.allocateNative(4, 1, session);
             {
                 AtomicReference<RuntimeException> exception = new AtomicReference<>();
                 Runnable action = () -> {
@@ -207,7 +207,7 @@ public class TestMismatch {
     }
 
     enum SegmentKind {
-        NATIVE(i -> MemorySegment.allocateNative(i, ResourceScope.newImplicitScope())),
+        NATIVE(i -> MemorySegment.allocateNative(i, MemorySession.openImplicit())),
         ARRAY(i -> MemorySegment.ofArray(new byte[i]));
 
         final IntFunction<MemorySegment> segmentFactory;

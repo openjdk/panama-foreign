@@ -29,7 +29,7 @@ import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -66,7 +66,7 @@ public class QSort extends CLayouts {
     static NativeSymbol qsort_addr = abi.lookup("qsort").get();
 
     static {
-        INPUT_SEGMENT = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(INPUT.length, JAVA_INT), ResourceScope.globalScope());
+        INPUT_SEGMENT = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(INPUT.length, JAVA_INT), MemorySession.global());
         INPUT_SEGMENT.copyFrom(MemorySegment.ofArray(INPUT));
 
         System.loadLibrary("QSortJNI");
@@ -84,7 +84,7 @@ public class QSort extends CLayouts {
                             "panama_upcall_compar",
                             MethodType.methodType(int.class, MemoryAddress.class, MemoryAddress.class)),
                     FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER),
-                    ResourceScope.globalScope()
+                    MemorySession.global()
             );
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);

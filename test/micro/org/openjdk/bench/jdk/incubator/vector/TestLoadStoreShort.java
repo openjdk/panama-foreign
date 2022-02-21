@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import jdk.incubator.vector.ShortVector;
 import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorSpecies;
@@ -77,7 +77,7 @@ public class TestLoadStoreShort {
   private ByteBuffer dstBufferNative;
 
 
-  private ResourceScope implicitScope;
+  private MemorySession implicitScope;
 
   private MemorySegment srcSegmentImplicit;
 
@@ -112,7 +112,7 @@ public class TestLoadStoreShort {
     dstBufferNative = ByteBuffer.allocateDirect(size);
 
 
-    implicitScope = ResourceScope.newSharedScope();
+    implicitScope = MemorySession.openShared();
     srcSegmentImplicit = MemorySegment.allocateNative(size, SPECIES.vectorByteSize(), implicitScope);
     srcBufferSegmentImplicit = srcSegmentImplicit.asByteBuffer();
     dstSegmentImplicit = MemorySegment.allocateNative(size, SPECIES.vectorByteSize(), implicitScope);
@@ -209,7 +209,7 @@ public class TestLoadStoreShort {
 
   @Benchmark
   public void bufferSegmentConfined() {
-    try (final var scope = ResourceScope.newConfinedScope()) {
+    try (final var scope = MemorySession.openConfined()) {
       final var srcBufferSegmentConfined = MemorySegment.ofAddress(srcAddress, size, scope).asByteBuffer();
       final var dstBufferSegmentConfined = MemorySegment.ofAddress(dstAddress, size, scope).asByteBuffer();
 

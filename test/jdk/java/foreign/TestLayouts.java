@@ -59,9 +59,9 @@ public class TestLayouts {
         VarHandle array_elem_handle = layout.varHandle(
                 MemoryLayout.PathElement.groupElement("arr"),
                 MemoryLayout.PathElement.sequenceElement());
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+        try (MemorySession session = MemorySession.openConfined()) {
             MemorySegment segment = MemorySegment.allocateNative(
-                    layout.map(l -> ((SequenceLayout)l).withElementCount(4), MemoryLayout.PathElement.groupElement("arr")), scope);
+                    layout.map(l -> ((SequenceLayout)l).withElementCount(4), MemoryLayout.PathElement.groupElement("arr")), session);
             size_handle.set(segment, 4);
             for (int i = 0 ; i < 4 ; i++) {
                 array_elem_handle.set(segment, i, (double)i);
@@ -85,9 +85,9 @@ public class TestLayouts {
                 MemoryLayout.PathElement.groupElement("arr"),
                 MemoryLayout.PathElement.sequenceElement(0),
                 MemoryLayout.PathElement.sequenceElement());
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+        try (MemorySession session = MemorySession.openConfined()) {
             MemorySegment segment = MemorySegment.allocateNative(
-                    layout.map(l -> ((SequenceLayout)l).withElementCount(4), MemoryLayout.PathElement.groupElement("arr"), MemoryLayout.PathElement.sequenceElement()), scope);
+                    layout.map(l -> ((SequenceLayout)l).withElementCount(4), MemoryLayout.PathElement.groupElement("arr"), MemoryLayout.PathElement.sequenceElement()), session);
             size_handle.set(segment, 4);
             for (int i = 0 ; i < 4 ; i++) {
                 array_elem_handle.set(segment, i, (double)i);
@@ -103,8 +103,8 @@ public class TestLayouts {
     @Test
     public void testIndexedSequencePath() {
         MemoryLayout seq = MemoryLayout.sequenceLayout(10, ValueLayout.JAVA_INT);
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment segment = MemorySegment.allocateNative(seq, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(seq, session);
             VarHandle indexHandle = seq.varHandle(MemoryLayout.PathElement.sequenceElement());
             // init segment
             for (int i = 0 ; i < 10 ; i++) {

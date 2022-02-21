@@ -30,7 +30,7 @@ import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -57,10 +57,10 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 @Fork(value = 3, jvmArgsAppend = { "--enable-native-access=ALL-UNNAMED", "--enable-preview" })
 public class StrLenTest extends CLayouts {
 
-    ResourceScope scope = ResourceScope.newImplicitScope();
+    MemorySession session = MemorySession.openConfined();
 
     SegmentAllocator segmentAllocator;
-    SegmentAllocator arenaAllocator = SegmentAllocator.newNativeArena(scope);
+    SegmentAllocator arenaAllocator = SegmentAllocator.newNativeArena(session);
 
     @Param({"5", "20", "100"})
     public int size;
@@ -81,12 +81,12 @@ public class StrLenTest extends CLayouts {
     @Setup
     public void setup() {
         str = makeString(size);
-        segmentAllocator = SegmentAllocator.prefixAllocator(MemorySegment.allocateNative(size + 1, ResourceScope.newConfinedScope()));
+        segmentAllocator = SegmentAllocator.prefixAllocator(MemorySegment.allocateNative(size + 1, MemorySession.openConfined()));
     }
 
     @TearDown
     public void tearDown() {
-        scope.close();
+        session.close();
     }
 
     @Benchmark
@@ -96,8 +96,8 @@ public class StrLenTest extends CLayouts {
 
     @Benchmark
     public int panama_strlen() throws Throwable {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment segment = MemorySegment.allocateNative(str.length() + 1, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(str.length() + 1, session);
             segment.setUtf8String(0, str);
             return (int)STRLEN.invokeExact((Addressable)segment);
         }
@@ -125,7 +125,7 @@ public class StrLenTest extends CLayouts {
         byte[] bytes = s.getBytes();
         int len = bytes.length;
         MemoryAddress address = allocateMemory(len + 1);
-        MemorySegment str = MemorySegment.ofAddress(address, len + 1, ResourceScope.globalScope());
+        MemorySegment str = MemorySegment.ofAddress(address, len + 1, MemorySession.global());
         str.copyFrom(MemorySegment.ofArray(bytes));
         str.set(JAVA_BYTE, len, (byte)0);
         return address;

@@ -33,7 +33,7 @@
  */
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
@@ -67,8 +67,8 @@ public class TestHandshake {
     @Test(dataProvider = "accessors")
     public void testHandshake(String testName, AccessorFactory accessorFactory) throws InterruptedException {
         for (int it = 0 ; it < ITERATIONS ; it++) {
-            ResourceScope scope = ResourceScope.newSharedScope();
-            MemorySegment segment = MemorySegment.allocateNative(SEGMENT_SIZE, 1, scope);
+            MemorySession session = MemorySession.openShared();
+            MemorySegment segment = MemorySegment.allocateNative(SEGMENT_SIZE, 1, session);
             System.out.println("ITERATION " + it);
             ExecutorService accessExecutor = Executors.newCachedThreadPool();
             start.set(System.currentTimeMillis());
@@ -79,10 +79,10 @@ public class TestHandshake {
             int delay = ThreadLocalRandom.current().nextInt(MAX_DELAY_MILLIS);
             System.out.println("Starting handshaker with delay set to " + delay + " millis");
             Thread.sleep(delay);
-            accessExecutor.execute(new Handshaker(scope));
+            accessExecutor.execute(new Handshaker(session));
             accessExecutor.shutdown();
             assertTrue(accessExecutor.awaitTermination(MAX_EXECUTOR_WAIT_SECONDS, TimeUnit.SECONDS));
-            assertTrue(!segment.scope().isAlive());
+            assertTrue(!segment.session().isAlive());
         }
     }
 
@@ -98,7 +98,7 @@ public class TestHandshake {
         @Override
         public final void run() {
             start("\"Accessor #\" + id");
-            outer: while (segment.scope().isAlive()) {
+            outer: while (segment.session().isAlive()) {
                 try {
                     doAccess();
                 } catch (IllegalStateException ex) {
@@ -192,7 +192,7 @@ public class TestHandshake {
 
         SegmentMismatchAccessor(int id, MemorySegment segment) {
             super(id, segment);
-            this.copy = MemorySegment.allocateNative(SEGMENT_SIZE, 1, segment.scope());
+            this.copy = MemorySegment.allocateNative(SEGMENT_SIZE, 1, segment.session());
             copy.copyFrom(segment);
             copy.set(JAVA_BYTE, ThreadLocalRandom.current().nextInt(SEGMENT_SIZE), (byte)42);
         }
@@ -237,10 +237,10 @@ public class TestHandshake {
 
     static class Handshaker implements Runnable {
 
-        final ResourceScope scope;
+        final MemorySession session;
 
-        Handshaker(ResourceScope scope) {
-            this.scope = scope;
+        Handshaker(MemorySession session) {
+            this.session = session;
         }
 
         @Override
@@ -248,7 +248,7 @@ public class TestHandshake {
             start("Handshaker");
             while (true) {
                 try {
-                    scope.close();
+                    session.close();
                     break;
                 } catch (IllegalStateException ex) {
                     Thread.onSpinWait();

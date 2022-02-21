@@ -24,7 +24,7 @@
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -72,8 +72,8 @@ public class ThrowingUpcall extends NativeTestHelper {
         MethodHandle invoker = MethodHandles.exactInvoker(MethodType.methodType(void.class));
         handle = MethodHandles.insertArguments(invoker, 0, handle);
 
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            NativeSymbol stub = CLinker.systemCLinker().upcallStub(handle, FunctionDescriptor.ofVoid(), scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            NativeSymbol stub = CLinker.systemCLinker().upcallStub(handle, FunctionDescriptor.ofVoid(), session);
 
             downcallVoid.invoke(stub); // should call Shutdown.exit(1);
         }
@@ -85,8 +85,8 @@ public class ThrowingUpcall extends NativeTestHelper {
         MethodHandle invoker = MethodHandles.exactInvoker(MethodType.methodType(int.class, int.class));
         handle = MethodHandles.insertArguments(invoker, 0, handle);
 
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            NativeSymbol stub = CLinker.systemCLinker().upcallStub(handle, FunctionDescriptor.of(C_INT, C_INT), scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            NativeSymbol stub = CLinker.systemCLinker().upcallStub(handle, FunctionDescriptor.of(C_INT, C_INT), session);
 
             downcallNonVoid.invoke(42, stub); // should call Shutdown.exit(1);
         }

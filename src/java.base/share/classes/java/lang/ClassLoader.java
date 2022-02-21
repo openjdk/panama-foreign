@@ -32,7 +32,7 @@ import java.io.UncheckedIOException;
 import java.io.File;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -59,7 +59,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import jdk.internal.foreign.ResourceScopeImpl;
+import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.ClassLoaders;
@@ -2476,9 +2476,9 @@ public abstract class ClassLoader {
                 : Optional.of(NativeSymbol.ofAddress(name, addr, loaderScope));
     }
 
-    // A resource scope which keeps this loader reachable. Useful when returning
+    // A memory session which keeps this loader reachable. Useful when returning
     // native symbols associated with libraries loaded by this loader.
-    private final ResourceScope loaderScope = ResourceScopeImpl.heapScope(this);
+    private final MemorySession loaderScope = MemorySessionImpl.heapSession(this);
 
     // -- Assertion management --
 

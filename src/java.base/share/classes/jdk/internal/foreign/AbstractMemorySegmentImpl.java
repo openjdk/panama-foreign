@@ -28,6 +28,7 @@ package jdk.internal.foreign;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteBuffer;
@@ -52,7 +53,7 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * about the segment's spatial and temporal bounds; each memory segment implementation is associated with an owner thread which is set at creation time.
  * Access to certain sensitive operations on the memory segment will fail with {@code IllegalStateException} if the
  * segment is either in an invalid state (e.g. it has already been closed) or if access occurs from a thread other
- * than the owner thread. See {@link ResourceScopeImpl} for more details on management of temporal bounds. Subclasses
+ * than the owner thread. See {@link MemorySessionImpl} for more details on management of temporal bounds. Subclasses
  * are defined for each memory segment kind, see {@link NativeMemorySegmentImpl}, {@link HeapMemorySegmentImpl} and
  * {@link MappedMemorySegmentImpl}.
  */
@@ -69,26 +70,26 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
 
     final long length;
     final int mask;
-    final ResourceScopeImpl scope;
+    final MemorySessionImpl session;
 
     @ForceInline
-    AbstractMemorySegmentImpl(long length, int mask, ResourceScopeImpl scope) {
+    AbstractMemorySegmentImpl(long length, int mask, MemorySessionImpl session) {
         this.length = length;
         this.mask = mask;
-        this.scope = scope;
+        this.session = session;
     }
 
     abstract long min();
 
     abstract Object base();
 
-    abstract AbstractMemorySegmentImpl dup(long offset, long size, int mask, ResourceScopeImpl scope);
+    abstract AbstractMemorySegmentImpl dup(long offset, long size, int mask, MemorySessionImpl session);
 
     abstract ByteBuffer makeByteBuffer();
 
     @Override
     public AbstractMemorySegmentImpl asReadOnly() {
-        return dup(0, length, mask | READ_ONLY, scope);
+        return dup(0, length, mask | READ_ONLY, session);
     }
 
     @Override
@@ -109,7 +110,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     }
 
     private AbstractMemorySegmentImpl asSliceNoCheck(long offset, long newSize) {
-        return dup(offset, newSize, mask, scope);
+        return dup(offset, newSize, mask, session);
     }
 
     @Override
@@ -137,7 +138,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     @Override
     public final MemorySegment fill(byte value){
         checkAccess(0, length, false);
-        SCOPED_MEMORY_ACCESS.setMemory(scope, base(), min(), length, value);
+        SCOPED_MEMORY_ACCESS.setMemory(session, base(), min(), length, value);
         return this;
     }
 
@@ -164,7 +165,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
             if (get(JAVA_BYTE, 0) != that.get(JAVA_BYTE, 0)) {
                 return 0;
             }
-            i = vectorizedMismatchLargeForBytes(scope, that.scope,
+            i = vectorizedMismatchLargeForBytes(session, that.session,
                     this.base(), this.min(),
                     that.base(), that.min(),
                     length);
@@ -186,7 +187,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     /**
      * Mismatch over long lengths.
      */
-    private static long vectorizedMismatchLargeForBytes(ResourceScopeImpl aScope, ResourceScopeImpl bScope,
+    private static long vectorizedMismatchLargeForBytes(MemorySessionImpl aSession, MemorySessionImpl bSession,
                                                         Object a, long aOffset,
                                                         Object b, long bOffset,
                                                         long length) {
@@ -201,7 +202,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
                 size = (int) remaining;
                 lastSubRange = true;
             }
-            i = SCOPED_MEMORY_ACCESS.vectorizedMismatch(aScope, bScope,
+            i = SCOPED_MEMORY_ACCESS.vectorizedMismatch(aSession, bSession,
                     a, aOffset + off,
                     b, bOffset + off,
                     size, ArraysSupport.LOG2_ARRAY_BYTE_INDEX_SCALE);
@@ -225,7 +226,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
         checkArraySize("ByteBuffer", 1);
         ByteBuffer _bb = makeByteBuffer();
         if (isSet(READ_ONLY)) {
-            //scope is IMMUTABLE - obtain a RO byte buffer
+            //session is IMMUTABLE - obtain a RO byte buffer
             _bb = _bb.asReadOnlyBuffer();
         }
         return _bb;
@@ -234,14 +235,6 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     @Override
     public final long byteSize() {
         return length;
-    }
-
-    public final boolean isAlive() {
-        return scope.isAlive();
-    }
-
-    public Thread ownerThread() {
-        return scope.ownerThread();
     }
 
     @Override
@@ -351,8 +344,8 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
         checkBounds(offset, length);
     }
 
-    void checkValidState() {
-        scope.checkValidStateSlow();
+    public void checkValidState() {
+        session.checkValidStateSlow();
     }
 
     public long unsafeGetOffset() {
@@ -398,8 +391,13 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     }
 
     @Override
-    public ResourceScopeImpl scope() {
-        return scope;
+    public MemorySessionImpl sessionImpl() {
+        return session;
+    }
+
+    @Override
+    public MemorySession session() {
+        return new MemorySessionImpl.NonCloseableView(sessionImpl());
     }
 
     private IndexOutOfBoundsException outOfBoundException(long offset, long length) {
@@ -504,13 +502,13 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
         int size = limit - pos;
 
         AbstractMemorySegmentImpl bufferSegment = (AbstractMemorySegmentImpl)nioAccess.bufferSegment(bb);
-        final ResourceScopeImpl bufferScope;
+        final MemorySessionImpl bufferSession;
         int modes;
         if (bufferSegment != null) {
-            bufferScope = bufferSegment.scope;
+            bufferSession = bufferSegment.session;
             modes = bufferSegment.mask;
         } else {
-            bufferScope = ResourceScopeImpl.heapScope(bb);
+            bufferSession = MemorySessionImpl.heapSession(bb);
             modes = DEFAULT_MODES;
         }
         if (bb.isReadOnly()) {
@@ -519,9 +517,9 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
         if (base != null) {
             return new HeapMemorySegmentImpl.OfByte(bbAddress + pos, (byte[])base, size, modes);
         } else if (unmapper == null) {
-            return new NativeMemorySegmentImpl(bbAddress + pos, size, modes, bufferScope);
+            return new NativeMemorySegmentImpl(bbAddress + pos, size, modes, bufferSession);
         } else {
-            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, modes, bufferScope);
+            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, modes, bufferSession);
         }
     }
 }

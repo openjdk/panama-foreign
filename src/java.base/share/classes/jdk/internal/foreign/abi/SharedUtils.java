@@ -29,6 +29,7 @@ import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
@@ -42,8 +43,8 @@ import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.VaList;
@@ -378,21 +379,21 @@ public class SharedUtils {
         }
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions, ResourceScope scope) {
+    public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession session) {
         return switch (CABI.current()) {
-            case Win64 -> Windowsx64Linker.newVaList(actions, scope);
-            case SysV -> SysVx64Linker.newVaList(actions, scope);
-            case LinuxAArch64 -> LinuxAArch64Linker.newVaList(actions, scope);
-            case MacOsAArch64 -> MacOsAArch64Linker.newVaList(actions, scope);
+            case Win64 -> Windowsx64Linker.newVaList(actions, session);
+            case SysV -> SysVx64Linker.newVaList(actions, session);
+            case LinuxAArch64 -> LinuxAArch64Linker.newVaList(actions, session);
+            case MacOsAArch64 -> MacOsAArch64Linker.newVaList(actions, session);
         };
     }
 
-    public static VaList newVaListOfAddress(MemoryAddress ma, ResourceScope scope) {
+    public static VaList newVaListOfAddress(MemoryAddress ma, MemorySession session) {
         return switch (CABI.current()) {
-            case Win64 -> Windowsx64Linker.newVaListOfAddress(ma, scope);
-            case SysV -> SysVx64Linker.newVaListOfAddress(ma, scope);
-            case LinuxAArch64 -> LinuxAArch64Linker.newVaListOfAddress(ma, scope);
-            case MacOsAArch64 -> MacOsAArch64Linker.newVaListOfAddress(ma, scope);
+            case Win64 -> Windowsx64Linker.newVaListOfAddress(ma, session);
+            case SysV -> SysVx64Linker.newVaListOfAddress(ma, session);
+            case LinuxAArch64 -> LinuxAArch64Linker.newVaListOfAddress(ma, session);
+            case MacOsAArch64 -> MacOsAArch64Linker.newVaListOfAddress(ma, session);
         };
     }
 
@@ -476,8 +477,8 @@ public class SharedUtils {
         }
 
         @Override
-        public ResourceScope scope() {
-            return ResourceScope.globalScope();
+        public MemorySessionImpl sessionImpl() {
+            return (MemorySessionImpl)MemorySession.global();
         }
 
         @Override
@@ -488,6 +489,11 @@ public class SharedUtils {
         @Override
         public MemoryAddress address() {
             return address;
+        }
+
+        @Override
+        public MemorySession session() {
+            return MemorySessionImpl.GLOBAL;
         }
     }
 
