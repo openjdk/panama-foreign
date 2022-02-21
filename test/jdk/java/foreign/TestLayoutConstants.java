@@ -68,7 +68,6 @@ public class TestLayoutConstants {
         return new Object[][] {
                 //padding
                 {MemoryLayout.paddingLayout(32)},
-                { MemoryLayout.sequenceLayout(MemoryLayout.paddingLayout(32)) },
                 { MemoryLayout.sequenceLayout(5, MemoryLayout.paddingLayout(32)) },
                 { MemoryLayout.structLayout(MemoryLayout.paddingLayout(32), MemoryLayout.paddingLayout(32)) },
                 { MemoryLayout.unionLayout(MemoryLayout.paddingLayout(32), MemoryLayout.paddingLayout(32)) },
@@ -96,10 +95,6 @@ public class TestLayoutConstants {
                                 ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN))) },
                 { MemoryLayout.unionLayout(
                         MemoryLayout.paddingLayout(16),
-                        MemoryLayout.structLayout(
-                                MemoryLayout.paddingLayout(8),
-                                ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN))) },
-                { MemoryLayout.sequenceLayout(
                         MemoryLayout.structLayout(
                                 MemoryLayout.paddingLayout(8),
                                 ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN))) },

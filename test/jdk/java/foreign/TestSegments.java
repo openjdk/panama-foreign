@@ -28,7 +28,6 @@
  * @run testng/othervm -Xmx4G -XX:MaxDirectMemorySize=1M TestSegments
  */
 
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ResourceScope;
 import java.lang.foreign.ValueLayout;
@@ -65,8 +64,7 @@ public class TestSegments {
 
     @Test
     public void testNativeSegmentIsZeroed() {
-        VarHandle byteHandle = MemoryLayout.sequenceLayout(ValueLayout.JAVA_BYTE)
-                .varHandle(MemoryLayout.PathElement.sequenceElement());
+        VarHandle byteHandle = ValueLayout.JAVA_BYTE.arrayElementVarHandle();
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(1000, 1, scope);
             for (long i = 0 ; i < segment.byteSize() ; i++) {
@@ -77,8 +75,7 @@ public class TestSegments {
 
     @Test
     public void testSlices() {
-        VarHandle byteHandle = MemoryLayout.sequenceLayout(ValueLayout.JAVA_BYTE)
-                .varHandle(MemoryLayout.PathElement.sequenceElement());
+        VarHandle byteHandle = ValueLayout.JAVA_BYTE.arrayElementVarHandle();
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(10, 1, scope);
             //init
@@ -147,8 +144,7 @@ public class TestSegments {
 
     @Test(dataProvider = "segmentFactories")
     public void testFill(Supplier<MemorySegment> memorySegmentSupplier) {
-        VarHandle byteHandle = MemoryLayout.sequenceLayout(ValueLayout.JAVA_BYTE)
-                .varHandle(MemoryLayout.PathElement.sequenceElement());
+        VarHandle byteHandle = ValueLayout.JAVA_BYTE.arrayElementVarHandle();
 
         for (byte value : new byte[] {(byte) 0xFF, (byte) 0x00, (byte) 0x45}) {
             MemorySegment segment = memorySegmentSupplier.get();

@@ -58,7 +58,7 @@ public class TestVarArgs extends NativeTestHelper {
     static final VarHandle VH_CallInfo_writeback = ML_CallInfo.varHandle(groupElement("writeback"));
     static final VarHandle VH_CallInfo_argIDs = ML_CallInfo.varHandle(groupElement("argIDs"));
 
-    static final VarHandle VH_IntArray = MemoryLayout.sequenceLayout(C_INT).varHandle(sequenceElement());
+    static final VarHandle VH_IntArray = C_INT.arrayElementVarHandle();
 
     static final CLinker abi = CLinker.systemCLinker();
     static {
