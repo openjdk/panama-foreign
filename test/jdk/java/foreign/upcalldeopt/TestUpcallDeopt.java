@@ -44,7 +44,7 @@ import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -80,8 +80,8 @@ public class TestUpcallDeopt extends NativeTestHelper {
     // we need to deoptimize through an uncommon trap in the callee of the optimized upcall stub
     // that is created when calling upcallStub below
     public static void main(String[] args) throws Throwable {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            NativeSymbol stub = linker.upcallStub(MH_m, FunctionDescriptor.ofVoid(C_INT, C_INT, C_INT, C_INT), scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            NativeSymbol stub = linker.upcallStub(MH_m, FunctionDescriptor.ofVoid(C_INT, C_INT, C_INT, C_INT), session);
             armed = false;
             for (int i = 0; i < 20_000; i++) {
                 payload(stub); // warmup

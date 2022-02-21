@@ -76,31 +76,13 @@ public class TestReshape {
         seq.reshape(-2, 2);
     }
 
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testReshapeOnUnboundSequence() {
-        SequenceLayout seq = MemoryLayout.sequenceLayout(ValueLayout.JAVA_INT);
-        seq.reshape(3, 2);
-    }
-
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testFlattenOnUnboundSequence() {
-        SequenceLayout seq = MemoryLayout.sequenceLayout(ValueLayout.JAVA_INT);
-        seq.flatten();
-    }
-
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testFlattenOnUnboundNestedSequence() {
-        SequenceLayout seq = MemoryLayout.sequenceLayout(4, MemoryLayout.sequenceLayout(ValueLayout.JAVA_INT));
-        seq.flatten();
-    }
-
     static void assertDimensions(SequenceLayout layout, long... dims) {
         SequenceLayout prev = null;
         for (int i = 0 ; i < dims.length ; i++) {
             if (prev != null) {
                 layout = (SequenceLayout)prev.elementLayout();
             }
-            assertEquals(layout.elementCount().getAsLong(), dims[i]);
+            assertEquals(layout.elementCount(), dims[i]);
             prev = layout;
         }
     }

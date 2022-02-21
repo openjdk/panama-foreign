@@ -32,19 +32,19 @@ import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.vm.annotation.ForceInline;
 
 /**
- * A shared scope, which can be shared across multiple threads. Closing a shared scope has to ensure that
- * (i) only one thread can successfully close a scope (e.g. in a close vs. close race) and that
- * (ii) no other thread is accessing the memory associated with this scope while the segment is being
+ * A shared session, which can be shared across multiple threads. Closing a shared session has to ensure that
+ * (i) only one thread can successfully close a session (e.g. in a close vs. close race) and that
+ * (ii) no other thread is accessing the memory associated with this session while the segment is being
  * closed. To ensure the former condition, a CAS is performed on the liveness bit. Ensuring the latter
  * is trickier, and require a complex synchronization protocol (see {@link jdk.internal.misc.ScopedMemoryAccess}).
  * Since it is the responsibility of the closing thread to make sure that no concurrent access is possible,
  * checking the liveness bit upon access can be performed in plain mode, as in the confined case.
  */
-class SharedScope extends ResourceScopeImpl {
+class SharedSession extends MemorySessionImpl {
 
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-    SharedScope(Cleaner cleaner) {
+    SharedSession(Cleaner cleaner) {
         super(null, new SharedResourceList(), cleaner);
     }
 
@@ -54,12 +54,12 @@ class SharedScope extends ResourceScopeImpl {
         int value;
         do {
             value = (int) STATE.getVolatile(this);
-            if (value < ALIVE) {
-                //segment is not alive!
+            if (value < OPEN) {
+                //segment is not open!
                 throw new IllegalStateException("Already closed");
             } else if (value == MAX_FORKS) {
                 //overflow
-                throw new IllegalStateException("Scope keep alive limit exceeded");
+                throw new IllegalStateException("Session acquire limit exceeded");
             }
         } while (!STATE.compareAndSet(this, value, value + 1));
     }
@@ -70,7 +70,7 @@ class SharedScope extends ResourceScopeImpl {
         int value;
         do {
             value = (int) STATE.getVolatile(this);
-            if (value <= ALIVE) {
+            if (value <= OPEN) {
                 //cannot get here - we can't close segment twice
                 throw new IllegalStateException("Already closed");
             }
@@ -78,13 +78,13 @@ class SharedScope extends ResourceScopeImpl {
     }
 
     void justClose() {
-        int prevState = (int) STATE.compareAndExchange(this, ALIVE, CLOSED);
+        int prevState = (int) STATE.compareAndExchange(this, OPEN, CLOSED);
         if (prevState == CLOSED) {
             throw new IllegalStateException("Already closed");
-        } else if (prevState != ALIVE) {
-            throw new IllegalStateException("Scope is kept alive by " + prevState + " scopes");
+        } else if (prevState != OPEN) {
+            throw new IllegalStateException("Session is acquired by " + prevState + " clients");
         }
-        SCOPED_MEMORY_ACCESS.closeScope(this); // handshake
+        SCOPED_MEMORY_ACCESS.closeScope(this);
     }
 
     @Override
@@ -125,7 +125,7 @@ class SharedScope extends ResourceScopeImpl {
 
         void cleanup() {
             // At this point we are only interested about add vs. close races - not close vs. close
-            // (because MemoryScope::justClose ensured that this thread won the race to close the scope).
+            // (because MemorySessionImpl::justClose ensured that this thread won the race to close the session).
             // So, the only "bad" thing that could happen is that some other thread adds to this list
             // while we're closing it.
             if (FST.getAcquire(this) != ResourceCleanup.CLOSED_LIST) {

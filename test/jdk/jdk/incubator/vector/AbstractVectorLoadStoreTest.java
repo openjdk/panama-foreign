@@ -22,7 +22,7 @@
  */
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Collection;
@@ -45,7 +45,7 @@ public class AbstractVectorLoadStoreTest extends AbstractVectorTest {
                         .order(ByteOrder.nativeOrder());
             }),
             withToString("MS:RW:NE", (int s) -> {
-                return MemorySegment.allocateNative(s, ResourceScope.newImplicitScope())
+                return MemorySegment.allocateNative(s, MemorySession.openImplicit())
                         .asByteBuffer()
                         .order(ByteOrder.nativeOrder());
             })

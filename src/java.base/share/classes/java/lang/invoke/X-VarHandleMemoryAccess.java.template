@@ -47,8 +47,8 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
 
     static final VarForm FORM = new VarForm(MemoryAccessVarHandle$Type$Helper.class, MemorySegment.class, $type$.class, long.class);
 
-    MemoryAccessVarHandle$Type$Helper(boolean skipAlignmentMaskCheck, boolean be, long length, long alignmentMask, boolean exact) {
-        super(FORM, skipAlignmentMaskCheck, be, length, alignmentMask, exact);
+    MemoryAccessVarHandle$Type$Helper(boolean be, long length, long alignmentMask, boolean exact) {
+        super(FORM, be, length, alignmentMask, exact);
     }
 
     @Override
@@ -60,14 +60,14 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
     public MemoryAccessVarHandle$Type$Helper withInvokeExactBehavior() {
         return hasInvokeExactBehavior() ?
                 this :
-                new MemoryAccessVarHandle$Type$Helper(skipAlignmentMaskCheck, be, length, alignmentMask, true);
+                new MemoryAccessVarHandle$Type$Helper(be, length, alignmentMask, true);
     }
 
     @Override
     public MemoryAccessVarHandle$Type$Helper withInvokeBehavior() {
         return !hasInvokeExactBehavior() ?
                 this :
-                new MemoryAccessVarHandle$Type$Helper(skipAlignmentMaskCheck, be, length, alignmentMask, false);
+                new MemoryAccessVarHandle$Type$Helper(be, length, alignmentMask, false);
     }
 
 #if[floatingPoint]
@@ -104,8 +104,8 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
     }
 
     @ForceInline
-    static long offset(boolean skipAlignmentMaskCheck, AbstractMemorySegmentImpl bb, long offset, long alignmentMask) {
-        long address = offsetNoVMAlignCheck(skipAlignmentMaskCheck, bb, offset, alignmentMask);
+    static long offset(AbstractMemorySegmentImpl bb, long offset, long alignmentMask) {
+        long address = offsetNoVMAlignCheck(bb, offset, alignmentMask);
         if ((address & VM_ALIGN) != 0) {
             throw MemoryAccessVarHandleBase.newIllegalArgumentExceptionForMisalignedAccess(address);
         }
@@ -113,19 +113,12 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
     }
 
     @ForceInline
-    static long offsetNoVMAlignCheck(boolean skipAlignmentMaskCheck, AbstractMemorySegmentImpl bb, long offset, long alignmentMask) {
+    static long offsetNoVMAlignCheck(AbstractMemorySegmentImpl bb, long offset, long alignmentMask) {
         long base = bb.unsafeGetOffset();
         long address = base + offset;
         long maxAlignMask = bb.maxAlignMask();
-        if (skipAlignmentMaskCheck) {
-            //note: the offset portion has already been aligned-checked, by construction
-            if (((base | maxAlignMask) & alignmentMask) != 0) {
-                throw MemoryAccessVarHandleBase.newIllegalArgumentExceptionForMisalignedAccess(address);
-            }
-        } else {
-            if (((address | maxAlignMask) & alignmentMask) != 0) {
-                throw MemoryAccessVarHandleBase.newIllegalArgumentExceptionForMisalignedAccess(address);
-            }
+        if (((address | maxAlignMask) & alignmentMask) != 0) {
+            throw MemoryAccessVarHandleBase.newIllegalArgumentExceptionForMisalignedAccess(address);
         }
         return address;
     }
@@ -135,20 +128,20 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, true);
 #if[floatingPoint]
-        $rawType$ rawValue = SCOPED_MEMORY_ACCESS.get$RawType$Unaligned(bb.scope(),
+        $rawType$ rawValue = SCOPED_MEMORY_ACCESS.get$RawType$Unaligned(bb.sessionImpl(),
                 bb.unsafeGetBase(),
-                offsetNoVMAlignCheck(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                offsetNoVMAlignCheck(bb, base, handle.alignmentMask),
                 handle.be);
         return $Type$.$rawType$BitsTo$Type$(rawValue);
 #else[floatingPoint]
 #if[byte]
-        return SCOPED_MEMORY_ACCESS.get$Type$(bb.scope(),
+        return SCOPED_MEMORY_ACCESS.get$Type$(bb.sessionImpl(),
                 bb.unsafeGetBase(),
-                offsetNoVMAlignCheck(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask));
+                offsetNoVMAlignCheck(bb, base, handle.alignmentMask));
 #else[byte]
-        return SCOPED_MEMORY_ACCESS.get$Type$Unaligned(bb.scope(),
+        return SCOPED_MEMORY_ACCESS.get$Type$Unaligned(bb.sessionImpl(),
                 bb.unsafeGetBase(),
-                offsetNoVMAlignCheck(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                offsetNoVMAlignCheck(bb, base, handle.alignmentMask),
                 handle.be);
 #end[byte]
 #end[floatingPoint]
@@ -159,21 +152,21 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
 #if[floatingPoint]
-        SCOPED_MEMORY_ACCESS.put$RawType$Unaligned(bb.scope(),
+        SCOPED_MEMORY_ACCESS.put$RawType$Unaligned(bb.sessionImpl(),
                 bb.unsafeGetBase(),
-                offsetNoVMAlignCheck(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                offsetNoVMAlignCheck(bb, base, handle.alignmentMask),
                 $Type$.$type$ToRaw$RawType$Bits(value),
                 handle.be);
 #else[floatingPoint]
 #if[byte]
-        SCOPED_MEMORY_ACCESS.put$Type$(bb.scope(),
+        SCOPED_MEMORY_ACCESS.put$Type$(bb.sessionImpl(),
                 bb.unsafeGetBase(),
-                offsetNoVMAlignCheck(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                offsetNoVMAlignCheck(bb, base, handle.alignmentMask),
                 value);
 #else[byte]
-        SCOPED_MEMORY_ACCESS.put$Type$Unaligned(bb.scope(),
+        SCOPED_MEMORY_ACCESS.put$Type$Unaligned(bb.sessionImpl(),
                 bb.unsafeGetBase(),
-                offsetNoVMAlignCheck(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                offsetNoVMAlignCheck(bb, base, handle.alignmentMask),
                 value,
                 handle.be);
 #end[byte]
@@ -185,18 +178,18 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, true);
         return convEndian(handle.be,
-                          SCOPED_MEMORY_ACCESS.get$RawType$Volatile(bb.scope(),
+                          SCOPED_MEMORY_ACCESS.get$RawType$Volatile(bb.sessionImpl(),
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask)));
+                                  offset(bb, base, handle.alignmentMask)));
     }
 
     @ForceInline
     static void setVolatile(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
-        SCOPED_MEMORY_ACCESS.put$RawType$Volatile(bb.scope(),
+        SCOPED_MEMORY_ACCESS.put$RawType$Volatile(bb.sessionImpl(),
                 bb.unsafeGetBase(),
-                offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                offset(bb, base, handle.alignmentMask),
                 convEndian(handle.be, value));
     }
 
@@ -205,18 +198,18 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, true);
         return convEndian(handle.be,
-                          SCOPED_MEMORY_ACCESS.get$RawType$Acquire(bb.scope(),
+                          SCOPED_MEMORY_ACCESS.get$RawType$Acquire(bb.sessionImpl(),
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask)));
+                                  offset(bb, base, handle.alignmentMask)));
     }
 
     @ForceInline
     static void setRelease(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
-        SCOPED_MEMORY_ACCESS.put$RawType$Release(bb.scope(),
+        SCOPED_MEMORY_ACCESS.put$RawType$Release(bb.sessionImpl(),
                 bb.unsafeGetBase(),
-                offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                offset(bb, base, handle.alignmentMask),
                 convEndian(handle.be, value));
     }
 
@@ -225,18 +218,18 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, true);
         return convEndian(handle.be,
-                          SCOPED_MEMORY_ACCESS.get$RawType$Opaque(bb.scope(),
+                          SCOPED_MEMORY_ACCESS.get$RawType$Opaque(bb.sessionImpl(),
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask)));
+                                  offset(bb, base, handle.alignmentMask)));
     }
 
     @ForceInline
     static void setOpaque(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
-        SCOPED_MEMORY_ACCESS.put$RawType$Opaque(bb.scope(),
+        SCOPED_MEMORY_ACCESS.put$RawType$Opaque(bb.sessionImpl(),
                 bb.unsafeGetBase(),
-                offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                offset(bb, base, handle.alignmentMask),
                 convEndian(handle.be, value));
     }
 #if[CAS]
@@ -245,9 +238,9 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
     static boolean compareAndSet(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
-        return SCOPED_MEMORY_ACCESS.compareAndSet$RawType$(bb.scope(),
+        return SCOPED_MEMORY_ACCESS.compareAndSet$RawType$(bb.sessionImpl(),
                 bb.unsafeGetBase(),
-                offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                offset(bb, base, handle.alignmentMask),
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
@@ -256,9 +249,9 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         return convEndian(handle.be,
-                          SCOPED_MEMORY_ACCESS.compareAndExchange$RawType$(bb.scope(),
+                          SCOPED_MEMORY_ACCESS.compareAndExchange$RawType$(bb.sessionImpl(),
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                                  offset(bb, base, handle.alignmentMask),
                                   convEndian(handle.be, expected), convEndian(handle.be, value)));
     }
 
@@ -267,9 +260,9 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         return convEndian(handle.be,
-                          SCOPED_MEMORY_ACCESS.compareAndExchange$RawType$Acquire(bb.scope(),
+                          SCOPED_MEMORY_ACCESS.compareAndExchange$RawType$Acquire(bb.sessionImpl(),
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                                  offset(bb, base, handle.alignmentMask),
                                   convEndian(handle.be, expected), convEndian(handle.be, value)));
     }
 
@@ -278,9 +271,9 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         return convEndian(handle.be,
-                          SCOPED_MEMORY_ACCESS.compareAndExchange$RawType$Release(bb.scope(),
+                          SCOPED_MEMORY_ACCESS.compareAndExchange$RawType$Release(bb.sessionImpl(),
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                                  offset(bb, base, handle.alignmentMask),
                                   convEndian(handle.be, expected), convEndian(handle.be, value)));
     }
 
@@ -288,9 +281,9 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
     static boolean weakCompareAndSetPlain(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
-        return SCOPED_MEMORY_ACCESS.weakCompareAndSet$RawType$Plain(bb.scope(),
+        return SCOPED_MEMORY_ACCESS.weakCompareAndSet$RawType$Plain(bb.sessionImpl(),
                 bb.unsafeGetBase(),
-                offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                offset(bb, base, handle.alignmentMask),
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
@@ -298,9 +291,9 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
     static boolean weakCompareAndSet(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
-        return SCOPED_MEMORY_ACCESS.weakCompareAndSet$RawType$(bb.scope(),
+        return SCOPED_MEMORY_ACCESS.weakCompareAndSet$RawType$(bb.sessionImpl(),
                 bb.unsafeGetBase(),
-                offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                offset(bb, base, handle.alignmentMask),
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
@@ -308,9 +301,9 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
     static boolean weakCompareAndSetAcquire(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
-        return SCOPED_MEMORY_ACCESS.weakCompareAndSet$RawType$Acquire(bb.scope(),
+        return SCOPED_MEMORY_ACCESS.weakCompareAndSet$RawType$Acquire(bb.sessionImpl(),
                 bb.unsafeGetBase(),
-                offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                offset(bb, base, handle.alignmentMask),
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
@@ -318,9 +311,9 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
     static boolean weakCompareAndSetRelease(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
-        return SCOPED_MEMORY_ACCESS.weakCompareAndSet$RawType$Release(bb.scope(),
+        return SCOPED_MEMORY_ACCESS.weakCompareAndSet$RawType$Release(bb.sessionImpl(),
                 bb.unsafeGetBase(),
-                offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                offset(bb, base, handle.alignmentMask),
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
@@ -329,9 +322,9 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         return convEndian(handle.be,
-                          SCOPED_MEMORY_ACCESS.getAndSet$RawType$(bb.scope(),
+                          SCOPED_MEMORY_ACCESS.getAndSet$RawType$(bb.sessionImpl(),
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                                  offset(bb, base, handle.alignmentMask),
                                   convEndian(handle.be, value)));
     }
 
@@ -340,9 +333,9 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         return convEndian(handle.be,
-                          SCOPED_MEMORY_ACCESS.getAndSet$RawType$Acquire(bb.scope(),
+                          SCOPED_MEMORY_ACCESS.getAndSet$RawType$Acquire(bb.sessionImpl(),
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                                  offset(bb, base, handle.alignmentMask),
                                   convEndian(handle.be, value)));
     }
 
@@ -351,9 +344,9 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         return convEndian(handle.be,
-                          SCOPED_MEMORY_ACCESS.getAndSet$RawType$Release(bb.scope(),
+                          SCOPED_MEMORY_ACCESS.getAndSet$RawType$Release(bb.sessionImpl(),
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                                  offset(bb, base, handle.alignmentMask),
                                   convEndian(handle.be, value)));
     }
 #end[CAS]
@@ -364,12 +357,12 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
-            return SCOPED_MEMORY_ACCESS.getAndAdd$RawType$(bb.scope(),
+            return SCOPED_MEMORY_ACCESS.getAndAdd$RawType$(bb.sessionImpl(),
                     bb.unsafeGetBase(),
-                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                    offset(bb, base, handle.alignmentMask),
                     delta);
         } else {
-            return getAndAddConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), delta);
+            return getAndAddConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), delta);
         }
     }
 
@@ -378,12 +371,12 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
-            return SCOPED_MEMORY_ACCESS.getAndAdd$RawType$Acquire(bb.scope(),
+            return SCOPED_MEMORY_ACCESS.getAndAdd$RawType$Acquire(bb.sessionImpl(),
                     bb.unsafeGetBase(),
-                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                    offset(bb, base, handle.alignmentMask),
                     delta);
         } else {
-            return getAndAddConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), delta);
+            return getAndAddConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), delta);
         }
     }
 
@@ -392,12 +385,12 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
-            return SCOPED_MEMORY_ACCESS.getAndAdd$RawType$Release(bb.scope(),
+            return SCOPED_MEMORY_ACCESS.getAndAdd$RawType$Release(bb.sessionImpl(),
                     bb.unsafeGetBase(),
-                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                    offset(bb, base, handle.alignmentMask),
                     delta);
         } else {
-            return getAndAddConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), delta);
+            return getAndAddConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), delta);
         }
     }
 
@@ -406,9 +399,9 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         $type$ nativeExpectedValue, expectedValue;
         Object base = bb.unsafeGetBase();
         do {
-            nativeExpectedValue = SCOPED_MEMORY_ACCESS.get$RawType$Volatile(bb.scope(),base, offset);
+            nativeExpectedValue = SCOPED_MEMORY_ACCESS.get$RawType$Volatile(bb.sessionImpl(),base, offset);
             expectedValue = $RawBoxType$.reverseBytes(nativeExpectedValue);
-        } while (!SCOPED_MEMORY_ACCESS.weakCompareAndSet$RawType$(bb.scope(),base, offset,
+        } while (!SCOPED_MEMORY_ACCESS.weakCompareAndSet$RawType$(bb.sessionImpl(),base, offset,
                 nativeExpectedValue, $RawBoxType$.reverseBytes(expectedValue + delta)));
         return expectedValue;
     }
@@ -420,12 +413,12 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
-            return SCOPED_MEMORY_ACCESS.getAndBitwiseOr$RawType$(bb.scope(),
+            return SCOPED_MEMORY_ACCESS.getAndBitwiseOr$RawType$(bb.sessionImpl(),
                     bb.unsafeGetBase(),
-                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseOrConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseOrConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -434,12 +427,12 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
-            return SCOPED_MEMORY_ACCESS.getAndBitwiseOr$RawType$Release(bb.scope(),
+            return SCOPED_MEMORY_ACCESS.getAndBitwiseOr$RawType$Release(bb.sessionImpl(),
                     bb.unsafeGetBase(),
-                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseOrConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseOrConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -448,12 +441,12 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
-            return SCOPED_MEMORY_ACCESS.getAndBitwiseOr$RawType$Acquire(bb.scope(),
+            return SCOPED_MEMORY_ACCESS.getAndBitwiseOr$RawType$Acquire(bb.sessionImpl(),
                     bb.unsafeGetBase(),
-                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseOrConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseOrConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -462,9 +455,9 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         $type$ nativeExpectedValue, expectedValue;
         Object base = bb.unsafeGetBase();
         do {
-            nativeExpectedValue = SCOPED_MEMORY_ACCESS.get$RawType$Volatile(bb.scope(),base, offset);
+            nativeExpectedValue = SCOPED_MEMORY_ACCESS.get$RawType$Volatile(bb.sessionImpl(),base, offset);
             expectedValue = $RawBoxType$.reverseBytes(nativeExpectedValue);
-        } while (!SCOPED_MEMORY_ACCESS.weakCompareAndSet$RawType$(bb.scope(),base, offset,
+        } while (!SCOPED_MEMORY_ACCESS.weakCompareAndSet$RawType$(bb.sessionImpl(),base, offset,
                 nativeExpectedValue, $RawBoxType$.reverseBytes(expectedValue | value)));
         return expectedValue;
     }
@@ -474,12 +467,12 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
-            return SCOPED_MEMORY_ACCESS.getAndBitwiseAnd$RawType$(bb.scope(),
+            return SCOPED_MEMORY_ACCESS.getAndBitwiseAnd$RawType$(bb.sessionImpl(),
                     bb.unsafeGetBase(),
-                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseAndConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseAndConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -488,12 +481,12 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
-            return SCOPED_MEMORY_ACCESS.getAndBitwiseAnd$RawType$Release(bb.scope(),
+            return SCOPED_MEMORY_ACCESS.getAndBitwiseAnd$RawType$Release(bb.sessionImpl(),
                     bb.unsafeGetBase(),
-                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseAndConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseAndConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -502,12 +495,12 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
-            return SCOPED_MEMORY_ACCESS.getAndBitwiseAnd$RawType$Acquire(bb.scope(),
+            return SCOPED_MEMORY_ACCESS.getAndBitwiseAnd$RawType$Acquire(bb.sessionImpl(),
                     bb.unsafeGetBase(),
-                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseAndConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseAndConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -516,9 +509,9 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         $type$ nativeExpectedValue, expectedValue;
         Object base = bb.unsafeGetBase();
         do {
-            nativeExpectedValue = SCOPED_MEMORY_ACCESS.get$RawType$Volatile(bb.scope(),base, offset);
+            nativeExpectedValue = SCOPED_MEMORY_ACCESS.get$RawType$Volatile(bb.sessionImpl(),base, offset);
             expectedValue = $RawBoxType$.reverseBytes(nativeExpectedValue);
-        } while (!SCOPED_MEMORY_ACCESS.weakCompareAndSet$RawType$(bb.scope(),base, offset,
+        } while (!SCOPED_MEMORY_ACCESS.weakCompareAndSet$RawType$(bb.sessionImpl(),base, offset,
                 nativeExpectedValue, $RawBoxType$.reverseBytes(expectedValue & value)));
         return expectedValue;
     }
@@ -529,12 +522,12 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
-            return SCOPED_MEMORY_ACCESS.getAndBitwiseXor$RawType$(bb.scope(),
+            return SCOPED_MEMORY_ACCESS.getAndBitwiseXor$RawType$(bb.sessionImpl(),
                     bb.unsafeGetBase(),
-                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseXorConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseXorConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -543,12 +536,12 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
-            return SCOPED_MEMORY_ACCESS.getAndBitwiseXor$RawType$Release(bb.scope(),
+            return SCOPED_MEMORY_ACCESS.getAndBitwiseXor$RawType$Release(bb.sessionImpl(),
                     bb.unsafeGetBase(),
-                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseXorConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseXorConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -557,12 +550,12 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         AbstractMemorySegmentImpl bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
-            return SCOPED_MEMORY_ACCESS.getAndBitwiseXor$RawType$Acquire(bb.scope(),
+            return SCOPED_MEMORY_ACCESS.getAndBitwiseXor$RawType$Acquire(bb.sessionImpl(),
                     bb.unsafeGetBase(),
-                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseXorConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseXorConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -571,9 +564,9 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         $type$ nativeExpectedValue, expectedValue;
         Object base = bb.unsafeGetBase();
         do {
-            nativeExpectedValue = SCOPED_MEMORY_ACCESS.get$RawType$Volatile(bb.scope(),base, offset);
+            nativeExpectedValue = SCOPED_MEMORY_ACCESS.get$RawType$Volatile(bb.sessionImpl(),base, offset);
             expectedValue = $RawBoxType$.reverseBytes(nativeExpectedValue);
-        } while (!SCOPED_MEMORY_ACCESS.weakCompareAndSet$RawType$(bb.scope(),base, offset,
+        } while (!SCOPED_MEMORY_ACCESS.weakCompareAndSet$RawType$(bb.sessionImpl(),base, offset,
                 nativeExpectedValue, $RawBoxType$.reverseBytes(expectedValue ^ value)));
         return expectedValue;
     }

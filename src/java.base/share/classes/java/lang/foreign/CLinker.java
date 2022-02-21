@@ -85,7 +85,7 @@ import jdk.internal.reflect.Reflection;
  *
  * <h2><a id = "upcall-stubs">Upcall stubs</a></h2>
  *
- * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, ResourceScope) Creating an upcall stub} requires a method
+ * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, MemorySession) Creating an upcall stub} requires a method
  * handle and a function descriptor; in this case, the set of memory layouts in the function descriptor
  * specify the signature of the function pointer associated with the upcall stub.
  * <p>
@@ -103,7 +103,7 @@ import jdk.internal.reflect.Reflection;
  * </ul>
  * Upcall stubs are modelled by instances of type {@link NativeSymbol}; upcall stubs can be passed by reference to other
  * downcall method handles (as {@link NativeSymbol} implements the {@link Addressable} interface) and,
- * when no longer required, they can be {@link ResourceScope#close() released}, via their {@linkplain NativeSymbol#scope() scope}.
+ * when no longer required, they can be {@link MemorySession#close() released}, via their associated {@linkplain MemorySession session}.
  *
  * <h2>Symbol lookup</h2>
  * Clients can {@linkplain #lookup(String) look up} symbols in the standard libraries associated with this linker.
@@ -119,11 +119,11 @@ import jdk.internal.reflect.Reflection;
  * the linker runtime guarantees the following for any argument that is a memory resource {@code R} (of type {@link MemorySegment},
  * {@link NativeSymbol} or {@link VaList}):
  * <ul>
- *     <li>The resource scope of {@code R} is {@linkplain ResourceScope#isAlive() alive}. Otherwise, the invocation throws
+ *     <li>The memory session of {@code R} is {@linkplain MemorySession#isAlive() alive}. Otherwise, the invocation throws
  *     {@link IllegalStateException};</li>
- *     <li>The invocation occurs in same thread as the one {@link ResourceScope#ownerThread() owning} the resource scope of {@code R},
- *     if said scope is confined. Otherwise, the invocation throws {@link IllegalStateException}; and</li>
- *     <li>The scope of {@code R} is {@linkplain ResourceScope#keepAlive(ResourceScope) kept alive} (and cannot be closed) during the invocation.
+ *     <li>The invocation occurs in same thread as the one {@link MemorySession#ownerThread() owning} the memory session of {@code R},
+ *     if said session is confined. Otherwise, the invocation throws {@link IllegalStateException}; and</li>
+ *     <li>The memory session of {@code R} is {@linkplain MemorySession#whileAlive(Runnable) kept alive} (and cannot be closed) during the invocation.
  *</ul>
  * <p>
  * When creating upcall stubs the linker runtime validates the type of the target method handle against the provided
@@ -216,11 +216,11 @@ public sealed interface CLinker permits AbstractLinker {
     MethodHandle downcallHandle(FunctionDescriptor function);
 
     /**
-     * Allocates a native stub with given scope which can be passed to other foreign functions (as a function pointer);
-     * calling such a function pointer from native code will result in the execution of the provided method handle.
-     *
+     * Allocates a native stub which can be passed to other foreign functions (as a function pointer), with given
+     * memory session. Calling such a function pointer from native code will result in the execution of the provided
+     * method handle.
      * <p>
-     * The returned function pointer is associated with the provided scope. When such scope is closed,
+     * The returned function pointer is associated with the provided memory session. When such session is closed,
      * the corresponding native stub will be deallocated.
      * <p>
      * The target method handle should not throw any exceptions. If the target method handle does throw an exception,
@@ -231,15 +231,15 @@ public sealed interface CLinker permits AbstractLinker {
      *
      * @param target   the target method handle.
      * @param function the function descriptor.
-     * @param scope the upcall stub scope.
+     * @param session the upcall stub memory session.
      * @return the native stub symbol.
      * @throws IllegalArgumentException if the provided descriptor contains either a sequence or a padding layout,
      * or if it is determined that the target method handle can throw an exception, or if the target method handle
      * has a type that does not match the upcall stub <a href="CLinker.html#upcall-stubs"><em>inferred type</em></a>.
-     * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
-     * than the thread owning {@code scope}.
+     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
+     * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
      */
-    NativeSymbol upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);
+    NativeSymbol upcallStub(MethodHandle target, FunctionDescriptor function, MemorySession session);
 
     /**
      * Obtains the downcall method handle {@linkplain MethodType type} associated with a given function descriptor.

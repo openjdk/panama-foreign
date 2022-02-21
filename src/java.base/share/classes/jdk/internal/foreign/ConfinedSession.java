@@ -32,12 +32,12 @@ import java.lang.ref.Cleaner;
 import jdk.internal.vm.annotation.ForceInline;
 
 /**
- * A confined scope, which features an owner thread. The liveness check features an additional
- * confinement check - that is, calling any operation on this scope from a thread other than the
+ * A confined session, which features an owner thread. The liveness check features an additional
+ * confinement check - that is, calling any operation on this session from a thread other than the
  * owner thread will result in an exception. Because of this restriction, checking the liveness bit
  * can be performed in plain mode.
  */
-final class ConfinedScope extends ResourceScopeImpl {
+final class ConfinedSession extends MemorySessionImpl {
 
     private int asyncReleaseCount = 0;
 
@@ -45,13 +45,13 @@ final class ConfinedScope extends ResourceScopeImpl {
 
     static {
         try {
-            ASYNC_RELEASE_COUNT = MethodHandles.lookup().findVarHandle(ConfinedScope.class, "asyncReleaseCount", int.class);
+            ASYNC_RELEASE_COUNT = MethodHandles.lookup().findVarHandle(ConfinedSession.class, "asyncReleaseCount", int.class);
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
     }
 
-    public ConfinedScope(Thread owner, Cleaner cleaner) {
+    public ConfinedSession(Thread owner, Cleaner cleaner) {
         super(owner, new ConfinedResourceList(), cleaner);
     }
 
@@ -65,7 +65,7 @@ final class ConfinedScope extends ResourceScopeImpl {
     public void acquire0() {
         checkValidStateSlow();
         if (state == MAX_FORKS) {
-            throw new IllegalStateException("Scope keep alive limit exceeded");
+            throw new IllegalStateException("Session keep alive limit exceeded");
         }
         state++;
     }
@@ -76,9 +76,9 @@ final class ConfinedScope extends ResourceScopeImpl {
         if (Thread.currentThread() == owner) {
             state--;
         } else {
-            // It is possible to end up here in two cases: this scope was kept alive by some other confined scope
+            // It is possible to end up here in two cases: this session was kept alive by some other confined session
             // which is implicitly released (in which case the release call comes from the cleaner thread). Or,
-            // this scope might be kept alive by a shared scope, which means the release call can come from any
+            // this session might be kept alive by a shared session, which means the release call can come from any
             // thread.
             ASYNC_RELEASE_COUNT.getAndAdd(this, 1);
         }
@@ -89,7 +89,7 @@ final class ConfinedScope extends ResourceScopeImpl {
         if (state == 0 || state - ((int)ASYNC_RELEASE_COUNT.getVolatile(this)) == 0) {
             state = CLOSED;
         } else {
-            throw new IllegalStateException("Scope is kept alive by " + state + " scopes");
+            throw new IllegalStateException("Session is acquired by " + state + " clients");
         }
     }
 

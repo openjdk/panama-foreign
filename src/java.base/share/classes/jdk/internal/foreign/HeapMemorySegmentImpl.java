@@ -43,7 +43,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * the field type storing the 'base' coordinate is just Object; similarly, all the constructor in the subclasses
  * accept an Object 'base' parameter instead of a sharper type (e.g. {@code byte[]}). This is deliberate, as
  * using sharper types would require use of type-conversions, which in turn would inhibit some C2 optimizations,
- * such as the elimination of store barriers in methods like {@link HeapMemorySegmentImpl#dup(long, long, int, ResourceScopeImpl)}.
+ * such as the elimination of store barriers in methods like {@link HeapMemorySegmentImpl#dup(long, long, int, MemorySessionImpl)}.
  */
 public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
@@ -60,7 +60,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     @ForceInline
     HeapMemorySegmentImpl(long offset, Object base, long length, int mask) {
-        super(length, mask, ResourceScopeImpl.GLOBAL);
+        super(length, mask, MemorySessionImpl.GLOBAL);
         this.offset = offset;
         this.base = base;
     }
@@ -74,7 +74,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     @Override
-    abstract HeapMemorySegmentImpl dup(long offset, long size, int mask, ResourceScopeImpl scope);
+    abstract HeapMemorySegmentImpl dup(long offset, long size, int mask, MemorySessionImpl session);
 
     @Override
     ByteBuffer makeByteBuffer() {
@@ -94,7 +94,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        OfByte dup(long offset, long size, int mask, ResourceScopeImpl scope) {
+        OfByte dup(long offset, long size, int mask, MemorySessionImpl session) {
             return new OfByte(this.offset + offset, base, size, mask);
         }
 
@@ -106,7 +106,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         public static MemorySegment fromArray(byte[] arr) {
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Unsafe.ARRAY_BYTE_INDEX_SCALE;
-            return new OfByte(Unsafe.ARRAY_BYTE_BASE_OFFSET, arr, byteSize, defaultAccessModes(byteSize));
+            return new OfByte(Unsafe.ARRAY_BYTE_BASE_OFFSET, arr, byteSize, DEFAULT_MODES);
         }
 
         @Override
@@ -122,7 +122,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        OfChar dup(long offset, long size, int mask, ResourceScopeImpl scope) {
+        OfChar dup(long offset, long size, int mask, MemorySessionImpl session) {
             return new OfChar(this.offset + offset, base, size, mask);
         }
 
@@ -134,7 +134,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         public static MemorySegment fromArray(char[] arr) {
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Unsafe.ARRAY_CHAR_INDEX_SCALE;
-            return new OfChar(Unsafe.ARRAY_CHAR_BASE_OFFSET, arr, byteSize, defaultAccessModes(byteSize));
+            return new OfChar(Unsafe.ARRAY_CHAR_BASE_OFFSET, arr, byteSize, DEFAULT_MODES);
         }
 
         @Override
@@ -150,7 +150,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        OfShort dup(long offset, long size, int mask, ResourceScopeImpl scope) {
+        OfShort dup(long offset, long size, int mask, MemorySessionImpl session) {
             return new OfShort(this.offset + offset, base, size, mask);
         }
 
@@ -162,7 +162,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         public static MemorySegment fromArray(short[] arr) {
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Unsafe.ARRAY_SHORT_INDEX_SCALE;
-            return new OfShort(Unsafe.ARRAY_SHORT_BASE_OFFSET, arr, byteSize, defaultAccessModes(byteSize));
+            return new OfShort(Unsafe.ARRAY_SHORT_BASE_OFFSET, arr, byteSize, DEFAULT_MODES);
         }
 
         @Override
@@ -178,7 +178,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        OfInt dup(long offset, long size, int mask, ResourceScopeImpl scope) {
+        OfInt dup(long offset, long size, int mask, MemorySessionImpl session) {
             return new OfInt(this.offset + offset, base, size, mask);
         }
 
@@ -190,7 +190,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         public static MemorySegment fromArray(int[] arr) {
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Unsafe.ARRAY_INT_INDEX_SCALE;
-            return new OfInt(Unsafe.ARRAY_INT_BASE_OFFSET, arr, byteSize, defaultAccessModes(byteSize));
+            return new OfInt(Unsafe.ARRAY_INT_BASE_OFFSET, arr, byteSize, DEFAULT_MODES);
         }
 
         @Override
@@ -206,7 +206,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        OfLong dup(long offset, long size, int mask, ResourceScopeImpl scope) {
+        OfLong dup(long offset, long size, int mask, MemorySessionImpl session) {
             return new OfLong(this.offset + offset, base, size, mask);
         }
 
@@ -218,7 +218,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         public static MemorySegment fromArray(long[] arr) {
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Unsafe.ARRAY_LONG_INDEX_SCALE;
-            return new OfLong(Unsafe.ARRAY_LONG_BASE_OFFSET, arr, byteSize, defaultAccessModes(byteSize));
+            return new OfLong(Unsafe.ARRAY_LONG_BASE_OFFSET, arr, byteSize, DEFAULT_MODES);
         }
 
         @Override
@@ -234,7 +234,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        OfFloat dup(long offset, long size, int mask, ResourceScopeImpl scope) {
+        OfFloat dup(long offset, long size, int mask, MemorySessionImpl session) {
             return new OfFloat(this.offset + offset, base, size, mask);
         }
 
@@ -246,7 +246,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         public static MemorySegment fromArray(float[] arr) {
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Unsafe.ARRAY_FLOAT_INDEX_SCALE;
-            return new OfFloat(Unsafe.ARRAY_FLOAT_BASE_OFFSET, arr, byteSize, defaultAccessModes(byteSize));
+            return new OfFloat(Unsafe.ARRAY_FLOAT_BASE_OFFSET, arr, byteSize, DEFAULT_MODES);
         }
 
         @Override
@@ -262,7 +262,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        OfDouble dup(long offset, long size, int mask, ResourceScopeImpl scope) {
+        OfDouble dup(long offset, long size, int mask, MemorySessionImpl session) {
             return new OfDouble(this.offset + offset, base, size, mask);
         }
 
@@ -274,7 +274,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         public static MemorySegment fromArray(double[] arr) {
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE;
-            return new OfDouble(Unsafe.ARRAY_DOUBLE_BASE_OFFSET, arr, byteSize, defaultAccessModes(byteSize));
+            return new OfDouble(Unsafe.ARRAY_DOUBLE_BASE_OFFSET, arr, byteSize, DEFAULT_MODES);
         }
 
         @Override

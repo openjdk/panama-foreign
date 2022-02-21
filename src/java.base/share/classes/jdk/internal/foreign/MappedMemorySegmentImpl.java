@@ -52,20 +52,20 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-    MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, int mask, ResourceScopeImpl scope) {
-        super(min, length, mask, scope);
+    MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, int mask, MemorySessionImpl session) {
+        super(min, length, mask, session);
         this.unmapper = unmapper;
     }
 
     @Override
     ByteBuffer makeByteBuffer() {
         return nioAccess.newMappedByteBuffer(unmapper, min, (int)length, null,
-                scope == ResourceScopeImpl.GLOBAL ? null : this);
+                session == MemorySessionImpl.GLOBAL ? null : this);
     }
 
     @Override
-    MappedMemorySegmentImpl dup(long offset, long size, int mask, ResourceScopeImpl scope) {
-        return new MappedMemorySegmentImpl(min + offset, unmapper, size, mask, scope);
+    MappedMemorySegmentImpl dup(long offset, long size, int mask, MemorySessionImpl session) {
+        return new MappedMemorySegmentImpl(min + offset, unmapper, size, mask, session);
     }
 
     // mapped segment methods
@@ -88,27 +88,27 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     }
 
     public void load() {
-        SCOPED_MEMORY_ACCESS.load(scope, min, unmapper.isSync(), length);
+        SCOPED_MEMORY_ACCESS.load(session, min, unmapper.isSync(), length);
     }
 
     public void unload() {
-        SCOPED_MEMORY_ACCESS.unload(scope, min, unmapper.isSync(), length);
+        SCOPED_MEMORY_ACCESS.unload(session, min, unmapper.isSync(), length);
     }
 
     public boolean isLoaded() {
-        return SCOPED_MEMORY_ACCESS.isLoaded(scope, min, unmapper.isSync(), length);
+        return SCOPED_MEMORY_ACCESS.isLoaded(session, min, unmapper.isSync(), length);
     }
 
     public void force() {
-        SCOPED_MEMORY_ACCESS.force(scope, unmapper.fileDescriptor(), min, unmapper.isSync(), 0, length);
+        SCOPED_MEMORY_ACCESS.force(session, unmapper.fileDescriptor(), min, unmapper.isSync(), 0, length);
     }
 
     // factories
 
-    public static MemorySegment makeMappedSegment(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode, ResourceScopeImpl scope) throws IOException {
+    public static MemorySegment makeMappedSegment(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode, MemorySessionImpl session) throws IOException {
         Objects.requireNonNull(path);
         Objects.requireNonNull(mapMode);
-        scope.checkValidStateSlow();
+        session.checkValidStateSlow();
         if (bytesSize < 0) throw new IllegalArgumentException("Requested bytes size must be >= 0.");
         if (bytesOffset < 0) throw new IllegalArgumentException("Requested bytes offset must be >= 0.");
         FileSystem fs = path.getFileSystem();
@@ -118,14 +118,14 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
         }
         try (FileChannel channelImpl = FileChannel.open(path, openOptions(mapMode))) {
             UnmapperProxy unmapperProxy = ((FileChannelImpl)channelImpl).mapInternal(mapMode, bytesOffset, bytesSize);
-            int modes = defaultAccessModes(bytesSize);
+            int modes = DEFAULT_MODES;
             if (mapMode == FileChannel.MapMode.READ_ONLY) {
                 modes |= READ_ONLY;
             }
             if (unmapperProxy != null) {
                 AbstractMemorySegmentImpl segment = new MappedMemorySegmentImpl(unmapperProxy.address(), unmapperProxy, bytesSize,
-                        modes, scope);
-                scope.addOrCleanupIfFail(new ResourceScopeImpl.ResourceList.ResourceCleanup() {
+                        modes, session);
+                session.addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
                     @Override
                     public void cleanup() {
                         unmapperProxy.unmap();
@@ -133,7 +133,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
                 });
                 return segment;
             } else {
-                return new EmptyMappedMemorySegmentImpl(modes, scope);
+                return new EmptyMappedMemorySegmentImpl(modes, session);
             }
         }
     }
@@ -153,8 +153,8 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     static class EmptyMappedMemorySegmentImpl extends MappedMemorySegmentImpl {
 
-        public EmptyMappedMemorySegmentImpl(int modes, ResourceScopeImpl scope) {
-            super(0, null, 0, modes, scope);
+        public EmptyMappedMemorySegmentImpl(int modes, MemorySessionImpl session) {
+            super(0, null, 0, modes, session);
         }
 
         @Override

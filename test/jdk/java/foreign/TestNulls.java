@@ -100,13 +100,13 @@ public class TestNulls {
             VaList.Builder.class,
             FunctionDescriptor.class,
             SegmentAllocator.class,
-            ResourceScope.class,
+            MemorySession.class,
             NativeSymbol.class
     };
 
     static final Set<String> EXCLUDE_LIST = Set.of(
-            "java.lang.foreign.ResourceScope/newConfinedScope(java.lang.ref.Cleaner)/0/0",
-            "java.lang.foreign.ResourceScope/newSharedScope(java.lang.ref.Cleaner)/0/0",
+            "java.lang.foreign.MemorySession/openConfined(java.lang.ref.Cleaner)/0/0",
+            "java.lang.foreign.MemorySession/openShared(java.lang.ref.Cleaner)/0/0",
             "java.lang.foreign.MemoryLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "java.lang.foreign.SequenceLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "java.lang.foreign.ValueLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
@@ -174,17 +174,17 @@ public class TestNulls {
         addDefaultMapping(ValueLayout.OfLong.class, JAVA_LONG);
         addDefaultMapping(ValueLayout.OfDouble.class, ValueLayout.JAVA_DOUBLE);
         addDefaultMapping(GroupLayout.class, MemoryLayout.structLayout(ValueLayout.JAVA_INT));
-        addDefaultMapping(SequenceLayout.class, MemoryLayout.sequenceLayout(ValueLayout.JAVA_INT));
+        addDefaultMapping(SequenceLayout.class, MemoryLayout.sequenceLayout(1, ValueLayout.JAVA_INT));
         addDefaultMapping(MemorySegment.class, MemorySegment.ofArray(new byte[10]));
         addDefaultMapping(FunctionDescriptor.class, FunctionDescriptor.ofVoid());
         addDefaultMapping(CLinker.class, CLinker.systemCLinker());
         addDefaultMapping(VaList.class, VaListHelper.vaList);
         addDefaultMapping(VaList.Builder.class, VaListHelper.vaListBuilder);
-        addDefaultMapping(ResourceScope.class, ResourceScope.newSharedScope());
+        addDefaultMapping(MemorySession.class, MemorySession.openShared());
         addDefaultMapping(SegmentAllocator.class, SegmentAllocator.prefixAllocator(MemorySegment.ofArray(new byte[10])));
         addDefaultMapping(Supplier.class, () -> null);
         addDefaultMapping(ClassLoader.class, TestNulls.class.getClassLoader());
-        addDefaultMapping(NativeSymbol.class, NativeSymbol.ofAddress("dummy", MemoryAddress.ofLong(1), ResourceScope.globalScope()));
+        addDefaultMapping(NativeSymbol.class, NativeSymbol.ofAddress("dummy", MemoryAddress.ofLong(1), MemorySession.global()));
     }
 
     static class VaListHelper {
@@ -196,7 +196,7 @@ public class TestNulls {
             vaList = VaList.make(b -> {
                 builderRef.set(b);
                 b.addVarg(JAVA_LONG, 42L);
-            }, ResourceScope.newImplicitScope());
+            }, MemorySession.openImplicit());
             vaListBuilder = builderRef.get();
         }
     }

@@ -213,7 +213,7 @@ class TypeClass {
         } else if (l instanceof SequenceLayout) {
             SequenceLayout seq = (SequenceLayout)l;
             MemoryLayout elem = seq.elementLayout();
-            for (long i = 0 ; i < seq.elementCount().getAsLong() ; i++) {
+            for (long i = 0 ; i < seq.elementCount() ; i++) {
                 groupByEightBytes(elem, offset, groups);
                 offset += elem.byteSize();
             }

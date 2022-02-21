@@ -42,7 +42,7 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
@@ -89,14 +89,14 @@ public class TestUpcallStructScope extends NativeTestHelper {
         AtomicReference<MemorySegment> capturedSegment = new AtomicReference<>();
         MethodHandle target = methodHandle(capturedSegment::set);
         FunctionDescriptor upcallDesc = FunctionDescriptor.ofVoid(S_PDI_LAYOUT);
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            NativeSymbol upcallStub = LINKER.upcallStub(target, upcallDesc, scope);
-            MemorySegment argSegment = MemorySegment.allocateNative(S_PDI_LAYOUT, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            NativeSymbol upcallStub = LINKER.upcallStub(target, upcallDesc, session);
+            MemorySegment argSegment = MemorySegment.allocateNative(S_PDI_LAYOUT, session);
             MH_do_upcall.invoke(upcallStub, argSegment);
         }
 
         MemorySegment captured = capturedSegment.get();
-        assertFalse(captured.scope().isAlive());
+        assertFalse(captured.session().isAlive());
     }
 
 }

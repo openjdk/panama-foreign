@@ -27,9 +27,9 @@ package jdk.internal.foreign.abi;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.NativeSymbol;
+import java.lang.foreign.MemorySession;
 import sun.security.action.GetPropertyAction;
 
-import java.lang.foreign.ResourceScope;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import static java.lang.invoke.MethodHandles.dropArguments;
 import static java.lang.invoke.MethodHandles.exactInvoker;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodHandles.lookup;
@@ -63,7 +62,7 @@ public class ProgrammableUpcallHandler {
         }
     }
 
-    public static NativeSymbol make(ABIDescriptor abi, MethodHandle target, CallingSequence callingSequence, ResourceScope scope) {
+    public static NativeSymbol make(ABIDescriptor abi, MethodHandle target, CallingSequence callingSequence, MemorySession session) {
         assert callingSequence.forUpcall();
         Binding.VMLoad[] argMoves = argMoveBindings(callingSequence);
         Binding.VMStore[] retMoves = retMoveBindings(callingSequence);
@@ -95,7 +94,7 @@ public class ProgrammableUpcallHandler {
         CallRegs conv = new CallRegs(args, rets);
         long entryPoint = allocateOptimizedUpcallStub(doBindings, abi, conv,
                 callingSequence.needsReturnBuffer(), callingSequence.returnBufferSize());
-        return UpcallStubs.makeUpcall(entryPoint, scope);
+        return UpcallStubs.makeUpcall(entryPoint, session);
     }
 
     private static void checkPrimitive(MethodType type) {
@@ -132,7 +131,7 @@ public class ProgrammableUpcallHandler {
     private static Object invokeInterpBindings(Object[] lowLevelArgs, InvocationData invData) throws Throwable {
         Binding.Context allocator = invData.callingSequence.allocationSize() != 0
                 ? Binding.Context.ofBoundedAllocator(invData.callingSequence.allocationSize())
-                : Binding.Context.ofScope();
+                : Binding.Context.ofSession();
         try (allocator) {
             /// Invoke interpreter, got array of high-level arguments back
             Object[] highLevelArgs = new Object[invData.callingSequence.calleeMethodType().parameterCount()];

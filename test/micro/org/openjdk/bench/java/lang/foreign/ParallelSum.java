@@ -24,7 +24,7 @@
 package org.openjdk.bench.java.lang.foreign;
 
 import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.ValueLayout;
 import sun.misc.Unsafe;
@@ -65,7 +65,7 @@ public class ParallelSum {
     final static int CARRIER_SIZE = 4;
     final static int ALLOC_SIZE = CARRIER_SIZE * 1024 * 1024 * 256;
     final static int ELEM_SIZE = ALLOC_SIZE / CARRIER_SIZE;
-    static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(sequenceElement());
+    static final VarHandle VH_int = JAVA_INT.arrayElementVarHandle();
 
     final static MemoryLayout ELEM_LAYOUT = ValueLayout.JAVA_INT;
     final static int BULK_FACTOR = 512;
@@ -73,6 +73,7 @@ public class ParallelSum {
 
     static final Unsafe unsafe = Utils.unsafe;
 
+    MemorySession session;
     MemorySegment segment;
     long address;
 
@@ -82,7 +83,7 @@ public class ParallelSum {
         for (int i = 0; i < ELEM_SIZE; i++) {
             unsafe.putInt(address + (i * CARRIER_SIZE), i);
         }
-        segment = MemorySegment.allocateNative(ALLOC_SIZE, CARRIER_SIZE, ResourceScope.newSharedScope());
+        segment = MemorySegment.allocateNative(ALLOC_SIZE, CARRIER_SIZE, session = MemorySession.openShared());
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }
@@ -91,7 +92,7 @@ public class ParallelSum {
     @TearDown
     public void tearDown() throws Throwable {
         unsafe.freeMemory(address);
-        segment.scope().close();
+        session.close();
     }
 
     @Benchmark

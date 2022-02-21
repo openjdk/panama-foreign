@@ -27,6 +27,8 @@ package java.lang.foreign;
 
 import java.lang.invoke.MethodHandle;
 import java.util.Objects;
+
+import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.NativeSymbolImpl;
 import jdk.internal.javac.PreviewFeature;
 import jdk.internal.reflect.CallerSensitive;
@@ -34,10 +36,10 @@ import jdk.internal.reflect.Reflection;
 
 /**
  * A native symbol models a reference to a location (typically the entry point of a function) in a native library.
- * A native symbol has a name, and is associated with a scope, which governs the native symbol's lifecycle.
+ * A native symbol has a name, and is associated with a memory session, which governs the native symbol's lifecycle.
  * This is useful, since the library a native symbol refers to can be <em>unloaded</em>, thus invalidating the native symbol.
  * While native symbols are typically obtained via {@link ClassLoader#findNative(String)}, it is also possible to obtain an
- * <em>anonymous</em> native symbol, in the form of an {@linkplain CLinker#upcallStub(MethodHandle, FunctionDescriptor, ResourceScope) upcall stub},
+ * <em>anonymous</em> native symbol, in the form of an {@linkplain CLinker#upcallStub(MethodHandle, FunctionDescriptor, MemorySession) upcall stub},
  * that is, a reference to a dynamically-generated native symbol which can be used to call back into Java code.
  *
  * @since 19
@@ -51,20 +53,20 @@ sealed public interface NativeSymbol extends Addressable permits NativeSymbolImp
     String name();
 
     /**
-     * {@return the resource scope associated with this symbol}
-     */
-    ResourceScope scope();
-
-    /**
      * {@return the memory address associated with this symbol}
-     * @throws IllegalStateException if the scope associated with this symbol has been closed, or if access occurs from
-     * a thread other than the thread owning that scope.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with this native symbol is not
+     * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
      */
     @Override
     MemoryAddress address();
 
     /**
-     * Creates a new symbol from given name, address and scope.
+     * {@return a non-closeable view of the memory session associated with this native symbol}
+     */
+    MemorySession session();
+
+    /**
+     * Creates a new symbol from given name, address and memory session.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -72,18 +74,20 @@ sealed public interface NativeSymbol extends Addressable permits NativeSymbolImp
      * restricted methods, and use safe and supported functionalities, where possible.
      * @param name the symbol name.
      * @param address the symbol address.
-     * @param scope the symbol scope.
-     * @return A new symbol from given name, address and scope.
+     * @param session the symbol memory session.
+     * @return A new symbol from given name, address and memory session.
+     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
+     * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
      * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
-    static NativeSymbol ofAddress(String name, MemoryAddress address, ResourceScope scope) {
+    static NativeSymbol ofAddress(String name, MemoryAddress address, MemorySession session) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(name);
         Objects.requireNonNull(address);
-        Objects.requireNonNull(scope);
-        return new NativeSymbolImpl(name, address, scope);
+        Objects.requireNonNull(session);
+        return new NativeSymbolImpl(name, address, Scoped.toSessionImpl(session));
     }
 }

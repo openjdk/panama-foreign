@@ -28,7 +28,7 @@ import java.lang.foreign.Addressable;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
@@ -41,7 +41,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.ResourceScopeImpl;
+import jdk.internal.foreign.MemorySessionImpl;
 import static java.lang.invoke.MethodHandles.collectArguments;
 import static java.lang.invoke.MethodHandles.filterArguments;
 import static java.lang.invoke.MethodHandles.insertArguments;
@@ -205,66 +205,66 @@ public abstract class Binding {
     /**
      * A binding context is used as an helper to carry out evaluation of certain bindings; for instance,
      * it helps {@link Allocate} bindings, by providing the {@link SegmentAllocator} that should be used for
-     * the allocation operation, or {@link ToSegment} bindings, by providing the {@link ResourceScope} that
+     * the allocation operation, or {@link ToSegment} bindings, by providing the {@link MemorySession} that
      * should be used to create an unsafe struct from a memory address.
      */
     public static class Context implements AutoCloseable {
         private final SegmentAllocator allocator;
-        private final ResourceScope scope;
+        private final MemorySession session;
 
-        private Context(SegmentAllocator allocator, ResourceScope scope) {
+        private Context(SegmentAllocator allocator, MemorySession session) {
             this.allocator = allocator;
-            this.scope = scope;
+            this.session = session;
         }
 
         public SegmentAllocator allocator() {
             return allocator;
         }
 
-        public ResourceScope scope() {
-            return scope;
+        public MemorySession session() {
+            return session;
         }
 
         @Override
         public void close() {
-            scope().close();
+            session().close();
         }
 
         /**
-         * Create a binding context from given native scope.
+         * Create a binding context from given native session.
          */
         public static Context ofBoundedAllocator(long size) {
-            ResourceScope scope = ResourceScope.newConfinedScope();
-            return new Context(SegmentAllocator.newNativeArena(size, scope), scope);
+            MemorySession session = MemorySession.openConfined();
+            return new Context(SegmentAllocator.newNativeArena(size, session), session);
         }
 
         /**
          * Create a binding context from given segment allocator. The resulting context will throw when
-         * the context's scope is accessed.
+         * the context's session is accessed.
          */
         public static Context ofAllocator(SegmentAllocator allocator) {
             return new Context(allocator, null) {
                 @Override
-                public ResourceScope scope() {
+                public MemorySession session() {
                     throw new UnsupportedOperationException();
                 }
             };
         }
 
         /**
-         * Create a binding context from given scope. The resulting context will throw when
+         * Create a binding context from given session. The resulting context will throw when
          * the context's allocator is accessed.
          */
-        public static Context ofScope() {
-            ResourceScope scope = ResourceScope.newConfinedScope();
-            return new Context(null, scope) {
+        public static Context ofSession() {
+            MemorySession session = MemorySession.openConfined();
+            return new Context(null, session) {
                 @Override
                 public SegmentAllocator allocator() { throw new UnsupportedOperationException(); }
             };
         }
 
         /**
-         * Dummy binding context. Throws exceptions when attempting to access scope, return a throwing allocator, and has
+         * Dummy binding context. Throws exceptions when attempting to access session, return a throwing allocator, and has
          * an idempotent {@link #close()}.
          */
         public static final Context DUMMY = new Context(null, null) {
@@ -274,7 +274,7 @@ public abstract class Binding {
             }
 
             @Override
-            public ResourceScope scope() {
+            public MemorySession session() {
                 throw new UnsupportedOperationException();
             }
 
@@ -898,7 +898,7 @@ public abstract class Binding {
         }
 
         private static MemorySegment toSegment(MemoryAddress operand, long size, Context context) {
-            return MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size, (ResourceScopeImpl) context.scope);
+            return MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size, (MemorySessionImpl) context.session);
         }
 
         @Override

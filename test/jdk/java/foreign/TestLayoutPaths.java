@@ -32,7 +32,7 @@ import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SequenceLayout;
 
 import java.lang.foreign.ValueLayout;
@@ -52,13 +52,13 @@ public class TestLayoutPaths {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadBitSelectFromSeq() {
-        SequenceLayout seq = MemoryLayout.sequenceLayout(JAVA_INT);
+        SequenceLayout seq = MemoryLayout.sequenceLayout(5, JAVA_INT);
         seq.bitOffset(groupElement("foo"));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadByteSelectFromSeq() {
-        SequenceLayout seq = MemoryLayout.sequenceLayout(JAVA_INT);
+        SequenceLayout seq = MemoryLayout.sequenceLayout(5, JAVA_INT);
         seq.byteOffset(groupElement("foo"));
     }
 
@@ -76,13 +76,13 @@ public class TestLayoutPaths {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadBitSelectFromValue() {
-        SequenceLayout seq = MemoryLayout.sequenceLayout(JAVA_INT);
+        SequenceLayout seq = MemoryLayout.sequenceLayout(5, JAVA_INT);
         seq.bitOffset(sequenceElement(), sequenceElement());
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadByteSelectFromValue() {
-        SequenceLayout seq = MemoryLayout.sequenceLayout(JAVA_INT);
+        SequenceLayout seq = MemoryLayout.sequenceLayout(5, JAVA_INT);
         seq.byteOffset(sequenceElement(), sequenceElement());
     }
 
@@ -172,30 +172,6 @@ public class TestLayoutPaths {
     public void testBadMultiple() {
         GroupLayout g = MemoryLayout.structLayout(MemoryLayout.paddingLayout(3), JAVA_INT.withName("foo"));
         g.byteOffset(groupElement("foo"));
-    }
-
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testBitOffsetBadUnboundedSequenceTraverse() {
-        MemoryLayout layout = MemoryLayout.sequenceLayout(MemoryLayout.sequenceLayout(JAVA_INT));
-        layout.bitOffset(sequenceElement(1), sequenceElement(0));
-    }
-
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testByteOffsetBadUnboundedSequenceTraverse() {
-        MemoryLayout layout = MemoryLayout.sequenceLayout(MemoryLayout.sequenceLayout(JAVA_INT));
-        layout.byteOffset(sequenceElement(1), sequenceElement(0));
-    }
-
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testBitOffsetHandleBadUnboundedSequenceTraverse() {
-        MemoryLayout layout = MemoryLayout.sequenceLayout(MemoryLayout.sequenceLayout(JAVA_INT));
-        layout.bitOffsetHandle(sequenceElement(1), sequenceElement(0));
-    }
-
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testByteOffsetHandleBadUnboundedSequenceTraverse() {
-        MemoryLayout layout = MemoryLayout.sequenceLayout(MemoryLayout.sequenceLayout(JAVA_INT));
-        layout.byteOffsetHandle(sequenceElement(1), sequenceElement(0));
     }
 
     @Test(expectedExceptions = UnsupportedOperationException.class)
@@ -503,8 +479,8 @@ public class TestLayoutPaths {
         MethodHandle sliceHandle = layout.sliceHandle(pathElements);
         sliceHandle = sliceHandle.asSpreader(long[].class, indexes.length);
 
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment segment = MemorySegment.allocateNative(layout, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(layout, session);
             MemorySegment slice = (MemorySegment) sliceHandle.invokeExact(segment, indexes);
             assertEquals(slice.address().toRawLongValue() - segment.address().toRawLongValue(), expectedBitOffset / 8);
             assertEquals(slice.byteSize(), selected.byteSize());
@@ -538,8 +514,8 @@ public class TestLayoutPaths {
             return;
         }
 
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment segment = MemorySegment.allocateNative(layout, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(layout, session);
 
             try {
                 sliceHandle.invokeExact(segment, 1); // should work

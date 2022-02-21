@@ -28,7 +28,8 @@ package java.nio;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.UnmapperProxy;
-import jdk.internal.foreign.ResourceScopeImpl;
+import jdk.internal.foreign.AbstractMemorySegmentImpl;
+import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM.BufferPool;
@@ -36,7 +37,7 @@ import jdk.internal.vm.annotation.ForceInline;
 
 import java.io.FileDescriptor;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.util.Objects;
 import java.util.Spliterator;
 
@@ -757,19 +758,19 @@ public abstract class Buffer {
     }
 
     @ForceInline
-    final ResourceScope scope() {
+    final MemorySession session() {
         if (segment != null) {
-            return segment.scope();
+            return ((AbstractMemorySegmentImpl)segment).sessionImpl();
         } else {
             return null;
         }
     }
 
-    final void checkScope() {
-        ResourceScope scope = scope();
-        if (scope != null) {
+    final void checkSession() {
+        MemorySession session = session();
+        if (session != null) {
             try {
-                ((ResourceScopeImpl)scope).checkValidState();
+                ((MemorySessionImpl)session).checkValidState();
             } catch (ScopedMemoryAccess.ScopedAccessError e) {
                 throw new IllegalStateException("This segment is already closed");
             }
@@ -825,16 +826,16 @@ public abstract class Buffer {
                 }
 
                 @Override
-                public Runnable acquireScope(Buffer buffer, boolean async) {
-                    var scope = buffer.scope();
-                    if (scope == null) {
+                public Runnable acquireSession(Buffer buffer, boolean async) {
+                    var session = buffer.session();
+                    if (session == null) {
                         return null;
                     }
-                    if (async && scope.ownerThread() != null) {
-                        throw new IllegalStateException("Confined scope not supported");
+                    if (async && session.ownerThread() != null) {
+                        throw new IllegalStateException("Confined session not supported");
                     }
-                    ((ResourceScopeImpl)scope).acquire0();
-                    return ((ResourceScopeImpl) scope)::release0;
+                    ((MemorySessionImpl)session).acquire0();
+                    return ((MemorySessionImpl) session)::release0;
                 }
 
                 @Override
