@@ -194,7 +194,7 @@ public class TestEnableNativeAccess {
     public void testWarnFirstAccess() throws Exception {
         List<String> output1 = run("panama_enable_native_access_first", PANAMA_MAIN,
                 successWithWarning()).asLines();
-        assertTrue(count(output1, "WARNING") == 5);  // 4 on first access, 1 on second access
+        assertTrue(count(output1, "WARNING") == 4);  // 4 on first access, none on subsequent access
     }
 
     /**

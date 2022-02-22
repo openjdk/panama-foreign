@@ -123,24 +123,23 @@ public class Reflection {
             Module module = currentClass.getModule();
             if (ModuleBootstrap.hasEnableNativeAccessFlag()) {
                 if (!SharedSecrets.getJavaLangAccess().isEnableNativeAccess(module)) {
-                    // native-access not enabled for module
                     throw new IllegalCallerException("Illegal native access from: " + module);
                 }
-            } else {    // native-access unspecified, allowed for all modules with warning
+            } else {    // native-access unspecified, allowed for all modules
+                        // warning omitted on first access only
                 boolean isFirst = firstNativeAccessWarning.compareAndSet(false, true);
                 if (isFirst) {
-                    System.err.println("WARNING: A restricted native access operation has occurred");
-                }
-                URL url = codeSource(currentClass);
-                String source = currentClass.getName();
-                if (url != null)
-                    source += " (" + url + ")";
-                String what = owner.getName() + "." + methodName;
-                System.err.println("WARNING: Restricted native access by " + source + " to " + what);
-                if (isFirst) {
-                    System.err.println("""
+                    URL url = codeSource(currentClass);
+                    String source = currentClass.getName();
+                    if (url != null)
+                        source += " (" + url + ")";
+                    String what = owner.getName() + "." + methodName;
+                    System.err.printf("""
+                            WARNING: A restricted native access operation has occurred
+                            WARNING: Restricted native access by %s to %s
                             WARNING: Use --enable-native-access to prevent warnings about restricted native access by trusted modules
-                            WARNING: All restricted native access operations by untrusted modules will be denied in a future release""");
+                            WARNING: All restricted native access operations by untrusted modules will be denied in a future release
+                            %n""", source, what);
                 }
             }
         }

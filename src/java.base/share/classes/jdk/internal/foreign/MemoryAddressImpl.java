@@ -216,7 +216,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public long get(ValueLayout.OfLong layout, long offset) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "set");
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "get");
         return NativeMemorySegmentImpl.EVERYTHING.get(layout, toRawLongValue() + offset);
     }
 
@@ -363,7 +363,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     @ForceInline
     @CallerSensitive
     public void setAtIndex(ValueLayout.OfDouble layout, long index, double value) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "getAtIndex");
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemoryAddress.class, "setAtIndex");
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         NativeMemorySegmentImpl.EVERYTHING.set(layout, toRawLongValue() + (index * layout.byteSize()), value);
     }
