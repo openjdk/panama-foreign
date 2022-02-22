@@ -25,9 +25,10 @@
  * @test
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @run testng/othervm -Xmx4G -XX:MaxDirectMemorySize=1M TestSegments
+ * @run testng/othervm -Xmx4G -XX:MaxDirectMemorySize=1M --enable-native-access=ALL-UNNAMED TestSegments
  */
 
+import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
@@ -50,6 +51,24 @@ public class TestSegments {
     @Test(dataProvider = "badSizeAndAlignments", expectedExceptions = IllegalArgumentException.class)
     public void testBadAllocateAlign(long size, long align) {
         MemorySegment.allocateNative(size, align, MemorySession.openImplicit());
+    }
+
+    @Test
+    public void testZeroLengthNativeSegment() {
+        try (MemorySession session = MemorySession.openConfined()) {
+            var segment = MemorySegment.allocateNative(0, session);
+            assertEquals(segment.byteSize(), 0);
+            MemoryLayout seq = MemoryLayout.sequenceLayout(0, JAVA_INT);
+            segment = MemorySegment.allocateNative(seq, session);
+            assertEquals(segment.byteSize(), 0);
+            assertEquals(segment.address().toRawLongValue() % seq.byteAlignment(), 0);
+            segment = MemorySegment.allocateNative(0, 4, session);
+            assertEquals(segment.byteSize(), 0);
+            assertEquals(segment.address().toRawLongValue() % 4, 0);
+            segment = MemorySegment.ofAddress(segment.address(), 0, session);
+            assertEquals(segment.byteSize(), 0);
+            assertEquals(segment.address().toRawLongValue() % 4, 0);
+        }
     }
 
     @Test(expectedExceptions = { OutOfMemoryError.class,

@@ -839,7 +839,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param bytesSize the desired size.
      * @param session the native segment memory session.
      * @return a new native memory segment with given base address, size and memory session.
-     * @throws IllegalArgumentException if {@code bytesSize <= 0}.
+     * @throws IllegalArgumentException if {@code bytesSize < 0}.
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
      * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
@@ -851,7 +851,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(address);
         Objects.requireNonNull(session);
-        if (bytesSize <= 0) {
+        if (bytesSize < 0) {
             throw new IllegalArgumentException("Invalid size : " + bytesSize);
         }
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, bytesSize, Scoped.toSessionImpl(session));
@@ -872,7 +872,6 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param layout the layout of the off-heap memory block backing the native memory segment.
      * @param session the segment memory session.
      * @return a new native memory segment.
-     * @throws IllegalArgumentException if the specified layout has illegal size or alignment constraint.
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
      * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
      */
@@ -897,7 +896,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @param session the segment temporal bounds.
      * @return a new native memory segment.
-     * @throws IllegalArgumentException if {@code bytesSize <= 0}.
+     * @throws IllegalArgumentException if {@code bytesSize < 0}.
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
      * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
      */
@@ -917,14 +916,14 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param alignmentBytes the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
      * @param session the segment memory session.
      * @return a new native memory segment.
-     * @throws IllegalArgumentException if {@code bytesSize <= 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
+     * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
      * is not a power of 2.
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
      * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
      */
     static MemorySegment allocateNative(long bytesSize, long alignmentBytes, MemorySession session) {
         Objects.requireNonNull(session);
-        if (bytesSize <= 0) {
+        if (bytesSize < 0) {
             throw new IllegalArgumentException("Invalid allocation size : " + bytesSize);
         }
 

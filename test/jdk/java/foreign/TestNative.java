@@ -200,7 +200,7 @@ public class TestNative extends NativeTestHelper {
     public void testBadResize() {
         try (MemorySession session = MemorySession.openConfined()) {
             MemorySegment segment = MemorySegment.allocateNative(4, 1, session);
-            MemorySegment.ofAddress(segment.address(), 0, MemorySession.global());
+            MemorySegment.ofAddress(segment.address(), -1, MemorySession.global());
         }
     }
 
