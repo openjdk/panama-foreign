@@ -39,6 +39,6 @@ public class TestFallbackLookup {
         // we request a CLinker, forcing OS name to be "Windows". This should trigger an exception when
         // attempting to load a non-existent ucrtbase.dll. Make sure that no error is generated at this stage.
         CLinker linker = CLinker.systemCLinker();
-        assertTrue(linker.lookup("Foo").isEmpty());
+        assertTrue(linker.lookup("nonExistentSymbol").isEmpty());
     }
 }
