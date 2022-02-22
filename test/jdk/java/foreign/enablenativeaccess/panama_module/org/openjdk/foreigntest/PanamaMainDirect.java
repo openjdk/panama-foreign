@@ -25,10 +25,21 @@ package org.openjdk.foreigntest;
 
 import java.lang.foreign.*;
 
-public class PanamaMain {
-   public static void main(String[] args) {
-       System.out.println("Trying to get CLinker");
-       CLinker.systemCLinker();
-       System.out.println("Got CLinker");
+public class PanamaMainDirect {
+    public static void main(String[] args) {
+       testDirectAccessCLinker();
+       testDirectAccessMemorySegment();
+    }
+
+    public static void testDirectAccessCLinker() {
+        System.out.println("Trying to get CLinker");
+        CLinker.systemCLinker();
+        System.out.println("Got CLinker");
+   }
+
+    public static void testDirectAccessMemorySegment() {
+        System.out.println("Trying to get MemorySegment");
+        MemorySegment.ofAddress(MemoryAddress.NULL, 4000, MemorySession.global());
+        System.out.println("Got MemorySegment");
    }
 }

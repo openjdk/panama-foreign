@@ -57,7 +57,7 @@ public class TestEnableNativeAccess {
 
     static final String MODULE_PATH = System.getProperty("jdk.module.path");
 
-    static final String PANAMA_MAIN = "panama_module/org.openjdk.foreigntest.PanamaMain";
+    static final String PANAMA_MAIN = "panama_module/org.openjdk.foreigntest.PanamaMainDirect";
     static final String PANAMA_REFLECTION = "panama_module/org.openjdk.foreigntest.PanamaMainReflection";
     static final String PANAMA_INVOKE = "panama_module/org.openjdk.foreigntest.PanamaMainInvoke";
     static final String UNNAMED = "org.openjdk.foreigntest.PanamaMainUnnamedModule";
@@ -194,7 +194,7 @@ public class TestEnableNativeAccess {
     public void testWarnFirstAccess() throws Exception {
         List<String> output1 = run("panama_enable_native_access_first", PANAMA_MAIN,
                 successWithWarning()).asLines();
-        assertTrue(count(output1, "WARNING") == 4);
+        assertTrue(count(output1, "WARNING") == 5);  // 4 on first access, 1 on second access
     }
 
     /**

@@ -184,7 +184,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      */
     @CallerSensitive
     static VaList ofAddress(MemoryAddress address, MemorySession session) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), VaList.class, "ofAddress");
         Objects.requireNonNull(address);
         Objects.requireNonNull(session);
         return SharedUtils.newVaListOfAddress(address, Scoped.toSessionImpl(session));
