@@ -69,7 +69,7 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
         if (parameterNames.isPresent()) {
             name = parameterNames.get().get(i);
         }
-        return name.isEmpty()? "_x" + i : name;
+        return name.isEmpty()? "_x" + i : Utils.javaSafeIdentifier(name);
     }
 
     private void emitFunctionalInterfaceMethod() {
