@@ -44,6 +44,7 @@ public enum CursorKind {
     ParmDecl(CXCursor_ParmDecl()),
     TypedefDecl(CXCursor_TypedefDecl()),
     Namespace(CXCursor_Namespace()),
+    TypeRef(CXCursor_TypeRef()),
     IntegerLiteral(CXCursor_IntegerLiteral()),
     FloatingLiteral(CXCursor_FloatingLiteral()),
     ImaginaryLiteral(CXCursor_ImaginaryLiteral()),

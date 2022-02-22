@@ -257,6 +257,36 @@ class TreeMaker {
                 return null;
             }
         }
+        Type.Function funcType = null;
+        boolean isFuncPtrType = false;
+        if (canonicalType instanceof Type.Function) {
+            funcType = (Type.Function)canonicalType;
+        } else if (Utils.isPointerType(canonicalType)) {
+            Type pointeeType = null;
+            try {
+                pointeeType = ((Type.Delegated)canonicalType).type();
+            } catch (NullPointerException npe) {
+                // exception thrown for unresolved pointee type. Ignore if we hit that case.
+            }
+            if (pointeeType instanceof Type.Function) {
+                funcType = (Type.Function)pointeeType;
+                isFuncPtrType = true;
+            }
+        }
+        if (funcType != null) {
+            List<String> params = c.children().
+                filter(ch -> ch.kind() == CursorKind.ParmDecl).
+                map(this::createTree).
+                map(Declaration.Variable.class::cast).
+                map(Declaration::name).
+                collect(Collectors.toList());
+            if (!params.isEmpty()) {
+                canonicalType = funcType.withParameterNames(params);
+                if (isFuncPtrType) {
+                    canonicalType = new TypeImpl.PointerImpl(canonicalType);
+                }
+            }
+        }
         return Declaration.typedef(CursorPosition.of(c), c.spelling(), canonicalType);
     }
 

@@ -56,8 +56,9 @@ public abstract class JavaSourceBuilder {
             return new FunctionInfo(methodType, null, functionDescriptor, isVarargs, Optional.of(parameterNames));
         }
 
-        static FunctionInfo ofFunctionPointer(MethodType upcallType, MethodType downcallType, FunctionDescriptor functionDescriptor) {
-            return new FunctionInfo(upcallType, downcallType, functionDescriptor, false, Optional.empty());
+        static FunctionInfo ofFunctionPointer(MethodType upcallType, MethodType downcallType, FunctionDescriptor functionDescriptor,
+                 Optional<List<String>> parameterNames) {
+            return new FunctionInfo(upcallType, downcallType, functionDescriptor, false, parameterNames);
         }
     }
 

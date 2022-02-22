@@ -29,6 +29,7 @@ package jdk.internal.jextract.impl;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.VaList;
 import jdk.incubator.foreign.ValueLayout;
+import jdk.incubator.jextract.Type.Delegated;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.SourceLocation;
@@ -319,6 +320,15 @@ class Utils {
             return (isPrintableAscii(ch))
                 ? String.valueOf(ch)
                 : String.format("\\u%04x", (int) ch);
+        }
+    }
+
+    static boolean isPointerType(jdk.incubator.jextract.Type type) {
+        if (type instanceof Delegated) {
+            Delegated delegated = (Delegated) type;
+            return delegated.kind() == Delegated.Kind.POINTER;
+        } else {
+            return false;
         }
     }
 

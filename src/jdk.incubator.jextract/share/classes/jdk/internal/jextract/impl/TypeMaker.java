@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Declaration;
@@ -42,6 +43,7 @@ import jdk.incubator.jextract.Type;
 import jdk.incubator.jextract.Type.Delegated;
 import jdk.incubator.jextract.Type.Primitive;
 import jdk.internal.clang.Cursor;
+import jdk.internal.clang.TypeKind;
 
 class TypeMaker {
 
@@ -197,7 +199,11 @@ class TypeMaker {
             case BlockPointer:
             case Pointer: {
                 // TODO: We can always erase type for macro evaluation, should we?
-                return new TypeImpl.PointerImpl(reference(t.getPointeeType()));
+                if (t.getPointeeType().kind() == TypeKind.FunctionProto) {
+                    return new TypeImpl.PointerImpl(makeType(t.getPointeeType()));
+                } else {
+                    return new TypeImpl.PointerImpl(reference(t.getPointeeType()));
+                }
             }
             case Typedef: {
                 Type __type = makeType(t.canonicalType());
