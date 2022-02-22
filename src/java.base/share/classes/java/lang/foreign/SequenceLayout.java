@@ -91,7 +91,7 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
     }
 
     /**
-     * {@return the element count of this sequence layout (if any)}
+     * {@return the element count of this sequence layout}
      */
     public long elementCount() {
         return elemCount;

@@ -48,14 +48,28 @@ public class SystemLookup {
 
     static final SystemLookup INSTANCE = new SystemLookup();
 
+    /* A fallback lookup, used when creation of system lookup fails. */
+    private static final Function<String, Optional<NativeSymbol>> fallbackLookup = name -> Optional.empty();
+
     /*
      * On POSIX systems, dlsym will allow us to lookup symbol in library dependencies; the same trick doesn't work
      * on Windows. For this reason, on Windows we do not generate any side-library, and load msvcrt.dll directly instead.
      */
-    private static final Function<String, Optional<NativeSymbol>> syslookup = switch (CABI.current()) {
-        case SysV, LinuxAArch64, MacOsAArch64 -> libLookup(libs -> libs.load(jdkLibraryPath("syslookup")));
-        case Win64 -> makeWindowsLookup(); // out of line to workaround javac crash
-    };
+    private static final Function<String, Optional<NativeSymbol>> syslookup = makeSystemLookup();
+
+    private static final Function<String, Optional<NativeSymbol>> makeSystemLookup() {
+        try {
+            return switch (CABI.current()) {
+                case SysV, LinuxAArch64, MacOsAArch64 -> libLookup(libs -> libs.load(jdkLibraryPath("syslookup")));
+                case Win64 -> makeWindowsLookup(); // out of line to workaround javac crash
+            };
+        } catch (Throwable ex) {
+            // This can happen in the event of a library loading failure - e.g. if one of the libraries the
+            // system lookup depends on cannot be loaded for some reason. In such extreme cases, rather than
+            // fail, return a dummy lookup.
+            return fallbackLookup;
+        }
+    }
 
     private static Function<String, Optional<NativeSymbol>> makeWindowsLookup() {
         Path system32 = Path.of(System.getenv("SystemRoot"), "System32");
