@@ -159,17 +159,17 @@ public:
 };
 
 /*
- * This functin performs a thread-local handshake against all threads running at the time
- * the given scope (deopt) was closed. If the handshake closure finds that a thread has
- * safepointed inside a scoped method (that is, a method inside the ScopedMemoryAccess class
- * annotated with the '@Scoped' annotation), whose local variables mention the scope being closed
- * (deopt), the thread is added to a problematic stack. After the handshake, each thread in
- * the problematic stack is handshaked again, individually, to check that it has exited
+ * This function performs a thread-local handshake against all threads running at the time
+ * the given scope (deopt) was closed. If the hanshake for a given thread is processed while
+ * the thread is inside a scoped method (that is, a method inside the ScopedMemoryAccess
+ * class annotated with the '@Scoped' annotation), whose local variables mention the scope being
+ * closed (deopt), the thread is added to a problematic list. After the handshake, each thread in
+ * the problematic list is handshaked again, individually, to check that it has exited
  * the scoped method. This should happen quickly, because once we find a problematic
- * thread, we also deoptimize it, meaning that when the thread resumes execution, it should
- * also see the updated scope state. This function returns when the stack of problematic
- * threads is empty. To prevent premature thread termination we take a snapshot of the live
- * threads in the system using a ThreadsListHandle.
+ * thread, we also deoptimize it, meaning that when the thread resumes execution, the thread
+ * should also see the updated scope state (and fail on access). This function returns when
+ * the list of problematic threads is empty. To prevent premature thread termination we take
+ * a snapshot of the live threads in the system using a ThreadsListHandle.
  */
 JVM_ENTRY(void, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, jobject deopt))
   ThreadStack threads;
@@ -180,7 +180,7 @@ JVM_ENTRY(void, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, job
     // fast-path: return if no problematic thread is found
     return;
   }
-  // now iterate on all problematic threads, until we converge. Note: from this point on,
+  // Now iterate over all problematic threads, until we converge. Note: from this point on,
   // we only need to focus on the problematic threads found in the previous step, as
   // any new thread created after the initial handshake will see the scope as CLOSED,
   // and will fail to access memory anyway.
@@ -188,7 +188,7 @@ JVM_ENTRY(void, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, job
   ThreadStackElement *element = threads.pop();
   while (element != NULL) {
     JavaThread* thread = element->_thread;
-    // if the thread is not in the list handle, it means that the thread has died,
+    // If the thread is not in the list handle, it means that the thread has died,
     // so that we can safely skip further handshakes.
     if (tlh.list()->includes(thread)) {
       Handshake::execute(&cl, thread);
