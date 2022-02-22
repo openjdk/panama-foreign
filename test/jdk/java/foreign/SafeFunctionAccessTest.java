@@ -34,11 +34,12 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.Arrays;
 
 import java.lang.foreign.VaList;
 import org.testng.annotations.*;
@@ -57,10 +58,10 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     @Test(expectedExceptions = IllegalStateException.class)
     public void testClosedStruct() throws Throwable {
         MemorySegment segment;
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            segment = MemorySegment.allocateNative(POINT, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            segment = MemorySegment.allocateNative(POINT, session);
         }
-        assertFalse(segment.scope().isAlive());
+        assertFalse(segment.session().isAlive());
         MethodHandle handle = CLinker.systemCLinker().downcallHandle(
                 findNativeOrThrow(SafeFunctionAccessTest.class,"struct_func"),
                 FunctionDescriptor.ofVoid(POINT));
@@ -74,24 +75,26 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
                 findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func_6"),
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
         for (int i = 0 ; i < 6 ; i++) {
-            MemorySegment[] segments = new MemorySegment[]{
-                    MemorySegment.allocateNative(POINT, ResourceScope.newImplicitScope()),
-                    MemorySegment.allocateNative(POINT, ResourceScope.newImplicitScope()),
-                    MemorySegment.allocateNative(POINT, ResourceScope.newImplicitScope()),
-                    MemorySegment.allocateNative(POINT, ResourceScope.newImplicitScope()),
-                    MemorySegment.allocateNative(POINT, ResourceScope.newImplicitScope()),
-                    MemorySegment.allocateNative(POINT, ResourceScope.newImplicitScope())
+            MemorySession[] sessions = new MemorySession[] {
+                    MemorySession.openShared(),
+                    MemorySession.openShared(),
+                    MemorySession.openShared(),
+                    MemorySession.openShared(),
+                    MemorySession.openShared(),
+                    MemorySession.openShared()
             };
             // check liveness
-            segments[i].scope().close();
+            sessions[i].close();
             for (int j = 0 ; j < 6 ; j++) {
                 if (i == j) {
-                    assertFalse(segments[j].scope().isAlive());
+                    assertFalse(sessions[j].isAlive());
                 } else {
-                    assertTrue(segments[j].scope().isAlive());
+                    assertTrue(sessions[j].isAlive());
                 }
             }
             try {
+                MemorySegment[] segments = Arrays.stream(sessions).map(session -> MemorySegment.allocateNative(POINT, session))
+                        .toArray(MemorySegment[]::new);
                 handle.invokeWithArguments(segments);
                 fail();
             } catch (IllegalStateException ex) {
@@ -99,7 +102,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
             }
             for (int j = 0 ; j < 6 ; j++) {
                 if (i != j) {
-                    segments[j].scope().close(); // should succeed!
+                    sessions[j].close(); // should succeed!
                 }
             }
         }
@@ -108,10 +111,10 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     @Test(expectedExceptions = IllegalStateException.class)
     public void testClosedVaList() throws Throwable {
         VaList list;
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            list = VaList.make(b -> b.addVarg(C_INT, 42), scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            list = VaList.make(b -> b.addVarg(C_INT, 42), session);
         }
-        assertFalse(list.scope().isAlive());
+        assertFalse(list.session().isAlive());
         MethodHandle handle = CLinker.systemCLinker().downcallHandle(
                 findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func"),
                 FunctionDescriptor.ofVoid(C_POINTER));
@@ -122,11 +125,11 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     @Test(expectedExceptions = IllegalStateException.class)
     public void testClosedUpcall() throws Throwable {
         NativeSymbol upcall;
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+        try (MemorySession session = MemorySession.openConfined()) {
             MethodHandle dummy = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "dummy", MethodType.methodType(void.class));
-            upcall = CLinker.systemCLinker().upcallStub(dummy, FunctionDescriptor.ofVoid(), scope);
+            upcall = CLinker.systemCLinker().upcallStub(dummy, FunctionDescriptor.ofVoid(), session);
         }
-        assertFalse(upcall.scope().isAlive());
+        assertFalse(upcall.session().isAlive());
         MethodHandle handle = CLinker.systemCLinker().downcallHandle(
                 findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func"),
                 FunctionDescriptor.ofVoid(C_POINTER));
@@ -142,9 +145,9 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
                 findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func_cb"),
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
 
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            VaList list = VaList.make(b -> b.addVarg(C_INT, 42), scope);
-            handle.invoke(list, scopeChecker(scope));
+        try (MemorySession session = MemorySession.openConfined()) {
+            VaList list = VaList.make(b -> b.addVarg(C_INT, 42), session);
+            handle.invoke(list, sessionChecker(session));
         }
     }
 
@@ -154,9 +157,9 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
                 findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func_cb"),
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
 
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment segment = MemorySegment.allocateNative(POINT, scope);
-            handle.invoke(segment, scopeChecker(scope));
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(POINT, session);
+            handle.invoke(segment, sessionChecker(session));
         }
     }
 
@@ -166,30 +169,30 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
                 findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func_cb"),
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
 
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+        try (MemorySession session = MemorySession.openConfined()) {
             MethodHandle dummy = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "dummy", MethodType.methodType(void.class));
-            NativeSymbol upcall = CLinker.systemCLinker().upcallStub(dummy, FunctionDescriptor.ofVoid(), scope);
-            handle.invoke(upcall, scopeChecker(scope));
+            NativeSymbol upcall = CLinker.systemCLinker().upcallStub(dummy, FunctionDescriptor.ofVoid(), session);
+            handle.invoke(upcall, sessionChecker(session));
         }
     }
 
-    NativeSymbol scopeChecker(ResourceScope scope) {
+    NativeSymbol sessionChecker(MemorySession session) {
         try {
-            MethodHandle handle = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "checkScope",
-                    MethodType.methodType(void.class, ResourceScope.class));
-            handle = handle.bindTo(scope);
-            return CLinker.systemCLinker().upcallStub(handle, FunctionDescriptor.ofVoid(), ResourceScope.newImplicitScope());
+            MethodHandle handle = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "checkSession",
+                    MethodType.methodType(void.class, MemorySession.class));
+            handle = handle.bindTo(session);
+            return CLinker.systemCLinker().upcallStub(handle, FunctionDescriptor.ofVoid(), MemorySession.openImplicit());
         } catch (Throwable ex) {
             throw new AssertionError(ex);
         }
     }
 
-    static void checkScope(ResourceScope scope) {
+    static void checkSession(MemorySession session) {
         try {
-            scope.close();
-            fail("Scope closed unexpectedly!");
+            session.close();
+            fail("Session closed unexpectedly!");
         } catch (IllegalStateException ex) {
-            assertTrue(ex.getMessage().contains("kept alive")); //if acquired, fine
+            assertTrue(ex.getMessage().contains("acquired")); //if acquired, fine
         }
     }
 }

@@ -26,7 +26,7 @@
 package jdk.internal.foreign;
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 
 public final class ArenaAllocator implements SegmentAllocator {
@@ -39,12 +39,12 @@ public final class ArenaAllocator implements SegmentAllocator {
     private long size = 0;
     private final long blockSize;
     private final long arenaSize;
-    private final ResourceScope scope;
+    private final MemorySession session;
 
-    public ArenaAllocator(long blockSize, long arenaSize, ResourceScope scope) {
+    public ArenaAllocator(long blockSize, long arenaSize, MemorySession session) {
         this.blockSize = blockSize;
         this.arenaSize = arenaSize;
-        this.scope = scope;
+        this.session = session;
         this.segment = newSegment(blockSize, 1);
     }
 
@@ -60,17 +60,13 @@ public final class ArenaAllocator implements SegmentAllocator {
         }
     }
 
-    public ResourceScope scope() {
-        return scope;
-    }
-
     private MemorySegment newSegment(long bytesSize, long bytesAlignment) {
         long allocatedSize = Utils.alignUp(bytesSize, bytesAlignment);
         if (size + allocatedSize > arenaSize) {
             throw new OutOfMemoryError();
         }
         size += allocatedSize;
-        return MemorySegment.allocateNative(bytesSize, bytesAlignment, scope);
+        return MemorySegment.allocateNative(bytesSize, bytesAlignment, session);
     }
 
     @Override

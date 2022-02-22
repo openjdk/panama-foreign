@@ -28,7 +28,6 @@ package jdk.internal.foreign;
 import java.lang.foreign.Addressable;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
 import java.lang.foreign.ValueLayout;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.reflect.CallerSensitive;
@@ -86,17 +85,17 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
         return ofLongUnchecked(value, Long.MAX_VALUE);
     }
 
-    public static MemorySegment ofLongUnchecked(long value, long byteSize, ResourceScopeImpl resourceScope) {
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, resourceScope);
+    public static MemorySegment ofLongUnchecked(long value, long byteSize, MemorySessionImpl session) {
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, session);
     }
 
     public static MemorySegment ofLongUnchecked(long value, long byteSize) {
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, ResourceScopeImpl.GLOBAL);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, MemorySessionImpl.GLOBAL);
     }
 
     @Override
-    public ResourceScope scope() {
-        return ResourceScopeImpl.GLOBAL;
+    public MemorySessionImpl sessionImpl() {
+        return MemorySessionImpl.GLOBAL;
     }
 
     @Override

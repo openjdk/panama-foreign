@@ -24,13 +24,15 @@
 /*
  * @test
  * @enablePreview
- * @modules java.base/jdk.internal.ref
- * @run testng/othervm TestResourceScope
+ * @modules java.base/jdk.internal.ref java.base/jdk.internal.foreign
+ * @run testng/othervm TestMemorySession
  */
 
 import java.lang.ref.Cleaner;
 
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
+
+import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.ref.CleanerFactory;
 
 import org.testng.annotations.DataProvider;
@@ -44,7 +46,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
-public class TestResourceScope {
+public class TestMemorySession {
 
     final static int N_THREADS = 100;
 
@@ -52,20 +54,20 @@ public class TestResourceScope {
     public void testConfined(Supplier<Cleaner> cleanerSupplier) {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
-        ResourceScope scope = cleaner != null ?
-                ResourceScope.newConfinedScope(cleaner) :
-                ResourceScope.newConfinedScope();
+        MemorySession session = cleaner != null ?
+                MemorySession.openConfined(cleaner) :
+                MemorySession.openConfined();
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
-            scope.addCloseAction(() -> acc.addAndGet(delta));
+            session.addCloseAction(() -> acc.addAndGet(delta));
         }
         assertEquals(acc.get(), 0);
 
         if (cleaner == null) {
-            scope.close();
+            session.close();
             assertEquals(acc.get(), IntStream.range(0, N_THREADS).sum());
         } else {
-            scope = null;
+            session = null;
             int expected = IntStream.range(0, N_THREADS).sum();
             while (acc.get() != expected) {
                 kickGC();
@@ -77,20 +79,20 @@ public class TestResourceScope {
     public void testSharedSingleThread(Supplier<Cleaner> cleanerSupplier) {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
-        ResourceScope scope = cleaner != null ?
-                ResourceScope.newSharedScope(cleaner) :
-                ResourceScope.newSharedScope();
+        MemorySession session = cleaner != null ?
+                MemorySession.openShared(cleaner) :
+                MemorySession.openShared();
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
-            scope.addCloseAction(() -> acc.addAndGet(delta));
+            session.addCloseAction(() -> acc.addAndGet(delta));
         }
         assertEquals(acc.get(), 0);
 
         if (cleaner == null) {
-            scope.close();
+            session.close();
             assertEquals(acc.get(), IntStream.range(0, N_THREADS).sum());
         } else {
-            scope = null;
+            session = null;
             int expected = IntStream.range(0, N_THREADS).sum();
             while (acc.get() != expected) {
                 kickGC();
@@ -103,15 +105,15 @@ public class TestResourceScope {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
         List<Thread> threads = new ArrayList<>();
-        ResourceScope scope = cleaner != null ?
-                ResourceScope.newSharedScope(cleaner) :
-                ResourceScope.newSharedScope();
-        AtomicReference<ResourceScope> scopeRef = new AtomicReference<>(scope);
+        MemorySession session = cleaner != null ?
+                MemorySession.openShared(cleaner) :
+                MemorySession.openShared();
+        AtomicReference<MemorySession> sessionRef = new AtomicReference<>(session);
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
             Thread thread = new Thread(() -> {
                 try {
-                    scopeRef.get().addCloseAction(() -> {
+                    sessionRef.get().addCloseAction(() -> {
                         acc.addAndGet(delta);
                     });
                 } catch (IllegalStateException ex) {
@@ -124,15 +126,15 @@ public class TestResourceScope {
         assertEquals(acc.get(), 0);
         threads.forEach(Thread::start);
 
-        // if no cleaner, close - not all segments might have been added to the scope!
-        // if cleaner, don't unset the scope - after all, the scope is kept alive by threads
+        // if no cleaner, close - not all segments might have been added to the session!
+        // if cleaner, don't unset the session - after all, the session is kept alive by threads
         if (cleaner == null) {
             while (true) {
                 try {
-                    scope.close();
+                    session.close();
                     break;
                 } catch (IllegalStateException ise) {
-                    // scope is acquired (by add) - wait some more
+                    // session is acquired (by add) - wait some more
                 }
             }
         }
@@ -148,8 +150,8 @@ public class TestResourceScope {
         if (cleaner == null) {
             assertEquals(acc.get(), IntStream.range(0, N_THREADS).sum());
         } else {
-            scope = null;
-            scopeRef.set(null);
+            session = null;
+            sessionRef.set(null);
             int expected = IntStream.range(0, N_THREADS).sum();
             while (acc.get() != expected) {
                 kickGC();
@@ -159,22 +161,22 @@ public class TestResourceScope {
 
     @Test
     public void testLockSingleThread() {
-        ResourceScope scope = ResourceScope.newConfinedScope();
-        List<ResourceScope> handles = new ArrayList<>();
+        MemorySession session = MemorySession.openConfined();
+        List<MemorySession> handles = new ArrayList<>();
         for (int i = 0 ; i < N_THREADS ; i++) {
-            ResourceScope handle = ResourceScope.newConfinedScope();
-            handle.keepAlive(scope);
+            MemorySession handle = MemorySession.openConfined();
+            keepAlive(handle, session);
             handles.add(handle);
         }
 
         while (true) {
             try {
-                scope.close();
+                session.close();
                 assertEquals(handles.size(), 0);
                 break;
             } catch (IllegalStateException ex) {
                 assertTrue(handles.size() > 0);
-                ResourceScope handle = handles.remove(0);
+                MemorySession handle = handles.remove(0);
                 handle.close();
             }
         }
@@ -182,12 +184,12 @@ public class TestResourceScope {
 
     @Test
     public void testLockSharedMultiThread() {
-        ResourceScope scope = ResourceScope.newSharedScope();
+        MemorySession session = MemorySession.openShared();
         AtomicInteger lockCount = new AtomicInteger();
         for (int i = 0 ; i < N_THREADS ; i++) {
             new Thread(() -> {
-                try (ResourceScope handle = ResourceScope.newConfinedScope()) {
-                    handle.keepAlive(scope);
+                try (MemorySession handle = MemorySession.openConfined()) {
+                    keepAlive(handle, session);
                     lockCount.incrementAndGet();
                     waitSomeTime();
                     lockCount.decrementAndGet();
@@ -200,7 +202,7 @@ public class TestResourceScope {
 
         while (true) {
             try {
-                scope.close();
+                session.close();
                 assertEquals(lockCount.get(), 0);
                 break;
             } catch (IllegalStateException ex) {
@@ -210,20 +212,20 @@ public class TestResourceScope {
     }
 
     @Test
-    public void testCloseEmptyConfinedScope() {
-        ResourceScope.newConfinedScope().close();
+    public void testCloseEmptyConfinedSession() {
+        MemorySession.openConfined().close();
     }
 
     @Test
-    public void testCloseEmptySharedScope() {
-        ResourceScope.newSharedScope().close();
+    public void testCloseEmptySharedSession() {
+        MemorySession.openShared().close();
     }
 
     @Test
     public void testCloseConfinedLock() {
-        ResourceScope scope = ResourceScope.newConfinedScope();
-        ResourceScope handle = ResourceScope.newConfinedScope();
-        handle.keepAlive(scope);
+        MemorySession session = MemorySession.openConfined();
+        MemorySession handle = MemorySession.openConfined();
+        keepAlive(handle, session);
         AtomicReference<Throwable> failure = new AtomicReference<>();
         Thread t = new Thread(() -> {
             try {
@@ -242,43 +244,37 @@ public class TestResourceScope {
         }
     }
 
-    @Test(dataProvider = "scopes")
-    public void testScopeHandles(Supplier<ResourceScope> scopeFactory) {
-        ResourceScope scope = scopeFactory.get();
-        acquireRecursive(scope, 5);
-        if (scope != ResourceScope.globalScope()) {
-            scope.close();
+    @Test(dataProvider = "sessions")
+    public void testSessionAcquires(Supplier<MemorySession> sessionFactory) {
+        MemorySession session = sessionFactory.get();
+        acquireRecursive(session, 5);
+        if (session.isCloseable()) {
+            session.close();
         }
     }
 
-    @Test(dataProvider = "scopes", expectedExceptions = IllegalArgumentException.class)
-    public void testAcquireSelf(Supplier<ResourceScope> scopeSupplier) {
-        ResourceScope scope = scopeSupplier.get();
-        scope.keepAlive(scope);
-    }
-
-    private void acquireRecursive(ResourceScope scope, int acquireCount) {
-        try (ResourceScope handle = ResourceScope.newConfinedScope()) {
-            handle.keepAlive(scope);
+    private void acquireRecursive(MemorySession session, int acquireCount) {
+        try (MemorySession handle = MemorySession.openConfined()) {
+            keepAlive(handle, session);
             if (acquireCount > 0) {
                 // recursive acquire
-                acquireRecursive(scope, acquireCount - 1);
+                acquireRecursive(session, acquireCount - 1);
             }
-            if (scope != ResourceScope.globalScope()) {
-                assertThrows(IllegalStateException.class, scope::close);
+            if (session.isCloseable()) {
+                assertThrows(IllegalStateException.class, session::close);
             }
         }
     }
 
     @Test
-    public void testConfinedScopeWithImplicitDependency() {
-        ResourceScope root = ResourceScope.newConfinedScope();
-        // Create many implicit scopes which depend on 'root', and let them become unreachable.
+    public void testConfinedSessionWithImplicitDependency() {
+        MemorySession root = MemorySession.openConfined();
+        // Create many implicit sessions which depend on 'root', and let them become unreachable.
         for (int i = 0; i < N_THREADS; i++) {
-            ResourceScope.newConfinedScope(Cleaner.create()).keepAlive(root);
+            keepAlive(MemorySession.openConfined(Cleaner.create()), root);
         }
         // Now let's keep trying to close 'root' until we succeed. This is trickier than it seems: cleanup action
-        // might be called from another thread (the Cleaner thread), so that the confined scope lock count is updated racily.
+        // might be called from another thread (the Cleaner thread), so that the confined session lock count is updated racily.
         // If that happens, the loop below never terminates.
         while (true) {
             try {
@@ -287,8 +283,8 @@ public class TestResourceScope {
             } catch (IllegalStateException ex) {
                 kickGC();
                 for (int i = 0 ; i < N_THREADS ; i++) {  // add more races from current thread
-                    try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-                        scope.keepAlive(root);
+                    try (MemorySession session = MemorySession.openConfined()) {
+                        keepAlive(session, root);
                         // dummy
                     }
                 }
@@ -298,20 +294,20 @@ public class TestResourceScope {
     }
 
     @Test
-    public void testConfinedScopeWithSharedDependency() {
-        ResourceScope root = ResourceScope.newConfinedScope();
+    public void testConfinedSessionWithSharedDependency() {
+        MemorySession root = MemorySession.openConfined();
         List<Thread> threads = new ArrayList<>();
-        // Create many implicit scopes which depend on 'root', and let them become unreachable.
+        // Create many implicit sessions which depend on 'root', and let them become unreachable.
         for (int i = 0; i < N_THREADS; i++) {
-            ResourceScope scope = ResourceScope.newSharedScope(); // create scope inside same thread!
-            scope.keepAlive(root);
-            Thread t = new Thread(scope::close); // close from another thread!
+            MemorySession session = MemorySession.openShared(); // create session inside same thread!
+            keepAlive(session, root);
+            Thread t = new Thread(session::close); // close from another thread!
             threads.add(t);
             t.start();
         }
         for (int i = 0 ; i < N_THREADS ; i++) { // add more races from current thread
-            try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-                scope.keepAlive(root);
+            try (MemorySession session = MemorySession.openConfined()) {
+                keepAlive(session, root);
                 // dummy
             }
         }
@@ -322,8 +318,8 @@ public class TestResourceScope {
                 // ok
             }
         });
-        // Now let's close 'root'. This is trickier than it seems: releases of the confined scope happen in different
-        // threads, so that the confined scope lock count is updated racily. If that happens, the following close will blow up.
+        // Now let's close 'root'. This is trickier than it seems: releases of the confined session happen in different
+        // threads, so that the confined session lock count is updated racily. If that happens, the following close will blow up.
         root.close();
     }
 
@@ -353,12 +349,17 @@ public class TestResourceScope {
     }
 
     @DataProvider
-    static Object[][] scopes() {
+    static Object[][] sessions() {
         return new Object[][] {
-                { (Supplier<ResourceScope>)ResourceScope::newConfinedScope },
-                { (Supplier<ResourceScope>)ResourceScope::newSharedScope },
-                { (Supplier<ResourceScope>)ResourceScope::newImplicitScope },
-                { (Supplier<ResourceScope>)ResourceScope::globalScope }
+                { (Supplier<MemorySession>) MemorySession::openConfined},
+                { (Supplier<MemorySession>) MemorySession::openShared},
+                { (Supplier<MemorySession>) MemorySession::openImplicit},
+                { (Supplier<MemorySession>) MemorySession::global}
         };
+    }
+
+    private void keepAlive(MemorySession child, MemorySession parent) {
+        ((MemorySessionImpl)parent).acquire0();
+        child.addCloseAction(() -> ((MemorySessionImpl)parent).release0());
     }
 }

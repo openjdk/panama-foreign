@@ -82,7 +82,7 @@ import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemoryAddress;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -115,8 +115,8 @@ public class TestStackWalk extends NativeTestHelper {
     static boolean armed;
 
     public static void main(String[] args) throws Throwable {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            NativeSymbol stub = linker.upcallStub(MH_m, FunctionDescriptor.ofVoid(), scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            NativeSymbol stub = linker.upcallStub(MH_m, FunctionDescriptor.ofVoid(), session);
             MemoryAddress stubAddress = stub.address();
             armed = false;
             for (int i = 0; i < 20_000; i++) {

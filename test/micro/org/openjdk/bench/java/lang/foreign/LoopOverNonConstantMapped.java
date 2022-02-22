@@ -24,7 +24,7 @@ package org.openjdk.bench.java.lang.foreign;
 
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -80,7 +80,8 @@ public class LoopOverNonConstantMapped {
         }
     }
 
-    static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(sequenceElement());
+    static final VarHandle VH_int = JAVA_INT.arrayElementVarHandle();
+    MemorySession session;
     MemorySegment segment;
     long unsafe_addr;
 
@@ -95,13 +96,13 @@ public class LoopOverNonConstantMapped {
             }
             ((MappedByteBuffer)byteBuffer).force();
         }
-        segment = MemorySegment.mapFile(tempPath, 0L, ALLOC_SIZE, FileChannel.MapMode.READ_WRITE, ResourceScope.newConfinedScope());
+        segment = MemorySegment.mapFile(tempPath, 0L, ALLOC_SIZE, FileChannel.MapMode.READ_WRITE, session = MemorySession.openConfined());
         unsafe_addr = segment.address().toRawLongValue();
     }
 
     @TearDown
     public void tearDown() {
-        segment.scope().close();
+        session.close();
         unsafe.invokeCleaner(byteBuffer);
     }
 

@@ -25,7 +25,7 @@
 package jdk.internal.foreign.abi;
 
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.ResourceScopeImpl;
+import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.Scoped;
 import jdk.internal.misc.VM;
 import jdk.internal.org.objectweb.asm.ClassReader;
@@ -46,8 +46,8 @@ import java.lang.constant.ConstantDescs;
 import java.lang.foreign.Addressable;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
@@ -62,6 +62,15 @@ import java.util.Deque;
 import java.util.List;
 import java.util.function.BiPredicate;
 
+import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_BOOLEAN;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.JAVA_CHAR;
+import static java.lang.foreign.ValueLayout.JAVA_DOUBLE;
+import static java.lang.foreign.ValueLayout.JAVA_FLOAT;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
+import static java.lang.foreign.ValueLayout.JAVA_SHORT;
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
@@ -79,15 +88,16 @@ public class BindingSpecializer {
 
     private static final String BINDING_CONTEXT_DESC = Binding.Context.class.descriptorString();
     private static final String OF_BOUNDED_ALLOCATOR_DESC = methodType(Binding.Context.class, long.class).descriptorString();
-    private static final String OF_SCOPE_DESC = methodType(Binding.Context.class).descriptorString();
+    private static final String OF_SESSION_DESC = methodType(Binding.Context.class).descriptorString();
     private static final String ALLOCATOR_DESC = methodType(SegmentAllocator.class).descriptorString();
-    private static final String SCOPE_DESC = methodType(ResourceScope.class).descriptorString();
+    private static final String SESSION_DESC = methodType(MemorySession.class).descriptorString();
+    private static final String SESSION_IMPL_DESC = methodType(MemorySessionImpl.class).descriptorString();
     private static final String CLOSE_DESC = methodType(void.class).descriptorString();
     private static final String ADDRESS_DESC = methodType(MemoryAddress.class).descriptorString();
     private static final String COPY_DESC = methodType(void.class, MemorySegment.class, long.class, MemorySegment.class, long.class, long.class).descriptorString();
     private static final String TO_RAW_LONG_VALUE_DESC = methodType(long.class).descriptorString();
     private static final String OF_LONG_DESC = methodType(MemoryAddress.class, long.class).descriptorString();
-    private static final String OF_LONG_UNCHECKED_DESC = methodType(MemorySegment.class, long.class, long.class, ResourceScopeImpl.class).descriptorString();
+    private static final String OF_LONG_UNCHECKED_DESC = methodType(MemorySegment.class, long.class, long.class, MemorySessionImpl.class).descriptorString();
     private static final String ALLOCATE_DESC = methodType(MemorySegment.class, long.class, long.class).descriptorString();
     private static final String HANDLE_UNCAUGHT_EXCEPTION_DESC = methodType(void.class, Throwable.class).descriptorString();
     private static final String METHOD_HANDLES_INTRN = Type.getInternalName(MethodHandles.class);
@@ -272,7 +282,7 @@ public class BindingSpecializer {
         } else if (callingSequence.forDowncall()) {
             emitGetStatic(Binding.Context.class, "DUMMY", BINDING_CONTEXT_DESC);
         } else {
-            emitInvokeStatic(Binding.Context.class, "ofScope", OF_SCOPE_DESC);
+            emitInvokeStatic(Binding.Context.class, "ofSession", OF_SESSION_DESC);
         }
         CONTEXT_IDX = newLocal(BasicType.L);
         emitStore(BasicType.L, CONTEXT_IDX);
@@ -452,7 +462,7 @@ public class BindingSpecializer {
 
     private void emitAcquireScope() {
         emitCheckCast(Scoped.class);
-        emitInvokeInterface(Scoped.class, "scope", SCOPE_DESC);
+        emitInvokeInterface(Scoped.class, "sessionImpl", SESSION_IMPL_DESC);
         Label skipAcquire = new Label();
         Label end = new Label();
 
@@ -469,8 +479,8 @@ public class BindingSpecializer {
         emitDup(BasicType.L);
         int nextScopeLocal = scopeSlots[curScopeLocalIdx++];
         emitStore(BasicType.L, nextScopeLocal); // store off one to release later
-        emitCheckCast(ResourceScopeImpl.class);
-        emitInvokeVirtual(ResourceScopeImpl.class, "acquire0", ACQUIRE0_DESC); // call acquire on the other
+        emitCheckCast(MemorySessionImpl.class);
+        emitInvokeVirtual(MemorySessionImpl.class, "acquire0", ACQUIRE0_DESC); // call acquire on the other
 
         if (hasOtherScopes) { // avoid ASM generating a bunch of nops for the dead code
             mv.visitJumpInsn(GOTO, end);
@@ -489,8 +499,8 @@ public class BindingSpecializer {
             emitLoad(BasicType.L, scopeLocal);
             mv.visitJumpInsn(IFNULL, skipRelease);
             emitLoad(BasicType.L, scopeLocal);
-            emitCheckCast(ResourceScopeImpl.class);
-            emitInvokeVirtual(ResourceScopeImpl.class, "release0", RELEASE0_DESC);
+            emitCheckCast(MemorySessionImpl.class);
+            emitInvokeVirtual(MemorySessionImpl.class, "release0", RELEASE0_DESC);
             mv.visitLabel(skipRelease);
         }
     }
@@ -516,10 +526,10 @@ public class BindingSpecializer {
         return idx;
     }
 
-    private void emitLoadInternalScope() {
+    private void emitLoadInternalSession() {
         assert CONTEXT_IDX != -1;
         emitLoad(BasicType.L, CONTEXT_IDX);
-        emitInvokeVirtual(Binding.Context.class, "scope", SCOPE_DESC);
+        emitInvokeVirtual(Binding.Context.class, "session", SESSION_DESC);
     }
 
     private void emitLoadInternalAllocator() {
@@ -540,8 +550,8 @@ public class BindingSpecializer {
 
         emitToRawLongValue();
         emitConst(size);
-        emitLoadInternalScope();
-        emitCheckCast(ResourceScopeImpl.class);
+        emitLoadInternalSession();
+        emitCheckCast(MemorySessionImpl.class);
         emitInvokeStatic(MemoryAddressImpl.class, "ofLongUnchecked", OF_LONG_UNCHECKED_DESC);
 
         pushType(MemorySegment.class);
@@ -697,29 +707,29 @@ public class BindingSpecializer {
     private Class<?> emitLoadLayoutConstant(Class<?> type) {
         Class<?> valueLayoutType = valueLayoutTypeFor(type);
         String valueLayoutConstantName = valueLayoutConstantFor(type);
-        emitGetStatic(ValueLayout.class, valueLayoutConstantName, valueLayoutType.descriptorString());
+        emitGetStatic(BindingSpecializer.class, valueLayoutConstantName, valueLayoutType.descriptorString());
         return valueLayoutType;
     }
 
     private static String valueLayoutConstantFor(Class<?> type) {
         if (type == boolean.class) {
-            return "JAVA_BOOLEAN";
+            return "JAVA_BOOLEAN_UNALIGNED";
         } else if (type == byte.class) {
-            return "JAVA_BYTE";
+            return "JAVA_BYTE_UNALIGNED";
         } else if (type == short.class) {
-            return "JAVA_SHORT";
+            return "JAVA_SHORT_UNALIGNED";
         } else if (type == char.class) {
-            return "JAVA_CHAR";
+            return "JAVA_CHAR_UNALIGNED";
         } else if (type == int.class) {
-            return "JAVA_INT";
+            return "JAVA_INT_UNALIGNED";
         } else if (type == long.class) {
-            return "JAVA_LONG";
+            return "JAVA_LONG_UNALIGNED";
         } else if (type == float.class) {
-            return "JAVA_FLOAT";
+            return "JAVA_FLOAT_UNALIGNED";
         } else if (type == double.class) {
-            return "JAVA_DOUBLE";
+            return "JAVA_DOUBLE_UNALIGNED";
         } else if (type == MemoryAddress.class) {
-            return "ADDRESS";
+            return "ADDRESS_UNALIGNED";
         } else {
             throw new IllegalStateException("Unknown type: " + type);
         }
@@ -945,4 +955,15 @@ public class BindingSpecializer {
             }
         }
     }
+
+    // unaligned constants
+    public final static ValueLayout.OfBoolean JAVA_BOOLEAN_UNALIGNED = JAVA_BOOLEAN;
+    public final static ValueLayout.OfByte JAVA_BYTE_UNALIGNED = JAVA_BYTE;
+    public final static ValueLayout.OfShort JAVA_SHORT_UNALIGNED = JAVA_SHORT.withBitAlignment(8);
+    public final static ValueLayout.OfChar JAVA_CHAR_UNALIGNED = JAVA_CHAR.withBitAlignment(8);
+    public final static ValueLayout.OfInt JAVA_INT_UNALIGNED = JAVA_INT.withBitAlignment(8);
+    public final static ValueLayout.OfLong JAVA_LONG_UNALIGNED = JAVA_LONG.withBitAlignment(8);
+    public final static ValueLayout.OfFloat JAVA_FLOAT_UNALIGNED = JAVA_FLOAT.withBitAlignment(8);
+    public final static ValueLayout.OfDouble JAVA_DOUBLE_UNALIGNED = JAVA_DOUBLE.withBitAlignment(8);
+    public final static ValueLayout.OfAddress ADDRESS_UNALIGNED = ADDRESS.withBitAlignment(8);
 }

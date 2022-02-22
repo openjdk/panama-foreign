@@ -23,7 +23,7 @@
 package org.openjdk.tests.java.util.stream;
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SequenceLayout;
 import org.testng.annotations.Test;
 
@@ -65,8 +65,8 @@ public class SpliteratorTest {
 
     @Test(dataProvider = "SegmentSpliterator", dataProviderClass = SegmentTestDataProvider.class )
     public void testSegmentSpliterator(String name, SequenceLayout layout, SpliteratorTestHelper.ContentAsserter<MemorySegment> contentAsserter) {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment segment = MemorySegment.allocateNative(layout, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(layout, session);
             SegmentTestDataProvider.initSegment(segment);
             SpliteratorTestHelper.testSpliterator(() -> segment.spliterator(layout),
                     SegmentTestDataProvider::segmentCopier, contentAsserter);

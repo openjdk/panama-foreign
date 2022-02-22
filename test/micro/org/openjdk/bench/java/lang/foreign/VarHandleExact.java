@@ -23,7 +23,7 @@
 package org.openjdk.bench.java.lang.foreign;
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -58,16 +58,17 @@ public class VarHandleExact {
         exact = generic.withInvokeExactBehavior();
     }
 
+    MemorySession session;
     MemorySegment data;
 
     @Setup
     public void setup() {
-        data = MemorySegment.allocateNative(JAVA_INT, ResourceScope.newConfinedScope());
+        data = MemorySegment.allocateNative(JAVA_INT, session = MemorySession.openConfined());
     }
 
     @TearDown
     public void tearDown() {
-        data.scope().close();
+        session.close();
     }
 
     @Benchmark

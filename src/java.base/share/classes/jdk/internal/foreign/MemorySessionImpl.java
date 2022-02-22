@@ -27,7 +27,7 @@
 package jdk.internal.foreign;
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
@@ -35,38 +35,38 @@ import java.lang.ref.Cleaner;
 import java.lang.ref.Reference;
 import java.util.Objects;
 import jdk.internal.misc.ScopedMemoryAccess;
+import jdk.internal.ref.CleanerFactory;
 import jdk.internal.vm.annotation.ForceInline;
 
 /**
  * This class manages the temporal bounds associated with a memory segment as well
- * as thread confinement. A scope has a liveness bit, which is updated when the scope is closed
- * (this operation is triggered by {@link ResourceScope#close()}). This bit is consulted prior
+ * as thread confinement. A session has a liveness bit, which is updated when the session is closed
+ * (this operation is triggered by {@link MemorySession#close()}). This bit is consulted prior
  * to memory access (see {@link #checkValidState()}).
- * There are two kinds of memory scope: confined memory scope and shared memory scope.
- * A confined memory scope has an associated owner thread that confines some operations to
+ * There are two kinds of memory session: confined memory session and shared memory session.
+ * A confined memory session has an associated owner thread that confines some operations to
  * associated owner thread such as {@link #close()} or {@link #checkValidState()}.
- * Shared scopes do not feature an owner thread - meaning their operations can be called, in a racy
+ * Shared sessions do not feature an owner thread - meaning their operations can be called, in a racy
  * manner, by multiple threads. To guarantee temporal safety in the presence of concurrent thread,
- * shared scopes use a more sophisticated synchronization mechanism, which guarantees that no concurrent
- * access is possible when a scope is being closed (see {@link jdk.internal.misc.ScopedMemoryAccess}).
+ * shared sessions use a more sophisticated synchronization mechanism, which guarantees that no concurrent
+ * access is possible when a session is being closed (see {@link jdk.internal.misc.ScopedMemoryAccess}).
  */
-public abstract non-sealed class ResourceScopeImpl implements ResourceScope, SegmentAllocator {
-
+public abstract non-sealed class MemorySessionImpl implements MemorySession, Scoped, SegmentAllocator {
     final ResourceList resourceList;
     final Cleaner.Cleanable cleanable;
     final Thread owner;
 
-    static final int ALIVE = 0;
+    static final int OPEN = 0;
     static final int CLOSING = -1;
     static final int CLOSED = -2;
 
-    int state = ALIVE;
+    int state = OPEN;
 
     static final VarHandle STATE;
 
     static {
         try {
-            STATE = MethodHandles.lookup().findVarHandle(ResourceScopeImpl.class, "state", int.class);
+            STATE = MethodHandles.lookup().findVarHandle(MemorySessionImpl.class, "state", int.class);
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -80,12 +80,16 @@ public abstract non-sealed class ResourceScopeImpl implements ResourceScope, Seg
         addInternal(ResourceList.ResourceCleanup.ofRunnable(runnable));
     }
 
+    public MemorySessionImpl sessionImpl() {
+        return this;
+    }
+
     /**
      * Add a cleanup action. If a failure occurred (because of a add vs. close race), call the cleanup action.
      * This semantics is useful when allocating new memory segments, since we first do a malloc/mmap and _then_
-     * we register the cleanup (free/munmap) against the scope; so, if registration fails, we still have to
+     * we register the cleanup (free/munmap) against the session; so, if registration fails, we still have to
      * cleanup memory. From the perspective of the client, such a failure would manifest as a factory
-     * returning a segment that is already "closed" - which is always possible anyway (e.g. if the scope
+     * returning a segment that is already "closed" - which is always possible anyway (e.g. if the session
      * is closed _after_ the cleanup for the segment is registered but _before_ the factory returns the
      * new segment to the client). For this reason, it's not worth adding extra complexity to the segment
      * initialization logic here - and using an optimistic logic works well in practice.
@@ -107,19 +111,23 @@ public abstract non-sealed class ResourceScopeImpl implements ResourceScope, Seg
         }
     }
 
-    protected ResourceScopeImpl(Thread owner, ResourceList resourceList, Cleaner cleaner) {
+    protected MemorySessionImpl(Thread owner, ResourceList resourceList, Cleaner cleaner) {
         this.owner = owner;
         this.resourceList = resourceList;
         cleanable = (cleaner != null) ?
             cleaner.register(this, resourceList) : null;
     }
 
-    public static ResourceScopeImpl createConfined(Thread thread, Cleaner cleaner) {
-        return new ConfinedScope(thread, cleaner);
+    public static MemorySession createConfined(Thread thread, Cleaner cleaner) {
+        return new ConfinedSession(thread, cleaner);
     }
 
-    public static ResourceScopeImpl createShared(Cleaner cleaner) {
-        return new SharedScope(cleaner);
+    public static MemorySession createShared(Cleaner cleaner) {
+        return new SharedSession(cleaner);
+    }
+
+    public static MemorySessionImpl createImplicit() {
+        return new ImplicitSession();
     }
 
     @Override
@@ -132,21 +140,88 @@ public abstract non-sealed class ResourceScopeImpl implements ResourceScope, Seg
     public abstract void acquire0();
 
     @Override
-    public void keepAlive(ResourceScope target) {
-        Objects.requireNonNull(target);
-        if (target == this) {
-            throw new IllegalArgumentException("Invalid target scope.");
+    public boolean equals(Object o) {
+        return (o instanceof MemorySession other) &&
+            ((Scoped)other).sessionImpl() == this;
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public void whileAlive(Runnable action) {
+        Objects.requireNonNull(action);
+        acquire0();
+        try {
+            action.run();
+        } finally {
+            release0();
         }
-        ResourceScopeImpl targetImpl = (ResourceScopeImpl)target;
-        targetImpl.acquire0();
-        addCloseAction(targetImpl::release0);
     }
 
     /**
-     * Closes this scope, executing any cleanup action (where provided).
-     * @throws IllegalStateException if this scope is already closed or if this is
-     * a confined scope and this method is called outside of the owner thread.
+     * Returns "owner" thread of this session.
+     * @return owner thread (or null for a shared session)
      */
+    public final Thread ownerThread() {
+        return owner;
+    }
+
+    /**
+     * Returns true, if this session is still open. This method may be called in any thread.
+     * @return {@code true} if this session is not closed yet.
+     */
+    public abstract boolean isAlive();
+
+    /**
+     * This is a faster version of {@link #checkValidStateSlow()}, which is called upon memory access, and which
+     * relies on invariants associated with the memory session implementations (volatile access
+     * to the closed state bit is replaced with plain access). This method should be monomorphic,
+     * to avoid virtual calls in the memory access hot path. This method is not intended as general purpose method
+     * and should only be used in the memory access handle hot path; for liveness checks triggered by other API methods,
+     * please use {@link #checkValidStateSlow()}.
+     */
+    @ForceInline
+    public final void checkValidState() {
+        if (owner != null && owner != Thread.currentThread()) {
+            throw new IllegalStateException("Attempted access outside owning thread");
+        }
+        if (state < OPEN) {
+            throw ScopedMemoryAccess.ScopedAccessError.INSTANCE;
+        }
+    }
+
+    /**
+     * Checks that this session is still alive (see {@link #isAlive()}).
+     * @throws IllegalStateException if this session is already closed or if this is
+     * a confined session and this method is called outside of the owner thread.
+     */
+    public final void checkValidStateSlow() {
+        if (owner != null && Thread.currentThread() != owner) {
+            throw new IllegalStateException("Attempted access outside owning thread");
+        } else if (!isAlive()) {
+            throw new IllegalStateException("Already closed");
+        }
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        throw new CloneNotSupportedException();
+    }
+
+    @Override
+    public boolean isCloseable() {
+        return true;
+    }
+
+    /**
+     * Closes this session, executing any cleanup action (where provided).
+     * @throws IllegalStateException if this session is already closed or if this is
+     * a confined session and this method is called outside of the owner thread.
+     */
+    @Override
     public void close() {
         try {
             justClose();
@@ -163,78 +238,28 @@ public abstract non-sealed class ResourceScopeImpl implements ResourceScope, Seg
     abstract void justClose();
 
     /**
-     * Returns "owner" thread of this scope.
-     * @return owner thread (or null for a shared scope)
+     * The global, non-closeable, shared session. Similar to a shared session, but its {@link #close()} method throws unconditionally.
+     * Adding new resources to the global session, does nothing: as the session can never become not-alive, there is nothing to track.
+     * Acquiring and or releasing a memory session similarly does nothing.
      */
-    public final Thread ownerThread() {
-        return owner;
-    }
-
-    /**
-     * Returns true, if this scope is still alive. This method may be called in any thread.
-     * @return {@code true} if this scope is not closed yet.
-     */
-    public abstract boolean isAlive();
-
-    /**
-     * This is a faster version of {@link #checkValidStateSlow()}, which is called upon memory access, and which
-     * relies on invariants associated with the memory scope implementations (volatile access
-     * to the closed state bit is replaced with plain access). This method should be monomorphic,
-     * to avoid virtual calls in the memory access hot path. This method is not intended as general purpose method
-     * and should only be used in the memory access handle hot path; for liveness checks triggered by other API methods,
-     * please use {@link #checkValidStateSlow()}.
-     */
-    @ForceInline
-    public final void checkValidState() {
-        if (owner != null && owner != Thread.currentThread()) {
-            throw new IllegalStateException("Attempted access outside owning thread");
-        }
-        if (state < ALIVE) {
-            throw ScopedMemoryAccess.ScopedAccessError.INSTANCE;
-        }
-    }
-
-    /**
-     * Checks that this scope is still alive (see {@link #isAlive()}).
-     * @throws IllegalStateException if this scope is already closed or if this is
-     * a confined scope and this method is called outside of the owner thread.
-     */
-    public final void checkValidStateSlow() {
-        if (owner != null && Thread.currentThread() != owner) {
-            throw new IllegalStateException("Attempted access outside owning thread");
-        } else if (!isAlive()) {
-            throw new IllegalStateException("Already closed");
-        }
-    }
-
-    @Override
-    protected Object clone() throws CloneNotSupportedException {
-        throw new CloneNotSupportedException();
-    }
-
-    /**
-     * The global, always alive, non-closeable, shared scope. Similar to a shared scope, but its {@link #close()} method throws unconditionally.
-     * Adding new resources to the global scope, does nothing: as the scope can never become not-alive, there is nothing to track.
-     * Acquiring and or releasing a resource scope similarly does nothing.
-     */
-    static class GlobalScopeImpl extends SharedScope {
+    static class GlobalSessionImpl extends MemorySessionImpl {
 
         final Object ref;
 
-        public GlobalScopeImpl(Object ref) {
-            super(null);
+        public GlobalSessionImpl(Object ref) {
+            super(null, null ,null);
             this.ref = ref;
-        }
-
-        @Override
-        public void close() {
-            throw new UnsupportedOperationException("Scope cannot be closed");
         }
 
         @Override
         @ForceInline
         public void release0() {
             // do nothing
+        }
+
+        @Override
+        public boolean isCloseable() {
+            return false;
         }
 
         @Override
@@ -252,19 +277,113 @@ public abstract non-sealed class ResourceScopeImpl implements ResourceScope, Seg
         public boolean isAlive() {
             return true;
         }
+
+        @Override
+        public void justClose() {
+            throw new UnsupportedOperationException();
+        }
     }
 
-    public static final ResourceScopeImpl GLOBAL = new GlobalScopeImpl(null);
+    public static final MemorySessionImpl GLOBAL = new GlobalSessionImpl(null);
 
-    public static ResourceScopeImpl heapScope(Object ref) {
-        return new GlobalScopeImpl(ref);
+    public static MemorySessionImpl heapSession(Object ref) {
+        return new GlobalSessionImpl(ref);
+    }
+
+    static class ImplicitSession extends SharedSession {
+
+        public ImplicitSession() {
+            super(CleanerFactory.cleaner());
+        }
+
+        @Override
+        public void release0() {
+            Reference.reachabilityFence(this);
+        }
+
+        @Override
+        public void acquire0() {
+            // do nothing
+        }
+
+        @Override
+        public boolean isCloseable() {
+            return false;
+        }
+
+        @Override
+        public boolean isAlive() {
+            return true;
+        }
+
+        @Override
+        public void justClose() {
+            throw new UnsupportedOperationException();
+        }
     }
 
     /**
-     * A list of all cleanup actions associated with a resource scope. Cleanup actions are modelled as instances
-     * of the {@link ResourceCleanup} class, and, together, form a linked list. Depending on whether a scope
-     * is shared or confined, different implementations of this class will be used, see {@link ConfinedScope.ConfinedResourceList}
-     * and {@link SharedScope.SharedResourceList}.
+     * This is a non-closeable view of another memory session. Instances of this class are used in resource session
+     * accessors (see {@link MemorySegment#session()}). This class forwards all session methods to the underlying
+     * "root" session implementation, and throws {@link UnsupportedOperationException} on close.
+     */
+    public final static class NonCloseableView implements MemorySession, Scoped {
+        final MemorySessionImpl session;
+
+        public NonCloseableView(MemorySessionImpl session) {
+            this.session = session;
+        }
+
+        public MemorySessionImpl sessionImpl() {
+            return session;
+        }
+
+        @Override
+        public boolean isAlive() {
+            return session.isAlive();
+        }
+
+        @Override
+        public boolean isCloseable() {
+            return false;
+        }
+
+        @Override
+        public Thread ownerThread() {
+            return session.ownerThread();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return session.equals(o);
+        }
+
+        @Override
+        public int hashCode() {
+            return session.hashCode();
+        }
+
+        @Override
+        public void whileAlive(Runnable action) {
+            session.whileAlive(action);
+        }
+
+        @Override
+        public void addCloseAction(Runnable runnable) {
+            session.addCloseAction(runnable);
+        }
+
+        @Override
+        public void close() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    /**
+     * A list of all cleanup actions associated with a memory session. Cleanup actions are modelled as instances
+     * of the {@link ResourceCleanup} class, and, together, form a linked list. Depending on whether a session
+     * is shared or confined, different implementations of this class will be used, see {@link ConfinedSession.ConfinedResourceList}
+     * and {@link SharedSession.SharedResourceList}.
      */
     public abstract static class ResourceList implements Runnable {
         ResourceCleanup fst;

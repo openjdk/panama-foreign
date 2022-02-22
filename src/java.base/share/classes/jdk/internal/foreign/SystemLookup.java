@@ -28,7 +28,7 @@ package jdk.internal.foreign;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -74,10 +74,10 @@ public class SystemLookup {
 
             int numSymbols = WindowsFallbackSymbols.values().length;
             MemorySegment funcs = MemorySegment.ofAddress(fallbackLibLookup.apply("funcs").orElseThrow().address(),
-                ADDRESS.byteSize() * numSymbols, ResourceScope.globalScope());
+                ADDRESS.byteSize() * numSymbols, MemorySession.global());
 
             Function<String, Optional<NativeSymbol>> fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.valueOfOrNull(name))
-                .map(symbol -> NativeSymbol.ofAddress(symbol.name(), funcs.getAtIndex(ADDRESS, symbol.ordinal()), ResourceScope.globalScope()));
+                .map(symbol -> NativeSymbol.ofAddress(symbol.name(), funcs.getAtIndex(ADDRESS, symbol.ordinal()), MemorySession.global()));
 
             final Function<String, Optional<NativeSymbol>> finalLookup = lookup;
             lookup = name -> finalLookup.apply(name).or(() -> fallbackLookup.apply(name));
@@ -94,7 +94,7 @@ public class SystemLookup {
                 long addr = lib.lookup(name);
                 return addr == 0 ?
                         Optional.empty() :
-                        Optional.of(NativeSymbol.ofAddress(name, MemoryAddress.ofLong(addr), ResourceScope.globalScope()));
+                        Optional.of(NativeSymbol.ofAddress(name, MemoryAddress.ofLong(addr), MemorySession.global()));
             } catch (NoSuchMethodException e) {
                 return Optional.empty();
             }

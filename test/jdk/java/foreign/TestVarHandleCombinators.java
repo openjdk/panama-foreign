@@ -28,7 +28,7 @@
  * @run testng TestVarHandleCombinators
  */
 
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -65,14 +65,15 @@ public class TestVarHandleCombinators {
     public void testAlign() {
         VarHandle vh = MethodHandles.memoryAccessVarHandle(ValueLayout.JAVA_BYTE.withBitAlignment(16));
 
-        MemorySegment segment = MemorySegment.allocateNative(1, 2, ResourceScope.newImplicitScope());
+        MemorySegment segment = MemorySegment.allocateNative(1, 2, MemorySession.openImplicit());
         vh.set(segment, 0L, (byte) 10); // fine, memory region is aligned
         assertEquals((byte) vh.get(segment, 0L), (byte) 10);
     }
 
     @Test
     public void testByteOrderLE() {
-        VarHandle vh = MethodHandles.memoryAccessVarHandle(ValueLayout.JAVA_SHORT.withOrder(ByteOrder.LITTLE_ENDIAN));
+        VarHandle vh = MethodHandles.memoryAccessVarHandle(ValueLayout.JAVA_SHORT
+                .withOrder(ByteOrder.LITTLE_ENDIAN).withBitAlignment(8));
         byte[] arr = new byte[2];
         MemorySegment segment = MemorySegment.ofArray(arr);
         vh.set(segment, 0L, (short) 0xFF);
@@ -82,7 +83,8 @@ public class TestVarHandleCombinators {
 
     @Test
     public void testByteOrderBE() {
-        VarHandle vh = MethodHandles.memoryAccessVarHandle(ValueLayout.JAVA_SHORT.withOrder(ByteOrder.BIG_ENDIAN));
+        VarHandle vh = MethodHandles.memoryAccessVarHandle(ValueLayout.JAVA_SHORT
+                .withOrder(ByteOrder.BIG_ENDIAN).withBitAlignment(8));
         byte[] arr = new byte[2];
         MemorySegment segment = MemorySegment.ofArray(arr);
         vh.set(segment, 0L, (short) 0xFF);
@@ -99,8 +101,8 @@ public class TestVarHandleCombinators {
 
         VarHandle vh = MethodHandles.memoryAccessVarHandle(ValueLayout.JAVA_INT.withBitAlignment(32));
         int count = 0;
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment segment = MemorySegment.allocateNative(inner_size * outer_size * 8, 4, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(inner_size * outer_size * 8, 4, session);
             for (long i = 0; i < outer_size; i++) {
                 for (long j = 0; j < inner_size; j++) {
                     vh.set(segment, i * 40 + j * 8, count);

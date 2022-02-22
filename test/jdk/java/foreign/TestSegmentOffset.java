@@ -28,7 +28,7 @@
  */
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ResourceScope;
+import java.lang.foreign.MemorySession;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import java.util.ArrayList;
@@ -79,7 +79,7 @@ public class TestSegmentOffset {
     static class SegmentSlice {
 
         enum Kind {
-            NATIVE(i -> MemorySegment.allocateNative(i, ResourceScope.newConfinedScope())),
+            NATIVE(i -> MemorySegment.allocateNative(i, MemorySession.openConfined())),
             ARRAY(i -> MemorySegment.ofArray(new byte[i]));
 
             final IntFunction<MemorySegment> segmentFactory;

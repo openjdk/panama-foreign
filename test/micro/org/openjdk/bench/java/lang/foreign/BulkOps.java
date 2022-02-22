@@ -24,7 +24,6 @@
 
 package org.openjdk.bench.java.lang.foreign;
 
-import java.lang.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.CompilerControl;
@@ -39,6 +38,7 @@ import org.openjdk.jmh.annotations.Warmup;
 import sun.misc.Unsafe;
 
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.concurrent.TimeUnit;
@@ -60,10 +60,10 @@ public class BulkOps {
     static final int CARRIER_SIZE = (int)JAVA_INT.byteSize();
     static final int ALLOC_SIZE = ELEM_SIZE * CARRIER_SIZE;
 
-    final ResourceScope scope = ResourceScope.newConfinedScope();
+    final MemorySession session = MemorySession.openConfined();
 
     final long unsafe_addr = unsafe.allocateMemory(ALLOC_SIZE);
-    final MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, ResourceScope.newConfinedScope());
+    final MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, MemorySession.openConfined());
     final IntBuffer buffer = IntBuffer.allocate(ELEM_SIZE);
 
     final int[] ints = new int[ELEM_SIZE];
@@ -72,14 +72,14 @@ public class BulkOps {
 
     // large(ish) segments/buffers with same content, 0, for mismatch, non-multiple-of-8 sized
     static final int SIZE_WITH_TAIL = (1024 * 1024) + 7;
-    final MemorySegment mismatchSegmentLarge1 = MemorySegment.allocateNative(SIZE_WITH_TAIL, scope);
-    final MemorySegment mismatchSegmentLarge2 = MemorySegment.allocateNative(SIZE_WITH_TAIL, scope);
+    final MemorySegment mismatchSegmentLarge1 = MemorySegment.allocateNative(SIZE_WITH_TAIL, session);
+    final MemorySegment mismatchSegmentLarge2 = MemorySegment.allocateNative(SIZE_WITH_TAIL, session);
     final ByteBuffer mismatchBufferLarge1 = ByteBuffer.allocateDirect(SIZE_WITH_TAIL);
     final ByteBuffer mismatchBufferLarge2 = ByteBuffer.allocateDirect(SIZE_WITH_TAIL);
 
     // mismatch at first byte
-    final MemorySegment mismatchSegmentSmall1 = MemorySegment.allocateNative(7, scope);
-    final MemorySegment mismatchSegmentSmall2 = MemorySegment.allocateNative(7, scope);
+    final MemorySegment mismatchSegmentSmall1 = MemorySegment.allocateNative(7, session);
+    final MemorySegment mismatchSegmentSmall2 = MemorySegment.allocateNative(7, session);
     final ByteBuffer mismatchBufferSmall1 = ByteBuffer.allocateDirect(7);
     final ByteBuffer mismatchBufferSmall2 = ByteBuffer.allocateDirect(7);
 
@@ -108,7 +108,7 @@ public class BulkOps {
 
     @TearDown
     public void tearDown() {
-        scope.close();
+        session.close();
     }
 
     @Benchmark
