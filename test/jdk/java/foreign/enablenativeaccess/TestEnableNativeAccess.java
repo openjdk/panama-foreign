@@ -30,18 +30,9 @@
  *        panama_module/*
  *        org.openjdk.foreigntest.PanamaMainUnnamedModule
  * @run testng/othervm/timeout=180 TestEnableNativeAccess
- * @summary Basic test for java --enable-native-access=<module name>
+ * @summary Basic test for java --enable-native-access
  */
 
-//  from old test, needed?
-//  @requires vm.compMode != "Xcomp"
-//  @modules java.base/jdk.internal.misc
-//           java.base/sun.security.x509
-// @build
-// *        jdk.test.lib.compiler.CompilerUtils
-// *        jdk.test.lib.util.JarUtils
-
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -64,8 +55,6 @@ import static org.testng.Assert.*;
 @Test
 public class TestEnableNativeAccess {
 
-    static final String TEST_SRC = System.getProperty("test.src");
-    static final String TEST_CLASSES = System.getProperty("test.classes");
     static final String MODULE_PATH = System.getProperty("jdk.module.path");
 
     static final String PANAMA_MAIN = "panama_module/org.openjdk.foreigntest.PanamaMain";
@@ -137,61 +126,23 @@ public class TestEnableNativeAccess {
         return new Result(false).expect(expectedOutput).expect("WARNING");
     }
 
-    @DataProvider(name = "denyCases")
-    public Object[][] denyCases() {
+    @DataProvider(name = "succeedCases")
+    public Object[][] succeedCases() {
         return new Object[][] {
-                { "accessPublicClassNonExportedPackage", fail("IllegalAccessError") },
-                { "accessPublicClassJdk9NonExportedPackage", fail("IllegalAccessError") },
+                { "panama_enable_native_access", PANAMA_MAIN, successNoWarning(), new String[]{"--enable-native-access=panama_module"} },
+                { "panama_enable_native_access_reflection", PANAMA_REFLECTION, successNoWarning(), new String[]{"--enable-native-access=panama_module"} },
+                { "panama_enable_native_access_invoke", PANAMA_INVOKE, successNoWarning(), new String[]{"--enable-native-access=panama_module"} },
 
-                { "reflectPublicMemberExportedPackage", successNoWarning() },
-                { "reflectNonPublicMemberExportedPackage", fail("IllegalAccessException") },
-                { "reflectPublicMemberNonExportedPackage", fail("IllegalAccessException") },
-                { "reflectNonPublicMemberNonExportedPackage", fail("IllegalAccessException") },
-                { "reflectPublicMemberJdk9NonExportedPackage", fail("IllegalAccessException") },
-                { "reflectPublicMemberApplicationModule", successNoWarning() },
+                { "panama_comma_separated_enable", PANAMA_MAIN, successNoWarning(), new String[]{"--enable-native-access=java.base,panama_module"} },
+                { "panama_comma_separated_enable_reflection", PANAMA_REFLECTION, successNoWarning(), new String[]{"--enable-native-access=java.base,panama_module"} },
+                { "panama_comma_separated_enable_invoke", PANAMA_INVOKE, successNoWarning(), new String[]{"--enable-native-access=java.base,panama_module"} },
 
-                { "setAccessiblePublicMemberExportedPackage", successNoWarning() },
-                { "setAccessibleNonPublicMemberExportedPackage", fail("InaccessibleObjectException") },
-                { "setAccessiblePublicMemberNonExportedPackage", fail("InaccessibleObjectException") },
-                { "setAccessibleNonPublicMemberNonExportedPackage", fail("InaccessibleObjectException") },
-                { "setAccessiblePublicMemberJdk9NonExportedPackage", fail("InaccessibleObjectException") },
-                { "setAccessiblePublicMemberApplicationModule", successNoWarning() },
-                { "setAccessibleNotPublicMemberApplicationModule", fail("InaccessibleObjectException") },
+                { "panama_enable_native_access_warn", PANAMA_MAIN, successWithWarning(), new String[]{} },
+                { "panama_enable_native_access_warn_reflection", PANAMA_REFLECTION, successWithWarning(), new String[]{} },
+                { "panama_enable_native_access_warn_invoke", PANAMA_INVOKE, successWithWarning(), new String[]{} },
 
-                { "privateLookupPublicClassExportedPackage", fail("IllegalAccessException") },
-                { "privateLookupNonPublicClassExportedPackage", fail("IllegalAccessException") },
-                { "privateLookupPublicClassNonExportedPackage", fail("IllegalAccessException") },
-                { "privateLookupNonPublicClassNonExportedPackage", fail("IllegalAccessException") },
-                { "privateLookupPublicClassJdk9NonExportedPackage", fail("IllegalAccessException") },
-        };
-    }
-
-    @DataProvider(name = "permitCases")
-    public Object[][] permitCases() {
-        return new Object[][] {
-                { "accessPublicClassNonExportedPackage", successNoWarning() },
-                { "accessPublicClassJdk9NonExportedPackage", fail("IllegalAccessError") },
-
-                { "reflectPublicMemberExportedPackage", successNoWarning() },
-                { "reflectNonPublicMemberExportedPackage", fail("IllegalAccessException") },
-                { "reflectPublicMemberNonExportedPackage", successWithWarning() },
-                { "reflectNonPublicMemberNonExportedPackage", fail("IllegalAccessException") },
-                { "reflectPublicMemberJdk9NonExportedPackage", fail("IllegalAccessException") },
-
-                { "setAccessiblePublicMemberExportedPackage", successNoWarning()},
-                { "setAccessibleNonPublicMemberExportedPackage", successWithWarning() },
-                { "setAccessiblePublicMemberNonExportedPackage", successWithWarning() },
-                { "setAccessibleNonPublicMemberNonExportedPackage", successWithWarning() },
-                { "setAccessiblePublicMemberJdk9NonExportedPackage", fail("InaccessibleObjectException") },
-                { "setAccessiblePublicMemberApplicationModule", successNoWarning() },
-                { "setAccessibleNotPublicMemberApplicationModule", fail("InaccessibleObjectException") },
-
-                { "privateLookupPublicClassExportedPackage", successWithWarning() },
-                { "privateLookupNonPublicClassExportedPackage", successWithWarning() },
-                { "privateLookupPublicClassNonExportedPackage", successWithWarning() },
-                { "privateLookupNonPublicClassNonExportedPackage",  successWithWarning() },
-                { "privateLookupPublicClassJdk9NonExportedPackage", fail("IllegalAccessException") },
-                { "privateLookupPublicClassApplicationModule", fail("IllegalAccessException") },
+                { "panama_no_unnamed_module_native_access", UNNAMED, successWithWarning(), new String[]{} },
+                { "panama_all_unnamed_module_native_access", UNNAMED, successNoWarning(), new String[]{"--enable-native-access=ALL-UNNAMED"} },
         };
     }
 
@@ -219,7 +170,8 @@ public class TestEnableNativeAccess {
             throws Exception
     {
         Stream<String> s1 = Stream.of(vmopts);
-        Stream<String> s2 = Stream.of("--enable-preview", "-p", MODULE_PATH, "-m", cls, action);
+        Stream<String> s2 = cls.equals(UNNAMED) ? Stream.of("--enable-preview", "-p", MODULE_PATH, cls, action)
+                : Stream.of("--enable-preview", "-p", MODULE_PATH, "-m", cls, action);
         String[] opts = Stream.concat(s1, s2).toArray(String[]::new);
         OutputAnalyzer outputAnalyzer = ProcessTools
                 .executeTestJava(opts)
@@ -229,95 +181,43 @@ public class TestEnableNativeAccess {
             checkResult(expectedResult, outputAnalyzer);
         return outputAnalyzer;
     }
-//
-//    OutputAnalyzer run(String action, String... vmopts) throws Exception {
-//        return run(action, null, vmopts);
-//    }
 
-//    @Test(dataProvider = "denyCases")
-//    public void testDefault(String action, Result expectedResult) throws Exception {
-//        run(action, expectedResult);
-//    }
-//
-//    @Test(dataProvider = "denyCases")
-//    public void testDeny(String action, Result expectedResult) throws Exception {
-//        run(action, expectedResult, "--illegal-access=deny");
-//    }
-//
-//    @Test(dataProvider = "permitCases")
-//    public void testPermit(String action, Result expectedResult) throws Exception {
-//        run(action, expectedResult, "--illegal-access=permit");
-//    }
-//
-//    @Test(dataProvider = "permitCases")
-//    public void testWarn(String action, Result expectedResult) throws Exception {
-//        run(action, expectedResult, "--illegal-access=warn");
-//    }
-//
-//    @Test(dataProvider = "permitCases")
-//    public void testDebug(String action, Result expectedResult) throws Exception {
-//        // expect stack trace with WARNING
-//        if (expectedResult.expectedOutput().anyMatch("WARNING"::equals)) {
-//            expectedResult.expect("TryAccess.main");
-//        }
-//        run(action, expectedResult, "--illegal-access=debug");
-//    }
-//
-//    /**
-//     * Test that without --enable-native-access, a multi-line warning is printed
-//     * on first access of a module.
-//     */
-//    public void testWarnOnFirstNativeAccess() throws Exception {
-//        String action1 = "reflectPublicMemberNonExportedPackage";
-//        String action2 = "setAccessibleNonPublicMemberExportedPackage";
-//        int warningCount = count(run(action1, "--illegal-access=permit").asLines(), "WARNING");
-//        assertTrue(warningCount > 0);  // multi line warning
-//
-//        // same native access
-//        List<String> output1 = run(action1 + "," + action1, "--illegal-access=permit").asLines();
-//        assertTrue(count(output1, "WARNING") == warningCount);
-//
-//        // different native access
-//        List<String> output2 = run(action1 + "," + action2, "--illegal-access=permit").asLines();
-//        assertTrue(count(output2, "WARNING") == warningCount);
-//    }
-//
-    /**
-     * Test that without --enable-native-access, a one-line warning is printed
-     * on each native access of a module.
-     */
-    public void testWarnPerNativeAccess() throws Exception {
-        String action1 = "panama_enable_native_access_first";
-        String action2 = "panama_enable_native_access_second";
-
-        // same native access
-        String repeatedActions = action1 + "," + action1;
-        List<String> output1 = run(repeatedActions, PANAMA_MAIN, successWithWarning()).asLines();
-        assertTrue(count(output1, "WARNING") == 1);
-
-        // different native access
-        String differentActions = action1 + "," + action2;
-        List<String> output2 = run(differentActions, PANAMA_MAIN, successWithWarning()).asLines();
-        assertTrue(count(output2, "WARNING") == 2);
+    @Test(dataProvider = "succeedCases")
+    public void testSucceed(String action, String cls, Result expectedResult, String... vmopts) throws Exception {
+        run(action, cls, expectedResult, vmopts);
     }
 
     /**
-     * Specify --enable-native-access more than once, each list of module names is appended
+     * Test that without --enable-native-access, a multi-line warning is printed
+     * on first access of a module.
+     */
+    public void testWarnFirstAccess() throws Exception {
+        List<String> output1 = run("panama_enable_native_access_first", PANAMA_MAIN,
+                successWithWarning()).asLines();
+        assertTrue(count(output1, "WARNING") == 4);
+    }
+
+    /**
+     * Specify --enable-native-access more than once, each list of module names
+     * is appended.
      */
     public void testRepeatedOption() throws Exception {
         run("panama_enable_native_access_last_one_wins", PANAMA_MAIN,
-                successWithWarning(), "--enable-native-access=java.base", "--enable-native-access=panama_module");
+                success(), "--enable-native-access=java.base", "--enable-native-access=panama_module");
         run("panama_enable_native_access_last_one_wins", PANAMA_MAIN,
-                successWithWarning(), "--enable-native-access=panama_module", "--enable-native-access=java.base");
+                success(), "--enable-native-access=panama_module", "--enable-native-access=java.base");
     }
 
     /**
-     * Specify bad value to --enable-native-access
+     * Specify bad value to --enable-native-access.
      */
     public void testBadValue() throws Exception {
         run("panama_enable_native_access_warn_unknown_module", PANAMA_MAIN,
                 failWithWarning("WARNING: Unknown module: BAD specified to --enable-native-access"),
                 "--enable-native-access=BAD");
+        run("panama_no_all_module_path_blanket_native_access", PANAMA_MAIN,
+                failWithWarning("WARNING: Unknown module: ALL-MODULE-PATH specified to --enable-native-access"),
+                "--enable-native-access=ALL-MODULE-PATH" );
     }
 
     private int count(Iterable<String> lines, CharSequence cs) {
