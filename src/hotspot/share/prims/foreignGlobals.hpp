@@ -30,7 +30,7 @@
 #include "utilities/growableArray.hpp"
 #include "utilities/macros.hpp"
 
-#include CPU_HEADER(foreign_globals)
+#include CPU_HEADER(foreignGlobals)
 
 class CallConvClosure {
 public:

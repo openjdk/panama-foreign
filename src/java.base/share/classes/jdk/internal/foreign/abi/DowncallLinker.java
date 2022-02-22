@@ -43,14 +43,9 @@ import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodType.methodType;
 
-/**
- * This class implements native call invocation through a so called 'universal adapter'. A universal adapter takes
- * an array of longs together with a call 'recipe', which is used to move the arguments in the right places as
- * expected by the system ABI.
- */
-public class ProgrammableInvoker {
+public class DowncallLinker {
     private static final boolean USE_SPEC = Boolean.parseBoolean(
-        GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.USE_SPEC", "true"));
+        GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.DowncallLinker.USE_SPEC", "true"));
 
     private static final JavaLangInvokeAccess JLIA = SharedSecrets.getJavaLangInvokeAccess();
 
@@ -63,7 +58,7 @@ public class ProgrammableInvoker {
     static {
         try {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
-            MH_INVOKE_INTERP_BINDINGS = lookup.findVirtual(ProgrammableInvoker.class, "invokeInterpBindings",
+            MH_INVOKE_INTERP_BINDINGS = lookup.findVirtual(DowncallLinker.class, "invokeInterpBindings",
                     methodType(Object.class, SegmentAllocator.class, Object[].class, InvocationData.class));
             MH_CHECK_SYMBOL = lookup.findStatic(SharedUtils.class, "checkSymbol",
                     methodType(void.class, NativeSymbol.class));
@@ -75,7 +70,7 @@ public class ProgrammableInvoker {
     private final ABIDescriptor abi;
     private final CallingSequence callingSequence;
 
-    public ProgrammableInvoker(ABIDescriptor abi, CallingSequence callingSequence) {
+    public DowncallLinker(ABIDescriptor abi, CallingSequence callingSequence) {
         this.abi = abi;
         assert callingSequence.forDowncall();
         this.callingSequence = callingSequence;

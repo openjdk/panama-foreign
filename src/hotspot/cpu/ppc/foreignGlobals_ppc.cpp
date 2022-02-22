@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020 SAP SE. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +23,12 @@
  */
 
 #include "precompiled.hpp"
-#include "prims/foreign_globals.hpp"
+#include "prims/foreignGlobals.hpp"
 #include "utilities/debug.hpp"
 
+// Stubbed out, implement later
 const ABIDescriptor ForeignGlobals::parse_abi_descriptor(jobject jabi) {
-  ShouldNotCallThis();
+  Unimplemented();
   return {};
 }
 

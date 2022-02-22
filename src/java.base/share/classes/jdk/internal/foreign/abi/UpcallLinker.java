@@ -44,18 +44,18 @@ import static java.lang.invoke.MethodHandles.lookup;
 import static java.lang.invoke.MethodType.methodType;
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
-public class ProgrammableUpcallHandler {
+public class UpcallLinker {
     private static final boolean DEBUG =
-        privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.DEBUG");
+        privilegedGetProperty("jdk.internal.foreign.UpcallLinker.DEBUG");
     private static final boolean USE_SPEC = Boolean.parseBoolean(
-        GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC", "true"));
+        GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.UpcallLinker.USE_SPEC", "true"));
 
     private static final MethodHandle MH_invokeInterpBindings;
 
     static {
         try {
             MethodHandles.Lookup lookup = lookup();
-            MH_invokeInterpBindings = lookup.findStatic(ProgrammableUpcallHandler.class, "invokeInterpBindings",
+            MH_invokeInterpBindings = lookup.findStatic(UpcallLinker.class, "invokeInterpBindings",
                     methodType(Object.class, Object[].class, InvocationData.class));
         } catch (ReflectiveOperationException e) {
             throw new InternalError(e);
@@ -92,7 +92,7 @@ public class ProgrammableUpcallHandler {
         VMStorage[] args = Arrays.stream(argMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
         VMStorage[] rets = Arrays.stream(retMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
         CallRegs conv = new CallRegs(args, rets);
-        long entryPoint = allocateOptimizedUpcallStub(doBindings, abi, conv,
+        long entryPoint = makeUpcallStub(doBindings, abi, conv,
                 callingSequence.needsReturnBuffer(), callingSequence.returnBufferSize());
         return UpcallStubs.makeUpcall(entryPoint, session);
     }
@@ -199,8 +199,8 @@ public class ProgrammableUpcallHandler {
     // used for transporting data into native code
     private static record CallRegs(VMStorage[] argRegs, VMStorage[] retRegs) {}
 
-    static native long allocateOptimizedUpcallStub(MethodHandle mh, ABIDescriptor abi, CallRegs conv,
-                                                   boolean needsReturnBuffer, long returnBufferSize);
+    static native long makeUpcallStub(MethodHandle mh, ABIDescriptor abi, CallRegs conv,
+                                      boolean needsReturnBuffer, long returnBufferSize);
 
     private static native void registerNatives();
     static {

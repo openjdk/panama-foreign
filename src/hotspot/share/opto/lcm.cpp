@@ -899,7 +899,7 @@ uint PhaseCFG::sched_call(Block* block, uint node_cnt, Node_List& worklist, Grow
   // here in case a native call has a safepoint. This doesn't work for
   // RBP though, which seems to be special-cased elsewhere to always be
   // treated as alive, so we instead manually save the location of RBP
-  // before doing the native call (see NativeInvokerGenerator::generate).
+  // before doing the native call (see DowncallStubGenerator::generate).
   bool exclude_soe = op == Op_CallRuntime;
 
   // If the call is a MethodHandle invoke, we need to exclude the

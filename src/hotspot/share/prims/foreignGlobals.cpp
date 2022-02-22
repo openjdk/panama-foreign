@@ -22,10 +22,10 @@
  */
 
 #include "precompiled.hpp"
-#include "foreign_globals.hpp"
+#include "foreignGlobals.hpp"
 #include "classfile/javaClasses.hpp"
 #include "memory/resourceArea.hpp"
-#include "prims/foreign_globals.inline.hpp"
+#include "prims/foreignGlobals.inline.hpp"
 #include "runtime/jniHandles.inline.hpp"
 
 #define FOREIGN_ABI "jdk/internal/foreign/abi/"

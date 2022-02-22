@@ -21,22 +21,16 @@
  * questions.
  */
 
-#ifndef SHARE_VM_PRIMS_UNIVERSALNATIVEINVOKER_HPP
-#define SHARE_VM_PRIMS_UNIVERSALNATIVEINVOKER_HPP
+#include "precompiled.hpp"
+#include "prims/downcallLinker.hpp"
 
-#include "prims/foreign_globals.hpp"
-
-class RuntimeStub;
-
-class ProgrammableInvoker: AllStatic {
-public:
-  static RuntimeStub* make_native_invoker(BasicType*,
-                                          int num_args,
-                                          BasicType ret_bt,
-                                          const ABIDescriptor& abi,
-                                          const GrowableArray<VMReg>& input_registers,
-                                          const GrowableArray<VMReg>& output_registers,
-                                          bool needs_return_buffer);
-};
-
-#endif // SHARE_VM_PRIMS_UNIVERSALNATIVEINVOKER_HPP
+RuntimeStub* DowncallLinker::make_downcall_stub(BasicType* signature,
+                                                int num_args,
+                                                BasicType ret_bt,
+                                                const ABIDescriptor& abi,
+                                                const GrowableArray<VMReg>& input_registers,
+                                                const GrowableArray<VMReg>& output_registers,
+                                                bool needs_return_buffer) {
+  Unimplemented();
+  return nullptr;
+}

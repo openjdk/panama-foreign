@@ -22,16 +22,15 @@
  */
 
 #include "precompiled.hpp"
-#include "prims/universalNativeInvoker.hpp"
+#include "prims/foreignGlobals.hpp"
 #include "utilities/debug.hpp"
 
-RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
-                                                      int num_args,
-                                                      BasicType ret_bt,
-                                                      const ABIDescriptor& abi,
-                                                      const GrowableArray<VMReg>& input_registers,
-                                                      const GrowableArray<VMReg>& output_registers,
-                                                      bool needs_return_buffer) {
+const ABIDescriptor ForeignGlobals::parse_abi_descriptor(jobject jabi) {
   Unimplemented();
-  return nullptr;
+  return {};
+}
+
+VMReg ForeignGlobals::vmstorage_to_vmreg(int type, int index) {
+  Unimplemented();
+  return VMRegImpl::Bad();
 }

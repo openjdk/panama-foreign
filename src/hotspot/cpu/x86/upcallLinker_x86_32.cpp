@@ -1,5 +1,4 @@
 /*
- * Copyright (c) 2020 SAP SE. All rights reserved.
  * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,15 +22,14 @@
  */
 
 #include "precompiled.hpp"
-#include "prims/universalUpcallHandler.hpp"
-#include "utilities/debug.hpp"
+#include "prims/upcallLinker.hpp"
 
-address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiver, Method* entry,
-                                                                  BasicType* in_sig_bt, int total_in_args,
-                                                                  BasicType* out_sig_bt, int total_out_args,
-                                                                  BasicType ret_type,
-                                                                  jobject jabi, jobject jconv,
-                                                                  bool needs_return_buffer, int ret_buf_size) {
+address UpcallLinker::make_upcall_stub(jobject receiver, Method* entry,
+                                       BasicType* in_sig_bt, int total_in_args,
+                                       BasicType* out_sig_bt, int total_out_args,
+                                       BasicType ret_type,
+                                       jobject jabi, jobject jconv,
+                                       bool needs_return_buffer, int ret_buf_size) {
   ShouldNotCallThis();
   return nullptr;
 }
