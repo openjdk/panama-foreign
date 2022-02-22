@@ -22,7 +22,7 @@
  */
 
 /*
- * @test /nodynamiccopyright/
+ * @test
  * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64")
  * @run testng/othervm -Dos.name=Windows --enable-native-access=ALL-UNNAMED TestFallbackLookup
