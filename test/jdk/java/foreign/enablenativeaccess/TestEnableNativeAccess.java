@@ -45,11 +45,13 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 /**
- * Basic test of --enable-native-access=<module name> with expected behaviour:
+ * Basic test of --enable-native-access with expected behaviour:
  *
  *  if flag present:        - permit access to modules that are specified
- *                          - deny access to modules that are not specified (throw IllegalCallerException)
+ *                          - deny access to modules that are not specified
+ *                            (throw IllegalCallerException)
  *  if flag not present:    - permit access to all modules and omit a warning
+ *                            (on first access per module only)
 */
 
 @Test
@@ -194,7 +196,7 @@ public class TestEnableNativeAccess {
     public void testWarnFirstAccess() throws Exception {
         List<String> output1 = run("panama_enable_native_access_first", PANAMA_MAIN,
                 successWithWarning()).asLines();
-        assertTrue(count(output1, "WARNING") == 4);  // 4 on first access, none on subsequent access
+        assertTrue(count(output1, "WARNING") == 3);  // 3 on first access, none on subsequent access
     }
 
     /**
