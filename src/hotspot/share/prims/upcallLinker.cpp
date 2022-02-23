@@ -27,7 +27,7 @@
 #include "classfile/systemDictionary.hpp"
 #include "compiler/compilationPolicy.hpp"
 #include "memory/resourceArea.hpp"
-#include "prims/universalUpcallHandler.hpp"
+#include "prims/upcallLinker.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/jniHandles.inline.hpp"
@@ -37,7 +37,7 @@
 
 extern struct JavaVM_ main_vm;
 
-JavaThread* ProgrammableUpcallHandler::maybe_attach_and_get_thread(bool* should_detach) {
+JavaThread* UpcallLinker::maybe_attach_and_get_thread(bool* should_detach) {
   JavaThread* thread = JavaThread::current_or_null();
   if (thread == nullptr) {
     JavaVM_ *vm = (JavaVM *)(&main_vm);
@@ -53,13 +53,13 @@ JavaThread* ProgrammableUpcallHandler::maybe_attach_and_get_thread(bool* should_
   return thread;
 }
 
-void ProgrammableUpcallHandler::detach_current_thread() {
+void UpcallLinker::detach_current_thread() {
   JavaVM_ *vm = (JavaVM *)(&main_vm);
   vm->functions->DetachCurrentThread(vm);
 }
 
 // modelled after JavaCallWrapper::JavaCallWrapper
-JavaThread* ProgrammableUpcallHandler::on_entry(OptimizedEntryBlob::FrameData* context) {
+JavaThread* UpcallLinker::on_entry(UpcallStub::FrameData* context) {
   JavaThread* thread = maybe_attach_and_get_thread(&context->should_detach);
   context->thread = thread;
 
@@ -93,7 +93,7 @@ JavaThread* ProgrammableUpcallHandler::on_entry(OptimizedEntryBlob::FrameData* c
 }
 
 // modelled after JavaCallWrapper::~JavaCallWrapper
-void ProgrammableUpcallHandler::on_exit(OptimizedEntryBlob::FrameData* context) {
+void UpcallLinker::on_exit(UpcallStub::FrameData* context) {
   JavaThread* thread = context->thread;
   assert(thread == JavaThread::current(), "must still be the same thread");
 
@@ -120,7 +120,7 @@ void ProgrammableUpcallHandler::on_exit(OptimizedEntryBlob::FrameData* context) 
   }
 }
 
-void ProgrammableUpcallHandler::handle_uncaught_exception(oop exception) {
+void UpcallLinker::handle_uncaught_exception(oop exception) {
   ResourceMark rm;
   // Based on CATCH macro
   tty->print_cr("Uncaught exception:");
@@ -128,7 +128,7 @@ void ProgrammableUpcallHandler::handle_uncaught_exception(oop exception) {
   ShouldNotReachHere();
 }
 
-JVM_ENTRY(jlong, PUH_AllocateOptimizedUpcallStub(JNIEnv *env, jclass unused, jobject mh, jobject abi, jobject conv,
+JVM_ENTRY(jlong, UL_MakeUpcallStub(JNIEnv *env, jclass unused, jobject mh, jobject abi, jobject conv,
                                                  jboolean needs_return_buffer, jlong ret_buf_size))
   ResourceMark rm(THREAD);
   Handle mh_h(THREAD, JNIHandles::resolve(mh));
@@ -164,23 +164,23 @@ JVM_ENTRY(jlong, PUH_AllocateOptimizedUpcallStub(JNIEnv *env, jclass unused, job
   BasicType* in_sig_bt = out_sig_bt + 1;
   int total_in_args = total_out_args - 1;
 
-  return (jlong) ProgrammableUpcallHandler::generate_optimized_upcall_stub(
+  return (jlong) UpcallLinker::make_upcall_stub(
     mh_j, entry, in_sig_bt, total_in_args, out_sig_bt, total_out_args, ret_type, abi, conv, needs_return_buffer, checked_cast<int>(ret_buf_size));
 JVM_END
 
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 
-static JNINativeMethod PUH_methods[] = {
-  {CC "allocateOptimizedUpcallStub", CC "(" "Ljava/lang/invoke/MethodHandle;" "L" FOREIGN_ABI "ABIDescriptor;" "L" FOREIGN_ABI "ProgrammableUpcallHandler$CallRegs;" "ZJ)J", FN_PTR(PUH_AllocateOptimizedUpcallStub)},
+static JNINativeMethod UL_methods[] = {
+  {CC "makeUpcallStub", CC "(" "Ljava/lang/invoke/MethodHandle;" "L" FOREIGN_ABI "ABIDescriptor;" "L" FOREIGN_ABI "UpcallLinker$CallRegs;" "ZJ)J", FN_PTR(UL_MakeUpcallStub)},
 };
 
 /**
  * This one function is exported, used by NativeLookup.
  */
-JNI_ENTRY(void, JVM_RegisterProgrammableUpcallHandlerMethods(JNIEnv *env, jclass PUH_class))
+JNI_ENTRY(void, JVM_RegisterUpcallLinkerMethods(JNIEnv *env, jclass UL_class))
   ThreadToNativeFromVM ttnfv(thread);
-  int status = env->RegisterNatives(PUH_class, PUH_methods, sizeof(PUH_methods)/sizeof(JNINativeMethod));
+  int status = env->RegisterNatives(UL_class, UL_methods, sizeof(UL_methods)/sizeof(JNINativeMethod));
   guarantee(status == JNI_OK && !env->ExceptionOccurred(),
-            "register jdk.internal.foreign.abi.ProgrammableUpcallHandler natives");
+            "register jdk.internal.foreign.abi.UpcallLinker natives");
 JNI_END

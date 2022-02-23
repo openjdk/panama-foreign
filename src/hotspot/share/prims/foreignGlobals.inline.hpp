@@ -21,15 +21,28 @@
  * questions.
  */
 
-#include "precompiled.hpp"
-#include "prims/universalUpcallHandler.hpp"
+#ifndef SHARE_PRIMS_FOREIGN_GLOBALS_INLINE_HPP
+#define SHARE_PRIMS_FOREIGN_GLOBALS_INLINE_HPP
 
-address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiver, Method* entry,
-                                                                  BasicType* in_sig_bt, int total_in_args,
-                                                                  BasicType* out_sig_bt, int total_out_args,
-                                                                  BasicType ret_type,
-                                                                  jobject jabi, jobject jconv,
-                                                                  bool needs_return_buffer, int ret_buf_size) {
-  ShouldNotCallThis();
-  return nullptr;
+#include "prims/foreignGlobals.hpp"
+
+#include "oops/oopsHierarchy.hpp"
+#include "oops/objArrayOop.hpp"
+#include "oops/oopCast.inline.hpp"
+
+template<typename T, typename Func>
+void ForeignGlobals::loadArray(objArrayOop jarray, int type_index, GrowableArray<T>& array, Func converter) {
+  objArrayOop subarray = oop_cast<objArrayOop>(jarray->obj_at(type_index));
+  int subarray_length = subarray->length();
+  for (int i = 0; i < subarray_length; i++) {
+    oop storage = subarray->obj_at(i);
+    jint index = jdk_internal_foreign_abi_VMStorage::index(storage);
+    array.push(converter(index));
+  }
 }
+
+inline const char* null_safe_string(const char* str) {
+  return str == nullptr ? "NULL" : str;
+}
+
+#endif // SHARE_PRIMS_FOREIGN_GLOBALS_INLINE_HPP

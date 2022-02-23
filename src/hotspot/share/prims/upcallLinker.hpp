@@ -21,30 +21,30 @@
  * questions.
  */
 
-#ifndef SHARE_VM_PRIMS_UNIVERSALUPCALLHANDLER_HPP
-#define SHARE_VM_PRIMS_UNIVERSALUPCALLHANDLER_HPP
+#ifndef SHARE_VM_PRIMS_UPCALLLINKER_HPP
+#define SHARE_VM_PRIMS_UPCALLLINKER_HPP
 
 #include "asm/codeBuffer.hpp"
 #include "code/codeBlob.hpp"
-#include "prims/foreign_globals.hpp"
+#include "prims/foreignGlobals.hpp"
 
 class JavaThread;
 
-class ProgrammableUpcallHandler {
+class UpcallLinker {
 private:
   static void handle_uncaught_exception(oop exception);
   static JavaThread* maybe_attach_and_get_thread(bool* should_detach);
   static void detach_current_thread();
 
-  static JavaThread* on_entry(OptimizedEntryBlob::FrameData* context);
-  static void on_exit(OptimizedEntryBlob::FrameData* context);
+  static JavaThread* on_entry(UpcallStub::FrameData* context);
+  static void on_exit(UpcallStub::FrameData* context);
 public:
-  static address generate_optimized_upcall_stub(jobject mh, Method* entry,
-                                                BasicType* in_sig_bt, int total_in_args,
-                                                BasicType* out_sig_bt, int total_out_args,
-                                                BasicType ret_type,
-                                                jobject jabi, jobject jconv,
-                                                bool needs_return_buffer, int ret_buf_size);
+  static address make_upcall_stub(jobject mh, Method* entry,
+                                  BasicType* in_sig_bt, int total_in_args,
+                                  BasicType* out_sig_bt, int total_out_args,
+                                  BasicType ret_type,
+                                  jobject jabi, jobject jconv,
+                                  bool needs_return_buffer, int ret_buf_size);
 };
 
-#endif // SHARE_VM_PRIMS_UNIVERSALUPCALLHANDLER_HPP
+#endif // SHARE_VM_PRIMS_UPCALLLINKER_HPP

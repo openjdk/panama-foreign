@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,15 @@
  */
 
 #include "precompiled.hpp"
-#include "prims/universalNativeInvoker.hpp"
+#include "prims/foreignGlobals.hpp"
+#include "utilities/debug.hpp"
 
-RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
-                                                      int num_args,
-                                                      BasicType ret_bt,
-                                                      const ABIDescriptor& abi,
-                                                      const GrowableArray<VMReg>& input_registers,
-                                                      const GrowableArray<VMReg>& output_registers,
-                                                      bool needs_return_buffer) {
+const ABIDescriptor ForeignGlobals::parse_abi_descriptor(jobject jabi) {
+  ShouldNotCallThis();
+  return {};
+}
+
+VMReg ForeignGlobals::vmstorage_to_vmreg(int type, int index) {
   Unimplemented();
-  return nullptr;
+  return VMRegImpl::Bad();
 }

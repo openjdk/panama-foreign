@@ -193,7 +193,7 @@ public class BindingSpecializer {
         try {
             // We must initialize the class since the upcall stubs don't have a clinit barrier, and the slow
             // path in the c2i adapter we end up calling can not handle the particular code shape where the
-            // caller is an optimized upcall stub.
+            // caller is an upcall stub.
             boolean initialize = callingSequence.forUpcall();
             MethodHandles.Lookup lookup = MethodHandles.lookup().defineHiddenClassWithClassData(bytes, leafHandle, initialize);
             return lookup.findStatic(lookup.lookupClass(), METHOD_NAME, callerMethodType);

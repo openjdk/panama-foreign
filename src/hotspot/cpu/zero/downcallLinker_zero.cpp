@@ -21,28 +21,16 @@
  * questions.
  */
 
-#ifndef SHARE_PRIMS_FOREIGN_GLOBALS_INLINE_HPP
-#define SHARE_PRIMS_FOREIGN_GLOBALS_INLINE_HPP
+#include "precompiled.hpp"
+#include "prims/downcallLinker.hpp"
 
-#include "prims/foreign_globals.hpp"
-
-#include "oops/oopsHierarchy.hpp"
-#include "oops/objArrayOop.hpp"
-#include "oops/oopCast.inline.hpp"
-
-template<typename T, typename Func>
-void ForeignGlobals::loadArray(objArrayOop jarray, int type_index, GrowableArray<T>& array, Func converter) {
-  objArrayOop subarray = oop_cast<objArrayOop>(jarray->obj_at(type_index));
-  int subarray_length = subarray->length();
-  for (int i = 0; i < subarray_length; i++) {
-    oop storage = subarray->obj_at(i);
-    jint index = jdk_internal_foreign_abi_VMStorage::index(storage);
-    array.push(converter(index));
-  }
+RuntimeStub* DowncallLinker::make_downcall_stub(BasicType* signature,
+                                                int num_args,
+                                                BasicType ret_bt,
+                                                const ABIDescriptor& abi,
+                                                const GrowableArray<VMReg>& input_registers,
+                                                const GrowableArray<VMReg>& output_registers,
+                                                bool needs_return_buffer) {
+  Unimplemented();
+  return nullptr;
 }
-
-inline const char* null_safe_string(const char* str) {
-  return str == nullptr ? "NULL" : str;
-}
-
-#endif // SHARE_PRIMS_FOREIGN_GLOBALS_INLINE_HPP
