@@ -387,10 +387,10 @@ address UpcallLinker::make_upcall_stub(jobject receiver, Method* entry,
 
   UpcallStub* blob
     = UpcallStub::create(name,
-                                 &buffer,
-                                 exception_handler_offset,
-                                 receiver,
-                                 in_ByteSize(frame_data_offset));
+                         &buffer,
+                         exception_handler_offset,
+                         receiver,
+                         in_ByteSize(frame_data_offset));
 
   if (TraceOptimizedUpcallStubs) {
     blob->print_on(tty);
