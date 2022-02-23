@@ -115,49 +115,35 @@ public class Reflection {
         }
     }
 
-    static class NativeAccessLogger {
-        static AtomicBoolean firstNativeAccessWarning = new AtomicBoolean();
-
-        @ForceInline
-        static void logNativeAccessIfNeeded(Class<?> currentClass, Class<?> owner, String methodName) {
-            Module module = currentClass.getModule();
-            if (ModuleBootstrap.hasEnableNativeAccessFlag()) {
-                if (!SharedSecrets.getJavaLangAccess().isEnableNativeAccess(module)) {
+    @ForceInline
+    public static void ensureNativeAccess(Class<?> currentClass, Class<?> owner, String methodName) {
+        Module module = currentClass.getModule();
+        boolean isNativeAccessEnabled = SharedSecrets.getJavaLangAccess().isEnableNativeAccess(module);
+        if (!isNativeAccessEnabled) {
+            synchronized(module) {
+                isNativeAccessEnabled = SharedSecrets.getJavaLangAccess().isEnableNativeAccess(module);
+                if (isNativeAccessEnabled) {
+                    // some other thread got to it, do nothing
+                } else if (ModuleBootstrap.hasEnableNativeAccessFlag()) {
                     throw new IllegalCallerException("Illegal native access from: " + module);
-                }
-            } else {    // native-access unspecified, allowed for all modules
-                        // warning omitted on first access only
-                boolean isFirst = firstNativeAccessWarning.compareAndSet(false, true);
-                if (isFirst) {
-                    URL url = codeSource(currentClass);
-                    String source = currentClass.getName();
-                    if (url != null)
-                        source += " (" + url + ")";
-                    String what = owner.getName() + "." + methodName;
+                } else {
+                    // warn and set flag, so that only one warning is reported per module
+                    String cls = owner.getName();
+                    String mtd = cls + "::" + methodName;
+                    String mod = module.isNamed() ? "module " + module.getName() : "the unnamed module";
                     System.err.printf("""
-                            WARNING: A restricted native access operation has occurred
-                            WARNING: Restricted native access by %s to %s
-                            WARNING: Use --enable-native-access to prevent warnings about restricted native access by trusted modules
-                            WARNING: All restricted native access operations by untrusted modules will be denied in a future release
-                            %n""", source, what);
+                            WARNING: A restricted method in %s has been called
+                            WARNING: %s has been called by %s
+                            WARNING: Use --enable-native-access to allow this module to use restricted methods
+                            %n""", cls, mtd, mod);
+                    if (module.isNamed()) {
+                        SharedSecrets.getJavaLangAccess().addEnableNativeAccess(module);
+                    } else {
+                        SharedSecrets.getJavaLangAccess().addEnableNativeAccessAllUnnamed();
+                    }
                 }
             }
         }
-
-        /**
-         * Returns the code source for the given class or null if there is no code source
-         */
-        private static URL codeSource(Class<?> clazz) {
-            PrivilegedAction<ProtectionDomain> pa = clazz::getProtectionDomain;
-            @SuppressWarnings("removal")
-            CodeSource cs = AccessController.doPrivileged(pa).getCodeSource();
-            return (cs != null) ? cs.getLocation() : null;
-        }
-    }
-
-    @ForceInline
-    public static void ensureNativeAccess(Class<?> currentClass, Class<?> owner, String methodName) {
-        NativeAccessLogger.logNativeAccessIfNeeded(currentClass, owner, methodName);
     }
 
     /**
