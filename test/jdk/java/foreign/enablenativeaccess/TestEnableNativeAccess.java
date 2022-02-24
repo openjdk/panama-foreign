@@ -120,10 +120,6 @@ public class TestEnableNativeAccess {
         return success().expect("WARNING");
     }
 
-    static Result fail(String expectedOutput) {
-        return new Result(false).expect(expectedOutput).doNotExpect("WARNING");
-    }
-
     static Result failWithWarning(String expectedOutput) {
         return new Result(false).expect(expectedOutput).expect("WARNING");
     }
@@ -179,8 +175,7 @@ public class TestEnableNativeAccess {
                 .executeTestJava(opts)
                 .outputTo(System.out)
                 .errorTo(System.out);
-        if (expectedResult != null)
-            checkResult(expectedResult, outputAnalyzer);
+        checkResult(expectedResult, outputAnalyzer);
         return outputAnalyzer;
     }
 
@@ -190,7 +185,7 @@ public class TestEnableNativeAccess {
     }
 
     /**
-     * Test that without --enable-native-access, a multi-line warning is printed
+     * Tests that without --enable-native-access, a multi-line warning is printed
      * on first access of a module.
      */
     public void testWarnFirstAccess() throws Exception {
@@ -200,7 +195,7 @@ public class TestEnableNativeAccess {
     }
 
     /**
-     * Specify --enable-native-access more than once, each list of module names
+     * Specifies --enable-native-access more than once, each list of module names
      * is appended.
      */
     public void testRepeatedOption() throws Exception {
@@ -211,7 +206,7 @@ public class TestEnableNativeAccess {
     }
 
     /**
-     * Specify bad value to --enable-native-access.
+     * Specifies bad value to --enable-native-access.
      */
     public void testBadValue() throws Exception {
         run("panama_enable_native_access_warn_unknown_module", PANAMA_MAIN,
