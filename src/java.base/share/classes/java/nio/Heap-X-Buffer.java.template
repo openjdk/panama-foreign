@@ -40,10 +40,10 @@ import java.util.Objects;
  * instance of this class rather than of the superclass.
 #end[rw]
  */
-
 class Heap$Type$Buffer$RW$
     extends {#if[ro]?Heap}$Type$Buffer
 {
+#if[rw]
     // Cached array base offset
     private static final long ARRAY_BASE_OFFSET = UNSAFE.arrayBaseOffset($type$[].class);
 
@@ -53,11 +53,10 @@ class Heap$Type$Buffer$RW$
     // For speed these fields are actually declared in X-Buffer;
     // these declarations are here as documentation
     /*
-#if[rw]
     protected final $type$[] hb;
     protected final int offset;
-#end[rw]
     */
+#end[rw]
 
     Heap$Type$Buffer$RW$(int cap, int lim, MemorySegment segment) {            // package-private
 #if[rw]
