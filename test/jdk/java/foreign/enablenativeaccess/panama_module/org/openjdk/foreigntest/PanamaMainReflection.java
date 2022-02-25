@@ -28,7 +28,21 @@ import java.lang.reflect.Method;
 
 public class PanamaMainReflection {
    public static void main(String[] args) throws Throwable {
-       Method method = CLinker.class.getDeclaredMethod("systemCLinker");
-       method.invoke(null);
+       testReflectionCLinker();
+       testReflectionMemorySegment();
    }
+
+    public static void testReflectionCLinker() throws Throwable {
+        System.out.println("Trying to get CLinker");
+        Method method = CLinker.class.getDeclaredMethod("systemCLinker");
+        method.invoke(null);
+        System.out.println("Got CLinker");
+    }
+
+    public static void testReflectionMemorySegment() throws Throwable {
+        System.out.println("Trying to get MemorySegment");
+        Method method = MemorySegment.class.getDeclaredMethod("ofAddress", MemoryAddress.class, long.class, MemorySession.class);
+        method.invoke(null, MemoryAddress.NULL, 4000L, MemorySession.global());
+        System.out.println("Got MemorySegment");
+    }
 }

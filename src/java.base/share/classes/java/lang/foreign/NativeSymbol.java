@@ -84,7 +84,7 @@ sealed public interface NativeSymbol extends Addressable permits NativeSymbolImp
      */
     @CallerSensitive
     static NativeSymbol ofAddress(String name, MemoryAddress address, MemorySession session) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), NativeSymbol.class, "ofAddress");
         Objects.requireNonNull(name);
         Objects.requireNonNull(address);
         Objects.requireNonNull(session);
