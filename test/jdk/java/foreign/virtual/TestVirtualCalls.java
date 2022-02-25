@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2021, 2022, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @enablePreview
  * @requires os.arch=="amd64" | os.arch=="x86_64" | os.arch=="aarch64"
  * @library ../
  * @run testng/othervm
@@ -30,15 +31,12 @@
  *   TestVirtualCalls
  */
 
-import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.FunctionDescriptor;
+import java.lang.foreign.CLinker;
+import java.lang.foreign.FunctionDescriptor;
 
 import java.lang.invoke.MethodHandle;
 
-import jdk.incubator.foreign.NativeSymbol;
-import jdk.incubator.foreign.SymbolLookup;
-import jdk.incubator.foreign.MemoryAddress;
+import java.lang.foreign.NativeSymbol;
 import org.testng.annotations.*;
 
 import static org.testng.Assert.assertEquals;
@@ -57,10 +55,9 @@ public class TestVirtualCalls extends NativeTestHelper {
                 FunctionDescriptor.of(C_INT));
 
         System.loadLibrary("Virtual");
-        SymbolLookup lookup = SymbolLookup.loaderLookup();
-        funcA = lookup.lookup("funcA").get();
-        funcB = lookup.lookup("funcB").get();
-        funcC = lookup.lookup("funcC").get();
+        funcA = findNativeOrThrow(TestVirtualCalls.class, "funcA");
+        funcB = findNativeOrThrow(TestVirtualCalls.class, "funcB");
+        funcC = findNativeOrThrow(TestVirtualCalls.class, "funcC");
     }
 
     @Test
