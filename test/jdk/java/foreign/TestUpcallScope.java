@@ -32,8 +32,8 @@
  *   TestUpcallScope
  */
 
+import java.lang.foreign.Addressable;
 import java.lang.foreign.MemorySession;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.SegmentAllocator;
 import org.testng.annotations.Test;
 
@@ -52,7 +52,7 @@ public class TestUpcallScope extends TestUpcallBase {
     public void testUpcalls(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        NativeSymbol addr = findNativeOrThrow(TestUpcallScope.class, fName);
+        Addressable addr = findNativeOrThrow(TestUpcallScope.class, fName);
         try (MemorySession session = MemorySession.openConfined()) {
             SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
             MethodHandle mh = downcallHandle(ABI, addr, allocator, function(ret, paramTypes, fields));

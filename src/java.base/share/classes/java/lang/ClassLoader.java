@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.File;
 import java.lang.foreign.MemoryAddress;
-import java.lang.foreign.NativeSymbol;
+import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -2468,12 +2468,12 @@ public abstract class ClassLoader {
      * @return the symbol (if any).
      * @throws NullPointerException if name is null.
      */
-    public final Optional<NativeSymbol> findNative(String name) {
+    public final Optional<MemorySegment> findNative(String name) {
         Objects.requireNonNull(name);
 
         MemoryAddress addr = MemoryAddress.ofLong(findNative(this, name));
         return addr == MemoryAddress.NULL? Optional.empty()
-                : Optional.of(NativeSymbol.ofAddress(name, addr, loaderScope));
+                : Optional.of(MemorySegment.ofAddress(addr, 0L, loaderScope));
     }
 
     // A memory session which keeps this loader reachable. Useful when returning

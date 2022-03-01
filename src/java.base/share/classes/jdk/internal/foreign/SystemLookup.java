@@ -27,7 +27,6 @@ package jdk.internal.foreign;
 
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemorySession;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
@@ -35,7 +34,6 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import jdk.internal.loader.NativeLibraries;
 import jdk.internal.loader.NativeLibrary;
 import jdk.internal.loader.RawNativeLibraries;
 import sun.security.action.GetPropertyAction;
@@ -49,15 +47,15 @@ public class SystemLookup {
     static final SystemLookup INSTANCE = new SystemLookup();
 
     /* A fallback lookup, used when creation of system lookup fails. */
-    private static final Function<String, Optional<NativeSymbol>> fallbackLookup = name -> Optional.empty();
+    private static final Function<String, Optional<MemorySegment>> fallbackLookup = name -> Optional.empty();
 
     /*
      * On POSIX systems, dlsym will allow us to lookup symbol in library dependencies; the same trick doesn't work
      * on Windows. For this reason, on Windows we do not generate any side-library, and load msvcrt.dll directly instead.
      */
-    private static final Function<String, Optional<NativeSymbol>> syslookup = makeSystemLookup();
+    private static final Function<String, Optional<MemorySegment>> syslookup = makeSystemLookup();
 
-    private static final Function<String, Optional<NativeSymbol>> makeSystemLookup() {
+    private static final Function<String, Optional<MemorySegment>> makeSystemLookup() {
         try {
             return switch (CABI.current()) {
                 case SysV, LinuxAArch64, MacOsAArch64 -> libLookup(libs -> libs.load(jdkLibraryPath("syslookup")));
@@ -71,36 +69,36 @@ public class SystemLookup {
         }
     }
 
-    private static Function<String, Optional<NativeSymbol>> makeWindowsLookup() {
+    private static Function<String, Optional<MemorySegment>> makeWindowsLookup() {
         Path system32 = Path.of(System.getenv("SystemRoot"), "System32");
         Path ucrtbase = system32.resolve("ucrtbase.dll");
         Path msvcrt = system32.resolve("msvcrt.dll");
 
         boolean useUCRT = Files.exists(ucrtbase);
         Path stdLib = useUCRT ? ucrtbase : msvcrt;
-        Function<String, Optional<NativeSymbol>> lookup = libLookup(libs -> libs.load(stdLib));
+        Function<String, Optional<MemorySegment>> lookup = libLookup(libs -> libs.load(stdLib));
 
         if (useUCRT) {
             // use a fallback lookup to look up inline functions from fallback lib
 
-            Function<String, Optional<NativeSymbol>> fallbackLibLookup =
+            Function<String, Optional<MemorySegment>> fallbackLibLookup =
                     libLookup(libs -> libs.load(jdkLibraryPath("WinFallbackLookup")));
 
             int numSymbols = WindowsFallbackSymbols.values().length;
             MemorySegment funcs = MemorySegment.ofAddress(fallbackLibLookup.apply("funcs").orElseThrow().address(),
                 ADDRESS.byteSize() * numSymbols, MemorySession.global());
 
-            Function<String, Optional<NativeSymbol>> fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.valueOfOrNull(name))
-                .map(symbol -> NativeSymbol.ofAddress(symbol.name(), funcs.getAtIndex(ADDRESS, symbol.ordinal()), MemorySession.global()));
+            Function<String, Optional<MemorySegment>> fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.valueOfOrNull(name))
+                .map(symbol -> MemorySegment.ofAddress(funcs.getAtIndex(ADDRESS, symbol.ordinal()), 0L, MemorySession.global()));
 
-            final Function<String, Optional<NativeSymbol>> finalLookup = lookup;
+            final Function<String, Optional<MemorySegment>> finalLookup = lookup;
             lookup = name -> finalLookup.apply(name).or(() -> fallbackLookup.apply(name));
         }
 
         return lookup;
     }
 
-    private static Function<String, Optional<NativeSymbol>> libLookup(Function<RawNativeLibraries, NativeLibrary> loader) {
+    private static Function<String, Optional<MemorySegment>> libLookup(Function<RawNativeLibraries, NativeLibrary> loader) {
         NativeLibrary lib = loader.apply(RawNativeLibraries.newInstance(MethodHandles.lookup()));
         return name -> {
             Objects.requireNonNull(name);
@@ -108,7 +106,7 @@ public class SystemLookup {
                 long addr = lib.lookup(name);
                 return addr == 0 ?
                         Optional.empty() :
-                        Optional.of(NativeSymbol.ofAddress(name, MemoryAddress.ofLong(addr), MemorySession.global()));
+                        Optional.of(MemorySegment.ofAddress(MemoryAddress.ofLong(addr), 0, MemorySession.global()));
             } catch (NoSuchMethodException e) {
                 return Optional.empty();
             }
@@ -133,7 +131,7 @@ public class SystemLookup {
         return INSTANCE;
     }
 
-    public Optional<NativeSymbol> lookup(String name) {
+    public Optional<MemorySegment> lookup(String name) {
         return syslookup.apply(name);
     }
 

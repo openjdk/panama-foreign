@@ -29,12 +29,11 @@
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestIllegalLink
  */
 
+import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.NativeSymbol;
-import java.lang.foreign.MemorySession;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -43,7 +42,7 @@ import static org.testng.Assert.fail;
 
 public class TestIllegalLink extends NativeTestHelper {
 
-    private static final NativeSymbol DUMMY_TARGET = NativeSymbol.ofAddress("dummy", MemoryAddress.ofLong(1), MemorySession.global());
+    private static final Addressable DUMMY_TARGET = MemoryAddress.ofLong(1);
     private static final CLinker ABI = CLinker.systemCLinker();
 
     @Test(dataProvider = "types")

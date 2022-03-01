@@ -29,12 +29,12 @@
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestVarArgs
  */
 
+import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
 import org.testng.annotations.DataProvider;
@@ -65,7 +65,7 @@ public class TestVarArgs extends NativeTestHelper {
         System.loadLibrary("VarArgs");
     }
 
-    static final NativeSymbol VARARGS_ADDR = findNativeOrThrow(TestVarArgs.class, "varargs");
+    static final Addressable VARARGS_ADDR = findNativeOrThrow(TestVarArgs.class, "varargs");
 
     static final int WRITEBACK_BYTES_PER_ARG = 8;
 

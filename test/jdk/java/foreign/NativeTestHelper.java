@@ -27,7 +27,6 @@ import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.ValueLayout;
 
 import java.lang.invoke.MethodHandle;
@@ -107,7 +106,7 @@ public class NativeTestHelper {
         }
     }
 
-    public static NativeSymbol findNativeOrThrow(Class<?> clazz, String name) {
+    public static Addressable findNativeOrThrow(Class<?> clazz, String name) {
         return clazz.getClassLoader().findNative(name).orElseThrow();
     }
 }

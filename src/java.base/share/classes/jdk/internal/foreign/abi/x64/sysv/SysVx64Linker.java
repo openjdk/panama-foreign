@@ -27,7 +27,7 @@ package jdk.internal.foreign.abi.x64.sysv;
 
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
-import java.lang.foreign.NativeSymbol;
+import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.VaList;
 import java.lang.invoke.MethodHandle;
@@ -63,7 +63,7 @@ public final class SysVx64Linker extends AbstractLinker {
     }
 
     @Override
-    protected NativeSymbol arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession session) {
+    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession session) {
         return CallArranger.arrangeUpcall(target, targetType, function, session);
     }
 

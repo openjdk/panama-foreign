@@ -32,12 +32,12 @@
  *   TestUpcallAsync
  */
 
+import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.SegmentAllocator;
 import org.testng.annotations.Test;
 
@@ -60,7 +60,7 @@ public class TestUpcallAsync extends TestUpcallBase {
     public void testUpcallsAsync(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        NativeSymbol addr = findNativeOrThrow(TestUpcallAsync.class, fName);
+        Addressable addr = findNativeOrThrow(TestUpcallAsync.class, fName);
         try (MemorySession session = MemorySession.openShared()) {
             SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
             FunctionDescriptor descriptor = function(ret, paramTypes, fields);
@@ -72,7 +72,7 @@ public class TestUpcallAsync extends TestUpcallBase {
             FunctionDescriptor callbackDesc = descriptor.returnLayout()
                     .map(FunctionDescriptor::of)
                     .orElse(FunctionDescriptor.ofVoid());
-            NativeSymbol callback = ABI.upcallStub(mh.asType(CLinker.upcallType(callbackDesc)), callbackDesc, session);
+            Addressable callback = ABI.upcallStub(mh.asType(CLinker.upcallType(callbackDesc)), callbackDesc, session);
 
             MethodHandle invoker = asyncInvoker(ret, ret == Ret.VOID ? null : paramTypes.get(0), fields);
 
@@ -101,7 +101,7 @@ public class TestUpcallAsync extends TestUpcallBase {
                 + (returnType == ParamType.STRUCT ? "_" + sigCode(fields) : "");
 
         return INVOKERS.computeIfAbsent(name, symbol -> {
-            NativeSymbol invokerSymbol = TestUpcallAsync.class.getClassLoader().findNative(symbol).orElseThrow();
+            Addressable invokerSymbol = TestUpcallAsync.class.getClassLoader().findNative(symbol).orElseThrow();
             MemoryLayout returnLayout = returnType.layout(fields);
             FunctionDescriptor desc = FunctionDescriptor.of(returnLayout, C_POINTER);
 

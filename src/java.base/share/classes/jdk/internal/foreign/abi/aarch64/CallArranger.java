@@ -30,7 +30,6 @@ import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemorySession;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -155,7 +154,7 @@ public abstract class CallArranger {
         return handle;
     }
 
-    public NativeSymbol arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, MemorySession session) {
+    public MemorySegment arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, MemorySession session) {
         Bindings bindings = getBindings(mt, cDesc, true);
 
         if (bindings.isInMemoryReturn) {

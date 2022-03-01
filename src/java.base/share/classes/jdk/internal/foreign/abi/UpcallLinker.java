@@ -26,7 +26,6 @@
 package jdk.internal.foreign.abi;
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemorySession;
 import sun.security.action.GetPropertyAction;
 
@@ -62,7 +61,7 @@ public class UpcallLinker {
         }
     }
 
-    public static NativeSymbol make(ABIDescriptor abi, MethodHandle target, CallingSequence callingSequence, MemorySession session) {
+    public static MemorySegment make(ABIDescriptor abi, MethodHandle target, CallingSequence callingSequence, MemorySession session) {
         assert callingSequence.forUpcall();
         Binding.VMLoad[] argMoves = argMoveBindings(callingSequence);
         Binding.VMStore[] retMoves = retMoveBindings(callingSequence);

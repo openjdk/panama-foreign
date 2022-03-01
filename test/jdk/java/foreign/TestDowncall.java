@@ -37,10 +37,10 @@
  *   TestDowncall
  */
 
+import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemoryLayout;
 
 import java.lang.foreign.MemorySession;
@@ -66,7 +66,7 @@ public class TestDowncall extends CallGeneratorHelper {
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testDowncall(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> checks = new ArrayList<>();
-        NativeSymbol addr = findNativeOrThrow(TestDowncall.class, fName);
+        Addressable addr = findNativeOrThrow(TestDowncall.class, fName);
         FunctionDescriptor descriptor = function(ret, paramTypes, fields);
         Object[] args = makeArgs(paramTypes, fields, checks);
         try (MemorySession session = MemorySession.openShared()) {
@@ -88,7 +88,7 @@ public class TestDowncall extends CallGeneratorHelper {
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testDowncallStack(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> checks = new ArrayList<>();
-        NativeSymbol addr = findNativeOrThrow(TestDowncall.class, "s" + fName);
+        Addressable addr = findNativeOrThrow(TestDowncall.class, "s" + fName);
         FunctionDescriptor descriptor = functionStack(ret, paramTypes, fields);
         Object[] args = makeArgsStack(paramTypes, fields, checks);
         try (MemorySession session = MemorySession.openShared()) {
@@ -107,7 +107,7 @@ public class TestDowncall extends CallGeneratorHelper {
         }
     }
 
-    Object doCall(NativeSymbol symbol, SegmentAllocator allocator, FunctionDescriptor descriptor, Object[] args) throws Throwable {
+    Object doCall(Addressable symbol, SegmentAllocator allocator, FunctionDescriptor descriptor, Object[] args) throws Throwable {
         MethodHandle mh = downcallHandle(abi, symbol, allocator, descriptor);
         Object res = mh.invokeWithArguments(args);
         return res;

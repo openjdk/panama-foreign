@@ -26,7 +26,7 @@ package invoker;
 import java.lang.foreign.*;
 
 public class Invoker {
-    public static void invoke(NativeSymbol symbol) throws Throwable {
+    public static void invoke(Addressable symbol) throws Throwable {
         var linker = CLinker.systemCLinker();
         var handle = linker.downcallHandle(symbol, FunctionDescriptor.ofVoid());
         handle.invokeExact();

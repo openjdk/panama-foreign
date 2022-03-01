@@ -47,7 +47,6 @@ import java.lang.foreign.Addressable;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
@@ -415,7 +414,7 @@ public class BindingSpecializer {
     }
 
     private static boolean shouldAcquire(Class<?> type) {
-        return type == Addressable.class || type == NativeSymbol.class;
+        return type == Addressable.class;
     }
 
     private void emitCleanup() {

@@ -43,7 +43,6 @@
 import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemorySession;
 
 import java.lang.invoke.MethodHandle;
@@ -81,7 +80,7 @@ public class TestUpcallDeopt extends NativeTestHelper {
     // that is created when calling upcallStub below
     public static void main(String[] args) throws Throwable {
         try (MemorySession session = MemorySession.openConfined()) {
-            NativeSymbol stub = linker.upcallStub(MH_m, FunctionDescriptor.ofVoid(C_INT, C_INT, C_INT, C_INT), session);
+            Addressable stub = linker.upcallStub(MH_m, FunctionDescriptor.ofVoid(C_INT, C_INT, C_INT, C_INT), session);
             armed = false;
             for (int i = 0; i < 20_000; i++) {
                 payload(stub); // warmup
@@ -92,7 +91,7 @@ public class TestUpcallDeopt extends NativeTestHelper {
         }
     }
 
-    static void payload(NativeSymbol cb) throws Throwable {
+    static void payload(Addressable cb) throws Throwable {
         MH_foo.invokeExact((Addressable) cb, 0, 1, 2, 3);
         Reference.reachabilityFence(cb); // keep oop alive across call
     }

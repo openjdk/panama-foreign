@@ -44,7 +44,6 @@ import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.VaList;
@@ -349,7 +348,7 @@ public class SharedUtils {
                 FunctionDescriptor.ofVoid(ADDRESS));
     }
 
-    public static void checkSymbol(NativeSymbol symbol) {
+    public static void checkSymbol(Addressable symbol) {
         checkAddressable(symbol, "Symbol is NULL");
     }
 

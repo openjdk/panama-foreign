@@ -70,7 +70,7 @@ import jdk.internal.reflect.Reflection;
  * in the given order if both are present:
  * <ul>
  * <li>If the downcall method handle is created {@linkplain #downcallHandle(FunctionDescriptor) without specifying a native symbol},
- * the downcall method handle type features a leading parameter of type {@link NativeSymbol}, from which the
+ * the downcall method handle type features a leading parameter of type {@link Addressable}, from which the
  * address of the target native function can be derived.</li>
  * <li>If the function descriptor's return layout is a group layout, the resulting downcall method handle accepts
  * an additional leading parameter of type {@link SegmentAllocator}, which is used by the linker runtime to allocate the
@@ -101,8 +101,8 @@ import jdk.internal.reflect.Reflection;
  *     </ul></li>
  * <li>or, if {@code L} is a {@link GroupLayout}, then {@code C} is set to {@code MemorySegment.class}</li>
  * </ul>
- * Upcall stubs are modelled by instances of type {@link NativeSymbol}; upcall stubs can be passed by reference to other
- * downcall method handles (as {@link NativeSymbol} implements the {@link Addressable} interface) and,
+ * Upcall stubs are modelled by instances of type {@link MemorySegment}; upcall stubs can be passed by reference to other
+ * downcall method handles (as {@link MemorySegment} implements the {@link Addressable} interface) and,
  * when no longer required, they can be {@link MemorySession#close() released}, via their associated {@linkplain MemorySession session}.
  *
  * <h2>Symbol lookup</h2>
@@ -116,8 +116,8 @@ import jdk.internal.reflect.Reflection;
  * the linker runtime cannot validate linkage requests. When a client interacts with a downcall method handle obtained
  * through an invalid linkage request (e.g. by specifying a function descriptor featuring too many argument layouts),
  * the result of such interaction is unspecified and can lead to JVM crashes. On downcall handle invocation,
- * the linker runtime guarantees the following for any argument that is a memory resource {@code R} (of type {@link MemorySegment},
- * {@link NativeSymbol} or {@link VaList}):
+ * the linker runtime guarantees the following for any argument that is a memory resource {@code R} (of type {@link MemorySegment}
+ * or {@link VaList}):
  * <ul>
  *     <li>The memory session of {@code R} is {@linkplain MemorySession#isAlive() alive}. Otherwise, the invocation throws
  *     {@link IllegalStateException};</li>
@@ -167,7 +167,7 @@ public sealed interface CLinker permits AbstractLinker {
      * @param name the symbol name
      * @return a symbol in the standard libraries associated with this linker.
      */
-    default Optional<NativeSymbol> lookup(String name) {
+    default Optional<MemorySegment> lookup(String name) {
         return SystemLookup.getInstance().lookup(name);
     }
 
@@ -190,7 +190,7 @@ public sealed interface CLinker permits AbstractLinker {
      * @throws IllegalArgumentException if the provided descriptor contains either a sequence or a padding layout,
      * or if the symbol is {@link MemoryAddress#NULL}
      */
-    default MethodHandle downcallHandle(NativeSymbol symbol, FunctionDescriptor function) {
+    default MethodHandle downcallHandle(Addressable symbol, FunctionDescriptor function) {
         SharedUtils.checkSymbol(symbol);
         return downcallHandle(function).bindTo(symbol);
     }
@@ -199,7 +199,7 @@ public sealed interface CLinker permits AbstractLinker {
      * Obtains a foreign method handle, with the given type and featuring the given function descriptor, which can be
      * used to call a target foreign function at the address in a dynamically provided native symbol.
      * The resulting method handle features a prefix parameter (as the first parameter) corresponding to the foreign function
-     * entry point, of type {@link NativeSymbol}.
+     * entry point, of type {@link Addressable}.
      * <p>
      * If the provided function descriptor's return layout is a {@link GroupLayout}, then the resulting method handle features an
      * additional prefix parameter (inserted immediately after the address parameter), of type {@link SegmentAllocator}),
@@ -239,7 +239,7 @@ public sealed interface CLinker permits AbstractLinker {
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
      * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
      */
-    NativeSymbol upcallStub(MethodHandle target, FunctionDescriptor function, MemorySession session);
+    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, MemorySession session);
 
     /**
      * Obtains the downcall method handle {@linkplain MethodType type} associated with a given function descriptor.

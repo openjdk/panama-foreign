@@ -28,7 +28,6 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemorySession;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -56,14 +55,14 @@ public class QSort extends CLayouts {
 
     static final CLinker abi = CLinker.systemCLinker();
     static final MethodHandle clib_qsort;
-    static final NativeSymbol native_compar;
-    static final NativeSymbol panama_upcall_compar;
+    static final Addressable native_compar;
+    static final Addressable panama_upcall_compar;
     static final long jni_upcall_compar;
 
     static final int[] INPUT = { 5, 3, 2, 7, 8, 12, 1, 7 };
     static final MemorySegment INPUT_SEGMENT;
 
-    static NativeSymbol qsort_addr = abi.lookup("qsort").get();
+    static Addressable qsort_addr = abi.lookup("qsort").get();
 
     static {
         INPUT_SEGMENT = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(INPUT.length, JAVA_INT), MemorySession.global());
