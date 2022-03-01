@@ -2465,7 +2465,7 @@ public abstract class ClassLoader {
      * with this classloader.
      *
      * @param name the symbol name.
-     * @return the symbol (if any).
+     * @return a zero-length segment, whose base address is the symbol address (if any).
      * @throws NullPointerException if name is null.
      */
     public final Optional<MemorySegment> findNative(String name) {

@@ -165,7 +165,7 @@ public sealed interface CLinker permits AbstractLinker {
      * Look up a symbol in the standard libraries associated with this linker.
      * The set of symbols available for lookup is unspecified, as it depends on the platform and on the operating system.
      * @param name the symbol name
-     * @return a symbol in the standard libraries associated with this linker.
+     * @return a zero-length segment, whose base address is the symbol address (if any).
      */
     default Optional<MemorySegment> lookup(String name) {
         return SystemLookup.getInstance().lookup(name);
@@ -220,8 +220,8 @@ public sealed interface CLinker permits AbstractLinker {
      * memory session. Calling such a function pointer from native code will result in the execution of the provided
      * method handle.
      * <p>
-     * The returned function pointer is associated with the provided memory session. When such session is closed,
-     * the corresponding native stub will be deallocated.
+     * The returned memory segment's base address points to the newly allocated native stub, and is associated with
+     * the provided memory session. When such session is closed, the corresponding native stub will be deallocated.
      * <p>
      * The target method handle should not throw any exceptions. If the target method handle does throw an exception,
      * the VM will exit with a non-zero exit code. To avoid the VM aborting due to an uncaught exception, clients
@@ -232,7 +232,7 @@ public sealed interface CLinker permits AbstractLinker {
      * @param target   the target method handle.
      * @param function the function descriptor.
      * @param session the upcall stub memory session.
-     * @return the native stub symbol.
+     * @return a zero-length segment whose base address is the address of the native stub.
      * @throws IllegalArgumentException if the provided descriptor contains either a sequence or a padding layout,
      * or if it is determined that the target method handle can throw an exception, or if the target method handle
      * has a type that does not match the upcall stub <a href="CLinker.html#upcall-stubs"><em>inferred type</em></a>.
