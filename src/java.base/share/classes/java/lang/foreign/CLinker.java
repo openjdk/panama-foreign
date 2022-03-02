@@ -69,7 +69,7 @@ import jdk.internal.reflect.Reflection;
  * The downcall method handle type, derived as above, might be decorated by additional leading parameters,
  * in the given order if both are present:
  * <ul>
- * <li>If the downcall method handle is created {@linkplain #downcallHandle(FunctionDescriptor) without specifying a native symbol},
+ * <li>If the downcall method handle is created {@linkplain #downcallHandle(FunctionDescriptor) without specifying a target address},
  * the downcall method handle type features a leading parameter of type {@link Addressable}, from which the
  * address of the target native function can be derived.</li>
  * <li>If the function descriptor's return layout is a group layout, the resulting downcall method handle accepts
@@ -173,7 +173,7 @@ public sealed interface CLinker permits AbstractLinker {
 
     /**
      * Obtains a foreign method handle, with the given type and featuring the given function descriptor,
-     * which can be used to call a target foreign function at the address in the given native symbol.
+     * which can be used to call a target foreign function at the address in the given {@link Addressable} instance.
      * <p>
      * If the provided method type's return type is {@code MemorySegment}, then the resulting method handle features
      * an additional prefix parameter, of type {@link SegmentAllocator}, which will be used by the linker runtime
@@ -197,7 +197,7 @@ public sealed interface CLinker permits AbstractLinker {
 
     /**
      * Obtains a foreign method handle, with the given type and featuring the given function descriptor, which can be
-     * used to call a target foreign function at the address in a dynamically provided native symbol.
+     * used to call a target foreign function at the address in a dynamically provided {@link Addressable} instance.
      * The resulting method handle features a prefix parameter (as the first parameter) corresponding to the foreign function
      * entry point, of type {@link Addressable}.
      * <p>
@@ -205,8 +205,8 @@ public sealed interface CLinker permits AbstractLinker {
      * additional prefix parameter (inserted immediately after the address parameter), of type {@link SegmentAllocator}),
      * which will be used by the linker runtime to allocate structs returned by-value.
      * <p>
-     * The returned method handle will throw an {@link IllegalArgumentException} if the native symbol passed to it is
-     * associated with the {@link MemoryAddress#NULL} address, or a {@link NullPointerException} if the native symbol is {@code null}.
+     * The returned method handle will throw an {@link IllegalArgumentException} if the {@link Addressable} parameter passed to it is
+     * associated with the {@link MemoryAddress#NULL} address, or a {@link NullPointerException} if that parameter is {@code null}.
      *
      * @param function the function descriptor.
      * @return the downcall method handle. The method handle type is <a href="CLinker.html#downcall-method-handles"><em>inferred</em></a>

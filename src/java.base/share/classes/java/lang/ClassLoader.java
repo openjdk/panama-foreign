@@ -2461,12 +2461,14 @@ public abstract class ClassLoader {
     }
 
     /**
-     * Finds a native library symbol with the given name that is associated
+     * Finds the address of a native symbol with given name, in one of the libraries {@linkplain System#loadLibrary(String) associated}
      * with this classloader.
      *
      * @param name the symbol name.
      * @return a zero-length segment, whose base address is the symbol address (if any).
      * @throws NullPointerException if name is null.
+     * @see System#load(String)
+     * @see System#loadLibrary(String)
      */
     public final Optional<MemorySegment> findNative(String name) {
         Objects.requireNonNull(name);
@@ -2477,7 +2479,7 @@ public abstract class ClassLoader {
     }
 
     // A memory session which keeps this loader reachable. Useful when returning
-    // native symbols associated with libraries loaded by this loader.
+    // segments associated with libraries loaded by this loader.
     private final MemorySession loaderScope = MemorySessionImpl.heapSession(this);
 
     // -- Assertion management --
