@@ -31,12 +31,12 @@
  *   TestVirtualCalls
  */
 
+import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 
 import java.lang.invoke.MethodHandle;
 
-import java.lang.foreign.NativeSymbol;
 import org.testng.annotations.*;
 
 import static org.testng.Assert.assertEquals;
@@ -46,9 +46,9 @@ public class TestVirtualCalls extends NativeTestHelper {
     static final CLinker abi = CLinker.systemCLinker();
 
     static final MethodHandle func;
-    static final NativeSymbol funcA;
-    static final NativeSymbol funcB;
-    static final NativeSymbol funcC;
+    static final Addressable funcA;
+    static final Addressable funcB;
+    static final Addressable funcC;
 
     static {
         func = abi.downcallHandle(
@@ -69,7 +69,7 @@ public class TestVirtualCalls extends NativeTestHelper {
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testNullTarget() throws Throwable {
-        int x = (int) func.invokeExact((NativeSymbol) null);
+        int x = (int) func.invokeExact((Addressable) null);
     }
 
 }

@@ -31,7 +31,6 @@
 import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
@@ -124,7 +123,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testClosedUpcall() throws Throwable {
-        NativeSymbol upcall;
+        MemorySegment upcall;
         try (MemorySession session = MemorySession.openConfined()) {
             MethodHandle dummy = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "dummy", MethodType.methodType(void.class));
             upcall = CLinker.systemCLinker().upcallStub(dummy, FunctionDescriptor.ofVoid(), session);
@@ -171,12 +170,12 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
 
         try (MemorySession session = MemorySession.openConfined()) {
             MethodHandle dummy = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "dummy", MethodType.methodType(void.class));
-            NativeSymbol upcall = CLinker.systemCLinker().upcallStub(dummy, FunctionDescriptor.ofVoid(), session);
+            MemorySegment upcall = CLinker.systemCLinker().upcallStub(dummy, FunctionDescriptor.ofVoid(), session);
             handle.invoke(upcall, sessionChecker(session));
         }
     }
 
-    NativeSymbol sessionChecker(MemorySession session) {
+    MemorySegment sessionChecker(MemorySession session) {
         try {
             MethodHandle handle = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "checkSession",
                     MethodType.methodType(void.class, MemorySession.class));

@@ -527,7 +527,7 @@ public class VaListTest extends NativeTestHelper {
     public void testUpcall(MethodHandle target, MethodHandle callback) throws Throwable {
         FunctionDescriptor desc = FunctionDescriptor.ofVoid(C_POINTER);
         try (MemorySession session = MemorySession.openConfined()) {
-            NativeSymbol stub = abi.upcallStub(callback, desc, session);
+            Addressable stub = abi.upcallStub(callback, desc, session);
             target.invoke(stub);
         }
     }

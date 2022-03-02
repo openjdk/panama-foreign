@@ -32,6 +32,7 @@
  *   TestIntrinsics
  */
 
+import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 
@@ -41,7 +42,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.NativeSymbol;
 import org.testng.annotations.*;
 
 import static java.lang.invoke.MethodType.methodType;
@@ -84,7 +84,7 @@ public class TestIntrinsics extends NativeTestHelper {
         }
 
         AddIdentity addIdentity = (name, carrier, layout, arg) -> {
-            NativeSymbol ma = findNativeOrThrow(TestIntrinsics.class, name);
+            Addressable ma = findNativeOrThrow(TestIntrinsics.class, name);
             MethodType mt = methodType(carrier, carrier);
             FunctionDescriptor fd = FunctionDescriptor.of(layout, layout);
 
@@ -93,7 +93,7 @@ public class TestIntrinsics extends NativeTestHelper {
         };
 
         { // empty
-            NativeSymbol ma = findNativeOrThrow(TestIntrinsics.class, "empty");
+            Addressable ma = findNativeOrThrow(TestIntrinsics.class, "empty");
             MethodType mt = methodType(void.class);
             FunctionDescriptor fd = FunctionDescriptor.ofVoid();
             tests.add(abi.downcallHandle(ma, fd), null);
@@ -108,7 +108,7 @@ public class TestIntrinsics extends NativeTestHelper {
         addIdentity.add("identity_double", double.class,  C_DOUBLE,        10D);
 
         { // identity_va
-            NativeSymbol ma = findNativeOrThrow(TestIntrinsics.class, "identity_va");
+            Addressable ma = findNativeOrThrow(TestIntrinsics.class, "identity_va");
             MethodType mt = methodType(int.class, int.class, double.class, int.class, float.class, long.class);
             FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT).asVariadic(C_DOUBLE, C_INT, C_FLOAT, C_LONG_LONG);
             tests.add(abi.downcallHandle(ma, fd), 1, 1, 10D, 2, 3F, 4L);
@@ -121,7 +121,7 @@ public class TestIntrinsics extends NativeTestHelper {
                     C_SHORT, JAVA_CHAR);
             Object[] args = {1, 10D, 2L, 3F, (byte) 0, (short) 13, 'a'};
             for (int i = 0; i < args.length; i++) {
-                NativeSymbol ma = findNativeOrThrow(TestIntrinsics.class, "invoke_high_arity" + i);
+                Addressable ma = findNativeOrThrow(TestIntrinsics.class, "invoke_high_arity" + i);
                 MethodType mt = baseMT.changeReturnType(baseMT.parameterType(i));
                 FunctionDescriptor fd = baseFD.changeReturnLayout(baseFD.argumentLayouts().get(i));
                 Object expected = args[i];

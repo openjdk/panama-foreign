@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.File;
 import java.lang.foreign.MemoryAddress;
-import java.lang.foreign.NativeSymbol;
+import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -2461,23 +2461,25 @@ public abstract class ClassLoader {
     }
 
     /**
-     * Finds a native library symbol with the given name that is associated
+     * Finds the address of a native symbol with given name, in one of the libraries {@linkplain System#loadLibrary(String) associated}
      * with this classloader.
      *
      * @param name the symbol name.
-     * @return the symbol (if any).
+     * @return a zero-length segment, whose base address is the symbol address (if any).
      * @throws NullPointerException if name is null.
+     * @see System#load(String)
+     * @see System#loadLibrary(String)
      */
-    public final Optional<NativeSymbol> findNative(String name) {
+    public final Optional<MemorySegment> findNative(String name) {
         Objects.requireNonNull(name);
 
         MemoryAddress addr = MemoryAddress.ofLong(findNative(this, name));
         return addr == MemoryAddress.NULL? Optional.empty()
-                : Optional.of(NativeSymbol.ofAddress(name, addr, loaderScope));
+                : Optional.of(MemorySegment.ofAddress(addr, 0L, loaderScope));
     }
 
     // A memory session which keeps this loader reachable. Useful when returning
-    // native symbols associated with libraries loaded by this loader.
+    // segments associated with libraries loaded by this loader.
     private final MemorySession loaderScope = MemorySessionImpl.heapSession(this);
 
     // -- Assertion management --

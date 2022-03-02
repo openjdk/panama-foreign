@@ -27,7 +27,7 @@ package jdk.internal.foreign.abi.aarch64.linux;
 
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
-import java.lang.foreign.NativeSymbol;
+import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import jdk.internal.foreign.abi.AbstractLinker;
 import jdk.internal.foreign.abi.aarch64.CallArranger;
@@ -59,7 +59,7 @@ public final class LinuxAArch64Linker extends AbstractLinker {
     }
 
     @Override
-    protected NativeSymbol arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession session) {
+    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession session) {
         return CallArranger.LINUX.arrangeUpcall(target, targetType, function, session);
     }
 

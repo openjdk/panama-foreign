@@ -22,10 +22,10 @@
  *
  */
 
+import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySession;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 
@@ -60,7 +60,7 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
         }
     }
 
-    private static NativeSymbol DUMMY_STUB;
+    private static Addressable DUMMY_STUB;
 
     @BeforeClass
     void setup() {
@@ -97,7 +97,7 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
         return args;
     }
 
-    static NativeSymbol makeCallback(MemorySession session, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks, List<MemoryLayout> prefix) {
+    static Addressable makeCallback(MemorySession session, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks, List<MemoryLayout> prefix) {
         if (params.isEmpty()) {
             return DUMMY_STUB;
         }

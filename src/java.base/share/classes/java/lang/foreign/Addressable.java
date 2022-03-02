@@ -30,7 +30,7 @@ import jdk.internal.javac.PreviewFeature;
 /**
  * Represents a type which is <em>addressable</em>. An addressable type is one which can be projected down to
  * a {@linkplain #address() memory address}. Examples of addressable types are {@link MemorySegment},
- * {@link MemoryAddress}, {@link VaList} and {@link NativeSymbol}.
+ * {@link MemoryAddress} and {@link VaList}.
  * <p>
  * The {@link Addressable} type is used by the {@link CLinker C linker} to model the types of
  * {@link CLinker#downcallHandle(FunctionDescriptor) downcall handle} parameters that must be passed <em>by reference</em>
@@ -42,7 +42,7 @@ import jdk.internal.javac.PreviewFeature;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface Addressable permits MemorySegment, MemoryAddress, NativeSymbol, VaList {
+public sealed interface Addressable permits MemorySegment, MemoryAddress, VaList {
 
     /**
      * {@return the {@linkplain MemoryAddress memory address} associated with this addressable}

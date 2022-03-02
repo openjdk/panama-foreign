@@ -42,11 +42,11 @@ public class TestLoaderLookup {
         ClassLoader loader1 = newClassLoader("lookup");
         Class<?> lookup = loader1.loadClass("lookup.Lookup");
         Method fooSymbol = lookup.getDeclaredMethod("fooSymbol");
-        NativeSymbol foo = (NativeSymbol)fooSymbol.invoke(null);
+        Addressable foo = (Addressable)fooSymbol.invoke(null);
 
         ClassLoader loader2 = newClassLoader("invoker");
         Class<?> invoker = loader2.loadClass("invoker.Invoker");
-        Method invoke = invoker.getDeclaredMethod("invoke", NativeSymbol.class);
+        Method invoke = invoker.getDeclaredMethod("invoke", Addressable.class);
         invoke.invoke(null, foo);
 
         loader1 = null;

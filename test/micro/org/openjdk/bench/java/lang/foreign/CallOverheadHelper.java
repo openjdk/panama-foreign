@@ -22,11 +22,11 @@
  */
 package org.openjdk.bench.java.lang.foreign;
 
+import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 
@@ -41,40 +41,40 @@ public class CallOverheadHelper extends CLayouts {
 
     static final MethodHandle func;
     static final MethodHandle func_v;
-    static NativeSymbol func_addr;
+    static Addressable func_addr;
     static final MethodHandle identity;
     static final MethodHandle identity_v;
-    static NativeSymbol identity_addr;
+    static Addressable identity_addr;
     static final MethodHandle identity_struct;
     static final MethodHandle identity_struct_v;
-    static NativeSymbol identity_struct_addr;
+    static Addressable identity_struct_addr;
     static final MethodHandle identity_struct_3;
     static final MethodHandle identity_struct_3_v;
-    static NativeSymbol identity_struct_3_addr;
+    static Addressable identity_struct_3_addr;
     static final MethodHandle identity_memory_address;
     static final MethodHandle identity_memory_address_v;
-    static NativeSymbol identity_memory_address_addr;
+    static Addressable identity_memory_address_addr;
     static final MethodHandle identity_memory_address_3;
     static final MethodHandle identity_memory_address_3_v;
-    static NativeSymbol identity_memory_address_3_addr;
+    static Addressable identity_memory_address_3_addr;
     static final MethodHandle args1;
     static final MethodHandle args1_v;
-    static NativeSymbol args1_addr;
+    static Addressable args1_addr;
     static final MethodHandle args2;
     static final MethodHandle args2_v;
-    static NativeSymbol args2_addr;
+    static Addressable args2_addr;
     static final MethodHandle args3;
     static final MethodHandle args3_v;
-    static NativeSymbol args3_addr;
+    static Addressable args3_addr;
     static final MethodHandle args4;
     static final MethodHandle args4_v;
-    static NativeSymbol args4_addr;
+    static Addressable args4_addr;
     static final MethodHandle args5;
     static final MethodHandle args5_v;
-    static NativeSymbol args5_addr;
+    static Addressable args5_addr;
     static final MethodHandle args10;
     static final MethodHandle args10_v;
-    static NativeSymbol args10_addr;
+    static Addressable args10_addr;
 
     static final MemoryLayout POINT_LAYOUT = MemoryLayout.structLayout(
             C_INT, C_INT

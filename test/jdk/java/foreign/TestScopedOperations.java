@@ -31,7 +31,6 @@
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.VaList;
@@ -158,8 +157,6 @@ public class TestScopedOperations {
         ScopedOperation.ofAllocator(a -> a.allocateArray(ValueLayout.JAVA_FLOAT, new float[]{0}), "NativeAllocator::allocateArray/float");
         ScopedOperation.ofAllocator(a -> a.allocateArray(ValueLayout.JAVA_LONG, new long[]{0}), "NativeAllocator::allocateArray/long");
         ScopedOperation.ofAllocator(a -> a.allocateArray(ValueLayout.JAVA_DOUBLE, new double[]{0}), "NativeAllocator::allocateArray/double");
-        // native symbol
-        ScopedOperation.of(session -> NativeSymbol.ofAddress("", MemoryAddress.NULL, session), NativeSymbol::address, "NativeSymbol::address");
     };
 
     @DataProvider(name = "scopedOperations")

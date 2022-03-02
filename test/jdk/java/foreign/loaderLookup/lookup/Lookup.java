@@ -23,14 +23,14 @@
 
 package lookup;
 
-import java.lang.foreign.NativeSymbol;
+import java.lang.foreign.Addressable;
 
 public class Lookup {
     static {
         System.loadLibrary("Foo");
     }
 
-    public static NativeSymbol fooSymbol() {
+    public static Addressable fooSymbol() {
         return Lookup.class.getClassLoader().findNative("foo").get();
     }
 }

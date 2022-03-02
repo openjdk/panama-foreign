@@ -78,9 +78,9 @@
  *   TestStackWalk
  */
 
+import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySession;
 
@@ -116,7 +116,7 @@ public class TestStackWalk extends NativeTestHelper {
 
     public static void main(String[] args) throws Throwable {
         try (MemorySession session = MemorySession.openConfined()) {
-            NativeSymbol stub = linker.upcallStub(MH_m, FunctionDescriptor.ofVoid(), session);
+            Addressable stub = linker.upcallStub(MH_m, FunctionDescriptor.ofVoid(), session);
             MemoryAddress stubAddress = stub.address();
             armed = false;
             for (int i = 0; i < 20_000; i++) {

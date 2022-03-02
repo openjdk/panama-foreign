@@ -24,10 +24,10 @@
  */
 package jdk.internal.foreign.abi;
 
+import java.lang.foreign.Addressable;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodType;
 import java.util.ArrayDeque;
@@ -94,8 +94,8 @@ public class CallingSequenceBuilder {
         MethodType callerMethodType;
         MethodType calleeMethodType;
         if (!forUpcall) {
-            addArgumentBinding(0, NativeSymbol.class, ValueLayout.ADDRESS, List.of(
-                Binding.unboxAddress(NativeSymbol.class),
+            addArgumentBinding(0, Addressable.class, ValueLayout.ADDRESS, List.of(
+                Binding.unboxAddress(Addressable.class),
                 Binding.vmStore(abi.targetAddrStorage(), long.class)));
             if (needsReturnBuffer) {
                 addArgumentBinding(0, MemorySegment.class, ValueLayout.ADDRESS, List.of(

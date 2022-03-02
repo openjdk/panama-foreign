@@ -25,7 +25,6 @@ package org.openjdk.bench.java.lang.foreign;
 import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemorySession;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -56,10 +55,10 @@ public class Upcalls extends CLayouts {
     static final MethodHandle args5;
     static final MethodHandle args10;
 
-    static final NativeSymbol cb_blank;
-    static final NativeSymbol cb_identity;
-    static final NativeSymbol cb_args5;
-    static final NativeSymbol cb_args10;
+    static final Addressable cb_blank;
+    static final Addressable cb_identity;
+    static final Addressable cb_args5;
+    static final Addressable cb_args10;
 
     static final long cb_blank_jni;
     static final long cb_identity_jni;
@@ -127,7 +126,7 @@ public class Upcalls extends CLayouts {
         );
     }
 
-    static NativeSymbol makeCB(String name, MethodType mt, FunctionDescriptor fd) throws ReflectiveOperationException {
+    static Addressable makeCB(String name, MethodType mt, FunctionDescriptor fd) throws ReflectiveOperationException {
         return abi.upcallStub(
             lookup().findStatic(Upcalls.class, name, mt),
             fd, MemorySession.global()

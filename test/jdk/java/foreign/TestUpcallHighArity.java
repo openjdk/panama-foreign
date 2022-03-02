@@ -33,9 +33,9 @@
  *   TestUpcallHighArity
  */
 
+import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
@@ -101,7 +101,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
                                          .asCollector(Object[].class, upcallType.parameterCount())
                                          .asType(upcallType);
         try (MemorySession session = MemorySession.openConfined()) {
-            NativeSymbol upcallStub = LINKER.upcallStub(target, upcallDescriptor, session);
+            Addressable upcallStub = LINKER.upcallStub(target, upcallDescriptor, session);
             Object[] args = new Object[upcallType.parameterCount() + 1];
             args[0] = upcallStub;
             List<MemoryLayout> argLayouts = upcallDescriptor.argumentLayouts();

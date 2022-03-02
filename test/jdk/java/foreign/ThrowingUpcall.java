@@ -21,9 +21,9 @@
  * questions.
  */
 
+import java.lang.foreign.Addressable;
 import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemorySession;
 
 import java.lang.invoke.MethodHandle;
@@ -73,7 +73,7 @@ public class ThrowingUpcall extends NativeTestHelper {
         handle = MethodHandles.insertArguments(invoker, 0, handle);
 
         try (MemorySession session = MemorySession.openConfined()) {
-            NativeSymbol stub = CLinker.systemCLinker().upcallStub(handle, FunctionDescriptor.ofVoid(), session);
+            Addressable stub = CLinker.systemCLinker().upcallStub(handle, FunctionDescriptor.ofVoid(), session);
 
             downcallVoid.invoke(stub); // should call Shutdown.exit(1);
         }
@@ -86,7 +86,7 @@ public class ThrowingUpcall extends NativeTestHelper {
         handle = MethodHandles.insertArguments(invoker, 0, handle);
 
         try (MemorySession session = MemorySession.openConfined()) {
-            NativeSymbol stub = CLinker.systemCLinker().upcallStub(handle, FunctionDescriptor.of(C_INT, C_INT), session);
+            Addressable stub = CLinker.systemCLinker().upcallStub(handle, FunctionDescriptor.of(C_INT, C_INT), session);
 
             downcallNonVoid.invoke(42, stub); // should call Shutdown.exit(1);
         }

@@ -97,9 +97,9 @@
  * operation either succeeds - and accesses a valid memory location - or fails.
  *
  * <h2>Foreign function access</h2>
- * The key abstractions introduced to support foreign function access are {@link java.lang.foreign.NativeSymbol} and
+ * The key abstractions introduced to support foreign function access are {@link java.lang.foreign.FunctionDescriptor} and
  * {@link java.lang.foreign.CLinker}.
- * The first is used to model native addresses (more on that later), while the second provides linking capabilities
+ * The first is used to model the signature of foreign functions, while the second provides linking capabilities
  * which allows modelling foreign functions as {@link java.lang.invoke.MethodHandle} instances,
  * so that clients can perform foreign function calls directly in Java, without the need for intermediate layers of native
  * code (as is the case with the <a href="{@docRoot}/../specs/jni/index.html">Java Native Interface (JNI)</a>).
@@ -210,7 +210,7 @@
  * a new upcall stub; the layouts in the function descriptors allow the linker to determine the sequence of steps which
  * allow foreign code to call the stub for {@code intCompareHandle} according to the rules specified by the platform C ABI.
  * The lifecycle of the upcall stub is tied to the {@linkplain java.lang.foreign.MemorySession memory session}
- * provided when the upcall stub is created. This same session is made available by the {@link java.lang.foreign.NativeSymbol}
+ * provided when the upcall stub is created. This same session is made available by the {@link java.lang.foreign.MemorySegment}
  * instance returned by that method.
  *
  * <a id="restricted"></a>

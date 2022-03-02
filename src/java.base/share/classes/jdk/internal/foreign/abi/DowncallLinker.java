@@ -28,8 +28,8 @@ import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import sun.security.action.GetPropertyAction;
 
+import java.lang.foreign.Addressable;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -61,7 +61,7 @@ public class DowncallLinker {
             MH_INVOKE_INTERP_BINDINGS = lookup.findVirtual(DowncallLinker.class, "invokeInterpBindings",
                     methodType(Object.class, SegmentAllocator.class, Object[].class, InvocationData.class));
             MH_CHECK_SYMBOL = lookup.findStatic(SharedUtils.class, "checkSymbol",
-                    methodType(void.class, NativeSymbol.class));
+                    methodType(void.class, Addressable.class));
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -111,7 +111,7 @@ public class DowncallLinker {
          }
 
         assert handle.type().parameterType(0) == SegmentAllocator.class;
-        assert handle.type().parameterType(1) == NativeSymbol.class;
+        assert handle.type().parameterType(1) == Addressable.class;
         handle = foldArguments(handle, 1, MH_CHECK_SYMBOL);
 
         handle = SharedUtils.swapArguments(handle, 0, 1); // normalize parameter order

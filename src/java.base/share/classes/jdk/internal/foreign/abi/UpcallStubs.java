@@ -25,11 +25,10 @@
 package jdk.internal.foreign.abi;
 
 import java.lang.foreign.MemoryAddress;
-import java.lang.foreign.NativeSymbol;
+import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 
 import jdk.internal.foreign.MemorySessionImpl;
-import jdk.internal.foreign.NativeSymbolImpl;
 
 public class UpcallStubs {
 
@@ -49,7 +48,7 @@ public class UpcallStubs {
         registerNatives();
     }
 
-    static NativeSymbol makeUpcall(long entry, MemorySession session) {
+    static MemorySegment makeUpcall(long entry, MemorySession session) {
         // The cast below should always pass, as we should have a real session by now (see AbstractLinker::upcallStub)
         ((MemorySessionImpl)session).addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
             @Override
@@ -57,6 +56,6 @@ public class UpcallStubs {
                 freeUpcallStub(entry);
             }
         });
-        return new NativeSymbolImpl("upcall:" + Long.toHexString(entry), MemoryAddress.ofLong(entry), ((MemorySessionImpl)session));
+        return MemorySegment.ofAddress(MemoryAddress.ofLong(entry), 0L, session);
     }
 }

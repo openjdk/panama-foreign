@@ -29,7 +29,6 @@ import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.NativeSymbol;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
@@ -454,7 +453,7 @@ public class CallGeneratorHelper extends NativeTestHelper {
         }
     }
 
-    MethodHandle downcallHandle(CLinker abi, NativeSymbol symbol, SegmentAllocator allocator, FunctionDescriptor descriptor) {
+    MethodHandle downcallHandle(CLinker abi, Addressable symbol, SegmentAllocator allocator, FunctionDescriptor descriptor) {
         MethodHandle mh = abi.downcallHandle(symbol, descriptor);
         if (descriptor.returnLayout().isPresent() && descriptor.returnLayout().get() instanceof GroupLayout) {
             mh = mh.bindTo(allocator);

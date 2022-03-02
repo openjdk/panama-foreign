@@ -69,8 +69,8 @@ import jdk.internal.reflect.Reflection;
  * The downcall method handle type, derived as above, might be decorated by additional leading parameters,
  * in the given order if both are present:
  * <ul>
- * <li>If the downcall method handle is created {@linkplain #downcallHandle(FunctionDescriptor) without specifying a native symbol},
- * the downcall method handle type features a leading parameter of type {@link NativeSymbol}, from which the
+ * <li>If the downcall method handle is created {@linkplain #downcallHandle(FunctionDescriptor) without specifying a target address},
+ * the downcall method handle type features a leading parameter of type {@link Addressable}, from which the
  * address of the target native function can be derived.</li>
  * <li>If the function descriptor's return layout is a group layout, the resulting downcall method handle accepts
  * an additional leading parameter of type {@link SegmentAllocator}, which is used by the linker runtime to allocate the
@@ -101,8 +101,8 @@ import jdk.internal.reflect.Reflection;
  *     </ul></li>
  * <li>or, if {@code L} is a {@link GroupLayout}, then {@code C} is set to {@code MemorySegment.class}</li>
  * </ul>
- * Upcall stubs are modelled by instances of type {@link NativeSymbol}; upcall stubs can be passed by reference to other
- * downcall method handles (as {@link NativeSymbol} implements the {@link Addressable} interface) and,
+ * Upcall stubs are modelled by instances of type {@link MemorySegment}; upcall stubs can be passed by reference to other
+ * downcall method handles (as {@link MemorySegment} implements the {@link Addressable} interface) and,
  * when no longer required, they can be {@link MemorySession#close() released}, via their associated {@linkplain MemorySession session}.
  *
  * <h2>Symbol lookup</h2>
@@ -116,8 +116,8 @@ import jdk.internal.reflect.Reflection;
  * the linker runtime cannot validate linkage requests. When a client interacts with a downcall method handle obtained
  * through an invalid linkage request (e.g. by specifying a function descriptor featuring too many argument layouts),
  * the result of such interaction is unspecified and can lead to JVM crashes. On downcall handle invocation,
- * the linker runtime guarantees the following for any argument that is a memory resource {@code R} (of type {@link MemorySegment},
- * {@link NativeSymbol} or {@link VaList}):
+ * the linker runtime guarantees the following for any argument that is a memory resource {@code R} (of type {@link MemorySegment}
+ * or {@link VaList}):
  * <ul>
  *     <li>The memory session of {@code R} is {@linkplain MemorySession#isAlive() alive}. Otherwise, the invocation throws
  *     {@link IllegalStateException};</li>
@@ -165,15 +165,15 @@ public sealed interface CLinker permits AbstractLinker {
      * Look up a symbol in the standard libraries associated with this linker.
      * The set of symbols available for lookup is unspecified, as it depends on the platform and on the operating system.
      * @param name the symbol name
-     * @return a symbol in the standard libraries associated with this linker.
+     * @return a zero-length segment, whose base address is the symbol address (if any).
      */
-    default Optional<NativeSymbol> lookup(String name) {
+    default Optional<MemorySegment> lookup(String name) {
         return SystemLookup.getInstance().lookup(name);
     }
 
     /**
      * Obtains a foreign method handle, with the given type and featuring the given function descriptor,
-     * which can be used to call a target foreign function at the address in the given native symbol.
+     * which can be used to call a target foreign function at the address in the given {@link Addressable} instance.
      * <p>
      * If the provided method type's return type is {@code MemorySegment}, then the resulting method handle features
      * an additional prefix parameter, of type {@link SegmentAllocator}, which will be used by the linker runtime
@@ -190,23 +190,23 @@ public sealed interface CLinker permits AbstractLinker {
      * @throws IllegalArgumentException if the provided descriptor contains either a sequence or a padding layout,
      * or if the symbol is {@link MemoryAddress#NULL}
      */
-    default MethodHandle downcallHandle(NativeSymbol symbol, FunctionDescriptor function) {
+    default MethodHandle downcallHandle(Addressable symbol, FunctionDescriptor function) {
         SharedUtils.checkSymbol(symbol);
         return downcallHandle(function).bindTo(symbol);
     }
 
     /**
      * Obtains a foreign method handle, with the given type and featuring the given function descriptor, which can be
-     * used to call a target foreign function at the address in a dynamically provided native symbol.
+     * used to call a target foreign function at the address in a dynamically provided {@link Addressable} instance.
      * The resulting method handle features a prefix parameter (as the first parameter) corresponding to the foreign function
-     * entry point, of type {@link NativeSymbol}.
+     * entry point, of type {@link Addressable}.
      * <p>
      * If the provided function descriptor's return layout is a {@link GroupLayout}, then the resulting method handle features an
      * additional prefix parameter (inserted immediately after the address parameter), of type {@link SegmentAllocator}),
      * which will be used by the linker runtime to allocate structs returned by-value.
      * <p>
-     * The returned method handle will throw an {@link IllegalArgumentException} if the native symbol passed to it is
-     * associated with the {@link MemoryAddress#NULL} address, or a {@link NullPointerException} if the native symbol is {@code null}.
+     * The returned method handle will throw an {@link IllegalArgumentException} if the {@link Addressable} parameter passed to it is
+     * associated with the {@link MemoryAddress#NULL} address, or a {@link NullPointerException} if that parameter is {@code null}.
      *
      * @param function the function descriptor.
      * @return the downcall method handle. The method handle type is <a href="CLinker.html#downcall-method-handles"><em>inferred</em></a>
@@ -220,8 +220,8 @@ public sealed interface CLinker permits AbstractLinker {
      * memory session. Calling such a function pointer from native code will result in the execution of the provided
      * method handle.
      * <p>
-     * The returned function pointer is associated with the provided memory session. When such session is closed,
-     * the corresponding native stub will be deallocated.
+     * The returned memory segment's base address points to the newly allocated native stub, and is associated with
+     * the provided memory session. When such session is closed, the corresponding native stub will be deallocated.
      * <p>
      * The target method handle should not throw any exceptions. If the target method handle does throw an exception,
      * the VM will exit with a non-zero exit code. To avoid the VM aborting due to an uncaught exception, clients
@@ -232,14 +232,14 @@ public sealed interface CLinker permits AbstractLinker {
      * @param target   the target method handle.
      * @param function the function descriptor.
      * @param session the upcall stub memory session.
-     * @return the native stub symbol.
+     * @return a zero-length segment whose base address is the address of the native stub.
      * @throws IllegalArgumentException if the provided descriptor contains either a sequence or a padding layout,
      * or if it is determined that the target method handle can throw an exception, or if the target method handle
      * has a type that does not match the upcall stub <a href="CLinker.html#upcall-stubs"><em>inferred type</em></a>.
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
      * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
      */
-    NativeSymbol upcallStub(MethodHandle target, FunctionDescriptor function, MemorySession session);
+    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, MemorySession session);
 
     /**
      * Obtains the downcall method handle {@linkplain MethodType type} associated with a given function descriptor.
