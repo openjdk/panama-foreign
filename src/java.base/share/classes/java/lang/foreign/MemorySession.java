@@ -112,10 +112,10 @@ import jdk.internal.javac.PreviewFeature;
  *
  * There are situations in which it might not be desirable for a memory session to be reachable from one or
  * more resources associated with it. For instance, an API might create a private memory session, and allocate
- * a memory segment, and then expose one or more slices of this segment to its clients. If the API's memory session
- * is reachable from the slices (using the {@link MemorySegment#session()} accessor), it might be possible for
+ * a memory segment, and then expose one or more slices of this segment to its clients. Since the API's memory session
+ * would be reachable from the slices (using the {@link MemorySegment#session()} accessor), it might be possible for
  * clients to compromise the API (e.g. by closing the session prematurely). To avoid leaking private memory sessions
- * to untrusted clients, an API can instead wrap a new lifetime over an existing memory session, as follows:
+ * to untrusted clients, an API can instead return segments based on a non-closeable view of the session it created, as follows:
  *
  * {@snippet lang=java :
  * MemorySession session = MemorySession.openConfined();

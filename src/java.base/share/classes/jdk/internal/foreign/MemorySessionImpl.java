@@ -128,7 +128,7 @@ public abstract non-sealed class MemorySessionImpl implements Scoped, MemorySess
 
     @Override
     public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, bytesAlignment, this);
+        return MemorySegment.allocateNative(bytesSize, bytesAlignment, this);
     }
 
     public abstract void release0();
