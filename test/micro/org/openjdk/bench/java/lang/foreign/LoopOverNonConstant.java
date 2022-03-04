@@ -66,7 +66,6 @@ public class LoopOverNonConstant {
     static final ValueLayout.OfInt JAVA_INT_ALIGNED = JAVA_INT.withBitAlignment(32);
     static final VarHandle VH_int_aligned = JAVA_INT_ALIGNED.arrayElementVarHandle();
 
-    MemorySession session;
     MemorySegment segment;
     long unsafe_addr;
 
@@ -78,8 +77,7 @@ public class LoopOverNonConstant {
         for (int i = 0; i < ELEM_SIZE; i++) {
             unsafe.putInt(unsafe_addr + (i * CARRIER_SIZE) , i);
         }
-        session = MemorySession.openConfined();
-        segment = MemorySegment.allocateNative(ALLOC_SIZE, session);
+        segment = MemorySegment.allocateNative(ALLOC_SIZE, MemorySession.openConfined());
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }
@@ -91,7 +89,7 @@ public class LoopOverNonConstant {
 
     @TearDown
     public void tearDown() {
-        session.close();
+        segment.session().close();
         unsafe.invokeCleaner(byteBuffer);
         unsafe.freeMemory(unsafe_addr);
     }

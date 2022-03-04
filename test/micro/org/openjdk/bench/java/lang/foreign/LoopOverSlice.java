@@ -58,20 +58,17 @@ public class LoopOverSlice {
 
     MemorySegment nativeSegment, heapSegment;
     IntBuffer nativeBuffer, heapBuffer;
-    MemorySession session;
 
     @Setup
     public void setup() {
-        session = MemorySession.openConfined();
-        nativeSegment = MemorySegment.allocateNative(ALLOC_SIZE, session);
+        nativeSegment = MemorySegment.allocateNative(ALLOC_SIZE, MemorySession.openConfined());
         heapSegment = MemorySegment.ofArray(new int[ELEM_SIZE]);
         nativeBuffer = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
         heapBuffer = IntBuffer.wrap(new int[ELEM_SIZE]);
     }
 
     @TearDown
-    public void tearDown() {
-        session.close();
+    public void tearDown() { nativeSegment.session().close();
     }
 
     @Benchmark

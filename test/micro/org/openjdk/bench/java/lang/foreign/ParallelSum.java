@@ -73,7 +73,6 @@ public class ParallelSum {
 
     static final Unsafe unsafe = Utils.unsafe;
 
-    MemorySession session;
     MemorySegment segment;
     long address;
 
@@ -83,7 +82,7 @@ public class ParallelSum {
         for (int i = 0; i < ELEM_SIZE; i++) {
             unsafe.putInt(address + (i * CARRIER_SIZE), i);
         }
-        segment = MemorySegment.allocateNative(ALLOC_SIZE, CARRIER_SIZE, session = MemorySession.openShared());
+        segment = MemorySegment.allocateNative(ALLOC_SIZE, CARRIER_SIZE, MemorySession.openShared());
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }
@@ -92,7 +91,7 @@ public class ParallelSum {
     @TearDown
     public void tearDown() throws Throwable {
         unsafe.freeMemory(address);
-        session.close();
+        segment.session().close();
     }
 
     @Benchmark
