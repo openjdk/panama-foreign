@@ -181,7 +181,7 @@ public non-sealed class MacOsAArch64VaList implements VaList, Scoped {
         private final List<SimpleVaArg> args = new ArrayList<>();
 
         public Builder(MemorySession session) {
-            ((MemorySessionImpl)session).checkValidStateSlow();
+            MemorySessionImpl.toSessionImpl(session).checkValidStateSlow();
             this.session = session;
         }
 

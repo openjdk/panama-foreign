@@ -138,7 +138,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     @Override
     public final MemorySegment fill(byte value){
         checkAccess(0, length, false);
-        SCOPED_MEMORY_ACCESS.setMemory(session, base(), min(), length, value);
+        SCOPED_MEMORY_ACCESS.setMemory(sessionImpl(), base(), min(), length, value);
         return this;
     }
 

@@ -300,13 +300,13 @@ class Direct$Type$Buffer$RW$$BO$
 #if[rw]
 
     public long address() {
-        MemorySession session = session();
+        MemorySessionImpl session = session();
         if (session != null) {
             if (session.ownerThread() == null && session.isCloseable()) {
                 throw new UnsupportedOperationException("ByteBuffer derived from closeable shared segments not supported");
             }
             try {
-                ((MemorySessionImpl)session).checkValidState();
+                session.checkValidState();
             } catch (ScopedAccessError e) {
                 throw new IllegalStateException("This segment is already closed");
             }

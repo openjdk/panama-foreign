@@ -30,7 +30,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.lang.ref.Reference;
 import java.io.FileDescriptor;
 import java.nio.Buffer;
@@ -48,7 +47,7 @@ import jdk.internal.vm.vector.VectorSupport;
 /**
  * This class defines low-level methods to access on-heap and off-heap memory. The methods in this class
  * can be thought of as thin wrappers around methods provided in the {@link Unsafe} class. All the methods in this
- * class accept one or more {@link MemorySession} parameter, which is used to validate as to whether access to memory
+ * class accept one or more {@link MemorySessionImpl} parameter, which is used to validate as to whether access to memory
  * can be performed in a safe fashion - more specifically, to ensure that the memory being accessed has not
  * already been released (which would result in a hard VM crash).
  * <p>
@@ -59,7 +58,7 @@ import jdk.internal.vm.vector.VectorSupport;
  * <p>
  * This class provides tools to manage races when multiple threads are accessing and/or releasing the same memory
  * region concurrently. More specifically, when a thread wants to release a memory region, it should call the
- * {@link MemorySession#close()} method. This method initiates thread-local handshakes with all the other VM threads,
+ * {@link MemorySessionImpl#close()} method. This method initiates thread-local handshakes with all the other VM threads,
  * which are then stopped one by one. If any thread is found accessing a resource associated to the very memory session
  * being closed, the handshake is retried on the problematic threads, until it succeeds.
  * <p>
@@ -85,11 +84,11 @@ public class ScopedMemoryAccess {
         registerNatives();
     }
 
-    public void closeScope(MemorySession session) {
+    public void closeScope(MemorySessionImpl session) {
         closeScope0(session);
     }
 
-    native void closeScope0(MemorySession session);
+    native void closeScope0(MemorySessionImpl session);
 
     private ScopedMemoryAccess() {}
 
@@ -115,7 +114,7 @@ public class ScopedMemoryAccess {
     // bulk ops
 
     @ForceInline
-    public void copyMemory(MemorySession srcScope, MemorySession dstScope,
+    public void copyMemory(MemorySessionImpl srcScope, MemorySessionImpl dstScope,
                                    Object srcBase, long srcOffset,
                                    Object destBase, long destOffset,
                                    long bytes) {
@@ -127,16 +126,16 @@ public class ScopedMemoryAccess {
     }
 
     @ForceInline @Scoped
-    private void copyMemoryInternal(MemorySession srcScope, MemorySession dstScope,
+    private void copyMemoryInternal(MemorySessionImpl srcScope, MemorySessionImpl dstScope,
                                Object srcBase, long srcOffset,
                                Object destBase, long destOffset,
                                long bytes) {
         try {
             if (srcScope != null) {
-                ((MemorySessionImpl)srcScope).checkValidState();
+                srcScope.checkValidState();
             }
             if (dstScope != null) {
-                ((MemorySessionImpl)dstScope).checkValidState();
+                dstScope.checkValidState();
             }
             UNSAFE.copyMemory(srcBase, srcOffset, destBase, destOffset, bytes);
         } finally {
@@ -146,7 +145,7 @@ public class ScopedMemoryAccess {
     }
 
     @ForceInline
-    public void copySwapMemory(MemorySession srcScope, MemorySession dstScope,
+    public void copySwapMemory(MemorySessionImpl srcScope, MemorySessionImpl dstScope,
                                    Object srcBase, long srcOffset,
                                    Object destBase, long destOffset,
                                    long bytes, long elemSize) {
@@ -158,16 +157,16 @@ public class ScopedMemoryAccess {
     }
 
     @ForceInline @Scoped
-    private void copySwapMemoryInternal(MemorySession srcScope, MemorySession dstScope,
+    private void copySwapMemoryInternal(MemorySessionImpl srcScope, MemorySessionImpl dstScope,
                                Object srcBase, long srcOffset,
                                Object destBase, long destOffset,
                                long bytes, long elemSize) {
         try {
             if (srcScope != null) {
-                ((MemorySessionImpl)srcScope).checkValidState();
+                srcScope.checkValidState();
             }
             if (dstScope != null) {
-                ((MemorySessionImpl)dstScope).checkValidState();
+                dstScope.checkValidState();
             }
             UNSAFE.copySwapMemory(srcBase, srcOffset, destBase, destOffset, bytes, elemSize);
         } finally {
@@ -177,7 +176,7 @@ public class ScopedMemoryAccess {
     }
 
     @ForceInline
-    public void setMemory(MemorySession session, Object o, long offset, long bytes, byte value) {
+    public void setMemory(MemorySessionImpl session, Object o, long offset, long bytes, byte value) {
         try {
             setMemoryInternal(session, o, offset, bytes, value);
         } catch (ScopedAccessError ex) {
@@ -186,10 +185,10 @@ public class ScopedMemoryAccess {
     }
 
     @ForceInline @Scoped
-    private void setMemoryInternal(MemorySession session, Object o, long offset, long bytes, byte value) {
+    private void setMemoryInternal(MemorySessionImpl session, Object o, long offset, long bytes, byte value) {
         try {
             if (session != null) {
-                ((MemorySessionImpl)session).checkValidState();
+                session.checkValidState();
             }
             UNSAFE.setMemory(o, offset, bytes, value);
         } finally {
@@ -198,7 +197,7 @@ public class ScopedMemoryAccess {
     }
 
     @ForceInline
-    public int vectorizedMismatch(MemorySession aScope, MemorySession bScope,
+    public int vectorizedMismatch(MemorySessionImpl aScope, MemorySessionImpl bScope,
                                              Object a, long aOffset,
                                              Object b, long bOffset,
                                              int length,
@@ -211,17 +210,17 @@ public class ScopedMemoryAccess {
     }
 
     @ForceInline @Scoped
-    private int vectorizedMismatchInternal(MemorySession aScope, MemorySession bScope,
+    private int vectorizedMismatchInternal(MemorySessionImpl aScope, MemorySessionImpl bScope,
                                              Object a, long aOffset,
                                              Object b, long bOffset,
                                              int length,
                                              int log2ArrayIndexScale) {
         try {
             if (aScope != null) {
-                ((MemorySessionImpl)aScope).checkValidState();
+                aScope.checkValidState();
             }
             if (bScope != null) {
-                ((MemorySessionImpl)bScope).checkValidState();
+                bScope.checkValidState();
             }
             return ArraysSupport.vectorizedMismatch(a, aOffset, b, bOffset, length, log2ArrayIndexScale);
         } finally {
@@ -231,7 +230,7 @@ public class ScopedMemoryAccess {
     }
 
     @ForceInline
-    public boolean isLoaded(MemorySession session, long address, boolean isSync, long size) {
+    public boolean isLoaded(MemorySessionImpl session, long address, boolean isSync, long size) {
         try {
             return isLoadedInternal(session, address, isSync, size);
         } catch (ScopedAccessError ex) {
@@ -240,10 +239,10 @@ public class ScopedMemoryAccess {
     }
 
     @ForceInline @Scoped
-    public boolean isLoadedInternal(MemorySession session, long address, boolean isSync, long size) {
+    public boolean isLoadedInternal(MemorySessionImpl session, long address, boolean isSync, long size) {
         try {
             if (session != null) {
-                ((MemorySessionImpl)session).checkValidState();
+                session.checkValidState();
             }
             return SharedSecrets.getJavaNioAccess().isLoaded(address, isSync, size);
         } finally {
@@ -252,7 +251,7 @@ public class ScopedMemoryAccess {
     }
 
     @ForceInline
-    public void load(MemorySession session, long address, boolean isSync, long size) {
+    public void load(MemorySessionImpl session, long address, boolean isSync, long size) {
         try {
             loadInternal(session, address, isSync, size);
         } catch (ScopedAccessError ex) {
@@ -261,10 +260,10 @@ public class ScopedMemoryAccess {
     }
 
     @ForceInline @Scoped
-    public void loadInternal(MemorySession session, long address, boolean isSync, long size) {
+    public void loadInternal(MemorySessionImpl session, long address, boolean isSync, long size) {
         try {
             if (session != null) {
-                ((MemorySessionImpl)session).checkValidState();
+                session.checkValidState();
             }
             SharedSecrets.getJavaNioAccess().load(address, isSync, size);
         } finally {
@@ -273,7 +272,7 @@ public class ScopedMemoryAccess {
     }
 
     @ForceInline
-    public void unload(MemorySession session, long address, boolean isSync, long size) {
+    public void unload(MemorySessionImpl session, long address, boolean isSync, long size) {
         try {
             unloadInternal(session, address, isSync, size);
         } catch (ScopedAccessError ex) {
@@ -282,10 +281,10 @@ public class ScopedMemoryAccess {
     }
 
     @ForceInline @Scoped
-    public void unloadInternal(MemorySession session, long address, boolean isSync, long size) {
+    public void unloadInternal(MemorySessionImpl session, long address, boolean isSync, long size) {
         try {
             if (session != null) {
-                ((MemorySessionImpl)session).checkValidState();
+                session.checkValidState();
             }
             SharedSecrets.getJavaNioAccess().unload(address, isSync, size);
         } finally {
@@ -294,7 +293,7 @@ public class ScopedMemoryAccess {
     }
 
     @ForceInline
-    public void force(MemorySession session, FileDescriptor fd, long address, boolean isSync, long index, long length) {
+    public void force(MemorySessionImpl session, FileDescriptor fd, long address, boolean isSync, long index, long length) {
         try {
             forceInternal(session, fd, address, isSync, index, length);
         } catch (ScopedAccessError ex) {
@@ -303,10 +302,10 @@ public class ScopedMemoryAccess {
     }
 
     @ForceInline @Scoped
-    public void forceInternal(MemorySession session, FileDescriptor fd, long address, boolean isSync, long index, long length) {
+    public void forceInternal(MemorySessionImpl session, FileDescriptor fd, long address, boolean isSync, long index, long length) {
         try {
             if (session != null) {
-                ((MemorySessionImpl)session).checkValidState();
+                session.checkValidState();
             }
             SharedSecrets.getJavaNioAccess().force(fd, address, isSync, index, length);
         } finally {
@@ -343,7 +342,7 @@ public class ScopedMemoryAccess {
         static final JavaNioAccess NIO_ACCESS = SharedSecrets.getJavaNioAccess();
 
         @ForceInline
-        static MemorySession session(ByteBuffer bb) {
+        static MemorySessionImpl session(ByteBuffer bb) {
             MemorySegment segment = NIO_ACCESS.bufferSegment(bb);
             return segment != null ?
                     ((AbstractMemorySegmentImpl)segment).sessionImpl() : null;
@@ -378,14 +377,14 @@ public class ScopedMemoryAccess {
     @ForceInline
     private static
     <V extends VectorSupport.Vector<E>, E, S extends VectorSupport.VectorSpecies<E>>
-    V loadFromByteBufferScoped(MemorySession session,
+    V loadFromByteBufferScoped(MemorySessionImpl session,
                           Class<? extends V> vmClass, Class<E> e, int length,
                           ByteBuffer bb, int offset,
                           S s,
                           VectorSupport.LoadOperation<ByteBuffer, V, S> defaultImpl) {
         try {
             if (session != null) {
-                ((MemorySessionImpl)session).checkValidState();
+                session.checkValidState();
             }
 
             final byte[] base = (byte[]) BufferAccess.bufferBase(bb);
@@ -423,14 +422,14 @@ public class ScopedMemoryAccess {
     private static
     <V extends VectorSupport.Vector<E>, E, S extends VectorSupport.VectorSpecies<E>,
      M extends VectorSupport.VectorMask<E>>
-    V loadFromByteBufferMaskedScoped(MemorySession session, Class<? extends V> vmClass,
+    V loadFromByteBufferMaskedScoped(MemorySessionImpl session, Class<? extends V> vmClass,
                                      Class<M> maskClass, Class<E> e, int length,
                                      ByteBuffer bb, int offset, M m,
                                      S s,
                                      VectorSupport.LoadVectorMaskedOperation<ByteBuffer, V, S, M> defaultImpl) {
         try {
             if (session != null) {
-                ((MemorySessionImpl)session).checkValidState();
+                session.checkValidState();
             }
 
             return VectorSupport.loadMasked(vmClass, maskClass, e, length,
@@ -465,14 +464,14 @@ public class ScopedMemoryAccess {
     @ForceInline
     private static
     <V extends VectorSupport.Vector<E>, E>
-    void storeIntoByteBufferScoped(MemorySession session,
+    void storeIntoByteBufferScoped(MemorySessionImpl session,
                                    Class<? extends V> vmClass, Class<E> e, int length,
                                    V v,
                                    ByteBuffer bb, int offset,
                                    VectorSupport.StoreVectorOperation<ByteBuffer, V> defaultImpl) {
         try {
             if (session != null) {
-                ((MemorySessionImpl)session).checkValidState();
+                session.checkValidState();
             }
 
             final byte[] base = (byte[]) BufferAccess.bufferBase(bb);
@@ -510,14 +509,14 @@ public class ScopedMemoryAccess {
     @ForceInline
     private static
     <V extends VectorSupport.Vector<E>, E, M extends VectorSupport.VectorMask<E>>
-    void storeIntoByteBufferMaskedScoped(MemorySession session,
+    void storeIntoByteBufferMaskedScoped(MemorySessionImpl session,
                                          Class<? extends V> vmClass, Class<M> maskClass,
                                          Class<E> e, int length, V v, M m,
                                          ByteBuffer bb, int offset,
                                          VectorSupport.StoreVectorMaskedOperation<ByteBuffer, V, M> defaultImpl) {
         try {
             if (session != null) {
-                ((MemorySessionImpl)session).checkValidState();
+                session.checkValidState();
             }
 
             VectorSupport.storeMasked(vmClass, maskClass, e, length,

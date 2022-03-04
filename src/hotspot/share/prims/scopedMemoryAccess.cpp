@@ -201,10 +201,10 @@ JVM_END
 /// JVM_RegisterUnsafeMethods
 
 #define PKG_MISC "Ljdk/internal/misc/"
-#define PKG_FOREIGN "Ljava/lang/foreign/"
+#define PKG_FOREIGN "Ljdk/internal/foreign/"
 
 #define MEMACCESS "ScopedMemoryAccess"
-#define SCOPE PKG_FOREIGN "MemorySession;"
+#define SCOPE PKG_FOREIGN "MemorySessionImpl;"
 
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
