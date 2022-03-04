@@ -196,6 +196,23 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     MemorySession asNonCloseable();
 
     /**
+     * Compares the specified object with this memory session for equality. Returns {@code true} if and only if the specified
+     * object is also a memory session, and it refers to the same memory session as this memory session. This method
+     * is especially useful when operating on {@linkplain #asNonCloseable() non-closeable} session views.
+     *
+     * @param that the object to be compared for equality with this memory session.
+     * @return {@code true} if the specified object is equal to this memory session.
+     */
+    @Override
+    boolean equals(Object that);
+
+    /**
+     * {@return the hash code value for this memory session}
+     */
+    @Override
+    int hashCode();
+
+    /**
      * Allocates a new native segment, using this session. Equivalent to the following code:
      * {@snippet lang=java :
      * MemorySegment.allocateNative(size, align, this);

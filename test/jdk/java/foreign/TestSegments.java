@@ -293,6 +293,7 @@ public class TestSegments {
     public void testSegmentAccessorWithWrappedLifetime() {
         MemorySession session = MemorySession.openConfined();
         MemorySession publicSession = session.asNonCloseable();
+        assertEquals(session, publicSession);
         MemorySegment segment = publicSession.allocate(100);
         assertThrows(UnsupportedOperationException.class, publicSession::close);
         assertThrows(UnsupportedOperationException.class, segment.session()::close);

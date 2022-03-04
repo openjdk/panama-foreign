@@ -137,7 +137,8 @@ public abstract non-sealed class MemorySessionImpl implements Scoped, MemorySess
 
     @Override
     public boolean equals(Object o) {
-        return o == this;
+        return (o instanceof MemorySession other) &&
+            toSessionImpl(other) == this;
     }
 
     @Override
@@ -361,6 +362,16 @@ public abstract non-sealed class MemorySessionImpl implements Scoped, MemorySess
         @Override
         public Thread ownerThread() {
             return session.ownerThread();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return session.equals(o);
+        }
+
+        @Override
+        public int hashCode() {
+            return session.hashCode();
         }
 
         @Override
