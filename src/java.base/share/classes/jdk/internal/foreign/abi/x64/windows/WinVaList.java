@@ -154,12 +154,12 @@ public non-sealed class WinVaList implements VaList, Scoped {
 
     @Override
     public MemorySessionImpl sessionImpl() {
-        return Scoped.toSessionImpl(segment.session());
+        return ((AbstractMemorySegmentImpl)segment).sessionImpl();
     }
 
     @Override
     public MemorySession session() {
-        return new MemorySessionImpl.NonCloseableView(sessionImpl());
+        return segment.session();
     }
 
     @Override

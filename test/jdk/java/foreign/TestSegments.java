@@ -285,6 +285,17 @@ public class TestSegments {
         assertTrue(segment.byteSize() > 0);
     }
 
+    @Test
+    public void testSegmentAccessorWithWrappedLifetime() {
+        MemorySession session = MemorySession.openConfined();
+        MemorySession publicSession = session.asNonCloseable();
+        MemorySegment segment = publicSession.allocate(100);
+        assertThrows(UnsupportedOperationException.class, publicSession::close);
+        assertThrows(UnsupportedOperationException.class, segment.session()::close);
+        session.close();
+        assertFalse(publicSession.isAlive());
+    }
+
     @DataProvider(name = "badSizeAndAlignments")
     public Object[][] sizesAndAlignments() {
         return new Object[][] {

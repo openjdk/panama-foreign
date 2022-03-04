@@ -51,7 +51,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * shared sessions use a more sophisticated synchronization mechanism, which guarantees that no concurrent
  * access is possible when a session is being closed (see {@link jdk.internal.misc.ScopedMemoryAccess}).
  */
-public abstract non-sealed class MemorySessionImpl implements MemorySession, Scoped, SegmentAllocator {
+public abstract non-sealed class MemorySessionImpl implements Scoped, MemorySession, SegmentAllocator {
     final ResourceList resourceList;
     final Cleaner.Cleanable cleanable;
     final Thread owner;
@@ -76,11 +76,8 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Sco
     @Override
     public void addCloseAction(Runnable runnable) {
         Objects.requireNonNull(runnable);
-        addInternal(ResourceList.ResourceCleanup.ofRunnable(runnable));
-    }
-
-    public MemorySessionImpl sessionImpl() {
-        return this;
+        addInternal(runnable instanceof ResourceList.ResourceCleanup cleanup ?
+                cleanup : ResourceList.ResourceCleanup.ofRunnable(runnable));
     }
 
     /**
@@ -131,7 +128,7 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Sco
 
     @Override
     public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-        return MemorySegment.allocateNative(bytesSize, bytesAlignment, this);
+        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, bytesAlignment, this);
     }
 
     public abstract void release0();
@@ -140,8 +137,7 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Sco
 
     @Override
     public boolean equals(Object o) {
-        return (o instanceof MemorySession other) &&
-            ((Scoped)other).sessionImpl() == this;
+        return o == this;
     }
 
     @Override
@@ -173,6 +169,21 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Sco
      * @return {@code true} if this session is not closed yet.
      */
     public abstract boolean isAlive();
+
+    @Override
+    public MemorySession asNonCloseable() {
+        return isCloseable() ?
+                new NonCloseableView(this) : this;
+    }
+
+    public static MemorySessionImpl toSessionImpl(MemorySession session) {
+        return ((Scoped)session).sessionImpl();
+    }
+
+    @Override
+    public MemorySessionImpl sessionImpl() {
+        return this;
+    }
 
     /**
      * This is a faster version of {@link #checkValidStateSlow()}, which is called upon memory access, and which
@@ -353,18 +364,13 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Sco
         }
 
         @Override
-        public boolean equals(Object o) {
-            return session.equals(o);
-        }
-
-        @Override
-        public int hashCode() {
-            return session.hashCode();
-        }
-
-        @Override
         public void whileAlive(Runnable action) {
             session.whileAlive(action);
+        }
+
+        @Override
+        public MemorySession asNonCloseable() {
+            return this;
         }
 
         @Override

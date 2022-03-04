@@ -24,7 +24,6 @@
  */
 package jdk.internal.foreign.abi;
 
-import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
@@ -67,7 +66,7 @@ public abstract sealed class AbstractLinker implements CLinker permits LinuxAArc
         if (!type.equals(target.type())) {
             throw new IllegalArgumentException("Wrong method handle type: " + target.type());
         }
-        MemorySegment symb =  arrangeUpcall(target, target.type(), function, Scoped.toSessionImpl(session));
+        MemorySegment symb =  arrangeUpcall(target, target.type(), function, session);
         return symb;
     }
 

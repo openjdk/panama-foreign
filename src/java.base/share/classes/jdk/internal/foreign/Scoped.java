@@ -25,12 +25,6 @@
 
 package jdk.internal.foreign;
 
-import java.lang.foreign.MemorySession;
-
 public interface Scoped {
     MemorySessionImpl sessionImpl();
-
-    static MemorySessionImpl toSessionImpl(MemorySession session) {
-        return ((Scoped)session).sessionImpl();
-    }
 }

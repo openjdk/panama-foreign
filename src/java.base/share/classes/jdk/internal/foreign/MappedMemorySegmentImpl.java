@@ -27,6 +27,7 @@ package jdk.internal.foreign;
 
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileSystem;
@@ -52,7 +53,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-    MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, int mask, MemorySessionImpl session) {
+    MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, int mask, MemorySession session) {
         super(min, length, mask, session);
         this.unmapper = unmapper;
     }
@@ -64,7 +65,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     }
 
     @Override
-    MappedMemorySegmentImpl dup(long offset, long size, int mask, MemorySessionImpl session) {
+    MappedMemorySegmentImpl dup(long offset, long size, int mask, MemorySession session) {
         return new MappedMemorySegmentImpl(min + offset, unmapper, size, mask, session);
     }
 
@@ -105,10 +106,11 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     // factories
 
-    public static MemorySegment makeMappedSegment(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode, MemorySessionImpl session) throws IOException {
+    public static MemorySegment makeMappedSegment(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode, MemorySession session) throws IOException {
         Objects.requireNonNull(path);
         Objects.requireNonNull(mapMode);
-        session.checkValidStateSlow();
+        MemorySessionImpl sessionImpl = MemorySessionImpl.toSessionImpl(session);
+        sessionImpl.checkValidStateSlow();
         if (bytesSize < 0) throw new IllegalArgumentException("Requested bytes size must be >= 0.");
         if (bytesOffset < 0) throw new IllegalArgumentException("Requested bytes offset must be >= 0.");
         FileSystem fs = path.getFileSystem();
@@ -125,7 +127,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
             if (unmapperProxy != null) {
                 AbstractMemorySegmentImpl segment = new MappedMemorySegmentImpl(unmapperProxy.address(), unmapperProxy, bytesSize,
                         modes, session);
-                session.addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
+                sessionImpl.addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
                     @Override
                     public void cleanup() {
                         unmapperProxy.unmap();
@@ -153,7 +155,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     static class EmptyMappedMemorySegmentImpl extends MappedMemorySegmentImpl {
 
-        public EmptyMappedMemorySegmentImpl(int modes, MemorySessionImpl session) {
+        public EmptyMappedMemorySegmentImpl(int modes, MemorySession session) {
             super(0, null, 0, modes, session);
         }
 

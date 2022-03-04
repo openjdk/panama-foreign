@@ -354,12 +354,13 @@ public class TestMemorySession {
                 { (Supplier<MemorySession>) MemorySession::openConfined},
                 { (Supplier<MemorySession>) MemorySession::openShared},
                 { (Supplier<MemorySession>) MemorySession::openImplicit},
-                { (Supplier<MemorySession>) MemorySession::global}
+                { (Supplier<MemorySession>) MemorySession::global},
         };
     }
 
     private void keepAlive(MemorySession child, MemorySession parent) {
-        ((MemorySessionImpl)parent).acquire0();
-        child.addCloseAction(() -> ((MemorySessionImpl)parent).release0());
+        MemorySessionImpl sessionImpl = (MemorySessionImpl)parent;
+        sessionImpl.acquire0();
+        child.addCloseAction(sessionImpl::release0);
     }
 }
