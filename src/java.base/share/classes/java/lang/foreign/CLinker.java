@@ -162,16 +162,6 @@ public sealed interface CLinker permits AbstractLinker {
     }
 
     /**
-     * Look up a symbol in the standard libraries associated with this linker.
-     * The set of symbols available for lookup is unspecified, as it depends on the platform and on the operating system.
-     * @param name the symbol name
-     * @return a zero-length segment, whose base address is the symbol address (if any).
-     */
-    default Optional<MemorySegment> lookup(String name) {
-        return SystemLookup.getInstance().lookup(name);
-    }
-
-    /**
      * Obtains a foreign method handle, with the given type and featuring the given function descriptor,
      * which can be used to call a target foreign function at the address in the given {@link Addressable} instance.
      * <p>
