@@ -31,10 +31,10 @@
  *
  * <p>
  * The main abstraction introduced to support foreign memory access is {@link java.lang.foreign.MemorySegment}, which
- * models a contiguous memory region, which can reside either inside or outside the Java heap. Moreover,
- * the {@link java.lang.foreign.MemoryLayout} class hierarchy enables description of <em>memory layouts</em>
- * and basic operations such as computing the size in bytes of a given layout, obtain its alignment requirements.
- * Memory layouts also provide an alternate, more abstract way, to <a href=MemorySegment.html#segment-deref>dereference memory segments</a>
+ * models a contiguous memory region, residing either inside or outside the Java heap. The contents of a memory
+ * segment can be described using a {@link java.lang.foreign.MemoryLayout memory layout}, which provides
+ * basic operations to query sizes, offsets and alignment constraints. Memory layouts also provide
+ * an alternate, more abstract way, to <a href=MemorySegment.html#segment-deref>dereference memory segments</a>
  * using {@linkplain java.lang.foreign.MemoryLayout#varHandle(java.lang.foreign.MemoryLayout.PathElement...) access var handles},
  * which can be computed using <a href="MemoryLayout.html#layout-paths"><em>layout paths</em></a>.
  *

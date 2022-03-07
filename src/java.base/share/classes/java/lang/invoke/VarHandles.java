@@ -302,7 +302,7 @@ final class VarHandles {
     /**
      * Creates a memory segment view var handle.
      *
-     * Resulting var handle will take a memory segment as first argument (the segment to be dereferenced),
+     * The resulting var handle will take a memory segment as first argument (the segment to be dereferenced),
      * and a {@code long} as second argument (the offset into the segment).
      *
      * @param carrier the Java carrier type.

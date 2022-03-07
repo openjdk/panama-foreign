@@ -134,7 +134,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * For more complex dereference operations (e.g. structured memory access), clients can obtain a
  * {@linkplain MethodHandles#memorySegmentViewVarHandle(ValueLayout) memory segment view var handle},
  * that is, a var handle that accepts a segment and a {@code long} offset. More complex access var handles
- * can be obtained by adapt a segment var handle view using the var handle combinator functions defined in the
+ * can be obtained by adapting a segment var handle view using the var handle combinator functions defined in the
  * {@link java.lang.invoke.MethodHandles} class:
  *
  * {@snippet lang=java :
