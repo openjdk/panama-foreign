@@ -98,7 +98,7 @@ public final class Utils {
         }
     }
 
-    public static VarHandle makeMemoryAccessVarHandle(ValueLayout layout) {
+    public static VarHandle makeSegmentViewVarHandle(ValueLayout layout) {
         class VarHandleCache {
             private static final Map<ValueLayout, VarHandle> handleMap = new ConcurrentHashMap<>();
 
@@ -118,7 +118,7 @@ public final class Utils {
             baseCarrier = byte.class;
         }
 
-        VarHandle handle = SharedSecrets.getJavaLangInvokeAccess().memoryAccessVarHandle(baseCarrier,
+        VarHandle handle = SharedSecrets.getJavaLangInvokeAccess().memorySegmentViewHandle(baseCarrier,
                 layout.byteAlignment() - 1, layout.order());
 
         if (layout.carrier() == boolean.class) {

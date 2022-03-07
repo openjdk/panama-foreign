@@ -153,7 +153,7 @@ public class TestNulls {
         addDefaultMapping(Class.class, String.class);
         addDefaultMapping(Runnable.class, () -> {});
         addDefaultMapping(Object.class, new Object());
-        addDefaultMapping(VarHandle.class, MethodHandles.memoryAccessVarHandle(JAVA_INT));
+        addDefaultMapping(VarHandle.class, MethodHandles.memorySegmentViewVarHandle(JAVA_INT));
         addDefaultMapping(MethodHandle.class, MethodHandles.identity(int.class));
         addDefaultMapping(List.class, List.of());
         addDefaultMapping(Charset.class, Charset.defaultCharset());

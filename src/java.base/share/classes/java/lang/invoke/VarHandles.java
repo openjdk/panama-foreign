@@ -300,22 +300,18 @@ final class VarHandles {
     }
 
     /**
-     * Creates a memory access VarHandle.
+     * Creates a memory segment view var handle.
      *
-     * Resulting VarHandle will take a memory address as first argument,
-     * and a certain number of coordinate {@code long} parameters, depending on the length
-     * of the {@code strides} argument array.
-     *
-     * Coordinates are multiplied with corresponding scale factors ({@code strides}) and added
-     * to a single fixed offset to compute an effective offset from the given MemoryAddress for the access.
+     * Resulting var handle will take a memory segment as first argument (the segment to be dereferenced),
+     * and a {@code long} as second argument (the offset into the segment).
      *
      * @param carrier the Java carrier type.
      * @param alignmentMask alignment requirement to be checked upon access. In bytes. Expressed as a mask.
      * @param byteOrder the byte order.
      * @return the created VarHandle.
      */
-    static VarHandle makeMemoryAddressViewHandle(Class<?> carrier, long alignmentMask,
-                                                 ByteOrder byteOrder) {
+    static VarHandle memorySegmentViewHandle(Class<?> carrier, long alignmentMask,
+                                             ByteOrder byteOrder) {
         if (!carrier.isPrimitive() || carrier == void.class || carrier == boolean.class) {
             throw new IllegalArgumentException("Invalid carrier: " + carrier.getName());
         }
@@ -324,19 +320,19 @@ final class VarHandles {
         boolean exact = false;
 
         if (carrier == byte.class) {
-            return maybeAdapt(new MemoryAccessVarHandleByteHelper(be, size, alignmentMask, exact));
+            return maybeAdapt(new VarHandleSegmentAsBytes(be, size, alignmentMask, exact));
         } else if (carrier == char.class) {
-            return maybeAdapt(new MemoryAccessVarHandleCharHelper(be, size, alignmentMask, exact));
+            return maybeAdapt(new VarHandleSegmentAsChars(be, size, alignmentMask, exact));
         } else if (carrier == short.class) {
-            return maybeAdapt(new MemoryAccessVarHandleShortHelper(be, size, alignmentMask, exact));
+            return maybeAdapt(new VarHandleSegmentAsShorts(be, size, alignmentMask, exact));
         } else if (carrier == int.class) {
-            return maybeAdapt(new MemoryAccessVarHandleIntHelper(be, size, alignmentMask, exact));
+            return maybeAdapt(new VarHandleSegmentAsInts(be, size, alignmentMask, exact));
         } else if (carrier == float.class) {
-            return maybeAdapt(new MemoryAccessVarHandleFloatHelper(be, size, alignmentMask, exact));
+            return maybeAdapt(new VarHandleSegmentAsFloats(be, size, alignmentMask, exact));
         } else if (carrier == long.class) {
-            return maybeAdapt(new MemoryAccessVarHandleLongHelper(be, size, alignmentMask, exact));
+            return maybeAdapt(new VarHandleSegmentAsLongs(be, size, alignmentMask, exact));
         } else if (carrier == double.class) {
-            return maybeAdapt(new MemoryAccessVarHandleDoubleHelper(be, size, alignmentMask, exact));
+            return maybeAdapt(new VarHandleSegmentAsDoubles(be, size, alignmentMask, exact));
         } else {
             throw new IllegalStateException("Cannot get here");
         }
