@@ -122,10 +122,6 @@ public abstract non-sealed class MemorySessionImpl implements Scoped, MemorySess
         return new SharedSession(cleaner);
     }
 
-    public static MemorySessionImpl createImplicit() {
-        return new ImplicitSession();
-    }
-
     @Override
     public MemorySegment allocate(long bytesSize, long bytesAlignment) {
         return MemorySegment.allocateNative(bytesSize, bytesAlignment, this);
@@ -301,42 +297,12 @@ public abstract non-sealed class MemorySessionImpl implements Scoped, MemorySess
         return new GlobalSessionImpl(ref);
     }
 
-    static class ImplicitSession extends SharedSession {
-
-        public ImplicitSession() {
-            super(CleanerFactory.cleaner());
-        }
-
-        @Override
-        public void release0() {
-            Reference.reachabilityFence(this);
-        }
-
-        @Override
-        public void acquire0() {
-            // do nothing
-        }
-
-        @Override
-        public boolean isCloseable() {
-            return false;
-        }
-
-        @Override
-        public boolean isAlive() {
-            return true;
-        }
-
-        @Override
-        public void justClose() {
-            throw new UnsupportedOperationException();
-        }
-    }
-
     /**
      * This is a non-closeable view of another memory session. Instances of this class are used in resource session
      * accessors (see {@link MemorySegment#session()}). This class forwards all session methods to the underlying
-     * "root" session implementation, and throws {@link UnsupportedOperationException} on close.
+     * "root" session implementation, and throws {@link UnsupportedOperationException} on close. This class contains
+     * a strong reference to the original session, so even if the original session is dropped by the client
+     * it would still be reachable by the GC, which is important if the session is implicitly closed.
      */
     public final static class NonCloseableView implements MemorySession, Scoped {
         final MemorySessionImpl session;

@@ -33,6 +33,7 @@ import java.util.Objects;
 
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.javac.PreviewFeature;
+import jdk.internal.ref.CleanerFactory;
 
 /**
  * A memory session manages the lifecycle of one or more resources. Resources (e.g. {@link MemorySegment}) associated
@@ -101,7 +102,7 @@ import jdk.internal.javac.PreviewFeature;
  * the session becomes unreachable; that is, {@linkplain #addCloseAction(Runnable) close actions} associated with a
  * memory session, whether managed or not, are called <em>exactly once</em>.
  *
- * <h2><a id = "global-session">Global session</a></h2>
+ * <h2>Global session</h2>
  *
  * An important memory session is the so called {@linkplain #global() global session}; the global session is
  * a memory session that cannot be closed, either explicitly or implicitly. As a result, the global session will never
@@ -191,6 +192,9 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
      * Returns a non-closeable view of this memory session. The returned session is the same session as this
      * session, if this session is {@linkplain #isCloseable() non-closeable}, or a new non-closeable view of
      * this memory session.
+     * @apiNote a non-closeable view of a memory session {@code S} keeps {@code S} reachable. As such, {@code S}
+     * cannot be closed implicitly (e.g. by a {@link Cleaner}) as long as one or more non-closeable views of {@code S}
+     * are reachable.
      * @return a non-closeable view of this memory session.
      */
     MemorySession asNonCloseable();
@@ -267,17 +271,17 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
      * Creates a new non-closeable shared memory session, managed by a private {@link Cleaner} instance.
      * Equivalent to (but likely more efficient than) the following code:
      * {@snippet lang=java :
-     * openShared(Cleaner.create());
+     * openShared(Cleaner.create()).asNonCloseable();
      * }
      * @return a non-closeable shared memory session, managed by a private {@link Cleaner} instance.
      */
     static MemorySession openImplicit() {
-        return MemorySessionImpl.createImplicit();
+        return MemorySessionImpl.createShared(CleanerFactory.cleaner()).asNonCloseable();
     }
 
     /**
-     * Returns the <a href="MemorySession.html#global-session"><em>global memory session</em></a>.
-     * @return the <a href="MemorySession.html#global-session"><em>global memory session</em></a>.
+     * Returns the <em>global memory session</em>.
+     * @return the <em>global memory session</em>.
      */
     static MemorySession global() {
         return MemorySessionImpl.GLOBAL;
