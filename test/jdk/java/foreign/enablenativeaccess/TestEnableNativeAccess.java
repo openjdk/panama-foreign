@@ -116,8 +116,8 @@ public class TestEnableNativeAccess {
         return success().doNotExpect("WARNING");
     }
 
-    static Result successWithWarning() {
-        return success().expect("WARNING");
+    static Result successWithWarning(String moduleName) {
+        return success().expect("WARNING").expect("--enable-native-access=" + moduleName);
     }
 
     static Result failWithWarning(String expectedOutput) {
@@ -135,11 +135,11 @@ public class TestEnableNativeAccess {
                 { "panama_comma_separated_enable_reflection", PANAMA_REFLECTION, successNoWarning(), new String[]{"--enable-native-access=java.base,panama_module"} },
                 { "panama_comma_separated_enable_invoke", PANAMA_INVOKE, successNoWarning(), new String[]{"--enable-native-access=java.base,panama_module"} },
 
-                { "panama_enable_native_access_warn", PANAMA_MAIN, successWithWarning(), new String[]{} },
-                { "panama_enable_native_access_warn_reflection", PANAMA_REFLECTION, successWithWarning(), new String[]{} },
-                { "panama_enable_native_access_warn_invoke", PANAMA_INVOKE, successWithWarning(), new String[]{} },
+                { "panama_enable_native_access_warn", PANAMA_MAIN, successWithWarning("panama"), new String[]{} },
+                { "panama_enable_native_access_warn_reflection", PANAMA_REFLECTION, successWithWarning("panama"), new String[]{} },
+                { "panama_enable_native_access_warn_invoke", PANAMA_INVOKE, successWithWarning("panama"), new String[]{} },
 
-                { "panama_no_unnamed_module_native_access", UNNAMED, successWithWarning(), new String[]{} },
+                { "panama_no_unnamed_module_native_access", UNNAMED, successWithWarning("ALL-UNNAMED"), new String[]{} },
                 { "panama_all_unnamed_module_native_access", UNNAMED, successNoWarning(), new String[]{"--enable-native-access=ALL-UNNAMED"} },
         };
     }
@@ -190,7 +190,7 @@ public class TestEnableNativeAccess {
      */
     public void testWarnFirstAccess() throws Exception {
         List<String> output1 = run("panama_enable_native_access_first", PANAMA_MAIN,
-                successWithWarning()).asLines();
+                successWithWarning("panama")).asLines();
         assertTrue(count(output1, "WARNING") == 3);  // 3 on first access, none on subsequent access
     }
 
