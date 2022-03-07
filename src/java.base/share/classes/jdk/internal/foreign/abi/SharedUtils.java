@@ -46,6 +46,7 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.SequenceLayout;
+import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.VaList;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
@@ -336,18 +337,6 @@ public class SharedUtils {
         return handle;
     }
 
-    // lazy init MH_ALLOC and MH_FREE handles
-    private static class AllocHolder {
-
-        private static final CLinker SYS_LINKER = getSystemLinker();
-
-        static final MethodHandle MH_MALLOC = SYS_LINKER.downcallHandle(CLinker.systemCLinker().lookup("malloc").get(),
-                FunctionDescriptor.of(ADDRESS, JAVA_LONG));
-
-        static final MethodHandle MH_FREE = SYS_LINKER.downcallHandle(CLinker.systemCLinker().lookup("free").get(),
-                FunctionDescriptor.ofVoid(ADDRESS));
-    }
-
     public static void checkSymbol(Addressable symbol) {
         checkAddressable(symbol, "Symbol is NULL");
     }
@@ -360,22 +349,6 @@ public class SharedUtils {
         Objects.requireNonNull(symbol);
         if (symbol.address().toRawLongValue() == 0)
             throw new IllegalArgumentException("Symbol is NULL: " + symbol);
-    }
-
-    public static MemoryAddress allocateMemoryInternal(long size) {
-        try {
-            return (MemoryAddress) AllocHolder.MH_MALLOC.invokeExact(size);
-        } catch (Throwable th) {
-            throw new RuntimeException(th);
-        }
-    }
-
-    public static void freeMemoryInternal(MemoryAddress addr) {
-        try {
-            AllocHolder.MH_FREE.invokeExact((Addressable)addr);
-        } catch (Throwable th) {
-            throw new RuntimeException(th);
-        }
     }
 
     public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession session) {

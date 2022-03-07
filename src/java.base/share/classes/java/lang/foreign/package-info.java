@@ -121,8 +121,8 @@
  * }
  * }
  *
- * Here, we obtain a {@linkplain java.lang.foreign.CLinker#systemCLinker() linker instance} and we use it
- * to {@linkplain java.lang.foreign.CLinker#lookup(java.lang.String) look up} the {@code strlen} symbol in the
+ * Here, we obtain a {@linkplain java.lang.foreign.SymbolLookup#systemLookup() system lookup} and we use it
+ * to {@linkplain java.lang.foreign.SymbolLookup#lookup(java.lang.String) look up} the {@code strlen} symbol in the
  * standard C library; a <em>downcall method handle</em> targeting said symbol is subsequently
  * {@linkplain java.lang.foreign.CLinker#downcallHandle(java.lang.foreign.FunctionDescriptor) obtained}.
  * To complete the linking successfully, we must provide a {@link java.lang.foreign.FunctionDescriptor} instance,

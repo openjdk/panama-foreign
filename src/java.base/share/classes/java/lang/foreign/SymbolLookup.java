@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,28 +29,39 @@ import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.SystemLookup;
+import jdk.internal.javac.PreviewFeature;
 import jdk.internal.loader.NativeLibrary;
 import jdk.internal.loader.RawNativeLibraries;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
-import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
 /**
- * A symbol lookup. Exposes a lookup operation for searching symbol addresses by name, see {@link jdk.incubator.foreign.SymbolLookup#lookup(String)}.
- * A symbol lookup can be used to look up a symbol in a loaded library. Clients can obtain a {@linkplain #loaderLookup() loader lookup},
+ * A symbol lookup can be used to look up a symbol in one or more loaded libraries. A symbol lookup allows for searching
+ * symbols by name, see {@link SymbolLookup#lookup(String)}. A returned symbol is modelled as a zero-length {@linkplain MemorySegment memory segment};
+ * it can be used directly to create a {@linkplain CLinker#downcallHandle(Addressable, FunctionDescriptor) downcall method handle},
+ * or it can be {@linkplain MemorySegment#ofAddress(MemoryAddress, long, MemorySession) resized} accordingly, if it models
+ * a <em>global variable</em> that needs to be dereferenced.
+ * <p>
+ * Clients can obtain a {@linkplain #loaderLookup() loader lookup},
  * which can be used to search symbols in libraries loaded by the current classloader (e.g. using {@link System#load(String)},
  * or {@link System#loadLibrary(String)}).
- * Alternatively, clients can search symbols in the standard C library using a {@link CLinker}, which conveniently
- * implements this interface.
+ * <p>
+ * Alternatively, clients can search symbols in the standard C library using a {@linkplain SymbolLookup#systemLookup() system lookup},
+ * which conveniently implements this interface. The set of symbols available in the system lookup is unspecified,
+ * as it depends on the platform and on the operating system.
+ * <p>
+ * Finally, clients can obtain a {@linkplain #libraryLookup(Path, MemorySession) library lookup} which can be used
+ * to search symbols in a given library; a library lookup is associated with a {@linkplain  MemorySession memory session},
+ * and the library it refers to is unloaded when the session is {@linkplain MemorySession#close() closed}.
  * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
  * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
  */
+@PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
 @FunctionalInterface
 public interface SymbolLookup {
 
@@ -69,9 +80,6 @@ public interface SymbolLookup {
      * <a href="../../../java/lang/ref/package.html#reachability">reachable</a>.
      *
      * @return a symbol lookup suitable to find symbols in libraries loaded by the caller's classloader.
-     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
-     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
     static SymbolLookup loaderLookup() {
@@ -89,30 +97,72 @@ public interface SymbolLookup {
     }
 
     /**
-     * Look up a symbol in the standard libraries associated with this linker.
-     * The set of symbols available for lookup is unspecified, as it depends on the platform and on the operating system.
-     * @param name the symbol name
-     * @return a zero-length segment, whose base address is the symbol address (if any).
+     * Obtains a system lookup suitable to find symbols in the standard C libraries. The set of symbols
+     * available for lookup is unspecified, as it depends on the platform and on the operating system.
+     * @return a system-specific library lookup which is suitable to find symbols in the standard C libraries.
+     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
+     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     static SymbolLookup systemLookup() {
         return SystemLookup.getInstance();
     }
 
+    /**
+     * Obtains a symbol lookup suitable to find symbols in a library with given name. As a side-effect, calling
+     * this method causes the specified library to be loaded. The library will be unloaded when the provided
+     * memory session is {@linkplain MemorySession#close() closed}.
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     * @param name the name of the library in which symbols should be looked up.
+     * @param session the memory session which controls the library lifecycle.
+     * @return a symbol lookup suitable to find symbols in a library with given name.
+     */
+    @CallerSensitive
     static SymbolLookup libraryLookup(String name, MemorySession session) {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), SymbolLookup.class, "libraryLookup");
         Objects.requireNonNull(name);
         RawNativeLibraries nativeLibraries = RawNativeLibraries.newInstance(MethodHandles.lookup());
         NativeLibrary library = nativeLibraries.load(name);
-        return libraryLookup(library, session);
+        return libraryLookup(name, nativeLibraries, library, session);
     }
 
+    /**
+     * Obtains a symbol lookup suitable to find symbols in a library with given path. As a side-effect, calling
+     * this method causes the specified library to be loaded. The library will be unloaded when the provided
+     * memory session is {@linkplain MemorySession#close() closed}.
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     * @param path the path of the library in which symbols should be looked up.
+     * @param session the memory session which controls the library lifecycle.
+     * @return a symbol lookup suitable to find symbols in a library with given name.
+     */
+    @CallerSensitive
     static SymbolLookup libraryLookup(Path path, MemorySession session) {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), SymbolLookup.class, "libraryLookup");
         Objects.requireNonNull(path);
         RawNativeLibraries nativeLibraries = RawNativeLibraries.newInstance(MethodHandles.lookup());
         NativeLibrary library = nativeLibraries.load(path);
-        return libraryLookup(library, session);
+        return libraryLookup(path, nativeLibraries, library, session);
     }
 
-    private static SymbolLookup libraryLookup(NativeLibrary library, MemorySession session) {
+    private static SymbolLookup libraryLookup(Object libName, RawNativeLibraries nativeLibraries, NativeLibrary library, MemorySession session) {
+        if (library == null) {
+            throw new IllegalArgumentException("Cannot open library: " + libName);
+        }
+        // register hook to unload library when session is closed
+        MemorySessionImpl.toSessionImpl(session).addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
+            @Override
+            public void cleanup() {
+                nativeLibraries.unload(library);
+            }
+        });
         return name -> {
             Objects.requireNonNull(name);
             MemoryAddress addr = MemoryAddress.ofLong(library.find(name));
