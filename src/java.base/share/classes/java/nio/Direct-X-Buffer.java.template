@@ -303,7 +303,7 @@ class Direct$Type$Buffer$RW$$BO$
         MemorySessionImpl session = session();
         if (session != null) {
             if (session.ownerThread() == null && session.isCloseable()) {
-                throw new UnsupportedOperationException("ByteBuffer derived from closeable shared segments not supported");
+                throw new UnsupportedOperationException("ByteBuffer derived from closeable shared sessions not supported");
             }
             try {
                 session.checkValidState();

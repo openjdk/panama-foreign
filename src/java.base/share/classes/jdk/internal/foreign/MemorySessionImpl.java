@@ -37,6 +37,7 @@ import java.util.Objects;
 import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.ref.CleanerFactory;
 import jdk.internal.vm.annotation.ForceInline;
+import sun.nio.ch.DirectBuffer;
 
 /**
  * This class manages the temporal bounds associated with a memory segment as well
@@ -120,6 +121,10 @@ public abstract non-sealed class MemorySessionImpl implements Scoped, MemorySess
 
     public static MemorySession createShared(Cleaner cleaner) {
         return new SharedSession(cleaner);
+    }
+
+    public static MemorySessionImpl createImplicit() {
+        return new ImplicitSession();
     }
 
     @Override
@@ -295,6 +300,51 @@ public abstract non-sealed class MemorySessionImpl implements Scoped, MemorySess
 
     public static MemorySessionImpl heapSession(Object ref) {
         return new GlobalSessionImpl(ref);
+    }
+
+    /**
+     * This is an implicit, GC-backed memory session. Implicit sessions cannot be closed explicitly.
+     * While it would be possible to model an implicit session as a non-closeable view of a shared
+     * session, it is better to capture the fact that an implicit session is not just a non-closeable
+     * view of some session which might be closeable. This is useful e.g. in the implementations of
+     * {@link DirectBuffer#address()}, where obtaining an address of a buffer instance associated
+     * with a potentially closeable session is forbidden.
+     */
+    static class ImplicitSession extends SharedSession {
+
+        public ImplicitSession() {
+            super(CleanerFactory.cleaner());
+        }
+
+        @Override
+        public void release0() {
+            Reference.reachabilityFence(this);
+        }
+
+        @Override
+        public void acquire0() {
+            // do nothing
+        }
+
+        @Override
+        public boolean isCloseable() {
+            return false;
+        }
+
+        @Override
+        public boolean isAlive() {
+            return true;
+        }
+
+        @Override
+        public MemorySession asNonCloseable() {
+            return this;
+        }
+
+        @Override
+        public void justClose() {
+            throw new UnsupportedOperationException();
+        }
     }
 
     /**

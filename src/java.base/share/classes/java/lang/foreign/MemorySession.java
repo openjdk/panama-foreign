@@ -276,7 +276,7 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
      * @return a non-closeable shared memory session, managed by a private {@link Cleaner} instance.
      */
     static MemorySession openImplicit() {
-        return MemorySessionImpl.createShared(CleanerFactory.cleaner()).asNonCloseable();
+        return MemorySessionImpl.createImplicit();
     }
 
     /**
