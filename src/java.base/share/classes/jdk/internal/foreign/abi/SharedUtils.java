@@ -477,7 +477,7 @@ public class SharedUtils {
 
         @Override
         public MemorySessionImpl sessionImpl() {
-            return (MemorySessionImpl)MemorySession.global();
+            return MemorySessionImpl.GLOBAL;
         }
 
         @Override

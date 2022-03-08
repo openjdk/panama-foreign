@@ -41,7 +41,6 @@ import java.util.stream.Stream;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.MappedMemorySegmentImpl;
-import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
@@ -319,7 +318,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     Stream<MemorySegment> elements(MemoryLayout elementLayout);
 
     /**
-     * {@return a non-closeable view of the memory session associated with this memory segment}
+     * {@return the memory session associated with this memory segment}
      */
     MemorySession session();
 
@@ -873,7 +872,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
         if (bytesSize < 0) {
             throw new IllegalArgumentException("Invalid size : " + bytesSize);
         }
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, bytesSize, Scoped.toSessionImpl(session));
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, bytesSize, session);
     }
 
     /**
@@ -897,7 +896,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     static MemorySegment allocateNative(MemoryLayout layout, MemorySession session) {
         Objects.requireNonNull(session);
         Objects.requireNonNull(layout);
-        return allocateNative(layout.byteSize(), layout.byteAlignment(), Scoped.toSessionImpl(session));
+        return allocateNative(layout.byteSize(), layout.byteAlignment(), session);
     }
 
     /**
@@ -951,7 +950,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
             throw new IllegalArgumentException("Invalid alignment constraint : " + alignmentBytes);
         }
 
-        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, alignmentBytes, Scoped.toSessionImpl(session));
+        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, alignmentBytes, session);
     }
 
     /**
@@ -998,7 +997,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      */
     static MemorySegment mapFile(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode, MemorySession session) throws IOException {
         Objects.requireNonNull(session);
-        return MappedMemorySegmentImpl.makeMappedSegment(path, bytesOffset, bytesSize, mapMode, Scoped.toSessionImpl(session));
+        return MappedMemorySegmentImpl.makeMappedSegment(path, bytesOffset, bytesSize, mapMode, session);
     }
 
     /**

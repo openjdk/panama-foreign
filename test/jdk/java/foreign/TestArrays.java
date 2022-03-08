@@ -136,9 +136,8 @@ public class TestArrays {
     @Test(dataProvider = "elemLayouts",
             expectedExceptions = IllegalStateException.class)
     public void testArrayFromClosedSegment(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
-        var session = MemorySession.openConfined();
-        MemorySegment segment = MemorySegment.allocateNative(layout, session);
-        session.close();
+        MemorySegment segment = MemorySegment.allocateNative(layout, MemorySession.openConfined());
+        segment.session().close();
         arrayFactory.apply(segment);
     }
 

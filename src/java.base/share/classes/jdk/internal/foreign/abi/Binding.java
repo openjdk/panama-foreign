@@ -896,7 +896,7 @@ public abstract class Binding {
         }
 
         private static MemorySegment toSegment(MemoryAddress operand, long size, Context context) {
-            return MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size, (MemorySessionImpl) context.session);
+            return MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size, context.session);
         }
 
         @Override

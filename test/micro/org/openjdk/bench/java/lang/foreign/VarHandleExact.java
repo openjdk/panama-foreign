@@ -57,17 +57,16 @@ public class VarHandleExact {
         exact = generic.withInvokeExactBehavior();
     }
 
-    MemorySession session;
     MemorySegment data;
 
     @Setup
     public void setup() {
-        data = MemorySegment.allocateNative(JAVA_INT, session = MemorySession.openConfined());
+        data = MemorySegment.allocateNative(JAVA_INT, MemorySession.openConfined());
     }
 
     @TearDown
     public void tearDown() {
-        session.close();
+        data.session().close();
     }
 
     @Benchmark

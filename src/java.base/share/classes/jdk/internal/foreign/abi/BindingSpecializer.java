@@ -96,7 +96,7 @@ public class BindingSpecializer {
     private static final String COPY_DESC = methodType(void.class, MemorySegment.class, long.class, MemorySegment.class, long.class, long.class).descriptorString();
     private static final String TO_RAW_LONG_VALUE_DESC = methodType(long.class).descriptorString();
     private static final String OF_LONG_DESC = methodType(MemoryAddress.class, long.class).descriptorString();
-    private static final String OF_LONG_UNCHECKED_DESC = methodType(MemorySegment.class, long.class, long.class, MemorySessionImpl.class).descriptorString();
+    private static final String OF_LONG_UNCHECKED_DESC = methodType(MemorySegment.class, long.class, long.class, MemorySession.class).descriptorString();
     private static final String ALLOCATE_DESC = methodType(MemorySegment.class, long.class, long.class).descriptorString();
     private static final String HANDLE_UNCAUGHT_EXCEPTION_DESC = methodType(void.class, Throwable.class).descriptorString();
     private static final String METHOD_HANDLES_INTRN = Type.getInternalName(MethodHandles.class);
@@ -550,7 +550,6 @@ public class BindingSpecializer {
         emitToRawLongValue();
         emitConst(size);
         emitLoadInternalSession();
-        emitCheckCast(MemorySessionImpl.class);
         emitInvokeStatic(MemoryAddressImpl.class, "ofLongUnchecked", OF_LONG_UNCHECKED_DESC);
 
         pushType(MemorySegment.class);

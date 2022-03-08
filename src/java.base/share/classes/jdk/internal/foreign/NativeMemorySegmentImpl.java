@@ -28,6 +28,7 @@ package jdk.internal.foreign;
 
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.nio.ByteBuffer;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;
@@ -47,7 +48,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        NativeMemorySegmentImpl dup(long offset, long size, int mask, MemorySessionImpl scope) {
+        NativeMemorySegmentImpl dup(long offset, long size, int mask, MemorySession scope) {
             throw new IllegalStateException();
         }
     };
@@ -63,7 +64,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     final long min;
 
     @ForceInline
-    NativeMemorySegmentImpl(long min, long length, int mask, MemorySessionImpl session) {
+    NativeMemorySegmentImpl(long min, long length, int mask, MemorySession session) {
         super(length, mask, session);
         this.min = min;
     }
@@ -76,7 +77,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     @Override
-    NativeMemorySegmentImpl dup(long offset, long size, int mask, MemorySessionImpl session) {
+    NativeMemorySegmentImpl dup(long offset, long size, int mask, MemorySession session) {
         return new NativeMemorySegmentImpl(min + offset, size, mask, session);
     }
 
@@ -108,8 +109,9 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     // factories
 
-    public static MemorySegment makeNativeSegment(long bytesSize, long alignmentBytes, MemorySessionImpl session) {
-        session.checkValidStateSlow();
+    public static MemorySegment makeNativeSegment(long bytesSize, long alignmentBytes, MemorySession session) {
+        MemorySessionImpl sessionImpl = MemorySessionImpl.toSessionImpl(session);
+        sessionImpl.checkValidStateSlow();
         if (VM.isDirectMemoryPageAligned()) {
             alignmentBytes = Math.max(alignmentBytes, nioAccess.pageSize());
         }
@@ -126,7 +128,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(buf, alignedSize,
                 DEFAULT_MODES, session);
-        session.addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
+        sessionImpl.addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
             @Override
             public void cleanup() {
                 unsafe.freeMemory(buf);
@@ -140,8 +142,9 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         return segment;
     }
 
-    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, MemorySessionImpl session) {
-        session.checkValidStateSlow();
+    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, MemorySession session) {
+        MemorySessionImpl sessionImpl = MemorySessionImpl.toSessionImpl(session);
+        sessionImpl.checkValidStateSlow();
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, DEFAULT_MODES, session);
         return segment;
     }

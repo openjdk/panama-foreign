@@ -33,7 +33,6 @@ import java.util.Objects;
 import java.util.function.Function;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.ArenaAllocator;
-import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.Utils;
 import jdk.internal.javac.PreviewFeature;
 
@@ -412,7 +411,7 @@ public interface SegmentAllocator {
         if (arenaSize <= 0 || arenaSize < blockSize) {
             throw new IllegalArgumentException("Invalid arena size: " + arenaSize);
         }
-        return new ArenaAllocator(blockSize, arenaSize, Scoped.toSessionImpl(session));
+        return new ArenaAllocator(blockSize, arenaSize, session);
     }
 
     /**
