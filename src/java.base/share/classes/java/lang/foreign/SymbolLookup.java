@@ -100,9 +100,6 @@ public interface SymbolLookup {
      * Obtains a system lookup suitable to find symbols in the standard C libraries. The set of symbols
      * available for lookup is unspecified, as it depends on the platform and on the operating system.
      * @return a system-specific library lookup which is suitable to find symbols in the standard C libraries.
-     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
-     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     static SymbolLookup systemLookup() {
         return SystemLookup.getInstance();
@@ -120,6 +117,10 @@ public interface SymbolLookup {
      * @param name the name of the library in which symbols should be looked up.
      * @param session the memory session which controls the library lifecycle.
      * @return a symbol lookup suitable to find symbols in a library with given name.
+     * @throws IllegalArgumentException if {@code name} does not identify a valid library.
+     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
+     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
     static SymbolLookup libraryLookup(String name, MemorySession session) {
@@ -142,6 +143,10 @@ public interface SymbolLookup {
      * @param path the path of the library in which symbols should be looked up.
      * @param session the memory session which controls the library lifecycle.
      * @return a symbol lookup suitable to find symbols in a library with given name.
+     * @throws IllegalArgumentException if {@code path} does not point to a valid library.
+     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
+     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
     static SymbolLookup libraryLookup(Path path, MemorySession session) {
