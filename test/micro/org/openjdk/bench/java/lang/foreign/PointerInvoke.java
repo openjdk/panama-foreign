@@ -42,6 +42,7 @@ import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
+import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.util.concurrent.TimeUnit;
 
@@ -64,9 +65,10 @@ public class PointerInvoke extends CLayouts {
 
     static {
         CLinker abi = CLinker.systemCLinker();
-        F_LONG = abi.downcallHandle(PointerInvoke.class.getClassLoader().findNative("func_as_long").get(),
+        SymbolLookup loaderLibs = SymbolLookup.loaderLookup();
+        F_LONG = abi.downcallHandle(loaderLibs.lookup("func_as_long").get(),
                 FunctionDescriptor.of(C_INT, C_LONG_LONG));
-        F_PTR = abi.downcallHandle(PointerInvoke.class.getClassLoader().findNative("func_as_ptr").get(),
+        F_PTR = abi.downcallHandle(loaderLibs.lookup("func_as_ptr").get(),
                 FunctionDescriptor.of(C_INT, C_POINTER));
     }
 

@@ -44,6 +44,7 @@ import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
+import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.util.concurrent.TimeUnit;
 
@@ -74,7 +75,7 @@ public class StrLenTest extends CLayouts {
 
     static {
         CLinker abi = CLinker.systemCLinker();
-        STRLEN = abi.downcallHandle(abi.lookup("strlen").get(),
+        STRLEN = abi.downcallHandle(SymbolLookup.systemLookup().lookup("strlen").get(),
                 FunctionDescriptor.of(C_INT, C_POINTER));
     }
 

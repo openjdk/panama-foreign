@@ -38,6 +38,7 @@ import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
+import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.concurrent.TimeUnit;
@@ -62,7 +63,7 @@ public class QSort extends CLayouts {
     static final int[] INPUT = { 5, 3, 2, 7, 8, 12, 1, 7 };
     static final MemorySegment INPUT_SEGMENT;
 
-    static Addressable qsort_addr = abi.lookup("qsort").get();
+    static Addressable qsort_addr = SymbolLookup.systemLookup().lookup("qsort").get();
 
     static {
         INPUT_SEGMENT = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(INPUT.length, JAVA_INT), MemorySession.global());
@@ -77,7 +78,7 @@ public class QSort extends CLayouts {
                     FunctionDescriptor.ofVoid(C_POINTER, C_LONG_LONG, C_LONG_LONG, C_POINTER)
             );
             System.loadLibrary("QSort");
-            native_compar = QSort.class.getClassLoader().findNative("compar").orElseThrow();
+            native_compar = SymbolLookup.loaderLookup().lookup("compar").orElseThrow();
             panama_upcall_compar = abi.upcallStub(
                     lookup().findStatic(QSort.class,
                             "panama_upcall_compar",

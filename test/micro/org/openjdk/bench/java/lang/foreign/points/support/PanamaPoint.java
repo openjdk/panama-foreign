@@ -30,6 +30,7 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import org.openjdk.bench.java.lang.foreign.CLayouts;
 
+import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 
@@ -50,12 +51,13 @@ public class PanamaPoint extends CLayouts implements AutoCloseable {
     static {
         CLinker abi = CLinker.systemCLinker();
         System.loadLibrary("Point");
+        SymbolLookup loaderLibs = SymbolLookup.loaderLookup();
         MH_distance = abi.downcallHandle(
-                PanamaPoint.class.getClassLoader().findNative("distance").get(),
+                loaderLibs.lookup("distance").get(),
                 FunctionDescriptor.of(C_DOUBLE, LAYOUT, LAYOUT)
         );
         MH_distance_ptrs = abi.downcallHandle(
-                PanamaPoint.class.getClassLoader().findNative("distance_ptrs").get(),
+                loaderLibs.lookup("distance_ptrs").get(),
                 FunctionDescriptor.of(C_DOUBLE, C_POINTER, C_POINTER)
         );
     }

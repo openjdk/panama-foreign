@@ -35,6 +35,7 @@ import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
+import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.concurrent.TimeUnit;
@@ -121,7 +122,7 @@ public class Upcalls extends CLayouts {
 
     static MethodHandle linkFunc(String name, FunctionDescriptor baseDesc) {
         return abi.downcallHandle(
-                Upcalls.class.getClassLoader().findNative(name).orElseThrow(),
+                SymbolLookup.loaderLookup().lookup(name).orElseThrow(),
                 baseDesc.appendArgumentLayouts(C_POINTER)
         );
     }
