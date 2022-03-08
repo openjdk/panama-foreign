@@ -60,7 +60,7 @@ public class TestUpcallAsync extends TestUpcallBase {
     public void testUpcallsAsync(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        Addressable addr = findNativeOrThrow(TestUpcallAsync.class, fName);
+        Addressable addr = findNativeOrThrow(fName);
         try (MemorySession session = MemorySession.openShared()) {
             SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
             FunctionDescriptor descriptor = function(ret, paramTypes, fields);
@@ -93,7 +93,7 @@ public class TestUpcallAsync extends TestUpcallBase {
             String name = "call_async_V";
             return INVOKERS.computeIfAbsent(name, symbol ->
                     ABI.downcallHandle(
-                            TestUpcallAsync.class.getClassLoader().findNative(symbol).orElseThrow(),
+                            findNativeOrThrow(symbol),
                             FunctionDescriptor.ofVoid(C_POINTER)));
         }
 
@@ -101,7 +101,7 @@ public class TestUpcallAsync extends TestUpcallBase {
                 + (returnType == ParamType.STRUCT ? "_" + sigCode(fields) : "");
 
         return INVOKERS.computeIfAbsent(name, symbol -> {
-            Addressable invokerSymbol = TestUpcallAsync.class.getClassLoader().findNative(symbol).orElseThrow();
+            Addressable invokerSymbol = findNativeOrThrow(symbol);
             MemoryLayout returnLayout = returnType.layout(fields);
             FunctionDescriptor desc = FunctionDescriptor.of(returnLayout, C_POINTER);
 

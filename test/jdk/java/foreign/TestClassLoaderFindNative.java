@@ -30,6 +30,7 @@
 
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
+import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import org.testng.annotations.Test;
 
@@ -48,17 +49,20 @@ public class TestClassLoaderFindNative {
 
     @Test
     public void testSimpleLookup() {
-        assertFalse(this.getClass().getClassLoader().findNative("f").isEmpty());
+        assertFalse(SymbolLookup.loaderLookup().lookup("f").isEmpty());
     }
 
     @Test
     public void testInvalidSymbolLookup() {
-        assertTrue(this.getClass().getClassLoader().findNative("nonExistent").isEmpty());
+        assertTrue(SymbolLookup.loaderLookup().lookup("nonExistent").isEmpty());
     }
 
     @Test
     public void testVariableSymbolLookup() {
-        MemorySegment segment = MemorySegment.ofAddress(this.getClass().getClassLoader().findNative("c").get().address(), ValueLayout.JAVA_INT.byteSize(), MemorySession.global());
+        MemorySegment segment = MemorySegment.ofAddress(
+                SymbolLookup.loaderLookup().lookup("c").get().address(),
+                ValueLayout.JAVA_INT.byteSize(),
+                MemorySession.global());
         assertEquals(segment.get(JAVA_BYTE, 0), 42);
     }
 }

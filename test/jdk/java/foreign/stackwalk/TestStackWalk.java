@@ -104,7 +104,7 @@ public class TestStackWalk extends NativeTestHelper {
         try {
             System.loadLibrary("StackWalk");
             MH_foo = linker.downcallHandle(
-                    findNativeOrThrow(TestStackWalk.class, "foo"),
+                    findNativeOrThrow("foo"),
                     FunctionDescriptor.ofVoid(C_POINTER));
             MH_m = lookup().findStatic(TestStackWalk.class, "m", MethodType.methodType(void.class));
         } catch (ReflectiveOperationException e) {

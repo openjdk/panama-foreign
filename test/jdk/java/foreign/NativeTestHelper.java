@@ -27,6 +27,7 @@ import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 
 import java.lang.invoke.MethodHandle;
@@ -85,10 +86,10 @@ public class NativeTestHelper {
     private static CLinker LINKER = CLinker.systemCLinker();
 
     private static final MethodHandle FREE = LINKER.downcallHandle(
-            LINKER.lookup("free").get(), FunctionDescriptor.ofVoid(ValueLayout.ADDRESS));
+            SymbolLookup.systemLookup().lookup("free").get(), FunctionDescriptor.ofVoid(ValueLayout.ADDRESS));
 
     private static final MethodHandle MALLOC = LINKER.downcallHandle(
-            LINKER.lookup("malloc").get(), FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.JAVA_LONG));
+            SymbolLookup.systemLookup().lookup("malloc").get(), FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.JAVA_LONG));
 
     public static void freeMemory(Addressable address) {
         try {
@@ -106,7 +107,7 @@ public class NativeTestHelper {
         }
     }
 
-    public static Addressable findNativeOrThrow(Class<?> clazz, String name) {
-        return clazz.getClassLoader().findNative(name).orElseThrow();
+    public static Addressable findNativeOrThrow(String name) {
+        return SymbolLookup.loaderLookup().lookup(name).orElseThrow();
     }
 }

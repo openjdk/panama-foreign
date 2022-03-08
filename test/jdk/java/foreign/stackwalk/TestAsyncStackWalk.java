@@ -104,7 +104,7 @@ public class TestAsyncStackWalk extends NativeTestHelper {
         try {
             System.loadLibrary("AsyncStackWalk");
             MH_asyncStackWalk = linker.downcallHandle(
-                    findNativeOrThrow(TestAsyncStackWalk.class, "asyncStackWalk"),
+                    findNativeOrThrow("asyncStackWalk"),
                     FunctionDescriptor.ofVoid(C_POINTER));
             MH_m = lookup().findStatic(TestAsyncStackWalk.class, "m", MethodType.methodType(void.class));
         } catch (ReflectiveOperationException e) {
