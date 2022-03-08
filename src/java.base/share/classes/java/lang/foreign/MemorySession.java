@@ -33,7 +33,6 @@ import java.util.Objects;
 
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.javac.PreviewFeature;
-import jdk.internal.ref.CleanerFactory;
 
 /**
  * A memory session manages the lifecycle of one or more resources. Resources (e.g. {@link MemorySegment}) associated
