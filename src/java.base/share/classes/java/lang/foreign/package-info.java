@@ -226,7 +226,10 @@
  * memory when attempting to dereference said segment. For these reasons, it is crucial for code that calls a restricted method
  * to never pass arguments that might cause incorrect binding of foreign data and/or functions to a Java API.
  * <p>
- * Access to restricted methods is <em>disabled</em> by default; to enable restricted methods, the command line option
- * {@code --enable-native-access} must mention the name of the caller's module.
+ * Access to restricted methods can be controlled using the command line option {@code --enable-native-access=M1,M2, ... Mn},
+ * where {@code M1}, {@code M2}, {@code ... Mn} are module names (for the unnamed module, the special value {@code ALL-UNNAMED}
+ * can be used). If this option is specified, access to restricted methods is only granted to the modules listed by that
+ * option. If no command line option is specified, access to restricted method is enabled for all modules, but
+ * access to restricted methods will result in runtime warnings.
  */
 package java.lang.foreign;

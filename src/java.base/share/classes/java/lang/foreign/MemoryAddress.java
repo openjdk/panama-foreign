@@ -111,7 +111,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * up to (but not including) the first {@code '\0'} terminator character (assuming one is found).
      * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -127,7 +127,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @param offset offset in bytes (relative to this address). The final address of this read operation can be expressed as {@code toRowLongValue() + offset}.
      * @param str the Java string to be written at this address.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -179,7 +179,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -199,7 +199,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -219,7 +219,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -239,7 +239,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -259,7 +259,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -279,7 +279,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -299,7 +299,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -319,7 +319,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -339,7 +339,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -359,7 +359,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -379,7 +379,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -399,7 +399,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -419,7 +419,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -439,7 +439,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -459,7 +459,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -479,7 +479,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -499,7 +499,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -519,7 +519,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * @throws IllegalArgumentException if the dereference operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -540,7 +540,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -561,7 +561,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -582,7 +582,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -603,7 +603,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -624,7 +624,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -645,7 +645,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -666,7 +666,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -687,7 +687,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -708,7 +708,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -729,7 +729,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -750,7 +750,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -771,7 +771,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -792,7 +792,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -813,7 +813,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
