@@ -229,7 +229,7 @@
  * Access to restricted methods can be controlled using the command line option {@code --enable-native-access=M1,M2, ... Mn},
  * where {@code M1}, {@code M2}, {@code ... Mn} are module names (for the unnamed module, the special value {@code ALL-UNNAMED}
  * can be used). If this option is specified, access to restricted methods is only granted to the modules listed by that
- * option. If no command line option is specified, access to restricted method is enabled for all modules, but
+ * option. If this option is not specified, access to restricted method is enabled for all modules, but
  * access to restricted methods will result in runtime warnings.
  */
 package java.lang.foreign;
