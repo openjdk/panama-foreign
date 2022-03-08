@@ -110,7 +110,7 @@
  * {@snippet lang=java :
  * var linker = CLinker.systemCLinker();
  * MethodHandle strlen = linker.downcallHandle(
- *     linker.lookup("strlen").get(),
+ *     SymbolLookup.systemLookup().lookup("strlen").get(),
  *     FunctionDescriptor.of(ValueLayout.JAVA_LONG, ValueLayout.ADDRESS)
  * );
  *
