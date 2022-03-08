@@ -42,7 +42,7 @@ import java.util.Optional;
 
 /**
  * A symbol lookup can be used to look up a symbol in one or more loaded libraries. A symbol lookup allows for searching
- * symbols by name, see {@link SymbolLookup#lookup(String)}. A returned symbol is modelled as a zero-length {@linkplain MemorySegment memory segment};
+ * symbols by name, see {@link SymbolLookup#lookup(String)}. A library symbol is modelled as a zero-length {@linkplain MemorySegment memory segment};
  * it can be used directly to create a {@linkplain CLinker#downcallHandle(Addressable, FunctionDescriptor) downcall method handle},
  * or it can be {@linkplain MemorySegment#ofAddress(MemoryAddress, long, MemorySession) resized} accordingly, if it models
  * a <em>global variable</em> that needs to be dereferenced.
