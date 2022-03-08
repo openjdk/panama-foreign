@@ -126,6 +126,7 @@ public class LibraryLookupTest {
                 session.close();
                 break;
             } catch (IllegalStateException ex) {
+                // wait for addressable parameter to be released
                 Thread.onSpinWait();
             }
         }
