@@ -131,11 +131,12 @@ public class Reflection {
                     String cls = owner.getName();
                     String mtd = cls + "::" + methodName;
                     String mod = module.isNamed() ? "module " + module.getName() : "the unnamed module";
+                    String modflag = module.isNamed() ? module.getName() : "ALL-UNNAMED";
                     System.err.printf("""
                             WARNING: A restricted method in %s has been called
                             WARNING: %s has been called by %s
-                            WARNING: Use --enable-native-access to allow this module to use restricted methods
-                            %n""", cls, mtd, mod);
+                            WARNING: Use --enable-native-access=%s to avoid a warning for this module
+                            %n""", cls, mtd, mod, modflag);
                     if (module.isNamed()) {
                         SharedSecrets.getJavaLangAccess().addEnableNativeAccess(module);
                     } else {

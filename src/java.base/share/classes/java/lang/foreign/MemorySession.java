@@ -33,7 +33,6 @@ import java.util.Objects;
 
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.javac.PreviewFeature;
-import jdk.internal.ref.CleanerFactory;
 
 /**
  * A memory session manages the lifecycle of one or more resources. Resources (e.g. {@link MemorySegment}) associated
@@ -120,7 +119,7 @@ import jdk.internal.ref.CleanerFactory;
  *
  * {@snippet lang=java :
  * MemorySession session = MemorySession.openConfined();
- * MemoryLifetime nonCloseableSession = session.asNonCloseable();
+ * MemorySession nonCloseableSession = session.asNonCloseable();
  * MemorySegment segment = MemorySegment.allocateNative(100, nonCloseableSession);
  * segment.session().close(); // throws
  * session.close(); //ok
@@ -189,9 +188,8 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     void close();
 
     /**
-     * Returns a non-closeable view of this memory session. The returned session is the same session as this
-     * session, if this session is {@linkplain #isCloseable() non-closeable}, or a new non-closeable view of
-     * this memory session.
+     * Returns a non-closeable view of this memory session. If this session is {@linkplain #isCloseable() non-closeable},
+     * this session is returned. Otherwise, this method returns a new non-closeable view of this memory session.
      * @apiNote a non-closeable view of a memory session {@code S} keeps {@code S} reachable. As such, {@code S}
      * cannot be closed implicitly (e.g. by a {@link Cleaner}) as long as one or more non-closeable views of {@code S}
      * are reachable.

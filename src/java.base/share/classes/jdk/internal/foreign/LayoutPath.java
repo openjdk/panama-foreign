@@ -46,7 +46,7 @@ import java.util.function.UnaryOperator;
  * a path can be constructed by selecting layout elements using the selector methods provided by this class
  * (see {@link #sequenceElement()}, {@link #sequenceElement(long)}, {@link #sequenceElement(long, long)}, {@link #groupElement(String)}).
  * Once a path has been fully constructed, clients can ask for the offset associated with the layout element selected
- * by the path (see {@link #offset}), or obtain a memory access var handle to access the selected layout element
+ * by the path (see {@link #offset}), or obtain var handle to access the selected layout element
  * given an address pointing to a segment associated with the root layout (see {@link #dereferenceHandle()}).
  */
 public class LayoutPath {
@@ -159,7 +159,7 @@ public class LayoutPath {
         perms.addFirst(0);
         expectedCoordinates.add(MemorySegment.class);
 
-        VarHandle handle = Utils.makeMemoryAccessVarHandle(valueLayout);
+        VarHandle handle = Utils.makeSegmentViewVarHandle(valueLayout);
 
         for (int i = 0 ; i < strides.length ; i++) {
             expectedCoordinates.add(long.class);

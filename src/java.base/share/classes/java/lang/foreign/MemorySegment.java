@@ -112,7 +112,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * caution: for instance, an incorrect segment size could result in a VM crash when attempting to dereference
  * the memory segment.
  *
- * <h2>Dereference</h2>
+ * <h2><a id = "segment-deref">Dereferencing memory segments</a></h2>
  *
  * A memory segment can be read or written using various methods provided in this class (e.g. {@link #get(ValueLayout.OfInt, long)}).
  * Each dereference method takes a {@linkplain ValueLayout value layout}, which specifies the size,
@@ -130,13 +130,32 @@ import jdk.internal.vm.annotation.ForceInline;
  * int value = segment.get(ValueLayout.JAVA_INT.withOrder(BIG_ENDIAN), 0);
  * }
  *
- * For more complex dereference operations (e.g. structured memory access), clients can obtain a <em>memory access var handle</em>,
- * that is, a var handle that accepts a segment and, optionally, one or more additional {@code long} coordinates. Memory
- * access var handles can be obtained from {@linkplain MemoryLayout#varHandle(MemoryLayout.PathElement...) memory layouts}
- * by providing a so called <a href="MemoryLayout.html#layout-paths"><em>layout path</em></a>.
- * Alternatively, clients can obtain raw memory access var handles from a given
- * {@linkplain MethodHandles#memoryAccessVarHandle(ValueLayout) value layout}, and then adapt it using the var handle combinator
- * functions defined in the {@link java.lang.invoke.MethodHandles} class.
+ * For more complex dereference operations (e.g. structured memory access), clients can obtain a
+ * {@linkplain MethodHandles#memorySegmentViewVarHandle(ValueLayout) memory segment view var handle},
+ * that is, a var handle that accepts a segment and a {@code long} offset. More complex access var handles
+ * can be obtained by adapting a segment var handle view using the var handle combinator functions defined in the
+ * {@link java.lang.invoke.MethodHandles} class:
+ *
+ * {@snippet lang=java :
+ * MemorySegment segment = ...
+ * VarHandle intHandle = MethodHandles.memorySegmentViewVarHandle(ValueLayout.JAVA_INT);
+ * MethodHandle multiplyExact = MethodHandles.lookup()
+ *                                           .findStatic(Math.class, "multiplyExact",
+ *                                                                   MethodType.methodType(long.class, long.class, long.class));
+ * intHandle = MethodHandles.filterCoordinates(intHandle, 1,
+ *                                             MethodHandles.insertArguments(multiplyExact, 0, 4L));
+ * intHandle.get(segment, 3L); // get int element at offset 3 * 4 = 12
+ * }
+ *
+ * Alternatively, complex access var handles can can be obtained
+ * from {@linkplain MemoryLayout#varHandle(MemoryLayout.PathElement...) memory layouts}
+ * by providing a so called <a href="MemoryLayout.html#layout-paths"><em>layout path</em></a>:
+ *
+ * {@snippet lang=java :
+ * MemorySegment segment = ...
+ * VarHandle intHandle = ValueLayout.JAVA_INT.arrayElementVarHandle();
+ * intHandle.get(segment, 3L); // get int element at offset 3 * 4 = 12
+ * }
  *
  * <h2 id="segment-alignment">Alignment</h2>
  *
@@ -842,7 +861,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
      * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
