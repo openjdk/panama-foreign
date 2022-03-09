@@ -95,10 +95,10 @@
  * operation either succeeds - and accesses a valid memory location - or fails.
  *
  * <h2>Foreign function access</h2>
- * The key abstractions introduced to support foreign function access are {@link java.lang.foreign.FunctionDescriptor} and
- * {@link java.lang.foreign.CLinker}.
- * The first is used to model the signature of foreign functions, while the second provides linking capabilities
- * which allows modelling foreign functions as {@link java.lang.invoke.MethodHandle} instances,
+ * The key abstractions introduced to support foreign function access are {@link java.lang.foreign.SymbolLookup},
+ * {@link java.lang.foreign.FunctionDescriptor} and {@link java.lang.foreign.CLinker}. The first is used to look up symbols
+ * inside native libraries; the second is used to model the signature of foreign functions, while the third provides
+ * linking capabilities which allows modelling foreign functions as {@link java.lang.invoke.MethodHandle} instances,
  * so that clients can perform foreign function calls directly in Java, without the need for intermediate layers of native
  * code (as is the case with the <a href="{@docRoot}/../specs/jni/index.html">Java Native Interface (JNI)</a>).
  * <p>

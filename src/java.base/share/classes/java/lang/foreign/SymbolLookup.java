@@ -55,8 +55,8 @@ import java.util.Optional;
  * which conveniently implements this interface. The set of symbols available in the system lookup is unspecified,
  * as it depends on the platform and on the operating system.
  * <p>
- * Finally, clients can obtain a {@linkplain #libraryLookup(Path, MemorySession) library lookup} which can be used
- * to search symbols in a given library; a library lookup is associated with a {@linkplain  MemorySession memory session},
+ * Finally, clients can load a library and obtain a {@linkplain #libraryLookup(Path, MemorySession) library lookup} which can be used
+ * to search symbols in that library. A library lookup is associated with a {@linkplain  MemorySession memory session},
  * and the library it refers to is unloaded when the session is {@linkplain MemorySession#close() closed}.
  * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
  * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
@@ -74,12 +74,13 @@ public interface SymbolLookup {
     Optional<MemorySegment> lookup(String name);
 
     /**
-     * Obtains a symbol lookup suitable to find symbols in native libraries associated with the caller's classloader
-     * (that is, libraries loaded using {@link System#loadLibrary} or {@link System#load}). The returned lookup
-     * returns native symbols backed by a non-closeable, shared scope which keeps the caller's classloader
+     * Obtains a symbol lookup suitable to find symbols in native libraries associated with the caller's classloader.
+     * The returned lookup returns native symbols backed by a non-closeable, shared scope which keeps the caller's classloader
      * <a href="../../../java/lang/ref/package.html#reachability">reachable</a>.
      *
      * @return a symbol lookup suitable to find symbols in libraries loaded by the caller's classloader.
+     * @see System#load(String)
+     * @see System#loadLibrary(String)
      */
     @CallerSensitive
     static SymbolLookup loaderLookup() {
@@ -106,9 +107,8 @@ public interface SymbolLookup {
     }
 
     /**
-     * Obtains a symbol lookup suitable to find symbols in a library with given name. As a side-effect, calling
-     * this method causes the specified library to be loaded. The library will be unloaded when the provided
-     * memory session is {@linkplain MemorySession#close() closed}.
+     * Loads a library with given name and obtains a symbol lookup suitable to find symbols in that library.
+     * The library will be unloaded when the provided memory session is {@linkplain MemorySession#close() closed}.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -132,9 +132,8 @@ public interface SymbolLookup {
     }
 
     /**
-     * Obtains a symbol lookup suitable to find symbols in a library with given path. As a side-effect, calling
-     * this method causes the specified library to be loaded. The library will be unloaded when the provided
-     * memory session is {@linkplain MemorySession#close() closed}.
+     * Loads a library with given path and obtains a symbol lookup suitable to find symbols in that library.
+     * The library will be unloaded when the provided memory session is {@linkplain MemorySession#close() closed}.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -142,7 +141,7 @@ public interface SymbolLookup {
      * restricted methods, and use safe and supported functionalities, where possible.
      * @param path the path of the library in which symbols should be looked up.
      * @param session the memory session which controls the library lifecycle.
-     * @return a symbol lookup suitable to find symbols in a library with given name.
+     * @return a symbol lookup suitable to find symbols in a library with given path.
      * @throws IllegalArgumentException if {@code path} does not point to a valid library.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
      * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or

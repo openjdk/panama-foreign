@@ -31,6 +31,7 @@ import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
+import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 
 import java.lang.invoke.MethodHandle;
@@ -85,6 +86,7 @@ public class MethodHandleInvoker {
         addDefaultMapping(ValueLayout.OfLong.class, ValueLayout.JAVA_LONG);
         addDefaultMapping(ValueLayout.OfDouble.class, ValueLayout.JAVA_DOUBLE);
         addDefaultMapping(ValueLayout.OfAddress.class, ValueLayout.ADDRESS);
+        addDefaultMapping(SymbolLookup.class, SymbolLookup.loaderLookup());
         addDefaultMapping(byte.class, (byte)0);
         addDefaultMapping(boolean.class, true);
         addDefaultMapping(char.class, (char)0);
