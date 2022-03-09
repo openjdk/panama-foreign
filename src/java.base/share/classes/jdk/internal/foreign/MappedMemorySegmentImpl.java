@@ -25,20 +25,10 @@
 
 package jdk.internal.foreign;
 
-import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.Objects;
 import jdk.internal.access.foreign.UnmapperProxy;
-import jdk.internal.misc.ExtendedMapMode;
 import jdk.internal.misc.ScopedMemoryAccess;
-import sun.nio.ch.FileChannelImpl;
 
 /**
  * Implementation for a mapped memory segments. A mapped memory segment is a native memory segment, which
@@ -52,7 +42,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-    MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, int mask, MemorySessionImpl session) {
+    public MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, int mask, MemorySessionImpl session) {
         super(min, length, mask, session);
         this.unmapper = unmapper;
     }
@@ -69,7 +59,6 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     }
 
     // mapped segment methods
-
 
     @Override
     public MappedMemorySegmentImpl asSlice(long offset, long newSize) {
@@ -103,55 +92,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
         SCOPED_MEMORY_ACCESS.force(session, unmapper.fileDescriptor(), min, unmapper.isSync(), 0, length);
     }
 
-    // factories
-
-    public static MemorySegment makeMappedSegment(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode, MemorySessionImpl session) throws IOException {
-        Objects.requireNonNull(path);
-        Objects.requireNonNull(mapMode);
-        session.checkValidStateSlow();
-        if (bytesSize < 0) throw new IllegalArgumentException("Requested bytes size must be >= 0.");
-        if (bytesOffset < 0) throw new IllegalArgumentException("Requested bytes offset must be >= 0.");
-        FileSystem fs = path.getFileSystem();
-        if (fs != FileSystems.getDefault() ||
-                fs.getClass().getModule() != Object.class.getModule()) {
-            throw new IllegalArgumentException("Unsupported file system");
-        }
-        try (FileChannel channelImpl = FileChannel.open(path, openOptions(mapMode))) {
-            UnmapperProxy unmapperProxy = ((FileChannelImpl)channelImpl).mapInternal(mapMode, bytesOffset, bytesSize);
-            int modes = DEFAULT_MODES;
-            if (mapMode == FileChannel.MapMode.READ_ONLY) {
-                modes |= READ_ONLY;
-            }
-            if (unmapperProxy != null) {
-                AbstractMemorySegmentImpl segment = new MappedMemorySegmentImpl(unmapperProxy.address(), unmapperProxy, bytesSize,
-                        modes, session);
-                session.addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
-                    @Override
-                    public void cleanup() {
-                        unmapperProxy.unmap();
-                    }
-                });
-                return segment;
-            } else {
-                return new EmptyMappedMemorySegmentImpl(modes, session);
-            }
-        }
-    }
-
-    private static OpenOption[] openOptions(FileChannel.MapMode mapMode) {
-        if (mapMode == FileChannel.MapMode.READ_ONLY ||
-            mapMode == ExtendedMapMode.READ_ONLY_SYNC) {
-            return new OpenOption[] { StandardOpenOption.READ };
-        } else if (mapMode == FileChannel.MapMode.READ_WRITE ||
-                   mapMode == FileChannel.MapMode.PRIVATE ||
-                   mapMode == ExtendedMapMode.READ_WRITE_SYNC) {
-            return new OpenOption[] { StandardOpenOption.READ, StandardOpenOption.WRITE };
-        } else {
-            throw new UnsupportedOperationException("Unsupported map mode: " + mapMode);
-        }
-    }
-
-    static class EmptyMappedMemorySegmentImpl extends MappedMemorySegmentImpl {
+    public static class EmptyMappedMemorySegmentImpl extends MappedMemorySegmentImpl {
 
         public EmptyMappedMemorySegmentImpl(int modes, MemorySessionImpl session) {
             super(0, null, 0, modes, session);
@@ -176,5 +117,5 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
         public void force() {
             // do nothing
         }
-    };
+    }
 }

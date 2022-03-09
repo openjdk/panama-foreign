@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -114,11 +115,12 @@ public class TestScopedOperations {
         ScopedOperation.ofScope(session -> MemorySegment.allocateNative(100, session), "MemorySegment::allocateNative");
         ScopedOperation.ofScope(session -> {
             try {
-                MemorySegment.mapFile(tempPath, 0, 10, FileChannel.MapMode.READ_WRITE, session);
+                FileChannel fileChannel = FileChannel.open(tempPath, StandardOpenOption.READ, StandardOpenOption.WRITE);
+                fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, 10L, session);
             } catch (IOException ex) {
                 fail();
             }
-        }, "MemorySegment::mapFromFile");
+        }, "FileChannel::map");
         ScopedOperation.ofScope(session -> VaList.make(b -> b.addVarg(JAVA_INT, 42), session), "VaList::make");
         ScopedOperation.ofScope(session -> VaList.ofAddress(MemoryAddress.ofLong(42), session), "VaList::make");
         ScopedOperation.ofScope(SegmentAllocator::newNativeArena, "SegmentAllocator::arenaAllocator");
@@ -222,7 +224,8 @@ public class TestScopedOperations {
             NATIVE(session -> MemorySegment.allocateNative(10, session)),
             MAPPED(session -> {
                 try {
-                    return MemorySegment.mapFile(Path.of("foo.txt"), 0, 10, FileChannel.MapMode.READ_WRITE, session);
+                    FileChannel fileChannel = FileChannel.open(Path.of("foo.txt"), StandardOpenOption.READ, StandardOpenOption.WRITE);
+                    return fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, 10L, session);
                 } catch (IOException ex) {
                     throw new AssertionError(ex);
                 }

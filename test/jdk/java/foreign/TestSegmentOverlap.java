@@ -64,7 +64,8 @@ public class TestSegmentOverlap {
                 () -> MemorySegment.allocateNative(16, MemorySession.openConfined()),
                 () -> {
                     try {
-                        return MemorySegment.mapFile(tempPath, 0L, 16, FileChannel.MapMode.READ_WRITE, MemorySession.openConfined());
+                        FileChannel fileChannel = FileChannel.open(tempPath, StandardOpenOption.READ, StandardOpenOption.WRITE);
+                        return fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, 16L, MemorySession.openConfined());
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }

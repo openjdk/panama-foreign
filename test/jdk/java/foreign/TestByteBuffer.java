@@ -228,12 +228,14 @@ public class TestByteBuffer {
     @Test
     public void testDefaultAccessModesMappedSegment() throws Throwable {
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = MemorySegment.mapFile(tempPath, 0L, 8, FileChannel.MapMode.READ_WRITE, session);
+            FileChannel fileChannel = FileChannel.open(tempPath, StandardOpenOption.READ, StandardOpenOption.WRITE);
+            MemorySegment segment = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, 8L, session);
             assertFalse(segment.isReadOnly());
         }
 
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = MemorySegment.mapFile(tempPath, 0L, 8, FileChannel.MapMode.READ_ONLY, session);
+            FileChannel fileChannel = FileChannel.open(tempPath, StandardOpenOption.READ);
+            MemorySegment segment = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0L, 8L, session);
             assertTrue(segment.isReadOnly());
         }
     }
@@ -246,14 +248,16 @@ public class TestByteBuffer {
 
         try (MemorySession session = MemorySession.openConfined()) {
             //write to channel
-            MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_WRITE, session);
+            FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE);
+            MemorySegment segment = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, tuples.byteSize(), session);
             initTuples(segment, tuples.elementCount());
             segment.force();
         }
 
         try (MemorySession session = MemorySession.openConfined()) {
             //read from channel
-            MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_ONLY, session);
+            FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.READ);
+            MemorySegment segment = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0L, tuples.byteSize(), session);
             checkTuples(segment, segment.asByteBuffer(), tuples.elementCount());
         }
     }
@@ -265,7 +269,8 @@ public class TestByteBuffer {
         f.deleteOnExit();
 
         var session = MemorySession.openConfined();
-        MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, 8, FileChannel.MapMode.READ_WRITE, session);
+        FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE);
+        MemorySegment segment = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, 8L, session);
         assertTrue(segment.isMapped());
         session.close();
         mappedBufferOp.apply(segment);
@@ -283,7 +288,8 @@ public class TestByteBuffer {
         for (int i = 0 ; i < tuples.byteSize() ; i += tupleLayout.byteSize()) {
             try (MemorySession session = MemorySession.openConfined()) {
                 //write to channel
-                MemorySegment segment = MemorySegment.mapFile(f.toPath(), i, tuples.byteSize(), FileChannel.MapMode.READ_WRITE, session);
+                FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE);
+                MemorySegment segment = fileChannel.map(FileChannel.MapMode.READ_WRITE, i, tuples.byteSize(), session);
                 initTuples(segment, 1);
                 segment.force();
             }
@@ -293,7 +299,8 @@ public class TestByteBuffer {
         for (int i = 0 ; i < tuples.byteSize() ; i += tupleLayout.byteSize()) {
             try (MemorySession session = MemorySession.openConfined()) {
                 //read from channel
-                MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_ONLY, session);
+                FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.READ);
+                MemorySegment segment = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0L, tuples.byteSize(), session);
                 checkTuples(segment, segment.asByteBuffer(), 1);
             }
         }
@@ -312,7 +319,8 @@ public class TestByteBuffer {
         f.deleteOnExit();
 
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0, LARGE_SIZE, FileChannel.MapMode.READ_WRITE, session);
+            FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE);
+            MemorySegment segment = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, LARGE_SIZE, session);
             segment.isLoaded();
             segment.load();
             segment.isLoaded();
@@ -488,7 +496,8 @@ public class TestByteBuffer {
         File f = new File("testNeg1.out");
         f.createNewFile();
         f.deleteOnExit();
-        MemorySegment.mapFile(f.toPath(), 0L, -1, FileChannel.MapMode.READ_WRITE, MemorySession.openImplicit());
+        FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE);
+        fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, -1L, MemorySession.openImplicit());
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -496,7 +505,8 @@ public class TestByteBuffer {
         File f = new File("testNeg2.out");
         f.createNewFile();
         f.deleteOnExit();
-        MemorySegment.mapFile(f.toPath(), -1, 1, FileChannel.MapMode.READ_WRITE, MemorySession.openImplicit());
+        FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE);
+        fileChannel.map(FileChannel.MapMode.READ_WRITE, -1L, 1L, MemorySession.openImplicit());
     }
 
     @Test
@@ -508,7 +518,8 @@ public class TestByteBuffer {
         int SIZE = Byte.MAX_VALUE;
 
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0, SIZE, FileChannel.MapMode.READ_WRITE, session);
+            FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE);
+            MemorySegment segment = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, SIZE, session);
             for (byte offset = 0; offset < SIZE; offset++) {
                 segment.set(JAVA_BYTE, offset, offset);
             }
@@ -517,7 +528,8 @@ public class TestByteBuffer {
 
         for (int offset = 0 ; offset < SIZE ; offset++) {
             try (MemorySession session = MemorySession.openConfined()) {
-                MemorySegment segment = MemorySegment.mapFile(f.toPath(), offset, SIZE - offset, FileChannel.MapMode.READ_ONLY, session);
+                FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.READ);
+                MemorySegment segment = fileChannel.map(FileChannel.MapMode.READ_ONLY, offset, SIZE - offset, session);
                 assertEquals(segment.get(JAVA_BYTE, 0), offset);
             }
         }
@@ -530,7 +542,8 @@ public class TestByteBuffer {
         f.deleteOnExit();
         //RW
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, 0L, FileChannel.MapMode.READ_WRITE, session);
+            FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE);
+            MemorySegment segment = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, 0L, session);
             assertEquals(segment.byteSize(), 0);
             assertEquals(segment.isMapped(), true);
             assertFalse(segment.isReadOnly());
@@ -541,7 +554,8 @@ public class TestByteBuffer {
         }
         //RO
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, 0L, FileChannel.MapMode.READ_ONLY, session);
+            FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.READ);
+            MemorySegment segment = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0L, 0L, session);
             assertEquals(segment.byteSize(), 0);
             assertEquals(segment.isMapped(), true);
             assertTrue(segment.isReadOnly());
@@ -552,10 +566,11 @@ public class TestByteBuffer {
         }
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testMapCustomPath() throws IOException {
         Path path = Path.of(URI.create("jrt:/"));
-        MemorySegment.mapFile(path, 0L, 0L, FileChannel.MapMode.READ_WRITE, MemorySession.openImplicit());
+        FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE);
+        fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, 0L, MemorySession.openImplicit());
     }
 
     @Test(dataProvider="resizeOps")

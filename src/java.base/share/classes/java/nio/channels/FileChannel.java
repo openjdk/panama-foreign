@@ -26,6 +26,8 @@
 package java.nio.channels;
 
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.spi.AbstractInterruptibleChannel;
@@ -38,6 +40,7 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Collections;
+import jdk.internal.javac.PreviewFeature;
 
 /**
  * A channel for reading, writing, mapping, and manipulating a file.
@@ -967,6 +970,87 @@ public abstract class FileChannel
     public abstract MappedByteBuffer map(MapMode mode, long position, long size)
         throws IOException;
 
+    /**
+     * Maps a region of this channel's file into a new mapped memory segment,
+     * with a given offset, size and memory session.
+     *
+     * <p> If the specified mapping mode is
+     * {@linkplain FileChannel.MapMode#READ_ONLY READ_ONLY}, the resulting
+     * segment will be read-only (see {@link MemorySegment#isReadOnly()}).
+     *
+     * <p> The content of a mapped memory segment can change at any time, for
+     * example if the content of the corresponding region of the mapped file is
+     * changed by this (or another) program.  Whether such changes occur, and
+     * when they occur, is operating-system dependent and therefore unspecified.
+     *
+     * <p> All or part of a mapped memory segment may become inaccessible at any
+     * time, for example if the backing mapped file is truncated. An attempt to
+     * access an inaccessible region of a mapped memory segment will not change
+     * the segment's content and will cause an unspecified exception to be
+     * thrown either at the time of the access or at some later time. It is
+     * therefore strongly recommended that appropriate precautions be taken to
+     * avoid the manipulation of a mapped file by this (or another) program,
+     * except to read or write the file's content.
+     *
+     * @implNote When obtaining a mapped segment from a newly created file
+     *           channel, the initialization state of the contents of the block
+     *           of mapped memory associated with the returned mapped memory
+     *           segment is unspecified and should not be relied upon.
+     *
+     * @param mode
+     *        The file mapping mode, see
+     *        {@link FileChannel#map(FileChannel.MapMode, long, long)};
+     *        the mapping mode might affect the behavior of the returned memory
+     *        mapped segment (see {@link MemorySegment#force()}).
+     *
+     * @param offset
+     *        The offset (expressed in bytes) within the file at which the
+     *        mapped segment is to start.
+     *
+     * @param size
+     *        The size (in bytes) of the mapped memory backing the memory
+     *        segment.
+
+     * @param session
+     *        The segment memory session.
+     *
+     * @return A new mapped memory segment.
+     *
+     * @throws IllegalArgumentException
+     *         If {@code bytesOffset < 0}, {@code bytesSize < 0},
+     *         or if {@code path} is not associated with the default file system.
+     *
+     * @throws IllegalStateException
+     *         If {@code session} is not
+     *         {@linkplain MemorySession#isAlive() alive}, or if access occurs
+     *         from a thread other than the thread
+     *         {@linkplain MemorySession#ownerThread() owning} {@code session}.
+     *
+     * @throws UnsupportedOperationException
+     *         If an unsupported map mode is specified.
+     *
+     * @throws IOException
+     *         If the specified path does not point to an existing file, or if
+     *         some other I/O error occurs.
+     *
+     * @throws  SecurityException
+     *          If a security manager is installed, and it denies an unspecified
+     *          permission required by the implementation. In the case of the
+     *          default provider, the {@link SecurityManager#checkRead(String)}
+     *          method is invoked to check read access if the file is opened for
+     *          reading. The {@link SecurityManager#checkWrite(String)} method
+     *          is invoked to check write access if the file is opened for
+     *          writing.
+     *
+     * @since 19
+     */
+    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
+    public MemorySegment map(MapMode mode, long offset, long size,
+                                      MemorySession session)
+            throws IOException, UnsupportedOperationException
+    {
+        throw new UnsupportedOperationException();
+    }
 
     // -- Locks --
 
