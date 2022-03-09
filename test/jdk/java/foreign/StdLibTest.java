@@ -151,7 +151,7 @@ public class StdLibTest extends NativeTestHelper {
     }
 
     static class StdLibHelper {
-        
+
         final static SymbolLookup stdlib = SymbolLookup.systemLookup();
 
         final static MethodHandle strcat = abi.downcallHandle(stdlib.lookup("strcat").get(),
