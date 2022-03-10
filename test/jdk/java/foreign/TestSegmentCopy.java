@@ -129,7 +129,7 @@ public class TestSegmentCopy {
         }
 
         VarHandle handle() {
-            return MethodHandles.memoryAccessVarHandle(layout);
+            return MethodHandles.memorySegmentViewVarHandle(layout);
         }
 
         void set(SegmentSlice slice, int index, int val) {

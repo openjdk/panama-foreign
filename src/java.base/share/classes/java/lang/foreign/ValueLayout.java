@@ -203,7 +203,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
     VarHandle accessHandle() {
         if (handle == null) {
             // this store to stable field is safe, because return value of 'makeMemoryAccessVarHandle' has stable identity
-            handle = Utils.makeMemoryAccessVarHandle(this);
+            handle = Utils.makeSegmentViewVarHandle(this);
         }
         return handle;
     }

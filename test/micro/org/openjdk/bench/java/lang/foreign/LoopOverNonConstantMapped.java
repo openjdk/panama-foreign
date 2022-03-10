@@ -81,7 +81,6 @@ public class LoopOverNonConstantMapped {
     }
 
     static final VarHandle VH_int = JAVA_INT.arrayElementVarHandle();
-    MemorySession session;
     MemorySegment segment;
     long unsafe_addr;
 
@@ -97,13 +96,13 @@ public class LoopOverNonConstantMapped {
             ((MappedByteBuffer)byteBuffer).force();
         }
         FileChannel fileChannel = FileChannel.open(tempPath, StandardOpenOption.READ, StandardOpenOption.WRITE);
-        segment = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, ALLOC_SIZE, session = MemorySession.openConfined());
+        segment = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, ALLOC_SIZE, MemorySession.openConfined());
         unsafe_addr = segment.address().toRawLongValue();
     }
 
     @TearDown
     public void tearDown() {
-        session.close();
+        segment.session().close();
         unsafe.invokeCleaner(byteBuffer);
     }
 

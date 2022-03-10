@@ -42,9 +42,7 @@ import java.util.List;
 import java.util.Objects;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.MemorySessionImpl;
-import static java.lang.invoke.MethodHandles.collectArguments;
-import static java.lang.invoke.MethodHandles.filterArguments;
-import static java.lang.invoke.MethodHandles.insertArguments;
+
 import static java.lang.invoke.MethodType.methodType;
 
 /**
@@ -595,7 +593,7 @@ public abstract class Binding {
             // copies of e.g. 2 int fields of a struct as a single long, while the struct is only
             // 4-byte-aligned (since it only contains ints)
             ValueLayout layout = MemoryLayout.valueLayout(type(), ByteOrder.nativeOrder()).withBitAlignment(8);
-            return MethodHandles.insertCoordinates(MethodHandles.memoryAccessVarHandle(layout), 1, offset);
+            return MethodHandles.insertCoordinates(MethodHandles.memorySegmentViewVarHandle(layout), 1, offset);
         }
     }
 
@@ -898,7 +896,7 @@ public abstract class Binding {
         }
 
         private static MemorySegment toSegment(MemoryAddress operand, long size, Context context) {
-            return MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size, (MemorySessionImpl) context.session);
+            return MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size, context.session);
         }
 
         @Override

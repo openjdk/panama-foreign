@@ -37,7 +37,6 @@ import org.openjdk.jmh.annotations.Warmup;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.foreign.ValueLayout.JAVA_INT;
@@ -54,21 +53,20 @@ public class VarHandleExact {
     static final VarHandle generic;
 
     static {
-        generic = MethodHandles.memoryAccessVarHandle(JAVA_INT);
+        generic = MethodHandles.memorySegmentViewVarHandle(JAVA_INT);
         exact = generic.withInvokeExactBehavior();
     }
 
-    MemorySession session;
     MemorySegment data;
 
     @Setup
     public void setup() {
-        data = MemorySegment.allocateNative(JAVA_INT, session = MemorySession.openConfined());
+        data = MemorySegment.allocateNative(JAVA_INT, MemorySession.openConfined());
     }
 
     @TearDown
     public void tearDown() {
-        session.close();
+        data.session().close();
     }
 
     @Benchmark

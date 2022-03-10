@@ -268,12 +268,13 @@ public class TestByteBuffer {
         f.createNewFile();
         f.deleteOnExit();
 
-        var session = MemorySession.openConfined();
-        FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE);
-        MemorySegment segment = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, 8L, session);
-        assertTrue(segment.isMapped());
-        session.close();
-        mappedBufferOp.apply(segment);
+        try (MemorySession session = MemorySession.openConfined();
+             FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+            MemorySegment segment = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, 8L, session);
+            assertTrue(segment.isMapped());
+            segment.session().close();
+            mappedBufferOp.apply(segment);
+        }
     }
 
     @Test
@@ -675,12 +676,11 @@ public class TestByteBuffer {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testDeadAccessOnClosedBufferSegment() {
-        var session = MemorySession.openConfined();
-        MemorySegment s1 = MemorySegment.allocateNative(JAVA_INT, session);
+        MemorySegment s1 = MemorySegment.allocateNative(JAVA_INT, MemorySession.openConfined());
         MemorySegment s2 = MemorySegment.ofByteBuffer(s1.asByteBuffer());
 
         // memory freed
-        session.close();
+        s1.session().close();
 
         s2.set(JAVA_INT, 0, 10); // Dead access!
     }
@@ -712,13 +712,12 @@ public class TestByteBuffer {
         File tmp = File.createTempFile("tmp", "txt");
         tmp.deleteOnExit();
         try (FileChannel channel = FileChannel.open(tmp.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE)) {
-            var session = sessionSupplier.get();
-            MemorySegment segment = MemorySegment.allocateNative(10, session);
+            MemorySegment segment = MemorySegment.allocateNative(10, sessionSupplier.get());
             for (int i = 0; i < 10; i++) {
                 segment.set(JAVA_BYTE, i, (byte) i);
             }
             ByteBuffer bb = segment.asByteBuffer();
-            session.close();
+            segment.session().close();
             assertThrows(ISE, () -> channel.read(bb));
             assertThrows(ISE, () -> channel.read(new ByteBuffer[] {bb}));
             assertThrows(ISE, () -> channel.read(new ByteBuffer[] {bb}, 0, 1));

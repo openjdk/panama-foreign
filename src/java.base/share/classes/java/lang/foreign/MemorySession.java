@@ -101,12 +101,32 @@ import jdk.internal.javac.PreviewFeature;
  * the session becomes unreachable; that is, {@linkplain #addCloseAction(Runnable) close actions} associated with a
  * memory session, whether managed or not, are called <em>exactly once</em>.
  *
- * <h2><a id = "global-session">Global session</a></h2>
+ * <h2>Global session</h2>
  *
  * An important memory session is the so called {@linkplain #global() global session}; the global session is
  * a memory session that cannot be closed, either explicitly or implicitly. As a result, the global session will never
  * attempt to release resources associated with it. Examples of resources associated with the global memory session are
  * {@linkplain MemorySegment#ofArray(int[]) heap segments}.
+ *
+ * <h2>Restricting access to memory sessions</h2>
+ *
+ * There are situations in which it might not be desirable for a memory session to be reachable from one or
+ * more resources associated with it. For instance, an API might create a private memory session, and allocate
+ * a memory segment, and then expose one or more slices of this segment to its clients. Since the API's memory session
+ * would be reachable from the slices (using the {@link MemorySegment#session()} accessor), it might be possible for
+ * clients to compromise the API (e.g. by closing the session prematurely). To avoid leaking private memory sessions
+ * to untrusted clients, an API can instead return segments based on a non-closeable view of the session it created, as follows:
+ *
+ * {@snippet lang=java :
+ * MemorySession session = MemorySession.openConfined();
+ * MemorySession nonCloseableSession = session.asNonCloseable();
+ * MemorySegment segment = MemorySegment.allocateNative(100, nonCloseableSession);
+ * segment.session().close(); // throws
+ * session.close(); //ok
+ * }
+ *
+ * In other words, only the owner of the original {@code session} object can close the session. External clients can only
+ * access the non-closeable session, and have no access to the underlying API session.
  *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
@@ -168,10 +188,19 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     void close();
 
     /**
+     * Returns a non-closeable view of this memory session. If this session is {@linkplain #isCloseable() non-closeable},
+     * this session is returned. Otherwise, this method returns a new non-closeable view of this memory session.
+     * @apiNote a non-closeable view of a memory session {@code S} keeps {@code S} reachable. As such, {@code S}
+     * cannot be closed implicitly (e.g. by a {@link Cleaner}) as long as one or more non-closeable views of {@code S}
+     * are reachable.
+     * @return a non-closeable view of this memory session.
+     */
+    MemorySession asNonCloseable();
+
+    /**
      * Compares the specified object with this memory session for equality. Returns {@code true} if and only if the specified
      * object is also a memory session, and it refers to the same memory session as this memory session. This method
-     * is especially useful when operating on non-closeable views of memory sessions, such as the ones returned
-     * by {@link MemorySegment#session()}.
+     * is especially useful when operating on {@linkplain #asNonCloseable() non-closeable} session views.
      *
      * @param that the object to be compared for equality with this memory session.
      * @return {@code true} if the specified object is equal to this memory session.
@@ -240,7 +269,7 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
      * Creates a new non-closeable shared memory session, managed by a private {@link Cleaner} instance.
      * Equivalent to (but likely more efficient than) the following code:
      * {@snippet lang=java :
-     * openShared(Cleaner.create());
+     * openShared(Cleaner.create()).asNonCloseable();
      * }
      * @return a non-closeable shared memory session, managed by a private {@link Cleaner} instance.
      */
@@ -249,8 +278,8 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     }
 
     /**
-     * Returns the <a href="MemorySession.html#global-session"><em>global memory session</em></a>.
-     * @return the <a href="MemorySession.html#global-session"><em>global memory session</em></a>.
+     * Returns the <em>global memory session</em>.
+     * @return the <em>global memory session</em>.
      */
     static MemorySession global() {
         return MemorySessionImpl.GLOBAL;

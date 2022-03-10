@@ -758,7 +758,7 @@ public abstract class Buffer {
     }
 
     @ForceInline
-    final MemorySession session() {
+    final MemorySessionImpl session() {
         if (segment != null) {
             return ((AbstractMemorySegmentImpl)segment).sessionImpl();
         } else {
@@ -767,10 +767,10 @@ public abstract class Buffer {
     }
 
     final void checkSession() {
-        MemorySession session = session();
+        MemorySessionImpl session = session();
         if (session != null) {
             try {
-                ((MemorySessionImpl)session).checkValidState();
+                session.checkValidState();
             } catch (ScopedMemoryAccess.ScopedAccessError e) {
                 throw new IllegalStateException("This segment is already closed");
             }
@@ -834,8 +834,8 @@ public abstract class Buffer {
                     if (async && session.ownerThread() != null) {
                         throw new IllegalStateException("Confined session not supported");
                     }
-                    ((MemorySessionImpl)session).acquire0();
-                    return ((MemorySessionImpl) session)::release0;
+                    session.acquire0();
+                    return session::release0;
                 }
 
                 @Override

@@ -28,7 +28,6 @@ package java.lang.foreign;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64VaList;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64VaList;
@@ -64,7 +63,7 @@ import jdk.internal.reflect.Reflection;
 sealed public interface VaList extends Addressable permits WinVaList, SysVVaList, LinuxAArch64VaList, MacOsAArch64VaList, SharedUtils.EmptyVaList {
 
     /**
-     * {@return a non-closeable view of the memory session associated with this variable argument list}
+     * {@return the memory session associated with this variable argument list}
      */
     MemorySession session();
 
@@ -179,7 +178,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
      * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
@@ -187,7 +186,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), VaList.class, "ofAddress");
         Objects.requireNonNull(address);
         Objects.requireNonNull(session);
-        return SharedUtils.newVaListOfAddress(address, Scoped.toSessionImpl(session));
+        return SharedUtils.newVaListOfAddress(address, session);
     }
 
     /**
@@ -210,7 +209,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
     static VaList make(Consumer<Builder> actions, MemorySession session) {
         Objects.requireNonNull(actions);
         Objects.requireNonNull(session);
-        return SharedUtils.newVaList(actions, Scoped.toSessionImpl(session));
+        return SharedUtils.newVaList(actions, session);
     }
 
     /**

@@ -37,6 +37,7 @@ import java.util.Objects;
 import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.ref.CleanerFactory;
 import jdk.internal.vm.annotation.ForceInline;
+import sun.nio.ch.DirectBuffer;
 
 /**
  * This class manages the temporal bounds associated with a memory segment as well
@@ -51,7 +52,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * shared sessions use a more sophisticated synchronization mechanism, which guarantees that no concurrent
  * access is possible when a session is being closed (see {@link jdk.internal.misc.ScopedMemoryAccess}).
  */
-public abstract non-sealed class MemorySessionImpl implements MemorySession, Scoped, SegmentAllocator {
+public abstract non-sealed class MemorySessionImpl implements Scoped, MemorySession, SegmentAllocator {
     final ResourceList resourceList;
     final Cleaner.Cleanable cleanable;
     final Thread owner;
@@ -76,11 +77,8 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Sco
     @Override
     public void addCloseAction(Runnable runnable) {
         Objects.requireNonNull(runnable);
-        addInternal(ResourceList.ResourceCleanup.ofRunnable(runnable));
-    }
-
-    public MemorySessionImpl sessionImpl() {
-        return this;
+        addInternal(runnable instanceof ResourceList.ResourceCleanup cleanup ?
+                cleanup : ResourceList.ResourceCleanup.ofRunnable(runnable));
     }
 
     /**
@@ -141,7 +139,7 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Sco
     @Override
     public boolean equals(Object o) {
         return (o instanceof MemorySession other) &&
-            ((Scoped)other).sessionImpl() == this;
+            toSessionImpl(other) == this;
     }
 
     @Override
@@ -173,6 +171,21 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Sco
      * @return {@code true} if this session is not closed yet.
      */
     public abstract boolean isAlive();
+
+    @Override
+    public MemorySession asNonCloseable() {
+        return isCloseable() ?
+                new NonCloseableView(this) : this;
+    }
+
+    public static MemorySessionImpl toSessionImpl(MemorySession session) {
+        return ((Scoped)session).sessionImpl();
+    }
+
+    @Override
+    public MemorySessionImpl sessionImpl() {
+        return this;
+    }
 
     /**
      * This is a faster version of {@link #checkValidStateSlow()}, which is called upon memory access, and which
@@ -289,6 +302,14 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Sco
         return new GlobalSessionImpl(ref);
     }
 
+    /**
+     * This is an implicit, GC-backed memory session. Implicit sessions cannot be closed explicitly.
+     * While it would be possible to model an implicit session as a non-closeable view of a shared
+     * session, it is better to capture the fact that an implicit session is not just a non-closeable
+     * view of some session which might be closeable. This is useful e.g. in the implementations of
+     * {@link DirectBuffer#address()}, where obtaining an address of a buffer instance associated
+     * with a potentially closeable session is forbidden.
+     */
     static class ImplicitSession extends SharedSession {
 
         public ImplicitSession() {
@@ -316,6 +337,11 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Sco
         }
 
         @Override
+        public MemorySession asNonCloseable() {
+            return this;
+        }
+
+        @Override
         public void justClose() {
             throw new UnsupportedOperationException();
         }
@@ -324,7 +350,9 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Sco
     /**
      * This is a non-closeable view of another memory session. Instances of this class are used in resource session
      * accessors (see {@link MemorySegment#session()}). This class forwards all session methods to the underlying
-     * "root" session implementation, and throws {@link UnsupportedOperationException} on close.
+     * "root" session implementation, and throws {@link UnsupportedOperationException} on close. This class contains
+     * a strong reference to the original session, so even if the original session is dropped by the client
+     * it would still be reachable by the GC, which is important if the session is implicitly closed.
      */
     public final static class NonCloseableView implements MemorySession, Scoped {
         final MemorySessionImpl session;
@@ -365,6 +393,11 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Sco
         @Override
         public void whileAlive(Runnable action) {
             session.whileAlive(action);
+        }
+
+        @Override
+        public MemorySession asNonCloseable() {
+            return this;
         }
 
         @Override

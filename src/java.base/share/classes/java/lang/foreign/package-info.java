@@ -31,14 +31,12 @@
  *
  * <p>
  * The main abstraction introduced to support foreign memory access is {@link java.lang.foreign.MemorySegment}, which
- * models a contiguous memory region, which can reside either inside or outside the Java heap.
- * A memory segment represents the main access coordinate of a memory access var handle, which can be obtained
- * using the combinator methods defined in the {@link java.lang.invoke.MethodHandles} class; a set of
- * common dereference and copy operations is provided also by the {@link java.lang.foreign.MemorySegment} class, which can
- * be useful for simple, non-structured access. Finally, the {@link java.lang.foreign.MemoryLayout} class
- * hierarchy enables description of <em>memory layouts</em> and basic operations such as computing the size in bytes of a given
- * layout, obtain its alignment requirements, and so on. Memory layouts also provide an alternate, more abstract way, to produce
- * memory access var handles, e.g. using <a href="MemoryLayout.html#layout-paths"><em>layout paths</em></a>.
+ * models a contiguous memory region, residing either inside or outside the Java heap. The contents of a memory
+ * segment can be described using a {@link java.lang.foreign.MemoryLayout memory layout}, which provides
+ * basic operations to query sizes, offsets and alignment constraints. Memory layouts also provide
+ * an alternate, more abstract way, to <a href=MemorySegment.html#segment-deref>dereference memory segments</a>
+ * using {@linkplain java.lang.foreign.MemoryLayout#varHandle(java.lang.foreign.MemoryLayout.PathElement...) access var handles},
+ * which can be computed using <a href="MemoryLayout.html#layout-paths"><em>layout paths</em></a>.
  *
  * For example, to allocate an off-heap memory region big enough to hold 10 values of the primitive type {@code int}, and fill it with values
  * ranging from {@code 0} to {@code 9}, we can use the following code:
@@ -226,7 +224,10 @@
  * memory when attempting to dereference said segment. For these reasons, it is crucial for code that calls a restricted method
  * to never pass arguments that might cause incorrect binding of foreign data and/or functions to a Java API.
  * <p>
- * Access to restricted methods is <em>disabled</em> by default; to enable restricted methods, the command line option
- * {@code --enable-native-access} must mention the name of the caller's module.
+ * Access to restricted methods can be controlled using the command line option {@code --enable-native-access=M1,M2, ... Mn},
+ * where {@code M1}, {@code M2}, {@code ... Mn} are module names (for the unnamed module, the special value {@code ALL-UNNAMED}
+ * can be used). If this option is specified, access to restricted methods is only granted to the modules listed by that
+ * option. If this option is not specified, access to restricted method is enabled for all modules, but
+ * access to restricted methods will result in runtime warnings.
  */
 package java.lang.foreign;

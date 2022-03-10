@@ -157,7 +157,8 @@ import jdk.internal.javac.PreviewFeature;
  * Layout paths can feature one or more <em>free dimensions</em>. For instance, a layout path traversing
  * an unspecified sequence element (that is, where one of the path component was obtained with the
  * {@link PathElement#sequenceElement()} method) features an additional free dimension, which will have to be bound at runtime.
- * This is important when obtaining memory access var handle from layouts, as in the following code:
+ * This is important when obtaining a {@linkplain MethodHandles#memorySegmentViewVarHandle(ValueLayout) memory segment view var handle}
+ * from layouts, as in the following code:
  *
  * {@snippet lang=java :
  * VarHandle valueHandle = taggedValues.varHandle(PathElement.sequenceElement(),
@@ -166,7 +167,7 @@ import jdk.internal.javac.PreviewFeature;
  *
  * Since the layout path constructed in the above example features exactly one free dimension (as it doesn't specify
  * <em>which</em> member layout named {@code value} should be selected from the enclosing sequence layout),
- * it follows that the memory access var handle {@code valueHandle} will feature an <em>additional</em> {@code long}
+ * it follows that the var handle {@code valueHandle} will feature an <em>additional</em> {@code long}
  * access coordinate.
  *
  * <p>A layout path with free dimensions can also be used to create an offset-computing method handle, using the
@@ -382,10 +383,10 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     }
 
     /**
-     * Creates a memory access var handle that can be used to dereference memory at the layout selected by a given layout path,
+     * Creates an access var handle that can be used to dereference memory at the layout selected by a given layout path,
      * where the path is considered rooted in this layout.
      * <p>
-     * The final memory location accessed by the returned memory access var handle can be computed as follows:
+     * The final memory location accessed by the returned var handle can be computed as follows:
      *
      * <blockquote><pre>{@code
      * address = base + offset
@@ -406,12 +407,13 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      *
      * @apiNote the resulting var handle will feature an additional {@code long} access coordinate for every
      * unspecified sequence access component contained in this layout path. Moreover, the resulting var handle
-     * features certain <a href="MemoryHandles.html#memaccess-mode">access mode restrictions</a>, which are common to all memory access var handles.
+     * features certain <em>access mode restrictions</em>, which are common to all memory segment view handles.
      *
      * @param elements the layout path elements.
      * @return a var handle which can be used to dereference memory at the (possibly nested) layout selected by the layout path in {@code elements}.
      * @throws UnsupportedOperationException if the layout path has one or more elements with incompatible alignment constraints.
      * @throws IllegalArgumentException if the layout path in {@code elements} does not select a value layout (see {@link ValueLayout}).
+     * @see MethodHandles#memorySegmentViewVarHandle(ValueLayout)
      */
     default VarHandle varHandle(PathElement... elements) {
         return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::dereferenceHandle,
@@ -419,7 +421,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     }
 
     /**
-     * Creates a <em>strided</em> memory access var handle that can be used to dereference memory at the layout selected by a given layout path,
+     * Creates a <em>strided</em> access var handle that can be used to dereference memory at the layout selected by a given layout path,
      * where the path is considered rooted in this layout. The returned var handle can effectively dereference multiple memory
      * locations, using a <em>dynamic</em> index (of type {@code long}), which is multiplied by this layout size and then added
      * to the offset of the selected layout. Equivalent to the following code:
@@ -432,6 +434,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * @return a var handle which can be used to dereference memory at the (possibly nested) layout selected by the layout path in {@code elements}.
      * @throws UnsupportedOperationException if the layout path has one or more elements with incompatible alignment constraints.
      * @throws IllegalArgumentException if the layout path in {@code elements} does not select a value layout (see {@link ValueLayout}).
+     * @see MethodHandles#memorySegmentViewVarHandle
      */
     default VarHandle arrayElementVarHandle(PathElement... elements) {
         Objects.requireNonNull(elements);

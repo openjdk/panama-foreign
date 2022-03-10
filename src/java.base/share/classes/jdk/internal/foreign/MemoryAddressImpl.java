@@ -28,6 +28,7 @@ package jdk.internal.foreign;
 import java.lang.foreign.Addressable;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.reflect.CallerSensitive;
@@ -85,7 +86,7 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
         return ofLongUnchecked(value, Long.MAX_VALUE);
     }
 
-    public static MemorySegment ofLongUnchecked(long value, long byteSize, MemorySessionImpl session) {
+    public static MemorySegment ofLongUnchecked(long value, long byteSize, MemorySession session) {
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, session);
     }
 

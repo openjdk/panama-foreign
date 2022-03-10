@@ -1065,7 +1065,8 @@ public class FileChannelImpl
     {
         Objects.requireNonNull(mode,"Mode is null");
         Objects.requireNonNull(session, "Session is null");
-        ((MemorySessionImpl)session).checkValidStateSlow();
+        MemorySessionImpl sessionImpl = MemorySessionImpl.toSessionImpl(session);
+        sessionImpl.checkValidStateSlow();
         if (offset < 0) throw new IllegalArgumentException("Requested bytes offset must be >= 0.");
         if (size < 0) throw new IllegalArgumentException("Requested bytes size must be >= 0.");
 
@@ -1078,8 +1079,8 @@ public class FileChannelImpl
         }
         if (unmapper != null) {
             AbstractMemorySegmentImpl segment = new MappedMemorySegmentImpl(unmapper.address(), unmapper, size,
-                    modes, (MemorySessionImpl)session);
-            ((MemorySessionImpl)session).addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
+                    modes, session);
+            sessionImpl.addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
                 @Override
                 public void cleanup() {
                     unmapper.unmap();
@@ -1087,7 +1088,7 @@ public class FileChannelImpl
             });
             return segment;
         } else {
-            return new MappedMemorySegmentImpl.EmptyMappedMemorySegmentImpl(modes, (MemorySessionImpl)session);
+            return new MappedMemorySegmentImpl.EmptyMappedMemorySegmentImpl(modes, session);
         }
     }
 

@@ -74,26 +74,24 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
                 findNativeOrThrow(SafeFunctionAccessTest.class, "addr_func_6"),
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
         for (int i = 0 ; i < 6 ; i++) {
-            MemorySession[] sessions = new MemorySession[] {
-                    MemorySession.openShared(),
-                    MemorySession.openShared(),
-                    MemorySession.openShared(),
-                    MemorySession.openShared(),
-                    MemorySession.openShared(),
-                    MemorySession.openShared()
+            MemorySegment[] segments = new MemorySegment[]{
+                    MemorySegment.allocateNative(POINT, MemorySession.openShared()),
+                    MemorySegment.allocateNative(POINT, MemorySession.openShared()),
+                    MemorySegment.allocateNative(POINT, MemorySession.openShared()),
+                    MemorySegment.allocateNative(POINT, MemorySession.openShared()),
+                    MemorySegment.allocateNative(POINT, MemorySession.openShared()),
+                    MemorySegment.allocateNative(POINT, MemorySession.openShared())
             };
             // check liveness
-            sessions[i].close();
+            segments[i].session().close();
             for (int j = 0 ; j < 6 ; j++) {
                 if (i == j) {
-                    assertFalse(sessions[j].isAlive());
+                    assertFalse(segments[j].session().isAlive());
                 } else {
-                    assertTrue(sessions[j].isAlive());
+                    assertTrue(segments[j].session().isAlive());
                 }
             }
             try {
-                MemorySegment[] segments = Arrays.stream(sessions).map(session -> MemorySegment.allocateNative(POINT, session))
-                        .toArray(MemorySegment[]::new);
                 handle.invokeWithArguments(segments);
                 fail();
             } catch (IllegalStateException ex) {
@@ -101,7 +99,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
             }
             for (int j = 0 ; j < 6 ; j++) {
                 if (i != j) {
-                    sessions[j].close(); // should succeed!
+                    segments[j].session().close(); // should succeed!
                 }
             }
         }

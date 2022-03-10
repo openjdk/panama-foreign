@@ -45,7 +45,7 @@ import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.util.ArraysSupport;
 import jdk.internal.vm.annotation.ForceInline;
-import sun.security.action.GetPropertyAction;
+
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 
 /**
@@ -70,10 +70,10 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
 
     final long length;
     final int mask;
-    final MemorySessionImpl session;
+    final MemorySession session;
 
     @ForceInline
-    AbstractMemorySegmentImpl(long length, int mask, MemorySessionImpl session) {
+    AbstractMemorySegmentImpl(long length, int mask, MemorySession session) {
         this.length = length;
         this.mask = mask;
         this.session = session;
@@ -83,7 +83,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
 
     abstract Object base();
 
-    abstract AbstractMemorySegmentImpl dup(long offset, long size, int mask, MemorySessionImpl session);
+    abstract AbstractMemorySegmentImpl dup(long offset, long size, int mask, MemorySession session);
 
     abstract ByteBuffer makeByteBuffer();
 
@@ -138,7 +138,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     @Override
     public final MemorySegment fill(byte value){
         checkAccess(0, length, false);
-        SCOPED_MEMORY_ACCESS.setMemory(session, base(), min(), length, value);
+        SCOPED_MEMORY_ACCESS.setMemory(sessionImpl(), base(), min(), length, value);
         return this;
     }
 
@@ -169,7 +169,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
             if (get(JAVA_BYTE, 0) != that.get(JAVA_BYTE, 0)) {
                 return 0;
             }
-            i = vectorizedMismatchLargeForBytes(session, that.session,
+            i = vectorizedMismatchLargeForBytes(sessionImpl(), that.sessionImpl(),
                     this.base(), this.min(),
                     that.base(), that.min(),
                     length);
@@ -349,7 +349,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     }
 
     public void checkValidState() {
-        session.checkValidStateSlow();
+        sessionImpl().checkValidStateSlow();
     }
 
     public long unsafeGetOffset() {
@@ -396,12 +396,12 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
 
     @Override
     public MemorySessionImpl sessionImpl() {
-        return session;
+        return MemorySessionImpl.toSessionImpl(session);
     }
 
     @Override
     public MemorySession session() {
-        return new MemorySessionImpl.NonCloseableView(sessionImpl());
+        return session;
     }
 
     private IndexOutOfBoundsException outOfBoundException(long offset, long length) {
@@ -509,7 +509,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
         final MemorySessionImpl bufferSession;
         int modes;
         if (bufferSegment != null) {
-            bufferSession = bufferSegment.session;
+            bufferSession = bufferSegment.sessionImpl();
             modes = bufferSegment.mask;
         } else {
             bufferSession = MemorySessionImpl.heapSession(bb);

@@ -43,7 +43,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.stream.IntStream;
 
 public class TestMemorySession {
@@ -51,12 +53,13 @@ public class TestMemorySession {
     final static int N_THREADS = 100;
 
     @Test(dataProvider = "cleaners")
-    public void testConfined(Supplier<Cleaner> cleanerSupplier) {
+    public void testConfined(Supplier<Cleaner> cleanerSupplier, UnaryOperator<MemorySession> sessionFunc) {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
         MemorySession session = cleaner != null ?
                 MemorySession.openConfined(cleaner) :
                 MemorySession.openConfined();
+        session = sessionFunc.apply(session);
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
             session.addCloseAction(() -> acc.addAndGet(delta));
@@ -76,12 +79,13 @@ public class TestMemorySession {
     }
 
     @Test(dataProvider = "cleaners")
-    public void testSharedSingleThread(Supplier<Cleaner> cleanerSupplier) {
+    public void testSharedSingleThread(Supplier<Cleaner> cleanerSupplier, UnaryOperator<MemorySession> sessionFunc) {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
         MemorySession session = cleaner != null ?
                 MemorySession.openShared(cleaner) :
                 MemorySession.openShared();
+        session = sessionFunc.apply(session);
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
             session.addCloseAction(() -> acc.addAndGet(delta));
@@ -101,13 +105,14 @@ public class TestMemorySession {
     }
 
     @Test(dataProvider = "cleaners")
-    public void testSharedMultiThread(Supplier<Cleaner> cleanerSupplier) {
+    public void testSharedMultiThread(Supplier<Cleaner> cleanerSupplier, UnaryOperator<MemorySession> sessionFunc) {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
         List<Thread> threads = new ArrayList<>();
         MemorySession session = cleaner != null ?
                 MemorySession.openShared(cleaner) :
                 MemorySession.openShared();
+        session = sessionFunc.apply(session);
         AtomicReference<MemorySession> sessionRef = new AtomicReference<>(session);
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
@@ -342,9 +347,11 @@ public class TestMemorySession {
     @DataProvider
     static Object[][] cleaners() {
         return new Object[][] {
-                { (Supplier<Cleaner>)() -> null },
-                { (Supplier<Cleaner>)Cleaner::create },
-                { (Supplier<Cleaner>)CleanerFactory::cleaner }
+                { (Supplier<Cleaner>)() -> null, UnaryOperator.identity() },
+                { (Supplier<Cleaner>)Cleaner::create, UnaryOperator.identity() },
+                { (Supplier<Cleaner>)CleanerFactory::cleaner, UnaryOperator.identity() },
+                { (Supplier<Cleaner>)Cleaner::create, (UnaryOperator<MemorySession>)MemorySession::asNonCloseable },
+                { (Supplier<Cleaner>)CleanerFactory::cleaner, (UnaryOperator<MemorySession>)MemorySession::asNonCloseable }
         };
     }
 
@@ -354,12 +361,17 @@ public class TestMemorySession {
                 { (Supplier<MemorySession>) MemorySession::openConfined},
                 { (Supplier<MemorySession>) MemorySession::openShared},
                 { (Supplier<MemorySession>) MemorySession::openImplicit},
-                { (Supplier<MemorySession>) MemorySession::global}
+                { (Supplier<MemorySession>) MemorySession::global},
+                { (Supplier<MemorySession>) () -> MemorySession.openConfined().asNonCloseable() },
+                { (Supplier<MemorySession>) () -> MemorySession.openShared().asNonCloseable() },
+                { (Supplier<MemorySession>) () -> MemorySession.openImplicit().asNonCloseable() },
+                { (Supplier<MemorySession>) () -> MemorySession.global().asNonCloseable()},
         };
     }
 
     private void keepAlive(MemorySession child, MemorySession parent) {
-        ((MemorySessionImpl)parent).acquire0();
-        child.addCloseAction(() -> ((MemorySessionImpl)parent).release0());
+        MemorySessionImpl sessionImpl = MemorySessionImpl.toSessionImpl(parent);
+        sessionImpl.acquire0();
+        child.addCloseAction(sessionImpl::release0);
     }
 }

@@ -7867,7 +7867,8 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
     }
 
     /**
-     * Creates a <i>memory access var handle</i> from the given value layout.
+     * Creates a var handle object, which can be used to dereference a {@linkplain java.lang.foreign.MemorySegment memory segment}
+     * by viewing its contents as a sequence of the provided value layout.
      *
      * <p>The provided layout specifies the {@linkplain ValueLayout#carrier() carrier type},
      * the {@linkplain ValueLayout#byteSize() byte size},
@@ -7878,7 +7879,7 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      * {@code (MemorySegment, long)}, where the {@code long} coordinate type corresponds to byte offset into
      * a given memory segment. The returned var handle accesses bytes at an offset in a given
      * memory segment, composing bytes to or from a value of the type {@code carrier} according to the given endianness;
-     * the alignment constraint (in bytes) for the resulting memory access var handle is given by {@code alignmentBytes}.
+     * the alignment constraint (in bytes) for the resulting var handle is given by {@code alignmentBytes}.
      *
      * <p>As an example, consider the memory layout expressed by a {@link GroupLayout} instance constructed as follows:
      * <blockquote><pre>{@code
@@ -7887,14 +7888,14 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      *             ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN).withName("value")
      *     );
      * }</pre></blockquote>
-     * To access the member layout named {@code value}, we can construct a memory access var handle as follows:
+     * To access the member layout named {@code value}, we can construct a memory segment view var handle as follows:
      * <blockquote><pre>{@code
-     *     VarHandle handle = MethodHandles.memoryAccessVarHandle(ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN)); //(MemorySegment, long) -> int
+     *     VarHandle handle = MethodHandles.memorySegmentViewVarHandle(ValueLayout.JAVA_INT.withOrder(ByteOrder.BIG_ENDIAN)); //(MemorySegment, long) -> int
      *     handle = MethodHandles.insertCoordinates(handle, 1, 4); //(MemorySegment) -> int
      * }</pre></blockquote>
      *
      * @apiNote The resulting var handle features certain <i>access mode restrictions</i>,
-     * which are common to all memory access var handles. A memory access var handle is associated
+     * which are common to all memory segment view var handles. A memory segment view var handle is associated
      * with an access size {@code S} and an alignment constraint {@code B}
      * (both expressed in bytes). We say that a memory access operation is <em>fully aligned</em> if it occurs
      * at a memory address {@code A} which is compatible with both alignment constraints {@code S} and {@code B}.
@@ -7930,15 +7931,15 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      * {@code IllegalStateException} is thrown, irrespective of the access mode being used.
      *
      * @param layout the value layout for which a memory access handle is to be obtained.
-     * @return the new memory access var handle.
+     * @return the new memory segment view var handle.
      * @throws IllegalArgumentException if an illegal carrier type is used, or if {@code alignmentBytes} is not a power of two.
      * @throws NullPointerException if {@code layout} is {@code null}.
      * @since 19
      */
     @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-    public static VarHandle memoryAccessVarHandle(ValueLayout layout) {
+    public static VarHandle memorySegmentViewVarHandle(ValueLayout layout) {
         Objects.requireNonNull(layout);
-        return Utils.makeMemoryAccessVarHandle(layout);
+        return Utils.makeSegmentViewVarHandle(layout);
     }
 
     /**

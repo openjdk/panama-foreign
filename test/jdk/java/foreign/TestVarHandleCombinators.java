@@ -30,7 +30,7 @@
 
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
-import org.testng.annotations.DataProvider;
+
 import org.testng.annotations.Test;
 
 import java.lang.foreign.MemorySegment;
@@ -44,7 +44,7 @@ public class TestVarHandleCombinators {
 
     @Test
     public void testElementAccess() {
-        VarHandle vh = MethodHandles.memoryAccessVarHandle(ValueLayout.JAVA_BYTE);
+        VarHandle vh = MethodHandles.memorySegmentViewVarHandle(ValueLayout.JAVA_BYTE);
 
         byte[] arr = { 0, 0, -1, 0 };
         MemorySegment segment = MemorySegment.ofArray(arr);
@@ -53,7 +53,7 @@ public class TestVarHandleCombinators {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testUnalignedElement() {
-        VarHandle vh = MethodHandles.memoryAccessVarHandle(ValueLayout.JAVA_BYTE.withBitAlignment(32));
+        VarHandle vh = MethodHandles.memorySegmentViewVarHandle(ValueLayout.JAVA_BYTE.withBitAlignment(32));
         MemorySegment segment = MemorySegment.ofArray(new byte[4]);
         vh.get(segment, 2L); //should throw
         //FIXME: the VH only checks the alignment of the segment, which is fine if the VH is derived from layouts,
@@ -63,7 +63,7 @@ public class TestVarHandleCombinators {
 
     @Test
     public void testAlign() {
-        VarHandle vh = MethodHandles.memoryAccessVarHandle(ValueLayout.JAVA_BYTE.withBitAlignment(16));
+        VarHandle vh = MethodHandles.memorySegmentViewVarHandle(ValueLayout.JAVA_BYTE.withBitAlignment(16));
 
         MemorySegment segment = MemorySegment.allocateNative(1, 2, MemorySession.openImplicit());
         vh.set(segment, 0L, (byte) 10); // fine, memory region is aligned
@@ -72,7 +72,7 @@ public class TestVarHandleCombinators {
 
     @Test
     public void testByteOrderLE() {
-        VarHandle vh = MethodHandles.memoryAccessVarHandle(ValueLayout.JAVA_SHORT
+        VarHandle vh = MethodHandles.memorySegmentViewVarHandle(ValueLayout.JAVA_SHORT
                 .withOrder(ByteOrder.LITTLE_ENDIAN).withBitAlignment(8));
         byte[] arr = new byte[2];
         MemorySegment segment = MemorySegment.ofArray(arr);
@@ -83,7 +83,7 @@ public class TestVarHandleCombinators {
 
     @Test
     public void testByteOrderBE() {
-        VarHandle vh = MethodHandles.memoryAccessVarHandle(ValueLayout.JAVA_SHORT
+        VarHandle vh = MethodHandles.memorySegmentViewVarHandle(ValueLayout.JAVA_SHORT
                 .withOrder(ByteOrder.BIG_ENDIAN).withBitAlignment(8));
         byte[] arr = new byte[2];
         MemorySegment segment = MemorySegment.ofArray(arr);
@@ -99,7 +99,7 @@ public class TestVarHandleCombinators {
 
         //[10 : [5 : [x32 i32]]]
 
-        VarHandle vh = MethodHandles.memoryAccessVarHandle(ValueLayout.JAVA_INT.withBitAlignment(32));
+        VarHandle vh = MethodHandles.memorySegmentViewVarHandle(ValueLayout.JAVA_INT.withBitAlignment(32));
         int count = 0;
         try (MemorySession session = MemorySession.openConfined()) {
             MemorySegment segment = MemorySegment.allocateNative(inner_size * outer_size * 8, 4, session);

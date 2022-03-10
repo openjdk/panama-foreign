@@ -82,11 +82,11 @@ public interface JavaLangInvokeAccess {
     Map<String, byte[]> generateHolderClasses(Stream<String> traces);
 
     /**
-     * Returns a var handle view of a given memory address.
+     * Returns a var handle view of a given memory segment.
      * Used by {@code jdk.internal.foreign.LayoutPath} and
      * {@code java.lang.invoke.MethodHandles}.
      */
-    VarHandle memoryAccessVarHandle(Class<?> carrier, long alignmentMask, ByteOrder order);
+    VarHandle memorySegmentViewHandle(Class<?> carrier, long alignmentMask, ByteOrder order);
 
     /**
      * Var handle carrier combinator.
