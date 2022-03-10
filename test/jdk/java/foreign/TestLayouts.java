@@ -50,57 +50,6 @@ public class TestLayouts {
     }
 
     @Test
-    public void testVLAInStruct() {
-        MemoryLayout layout = MemoryLayout.structLayout(
-                ValueLayout.JAVA_INT.withName("size"),
-                MemoryLayout.paddingLayout(32),
-                MemoryLayout.sequenceLayout(0, ValueLayout.JAVA_DOUBLE).withName("arr"));
-        VarHandle size_handle = layout.varHandle(MemoryLayout.PathElement.groupElement("size"));
-        VarHandle array_elem_handle = layout.varHandle(
-                MemoryLayout.PathElement.groupElement("arr"),
-                MemoryLayout.PathElement.sequenceElement());
-        try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = MemorySegment.allocateNative(
-                    layout.map(l -> ((SequenceLayout)l).withElementCount(4), MemoryLayout.PathElement.groupElement("arr")), session);
-            size_handle.set(segment, 4);
-            for (int i = 0 ; i < 4 ; i++) {
-                array_elem_handle.set(segment, i, (double)i);
-            }
-            //check
-            assertEquals(4, (int)size_handle.get(segment));
-            for (int i = 0 ; i < 4 ; i++) {
-                assertEquals((double)i, (double)array_elem_handle.get(segment, i));
-            }
-        }
-    }
-
-    @Test
-    public void testVLAInSequence() {
-        MemoryLayout layout = MemoryLayout.structLayout(
-                ValueLayout.JAVA_INT.withName("size"),
-                MemoryLayout.paddingLayout(32),
-                MemoryLayout.sequenceLayout(1, MemoryLayout.sequenceLayout(0, ValueLayout.JAVA_DOUBLE)).withName("arr"));
-        VarHandle size_handle = layout.varHandle(MemoryLayout.PathElement.groupElement("size"));
-        VarHandle array_elem_handle = layout.varHandle(
-                MemoryLayout.PathElement.groupElement("arr"),
-                MemoryLayout.PathElement.sequenceElement(0),
-                MemoryLayout.PathElement.sequenceElement());
-        try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = MemorySegment.allocateNative(
-                    layout.map(l -> ((SequenceLayout)l).withElementCount(4), MemoryLayout.PathElement.groupElement("arr"), MemoryLayout.PathElement.sequenceElement()), session);
-            size_handle.set(segment, 4);
-            for (int i = 0 ; i < 4 ; i++) {
-                array_elem_handle.set(segment, i, (double)i);
-            }
-            //check
-            assertEquals(4, (int)size_handle.get(segment));
-            for (int i = 0 ; i < 4 ; i++) {
-                assertEquals((double)i, (double)array_elem_handle.get(segment, i));
-            }
-        }
-    }
-
-    @Test
     public void testIndexedSequencePath() {
         MemoryLayout seq = MemoryLayout.sequenceLayout(10, ValueLayout.JAVA_INT);
         try (MemorySession session = MemorySession.openConfined()) {

@@ -120,8 +120,7 @@ import jdk.internal.javac.PreviewFeature;
  * <p>
  * Layout paths are for example useful in order to obtain {@linkplain MemoryLayout#bitOffset(PathElement...) offsets} of
  * arbitrarily nested layouts inside another layout, to quickly obtain a {@linkplain #varHandle(PathElement...) memory access handle}
- * corresponding to the selected layout, to {@linkplain #select(PathElement...) select} an arbitrarily nested layout inside
- * another layout, or to {@link #map(UnaryOperator, PathElement...) transform} a nested layout element inside
+ * corresponding to the selected layout, or to {@linkplain #select(PathElement...) select} an arbitrarily nested layout inside
  * another layout.
  * <p>
  * Such <em>layout paths</em> can be constructed programmatically using the methods in this class.
@@ -136,22 +135,6 @@ import jdk.internal.javac.PreviewFeature;
  * {@snippet lang=java :
  * MemoryLayout value = taggedValues.select(PathElement.sequenceElement(),
  *                                          PathElement.groupElement("value"));
- * }
- *
- * And, we can also replace the layout named {@code value} with another layout, as follows:
- * {@snippet lang=java :
- * MemoryLayout taggedValuesWithHole = taggedValues.map(l -> MemoryLayout.paddingLayout(32),
- *                                             PathElement.sequenceElement(), PathElement.groupElement("value"));
- * }
- *
- * That is, the above declaration is identical to the following, more verbose one:
- * {@snippet lang=java :
- * MemoryLayout taggedValuesWithHole = MemoryLayout.sequenceLayout(5,
- *     MemoryLayout.structLayout(
- *         ValueLayout.JAVA_BYTE.withName("kind"),
- *         MemoryLayout.paddingLayout(32),
- *         MemoryLayout.paddingLayout(32)
- * ));
  * }
  *
  * Layout paths can feature one or more <em>free dimensions</em>. For instance, a layout path traversing
@@ -292,7 +275,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * in {@code elements} is {@code null}.
      */
     default long bitOffset(PathElement... elements) {
-        return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::offset,
+        return computePathOp(LayoutPath.rootPath(this), LayoutPath::offset,
                 EnumSet.of(PathKind.SEQUENCE_ELEMENT, PathKind.SEQUENCE_RANGE), elements);
     }
 
@@ -324,7 +307,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * multiple sequence element indices (see {@link PathElement#sequenceElement(long, long)}).
      */
     default MethodHandle bitOffsetHandle(PathElement... elements) {
-        return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::offsetHandle,
+        return computePathOp(LayoutPath.rootPath(this), LayoutPath::offsetHandle,
                 EnumSet.of(PathKind.SEQUENCE_RANGE), elements);
     }
 
@@ -416,7 +399,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * @see MethodHandles#memorySegmentViewVarHandle(ValueLayout)
      */
     default VarHandle varHandle(PathElement... elements) {
-        return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::dereferenceHandle,
+        return computePathOp(LayoutPath.rootPath(this), LayoutPath::dereferenceHandle,
                 Set.of(), elements);
     }
 
@@ -441,7 +424,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
         PathElement[] newElements = new PathElement[elements.length + 1];
         newElements[0] = PathElement.sequenceElement();
         System.arraycopy(elements, 0, newElements, 1, elements.length);
-        return computePathOp(LayoutPath.rootPath(MemoryLayout.sequenceLayout(Long.MAX_VALUE, this), MemoryLayout::bitSize),
+        return computePathOp(LayoutPath.rootPath(MemoryLayout.sequenceLayout(Long.MAX_VALUE, this)),
                 LayoutPath::dereferenceHandle, Set.of(), newElements);
     }
 
@@ -484,7 +467,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * @throws UnsupportedOperationException if the size of the selected layout in bits is not a multiple of 8.
      */
     default MethodHandle sliceHandle(PathElement... elements) {
-        return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::sliceHandle,
+        return computePathOp(LayoutPath.rootPath(this), LayoutPath::sliceHandle,
                 Set.of(), elements);
     }
 
@@ -498,25 +481,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * (see {@link PathElement#sequenceElement(long)} and {@link PathElement#sequenceElement(long, long)}).
      */
     default MemoryLayout select(PathElement... elements) {
-        return computePathOp(LayoutPath.rootPath(this, l -> 0L), LayoutPath::layout,
-                EnumSet.of(PathKind.SEQUENCE_ELEMENT_INDEX, PathKind.SEQUENCE_RANGE), elements);
-    }
-
-    /**
-     * Creates a transformed copy of this layout where a selected layout, from a path rooted in this layout,
-     * is replaced with the result of applying the given operation.
-     *
-     * @param op the unary operation to be applied to the selected layout.
-     * @param elements the layout path elements.
-     * @return a new layout where the layout selected by the layout path in {@code elements},
-     * has been replaced by the result of applying {@code op} to the selected layout.
-     * @throws IllegalArgumentException if the layout path does not select any layout nested in this layout,
-     * or if the layout path contains one or more path elements that select one or more sequence element indices
-     * (see {@link PathElement#sequenceElement(long)} and {@link PathElement#sequenceElement(long, long)}).
-     */
-    default MemoryLayout map(UnaryOperator<MemoryLayout> op, PathElement... elements) {
-        Objects.requireNonNull(op);
-        return computePathOp(LayoutPath.rootPath(this, l -> 0L), path -> path.map(op),
+        return computePathOp(LayoutPath.rootPath(this), LayoutPath::layout,
                 EnumSet.of(PathKind.SEQUENCE_ELEMENT_INDEX, PathKind.SEQUENCE_RANGE), elements);
     }
 
