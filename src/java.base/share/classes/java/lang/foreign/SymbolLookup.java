@@ -126,9 +126,13 @@ public interface SymbolLookup {
     static SymbolLookup libraryLookup(String name, MemorySession session) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), SymbolLookup.class, "libraryLookup");
         Objects.requireNonNull(name);
+        Objects.requireNonNull(session);
         RawNativeLibraries nativeLibraries = RawNativeLibraries.newInstance(MethodHandles.lookup());
         NativeLibrary library = nativeLibraries.load(name);
-        return libraryLookup(name, nativeLibraries, library, session);
+        if (library == null) {
+            throw new IllegalArgumentException("Cannot open library: " + name);
+        }
+        return libraryLookup(nativeLibraries, library, session);
     }
 
     /**
@@ -151,15 +155,16 @@ public interface SymbolLookup {
     static SymbolLookup libraryLookup(Path path, MemorySession session) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), SymbolLookup.class, "libraryLookup");
         Objects.requireNonNull(path);
+        Objects.requireNonNull(session);
         RawNativeLibraries nativeLibraries = RawNativeLibraries.newInstance(MethodHandles.lookup());
         NativeLibrary library = nativeLibraries.load(path);
-        return libraryLookup(path, nativeLibraries, library, session);
+        if (library == null) {
+            throw new IllegalArgumentException("Cannot open library: " + path);
+        }
+        return libraryLookup(nativeLibraries, library, session);
     }
 
-    private static SymbolLookup libraryLookup(Object libName, RawNativeLibraries nativeLibraries, NativeLibrary library, MemorySession session) {
-        if (library == null) {
-            throw new IllegalArgumentException("Cannot open library: " + libName);
-        }
+    private static SymbolLookup libraryLookup(RawNativeLibraries nativeLibraries, NativeLibrary library, MemorySession session) {
         // register hook to unload library when session is closed
         MemorySessionImpl.toSessionImpl(session).addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
             @Override

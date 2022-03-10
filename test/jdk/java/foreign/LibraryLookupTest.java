@@ -92,6 +92,16 @@ public class LibraryLookupTest {
     static final int MAX_EXECUTOR_WAIT_SECONDS = 20;
     static final int NUM_ACCESSORS = Math.min(10, Runtime.getRuntime().availableProcessors());
 
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    void testBadLibraryLookupName() {
+        SymbolLookup.libraryLookup("nonExistent", MemorySession.global());
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    void testBadLibraryLookupPath() {
+        SymbolLookup.libraryLookup(Path.of("nonExistent"), MemorySession.global());
+    }
+
     @Test
     void testLoadLibraryShared() throws Throwable {
         ExecutorService accessExecutor = Executors.newCachedThreadPool();

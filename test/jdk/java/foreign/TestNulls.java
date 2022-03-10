@@ -100,7 +100,8 @@ public class TestNulls {
             VaList.Builder.class,
             FunctionDescriptor.class,
             SegmentAllocator.class,
-            MemorySession.class
+            MemorySession.class,
+            SymbolLookup.class
     };
 
     static final Set<String> EXCLUDE_LIST = Set.of(
@@ -174,6 +175,7 @@ public class TestNulls {
         addDefaultMapping(ValueLayout.OfDouble.class, ValueLayout.JAVA_DOUBLE);
         addDefaultMapping(GroupLayout.class, MemoryLayout.structLayout(ValueLayout.JAVA_INT));
         addDefaultMapping(SequenceLayout.class, MemoryLayout.sequenceLayout(1, ValueLayout.JAVA_INT));
+        addDefaultMapping(SymbolLookup.class, SymbolLookup.loaderLookup());
         addDefaultMapping(MemorySegment.class, MemorySegment.ofArray(new byte[10]));
         addDefaultMapping(FunctionDescriptor.class, FunctionDescriptor.ofVoid());
         addDefaultMapping(CLinker.class, CLinker.systemCLinker());
