@@ -110,7 +110,7 @@ public interface SymbolLookup {
      * Loads a library with given name and obtains a symbol lookup suitable to find symbols in that library.
      * The library will be unloaded when the provided memory session is {@linkplain MemorySession#close() closed}.
      * @apiNote The process of resolving a library name is platform-specific. For instance, on POSIX
-     * systems, the library name is resolved using the same process used during a {@code dlopen} function call.
+     * systems, the library name is resolved according to the specification of the {@code dlopen} function.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
