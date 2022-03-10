@@ -55,7 +55,10 @@ import jdk.internal.javac.PreviewFeature;
  * element layout (see {@link SequenceLayout}); a <em>group layout</em> denotes an aggregation of (typically) heterogeneous
  * member layouts (see {@link GroupLayout}).
  * <p>
- * For instance, consider the following struct declaration in C:
+ * Layouts can be optionally associated with a <em>name</em>. A layout name can be referred to when
+ * constructing <a href="MemoryLayout.html#layout-paths"><em>layout paths</em></a>.
+ * <p>
+ * Consider the following struct declaration in C:
  *
  * {@snippet lang=c :
  * typedef struct {
@@ -165,11 +168,6 @@ import jdk.internal.javac.PreviewFeature;
  * long offset1 = (long) offsetHandle.invokeExact(1L); // 8
  * long offset2 = (long) offsetHandle.invokeExact(2L); // 16
  * }
- *
- * <h2>Layout attributes</h2>
- *
- * Layouts can be optionally associated with a <em>name</em>. A layout name can be referred to when
- * constructing <a href="MemoryLayout.html#layout-paths"><em>layout paths</em></a>.
  *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
