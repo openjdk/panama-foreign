@@ -114,8 +114,7 @@ public class TestScopedOperations {
         }), "MemorySession::addCloseAction");
         ScopedOperation.ofScope(session -> MemorySegment.allocateNative(100, session), "MemorySegment::allocateNative");
         ScopedOperation.ofScope(session -> {
-            try {
-                FileChannel fileChannel = FileChannel.open(tempPath, StandardOpenOption.READ, StandardOpenOption.WRITE);
+            try (FileChannel fileChannel = FileChannel.open(tempPath, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                 fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, 10L, session);
             } catch (IOException ex) {
                 fail();
@@ -223,8 +222,7 @@ public class TestScopedOperations {
 
             NATIVE(session -> MemorySegment.allocateNative(10, session)),
             MAPPED(session -> {
-                try {
-                    FileChannel fileChannel = FileChannel.open(Path.of("foo.txt"), StandardOpenOption.READ, StandardOpenOption.WRITE);
+                try (FileChannel fileChannel = FileChannel.open(Path.of("foo.txt"), StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                     return fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, 10L, session);
                 } catch (IOException ex) {
                     throw new AssertionError(ex);

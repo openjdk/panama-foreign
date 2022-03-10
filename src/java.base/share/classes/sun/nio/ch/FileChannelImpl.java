@@ -1069,27 +1069,25 @@ public class FileChannelImpl
         if (offset < 0) throw new IllegalArgumentException("Requested bytes offset must be >= 0.");
         if (size < 0) throw new IllegalArgumentException("Requested bytes size must be >= 0.");
 
-        try (this) {
-            boolean isSync = isSync(mode);
-            int prot = toProt(mode);
-            Unmapper unmapper = mapInternal(mode, offset, size, prot, isSync);
-            int modes = MAP_MEM_SEG_DEFAULT_MODES;
-            if (mode == MapMode.READ_ONLY) {
-                modes |= MAP_MEM_SEG_READ_ONLY;
-            }
-            if (unmapper != null) {
-                AbstractMemorySegmentImpl segment = new MappedMemorySegmentImpl(unmapper.address(), unmapper, size,
-                        modes, (MemorySessionImpl)session);
-                ((MemorySessionImpl)session).addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
-                    @Override
-                    public void cleanup() {
-                        unmapper.unmap();
-                    }
-                });
-                return segment;
-            } else {
-                return new MappedMemorySegmentImpl.EmptyMappedMemorySegmentImpl(modes, (MemorySessionImpl)session);
-            }
+        boolean isSync = isSync(mode);
+        int prot = toProt(mode);
+        Unmapper unmapper = mapInternal(mode, offset, size, prot, isSync);
+        int modes = MAP_MEM_SEG_DEFAULT_MODES;
+        if (mode == MapMode.READ_ONLY) {
+            modes |= MAP_MEM_SEG_READ_ONLY;
+        }
+        if (unmapper != null) {
+            AbstractMemorySegmentImpl segment = new MappedMemorySegmentImpl(unmapper.address(), unmapper, size,
+                    modes, (MemorySessionImpl)session);
+            ((MemorySessionImpl)session).addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
+                @Override
+                public void cleanup() {
+                    unmapper.unmap();
+                }
+            });
+            return segment;
+        } else {
+            return new MappedMemorySegmentImpl.EmptyMappedMemorySegmentImpl(modes, (MemorySessionImpl)session);
         }
     }
 
