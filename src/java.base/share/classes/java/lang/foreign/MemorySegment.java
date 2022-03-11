@@ -86,8 +86,8 @@ import jdk.internal.vm.annotation.ForceInline;
  * <h2>Mapping memory segments from files</h2>
  *
  * It is also possible to obtain a native memory segment backed by a memory-mapped file using the factory method
- * {@link MemorySegment#mapFile(Path, long, long, FileChannel.MapMode, MemorySession)}. Such native memory segments are
- * called <em>mapped memory segments</em>; mapped memory segments are associated with an underlying file descriptor.
+ * {@link FileChannel#map(FileChannel.MapMode, long, long, MemorySession)}. Such native memory segments are called
+ * <em>mapped memory segments</em>; mapped memory segments are associated with an underlying file descriptor.
  * <p>
  * Contents of mapped memory segments can be {@linkplain #force() persisted} and {@linkplain #load() loaded} to and from the underlying file;
  * these capabilities are suitable replacements for some capabilities in the {@link java.nio.MappedByteBuffer} class.
@@ -381,7 +381,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
 
     /**
      * Returns {@code true} if this segment is a mapped segment. A mapped memory segment is
-     * created using the {@link #mapFile(Path, long, long, FileChannel.MapMode, MemorySession)} factory, or a buffer segment
+     * created using the {@link FileChannel#map(FileChannel.MapMode, long, long, MemorySession)} factory, or a buffer segment
      * derived from a {@link java.nio.MappedByteBuffer} using the {@link #ofByteBuffer(ByteBuffer)} factory.
      * @return {@code true} if this segment is a mapped segment.
      */
@@ -950,53 +950,6 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Creates a mapped memory segment that models a memory-mapped region of a file from a given path,
-     * size, offset and memory session.
-     * <p>
-     * If the specified mapping mode is {@linkplain FileChannel.MapMode#READ_ONLY READ_ONLY}, the resulting segment
-     * will be read-only (see {@link #isReadOnly()}).
-     * <p>
-     * The content of a mapped memory segment can change at any time, for example
-     * if the content of the corresponding region of the mapped file is changed by
-     * this (or another) program.  Whether such changes occur, and when they
-     * occur, is operating-system dependent and therefore unspecified.
-     * <p>
-     * All or part of a mapped memory segment may become
-     * inaccessible at any time, for example if the backing mapped file is truncated.  An
-     * attempt to access an inaccessible region of a mapped memory segment will not
-     * change the segment's content and will cause an unspecified exception to be
-     * thrown either at the time of the access or at some later time.  It is
-     * therefore strongly recommended that appropriate precautions be taken to
-     * avoid the manipulation of a mapped file by this (or another) program, except to read or write
-     * the file's content.
-     *
-     * @implNote When obtaining a mapped segment from a newly created file, the initialization state of the contents of the block
-     * of mapped memory associated with the returned mapped memory segment is unspecified and should not be relied upon.
-     *
-     * @param path the path to the file to memory map.
-     * @param bytesOffset the offset (expressed in bytes) within the file at which the mapped segment is to start.
-     * @param bytesSize the size (in bytes) of the mapped memory backing the memory segment.
-     * @param mapMode a file mapping mode, see {@link FileChannel#map(FileChannel.MapMode, long, long)}; the mapping mode
-     *                might affect the behavior of the returned memory mapped segment (see {@link #force()}).
-     * @param session the segment memory session.
-     * @return a new mapped memory segment.
-     * @throws IllegalArgumentException if {@code bytesOffset < 0}, {@code bytesSize < 0}, or if {@code path} is not associated
-     * with the default file system.
-     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
-     * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
-     * @throws UnsupportedOperationException if an unsupported map mode is specified.
-     * @throws IOException if the specified path does not point to an existing file, or if some other I/O error occurs.
-     * @throws  SecurityException If a security manager is installed, and it denies an unspecified permission required by the implementation.
-     * In the case of the default provider, the {@link SecurityManager#checkRead(String)} method is invoked to check
-     * read access if the file is opened for reading. The {@link SecurityManager#checkWrite(String)} method is invoked to check
-     * write access if the file is opened for writing.
-     */
-    static MemorySegment mapFile(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode, MemorySession session) throws IOException {
-        Objects.requireNonNull(session);
-        return MappedMemorySegmentImpl.makeMappedSegment(path, bytesOffset, bytesSize, mapMode, session);
-    }
-
-    /**
      * Performs a bulk copy from source segment to destination segment. More specifically, the bytes at offset
      * {@code srcOffset} through {@code srcOffset + bytes - 1} in the source segment are copied into the destination
      * segment at offset {@code dstOffset} through {@code dstOffset + bytes - 1}.
@@ -1008,7 +961,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * <p>
      * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and the destination segment
      * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
-     * For example, this may occur if the same file is {@linkplain MemorySegment#mapFile mapped} to two segments.
+     * For example, this may occur if the same file is {@linkplain FileChannel#map mapped} to two segments.
      * <p>
      * Calling this method is equivalent to the following code:
      * {@snippet lang=java :
@@ -1051,7 +1004,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * <p>
      * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and the destination segment
      * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
-     * For example, this may occur if the same file is {@linkplain MemorySegment#mapFile mapped} to two segments.
+     * For example, this may occur if the same file is {@linkplain FileChannel#map mapped} to two segments.
      * @param srcSegment the source segment.
      * @param srcElementLayout the element layout associated with the source segment.
      * @param srcOffset the starting offset, in bytes, of the source segment.
