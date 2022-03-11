@@ -946,13 +946,13 @@ public abstract class FileChannel
      *
      * @throws NonReadableChannelException
      *         If the {@code mode} is {@link MapMode#READ_ONLY READ_ONLY} or
-     *         an implementation specific map mode requiring read access
+     *         an implementation specific map mode requiring read access,
      *         but this channel was not opened for reading
      *
      * @throws NonWritableChannelException
-     *         If the {@code mode} is {@link MapMode#READ_WRITE READ_WRITE}.
+     *         If the {@code mode} is {@link MapMode#READ_WRITE READ_WRITE},
      *         {@link MapMode#PRIVATE PRIVATE} or an implementation specific
-     *         map mode requiring write access but this channel was not
+     *         map mode requiring write access, but this channel was not
      *         opened for both reading and writing
      *
      * @throws IllegalArgumentException
@@ -1029,13 +1029,13 @@ public abstract class FileChannel
      *
      * @throws NonReadableChannelException
      *         If the {@code mode} is {@link MapMode#READ_ONLY READ_ONLY} or
-     *         an implementation specific map mode requiring read access
+     *         an implementation specific map mode requiring read access,
      *         but this channel was not opened for reading.
      *
      * @throws NonWritableChannelException
-     *         If the {@code mode} is {@link MapMode#READ_WRITE READ_WRITE}.
+     *         If the {@code mode} is {@link MapMode#READ_WRITE READ_WRITE},
      *         {@link MapMode#PRIVATE PRIVATE} or an implementation specific
-     *         map mode requiring write access but this channel was not
+     *         map mode requiring write access, but this channel was not
      *         opened for both reading and writing.
      *
      * @throws IOException
