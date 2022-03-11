@@ -25,7 +25,7 @@
  */
 
 /**
- * <p> Classes to support low-level and efficient foreign memory/function access, directly from Java.
+ * <p>Provides low-level access to memory and functions outside the Java runtime.
  *
  * <h2>Foreign memory access</h2>
  *
