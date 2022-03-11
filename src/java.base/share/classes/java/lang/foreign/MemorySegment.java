@@ -64,9 +64,6 @@ import jdk.internal.vm.annotation.ForceInline;
  * <p>
  * Non-platform classes should not implement {@linkplain MemorySegment} directly.
  *
- * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
- * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
- *
  * <h2>Constructing memory segments</h2>
  *
  * There are multiple ways to obtain a memory segment. First, memory segments backed by off-heap memory can
@@ -328,21 +325,21 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     long byteSize();
 
     /**
-     * Obtains a new memory segment view whose base address is the same as the base address of this segment plus a given offset,
-     * and whose new size is specified by the given argument.
+     * Returns a slice of this memory segment, at given offset. The returned segment's base address is the base address
+     * of this segment plus a given offset; its size is specified by the given argument.
      *
      * @see #asSlice(long)
      *
      * @param offset The new segment base offset (relative to the current segment base address), specified in bytes.
      * @param newSize The new segment size, specified in bytes.
-     * @return a new memory segment view with updated base/limit addresses.
+     * @return a slice of this memory segment.
      * @throws IndexOutOfBoundsException if {@code offset < 0}, {@code offset > byteSize()}, {@code newSize < 0}, or {@code newSize > byteSize() - offset}
      */
     MemorySegment asSlice(long offset, long newSize);
 
     /**
-     * Obtains a new memory segment view whose base address is the same as the base address of this segment plus a given offset,
-     * and whose new size is computed by subtracting the specified offset from this segment size.
+     * Returns a slice of this memory segment, at given offset. The returned segment's base address is the base address
+     * of this segment plus a given offset; its size is computed by subtracting the specified offset from this segment size.
      * <p>
      * Equivalent to the following code:
      * {@snippet lang=java :
@@ -352,7 +349,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @see #asSlice(long, long)
      *
      * @param offset The new segment base offset (relative to the current segment base address), specified in bytes.
-     * @return a new memory segment view with updated base/limit addresses.
+     * @return a slice of this memory segment.
      * @throws IndexOutOfBoundsException if {@code offset < 0}, or {@code offset > byteSize()}.
      */
     default MemorySegment asSlice(long offset) {
@@ -366,7 +363,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     boolean isReadOnly();
 
     /**
-     * Obtains a read-only view of this segment. The resulting segment will be identical to this one, but
+     * Returns a read-only view of this segment. The resulting segment will be identical to this one, but
      * attempts to overwrite the contents of the returned segment will cause runtime exceptions.
      * @return a read-only view of this segment
      * @see #isReadOnly()
@@ -739,7 +736,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
 
 
     /**
-     * Creates a new buffer memory segment that models the memory associated with the given byte
+     * Creates a buffer memory segment that models the memory associated with the given byte
      * buffer. The segment starts relative to the buffer's position (inclusive)
      * and ends relative to the buffer's limit (exclusive).
      * <p>
@@ -751,84 +748,84 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * The resulting memory segment keeps a reference to the backing buffer, keeping it <em>reachable</em>.
      *
      * @param bb the byte buffer backing the buffer memory segment.
-     * @return a new buffer memory segment.
+     * @return a buffer memory segment.
      */
     static MemorySegment ofByteBuffer(ByteBuffer bb) {
         return AbstractMemorySegmentImpl.ofBuffer(bb);
     }
 
     /**
-     * Creates a new array memory segment that models the memory associated with a given heap-allocated byte array.
+     * Creates an array memory segment that models the memory associated with a given heap-allocated byte array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
+     * @return an array memory segment.
      */
     static MemorySegment ofArray(byte[] arr) {
         return HeapMemorySegmentImpl.OfByte.fromArray(arr);
     }
 
     /**
-     * Creates a new array memory segment that models the memory associated with a given heap-allocated char array.
+     * Creates an array memory segment that models the memory associated with a given heap-allocated char array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
+     * @return an array memory segment.
      */
     static MemorySegment ofArray(char[] arr) {
         return HeapMemorySegmentImpl.OfChar.fromArray(arr);
     }
 
     /**
-     * Creates a new array memory segment that models the memory associated with a given heap-allocated short array.
+     * Creates an array memory segment that models the memory associated with a given heap-allocated short array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
+     * @return an array memory segment.
      */
     static MemorySegment ofArray(short[] arr) {
         return HeapMemorySegmentImpl.OfShort.fromArray(arr);
     }
 
     /**
-     * Creates a new array memory segment that models the memory associated with a given heap-allocated int array.
+     * Creates an array memory segment that models the memory associated with a given heap-allocated int array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
+     * @return an array memory segment.
      */
     static MemorySegment ofArray(int[] arr) {
         return HeapMemorySegmentImpl.OfInt.fromArray(arr);
     }
 
     /**
-     * Creates a new array memory segment that models the memory associated with a given heap-allocated float array.
+     * Creates an array memory segment that models the memory associated with a given heap-allocated float array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
+     * @return an array memory segment.
      */
     static MemorySegment ofArray(float[] arr) {
         return HeapMemorySegmentImpl.OfFloat.fromArray(arr);
     }
 
     /**
-     * Creates a new array memory segment that models the memory associated with a given heap-allocated long array.
+     * Creates an array memory segment that models the memory associated with a given heap-allocated long array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
+     * @return an array memory segment.
      */
     static MemorySegment ofArray(long[] arr) {
         return HeapMemorySegmentImpl.OfLong.fromArray(arr);
     }
 
     /**
-     * Creates a new array memory segment that models the memory associated with a given heap-allocated double array.
+     * Creates an array memory segment that models the memory associated with a given heap-allocated double array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
+     * @return an array memory segment.
      */
     static MemorySegment ofArray(double[] arr) {
         return HeapMemorySegmentImpl.OfDouble.fromArray(arr);
@@ -836,7 +833,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
 
 
     /**
-     * Creates a new native memory segment with given size, base address, and memory session.
+     * Creates a native memory segment with given size, base address, and memory session.
      * This method can be useful when interacting with custom
      * native memory sources (e.g. custom allocators), where an address to some
      * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
@@ -856,7 +853,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param address the returned segment's base address.
      * @param bytesSize the desired size.
      * @param session the native segment memory session.
-     * @return a new native memory segment with given base address, size and memory session.
+     * @return a native memory segment with given base address, size and memory session.
      * @throws IllegalArgumentException if {@code bytesSize < 0}.
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
      * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
@@ -876,8 +873,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Creates a new native memory segment that models a newly allocated block of off-heap memory with given layout
-     * and memory session. A client is responsible make sure that the memory session associated with the returned segment is closed
+     * Creates a native memory segment with given layout and memory session.
+     * A client is responsible make sure that the memory session associated with the returned segment is closed
      * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
      * This is equivalent to the following code:
@@ -900,8 +897,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Creates a new native memory segment that models a newly allocated block of off-heap memory with given size (in bytes)
-     * and memory session. A client is responsible make sure that the memory session associated with the returned segment is closed
+     * Creates a native memory segment with given size (in bytes) and memory session.
+     * A client is responsible make sure that the memory session associated with the returned segment is closed
      * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
      * This is equivalent to the following code:
@@ -923,10 +920,9 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Creates a new native memory segment that models a newly allocated block of off-heap memory with given size
-     * (in bytes), alignment constraint (in bytes) and memory session. A client is responsible make sure that the memory
-     * session associated with the returned segment is closed when the segment is no longer in use.
-     * Failure to do so will result in off-heap memory leaks.
+     * Creates a native memory segment with given size (in bytes), alignment constraint (in bytes) and memory session.
+     * A client is responsible make sure that the memory session associated with the returned segment is closed when the
+     * segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
      * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      *
@@ -954,7 +950,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Creates a new mapped memory segment that models a memory-mapped region of a file from a given path,
+     * Creates a mapped memory segment that models a memory-mapped region of a file from a given path,
      * size, offset and memory session.
      * <p>
      * If the specified mapping mode is {@linkplain FileChannel.MapMode#READ_ONLY READ_ONLY}, the resulting segment
@@ -1777,8 +1773,9 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
 
 
     /**
-     * Copies a number of elements from a source segment to a destination array,
-     * starting at a given segment offset (expressed in bytes), and a given array index, using the given source element layout.
+     * Copies a number of elements from a source memory segment to a destination array. The elements, whose size and alignment
+     * constraints are specified by the given layout, are read from the source segment, starting at a given offset
+     * (expressed in bytes), and are copied into the destination array, at a given index.
      * Supported array types are {@code byte[]}, {@code char[]}, {@code short[]}, {@code int[]}, {@code float[]}, {@code long[]} and {@code double[]}.
      * @param srcSegment the source segment.
      * @param srcLayout the source element layout. If the byte order associated with the layout is
@@ -1826,8 +1823,9 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Copies a number of elements from a source array to a destination segment,
-     * starting at a given array index, and a given segment offset (expressed in bytes), using the given destination element layout.
+     * Copies a number of elements from a source array to a destination memory segment. The elements, whose size and alignment
+     * constraints are specified by the given layout, are read from the source array, starting at a given index,
+     * and are copied into the destination segment, at a given offset (expressed in bytes).
      * Supported array types are {@code byte[]}, {@code char[]}, {@code short[]}, {@code int[]}, {@code float[]}, {@code long[]} and {@code double[]}.
      * @param srcArray the source array.
      * @param srcIndex the starting index of the source array.

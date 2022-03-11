@@ -33,7 +33,7 @@ import java.util.Optional;
 import jdk.internal.javac.PreviewFeature;
 
 /**
- * A sequence layout. A sequence layout is used to denote a repetition of a given layout, also called the sequence layout's <em>element layout</em>.
+ * A compound layout that denotes a repetition of a given <em>element layout</em>.
  * The repetition count is said to be the sequence layout's <em>element count</em>. A finite sequence can be thought of as a
  * group layout where the sequence layout's element layout is repeated a number of times that is equal to the sequence
  * layout's element count. In other words this layout:
@@ -59,11 +59,8 @@ import jdk.internal.javac.PreviewFeature;
  * occur. For example, in a future release, synchronization may fail.
  * The {@code equals} method should be used for comparisons.
  *
- * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
- * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
- *
  * @implSpec
- * This class is immutable and thread-safe.
+ * This class is immutable and thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
  * @since 19
  */
@@ -98,10 +95,10 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
     }
 
     /**
-     * Obtains a new sequence layout with same element layout, alignment constraints and name as this sequence layout
-     * but with the new specified element count.
+     * Returns a sequence layout with same element layout, alignment constraints and name as this sequence layout,
+     * but with the specified element count.
      * @param elementCount the new element count.
-     * @return a new sequence with given element count.
+     * @return a sequence layout with given element count.
      * @throws IllegalArgumentException if {@code elementCount < 0}.
      */
     public SequenceLayout withElementCount(long elementCount) {
@@ -110,7 +107,8 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
     }
 
     /**
-     * Returns a new sequence layout where element layouts in the flattened projection of this
+     * Re-arrange the elements in this sequence layout into a multi-dimensional sequence layout.
+     * The resulting layout is a sequence layout where element layouts in the flattened projection of this
      * sequence layout (see {@link #flatten()}) are re-arranged into one or more nested sequence layouts
      * according to the provided element counts. This transformation preserves the layout size;
      * that is, multiplying the provided element counts must yield the same element count
@@ -134,7 +132,7 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
      * var reshapeSeqImplicit2 = seq.reshape(2, -1);
      * }
      * @param elementCounts an array of element counts, of which at most one can be {@code -1}.
-     * @return a new sequence layout where element layouts in the flattened projection of this
+     * @return a sequence layout where element layouts in the flattened projection of this
      * sequence layout (see {@link #flatten()}) are re-arranged into one or more nested sequence layouts.
      * @throws UnsupportedOperationException if this sequence layout does not have an element count.
      * @throws IllegalArgumentException if two or more element counts are set to {@code -1}, or if one
@@ -185,8 +183,8 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
     }
 
     /**
-     * Returns a new, flattened sequence layout whose element layout is the first non-sequence
-     * element layout found by recursively traversing the element layouts of this sequence layout.
+     * Returns a flattened sequence layout. The element layout of the returned sequence layout
+     * is the first non-sequence element layout found by recursively traversing the element layouts of this sequence layout.
      * This transformation preserves the layout size; nested sequence layout in this sequence layout will
      * be dropped and their element counts will be incorporated into that of the returned sequence layout.
      * For instance, given a sequence layout of the kind:
@@ -197,7 +195,7 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
      * {@snippet lang=java :
      * var flattenedSeq = MemoryLayout.sequenceLayout(12, ValueLayout.JAVA_INT);
      * }
-     * @return a new sequence layout with the same size as this layout (but, possibly, with different
+     * @return a sequence layout with the same size as this layout (but, possibly, with different
      * element count), whose element layout is not a sequence layout.
      * @throws UnsupportedOperationException if this sequence layout, or one of the nested sequence layouts being
      * flattened, does not have an element count.

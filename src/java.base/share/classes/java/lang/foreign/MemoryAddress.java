@@ -27,6 +27,8 @@
 package java.lang.foreign;
 
 import java.nio.ByteOrder;
+
+import jdk.internal.ValueBased;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.javac.PreviewFeature;
 import jdk.internal.reflect.CallerSensitive;
@@ -70,9 +72,6 @@ import java.lang.invoke.MethodHandle;
  * use instances for synchronization, or unpredictable behavior may occur. For example, in a future release,
  * synchronization may fail. The {@code equals} method should be used for comparisons.
  *
- * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
- * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
- *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
@@ -87,9 +86,10 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     long toRawLongValue();
 
     /**
-     * Creates a new memory address with given offset (in bytes), which might be negative, from current one.
+     * Returns a memory address at given offset from this address.
      * @param offset specified offset (in bytes), relative to this address, which should be used to create the new address.
-     * @return a new memory address with given offset from current one.
+     *               Might be negative.
+     * @return a memory address with given offset from current one.
      */
     MemoryAddress addOffset(long offset);
 
@@ -155,14 +155,14 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     int hashCode();
 
     /**
-     * The native memory address instance modelling the {@code NULL} address.
+     * The memory address instance modelling the {@code NULL} address.
      */
     MemoryAddress NULL = new MemoryAddressImpl(0L);
 
     /**
-     * Obtain a native memory address instance from given long address.
-     * @param value the long address.
-     * @return the new memory address instance.
+     * Creates a memory address from a given long value.
+     * @param value the long value representing a raw address.
+     * @return a new memory address instance.
      */
     static MemoryAddress ofLong(long value) {
         return value == 0 ?

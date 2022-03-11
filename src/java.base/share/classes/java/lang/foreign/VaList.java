@@ -38,7 +38,7 @@ import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
 /**
- * An interface that models a variable argument list, similar in functionality to a C {@code va_list}.
+ * A variable argument list, similar in functionality to a C {@code va_list}.
  * <p>
  * A variable argument list is a stateful cursor used to iterate over a set of arguments. A variable argument list
  * can be passed by reference e.g. to a {@linkplain CLinker#downcallHandle(FunctionDescriptor) downcall method handle}.
@@ -53,9 +53,6 @@ import jdk.internal.reflect.Reflection;
  *
  * This class is not thread safe, and all accesses should occur within a single thread
  * (regardless of the memory session associated with the variable arity list).
- *
- * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
- * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
  *
  * @since 19
  */
@@ -164,7 +161,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
     MemoryAddress address();
 
     /**
-     * Constructs a new variable argument list from a memory address pointing to an existing variable argument list,
+     * Creates a variable argument list from a memory address pointing to an existing variable argument list,
      * with given memory session.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
@@ -190,7 +187,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
     }
 
     /**
-     * Constructs a new variable argument list using a builder (see {@link Builder}), with given
+     * Creates a variable argument list using a builder (see {@link Builder}), with given
      * memory session.
      * <p>
      * If this method needs to allocate native memory, such memory will be managed by the given
@@ -223,10 +220,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
     }
 
     /**
-     * A builder interface used to construct a variable argument list.
-     *
-     * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
-     * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
+     * A builder used to construct a {@linkplain VaList variable argument list}.
      *
      * @since 19
      */

@@ -78,14 +78,6 @@ import jdk.internal.javac.PreviewFeature;
  *     )
  * ).withName("TaggedValues");
  * }
- * <p>
- * All implementations of this interface must be <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>;
- * programmers should treat instances that are {@linkplain #equals(Object) equal} as interchangeable and should not
- * use instances for synchronization, or unpredictable behavior may occur. For example, in a future release,
- * synchronization may fail. The {@code equals} method should be used for comparisons.
- *
- * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
- * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
  *
  * <h2><a id = "layout-align">Size, alignment and byte order</a></h2>
  *
@@ -178,9 +170,7 @@ import jdk.internal.javac.PreviewFeature;
 public sealed interface MemoryLayout extends Constable permits AbstractLayout, SequenceLayout, GroupLayout, PaddingLayout, ValueLayout {
 
     /**
-     * {@return an {@link Optional} containing the nominal descriptor for this
-     * layout, if one can be constructed, or an empty {@link Optional}
-     * if one cannot be constructed}
+     * {@return the nominal descriptor for this layout, if one can be constructed}
      */
     @Override
     Optional<? extends DynamicConstantDesc<? extends MemoryLayout>> describeConstable();
@@ -197,16 +187,17 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     long byteSize();
 
     /**
-     * {@return the <em>name</em> (if any) associated with this layout}
+     * {@return the name (if any) associated with this layout}
      * @see MemoryLayout#withName(String)
      */
     Optional<String> name();
 
     /**
-     * Creates a new layout which features the desired layout <em>name</em>.
+     * Returns a memory layout with same size and alignment constraints as this layout,
+     * but with the specified name.
      *
      * @param name the layout name.
-     * @return a new layout which is the same as this layout, except for the <em>name</em> associated with it.
+     * @return a memory layout with given name.
      * @see MemoryLayout#name()
      */
     MemoryLayout withName(String name);
@@ -252,10 +243,11 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     }
 
     /**
-     * Creates a new layout which features the desired alignment constraint.
+     * Returns a memory layout with same size and name as this layout,
+     * but with the specified alignment constraints (in bits).
      *
      * @param bitAlignment the layout alignment constraint, expressed in bits.
-     * @return a new layout which is the same as this layout, except for the alignment constraint associated with it.
+     * @return a memory layout with given alignment constraints.
      * @throws IllegalArgumentException if {@code bitAlignment} is not a power of two, or if it's less than 8.
      */
     MemoryLayout withBitAlignment(long bitAlignment);
@@ -502,7 +494,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     boolean isPadding();
 
     /**
-     * Instances of this class are used to form <a href="MemoryLayout.html#layout-paths"><em>layout paths</em></a>. There
+     * An element in a <a href="MemoryLayout.html#layout-paths"><em>layout path</em></a>. There
      * are two kinds of path elements: <em>group path elements</em> and <em>sequence path elements</em>. Group
      * path elements are used to select a given named member layout within a {@link GroupLayout}. Sequence
      * path elements are used to select a sequence element layout within a {@link SequenceLayout}; selection
@@ -511,10 +503,10 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * sequence path elements, it acquires additional <em>free dimensions</em>.
      *
      * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
-     * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
+     * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown.</p>
      *
      * @implSpec
-     * Implementations of this interface are immutable and thread-safe.
+     * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
      *
      * @since 19
      */
@@ -556,8 +548,8 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
         }
 
         /**
-         * Returns a path element which selects the element layout in a <em>range</em> of positions in a given the sequence layout,
-         * where the range is expressed as a pair of starting index (inclusive) {@code S} and step factor (which can also be negative)
+         * Returns a path element which selects the element layout in a <em>range</em> of positions in a given the sequence layout.
+         * The range is expressed as a pair of starting index (inclusive) {@code S} and step factor (which can also be negative)
          * {@code F}.
          * If a path with free dimensions {@code n} is combined with the path element returned by this method,
          * the number of free dimensions of the resulting path will be {@code 1 + n}. If the free dimension associated
@@ -629,7 +621,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     String toString();
 
     /**
-     * Create a new padding layout with given size.
+     * Creates a padding layout with given size.
      *
      * @param size the padding size in bits.
      * @return the new selector layout.
@@ -656,7 +648,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * </ul>
      * @param carrier the value layout carrier.
      * @param order the value layout's byte order.
-     * @return a new value layout.
+     * @return a value layout with given Java carrier and byte-order.
      * @throws IllegalArgumentException if the carrier type is not supported.
      */
     static ValueLayout valueLayout(Class<?> carrier, ByteOrder order) {
@@ -686,7 +678,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     }
 
     /**
-     * Create a new sequence layout with given element layout and element count.
+     * Creates a sequence layout with given element layout and element count.
      *
      * @param elementCount the sequence element count.
      * @param elementLayout the sequence element layout.
@@ -699,10 +691,10 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     }
 
     /**
-     * Create a new <em>struct</em> group layout with given member layouts.
+     * Creates a struct layout with given member layouts.
      *
-     * @param elements The member layouts of the <em>struct</em> group layout.
-     * @return a new <em>struct</em> group layout with given member layouts.
+     * @param elements The member layouts of the struct layout.
+     * @return a struct layout with given member layouts.
      */
     static GroupLayout structLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
@@ -713,10 +705,10 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     }
 
     /**
-     * Create a new <em>union</em> group layout with given member layouts.
+     * Creates a union layout with given member layouts.
      *
-     * @param elements The member layouts of the <em>union</em> layout.
-     * @return a new <em>union</em> group layout with given member layouts.
+     * @param elements The member layouts of the union layout.
+     * @return a union layout with given member layouts.
      */
     static GroupLayout unionLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);

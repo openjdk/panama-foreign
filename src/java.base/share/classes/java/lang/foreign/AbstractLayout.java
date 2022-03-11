@@ -144,24 +144,48 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
         return this instanceof PaddingLayout;
     }
 
+    /**
+     * {@return the hash code value for this layout}
+     */
     @Override
     public int hashCode() {
         return name.hashCode() << Long.hashCode(alignment);
     }
 
+    /**
+     * Compares the specified object with this layout for equality. Returns {@code true} if and only if the specified
+     * object is also a layout, and it is equal to this layout. Two layouts are considered equal if they are of
+     * the same kind, have the same size, name and alignment constraints. Furthermore, depending on the layout kind, additional
+     * conditions must be satisfied:
+     * <ul>
+     *     <li>two value layouts are considered equal if they have the same byte order (see {@link ValueLayout#order()})</li>
+     *     <li>two sequence layouts are considered equal if they have the same element count (see {@link SequenceLayout#elementCount()}), and
+     *     if their element layouts (see {@link SequenceLayout#elementLayout()}) are also equal</li>
+     *     <li>two group layouts are considered equal if they are of the same kind (see {@link GroupLayout#isStruct()},
+     *     {@link GroupLayout#isUnion()}) and if their member layouts (see {@link GroupLayout#memberLayouts()}) are also equal</li>
+     * </ul>
+     *
+     * @param that the object to be compared for equality with this layout.
+     * @return {@code true} if the specified object is equal to this layout.
+     */
     @Override
-    public boolean equals(Object other) {
-        if (this == other) {
+    public boolean equals(Object that) {
+        if (this == that) {
             return true;
         }
 
-        if (!(other instanceof AbstractLayout)) {
+        if (!(that instanceof AbstractLayout)) {
             return false;
         }
 
-        return Objects.equals(name, ((AbstractLayout) other).name) &&
-                Objects.equals(alignment, ((AbstractLayout) other).alignment);
+        return Objects.equals(name, ((AbstractLayout) that).name) &&
+                Objects.equals(alignment, ((AbstractLayout) that).alignment);
     }
+
+    /**
+     * {@return the string representation of this layout}
+     */
+    public abstract String toString();
 
     /*** Helper constants for implementing Layout::describeConstable ***/
 

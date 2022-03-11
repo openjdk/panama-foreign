@@ -229,5 +229,9 @@
  * can be used). If this option is specified, access to restricted methods is only granted to the modules listed by that
  * option. If this option is not specified, access to restricted method is enabled for all modules, but
  * access to restricted methods will result in runtime warnings.
+ * <p>
+ * For every class in this package, unless specified otherwise, any method arguments of reference
+ * type must not be null, and any null argument will elicit a {@code NullPointerException}.  This fact is not individually
+ * documented for methods of this API.
  */
 package java.lang.foreign;
