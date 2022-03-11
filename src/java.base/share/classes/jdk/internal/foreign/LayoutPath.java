@@ -189,7 +189,7 @@ public class LayoutPath {
     // Layout path construction
 
     public static LayoutPath rootPath(MemoryLayout layout) {
-        return new LayoutPath(layout, 0L, EMPTY_STRIDES,null);
+        return new LayoutPath(layout, 0L, EMPTY_STRIDES, null);
     }
 
     private static LayoutPath nestedPath(MemoryLayout layout, long offset, long[] strides, LayoutPath encl) {
