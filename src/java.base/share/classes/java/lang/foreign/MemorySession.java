@@ -48,7 +48,7 @@ import jdk.internal.javac.PreviewFeature;
  * <ul>
  *     <li>closing the memory session associated with a {@linkplain MemorySegment#allocateNative(long, long, MemorySession) native memory segment}
  *     results in <em>freeing</em> the native memory associated with it;</li>
- *     <li>closing the memory session associated with a {@linkplain MemorySegment#mapFile(Path, long, long, FileChannel.MapMode, MemorySession) mapped memory segment}
+ *     <li>closing the memory session associated with a {@linkplain FileChannel#map(FileChannel.MapMode, long, long, MemorySession) mapped memory segment}
  *     results in the backing memory-mapped file to be unmapped;</li>
  *     <li>closing the memory session associated with an {@linkplain CLinker#upcallStub(MethodHandle, FunctionDescriptor, MemorySession) upcall stub}
  *     results in releasing the stub;</li>
