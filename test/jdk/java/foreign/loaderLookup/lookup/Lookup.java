@@ -24,6 +24,7 @@
 package lookup;
 
 import java.lang.foreign.Addressable;
+import java.lang.foreign.SymbolLookup;
 
 public class Lookup {
     static {
@@ -31,6 +32,6 @@ public class Lookup {
     }
 
     public static Addressable fooSymbol() {
-        return Lookup.class.getClassLoader().findNative("foo").get();
+        return SymbolLookup.loaderLookup().lookup("foo").get();
     }
 }

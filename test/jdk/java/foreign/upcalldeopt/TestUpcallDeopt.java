@@ -65,7 +65,7 @@ public class TestUpcallDeopt extends NativeTestHelper {
         try {
             System.loadLibrary("UpcallDeopt");
             MH_foo = linker.downcallHandle(
-                    TestUpcallDeopt.class.getClassLoader().findNative("foo").orElseThrow(),
+                    findNativeOrThrow("foo"),
                     FunctionDescriptor.ofVoid(C_POINTER, C_INT, C_INT, C_INT, C_INT));
             MH_m = lookup().findStatic(TestUpcallDeopt.class, "m",
                     MethodType.methodType(void.class, int.class, int.class, int.class, int.class));

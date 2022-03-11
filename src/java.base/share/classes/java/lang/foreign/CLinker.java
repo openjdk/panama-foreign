@@ -105,10 +105,6 @@ import jdk.internal.reflect.Reflection;
  * downcall method handles (as {@link MemorySegment} implements the {@link Addressable} interface) and,
  * when no longer required, they can be {@link MemorySession#close() released}, via their associated {@linkplain MemorySession session}.
  *
- * <h2>Symbol lookup</h2>
- * Clients can {@linkplain #lookup(String) look up} symbols in the standard libraries associated with this linker.
- * The set of symbols available for lookup is unspecified, as it depends on the platform and on the operating system.
- *
  * <h2>Safety considerations</h2>
  *
  * Obtaining downcall method handle is intrinsically unsafe. A symbol in a native library does not, in general,
@@ -159,16 +155,6 @@ public sealed interface CLinker permits AbstractLinker {
     static CLinker systemCLinker() {
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), CLinker.class, "systemCLinker");
         return SharedUtils.getSystemLinker();
-    }
-
-    /**
-     * Look up a symbol in the standard libraries associated with this linker.
-     * The set of symbols available for lookup is unspecified, as it depends on the platform and on the operating system.
-     * @param name the symbol name
-     * @return a zero-length segment, whose base address is the symbol address (if any).
-     */
-    default Optional<MemorySegment> lookup(String name) {
-        return SystemLookup.getInstance().lookup(name);
     }
 
     /**

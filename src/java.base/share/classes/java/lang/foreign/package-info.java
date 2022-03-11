@@ -95,10 +95,10 @@
  * operation either succeeds - and accesses a valid memory location - or fails.
  *
  * <h2>Foreign function access</h2>
- * The key abstractions introduced to support foreign function access are {@link java.lang.foreign.FunctionDescriptor} and
- * {@link java.lang.foreign.CLinker}.
- * The first is used to model the signature of foreign functions, while the second provides linking capabilities
- * which allows modelling foreign functions as {@link java.lang.invoke.MethodHandle} instances,
+ * The key abstractions introduced to support foreign function access are {@link java.lang.foreign.SymbolLookup},
+ * {@link java.lang.foreign.FunctionDescriptor} and {@link java.lang.foreign.CLinker}. The first is used to look up symbols
+ * inside native libraries; the second is used to model the signature of foreign functions, while the third provides
+ * linking capabilities which allows modelling foreign functions as {@link java.lang.invoke.MethodHandle} instances,
  * so that clients can perform foreign function calls directly in Java, without the need for intermediate layers of native
  * code (as is the case with the <a href="{@docRoot}/../specs/jni/index.html">Java Native Interface (JNI)</a>).
  * <p>
@@ -108,7 +108,7 @@
  * {@snippet lang=java :
  * var linker = CLinker.systemCLinker();
  * MethodHandle strlen = linker.downcallHandle(
- *     linker.lookup("strlen").get(),
+ *     SymbolLookup.systemLookup().lookup("strlen").get(),
  *     FunctionDescriptor.of(ValueLayout.JAVA_LONG, ValueLayout.ADDRESS)
  * );
  *
@@ -119,8 +119,8 @@
  * }
  * }
  *
- * Here, we obtain a {@linkplain java.lang.foreign.CLinker#systemCLinker() linker instance} and we use it
- * to {@linkplain java.lang.foreign.CLinker#lookup(java.lang.String) look up} the {@code strlen} symbol in the
+ * Here, we obtain a {@linkplain java.lang.foreign.SymbolLookup#systemLookup() system lookup} and we use it
+ * to {@linkplain java.lang.foreign.SymbolLookup#lookup(java.lang.String) look up} the {@code strlen} symbol in the
  * standard C library; a <em>downcall method handle</em> targeting said symbol is subsequently
  * {@linkplain java.lang.foreign.CLinker#downcallHandle(java.lang.foreign.FunctionDescriptor) obtained}.
  * To complete the linking successfully, we must provide a {@link java.lang.foreign.FunctionDescriptor} instance,

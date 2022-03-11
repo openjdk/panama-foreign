@@ -65,7 +65,7 @@ public class TestVarArgs extends NativeTestHelper {
         System.loadLibrary("VarArgs");
     }
 
-    static final Addressable VARARGS_ADDR = findNativeOrThrow(TestVarArgs.class, "varargs");
+    static final Addressable VARARGS_ADDR = findNativeOrThrow("varargs");
 
     static final int WRITEBACK_BYTES_PER_ARG = 8;
 

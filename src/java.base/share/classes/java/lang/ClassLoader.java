@@ -30,9 +30,6 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.File;
-import java.lang.foreign.MemoryAddress;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -49,7 +46,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -59,7 +55,6 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.ClassLoaders;
@@ -2459,28 +2454,6 @@ public abstract class ClassLoader {
             return loader.libraries.find(entryName);
         }
     }
-
-    /**
-     * Finds the address of a native symbol with given name, in one of the libraries {@linkplain System#loadLibrary(String) associated}
-     * with this classloader.
-     *
-     * @param name the symbol name.
-     * @return a zero-length segment, whose base address is the symbol address (if any).
-     * @throws NullPointerException if name is null.
-     * @see System#load(String)
-     * @see System#loadLibrary(String)
-     */
-    public final Optional<MemorySegment> findNative(String name) {
-        Objects.requireNonNull(name);
-
-        MemoryAddress addr = MemoryAddress.ofLong(findNative(this, name));
-        return addr == MemoryAddress.NULL? Optional.empty()
-                : Optional.of(MemorySegment.ofAddress(addr, 0L, loaderScope));
-    }
-
-    // A memory session which keeps this loader reachable. Useful when returning
-    // segments associated with libraries loaded by this loader.
-    private final MemorySession loaderScope = MemorySessionImpl.heapSession(this);
 
     // -- Assertion management --
 

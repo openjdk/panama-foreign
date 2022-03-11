@@ -36,6 +36,7 @@ import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
+import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.util.concurrent.TimeUnit;
 
@@ -56,9 +57,10 @@ public class VaList extends CLayouts {
     static final MethodHandle MH_vaList;
 
     static {
-        MH_ellipsis = linker.downcallHandle(VaList.class.getClassLoader().findNative("ellipsis").get(),
+        SymbolLookup loaderLibs = SymbolLookup.loaderLookup();
+        MH_ellipsis = linker.downcallHandle(loaderLibs.lookup("ellipsis").get(),
                 FunctionDescriptor.ofVoid(C_INT).asVariadic(C_INT, C_DOUBLE, C_LONG_LONG));
-        MH_vaList = linker.downcallHandle(VaList.class.getClassLoader().findNative("vaList").get(),
+        MH_vaList = linker.downcallHandle(loaderLibs.lookup("vaList").get(),
                 FunctionDescriptor.ofVoid(C_INT, C_POINTER));
     }
 

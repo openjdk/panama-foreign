@@ -39,11 +39,11 @@ public class ThrowingUpcall extends NativeTestHelper {
     static {
         System.loadLibrary("TestUpcall");
         downcallVoid = CLinker.systemCLinker().downcallHandle(
-            ThrowingUpcall.class.getClassLoader().findNative("f0_V__").orElseThrow(),
+            findNativeOrThrow("f0_V__"),
                 FunctionDescriptor.ofVoid(C_POINTER)
         );
         downcallNonVoid = CLinker.systemCLinker().downcallHandle(
-                ThrowingUpcall.class.getClassLoader().findNative("f10_I_I_").orElseThrow(),
+                findNativeOrThrow("f10_I_I_"),
                 FunctionDescriptor.of(C_INT, C_INT, C_POINTER)
         );
 

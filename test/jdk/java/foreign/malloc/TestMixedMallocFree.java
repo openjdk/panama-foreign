@@ -48,7 +48,7 @@ public class TestMixedMallocFree extends NativeTestHelper {
     static {
         System.loadLibrary("Malloc");
         MH_my_malloc = CLinker.systemCLinker().downcallHandle(
-                TestMixedMallocFree.class.getClassLoader().findNative("my_malloc").orElseThrow(),
+                findNativeOrThrow("my_malloc"),
                 FunctionDescriptor.of(C_POINTER, C_LONG_LONG));
     }
 

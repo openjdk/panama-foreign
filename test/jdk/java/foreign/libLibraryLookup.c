@@ -19,26 +19,17 @@
  *  Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  *  or visit www.oracle.com if you need additional information or have any
  *  questions.
+ *
  */
 
-/*
- * @test
- * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64")
- * @run testng/othervm -Dos.name=Windows --enable-native-access=ALL-UNNAMED TestFallbackLookup
- */
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
 
-import org.testng.annotations.*;
-import static org.testng.Assert.*;
+int count = 0;
 
-import java.lang.foreign.CLinker;
-import java.lang.foreign.SymbolLookup;
-
-public class TestFallbackLookup {
-    @Test
-    void testBadSystemLookupRequest() {
-        // we request a CLinker, forcing OS name to be "Windows". This should trigger an exception when
-        // attempting to load a non-existent ucrtbase.dll. Make sure that no error is generated at this stage.
-        assertTrue(SymbolLookup.systemLookup().lookup("nonExistentSymbol").isEmpty());
-    }
+EXPORT int inc() {
+  return count++;
 }
