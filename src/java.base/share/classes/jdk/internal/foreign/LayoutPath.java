@@ -138,7 +138,7 @@ public class LayoutPath {
         checkAlignment(this);
 
         VarHandle handle = Utils.makeSegmentViewVarHandle(valueLayout);
-        for (int i = strides.length - 1; i >=0; i--) {
+        for (int i = strides.length - 1; i >= 0; i--) {
             MethodHandle collector = MethodHandles.insertArguments(MH_ADD_SCALED_OFFSET, 2,
                     Utils.bitsToBytesOrThrow(strides[i], IllegalArgumentException::new));
             // (J, ...) -> J to (J, J, ...) -> J
