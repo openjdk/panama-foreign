@@ -259,19 +259,6 @@ public class TestLayoutPaths {
     }
 
     @Test
-    public void testBadSequencePathInMap() {
-        SequenceLayout seq = MemoryLayout.sequenceLayout(10, JAVA_INT);
-        for (PathElement e : List.of( sequenceElement(0), sequenceElement(0, 2) )) {
-            try {
-                seq.map(l -> l, e);
-                fail();
-            } catch (IllegalArgumentException ex) {
-                assertTrue(true);
-            }
-        }
-    }
-
-    @Test
     public void testStructPaths() {
         long[] offsets = { 0, 8, 24, 56 };
         GroupLayout g = MemoryLayout.structLayout(
@@ -295,20 +282,6 @@ public class TestLayoutPaths {
             assertEquals(offsets[i - 1], bitOffset);
             long byteOffset = g.byteOffset(groupElement(String.valueOf(i)));
             assertEquals((offsets[i - 1]) >>> 3, byteOffset);
-        }
-
-        // test map
-
-        for (int i = 1 ; i <= 4 ; i++) {
-            GroupLayout g2 = (GroupLayout)g.map(l -> ValueLayout.JAVA_DOUBLE, groupElement(String.valueOf(i)));
-            assertTrue(g2.isStruct());
-            for (int j = 0 ; j < 4 ; j++) {
-                if (j == i - 1) {
-                    assertEquals(g2.memberLayouts().get(j), ValueLayout.JAVA_DOUBLE);
-                } else {
-                    assertEquals(g2.memberLayouts().get(j), g.memberLayouts().get(j));
-                }
-            }
         }
     }
 
@@ -337,20 +310,6 @@ public class TestLayoutPaths {
             long byteOffset = g.byteOffset(groupElement(String.valueOf(i)));
             assertEquals((offsets[i - 1]) >>> 3, byteOffset);
         }
-
-        // test map
-
-        for (int i = 1 ; i <= 4 ; i++) {
-            GroupLayout g2 = (GroupLayout)g.map(l -> ValueLayout.JAVA_DOUBLE, groupElement(String.valueOf(i)));
-            assertTrue(g2.isUnion());
-            for (int j = 0 ; j < 4 ; j++) {
-                if (j == i - 1) {
-                    assertEquals(g2.memberLayouts().get(j), ValueLayout.JAVA_DOUBLE);
-                } else {
-                    assertEquals(g2.memberLayouts().get(j), g.memberLayouts().get(j));
-                }
-            }
-        }
     }
 
     @Test
@@ -371,11 +330,6 @@ public class TestLayoutPaths {
             long byteOffset = g.byteOffset(sequenceElement(i));
             assertEquals((offsets[i]) >>> 3, byteOffset);
         }
-
-        // test map
-
-        SequenceLayout seq2 = (SequenceLayout)g.map(l -> ValueLayout.JAVA_DOUBLE, sequenceElement());
-        assertTrue(seq2.elementLayout() == ValueLayout.JAVA_DOUBLE);
     }
 
     @Test(dataProvider = "testLayouts")
