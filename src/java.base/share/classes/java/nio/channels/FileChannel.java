@@ -1017,30 +1017,32 @@ public abstract class FileChannel
      * @return A new mapped memory segment.
      *
      * @throws IllegalArgumentException
-     *         If {@code bytesOffset < 0}, {@code bytesSize < 0},
-     *         or if {@code path} is not associated with the default file system.
+     *         If {@code offset < 0}, {@code size < 0} or
+     *         {@code offset + size < 0}.
      *
      * @throws IllegalStateException
-     *         If {@code session} is not
+     *         If the {@code session} is not
      *         {@linkplain MemorySession#isAlive() alive}, or if access occurs
      *         from a thread other than the thread
-     *         {@linkplain MemorySession#ownerThread() owning} {@code session}.
+     *         {@linkplain MemorySession#ownerThread() owning} the
+     *         {@code session}.
+     *
+     * @throws NonReadableChannelException
+     *         If the {@code mode} is {@link MapMode#READ_ONLY READ_ONLY} or
+     *         an implementation specific map mode requiring read access
+     *         but this channel was not opened for reading.
+     *
+     * @throws NonWritableChannelException
+     *         If the {@code mode} is {@link MapMode#READ_WRITE READ_WRITE}.
+     *         {@link MapMode#PRIVATE PRIVATE} or an implementation specific
+     *         map mode requiring write access but this channel was not
+     *         opened for both reading and writing.
+     *
+     * @throws IOException
+     *         If some other I/O error occurs.
      *
      * @throws UnsupportedOperationException
      *         If an unsupported map mode is specified.
-     *
-     * @throws IOException
-     *         If the specified path does not point to an existing file, or if
-     *         some other I/O error occurs.
-     *
-     * @throws  SecurityException
-     *          If a security manager is installed, and it denies an unspecified
-     *          permission required by the implementation. In the case of the
-     *          default provider, the {@link SecurityManager#checkRead(String)}
-     *          method is invoked to check read access if the file is opened for
-     *          reading. The {@link SecurityManager#checkWrite(String)} method
-     *          is invoked to check write access if the file is opened for
-     *          writing.
      *
      * @since 19
      */
