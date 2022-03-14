@@ -64,7 +64,7 @@ import jdk.internal.vm.annotation.ForceInline;
  *     <li>{@linkplain MemorySegment#ofByteBuffer(ByteBuffer) buffer segments}, wrapping an existing {@link ByteBuffer} instance;
  * buffer memory segments might be backed by either off-heap memory or on-heap memory, depending on the characteristics of the
  * wrapped byte buffer instance. For instance, a buffer memory segment obtained from a byte buffer created with the
- * {@link ByteBuffer#allocateDirect(int)} method will be backed by off-heap memory.
+ * {@link ByteBuffer#allocateDirect(int)} method will be backed by off-heap memory.</li>
  * </ul>
  *
  * <h2>Lifecycle and confinement</h2>
