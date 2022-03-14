@@ -27,6 +27,7 @@
 package java.lang.foreign;
 
 import java.nio.ByteOrder;
+
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.javac.PreviewFeature;
 import jdk.internal.reflect.CallerSensitive;
@@ -70,9 +71,6 @@ import java.lang.invoke.MethodHandle;
  * use instances for synchronization, or unpredictable behavior may occur. For example, in a future release,
  * synchronization may fail. The {@code equals} method should be used for comparisons.
  *
- * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
- * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
- *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
@@ -87,14 +85,15 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     long toRawLongValue();
 
     /**
-     * Creates a new memory address with given offset (in bytes), which might be negative, from current one.
+     * Returns a memory address at given offset from this address.
      * @param offset specified offset (in bytes), relative to this address, which should be used to create the new address.
-     * @return a new memory address with given offset from current one.
+     *               Might be negative.
+     * @return a memory address with the given offset from current one.
      */
     MemoryAddress addOffset(long offset);
 
     /**
-     * Reads a UTF-8 encoded, null-terminated string from this address and offset.
+     * Reads a UTF-8 encoded, null-terminated string from this address at the given offset.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement string.  The {@link
@@ -118,7 +117,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     String getUtf8String(long offset);
 
     /**
-     * Writes the given string to this address at given offset, converting it to a null-terminated byte sequence using UTF-8 encoding.
+     * Writes the given string to this address at the given offset, converting it to a null-terminated byte sequence using UTF-8 encoding.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement string.  The {@link
@@ -155,14 +154,14 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     int hashCode();
 
     /**
-     * The native memory address instance modelling the {@code NULL} address.
+     * The memory address instance modelling the {@code NULL} address.
      */
     MemoryAddress NULL = new MemoryAddressImpl(0L);
 
     /**
-     * Obtain a native memory address instance from given long address.
-     * @param value the long address.
-     * @return the new memory address instance.
+     * Creates a memory address from the given long value.
+     * @param value the long value representing a raw address.
+     * @return a new memory address instance.
      */
     static MemoryAddress ofLong(long value) {
         return value == 0 ?
@@ -171,7 +170,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     }
 
     /**
-     * Reads a byte from this address and offset with given layout.
+     * Reads a byte at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -191,7 +190,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     byte get(ValueLayout.OfByte layout, long offset);
 
     /**
-     * Writes a byte to this address instance and offset with given layout.
+     * Writes a byte at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -211,7 +210,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     void set(ValueLayout.OfByte layout, long offset, byte value);
 
     /**
-     * Reads a boolean from this address and offset with given layout.
+     * Reads a boolean at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -231,7 +230,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     boolean get(ValueLayout.OfBoolean layout, long offset);
 
     /**
-     * Writes a boolean to this address instance and offset with given layout.
+     * Writes a boolean at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -251,7 +250,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     void set(ValueLayout.OfBoolean layout, long offset, boolean value);
 
     /**
-     * Reads a char from this address and offset with given layout.
+     * Reads a char at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -271,7 +270,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     char get(ValueLayout.OfChar layout, long offset);
 
     /**
-     * Writes a char to this address instance and offset with given layout.
+     * Writes a char at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -291,7 +290,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     void set(ValueLayout.OfChar layout, long offset, char value);
 
     /**
-     * Reads a short from this address and offset with given layout.
+     * Reads a short at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -311,7 +310,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     short get(ValueLayout.OfShort layout, long offset);
 
     /**
-     * Writes a short to this address instance and offset with given layout.
+     * Writes a short at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -331,7 +330,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     void set(ValueLayout.OfShort layout, long offset, short value);
 
     /**
-     * Reads an int from this address and offset with given layout.
+     * Reads an int at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -351,7 +350,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     int get(ValueLayout.OfInt layout, long offset);
 
     /**
-     * Writes an int to this address instance and offset with given layout.
+     * Writes an int at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -371,7 +370,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     void set(ValueLayout.OfInt layout, long offset, int value);
 
     /**
-     * Reads a float from this address and offset with given layout.
+     * Reads a float at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -391,7 +390,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     float get(ValueLayout.OfFloat layout, long offset);
 
     /**
-     * Writes a float to this address instance and offset with given layout.
+     * Writes a float at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -411,7 +410,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     void set(ValueLayout.OfFloat layout, long offset, float value);
 
     /**
-     * Reads a long from this address and offset with given layout.
+     * Reads a long at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -431,7 +430,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     long get(ValueLayout.OfLong layout, long offset);
 
     /**
-     * Writes a long to this address instance and offset with given layout.
+     * Writes a long at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -451,7 +450,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     void set(ValueLayout.OfLong layout, long offset, long value);
 
     /**
-     * Reads a double from this address and offset with given layout.
+     * Reads a double at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -471,7 +470,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     double get(ValueLayout.OfDouble layout, long offset);
 
     /**
-     * Writes a double to this address instance and offset with given layout.
+     * Writes a double at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -491,7 +490,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     void set(ValueLayout.OfDouble layout, long offset, double value);
 
     /**
-     * Reads an address from this address and offset with given layout.
+     * Reads an address at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -511,7 +510,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     MemoryAddress get(ValueLayout.OfAddress layout, long offset);
 
     /**
-     * Writes an address to this address instance and offset with given layout.
+     * Writes an address at the given offset from this address, with the given layout.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -531,7 +530,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     void set(ValueLayout.OfAddress layout, long offset, Addressable value);
 
     /**
-     * Reads a char from this address and index, scaled by given layout size.
+     * Reads a char from this address at the given index, scaled by the given layout size.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -552,7 +551,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     char getAtIndex(ValueLayout.OfChar layout, long index);
 
     /**
-     * Writes a char to this address instance and index, scaled by given layout size.
+     * Writes a char to this address at the given index, scaled by the given layout size.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -573,7 +572,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     void setAtIndex(ValueLayout.OfChar layout, long index, char value);
 
     /**
-     * Reads a short from this address and index, scaled by given layout size.
+     * Reads a short from this address at the given index, scaled by the given layout size.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -594,7 +593,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     short getAtIndex(ValueLayout.OfShort layout, long index);
 
     /**
-     * Writes a short to this address instance and index, scaled by given layout size.
+     * Writes a short to this address at the given index, scaled by the given layout size.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -615,7 +614,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     void setAtIndex(ValueLayout.OfShort layout, long index, short value);
 
     /**
-     * Reads an int from this address and index, scaled by given layout size.
+     * Reads an int from this address at the given index, scaled by the given layout size.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -636,7 +635,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     int getAtIndex(ValueLayout.OfInt layout, long index);
 
     /**
-     * Writes an int to this address instance and index, scaled by given layout size.
+     * Writes an int to this address at the given index, scaled by the given layout size.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -657,7 +656,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     void setAtIndex(ValueLayout.OfInt layout, long index, int value);
 
     /**
-     * Reads a float from this address and index, scaled by given layout size.
+     * Reads a float from this address at the given index, scaled by the given layout size.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -678,7 +677,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     float getAtIndex(ValueLayout.OfFloat layout, long index);
 
     /**
-     * Writes a float to this address instance and index, scaled by given layout size.
+     * Writes a float to this address at the given index, scaled by the given layout size.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -699,7 +698,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     void setAtIndex(ValueLayout.OfFloat layout, long index, float value);
 
     /**
-     * Reads a long from this address and index, scaled by given layout size.
+     * Reads a long from this address at the given index, scaled by the given layout size.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -720,7 +719,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     long getAtIndex(ValueLayout.OfLong layout, long index);
 
     /**
-     * Writes a long to this address instance and index, scaled by given layout size.
+     * Writes a long to this address at the given index, scaled by the given layout size.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -741,7 +740,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     void setAtIndex(ValueLayout.OfLong layout, long index, long value);
 
     /**
-     * Reads a double from this address and index, scaled by given layout size.
+     * Reads a double from this address at the given index, scaled by the given layout size.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -762,7 +761,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     double getAtIndex(ValueLayout.OfDouble layout, long index);
 
     /**
-     * Writes a double to this address instance and index, scaled by given layout size.
+     * Writes a double to this address at the given index, scaled by the given layout size.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -783,7 +782,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     void setAtIndex(ValueLayout.OfDouble layout, long index, double value);
 
     /**
-     * Reads an address from this address and index, scaled by given layout size.
+     * Reads an address from this address at the given index, scaled by the given layout size.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -804,7 +803,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     MemoryAddress getAtIndex(ValueLayout.OfAddress layout, long index);
 
     /**
-     * Writes an address to this address instance and index, scaled by given layout size.
+     * Writes an address to this address at the given index, scaled by the given layout size.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash

@@ -129,7 +129,7 @@ import jdk.internal.javac.PreviewFeature;
  * access the non-closeable session, and have no access to the underlying API session.
  *
  * @implSpec
- * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
+ * Implementations of this interface are thread-safe.
  *
  * @since 19
  */
@@ -152,13 +152,13 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     Thread ownerThread();
 
     /**
-     * Run a critical action while this memory session is kept alive.
+     * Runs a critical action while this memory session is kept alive.
      * @param action the action to be run.
      */
     void whileAlive(Runnable action);
 
     /**
-     * Add a custom cleanup action which will be executed when the memory session is closed.
+     * Adds a custom cleanup action which will be executed when the memory session is closed.
      * The order in which custom cleanup actions are invoked once the memory session is closed is unspecified.
      * @apiNote The provided action should not keep a strong reference to this memory session, so that implicitly
      * closed sessions can be handled correctly by a {@link Cleaner} instance.
@@ -189,7 +189,7 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
 
     /**
      * Returns a non-closeable view of this memory session. If this session is {@linkplain #isCloseable() non-closeable},
-     * this session is returned. Otherwise, this method returns a new non-closeable view of this memory session.
+     * this session is returned. Otherwise, this method returns a non-closeable view of this memory session.
      * @apiNote a non-closeable view of a memory session {@code S} keeps {@code S} reachable. As such, {@code S}
      * cannot be closed implicitly (e.g. by a {@link Cleaner}) as long as one or more non-closeable views of {@code S}
      * are reachable.
@@ -215,7 +215,7 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     int hashCode();
 
     /**
-     * Allocates a new native segment, using this session. Equivalent to the following code:
+     * Allocates a native segment, using this session. Equivalent to the following code:
      * {@snippet lang=java :
      * MemorySegment.allocateNative(size, align, this);
      * }
@@ -230,7 +230,7 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     }
 
     /**
-     * Creates a new closeable confined memory session.
+     * Creates a closeable confined memory session.
      * @return a new closeable confined memory session.
      */
     static MemorySession openConfined() {
@@ -238,7 +238,7 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     }
 
     /**
-     * Creates a new closeable confined memory session, managed by the provided cleaner instance.
+     * Creates a closeable confined memory session, managed by the provided cleaner instance.
      * @param cleaner the cleaner to be associated with the returned memory session.
      * @return a new closeable confined memory session, managed by {@code cleaner}.
      */
@@ -248,7 +248,7 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     }
 
     /**
-     * Creates a new closeable shared memory session.
+     * Creates a closeable shared memory session.
      * @return a new closeable shared memory session.
      */
     static MemorySession openShared() {
@@ -256,7 +256,7 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     }
 
     /**
-     * Creates a new closeable shared memory session, managed by the provided cleaner instance.
+     * Creates a closeable shared memory session, managed by the provided cleaner instance.
      * @param cleaner the cleaner to be associated with the returned memory session.
      * @return a new closeable shared memory session, managed by {@code cleaner}.
      */
@@ -266,7 +266,7 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     }
 
     /**
-     * Creates a new non-closeable shared memory session, managed by a private {@link Cleaner} instance.
+     * Creates a non-closeable shared memory session, managed by a private {@link Cleaner} instance.
      * Equivalent to (but likely more efficient than) the following code:
      * {@snippet lang=java :
      * openShared(Cleaner.create()).asNonCloseable();
@@ -278,8 +278,8 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     }
 
     /**
-     * Returns the <em>global memory session</em>.
-     * @return the <em>global memory session</em>.
+     * Returns the global memory session.
+     * @return the global memory session.
      */
     static MemorySession global() {
         return MemorySessionImpl.GLOBAL;

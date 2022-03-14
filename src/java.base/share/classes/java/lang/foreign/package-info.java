@@ -25,7 +25,7 @@
  */
 
 /**
- * <p> Classes to support low-level and efficient foreign memory/function access, directly from Java.
+ * <p>Provides low-level access to memory and functions outside the Java runtime.
  *
  * <h2>Foreign memory access</h2>
  *
@@ -216,7 +216,7 @@
  * Some methods in this package are considered <em>restricted</em>. Restricted methods are typically used to bind native
  * foreign data and/or functions to first-class Java API elements which can then be used directly by clients. For instance
  * the restricted method {@link java.lang.foreign.MemorySegment#ofAddress(MemoryAddress, long, MemorySession)}
- * can be used to create a fresh segment with given spatial bounds out of a native address.
+ * can be used to create a fresh segment with the given spatial bounds out of a native address.
  * <p>
  * Binding foreign data and/or functions is generally unsafe and, if done incorrectly, can result in VM crashes, or memory corruption when the bound Java API element is accessed.
  * For instance, in the case of {@link java.lang.foreign.MemorySegment#ofAddress(MemoryAddress, long, MemorySession)},
@@ -229,5 +229,9 @@
  * can be used). If this option is specified, access to restricted methods is only granted to the modules listed by that
  * option. If this option is not specified, access to restricted method is enabled for all modules, but
  * access to restricted methods will result in runtime warnings.
+ * <p>
+ * For every class in this package, unless specified otherwise, any method arguments of reference
+ * type must not be null, and any null argument will elicit a {@code NullPointerException}.  This fact is not individually
+ * documented for methods of this API.
  */
 package java.lang.foreign;

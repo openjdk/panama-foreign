@@ -28,16 +28,12 @@ package java.lang.foreign;
 import jdk.internal.javac.PreviewFeature;
 
 /**
- * Represents a type which is <em>addressable</em>. An addressable type is one which can be projected down to
- * a {@linkplain #address() memory address}. Examples of addressable types are {@link MemorySegment},
- * {@link MemoryAddress} and {@link VaList}.
+ * An object that may be projected down to a {@linkplain #address() memory address}.
+ * Examples of addressable types are {@link MemorySegment}, {@link MemoryAddress} and {@link VaList}.
  * <p>
  * The {@link Addressable} type is used by the {@link CLinker C linker} to model the types of
  * {@link CLinker#downcallHandle(FunctionDescriptor) downcall handle} parameters that must be passed <em>by reference</em>
  * (e.g. memory addresses, va lists and upcall stubs).
- *
- * @implSpec
- * Implementations of this interface are <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
  * @since 19
  */

@@ -45,7 +45,7 @@ import jdk.internal.reflect.Reflection;
  * On unsupported platforms this class will fail to initialize with an {@link ExceptionInInitializerError}.
  * <p>
  * Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
- * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
+ * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown.</p>
  *
  * <h2><a id = "downcall-method-handles">Downcall method handles</a></h2>
  * <p>
@@ -107,7 +107,7 @@ import jdk.internal.reflect.Reflection;
  *
  * <h2>Safety considerations</h2>
  *
- * Obtaining downcall method handle is intrinsically unsafe. A symbol in a native library does not, in general,
+ * Creating a downcall method handle is intrinsically unsafe. A symbol in a native library does not, in general,
  * contain enough signature information (e.g. arity and types of native function parameters). As a consequence,
  * the linker runtime cannot validate linkage requests. When a client interacts with a downcall method handle obtained
  * through an invalid linkage request (e.g. by specifying a function descriptor featuring too many argument layouts),
@@ -158,8 +158,7 @@ public sealed interface CLinker permits AbstractLinker {
     }
 
     /**
-     * Obtains a foreign method handle, with the given type and featuring the given function descriptor,
-     * which can be used to call a target foreign function at the address in the given {@link Addressable} instance.
+     * Creates a method handle which can be used to call a target foreign function with the given signature and address.
      * <p>
      * If the provided method type's return type is {@code MemorySegment}, then the resulting method handle features
      * an additional prefix parameter, of type {@link SegmentAllocator}, which will be used by the linker runtime
@@ -170,10 +169,10 @@ public sealed interface CLinker permits AbstractLinker {
      * linker.downcallHandle(function).bindTo(symbol);
      * }
      *
-     * @param symbol   downcall symbol.
-     * @param function the function descriptor.
-     * @return the downcall method handle. The method handle type is <a href="CLinker.html#downcall-method-handles"><em>inferred</em></a>
-     * @throws IllegalArgumentException if the provided descriptor contains either a sequence or a padding layout,
+     * @param symbol the address of the target function.
+     * @param function the function descriptor of the target function.
+     * @return a new downcall method handle. The method handle type is <a href="CLinker.html#downcall-method-handles"><em>inferred</em></a>
+     * @throws IllegalArgumentException if the provided function descriptor contains either a sequence or a padding layout,
      * or if the symbol is {@link MemoryAddress#NULL}
      */
     default MethodHandle downcallHandle(Addressable symbol, FunctionDescriptor function) {
@@ -182,10 +181,10 @@ public sealed interface CLinker permits AbstractLinker {
     }
 
     /**
-     * Obtains a foreign method handle, with the given type and featuring the given function descriptor, which can be
-     * used to call a target foreign function at the address in a dynamically provided {@link Addressable} instance.
+     * Creates a method handle which can be used to call a target foreign function with the given signature.
      * The resulting method handle features a prefix parameter (as the first parameter) corresponding to the foreign function
-     * entry point, of type {@link Addressable}.
+     * entry point, of type {@link Addressable}, which is used to specify the address of the target function
+     * to be called.
      * <p>
      * If the provided function descriptor's return layout is a {@link GroupLayout}, then the resulting method handle features an
      * additional prefix parameter (inserted immediately after the address parameter), of type {@link SegmentAllocator}),
@@ -194,15 +193,15 @@ public sealed interface CLinker permits AbstractLinker {
      * The returned method handle will throw an {@link IllegalArgumentException} if the {@link Addressable} parameter passed to it is
      * associated with the {@link MemoryAddress#NULL} address, or a {@link NullPointerException} if that parameter is {@code null}.
      *
-     * @param function the function descriptor.
-     * @return the downcall method handle. The method handle type is <a href="CLinker.html#downcall-method-handles"><em>inferred</em></a>
+     * @param function the function descriptor of the target function.
+     * @return a new downcall method handle. The method handle type is <a href="CLinker.html#downcall-method-handles"><em>inferred</em></a>
      * from the provided function descriptor.
-     * @throws IllegalArgumentException if the provided descriptor contains either a sequence or a padding layout.
+     * @throws IllegalArgumentException if the provided function descriptor contains either a sequence or a padding layout.
      */
     MethodHandle downcallHandle(FunctionDescriptor function);
 
     /**
-     * Allocates a native stub which can be passed to other foreign functions (as a function pointer), with given
+     * Creates a native stub which can be passed to other foreign functions as a function pointer, with the given
      * memory session. Calling such a function pointer from native code will result in the execution of the provided
      * method handle.
      * <p>
@@ -215,8 +214,8 @@ public sealed interface CLinker permits AbstractLinker {
      * instance by using the {@link java.lang.invoke.MethodHandles#catchException(MethodHandle, Class, MethodHandle)}
      * method handle combinator, and handle exceptions as desired in the corresponding catch block.
      *
-     * @param target   the target method handle.
-     * @param function the function descriptor.
+     * @param target the target method handle.
+     * @param function the upcall stub function descriptor.
      * @param session the upcall stub memory session.
      * @return a zero-length segment whose base address is the address of the native stub.
      * @throws IllegalArgumentException if the provided descriptor contains either a sequence or a padding layout,
@@ -228,9 +227,8 @@ public sealed interface CLinker permits AbstractLinker {
     MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, MemorySession session);
 
     /**
-     * Obtains the downcall method handle {@linkplain MethodType type} associated with a given function descriptor.
+     * {@return the downcall method handle {@linkplain MethodType type} associated with the given function descriptor}
      * @param functionDescriptor a function descriptor.
-     * @return the downcall method handle {@linkplain MethodType type} associated with a given function descriptor.
      * @throws IllegalArgumentException if one or more layouts in the function descriptor are not supported
      * (e.g. if they are sequence layouts or padding layouts).
      */
@@ -239,9 +237,8 @@ public sealed interface CLinker permits AbstractLinker {
     }
 
     /**
-     * Obtains the method handle {@linkplain MethodType type} associated with an upcall stub with given function descriptor.
+     * {@return the method handle {@linkplain MethodType type} associated with an upcall stub with the given function descriptor}
      * @param functionDescriptor a function descriptor.
-     * @return the method handle {@linkplain MethodType type} associated with an upcall stub with given function descriptor.
      * @throws IllegalArgumentException if one or more layouts in the function descriptor are not supported
      * (e.g. if they are sequence layouts or padding layouts).
      */

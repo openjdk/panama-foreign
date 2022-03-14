@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 import jdk.internal.javac.PreviewFeature;
 
 /**
- * A group layout is used to combine multiple <em>member layouts</em>. There are two ways in which member layouts
+ * A compound layout that aggregates multiple <em>member layouts</em>. There are two ways in which member layouts
  * can be combined: if member layouts are laid out one after the other, the resulting group layout is said to be a <em>struct</em>
  * (see {@link MemoryLayout#structLayout(MemoryLayout...)}); conversely, if all member layouts are laid out at the same starting offset,
  * the resulting group layout is said to be a <em>union</em> (see {@link MemoryLayout#unionLayout(MemoryLayout...)}).
@@ -50,11 +50,8 @@ import jdk.internal.javac.PreviewFeature;
  * occur. For example, in a future release, synchronization may fail.
  * The {@code equals} method should be used for comparisons.
  *
- * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
- * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
- *
  * @implSpec
- * This class is immutable and thread-safe.
+ * This class is immutable and thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
  * @since 19
  */
@@ -124,6 +121,9 @@ public final class GroupLayout extends AbstractLayout implements MemoryLayout {
         return Collections.unmodifiableList(elements);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         return decorateLayoutString(elements.stream()
@@ -132,19 +132,22 @@ public final class GroupLayout extends AbstractLayout implements MemoryLayout {
     }
 
     /**
-     * {@return {@code true}, if this group layout is a <em>struct</em>}
+     * {@return {@code true}, if this group layout is a struct layout}
      */
     public boolean isStruct() {
         return kind == Kind.STRUCT;
     }
 
     /**
-     * {@return {@code true}, if this group layout is a <em>union</em>}
+     * {@return {@code true}, if this group layout is a union layout}
      */
     public boolean isUnion() {
         return kind == Kind.UNION;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -159,6 +162,9 @@ public final class GroupLayout extends AbstractLayout implements MemoryLayout {
         return kind.equals(g.kind) && elements.equals(g.elements);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), kind, elements);

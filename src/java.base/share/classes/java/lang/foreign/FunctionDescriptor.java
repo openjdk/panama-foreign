@@ -28,6 +28,7 @@ import java.lang.constant.Constable;
 import java.lang.constant.ConstantDesc;
 import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
+import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,10 +40,12 @@ import jdk.internal.javac.PreviewFeature;
 
 /**
  * A function descriptor is made up of zero or more argument layouts and zero or one return layout. A function descriptor
- * is used to model the signature of foreign functions.
+ * is used to model the signature of foreign functions when creating
+ * {@linkplain CLinker#downcallHandle(Addressable, FunctionDescriptor) downcall method handles} or
+ * {@linkplain CLinker#upcallStub(MethodHandle, FunctionDescriptor, MemorySession) upcall stubs}.
  *
- * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
- * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
+ * @implSpec
+ * This class is immutable and thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
  * @since 19
  */
@@ -72,7 +75,7 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
     }
 
     /**
-     * Create a function descriptor with given return and argument layouts.
+     * Creates a function descriptor with the given return and argument layouts.
      * @param resLayout the return layout.
      * @param argLayouts the argument layouts.
      * @return the new function descriptor.
@@ -85,7 +88,7 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
     }
 
     /**
-     * Create a function descriptor with given argument layouts and no return layout.
+     * Creates a function descriptor with the given argument layouts and no return layout.
      * @param argLayouts the argument layouts.
      * @return the new function descriptor.
      */
@@ -96,13 +99,13 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
     }
 
     /**
-     * Obtain a specialized variadic function descriptor, by appending given variadic layouts to this
+     * Creates a specialized variadic function descriptor, by appending given variadic layouts to this
      * function descriptor argument layouts. The resulting function descriptor can report the position
      * of the {@linkplain #firstVariadicArgumentIndex() first variadic argument}, and cannot be altered
      * in any way: for instance, calling {@link #changeReturnLayout(MemoryLayout)} on the resulting descriptor
      * will throw an {@link UnsupportedOperationException}.
      * @param variadicLayouts the variadic argument layouts to be appended to this descriptor argument layouts.
-     * @return a new variadic function descriptor, or this descriptor if {@code variadicLayouts.length == 0}.
+     * @return a variadic function descriptor, or this descriptor if {@code variadicLayouts.length == 0}.
      */
     public FunctionDescriptor asVariadic(MemoryLayout... variadicLayouts) {
         Objects.requireNonNull(variadicLayouts);
@@ -120,7 +123,7 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
     }
 
     /**
-     * Create a new function descriptor with the given argument layouts appended to the argument layout array
+     * Returns a function descriptor with the given argument layouts appended to the argument layout array
      * of this function descriptor.
      * @param addedLayouts the argument layouts to append.
      * @return the new function descriptor.
@@ -130,7 +133,7 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
     }
 
     /**
-     * Create a new function descriptor with the given argument layouts inserted at the given index, into the argument
+     * Returns a function descriptor with the given argument layouts inserted at the given index, into the argument
      * layout array of this function descriptor.
      * @param index the index at which to insert the arguments
      * @param addedLayouts the argument layouts to insert at given index.
@@ -149,7 +152,7 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
     }
 
     /**
-     * Create a new function descriptor with the given memory layout as the new return layout.
+     * Returns a function descriptor with the given memory layout as the new return layout.
      * @param newReturn the new return layout.
      * @return the new function descriptor.
      */
@@ -159,7 +162,7 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
     }
 
     /**
-     * Create a new function descriptor with the return layout dropped. This is useful to model functions
+     * Returns a function descriptor with the return layout dropped. This is useful to model functions
      * which return no values.
      * @return the new function descriptor.
      */
@@ -210,13 +213,8 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
         return resLayout == null ? hashCode : resLayout.hashCode() ^ hashCode;
     }
 
-    /**
-     * Returns an {@link Optional} containing the nominal descriptor for this
-     * function descriptor, if one can be constructed, or an empty {@link Optional}
-     * if one cannot be constructed.
-     *
-     * @return An {@link Optional} containing the resulting nominal descriptor,
-     * or an empty {@link Optional} if one cannot be constructed.
+     /**
+     * {@return the nominal descriptor for this function descriptor, if one can be constructed}
      */
     @Override
     public Optional<DynamicConstantDesc<FunctionDescriptor>> describeConstable() {

@@ -41,7 +41,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * A symbol lookup can be used to look up a symbol in one or more loaded libraries. A symbol lookup allows for searching
+ * An object that may be used to look up symbols in one or more loaded libraries. A symbol lookup allows for searching
  * symbols by name, see {@link SymbolLookup#lookup(String)}. A library symbol is modelled as a zero-length {@linkplain MemorySegment memory segment};
  * it can be used directly to create a {@linkplain CLinker#downcallHandle(Addressable, FunctionDescriptor) downcall method handle},
  * or it can be {@linkplain MemorySegment#ofAddress(MemoryAddress, long, MemorySession) resized} accordingly, if it models
@@ -58,15 +58,13 @@ import java.util.Optional;
  * Finally, clients can load a library and obtain a {@linkplain #libraryLookup(Path, MemorySession) library lookup} which can be used
  * to search symbols in that library. A library lookup is associated with a {@linkplain  MemorySession memory session},
  * and the library it refers to is unloaded when the session is {@linkplain MemorySession#close() closed}.
- * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
- * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
 @FunctionalInterface
 public interface SymbolLookup {
 
     /**
-     * Looks up a symbol with given name in this lookup.
+     * Looks up a symbol with the given name in this lookup.
      *
      * @param name the symbol name.
      * @return the lookup symbol (if any).
@@ -74,7 +72,7 @@ public interface SymbolLookup {
     Optional<MemorySegment> lookup(String name);
 
     /**
-     * Obtains a symbol lookup suitable to find symbols in native libraries associated with the caller's classloader.
+     * Returns a symbol lookup suitable to find symbols in native libraries associated with the caller's classloader.
      * The returned lookup returns native symbols backed by a non-closeable, shared scope which keeps the caller's classloader
      * <a href="../../../java/lang/ref/package.html#reachability">reachable</a>.
      *
@@ -98,7 +96,7 @@ public interface SymbolLookup {
     }
 
     /**
-     * Obtains a system lookup suitable to find symbols in the standard C libraries. The set of symbols
+     * Returns a system lookup suitable to find symbols in the standard C libraries. The set of symbols
      * available for lookup is unspecified, as it depends on the platform and on the operating system.
      * @return a system-specific library lookup which is suitable to find symbols in the standard C libraries.
      */
@@ -107,7 +105,7 @@ public interface SymbolLookup {
     }
 
     /**
-     * Loads a library with given name and obtains a symbol lookup suitable to find symbols in that library.
+     * Loads a library with the given name and creates a symbol lookup suitable to find symbols in that library.
      * The library will be unloaded when the provided memory session is {@linkplain MemorySession#close() closed}.
      * @apiNote The process of resolving a library name is platform-specific. For instance, on POSIX
      * systems, the library name is resolved according to the specification of the {@code dlopen} function.
@@ -118,7 +116,7 @@ public interface SymbolLookup {
      * restricted methods, and use safe and supported functionalities, where possible.
      * @param name the name of the library in which symbols should be looked up.
      * @param session the memory session which controls the library lifecycle.
-     * @return a symbol lookup suitable to find symbols in a library with given name.
+     * @return a new symbol lookup suitable to find symbols in a library with the given name.
      * @throws IllegalArgumentException if {@code name} does not identify a valid library.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
      * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
@@ -138,7 +136,7 @@ public interface SymbolLookup {
     }
 
     /**
-     * Loads a library with given path and obtains a symbol lookup suitable to find symbols in that library.
+     * Loads a library with the given path and creates a symbol lookup suitable to find symbols in that library.
      * The library will be unloaded when the provided memory session is {@linkplain MemorySession#close() closed}.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
@@ -147,7 +145,7 @@ public interface SymbolLookup {
      * restricted methods, and use safe and supported functionalities, where possible.
      * @param path the path of the library in which symbols should be looked up.
      * @param session the memory session which controls the library lifecycle.
-     * @return a symbol lookup suitable to find symbols in a library with given path.
+     * @return a new symbol lookup suitable to find symbols in a library with the given path.
      * @throws IllegalArgumentException if {@code path} does not point to a valid library.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
      * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
