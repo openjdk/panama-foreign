@@ -122,7 +122,7 @@ import jdk.internal.javac.PreviewFeature;
  *
  * @implSpec
  * Implementations of this interface are thread-safe.
- * 
+ *
  * @see MemorySegment
  * @see SymbolLookup
  * @see CLinker
