@@ -69,7 +69,7 @@ import jdk.internal.vm.annotation.ForceInline;
  *
  * <h2>Lifecycle and confinement</h2>
  *
- * Memory segments are associated with a {@link MemorySegment#session() memory session}. As for all resources associated
+ * Memory segments are associated with a {@linkplain MemorySegment#session() memory session}. As for all resources associated
  * with a memory session, a segment cannot be accessed after its underlying session has been closed. For instance,
  * the following code will result in an exception:
  * {@snippet lang=java :
@@ -91,13 +91,13 @@ import jdk.internal.vm.annotation.ForceInline;
  * A memory segment can be read or written using various methods provided in this class (e.g. {@link #get(ValueLayout.OfInt, long)}).
  * Each dereference method takes a {@linkplain ValueLayout value layout}, which specifies the size,
  * alignment constraints, byte order as well as the Java type associated with the dereference operation, and an offset.
- * For instance, to read an int from a segment, using {@link ByteOrder#nativeOrder() default endianness}, the following code can be used:
+ * For instance, to read an int from a segment, using {@linkplain ByteOrder#nativeOrder() default endianness}, the following code can be used:
  * {@snippet lang=java :
  * MemorySegment segment = ...
  * int value = segment.get(ValueLayout.JAVA_INT, 0);
  * }
  *
- * If the value to be read is stored in memory using {@link ByteOrder#BIG_ENDIAN big-endian} encoding, the dereference operation
+ * If the value to be read is stored in memory using {@linkplain ByteOrder#BIG_ENDIAN big-endian} encoding, the dereference operation
  * can be expressed as follows:
  * {@snippet lang=java :
  * MemorySegment segment = ...
@@ -133,7 +133,7 @@ import jdk.internal.vm.annotation.ForceInline;
  *
  * <h2>Slicing memory segments</h2>
  *
- * Memory segments support <em>slicing</em>. A memory segment can be used to {@link MemorySegment#asSlice(long, long) obtain}
+ * Memory segments support <em>slicing</em>. A memory segment can be used to {@linkplain MemorySegment#asSlice(long, long) obtain}
  * other segments backed by the same underlying memory region, but with <em>stricter</em> spatial bounds than the ones
  * of the original segment:
  * {@snippet lang=java :
@@ -217,7 +217,7 @@ import jdk.internal.vm.annotation.ForceInline;
  *
  * <h2>Restricted memory segments</h2>
  * Sometimes it is necessary to turn a memory address obtained from native code into a memory segment with
- * full spatial, temporal and confinement bounds. To do this, clients can {@link #ofAddress(MemoryAddress, long, MemorySession) obtain}
+ * full spatial, temporal and confinement bounds. To do this, clients can {@linkplain #ofAddress(MemoryAddress, long, MemorySession) obtain}
  * a native segment <em>unsafely</em> from a give memory address, by providing the segment size, as well as the segment {@linkplain MemorySession session}.
  * This is a <a href="package-summary.html#restricted"><em>restricted</em></a> operation and should be used with
  * caution: for instance, an incorrect segment size could result in a VM crash when attempting to dereference
@@ -343,7 +343,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     /**
      * Returns {@code true} if this segment is a native segment. A native memory segment is
      * created using the {@link #allocateNative(long, MemorySession)} (and related) factory, or a buffer segment
-     * derived from a direct {@link java.nio.ByteBuffer} using the {@link #ofByteBuffer(ByteBuffer)} factory,
+     * derived from a {@linkplain ByteBuffer#allocateDirect(int) direct byte buffer} using the {@link #ofByteBuffer(ByteBuffer)} factory,
      * or if this is a {@linkplain #isMapped() mapped} segment.
      * @return {@code true} if this segment is native segment.
      */
@@ -364,7 +364,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * <p>Two segments {@code S1} and {@code S2} are said to overlap if it is possible to find
      * at least two slices {@code L1} (from {@code S1}) and {@code L2} (from {@code S2}) that are backed by the
      * same memory region. As such, it is not possible for a
-     * {@link #isNative() native} segment to overlap with a heap segment; in
+     * {@linkplain #isNative() native} segment to overlap with a heap segment; in
      * this case, or when no overlap occurs, {@code null} is returned.
      *
      * @param other the segment to test for an overlap with this segment.
@@ -710,8 +710,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * buffer. The segment starts relative to the buffer's position (inclusive)
      * and ends relative to the buffer's limit (exclusive).
      * <p>
-     * If the buffer is {@link ByteBuffer#isReadOnly() read-only}, the resulting segment will also be
-     * {@link ByteBuffer#isReadOnly() read-only}. The memory session associated with this segment can either be the
+     * If the buffer is {@linkplain ByteBuffer#isReadOnly() read-only}, the resulting segment will also be
+     * {@linkplain ByteBuffer#isReadOnly() read-only}. The memory session associated with this segment can either be the
      * {@linkplain MemorySession#global() global} memory session, in case the buffer has been created independently,
      * or some other memory session, in case the buffer has been obtained using {@link #asByteBuffer()}.
      * <p>

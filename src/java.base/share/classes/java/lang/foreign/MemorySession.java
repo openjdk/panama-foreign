@@ -41,7 +41,7 @@ import jdk.internal.javac.PreviewFeature;
  * and by the {@linkplain #ownerThread() thread} associated with the memory session (if any).
  * <p>
  * Memory sessions can be closed, either implicitly (e.g. when a session is no longer reachable), or explicitly.
- * When a memory session is closed, it is no longer {@link #isAlive() alive}, and subsequent operations on resources
+ * When a memory session is closed, it is no longer {@linkplain #isAlive() alive}, and subsequent operations on resources
  * associated with that session (e.g. attempting to access a {@link MemorySegment} instance) will fail with {@link IllegalStateException}.
  * <p>
  * A memory session is associated with one or more {@linkplain #addCloseAction(Runnable) close actions}. Close actions
@@ -75,7 +75,7 @@ import jdk.internal.javac.PreviewFeature;
  * When a session is associated with off-heap resources, it is often desirable for said resources to be released in a timely fashion,
  * rather than waiting for the session to be deemed <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>
  * by the garbage collector. In this scenario, a client might consider using a {@linkplain #isCloseable() <em>closeable</em>} memory session.
- * Closeable memory sessions are memory sessions that can be {@link MemorySession#close() closed} explicitly, as demonstrated
+ * Closeable memory sessions are memory sessions that can be {@linkplain MemorySession#close() closed} explicitly, as demonstrated
  * in the following example:
  *
  * {@snippet lang=java :
