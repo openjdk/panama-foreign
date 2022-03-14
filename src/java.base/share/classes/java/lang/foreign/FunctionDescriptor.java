@@ -75,7 +75,7 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
     }
 
     /**
-     * Creates a function descriptor with given return and argument layouts.
+     * Creates a function descriptor with the given return and argument layouts.
      * @param resLayout the return layout.
      * @param argLayouts the argument layouts.
      * @return the new function descriptor.
@@ -88,7 +88,7 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
     }
 
     /**
-     * Creates a function descriptor with given argument layouts and no return layout.
+     * Creates a function descriptor with the given argument layouts and no return layout.
      * @param argLayouts the argument layouts.
      * @return the new function descriptor.
      */

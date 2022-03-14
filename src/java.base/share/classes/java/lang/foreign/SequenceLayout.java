@@ -95,10 +95,10 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
     }
 
     /**
-     * Returns a sequence layout with same element layout, alignment constraints and name as this sequence layout,
+     * Returns a sequence layout with the same element layout, alignment constraints and name as this sequence layout,
      * but with the specified element count.
      * @param elementCount the new element count.
-     * @return a sequence layout with given element count.
+     * @return a sequence layout with the given element count.
      * @throws IllegalArgumentException if {@code elementCount < 0}.
      */
     public SequenceLayout withElementCount(long elementCount) {

@@ -58,7 +58,7 @@ import sun.invoke.util.Wrapper;
  * The {@code equals} method should be used for comparisons.
  *
  * @implSpec
- * This class and its subclasses are immutable and thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
+ * This class and its subclasses are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
  * @since 19
  */
@@ -89,11 +89,11 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
     }
 
     /**
-     * Returns a value layout with same carrier, alignment constraints and name as this value layout,
+     * Returns a value layout with the same carrier, alignment constraints and name as this value layout,
      * but with the specified byte order.
      *
      * @param order the desired byte order.
-     * @return a value layout with given byte order.
+     * @return a value layout with the given byte order.
      */
     public ValueLayout withOrder(ByteOrder order) {
         return new ValueLayout(carrier, Objects.requireNonNull(order), bitSize(), alignment, name());

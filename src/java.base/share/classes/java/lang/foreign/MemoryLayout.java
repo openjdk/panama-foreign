@@ -193,11 +193,11 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     Optional<String> name();
 
     /**
-     * Returns a memory layout with same size and alignment constraints as this layout,
+     * Returns a memory layout with the same size and alignment constraints as this layout,
      * but with the specified name.
      *
      * @param name the layout name.
-     * @return a memory layout with given name.
+     * @return a memory layout with the given name.
      * @see MemoryLayout#name()
      */
     MemoryLayout withName(String name);
@@ -243,17 +243,17 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     }
 
     /**
-     * Returns a memory layout with same size and name as this layout,
+     * Returns a memory layout with the same size and name as this layout,
      * but with the specified alignment constraints (in bits).
      *
      * @param bitAlignment the layout alignment constraint, expressed in bits.
-     * @return a memory layout with given alignment constraints.
+     * @return a memory layout with the given alignment constraints.
      * @throws IllegalArgumentException if {@code bitAlignment} is not a power of two, or if it's less than 8.
      */
     MemoryLayout withBitAlignment(long bitAlignment);
 
     /**
-     * Computes the offset, in bits, of the layout selected by a given layout path, where the path is considered rooted in this
+     * Computes the offset, in bits, of the layout selected by the given layout path, where the path is considered rooted in this
      * layout.
      *
      * @param elements the layout path elements.
@@ -271,7 +271,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
 
     /**
      * Creates a method handle that can be used to compute the offset, in bits, of the layout selected
-     * by a given layout path, where the path is considered rooted in this layout.
+     * by the given layout path, where the path is considered rooted in this layout.
      *
      * <p>The returned method handle has a return type of {@code long}, and features as many {@code long}
      * parameter types as there are free dimensions in the provided layout path (see {@link PathElement#sequenceElement()}),
@@ -302,7 +302,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     }
 
     /**
-     * Computes the offset, in bytes, of the layout selected by a given layout path, where the path is considered rooted in this
+     * Computes the offset, in bytes, of the layout selected by the given layout path, where the path is considered rooted in this
      * layout.
      *
      * @param elements the layout path elements.
@@ -320,7 +320,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
 
     /**
      * Creates a method handle that can be used to compute the offset, in bytes, of the layout selected
-     * by a given layout path, where the path is considered rooted in this layout.
+     * by the given layout path, where the path is considered rooted in this layout.
      *
      * <p>The returned method handle has a return type of {@code long}, and features as many {@code long}
      * parameter types as there are free dimensions in the provided layout path (see {@link PathElement#sequenceElement()}),
@@ -356,7 +356,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     }
 
     /**
-     * Creates an access var handle that can be used to dereference memory at the layout selected by a given layout path,
+     * Creates an access var handle that can be used to dereference memory at the layout selected by the given layout path,
      * where the path is considered rooted in this layout.
      * <p>
      * The final memory location accessed by the returned var handle can be computed as follows:
@@ -394,7 +394,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     }
 
     /**
-     * Creates a <em>strided</em> access var handle that can be used to dereference memory at the layout selected by a given layout path,
+     * Creates a <em>strided</em> access var handle that can be used to dereference memory at the layout selected by the given layout path,
      * where the path is considered rooted in this layout. The returned var handle can effectively dereference multiple memory
      * locations, using a <em>dynamic</em> index (of type {@code long}), which is multiplied by this layout size and then added
      * to the offset of the selected layout. Equivalent to the following code:
@@ -420,7 +420,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
 
     /**
      * Creates a method handle which, given a memory segment, returns a {@linkplain MemorySegment#asSlice(long,long) slice}
-     * corresponding to the layout selected by a given layout path, where the path is considered rooted in this layout.
+     * corresponding to the layout selected by the given layout path, where the path is considered rooted in this layout.
      *
      * <p>The returned method handle has a return type of {@code MemorySegment}, features a {@code MemorySegment}
      * parameter as leading parameter representing the segment to be sliced, and features as many trailing {@code long}
@@ -496,7 +496,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     /**
      * An element in a <a href="MemoryLayout.html#layout-paths"><em>layout path</em></a>. There
      * are two kinds of path elements: <em>group path elements</em> and <em>sequence path elements</em>. Group
-     * path elements are used to select a given named member layout within a {@link GroupLayout}. Sequence
+     * path elements are used to select a named member layout within a {@link GroupLayout}. Sequence
      * path elements are used to select a sequence element layout within a {@link SequenceLayout}; selection
      * of sequence element layout can be <em>explicit</em> (see {@link PathElement#sequenceElement(long)}) or
      * <em>implicit</em> (see {@link PathElement#sequenceElement()}). When a path uses one or more implicit
@@ -514,7 +514,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     sealed interface PathElement permits LayoutPath.PathElementImpl {
 
         /**
-         * Returns a path element which selects a member layout with given name from a given group layout.
+         * Returns a path element which selects a member layout with the given name in a group layout.
          * The path element returned by this method does not alter the number of free dimensions of any path
          * that is combined with such element.
          *
@@ -522,7 +522,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
          * method will select the first one; that is, the group element with the lowest offset from current path is selected.
          *
          * @param name the name of the group element to be selected.
-         * @return a path element which selects the group element with given name.
+         * @return a path element which selects the group element with the given name.
          */
         static PathElement groupElement(String name) {
             Objects.requireNonNull(name);
@@ -531,12 +531,12 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
         }
 
         /**
-         * Returns a path element which selects the element layout at the specified position in a given the sequence layout.
+         * Returns a path element which selects the element layout at the specified position in a sequence layout.
          * The path element returned by this method does not alter the number of free dimensions of any path
          * that is combined with such element.
          *
          * @param index the index of the sequence element to be selected.
-         * @return a path element which selects the sequence element layout with given index.
+         * @return a path element which selects the sequence element layout with the given index.
          * @throws IllegalArgumentException if {@code index < 0}.
          */
         static PathElement sequenceElement(long index) {
@@ -548,7 +548,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
         }
 
         /**
-         * Returns a path element which selects the element layout in a <em>range</em> of positions in a given the sequence layout.
+         * Returns a path element which selects the element layout in a <em>range</em> of positions in a sequence layout.
          * The range is expressed as a pair of starting index (inclusive) {@code S} and step factor (which can also be negative)
          * {@code F}.
          * If a path with free dimensions {@code n} is combined with the path element returned by this method,
@@ -564,7 +564,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
          *
          * @param start the index of the first sequence element to be selected.
          * @param step the step factor at which subsequence sequence elements are to be selected.
-         * @return a path element which selects the sequence element layout with given index.
+         * @return a path element which selects the sequence element layout with the given index.
          * @throws IllegalArgumentException if {@code start < 0}, or {@code step == 0}.
          */
         static PathElement sequenceElement(long start, long step) {
@@ -579,7 +579,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
         }
 
         /**
-         * Returns a path element which selects an unspecified element layout from a given sequence layout.
+         * Returns a path element which selects an unspecified element layout in a sequence layout.
          * If a path with free dimensions {@code n} is combined with the path element returned by this method,
          * the number of free dimensions of the resulting path will be {@code 1 + n}.
          *
@@ -621,7 +621,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     String toString();
 
     /**
-     * Creates a padding layout with given size.
+     * Creates a padding layout with the given size.
      *
      * @param size the padding size in bits.
      * @return the new selector layout.
@@ -648,7 +648,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * </ul>
      * @param carrier the value layout carrier.
      * @param order the value layout's byte order.
-     * @return a value layout with given Java carrier and byte-order.
+     * @return a value layout with the given Java carrier and byte-order.
      * @throws IllegalArgumentException if the carrier type is not supported.
      */
     static ValueLayout valueLayout(Class<?> carrier, ByteOrder order) {
@@ -678,11 +678,11 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     }
 
     /**
-     * Creates a sequence layout with given element layout and element count.
+     * Creates a sequence layout with the given element layout and element count.
      *
      * @param elementCount the sequence element count.
      * @param elementLayout the sequence element layout.
-     * @return the new sequence layout with given element layout and size.
+     * @return the new sequence layout with the given element layout and size.
      * @throws IllegalArgumentException if {@code elementCount < 0}.
      */
     static SequenceLayout sequenceLayout(long elementCount, MemoryLayout elementLayout) {
@@ -691,10 +691,10 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     }
 
     /**
-     * Creates a struct layout with given member layouts.
+     * Creates a struct layout with the given member layouts.
      *
      * @param elements The member layouts of the struct layout.
-     * @return a struct layout with given member layouts.
+     * @return a struct layout with the given member layouts.
      */
     static GroupLayout structLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
@@ -705,10 +705,10 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
     }
 
     /**
-     * Creates a union layout with given member layouts.
+     * Creates a union layout with the given member layouts.
      *
      * @param elements The member layouts of the union layout.
-     * @return a union layout with given member layouts.
+     * @return a union layout with the given member layouts.
      */
     static GroupLayout unionLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);

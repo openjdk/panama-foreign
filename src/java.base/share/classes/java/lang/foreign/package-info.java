@@ -216,7 +216,7 @@
  * Some methods in this package are considered <em>restricted</em>. Restricted methods are typically used to bind native
  * foreign data and/or functions to first-class Java API elements which can then be used directly by clients. For instance
  * the restricted method {@link java.lang.foreign.MemorySegment#ofAddress(MemoryAddress, long, MemorySession)}
- * can be used to create a fresh segment with given spatial bounds out of a native address.
+ * can be used to create a fresh segment with the given spatial bounds out of a native address.
  * <p>
  * Binding foreign data and/or functions is generally unsafe and, if done incorrectly, can result in VM crashes, or memory corruption when the bound Java API element is accessed.
  * For instance, in the case of {@link java.lang.foreign.MemorySegment#ofAddress(MemoryAddress, long, MemorySession)},

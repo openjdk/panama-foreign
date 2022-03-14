@@ -162,7 +162,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
 
     /**
      * Creates a variable argument list from a memory address pointing to an existing variable argument list,
-     * with given memory session.
+     * with the given memory session.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -187,7 +187,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
     }
 
     /**
-     * Creates a variable argument list using a builder (see {@link Builder}), with given
+     * Creates a variable argument list using a builder (see {@link Builder}), with the given
      * memory session.
      * <p>
      * If this method needs to allocate native memory, such memory will be managed by the given
@@ -264,7 +264,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
         Builder addVarg(ValueLayout.OfAddress layout, Addressable value);
 
         /**
-         * Writes a {@code MemorySegment} value, with given layout, to the variable argument list being constructed.
+         * Writes a {@code MemorySegment} value, with the given layout, to the variable argument list being constructed.
          *
          * @param layout the layout of the value to be written.
          * @param value the {@code MemorySegment} whose contents will be copied.

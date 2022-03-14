@@ -107,7 +107,7 @@ import jdk.internal.reflect.Reflection;
  *
  * <h2>Safety considerations</h2>
  *
- * Creating downcall method handle is intrinsically unsafe. A symbol in a native library does not, in general,
+ * Creating a downcall method handle is intrinsically unsafe. A symbol in a native library does not, in general,
  * contain enough signature information (e.g. arity and types of native function parameters). As a consequence,
  * the linker runtime cannot validate linkage requests. When a client interacts with a downcall method handle obtained
  * through an invalid linkage request (e.g. by specifying a function descriptor featuring too many argument layouts),
@@ -158,7 +158,7 @@ public sealed interface CLinker permits AbstractLinker {
     }
 
     /**
-     * Creates a method handle which can be used to call a target foreign function with given signature and address.
+     * Creates a method handle which can be used to call a target foreign function with the given signature and address.
      * <p>
      * If the provided method type's return type is {@code MemorySegment}, then the resulting method handle features
      * an additional prefix parameter, of type {@link SegmentAllocator}, which will be used by the linker runtime
@@ -181,7 +181,7 @@ public sealed interface CLinker permits AbstractLinker {
     }
 
     /**
-     * Creates a method handle which can be used to call a target foreign function with given signature.
+     * Creates a method handle which can be used to call a target foreign function with the given signature.
      * The resulting method handle features a prefix parameter (as the first parameter) corresponding to the foreign function
      * entry point, of type {@link Addressable}, which is used to specify the address of the target function
      * to be called.
@@ -201,7 +201,7 @@ public sealed interface CLinker permits AbstractLinker {
     MethodHandle downcallHandle(FunctionDescriptor function);
 
     /**
-     * Creates a native stub which can be passed to other foreign functions as a function pointer, with given
+     * Creates a native stub which can be passed to other foreign functions as a function pointer, with the given
      * memory session. Calling such a function pointer from native code will result in the execution of the provided
      * method handle.
      * <p>
@@ -227,7 +227,7 @@ public sealed interface CLinker permits AbstractLinker {
     MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, MemorySession session);
 
     /**
-     * {@return the downcall method handle {@linkplain MethodType type} associated with a given function descriptor}
+     * {@return the downcall method handle {@linkplain MethodType type} associated with the given function descriptor}
      * @param functionDescriptor a function descriptor.
      * @throws IllegalArgumentException if one or more layouts in the function descriptor are not supported
      * (e.g. if they are sequence layouts or padding layouts).
@@ -237,7 +237,7 @@ public sealed interface CLinker permits AbstractLinker {
     }
 
     /**
-     * {@return the method handle {@linkplain MethodType type} associated with an upcall stub with given function descriptor}
+     * {@return the method handle {@linkplain MethodType type} associated with an upcall stub with the given function descriptor}
      * @param functionDescriptor a function descriptor.
      * @throws IllegalArgumentException if one or more layouts in the function descriptor are not supported
      * (e.g. if they are sequence layouts or padding layouts).

@@ -323,7 +323,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
 
     /**
      * Returns a slice of this memory segment, at given offset. The returned segment's base address is the base address
-     * of this segment plus a given offset; its size is specified by the given argument.
+     * of this segment plus the given offset; its size is specified by the given argument.
      *
      * @see #asSlice(long)
      *
@@ -336,7 +336,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
 
     /**
      * Returns a slice of this memory segment, at given offset. The returned segment's base address is the base address
-     * of this segment plus a given offset; its size is computed by subtracting the specified offset from this segment size.
+     * of this segment plus the given offset; its size is computed by subtracting the specified offset from this segment size.
      * <p>
      * Equivalent to the following code:
      * {@snippet lang=java :
@@ -472,7 +472,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
 
     /**
      * Finds and returns the offset, in bytes, of the first mismatch between
-     * this segment and a given other segment. The offset is relative to the
+     * this segment and the given other segment. The offset is relative to the
      * {@linkplain #address() base address} of each segment and will be in the
      * range of 0 (inclusive) up to the {@linkplain #byteSize() size} (in bytes) of
      * the smaller memory segment (exclusive).
@@ -693,7 +693,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     double[] toArray(ValueLayout.OfDouble elementLayout);
 
     /**
-     * Reads a UTF-8 encoded, null-terminated string from this segment at given offset.
+     * Reads a UTF-8 encoded, null-terminated string from this segment at the given offset.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement string.  The {@link
@@ -713,7 +713,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Writes the given string into this segment at given offset, converting it to a null-terminated byte sequence using UTF-8 encoding.
+     * Writes the given string into this segment at the given offset, converting it to a null-terminated byte sequence using UTF-8 encoding.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement string.  The {@link
@@ -752,7 +752,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Creates an array memory segment that models the memory associated with a given heap-allocated byte array.
+     * Creates an array memory segment that models the memory associated with the given heap-allocated byte array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
@@ -763,7 +763,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Creates an array memory segment that models the memory associated with a given heap-allocated char array.
+     * Creates an array memory segment that models the memory associated with the given heap-allocated char array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
@@ -774,7 +774,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Creates an array memory segment that models the memory associated with a given heap-allocated short array.
+     * Creates an array memory segment that models the memory associated with the given heap-allocated short array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
@@ -785,7 +785,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Creates an array memory segment that models the memory associated with a given heap-allocated int array.
+     * Creates an array memory segment that models the memory associated with the given heap-allocated int array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
@@ -796,7 +796,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Creates an array memory segment that models the memory associated with a given heap-allocated float array.
+     * Creates an array memory segment that models the memory associated with the given heap-allocated float array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
@@ -807,7 +807,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Creates an array memory segment that models the memory associated with a given heap-allocated long array.
+     * Creates an array memory segment that models the memory associated with the given heap-allocated long array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
@@ -818,7 +818,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Creates an array memory segment that models the memory associated with a given heap-allocated double array.
+     * Creates an array memory segment that models the memory associated with the given heap-allocated double array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
@@ -830,7 +830,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
 
 
     /**
-     * Creates a native memory segment with given size, base address, and memory session.
+     * Creates a native memory segment with the given size, base address, and memory session.
      * This method can be useful when interacting with custom
      * native memory sources (e.g. custom allocators), where an address to some
      * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
@@ -850,7 +850,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param address the returned segment's base address.
      * @param bytesSize the desired size.
      * @param session the native segment memory session.
-     * @return a native memory segment with given base address, size and memory session.
+     * @return a native memory segment with the given base address, size and memory session.
      * @throws IllegalArgumentException if {@code bytesSize < 0}.
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
      * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
@@ -870,8 +870,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Creates a native memory segment with given layout and memory session.
-     * A client is responsible make sure that the memory session associated with the returned segment is closed
+     * Creates a native memory segment with the given layout and memory session.
+     * A client is responsible for ensuring that the memory session associated with the returned segment is closed
      * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
      * This is equivalent to the following code:
@@ -894,8 +894,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Creates a native memory segment with given size (in bytes) and memory session.
-     * A client is responsible make sure that the memory session associated with the returned segment is closed
+     * Creates a native memory segment with the given size (in bytes) and memory session.
+     * A client is responsible for ensuring that the memory session associated with the returned segment is closed
      * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
      * This is equivalent to the following code:
@@ -917,8 +917,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Creates a native memory segment with given size (in bytes), alignment constraint (in bytes) and memory session.
-     * A client is responsible make sure that the memory session associated with the returned segment is closed when the
+     * Creates a native memory segment with the given size (in bytes), alignment constraint (in bytes) and memory session.
+     * A client is responsible for ensuring that the memory session associated with the returned segment is closed when the
      * segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
      * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
@@ -1056,7 +1056,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads a byte from this segment and offset with given layout.
+     * Reads a byte at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1075,7 +1075,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Writes a byte to this segment and offset with given layout.
+     * Writes a byte at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1095,7 +1095,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads a boolean from this segment and offset with given layout.
+     * Reads a boolean at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1114,7 +1114,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Writes a boolean to this segment and offset with given layout.
+     * Writes a boolean at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1134,7 +1134,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads a char from this segment and offset with given layout.
+     * Reads a char at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1153,7 +1153,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Writes a char to this segment and offset with given layout.
+     * Writes a char at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1173,7 +1173,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads a short from this segment and offset with given layout.
+     * Reads a short at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1192,7 +1192,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Writes a short to this segment and offset with given layout.
+     * Writes a short at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1212,7 +1212,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads an int from this segment and offset with given layout.
+     * Reads an int at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1231,7 +1231,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Writes an int to this segment and offset with given layout.
+     * Writes an int at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1251,7 +1251,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads a float from this segment and offset with given layout.
+     * Reads a float at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1270,7 +1270,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Writes a float to this segment and offset with given layout.
+     * Writes a float at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1290,7 +1290,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads a long from this segment and offset with given layout.
+     * Reads a long at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1309,7 +1309,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Writes a long to this segment and offset with given layout.
+     * Writes a long at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1329,7 +1329,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads a double from this segment and offset with given layout.
+     * Reads a double at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1348,7 +1348,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Writes a double to this segment and offset with given layout.
+     * Writes a double at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1368,7 +1368,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads an address from this segment and offset with given layout.
+     * Reads an address at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1387,7 +1387,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Writes an address to this segment and offset with given layout.
+     * Writes an address at the given offset from this segment, with the given layout.
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1407,7 +1407,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads a char from this segment and index, scaled by given layout size.
+     * Reads a char from this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1429,7 +1429,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Writes a char to this segment and index, scaled by given layout size.
+     * Writes a char to this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1452,7 +1452,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads a short from this segment and index, scaled by given layout size.
+     * Reads a short from this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1474,7 +1474,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Writes a short to this segment and index, scaled by given layout size.
+     * Writes a short to this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1497,7 +1497,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads an int from this segment and index, scaled by given layout size.
+     * Reads an int from this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1519,7 +1519,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Writes an int to this segment and index, scaled by given layout size.
+     * Writes an int to this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1542,7 +1542,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads a float from this segment and index, scaled by given layout size.
+     * Reads a float from this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1564,7 +1564,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Writes a float to this segment and index, scaled by given layout size.
+     * Writes a float to this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1587,7 +1587,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads a long from this segment and index, scaled by given layout size.
+     * Reads a long from this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1609,7 +1609,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Writes a long to this segment and index, scaled by given layout size.
+     * Writes a long to this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1632,7 +1632,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads a double from this segment and index, scaled by given layout size.
+     * Reads a double from this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1654,7 +1654,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Writes a double to this segment and index, scaled by given layout size.
+     * Writes a double to this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1677,7 +1677,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads an address from this segment and index, scaled by given layout size.
+     * Reads an address from this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1699,7 +1699,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Writes an address to this segment and index, scaled by given layout size.
+     * Writes an address to this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
@@ -1724,8 +1724,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
 
     /**
      * Copies a number of elements from a source memory segment to a destination array. The elements, whose size and alignment
-     * constraints are specified by the given layout, are read from the source segment, starting at a given offset
-     * (expressed in bytes), and are copied into the destination array, at a given index.
+     * constraints are specified by the given layout, are read from the source segment, starting at the given offset
+     * (expressed in bytes), and are copied into the destination array, at the given index.
      * Supported array types are {@code byte[]}, {@code char[]}, {@code short[]}, {@code int[]}, {@code float[]}, {@code long[]} and {@code double[]}.
      * @param srcSegment the source segment.
      * @param srcLayout the source element layout. If the byte order associated with the layout is
@@ -1774,8 +1774,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
 
     /**
      * Copies a number of elements from a source array to a destination memory segment. The elements, whose size and alignment
-     * constraints are specified by the given layout, are read from the source array, starting at a given index,
-     * and are copied into the destination segment, at a given offset (expressed in bytes).
+     * constraints are specified by the given layout, are read from the source array, starting at the given index,
+     * and are copied into the destination segment, at the given offset (expressed in bytes).
      * Supported array types are {@code byte[]}, {@code char[]}, {@code short[]}, {@code int[]}, {@code float[]}, {@code long[]} and {@code double[]}.
      * @param srcArray the source array.
      * @param srcIndex the starting index of the source array.
