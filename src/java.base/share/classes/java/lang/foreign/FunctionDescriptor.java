@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import jdk.internal.javac.PreviewFeature;
 
@@ -177,8 +178,9 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
     @Override
     public String toString() {
         return String.format("(%s)%s",
-                Stream.of(argLayouts)
-                        .map(Object::toString)
+                IntStream.range(0, argLayouts.size())
+                        .mapToObj(i -> (i == firstVariadicArgumentIndex() ?
+                                "..." : "") + argLayouts.get(i))
                         .collect(Collectors.joining()),
                 returnLayout().map(Object::toString).orElse("v"));
     }
