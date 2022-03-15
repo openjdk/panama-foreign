@@ -45,8 +45,9 @@ import jdk.internal.javac.PreviewFeature;
  * {@linkplain CLinker#upcallStub(MethodHandle, FunctionDescriptor, MemorySession) upcall stubs}.
  *
  * @implSpec
- * This class is immutable and thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
+ * This class is immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
+ * @see MemoryLayout
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
