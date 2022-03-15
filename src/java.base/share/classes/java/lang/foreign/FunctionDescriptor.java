@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import jdk.internal.javac.PreviewFeature;
 
@@ -177,8 +178,9 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
     @Override
     public String toString() {
         return String.format("(%s)%s",
-                Stream.of(argLayouts)
-                        .map(Object::toString)
+                IntStream.range(0, argLayouts.size())
+                        .mapToObj(i -> (i == firstVariadicArgumentIndex() ?
+                                "..." : "") + argLayouts.get(i))
                         .collect(Collectors.joining()),
                 returnLayout().map(Object::toString).orElse("v"));
     }
@@ -187,8 +189,9 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
      * Compares the specified object with this function descriptor for equality. Returns {@code true} if and only if the specified
      * object is also a function descriptor, and all the following conditions are met:
      * <ul>
-     *     <li>the two function descriptors have equals return layouts (see {@link MemoryLayout#equals(Object)}), or both have no return layout</li>
-     *     <li>the two function descriptors have argument layouts that are pair-wise equal (see {@link MemoryLayout#equals(Object)})
+     *     <li>the two function descriptors have equals return layouts (see {@link MemoryLayout#equals(Object)}), or both have no return layout;</li>
+     *     <li>the two function descriptors have argument layouts that are pair-wise {@linkplain MemoryLayout#equals(Object) equal}; and</li>
+     *     <li>the two function descriptors have the same leading {@linkplain #firstVariadicArgumentIndex() variadic argument index}</li>
      * </ul>
      *
      * @param other the object to be compared for equality with this function descriptor.
@@ -196,13 +199,10 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
      */
     @Override
     public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!(other instanceof FunctionDescriptor f)) {
-            return false;
-        }
-        return Objects.equals(resLayout, f.resLayout) && Objects.equals(argLayouts, f.argLayouts);
+        return other instanceof FunctionDescriptor f &&
+                Objects.equals(resLayout, f.resLayout) &&
+                Objects.equals(argLayouts, f.argLayouts) &&
+                firstVariadicArgumentIndex() == f.firstVariadicArgumentIndex();
     }
 
     /**
@@ -210,8 +210,7 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
      */
     @Override
     public int hashCode() {
-        int hashCode = Objects.hashCode(argLayouts);
-        return resLayout == null ? hashCode : resLayout.hashCode() ^ hashCode;
+        return Objects.hash(argLayouts, resLayout, firstVariadicArgumentIndex());
     }
 
      /**

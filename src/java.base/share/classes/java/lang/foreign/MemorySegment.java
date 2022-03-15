@@ -1694,6 +1694,36 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
         layout.accessHandle().set(this, index * layout.byteSize(), value.address());
     }
 
+    /**
+     * Compares the specified object with this memory segment for equality. Returns {@code true} if and only if the specified
+     * object is also a memory segment, and if that segment refers to the same memory region as this segment. More specifically,
+     * for two segments to be considered equals, all the following must be true:
+     * <ul>
+     *     <li>the two segments must be of the same kind; either both are {@linkplain #isNative() native segments},
+     *     backed by off-heap memory, or both are backed by on-heap memory;
+     *     <li>if the two segments are {@linkplain #isNative() native segments}, their {@link #address() base address}
+     *     must be {@linkplain MemoryAddress#equals(Object) equal}. Otherwise, the two segments must wrap the
+     *     same Java array instance, at the same starting offset;</li>
+     *     <li>the two segments must have the same {@linkplain #byteSize() size}; and</li>
+     *     <li>the two segments must have the {@linkplain MemorySession#equals(Object) same} {@linkplain #session() temporal bounds}.
+     * </ul>
+     * @apiNote This method does not perform a structural comparison of the contents of the two memory segments. Clients can
+     * compare memory segments structurally by using the {@link #mismatch(MemorySegment)} method instead.
+     *
+     * @param that the object to be compared for equality with this memory segment.
+     * @return {@code true} if the specified object is equal to this memory segment.
+     * @see #mismatch(MemorySegment)
+     * @see #asOverlappingSlice(MemorySegment)
+     */
+    @Override
+    boolean equals(Object that);
+
+    /**
+     * {@return the hash code value for this memory segment}
+     */
+    @Override
+    int hashCode();
+
 
     /**
      * Copies a number of elements from a source memory segment to a destination array. The elements, whose size and alignment
