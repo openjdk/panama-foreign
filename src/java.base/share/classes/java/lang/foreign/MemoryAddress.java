@@ -39,8 +39,8 @@ import java.lang.invoke.MethodHandle;
  * <ul>
  *     <li>By calling {@link Addressable#address()} on an instance of type {@link Addressable} (e.g. a memory segment);</li>
  *     <li>By invoking a {@linkplain CLinker#downcallHandle(FunctionDescriptor) downcall method handle} which returns a pointer;</li>
- *     <li>By reading an address from memory, e.g. via {@link MemorySegment#get(ValueLayout.OfAddress, long)}.</li>
- *     <li>By the invocation of an {@linkplain CLinker#upcallStub(MethodHandle, FunctionDescriptor, MemorySession) upcall stub} which accepts a pointer.
+ *     <li>By reading an address from memory, e.g. via {@link MemorySegment#get(ValueLayout.OfAddress, long)}; and</li>
+ *     <li>By the invocation of an {@linkplain CLinker#upcallStub(MethodHandle, FunctionDescriptor, MemorySession) upcall stub} which accepts a pointer.</li>
  * </ul>
  * A memory address is backed by a raw machine pointer, expressed as a {@linkplain #toRawLongValue() long value}.
  *
