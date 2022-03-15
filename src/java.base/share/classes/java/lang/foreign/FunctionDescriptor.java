@@ -190,7 +190,7 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
      * object is also a function descriptor, and all the following conditions are met:
      * <ul>
      *     <li>the two function descriptors have equals return layouts (see {@link MemoryLayout#equals(Object)}), or both have no return layout;</li>
-     *     <li>the two function descriptors have argument layouts that are pair-wise {@linkplain MemoryLayout#equals(Object) equal}; and
+     *     <li>the two function descriptors have argument layouts that are pair-wise {@linkplain MemoryLayout#equals(Object) equal}; and</li>
      *     <li>the two function descriptors have the same leading {@linkplain #firstVariadicArgumentIndex() variadic argument index}</li>
      * </ul>
      *
