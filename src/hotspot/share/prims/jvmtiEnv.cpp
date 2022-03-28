@@ -1072,7 +1072,7 @@ JvmtiEnv::StopThread(JavaThread* java_thread, jobject exception) {
   oop e = JNIHandles::resolve_external_guard(exception);
   NULL_CHECK(e, JVMTI_ERROR_NULL_POINTER);
 
-  JavaThread::send_async_exception(java_thread->threadObj(), e);
+  JavaThread::send_async_exception(java_thread, e);
 
   return JVMTI_ERROR_NONE;
 
@@ -1560,7 +1560,7 @@ JvmtiEnv::GetThreadListStackTraces(jint thread_count, const jthread* thread_list
     }
 
     GetSingleStackTraceClosure op(this, current_thread, *thread_list, max_frame_count);
-    Handshake::execute(&op, java_thread);
+    Handshake::execute(&op, &tlh, java_thread);
     err = op.result();
     if (err == JVMTI_ERROR_NONE) {
       *stack_info_ptr = op.stack_info();
@@ -3135,7 +3135,10 @@ JvmtiEnv::RawMonitorEnter(JvmtiRawMonitor * rmonitor) {
     // in thread.cpp.
     JvmtiPendingMonitors::enter(rmonitor);
   } else {
-    rmonitor->raw_enter(Thread::current());
+    Thread* thread = Thread::current();
+    // 8266889: raw_enter changes Java thread state, needs WXWrite
+    MACOS_AARCH64_ONLY(ThreadWXEnable __wx(WXWrite, thread));
+    rmonitor->raw_enter(thread);
   }
   return JVMTI_ERROR_NONE;
 } /* end RawMonitorEnter */
@@ -3167,6 +3170,8 @@ JvmtiEnv::RawMonitorExit(JvmtiRawMonitor * rmonitor) {
 jvmtiError
 JvmtiEnv::RawMonitorWait(JvmtiRawMonitor * rmonitor, jlong millis) {
   Thread* thread = Thread::current();
+  // 8266889: raw_wait changes Java thread state, needs WXWrite
+  MACOS_AARCH64_ONLY(ThreadWXEnable __wx(WXWrite, thread));
   int r = rmonitor->raw_wait(millis, thread);
 
   switch (r) {

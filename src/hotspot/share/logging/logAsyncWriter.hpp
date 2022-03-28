@@ -25,11 +25,11 @@
 #define SHARE_LOGGING_LOGASYNCWRITER_HPP
 #include "logging/log.hpp"
 #include "logging/logDecorations.hpp"
-#include "logging/logFileOutput.hpp"
 #include "logging/logMessageBuffer.hpp"
 #include "memory/resourceArea.hpp"
 #include "runtime/nonJavaThread.hpp"
-#include "utilities/hashtable.hpp"
+#include "runtime/semaphore.hpp"
+#include "utilities/resourceHash.hpp"
 #include "utilities/linkedlist.hpp"
 
 template <typename E, MEMFLAGS F>
@@ -90,25 +90,32 @@ class LinkedListDeque : private LinkedListImpl<E, ResourceObj::C_HEAP, F> {
   }
 };
 
+// Forward declaration
+class LogFileStreamOutput;
+
 class AsyncLogMessage {
-  LogFileOutput* _output;
+  LogFileStreamOutput* _output;
   const LogDecorations _decorations;
   char* _message;
 
 public:
-  AsyncLogMessage(LogFileOutput* output, const LogDecorations& decorations, char* msg)
+  AsyncLogMessage(LogFileStreamOutput* output, const LogDecorations& decorations, char* msg)
     : _output(output), _decorations(decorations), _message(msg) {}
 
   // placeholder for LinkedListImpl.
   bool equals(const AsyncLogMessage& o) const { return false; }
 
-  LogFileOutput* output() const { return _output; }
+  LogFileStreamOutput* output() const { return _output; }
   const LogDecorations& decorations() const { return _decorations; }
   char* message() const { return _message; }
 };
 
 typedef LinkedListDeque<AsyncLogMessage, mtLogging> AsyncLogBuffer;
-typedef KVHashtable<LogFileOutput*, uint32_t, mtLogging> AsyncLogMap;
+typedef ResourceHashtable<LogFileStreamOutput*,
+                          uint32_t,
+                          17, /*table_size*/
+                          ResourceObj::C_HEAP,
+                          mtLogging> AsyncLogMap;
 
 //
 // ASYNC LOGGING SUPPORT
@@ -135,13 +142,10 @@ class AsyncLogWriter : public NonJavaThread {
   class AsyncLogLocker;
 
   static AsyncLogWriter* _instance;
-  // _lock(1) denotes a critional region.
-  Semaphore _lock;
-  // _sem is a semaphore whose value denotes how many messages have been enqueued.
-  // It decreases in AsyncLogWriter::run()
-  Semaphore _sem;
   Semaphore _flush_sem;
-
+  // Can't use a Monitor here as we need a low-level API that can be used without Thread::current().
+  os::PlatformMonitor _lock;
+  bool _data_available;
   volatile bool _initialized;
   AsyncLogMap _stats; // statistics for dropped messages
   AsyncLogBuffer _buffer;
@@ -167,8 +171,8 @@ class AsyncLogWriter : public NonJavaThread {
   }
 
  public:
-  void enqueue(LogFileOutput& output, const LogDecorations& decorations, const char* msg);
-  void enqueue(LogFileOutput& output, LogMessageBuffer::Iterator msg_iterator);
+  void enqueue(LogFileStreamOutput& output, const LogDecorations& decorations, const char* msg);
+  void enqueue(LogFileStreamOutput& output, LogMessageBuffer::Iterator msg_iterator);
 
   static AsyncLogWriter* instance();
   static void initialize();

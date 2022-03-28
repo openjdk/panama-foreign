@@ -94,7 +94,6 @@ CodeBlob::CodeBlob(const char* name, CompilerType type, const CodeBlobLayout& la
   _oop_maps(oop_maps),
   _caller_must_gc_arguments(caller_must_gc_arguments),
   _name(name)
-  NOT_PRODUCT(COMMA _strings(CodeStrings()))
 {
   assert(is_aligned(layout.size(),            oopSize), "unaligned size");
   assert(is_aligned(layout.header_size(),     oopSize), "unaligned size");
@@ -107,7 +106,7 @@ CodeBlob::CodeBlob(const char* name, CompilerType type, const CodeBlobLayout& la
   S390_ONLY(_ctable_offset = 0;) // avoid uninitialized fields
 }
 
-CodeBlob::CodeBlob(const char* name, CompilerType type, const CodeBlobLayout& layout, CodeBuffer* cb, int frame_complete_offset, int frame_size, OopMapSet* oop_maps, bool caller_must_gc_arguments) :
+CodeBlob::CodeBlob(const char* name, CompilerType type, const CodeBlobLayout& layout, CodeBuffer* cb /*UNUSED*/, int frame_complete_offset, int frame_size, OopMapSet* oop_maps, bool caller_must_gc_arguments) :
   _type(type),
   _size(layout.size()),
   _header_size(layout.header_size()),
@@ -122,7 +121,6 @@ CodeBlob::CodeBlob(const char* name, CompilerType type, const CodeBlobLayout& la
   _relocation_end(layout.relocation_end()),
   _caller_must_gc_arguments(caller_must_gc_arguments),
   _name(name)
-  NOT_PRODUCT(COMMA _strings(CodeStrings()))
 {
   assert(is_aligned(_size,        oopSize), "unaligned size");
   assert(is_aligned(_header_size, oopSize), "unaligned size");
@@ -161,10 +159,23 @@ RuntimeBlob::RuntimeBlob(
   cb->copy_code_and_locs_to(this);
 }
 
+void RuntimeBlob::free(RuntimeBlob* blob) {
+  assert(blob != NULL, "caller must check for NULL");
+  ThreadInVMfromUnknown __tiv;  // get to VM state in case we block on CodeCache_lock
+  blob->flush();
+  {
+    MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+    CodeCache::free(blob);
+  }
+  // Track memory usage statistic after releasing CodeCache_lock
+  MemoryService::track_code_cache_memory_usage();
+}
+
 void CodeBlob::flush() {
   FREE_C_HEAP_ARRAY(unsigned char, _oop_maps);
   _oop_maps = NULL;
-  NOT_PRODUCT(_strings.free();)
+  NOT_PRODUCT(_asm_remarks.clear());
+  NOT_PRODUCT(_dbg_strings.clear());
 }
 
 void CodeBlob::set_oop_maps(OopMapSet* p) {
@@ -190,7 +201,8 @@ void RuntimeBlob::trace_new_stub(RuntimeBlob* stub, const char* name1, const cha
       ttyLocker ttyl;
       tty->print_cr("- - - [BEGIN] - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
       tty->print_cr("Decoding %s " INTPTR_FORMAT, stub_id, (intptr_t) stub);
-      Disassembler::decode(stub->code_begin(), stub->code_end(), tty);
+      Disassembler::decode(stub->code_begin(), stub->code_end(), tty
+                           NOT_PRODUCT(COMMA &stub->asm_remarks()));
       if ((stub->oop_maps() != NULL) && AbstractDisassembler::show_structs()) {
         tty->print_cr("- - - [OOP MAPS]- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
         stub->oop_maps()->print();
@@ -274,15 +286,7 @@ void* BufferBlob::operator new(size_t s, unsigned size) throw() {
 }
 
 void BufferBlob::free(BufferBlob *blob) {
-  assert(blob != NULL, "caller must check for NULL");
-  ThreadInVMfromUnknown __tiv;  // get to VM state in case we block on CodeCache_lock
-  blob->flush();
-  {
-    MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
-    CodeCache::free((RuntimeBlob*)blob);
-  }
-  // Track memory usage statistic after releasing CodeCache_lock
-  MemoryService::track_code_cache_memory_usage();
+  RuntimeBlob::free(blob);
 }
 
 
@@ -653,7 +657,12 @@ void CodeBlob::dump_for_addr(address addr, outputStream* st, bool verbose) const
       nm->method()->print_value_on(st);
     }
     st->cr();
-    nm->print_nmethod(verbose);
+    if (verbose && st == tty) {
+      // verbose is only ever true when called from findpc in debug.cpp
+      nm->print_nmethod(true);
+    } else {
+      nm->print(st);
+    }
     return;
   }
   st->print_cr(INTPTR_FORMAT " is at code_begin+%d in ", p2i(addr), (int)(addr - code_begin()));
@@ -714,16 +723,23 @@ void DeoptimizationBlob::print_value_on(outputStream* st) const {
 
 // Implementation of OptimizedEntryBlob
 
-OptimizedEntryBlob::OptimizedEntryBlob(const char* name, int size, CodeBuffer* cb, intptr_t exception_handler_offset,
+OptimizedEntryBlob::OptimizedEntryBlob(const char* name, CodeBuffer* cb, int size,
+                                       intptr_t exception_handler_offset,
                                        jobject receiver, ByteSize frame_data_offset) :
-  BufferBlob(name, size, cb),
+  RuntimeBlob(name, cb, sizeof(OptimizedEntryBlob), size, CodeOffsets::frame_never_safe, 0 /* no frame size */,
+              /* oop maps = */ nullptr, /* caller must gc arguments = */ false),
   _exception_handler_offset(exception_handler_offset),
   _receiver(receiver),
   _frame_data_offset(frame_data_offset) {
   CodeCache::commit(this);
 }
 
-OptimizedEntryBlob* OptimizedEntryBlob::create(const char* name, CodeBuffer* cb, intptr_t exception_handler_offset,
+void* OptimizedEntryBlob::operator new(size_t s, unsigned size) throw() {
+  return CodeCache::allocate(size, CodeBlobType::NonNMethod);
+}
+
+OptimizedEntryBlob* OptimizedEntryBlob::create(const char* name, CodeBuffer* cb,
+                                               intptr_t exception_handler_offset,
                                                jobject receiver, ByteSize frame_data_offset) {
   ThreadInVMfromUnknown __tiv;  // get to VM state in case we block on CodeCache_lock
 
@@ -731,10 +747,13 @@ OptimizedEntryBlob* OptimizedEntryBlob::create(const char* name, CodeBuffer* cb,
   unsigned int size = CodeBlob::allocation_size(cb, sizeof(OptimizedEntryBlob));
   {
     MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
-    blob = new (size) OptimizedEntryBlob(name, size, cb, exception_handler_offset, receiver, frame_data_offset);
+    blob = new (size) OptimizedEntryBlob(name, cb, size,
+                                         exception_handler_offset, receiver, frame_data_offset);
   }
   // Track memory usage statistic after releasing CodeCache_lock
   MemoryService::track_code_cache_memory_usage();
+
+  trace_new_stub(blob, "OptimizedEntryBlob");
 
   return blob;
 }
@@ -745,4 +764,28 @@ void OptimizedEntryBlob::oops_do(OopClosure* f, const frame& frame) {
 
 JavaFrameAnchor* OptimizedEntryBlob::jfa_for_frame(const frame& frame) const {
   return &frame_data_for_frame(frame)->jfa;
+}
+
+void OptimizedEntryBlob::free(OptimizedEntryBlob* blob) {
+  assert(blob != nullptr, "caller must check for NULL");
+  JNIHandles::destroy_global(blob->receiver());
+  RuntimeBlob::free(blob);
+}
+
+void OptimizedEntryBlob::preserve_callee_argument_oops(frame fr, const RegisterMap* reg_map, OopClosure* f) {
+  // do nothing for now
+}
+
+// Misc.
+void OptimizedEntryBlob::verify() {
+  // unimplemented
+}
+
+void OptimizedEntryBlob::print_on(outputStream* st) const {
+  RuntimeBlob::print_on(st);
+  print_value_on(st);
+}
+
+void OptimizedEntryBlob::print_value_on(outputStream* st) const {
+  st->print_cr("OptimizedEntryBlob (" INTPTR_FORMAT  ") used for %s", p2i(this), name());
 }

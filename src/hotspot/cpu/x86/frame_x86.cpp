@@ -354,6 +354,7 @@ frame frame::sender_for_entry_frame(RegisterMap* map) const {
 }
 
 OptimizedEntryBlob::FrameData* OptimizedEntryBlob::frame_data_for_frame(const frame& frame) const {
+  assert(frame.is_optimized_entry_frame(), "wrong frame");
   // need unextended_sp here, since normal sp is wrong for interpreter callees
   return reinterpret_cast<OptimizedEntryBlob::FrameData*>(
     reinterpret_cast<char*>(frame.unextended_sp()) + in_bytes(_frame_data_offset));
@@ -717,7 +718,6 @@ frame::frame(void* sp, void* fp, void* pc) {
   init((intptr_t*)sp, (intptr_t*)fp, (address)pc);
 }
 
-void frame::pd_ps() {}
 #endif
 
 void JavaFrameAnchor::make_walkable(JavaThread* thread) {

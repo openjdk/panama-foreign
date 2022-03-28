@@ -31,6 +31,7 @@
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/jniHandles.inline.hpp"
+#include "utilities/globalDefinitions.hpp"
 
 #define FOREIGN_ABI "jdk/internal/foreign/abi/"
 
@@ -54,40 +55,31 @@ struct UpcallContext {
   }
 };
 
-thread_local UpcallContext threadContext;
 
-void ProgrammableUpcallHandler::upcall_helper(JavaThread* thread, jobject rec, address buff) {
-  JavaThread* THREAD = thread; // For exception macros.
-  ThreadInVMfromNative tiv(THREAD);
-  const UpcallMethod& upcall_method = instance().upcall_method;
+APPROVED_CPP_THREAD_LOCAL UpcallContext threadContext;
 
-  ResourceMark rm(THREAD);
-  JavaValue result(T_VOID);
-  JavaCallArguments args(2); // long = 2 slots
-
-  args.push_jobject(rec);
-  args.push_long((jlong) buff);
-
-  JavaCalls::call_static(&result, upcall_method.klass, upcall_method.name, upcall_method.sig, &args, CATCH);
-}
-
-Thread* ProgrammableUpcallHandler::maybe_attach_and_get_thread() {
-  Thread* thread = Thread::current_or_null();
+JavaThread* ProgrammableUpcallHandler::maybe_attach_and_get_thread() {
+  JavaThread* thread = JavaThread::current_or_null();
   if (thread == nullptr) {
     JavaVM_ *vm = (JavaVM *)(&main_vm);
     JNIEnv* p_env = nullptr; // unused
-    jint result = vm->functions->AttachCurrentThreadAsDaemon(vm, (void**) &p_env, nullptr);
+    jint result = vm->functions->AttachCurrentThread(vm, (void**) &p_env, nullptr);
     guarantee(result == JNI_OK, "Could not attach thread for upcall. JNI error code: %d", result);
-    thread = Thread::current();
-    threadContext.attachedThread = thread;
-    assert(!JavaThread::cast(thread)->has_last_Java_frame(), "newly-attached thread not expected to have last Java frame");
+    thread = JavaThread::current();
+    threadContext.attachedThread = thread;  
+    assert(!thread->has_last_Java_frame(), "newly-attached thread not expected to have last Java frame");
   }
   return thread;
 }
 
+void ProgrammableUpcallHandler::detach_current_thread() {
+  JavaVM_ *vm = (JavaVM *)(&main_vm);
+  vm->functions->DetachCurrentThread(vm);
+}
+
 // modelled after JavaCallWrapper::JavaCallWrapper
-Thread* ProgrammableUpcallHandler::on_entry(OptimizedEntryBlob::FrameData* context) {
-  JavaThread* thread = JavaThread::cast(maybe_attach_and_get_thread());
+JavaThread* ProgrammableUpcallHandler::on_entry(OptimizedEntryBlob::FrameData* context) {
+  JavaThread* thread = maybe_attach_and_get_thread();
   context->thread = thread;
 
   assert(thread->can_call_java(), "must be able to call Java");
@@ -96,20 +88,12 @@ Thread* ProgrammableUpcallHandler::on_entry(OptimizedEntryBlob::FrameData* conte
   // since it can potentially block.
   context->new_handles = JNIHandleBlock::allocate_block(thread);
 
-  // After this, we are official in Java Code. This needs to be done before we change any of the thread local
-  // info, since we cannot find oops before the new information is set up completely.
-  ThreadStateTransition::transition_from_native(thread, _thread_in_Java);
+  // clear any pending exception in thread (native calls start with no exception pending)
+  thread->clear_pending_exception();
 
-  // Make sure that we handle asynchronous stops and suspends _before_ we clear all thread state
-  // in OptimizedEntryBlob::FrameData. This way, we can decide if we need to do any pd actions
-  // to prepare for stop/suspend (flush register windows on sparcs, cache sp, or other state).
-  bool clear_pending_exception = true;
-  if (thread->has_special_runtime_exit_condition()) {
-    thread->handle_special_runtime_exit_condition();
-    if (thread->has_pending_exception()) {
-      clear_pending_exception = false;
-    }
-  }
+  // After this, we are officially in Java Code. This needs to be done before we change any of the thread local
+  // info, since we cannot find oops before the new information is set up completely.
+  ThreadStateTransition::transition_from_native(thread, _thread_in_Java, true /* check_asyncs */);
 
   context->old_handles = thread->active_handles();
 
@@ -124,15 +108,6 @@ Thread* ProgrammableUpcallHandler::on_entry(OptimizedEntryBlob::FrameData* conte
   debug_only(thread->inc_java_call_counter());
   thread->set_active_handles(context->new_handles);     // install new handle block and reset Java frame linkage
 
-  assert (thread->thread_state() != _thread_in_native, "cannot set native pc to NULL");
-
-  // clear any pending exception in thread (native calls start with no exception pending)
-  if(clear_pending_exception) {
-    thread->clear_pending_exception();
-  }
-
-  MACOS_AARCH64_ONLY(thread->enable_wx(WXExec));
-
   return thread;
 }
 
@@ -141,8 +116,6 @@ void ProgrammableUpcallHandler::on_exit(OptimizedEntryBlob::FrameData* context) 
   JavaThread* thread = context->thread;
   assert(thread == JavaThread::current(), "must still be the same thread");
 
-  MACOS_AARCH64_ONLY(thread->enable_wx(WXWrite));
-
   // restore previous handle block
   thread->set_active_handles(context->old_handles);
 
@@ -150,14 +123,8 @@ void ProgrammableUpcallHandler::on_exit(OptimizedEntryBlob::FrameData* context) 
 
   debug_only(thread->dec_java_call_counter());
 
-  // Old thread-local info. has been restored. We are not back in native code.
+  // Old thread-local info. has been restored. We are now back in native code.
   ThreadStateTransition::transition_from_java(thread, _thread_in_native);
-
-  // State has been restored now make the anchor frame visible for the profiler.
-  // Do this after the transition because this allows us to put an assert
-  // the Java->native transition which checks to see that stack is not walkable
-  // on sparc/ia64 which will catch violations of the reseting of last_Java_frame
-  // invariants (i.e. _flags always cleared on return to Java)
 
   thread->frame_anchor()->copy(&context->jfa);
 
@@ -168,36 +135,6 @@ void ProgrammableUpcallHandler::on_exit(OptimizedEntryBlob::FrameData* context) 
   assert(!thread->has_pending_exception(), "Upcall can not throw an exception");
 }
 
-void ProgrammableUpcallHandler::attach_thread_and_do_upcall(jobject rec, address buff) {
-  Thread* thread = maybe_attach_and_get_thread();
-
-  {
-    MACOS_AARCH64_ONLY(ThreadWXEnable wx(WXWrite, thread));
-    upcall_helper(JavaThread::cast(thread), rec, buff);
-  }
-}
-
-const ProgrammableUpcallHandler& ProgrammableUpcallHandler::instance() {
-  static ProgrammableUpcallHandler handler;
-  return handler;
-}
-
-ProgrammableUpcallHandler::ProgrammableUpcallHandler() {
-  JavaThread* THREAD = JavaThread::current(); // For exception macros.
-  ResourceMark rm(THREAD);
-  Symbol* sym = SymbolTable::new_symbol(FOREIGN_ABI "ProgrammableUpcallHandler");
-  Klass* k = SystemDictionary::resolve_or_null(sym, Handle(), Handle(), CATCH);
-  k->initialize(CATCH);
-
-  upcall_method.klass = k;
-  upcall_method.name = SymbolTable::new_symbol("invoke");
-  upcall_method.sig = SymbolTable::new_symbol("(Ljava/lang/invoke/MethodHandle;J)V");
-
-  assert(upcall_method.klass->lookup_method(upcall_method.name, upcall_method.sig) != nullptr,
-    "Could not find upcall method: %s.%s%s", upcall_method.klass->external_name(),
-    upcall_method.name->as_C_string(), upcall_method.sig->as_C_string());
-}
-
 void ProgrammableUpcallHandler::handle_uncaught_exception(oop exception) {
   ResourceMark rm;
   // Based on CATCH macro
@@ -206,13 +143,9 @@ void ProgrammableUpcallHandler::handle_uncaught_exception(oop exception) {
   ShouldNotReachHere();
 }
 
-JVM_ENTRY(jlong, PUH_AllocateUpcallStub(JNIEnv *env, jclass unused, jobject rec, jobject abi, jobject buffer_layout))
-  Handle receiver(THREAD, JNIHandles::resolve(rec));
-  jobject global_rec = JNIHandles::make_global(receiver);
-  return (jlong) ProgrammableUpcallHandler::generate_upcall_stub(global_rec, abi, buffer_layout);
-JNI_END
-
-JVM_ENTRY(jlong, PUH_AllocateOptimizedUpcallStub(JNIEnv *env, jclass unused, jobject mh, jobject abi, jobject conv))
+JVM_ENTRY(jlong, PUH_AllocateOptimizedUpcallStub(JNIEnv *env, jclass unused, jobject mh, jobject abi, jobject conv,
+                                                 jboolean needs_return_buffer, jlong ret_buf_size))
+  ResourceMark rm(THREAD);
   Handle mh_h(THREAD, JNIHandles::resolve(mh));
   jobject mh_j = JNIHandles::make_global(mh_h);
 
@@ -224,20 +157,37 @@ JVM_ENTRY(jlong, PUH_AllocateOptimizedUpcallStub(JNIEnv *env, jclass unused, job
   assert(entry->method_holder()->is_initialized(), "no clinit barrier");
   CompilationPolicy::compile_if_required(mh_entry, CHECK_0);
 
-  return (jlong) ProgrammableUpcallHandler::generate_optimized_upcall_stub(mh_j, entry, abi, conv);
-JVM_END
+  assert(entry->is_static(), "static only");
+  // Fill in the signature array, for the calling-convention call.
+  const int total_out_args = entry->size_of_parameters();
+  assert(total_out_args > 0, "receiver arg");
 
-JVM_ENTRY(jboolean, PUH_SupportsOptimizedUpcalls(JNIEnv *env, jclass unused))
-  return (jboolean) ProgrammableUpcallHandler::supports_optimized_upcalls();
+  BasicType* out_sig_bt = NEW_RESOURCE_ARRAY(BasicType, total_out_args);
+  BasicType ret_type;
+  {
+    int i = 0;
+    SignatureStream ss(entry->signature());
+    for (; !ss.at_return_type(); ss.next()) {
+      out_sig_bt[i++] = ss.type();  // Collect remaining bits of signature
+      if (ss.type() == T_LONG || ss.type() == T_DOUBLE)
+        out_sig_bt[i++] = T_VOID;   // Longs & doubles take 2 Java slots
+    }
+    assert(i == total_out_args, "");
+    ret_type = ss.type();
+  }
+  // skip receiver
+  BasicType* in_sig_bt = out_sig_bt + 1;
+  int total_in_args = total_out_args - 1;
+
+  return (jlong) ProgrammableUpcallHandler::generate_optimized_upcall_stub(
+    mh_j, entry, in_sig_bt, total_in_args, out_sig_bt, total_out_args, ret_type, abi, conv, needs_return_buffer, checked_cast<int>(ret_buf_size));
 JVM_END
 
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 
 static JNINativeMethod PUH_methods[] = {
-  {CC "allocateUpcallStub", CC "(" "Ljava/lang/invoke/MethodHandle;" "L" FOREIGN_ABI "ABIDescriptor;" "L" FOREIGN_ABI "BufferLayout;" ")J", FN_PTR(PUH_AllocateUpcallStub)},
-  {CC "allocateOptimizedUpcallStub", CC "(" "Ljava/lang/invoke/MethodHandle;" "L" FOREIGN_ABI "ABIDescriptor;" "L" FOREIGN_ABI "ProgrammableUpcallHandler$CallRegs;" ")J", FN_PTR(PUH_AllocateOptimizedUpcallStub)},
-  {CC "supportsOptimizedUpcalls", CC "()Z", FN_PTR(PUH_SupportsOptimizedUpcalls)},
+  {CC "allocateOptimizedUpcallStub", CC "(" "Ljava/lang/invoke/MethodHandle;" "L" FOREIGN_ABI "ABIDescriptor;" "L" FOREIGN_ABI "ProgrammableUpcallHandler$CallRegs;" "ZJ)J", FN_PTR(PUH_AllocateOptimizedUpcallStub)},
 };
 
 /**

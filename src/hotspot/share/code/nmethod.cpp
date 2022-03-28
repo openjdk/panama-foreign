@@ -67,6 +67,7 @@
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/signature.hpp"
 #include "runtime/sweeper.hpp"
+#include "runtime/threadWXSetters.inline.hpp"
 #include "runtime/vmThread.hpp"
 #include "utilities/align.hpp"
 #include "utilities/copy.hpp"
@@ -501,8 +502,7 @@ nmethod* nmethod::new_nmethod(const methodHandle& method,
   ExceptionHandlerTable* handler_table,
   ImplicitExceptionTable* nul_chk_table,
   AbstractCompiler* compiler,
-  int comp_level,
-  const GrowableArrayView<RuntimeStub*>& native_invokers
+  int comp_level
 #if INCLUDE_JVMCI
   , char* speculations,
   int speculations_len,
@@ -524,7 +524,6 @@ nmethod* nmethod::new_nmethod(const methodHandle& method,
       CodeBlob::allocation_size(code_buffer, sizeof(nmethod))
       + adjust_pcs_size(debug_info->pcs_size())
       + align_up((int)dependencies->size_in_bytes(), oopSize)
-      + align_up(checked_cast<int>(native_invokers.data_size_in_bytes()), oopSize)
       + align_up(handler_table->size_in_bytes()    , oopSize)
       + align_up(nul_chk_table->size_in_bytes()    , oopSize)
 #if INCLUDE_JVMCI
@@ -540,8 +539,7 @@ nmethod* nmethod::new_nmethod(const methodHandle& method,
             handler_table,
             nul_chk_table,
             compiler,
-            comp_level,
-            native_invokers
+            comp_level
 #if INCLUDE_JVMCI
             , speculations,
             speculations_len,
@@ -629,8 +627,7 @@ nmethod::nmethod(
     scopes_data_offset       = _metadata_offset     + align_up(code_buffer->total_metadata_size(), wordSize);
     _scopes_pcs_offset       = scopes_data_offset;
     _dependencies_offset     = _scopes_pcs_offset;
-    _native_invokers_offset     = _dependencies_offset;
-    _handler_table_offset    = _native_invokers_offset;
+    _handler_table_offset    = _dependencies_offset;
     _nul_chk_table_offset    = _handler_table_offset;
 #if INCLUDE_JVMCI
     _speculations_offset     = _nul_chk_table_offset;
@@ -726,8 +723,7 @@ nmethod::nmethod(
   ExceptionHandlerTable* handler_table,
   ImplicitExceptionTable* nul_chk_table,
   AbstractCompiler* compiler,
-  int comp_level,
-  const GrowableArrayView<RuntimeStub*>& native_invokers
+  int comp_level
 #if INCLUDE_JVMCI
   , char* speculations,
   int speculations_len,
@@ -804,8 +800,7 @@ nmethod::nmethod(
 
     _scopes_pcs_offset       = scopes_data_offset    + align_up(debug_info->data_size       (), oopSize);
     _dependencies_offset     = _scopes_pcs_offset    + adjust_pcs_size(debug_info->pcs_size());
-    _native_invokers_offset  = _dependencies_offset  + align_up((int)dependencies->size_in_bytes(), oopSize);
-    _handler_table_offset    = _native_invokers_offset + align_up(checked_cast<int>(native_invokers.data_size_in_bytes()), oopSize);
+    _handler_table_offset    = _dependencies_offset  + align_up((int)dependencies->size_in_bytes(), oopSize);
     _nul_chk_table_offset    = _handler_table_offset + align_up(handler_table->size_in_bytes(), oopSize);
 #if INCLUDE_JVMCI
     _speculations_offset     = _nul_chk_table_offset + align_up(nul_chk_table->size_in_bytes(), oopSize);
@@ -827,10 +822,6 @@ nmethod::nmethod(
     code_buffer->copy_values_to(this);
     debug_info->copy_to(this);
     dependencies->copy_to(this);
-    if (native_invokers.is_nonempty()) { // can not get address of zero-length array
-      // Copy native stubs
-      memcpy(native_invokers_begin(), native_invokers.adr_at(0), native_invokers.data_size_in_bytes());
-    }
     clear_unloading_state();
 
     Universe::heap()->register_nmethod(this);
@@ -995,10 +986,6 @@ void nmethod::print_nmethod(bool printmethod) {
       print_dependencies();
       tty->print_cr("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
     }
-    if (printmethod && native_invokers_begin() < native_invokers_end()) {
-      print_native_invokers();
-      tty->print_cr("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
-    }
     if (printmethod || PrintExceptionHandlers) {
       print_handler_table();
       tty->print_cr("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
@@ -1056,12 +1043,6 @@ void nmethod::copy_values(GrowableArray<Metadata*>* array) {
   Metadata** dest = metadata_begin();
   for (int index = 0 ; index < length; index++) {
     dest[index] = array->at(index);
-  }
-}
-
-void nmethod::free_native_invokers() {
-  for (RuntimeStub** it = native_invokers_begin(); it < native_invokers_end(); it++) {
-    CodeCache::free(*it);
   }
 }
 
@@ -1193,7 +1174,9 @@ void nmethod::make_unloaded() {
   // recorded in instanceKlasses get flushed.
   // Since this work is being done during a GC, defer deleting dependencies from the
   // InstanceKlass.
-  assert(Universe::heap()->is_gc_active() || Thread::current()->is_ConcurrentGC_thread(),
+  assert(Universe::heap()->is_gc_active() ||
+         Thread::current()->is_ConcurrentGC_thread() ||
+         Thread::current()->is_Worker_thread(),
          "should only be called during gc");
   flush_dependencies(/*delete_immediately*/false);
 
@@ -1233,7 +1216,9 @@ void nmethod::make_unloaded() {
   }
 
   // Make the class unloaded - i.e., change state and notify sweeper
-  assert(SafepointSynchronize::is_at_safepoint() || Thread::current()->is_ConcurrentGC_thread(),
+  assert(SafepointSynchronize::is_at_safepoint() ||
+         Thread::current()->is_ConcurrentGC_thread() ||
+         Thread::current()->is_Worker_thread(),
          "must be at safepoint");
 
   {
@@ -1554,7 +1539,9 @@ oop nmethod::oop_at_phantom(int index) const {
 // notifies instanceKlasses that are reachable
 
 void nmethod::flush_dependencies(bool delete_immediately) {
-  DEBUG_ONLY(bool called_by_gc = Universe::heap()->is_gc_active() || Thread::current()->is_ConcurrentGC_thread();)
+  DEBUG_ONLY(bool called_by_gc = Universe::heap()->is_gc_active() ||
+                                 Thread::current()->is_ConcurrentGC_thread() ||
+                                 Thread::current()->is_Worker_thread();)
   assert(called_by_gc != delete_immediately,
   "delete_immediately is false if and only if we are called during GC");
   if (!has_flushed_dependencies()) {
@@ -2227,8 +2214,10 @@ void nmethod::check_all_dependencies(DepChange& changes) {
   // Turn off dependency tracing while actually testing dependencies.
   NOT_PRODUCT( FlagSetting fs(TraceDependencies, false) );
 
-  typedef ResourceHashtable<DependencySignature, int, &DependencySignature::hash,
-                            &DependencySignature::equals, 11027> DepTable;
+  typedef ResourceHashtable<DependencySignature, int, 11027,
+                            ResourceObj::RESOURCE_AREA, mtInternal,
+                            &DependencySignature::hash,
+                            &DependencySignature::equals> DepTable;
 
   DepTable* table = new DepTable();
 
@@ -2520,7 +2509,7 @@ void nmethod::print(outputStream* st) const {
     st->print("(n/a) ");
   }
 
-  print_on(tty, NULL);
+  print_on(st, NULL);
 
   if (WizardMode) {
     st->print("((nmethod*) " INTPTR_FORMAT ") ", p2i(this));
@@ -2706,14 +2695,6 @@ void nmethod::print_pcs_on(outputStream* st) {
   }
 }
 
-void nmethod::print_native_invokers() {
-  ResourceMark m;       // in case methods get printed via debugger
-  tty->print_cr("Native invokers:");
-  for (RuntimeStub** itt = native_invokers_begin(); itt < native_invokers_end(); itt++) {
-    (*itt)->print_on(tty);
-  }
-}
-
 void nmethod::print_handler_table() {
   ExceptionHandlerTable(this).print(code_begin());
 }
@@ -2871,6 +2852,9 @@ void nmethod::decode2(outputStream* ost) const {
                                                                   AbstractDisassembler::show_block_comment());
 #endif
 
+  // Decoding an nmethod can write to a PcDescCache (see PcDescCache::add_pc_desc)
+  MACOS_AARCH64_ONLY(ThreadWXEnable wx(WXWrite, Thread::current());)
+
   st->cr();
   this->print(st);
   st->cr();
@@ -2880,7 +2864,10 @@ void nmethod::decode2(outputStream* ost) const {
   //---<  Print real disassembly  >---
   //----------------------------------
   if (! use_compressed_format) {
+    st->print_cr("[Disassembly]");
     Disassembler::decode(const_cast<nmethod*>(this), st);
+    st->bol();
+    st->print_cr("[/Disassembly]");
     return;
   }
 #endif

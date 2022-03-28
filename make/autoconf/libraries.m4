@@ -28,10 +28,12 @@ m4_include([lib-alsa.m4])
 m4_include([lib-bundled.m4])
 m4_include([lib-cups.m4])
 m4_include([lib-ffi.m4])
+m4_include([lib-fontconfig.m4])
 m4_include([lib-freetype.m4])
+m4_include([lib-hsdis.m4])
 m4_include([lib-std.m4])
 m4_include([lib-x11.m4])
-m4_include([lib-fontconfig.m4])
+
 m4_include([lib-tests.m4])
 
 ################################################################################
@@ -43,11 +45,9 @@ AC_DEFUN_ONCE([LIB_DETERMINE_DEPENDENCIES],
   if test "x$OPENJDK_TARGET_OS" = xwindows || test "x$OPENJDK_TARGET_OS" = xmacosx; then
     # No X11 support on windows or macosx
     NEEDS_LIB_X11=false
-  elif test "x$ENABLE_HEADLESS_ONLY" = xtrue; then
-    # No X11 support needed when building headless only
-    NEEDS_LIB_X11=false
   else
-    # All other instances need X11
+    # All other instances need X11, even if building headless only, libawt still
+    # needs X11 headers.
     NEEDS_LIB_X11=true
   fi
 
@@ -95,14 +95,17 @@ AC_DEFUN_ONCE([LIB_DETERMINE_DEPENDENCIES],
 AC_DEFUN_ONCE([LIB_SETUP_LIBRARIES],
 [
   LIB_SETUP_STD_LIBS
-  LIB_SETUP_X11
+
+  LIB_SETUP_ALSA
+  LIB_SETUP_BUNDLED_LIBS
   LIB_SETUP_CUPS
   LIB_SETUP_FONTCONFIG
   LIB_SETUP_FREETYPE
-  LIB_SETUP_ALSA
+  LIB_SETUP_HSDIS
   LIB_SETUP_LIBFFI
-  LIB_SETUP_BUNDLED_LIBS
   LIB_SETUP_MISC_LIBS
+  LIB_SETUP_X11
+
   LIB_TESTS_SETUP_GTEST
 
   BASIC_JDKLIB_LIBS=""

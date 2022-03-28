@@ -60,13 +60,13 @@ struct CodeBlobType {
 //    AdapterBlob        : Used to hold C2I/I2C adapters
 //    VtableBlob         : Used for holding vtable chunks
 //    MethodHandlesAdapterBlob : Used to hold MethodHandles adapters
-//    OptimizedEntryBlob : Used for upcalls from native code
 //   RuntimeStub         : Call to VM runtime methods
 //   SingletonBlob       : Super-class for all blobs that exist in only one instance
 //    DeoptimizationBlob : Used for deoptimization
 //    ExceptionBlob      : Used for stack unrolling
 //    SafepointBlob      : Used to handle illegal instruction exceptions
 //    UncommonTrapBlob   : Used to handle uncommon traps
+//   OptimizedEntryBlob  : Used for upcalls from native code
 //
 //
 // Layout : continuous in the CodeCache
@@ -112,15 +112,22 @@ protected:
   const char*         _name;
   S390_ONLY(int       _ctable_offset;)
 
-  NOT_PRODUCT(CodeStrings _strings;)
+#ifndef PRODUCT
+  AsmRemarks _asm_remarks;
+  DbgStrings _dbg_strings;
+
+ ~CodeBlob() {
+    _asm_remarks.clear();
+    _dbg_strings.clear();
+  }
+#endif // not PRODUCT
 
   CodeBlob(const char* name, CompilerType type, const CodeBlobLayout& layout, int frame_complete_offset, int frame_size, ImmutableOopMapSet* oop_maps, bool caller_must_gc_arguments);
   CodeBlob(const char* name, CompilerType type, const CodeBlobLayout& layout, CodeBuffer* cb, int frame_complete_offset, int frame_size, OopMapSet* oop_maps, bool caller_must_gc_arguments);
 
 public:
   // Only used by unit test.
-  CodeBlob()
-    : _type(compiler_none) {}
+  CodeBlob() : _type(compiler_none) {}
 
   // Returns the space needed for CodeBlob
   static unsigned int allocation_size(CodeBuffer* cb, int header_size);
@@ -232,18 +239,21 @@ public:
   void dump_for_addr(address addr, outputStream* st, bool verbose) const;
   void print_code();
 
-  // Print the comment associated with offset on stream, if there is one
+  // Print to stream, any comments associated with offset.
   virtual void print_block_comment(outputStream* stream, address block_begin) const {
-  #ifndef PRODUCT
-    intptr_t offset = (intptr_t)(block_begin - code_begin());
-    _strings.print_block_comment(stream, offset);
-  #endif
+#ifndef PRODUCT
+    ptrdiff_t offset = block_begin - code_begin();
+    assert(offset >= 0, "Expecting non-negative offset!");
+    _asm_remarks.print(uint(offset), stream);
+#endif
   }
 
 #ifndef PRODUCT
-  void set_strings(CodeStrings& strings) {
-    _strings.copy(strings);
-  }
+  AsmRemarks &asm_remarks() { return _asm_remarks; }
+  DbgStrings &dbg_strings() { return _dbg_strings; }
+
+  void use_remarks(AsmRemarks &remarks) { _asm_remarks.share(remarks); }
+  void use_strings(DbgStrings &strings) { _dbg_strings.share(strings); }
 #endif
 };
 
@@ -361,6 +371,8 @@ class RuntimeBlob : public CodeBlob {
     bool        caller_must_gc_arguments = false
   );
 
+  static void free(RuntimeBlob* blob);
+
   // GC support
   virtual bool is_alive() const                  = 0;
 
@@ -455,7 +467,7 @@ public:
 
 class MethodHandlesAdapterBlob: public BufferBlob {
 private:
-  MethodHandlesAdapterBlob(int size)                 : BufferBlob("MethodHandles adapters", size) {}
+  MethodHandlesAdapterBlob(int size): BufferBlob("MethodHandles adapters", size) {}
 
 public:
   // Creation
@@ -730,15 +742,18 @@ class SafepointBlob: public SingletonBlob {
 
 class ProgrammableUpcallHandler;
 
-class OptimizedEntryBlob: public BufferBlob {
+class OptimizedEntryBlob: public RuntimeBlob {
   friend class ProgrammableUpcallHandler;
  private:
   intptr_t _exception_handler_offset;
   jobject _receiver;
   ByteSize _frame_data_offset;
 
-  OptimizedEntryBlob(const char* name, int size, CodeBuffer* cb, intptr_t exception_handler_offset,
+  OptimizedEntryBlob(const char* name, CodeBuffer* cb, int size,
+                     intptr_t exception_handler_offset,
                      jobject receiver, ByteSize frame_data_offset);
+
+  void* operator new(size_t s, unsigned size) throw();
 
   struct FrameData {
     JavaFrameAnchor jfa;
@@ -752,18 +767,28 @@ class OptimizedEntryBlob: public BufferBlob {
  public:
   // Creation
   static OptimizedEntryBlob* create(const char* name, CodeBuffer* cb,
-                                    intptr_t exception_handler_offset, jobject receiver,
-                                    ByteSize frame_data_offset);
+                                    intptr_t exception_handler_offset,
+                                    jobject receiver, ByteSize frame_data_offset);
+
+  static void free(OptimizedEntryBlob* blob);
 
   address exception_handler() { return code_begin() + _exception_handler_offset; }
   jobject receiver() { return _receiver; }
 
   JavaFrameAnchor* jfa_for_frame(const frame& frame) const;
 
-  void oops_do(OopClosure* f, const frame& frame);
-
   // Typing
   virtual bool is_optimized_entry_blob() const override { return true; }
+
+  // GC/Verification support
+  void oops_do(OopClosure* f, const frame& frame);
+  virtual void preserve_callee_argument_oops(frame fr, const RegisterMap* reg_map, OopClosure* f) override;
+  virtual bool is_alive() const override { return true; }
+  virtual void verify() override;
+
+  // Misc.
+  virtual void print_on(outputStream* st) const override;
+  virtual void print_value_on(outputStream* st) const override;
 };
 
 #endif // SHARE_CODE_CODEBLOB_HPP

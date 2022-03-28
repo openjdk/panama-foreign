@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -151,7 +151,7 @@ public abstract class LinkFactory {
                             // we get everything as extends java.lang.Object we suppress
                             // all of them except those that have multiple extends
                             if (bounds.size() == 1 &&
-                                    bound.equals(utils.getObjectType()) &&
+                                    utils.typeUtils.isSameType(bound, utils.getObjectType()) &&
                                     !utils.isAnnotated(bound)) {
                                 continue;
                             }
@@ -166,6 +166,16 @@ public abstract class LinkFactory {
 
                 @Override
                 public Content visitDeclared(DeclaredType type, LinkInfo linkInfo) {
+                    TypeMirror enc = type.getEnclosingType();
+                    if (enc instanceof DeclaredType dt && utils.isGenericType(dt)) {
+                        // If an enclosing type has type parameters render them as separate links as
+                        // otherwise this information is lost. On the other hand, plain enclosing types
+                        // are not linked separately as they are easy to reach from the nested type.
+                        setEnclosingTypeLinkInfo(linkInfo, dt);
+                        visitDeclared(dt, linkInfo);
+                        link.add(".");
+                        setEnclosingTypeLinkInfo(linkInfo, type);
+                    }
                     link.add(getTypeAnnotationLinks(linkInfo));
                     linkInfo.typeElement = utils.asTypeElement(type);
                     link.add(getClassLink(linkInfo));
@@ -193,6 +203,12 @@ public abstract class LinkFactory {
         linkInfo.label = null;
         linkInfo.type = bound;
         linkInfo.skipPreview = false;
+    }
+
+    private void setEnclosingTypeLinkInfo(LinkInfo linkinfo, DeclaredType enclosing) {
+        linkinfo.typeElement = null;
+        linkinfo.label = null;
+        linkinfo.type = enclosing;
     }
 
     /**

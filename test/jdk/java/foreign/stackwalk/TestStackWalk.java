@@ -25,6 +25,7 @@
  * @test id=default_gc
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @library /test/lib
+ * @library ../
  * @build sun.hotspot.WhiteBox
  * @run driver jdk.test.lib.helpers.ClassFileInstaller sun.hotspot.WhiteBox
  *
@@ -32,16 +33,6 @@
  *   -Xbootclasspath/a:.
  *   -XX:+UnlockDiagnosticVMOptions
  *   -XX:+WhiteBoxAPI
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   --enable-native-access=ALL-UNNAMED
- *   -Xbatch
- *   TestStackWalk
- *
- * @run main/othervm
- *   -Xbootclasspath/a:.
- *   -XX:+UnlockDiagnosticVMOptions
- *   -XX:+WhiteBoxAPI
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
  *   --enable-native-access=ALL-UNNAMED
  *   -Xbatch
  *   TestStackWalk
@@ -52,6 +43,7 @@
  * @requires (((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64")
  * @requires vm.gc.Z
  * @library /test/lib
+ * @library ../
  * @build sun.hotspot.WhiteBox
  * @run driver jdk.test.lib.helpers.ClassFileInstaller sun.hotspot.WhiteBox
  *
@@ -59,17 +51,6 @@
  *   -Xbootclasspath/a:.
  *   -XX:+UnlockDiagnosticVMOptions
  *   -XX:+WhiteBoxAPI
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   --enable-native-access=ALL-UNNAMED
- *   -Xbatch
- *   -XX:+UseZGC
- *   TestStackWalk
- *
- * @run main/othervm
- *   -Xbootclasspath/a:.
- *   -XX:+UnlockDiagnosticVMOptions
- *   -XX:+WhiteBoxAPI
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
  *   --enable-native-access=ALL-UNNAMED
  *   -Xbatch
  *   -XX:+UseZGC
@@ -80,6 +61,7 @@
  * @requires (((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64")
  * @requires vm.gc.Shenandoah
  * @library /test/lib
+ * @library ../
  * @build sun.hotspot.WhiteBox
  * @run driver jdk.test.lib.helpers.ClassFileInstaller sun.hotspot.WhiteBox
  *
@@ -87,17 +69,6 @@
  *   -Xbootclasspath/a:.
  *   -XX:+UnlockDiagnosticVMOptions
  *   -XX:+WhiteBoxAPI
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   --enable-native-access=ALL-UNNAMED
- *   -Xbatch
- *   -XX:+UseShenandoahGC
- *   TestStackWalk
- *
- * @run main/othervm
- *   -Xbootclasspath/a:.
- *   -XX:+UnlockDiagnosticVMOptions
- *   -XX:+WhiteBoxAPI
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
  *   --enable-native-access=ALL-UNNAMED
  *   -Xbatch
  *   -XX:+UseShenandoahGC
@@ -106,6 +77,7 @@
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
 
@@ -117,12 +89,11 @@ import jdk.incubator.foreign.ResourceScope;
 import sun.hotspot.WhiteBox;
 
 import static java.lang.invoke.MethodHandles.lookup;
-import static jdk.incubator.foreign.CLinker.C_POINTER;
 
-public class TestStackWalk {
+public class TestStackWalk extends NativeTestHelper {
     static final WhiteBox WB = WhiteBox.getWhiteBox();
 
-    static final CLinker linker = CLinker.getInstance();
+    static final CLinker linker = CLinker.systemCLinker();
 
     static final MethodHandle MH_foo;
     static final MethodHandle MH_m;
@@ -133,7 +104,6 @@ public class TestStackWalk {
             SymbolLookup lookup = SymbolLookup.loaderLookup();
             MH_foo = linker.downcallHandle(
                     lookup.lookup("foo").get(),
-                    MethodType.methodType(void.class, MemoryAddress.class),
                     FunctionDescriptor.ofVoid(C_POINTER));
             MH_m = lookup().findStatic(TestStackWalk.class, "m", MethodType.methodType(void.class));
         } catch (ReflectiveOperationException e) {
@@ -145,7 +115,7 @@ public class TestStackWalk {
 
     public static void main(String[] args) throws Throwable {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemoryAddress stub = linker.upcallStub(MH_m, FunctionDescriptor.ofVoid(), scope);
+            NativeSymbol stub = linker.upcallStub(MH_m, FunctionDescriptor.ofVoid(), scope);
             MemoryAddress stubAddress = stub.address();
             armed = false;
             for (int i = 0; i < 20_000; i++) {
@@ -158,7 +128,7 @@ public class TestStackWalk {
     }
 
     static void payload(MemoryAddress cb) throws Throwable {
-        MH_foo.invokeExact(cb);
+        MH_foo.invoke(cb);
         Reference.reachabilityFence(cb); // keep oop alive across call
     }
 
