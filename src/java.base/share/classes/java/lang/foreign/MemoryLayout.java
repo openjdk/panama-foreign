@@ -25,8 +25,6 @@
  */
 package java.lang.foreign;
 
-import java.lang.constant.Constable;
-import java.lang.constant.DynamicConstantDesc;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
@@ -36,7 +34,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jdk.internal.foreign.LayoutPath;
@@ -167,13 +164,7 @@ import jdk.internal.javac.PreviewFeature;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface MemoryLayout extends Constable permits AbstractLayout, SequenceLayout, GroupLayout, PaddingLayout, ValueLayout {
-
-    /**
-     * {@return the nominal descriptor for this layout, if one can be constructed}
-     */
-    @Override
-    Optional<? extends DynamicConstantDesc<? extends MemoryLayout>> describeConstable();
+public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, GroupLayout, PaddingLayout, ValueLayout {
 
     /**
      * {@return the layout size, in bits}
