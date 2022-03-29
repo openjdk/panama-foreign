@@ -760,7 +760,6 @@ class OptimizedEntryBlob: public RuntimeBlob {
     JavaThread* thread;
     JNIHandleBlock* old_handles;
     JNIHandleBlock* new_handles;
-    bool should_detach;
   };
 
   // defined in frame_ARCH.cpp
