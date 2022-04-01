@@ -178,6 +178,7 @@ public abstract class CallArranger {
 
     class StorageCalculator {
         private final boolean forArguments;
+        private boolean forVarArgs = false;
 
         private final int[] nRegs = new int[] { 0, 0 };
         private long stackOffset = 0;
@@ -197,7 +198,9 @@ public abstract class CallArranger {
             // macos-aarch64 ABI potentially requires addressing stack offsets that are not multiples of 8 bytes
             // Reject such call types here, to prevent undefined behavior down the line
             // Reject if the above stack-slot-aligned offset does not match the offset the ABI really wants
-            if (requiresSubSlotStackPacking() && alignedStackOffset != Utils.alignUp(stackOffset, alignment))
+            // Except for variadic arguments, which _are_ passed at 8-byte-aligned offsets
+            if (requiresSubSlotStackPacking() && alignedStackOffset != Utils.alignUp(stackOffset, alignment)
+                    && !forVarArgs) // varargs are given a pass on all aarch64 ABIs
                 throw new UnsupportedOperationException("Call type not supported on this platform");
 
             stackOffset = alignedStackOffset;
@@ -247,6 +250,7 @@ public abstract class CallArranger {
             // no further arguments are allocated to registers.
             nRegs[StorageClasses.INTEGER] = MAX_REGISTER_ARGUMENTS;
             nRegs[StorageClasses.VECTOR] = MAX_REGISTER_ARGUMENTS;
+            forVarArgs = true;
         }
     }
 
