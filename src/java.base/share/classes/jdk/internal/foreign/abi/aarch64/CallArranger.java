@@ -187,12 +187,20 @@ public abstract class CallArranger {
         }
 
         VMStorage stackAlloc(long size, long alignment) {
-            if (requiresSubSlotStackPacking() && size < STACK_SLOT_SIZE)
+            assert forArguments : "no stack returns";
+            // Implementation limit: each arg must take up at least an 8 byte stack slot (on the Java side)
+            // There is currently no way to address stack offsets that are not multiples of 8 bytes
+            // The VM can only address multiple-of-4-bytes offsets, which is also not good enough for some ABIs
+            // see JDK-8283462 and related issues
+            long stackSlotAlignment = Math.max(alignment, STACK_SLOT_SIZE);
+            long alignedStackOffset = Utils.alignUp(stackOffset, stackSlotAlignment);
+            // macos-aarch64 ABI potentially requires addressing stack offsets that are not multiples of 8 bytes
+            // Reject such call types here, to prevent undefined behavior down the line
+            // Reject if the above stack-slot-aligned offset does not match the offset the ABI really wants
+            if (requiresSubSlotStackPacking() && alignedStackOffset != Utils.alignUp(stackOffset, alignment))
                 throw new UnsupportedOperationException("Call type not supported on this platform");
 
-            assert forArguments : "no stack returns";
-            alignment = Math.max(alignment, STACK_SLOT_SIZE);
-            stackOffset = Utils.alignUp(stackOffset, alignment);
+            stackOffset = alignedStackOffset;
 
             VMStorage storage =
                 AArch64Architecture.stackStorage((int)(stackOffset / STACK_SLOT_SIZE));

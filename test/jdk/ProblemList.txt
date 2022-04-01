@@ -536,7 +536,7 @@ java/foreign/TestUpcallStack.java 8275584 macosx-aarch64
 java/foreign/TestVarArgs.java 8275584 macosx-aarch64
 java/foreign/TestUpcallHighArity.java 8275584 macosx-aarch64
 java/foreign/TestIntrinsics.java 8275584 macosx-aarch64
-java/foreign/TestDowncall.java 8275584 macosx-aarch64
+java/foreign/TestDowncallStack.java 8275584 macosx-aarch64
 java/foreign/StdLibTest.java 8275584 macosx-aarch64
 
 ############################################################################
