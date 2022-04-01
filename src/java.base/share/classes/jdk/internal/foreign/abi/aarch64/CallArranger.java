@@ -108,9 +108,14 @@ public abstract class CallArranger {
      * Are variadic arguments assigned to registers as in the standard calling
      * convention, or always passed on the stack?
      *
-     * @returns true if variadic arguments should be spilled to the stack.
+     * @return true if variadic arguments should be spilled to the stack.
+      */
+     protected abstract boolean varArgsOnStack();
+
+    /**
+     * {@return true if this ABI requires sub-slot (smaller than STACK_SLOT_SIZE) packing of arguments on the stack.}
      */
-    protected abstract boolean varArgsOnStack();
+    protected abstract boolean requiresSubSlotStackPacking();
 
     protected CallArranger() {}
 
@@ -171,7 +176,7 @@ public abstract class CallArranger {
             .isPresent();
     }
 
-    static class StorageCalculator {
+    class StorageCalculator {
         private final boolean forArguments;
 
         private final int[] nRegs = new int[] { 0, 0 };
@@ -182,6 +187,9 @@ public abstract class CallArranger {
         }
 
         VMStorage stackAlloc(long size, long alignment) {
+            if (requiresSubSlotStackPacking() && size < STACK_SLOT_SIZE)
+                throw new UnsupportedOperationException("Call type not supported on this platform");
+
             assert forArguments : "no stack returns";
             alignment = Math.max(alignment, STACK_SLOT_SIZE);
             stackOffset = Utils.alignUp(stackOffset, alignment);
@@ -234,7 +242,7 @@ public abstract class CallArranger {
         }
     }
 
-    static abstract class BindingCalculator {
+    abstract class BindingCalculator {
         protected final StorageCalculator storageCalculator;
 
         protected BindingCalculator(boolean forArguments) {
@@ -286,7 +294,7 @@ public abstract class CallArranger {
         abstract List<Binding> getIndirectBindings();
     }
 
-    static class UnboxBindingCalculator extends BindingCalculator {
+    class UnboxBindingCalculator extends BindingCalculator {
         UnboxBindingCalculator(boolean forArguments) {
             super(forArguments);
         }
@@ -387,7 +395,7 @@ public abstract class CallArranger {
         }
     }
 
-    static class BoxBindingCalculator extends BindingCalculator{
+    class BoxBindingCalculator extends BindingCalculator {
         BoxBindingCalculator(boolean forArguments) {
             super(forArguments);
         }
