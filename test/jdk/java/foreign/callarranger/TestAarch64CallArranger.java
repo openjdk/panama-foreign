@@ -427,19 +427,19 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         FunctionDescriptor fdExpected = FunctionDescriptor.ofVoid(ADDRESS, C_INT, C_INT, C_FLOAT);
         CallArranger.Bindings bindings = CallArranger.MACOS.getBindings(mt, fd, false);
 
-       assertFalse(bindings.isInMemoryReturn);
-       CallingSequence callingSequence = bindings.callingSequence;
-       assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
-       assertEquals(callingSequence.functionDesc(), fdExpected);
+        assertFalse(bindings.isInMemoryReturn);
+        CallingSequence callingSequence = bindings.callingSequence;
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
+        assertEquals(callingSequence.functionDesc(), fdExpected);
 
-       // The two variadic arguments should be allocated on the stack
-       checkArgumentBindings(callingSequence, new Binding[][]{
-           { unboxAddress(Addressable.class), vmStore(r9, long.class) },
-           { vmStore(r0, int.class) },
-           { vmStore(stackStorage(0), int.class) },
-           { vmStore(stackStorage(1), float.class) },
-       });
+        // The two variadic arguments should be allocated on the stack
+        checkArgumentBindings(callingSequence, new Binding[][]{
+            { unboxAddress(Addressable.class), vmStore(r9, long.class) },
+            { vmStore(r0, int.class) },
+            { vmStore(stackStorage(0), int.class) },
+            { vmStore(stackStorage(1), float.class) },
+        });
 
-       checkReturnBindings(callingSequence, new Binding[]{});
+        checkReturnBindings(callingSequence, new Binding[]{});
     }
 }
