@@ -533,6 +533,7 @@ java/beans/XMLEncoder/Test6570354.java 8015593 macosx-all
 
 java/foreign/TestMismatch.java 8249684 macosx-all
 java/foreign/TestUpcallStack.java 8275584 macosx-aarch64
+java/foreign/TestDowncallStack.java 8275584 macosx-aarch64
 
 ############################################################################
 
@@ -743,7 +744,7 @@ java/awt/Robot/HiDPIScreenCapture/ScreenCaptureTest.java  8277816 macosx-aarch64
 java/awt/Robot/CheckCommonColors/CheckCommonColors.java 8277816 macosx-aarch64
 java/awt/ColorClass/AlphaColorTest.java 8277816 macosx-aarch64
 java/awt/AlphaComposite/WindowAlphaCompositeTest.java 8277816 macosx-aarch64
-	
+
 # macos12 failure
 javax/swing/JMenu/4515762/bug4515762.java 8276074 macosx-all
 
