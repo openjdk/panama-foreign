@@ -418,6 +418,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         checkReturnBindings(callingSequence, new Binding[]{});
     }
 
+    @Test
     public void testVarArgsOnStack() {
         MethodType mt = MethodType.methodType(void.class, int.class, int.class, float.class);
         FunctionDescriptor fd = FunctionDescriptor.ofVoid(C_INT).asVariadic(C_INT, C_FLOAT);
