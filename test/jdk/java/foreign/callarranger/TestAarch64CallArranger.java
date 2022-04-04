@@ -418,9 +418,6 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         checkReturnBindings(callingSequence, new Binding[]{});
     }
 
-    // The placement of the float is incorrect.
-    @Test(expectedExceptions = UnsupportedOperationException.class,
-            expectedExceptionsMessageRegExp = ".*Call type not supported on this platform.*")
     public void testVarArgsOnStack() {
         MethodType mt = MethodType.methodType(void.class, int.class, int.class, float.class);
         FunctionDescriptor fd = FunctionDescriptor.ofVoid(C_INT).asVariadic(C_INT, C_FLOAT);
