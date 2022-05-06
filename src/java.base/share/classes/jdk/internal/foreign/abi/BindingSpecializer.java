@@ -204,16 +204,13 @@ public class BindingSpecializer {
         }
 
         try {
-            if (callingSequence.forUpcall()) {
-                // We must initialize the class since the upcall stubs don't have a clinit barrier, and the slow
-                // path in the c2i adapter we end up calling can not handle the particular code shape where the
-                // caller is an upcall stub.
-                MethodHandles.Lookup lookup = MethodHandles.lookup().defineHiddenClass(bytes, true);
-                return lookup.findStatic(lookup.lookupClass(), METHOD_NAME, callerMethodType);
-            } else { // downcall
-                MethodHandles.Lookup lookup = MethodHandles.lookup().defineHiddenClassWithClassData(bytes, leafHandle, false);
-                return lookup.findStatic(lookup.lookupClass(), METHOD_NAME, callerMethodType);
-            }
+            MethodHandles.Lookup defineClassLookup = callingSequence.forUpcall()
+                // For upcalls, we must initialize the class since the upcall stubs don't have a clinit barrier,
+                // and the slow path in the c2i adapter we end up calling can not handle the particular code shape
+                // where the caller is an upcall stub.
+                ? MethodHandles.lookup().defineHiddenClass(bytes, true)
+                : MethodHandles.lookup().defineHiddenClassWithClassData(bytes, leafHandle, false);
+            return defineClassLookup.findStatic(defineClassLookup.lookupClass(), METHOD_NAME, callerMethodType);
         } catch (IllegalAccessException | NoSuchMethodException e) {
             throw new InternalError("Should not happen", e);
         }
