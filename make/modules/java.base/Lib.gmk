@@ -217,3 +217,16 @@ $(eval $(call SetupJdkLibrary, BUILD_SYSLOOKUPLIB, \
 ))
 
 TARGETS += $(BUILD_SYSLOOKUPLIB)
+
+################################################################################
+# Create fallback linker lib
+
+$(eval $(call SetupJdkLibrary, BUILD_LIBFALLBACKLINKER, \
+		NAME := fallbackLinker, \
+		CFLAGS := $(CFLAGS_JDKLIB) $(LIBFFI_CFLAGS), \
+		LDFLAGS := $(LDFLAGS_JDKLIB) \
+				$(call SET_SHARED_LIBRARY_ORIGIN), \
+		LIBS := $(LIBFFI_LIBS), \
+))
+
+TARGETS += $(BUILD_LIBFALLBACKLINKER)

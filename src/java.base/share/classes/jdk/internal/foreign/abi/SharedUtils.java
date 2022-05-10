@@ -31,6 +31,7 @@ import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.windows.WindowsAArch64Linker;
+import jdk.internal.foreign.abi.fallback.FallbackLinker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 import jdk.internal.vm.annotation.ForceInline;
@@ -40,9 +41,7 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentScope;
 import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -51,9 +50,7 @@ import java.lang.ref.Reference;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -72,6 +69,7 @@ public final class SharedUtils {
     private static final MethodHandle MH_ALLOC_BUFFER;
     private static final MethodHandle MH_BUFFER_COPY;
     private static final MethodHandle MH_REACHABILITY_FENCE;
+    public static final MethodHandle MH_CHECK_SYMBOL;
 
     static {
         try {
@@ -82,6 +80,8 @@ public final class SharedUtils {
                     methodType(MemorySegment.class, MemorySegment.class, MemorySegment.class));
             MH_REACHABILITY_FENCE = lookup.findStatic(Reference.class, "reachabilityFence",
                     methodType(void.class, Object.class));
+            MH_CHECK_SYMBOL = lookup.findStatic(SharedUtils.class, "checkSymbol",
+                    methodType(void.class, MemorySegment.class));
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
         }
@@ -188,6 +188,7 @@ public final class SharedUtils {
             case LINUX_AARCH_64 -> LinuxAArch64Linker.getInstance();
             case MAC_OS_AARCH_64 -> MacOsAArch64Linker.getInstance();
             case WIN_AARCH_64 -> WindowsAArch64Linker.getInstance();
+            case UNKNOWN -> FallbackLinker.getInstance();
         };
     }
 
@@ -239,7 +240,7 @@ public final class SharedUtils {
     }
 
 
-    static MethodHandle swapArguments(MethodHandle mh, int firstArg, int secondArg) {
+    public static MethodHandle swapArguments(MethodHandle mh, int firstArg, int secondArg) {
         MethodType mtype = mh.type();
         int[] perms = new int[mtype.parameterCount()];
         MethodType swappedType = MethodType.methodType(mtype.returnType());
