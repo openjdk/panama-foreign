@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,16 +21,36 @@
  * questions.
  */
 
-// key: compiler.err.total.pattern.and.default
-// key: compiler.misc.feature.pattern.switch
-// key: compiler.warn.preview.feature.use.plural
-// options: --enable-preview -source ${jdk.version} -Xlint:preview
+#include "precompiled.hpp"
+#include "code/vmreg.hpp"
+#include "prims/foreign_globals.hpp"
+#include "utilities/debug.hpp"
 
-class TotalPatternAndDefault {
-    private void doSwitch(Object o) {
-        switch (o) {
-            case Object obj: break;
-            default: break;
-        }
-    }
+class MacroAssembler;
+
+const ABIDescriptor ForeignGlobals::parse_abi_descriptor(jobject jabi) {
+  Unimplemented();
+  return {};
+}
+
+VMReg ForeignGlobals::vmstorage_to_vmreg(int type, int index) {
+  Unimplemented();
+  return VMRegImpl::Bad();
+}
+
+int RegSpiller::pd_reg_size(VMReg reg) {
+  Unimplemented();
+  return -1;
+}
+
+void RegSpiller::pd_store_reg(MacroAssembler* masm, int offset, VMReg reg) {
+  Unimplemented();
+}
+
+void RegSpiller::pd_load_reg(MacroAssembler* masm, int offset, VMReg reg) {
+  Unimplemented();
+}
+
+void ArgumentShuffle::pd_generate(MacroAssembler* masm, VMReg tmp, int in_stk_bias, int out_stk_bias) const {
+  Unimplemented();
 }

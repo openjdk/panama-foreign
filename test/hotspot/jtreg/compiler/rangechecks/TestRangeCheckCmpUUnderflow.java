@@ -19,29 +19,39 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#include "precompiled.hpp"
+/*
+ * @test
+ * @bug 8286638
+ * @summary Dominator failure because ConvL2I node becomes TOP, kills data-flow, but range-check does not collapse
+ *          due to insufficient overflow/underflow handling in CmpUNode::Value.
+ *
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+StressIGVN -Xcomp -XX:-TieredCompilation
+ *                   -XX:CompileCommand=compileonly,compiler.rangechecks.TestRangeCheckCmpUUnderflow::*
+ *                   -XX:RepeatCompilation=300
+ *                   compiler.rangechecks.TestRangeCheckCmpUUnderflow
+*/
 
-#ifdef COMPILER2
+package compiler.rangechecks;
 
-#include "opto/parse.hpp"
-#include "interpreter/bytecodes.hpp"
-
-bool Parse::do_one_bytecode_targeted() {
-  switch (bc()) {
-    case Bytecodes::_idiv: // fallthrough
-    case Bytecodes::_irem: // fallthrough
-#ifdef _LP64
-    case Bytecodes::_ldiv: // fallthrough
-    case Bytecodes::_lrem:
-#endif
-      do_divmod_fixup();
-      return true;
-    default:
-      return false;
-  }
+public class TestRangeCheckCmpUUnderflow {
+    volatile int a;
+    int b[];
+    float c[];
+    void e() {
+        int g, f, i;
+        for (g = 2;; g++) {
+            for (i = g; i < 1; i++) {
+                f = a;
+                c[i - 1] -= b[i];
+            }
+        }
+    }
+    public static void main(String[] args) {
+        try {
+            TestRangeCheckCmpUUnderflow j = new TestRangeCheckCmpUUnderflow();
+            j.e();
+        } catch (Exception ex) {}
+    }
 }
-
-#endif // COMPILER2
