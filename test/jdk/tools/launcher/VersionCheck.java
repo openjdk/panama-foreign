@@ -80,12 +80,14 @@ public class VersionCheck extends TestHelper {
         "javadoc",
         "javacpl",
         "javaws",
+        "jextract",
         "jcmd",
         "jconsole",
         "jcontrol",
         "jdeprscan",
         "jdeps",
         "jfr",
+        "jextract",
         "jimage",
         "jinfo",
         "jlink",
@@ -175,6 +177,10 @@ public class VersionCheck extends TestHelper {
             System.out.println("Testing " + f.getName());
             String x = f.getAbsolutePath();
             String testStr = getVersion(x, "-J-version");
+            if (f.getName().startsWith("jextract")) {
+                // skip the WARNING: Unknown module: jdk.incubator.jextract specified to --enable-native-access line
+                testStr = testStr.substring(testStr.indexOf('\n') + 1);
+            }
             if (refVersion.compareTo(testStr) != 0) {
                 failed.add(f.getName());
                 System.out.println("Error: " + x +
