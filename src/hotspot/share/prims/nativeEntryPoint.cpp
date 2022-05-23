@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@
 #include "precompiled.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 #include "classfile/javaClasses.inline.hpp"
-#include "code/codeCache.hpp"
 #include "code/vmreg.hpp"
 #include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
@@ -58,8 +57,8 @@ JNI_ENTRY(jlong, NEP_makeDowncallStub(JNIEnv* env, jclass _unused, jobject metho
     if (bt == BasicType::T_DOUBLE || bt == BasicType::T_LONG) {
       basic_type[bt_idx++] = T_VOID;
       // we only need these in the basic type
-      // NativeCallConv ignores them, but they are needed
-      // for JavaCallConv
+      // NativeCallingConvention ignores them, but they are needed
+      // for JavaCallingConvention
     }
   }
 
@@ -73,34 +72,6 @@ JNI_ENTRY(jlong, NEP_makeDowncallStub(JNIEnv* env, jclass _unused, jobject metho
     // we are NOT moving Java values, we are moving register-sized values
     output_regs.push(ForeignGlobals::parse_vmstorage(ret_moves_oop->obj_at(i)));
   }
-
-#ifdef ASSERT
-  LogTarget(Trace, panama) lt;
-  if (lt.is_enabled()) {
-    ResourceMark rm;
-    LogStream ls(lt);
-    ls.print_cr("Generating native invoker {");
-    ls.print("BasicType { ");
-    for (int i = 0; i < pslots; i++) {
-      ls.print("%s, ", null_safe_string(type2name(basic_type[i])));
-    }
-    ls.print_cr("}");
-    ls.print_cr("shadow_space_bytes = %d", abi._shadow_space_bytes);
-    ls.print("input_registers { ");
-    for (int i = 0; i < input_regs.length(); i++) {
-      VMReg reg = input_regs.at(i);
-      ls.print("%s (" INTPTR_FORMAT "), ", reg->name(), reg->value());
-    }
-    ls.print_cr("}");
-      ls.print("output_registers { ");
-    for (int i = 0; i < output_regs.length(); i++) {
-      VMReg reg = output_regs.at(i);
-      ls.print("%s (" INTPTR_FORMAT "), ", reg->name(), reg->value());
-    }
-    ls.print_cr("}");
-    ls.print_cr("}");
-  }
-#endif
 
   return (jlong) DowncallLinker::make_downcall_stub(
     basic_type, pslots, ret_bt, abi, input_regs, output_regs, needs_return_buffer)->code_begin();

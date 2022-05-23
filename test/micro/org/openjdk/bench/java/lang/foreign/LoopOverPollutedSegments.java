@@ -22,7 +22,6 @@
  */
 package org.openjdk.bench.java.lang.foreign;
 
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -37,11 +36,8 @@ import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 import sun.misc.Unsafe;
 
-import java.lang.invoke.VarHandle;
 import java.util.concurrent.TimeUnit;
 
-import static java.lang.foreign.MemoryLayout.PathElement.sequenceElement;
-import static java.lang.foreign.ValueLayout.JAVA_FLOAT;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 
 @BenchmarkMode(Mode.AverageTime)
@@ -50,7 +46,7 @@ import static java.lang.foreign.ValueLayout.JAVA_INT;
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Fork(value = 3, jvmArgsAppend = "--enable-preview")
-public class LoopOverPollutedSegments {
+public class LoopOverPollutedSegments extends JavaLayouts {
 
     static final int ELEM_SIZE = 1_000_000;
     static final int CARRIER_SIZE = (int) JAVA_INT.byteSize();
@@ -63,9 +59,6 @@ public class LoopOverPollutedSegments {
     MemorySegment nativeSegment, nativeSharedSegment, heapSegmentBytes, heapSegmentFloats;
     byte[] arr;
     long addr;
-
-    static final VarHandle intHandle = JAVA_INT.arrayElementVarHandle();
-
 
     @Setup
     public void setup() {
@@ -82,17 +75,17 @@ public class LoopOverPollutedSegments {
         for (int rep = 0 ; rep < 5 ; rep++) {
             for (int i = 0; i < ELEM_SIZE; i++) {
                 unsafe.putInt(arr, Unsafe.ARRAY_BYTE_BASE_OFFSET + (i * 4), i);
-                nativeSegment.setAtIndex(JAVA_INT, i, i);
-                nativeSegment.setAtIndex(JAVA_FLOAT, i, i);
-                nativeSharedSegment.setAtIndex(JAVA_INT, i, i);
-                nativeSharedSegment.setAtIndex(JAVA_FLOAT, i, i);
-                intHandle.set(nativeSegment, (long)i, i);
-                heapSegmentBytes.setAtIndex(JAVA_INT, i, i);
-                heapSegmentBytes.setAtIndex(JAVA_FLOAT, i, i);
-                intHandle.set(heapSegmentBytes, (long)i, i);
-                heapSegmentFloats.setAtIndex(JAVA_INT, i, i);
-                heapSegmentFloats.setAtIndex(JAVA_FLOAT, i, i);
-                intHandle.set(heapSegmentFloats, (long)i, i);
+                nativeSegment.setAtIndex(JAVA_INT_UNALIGNED, i, i);
+                nativeSegment.setAtIndex(JAVA_FLOAT_UNALIGNED, i, i);
+                nativeSharedSegment.setAtIndex(JAVA_INT_UNALIGNED, i, i);
+                nativeSharedSegment.setAtIndex(JAVA_FLOAT_UNALIGNED, i, i);
+                VH_INT_UNALIGNED.set(nativeSegment, (long)i, i);
+                heapSegmentBytes.setAtIndex(JAVA_INT_UNALIGNED, i, i);
+                heapSegmentBytes.setAtIndex(JAVA_FLOAT_UNALIGNED, i, i);
+                VH_INT_UNALIGNED.set(heapSegmentBytes, (long)i, i);
+                heapSegmentFloats.setAtIndex(JAVA_INT_UNALIGNED, i, i);
+                heapSegmentFloats.setAtIndex(JAVA_FLOAT_UNALIGNED, i, i);
+                VH_INT_UNALIGNED.set(heapSegmentFloats, (long)i, i);
             }
         }
     }
@@ -110,8 +103,8 @@ public class LoopOverPollutedSegments {
     public int native_segment_VH() {
         int sum = 0;
         for (int k = 0; k < ELEM_SIZE; k++) {
-            intHandle.set(nativeSegment, (long)k, k + 1);
-            int v = (int) intHandle.get(nativeSegment, (long)k);
+            VH_INT_UNALIGNED.set(nativeSegment, (long)k, k + 1);
+            int v = (int) VH_INT_UNALIGNED.get(nativeSegment, (long)k);
             sum += v;
         }
         return sum;
@@ -121,8 +114,8 @@ public class LoopOverPollutedSegments {
     public int native_segment_instance() {
         int sum = 0;
         for (int k = 0; k < ELEM_SIZE; k++) {
-            nativeSegment.setAtIndex(JAVA_INT, k, k + 1);
-            int v = nativeSegment.getAtIndex(JAVA_INT, k);
+            nativeSegment.setAtIndex(JAVA_INT_UNALIGNED, k, k + 1);
+            int v = nativeSegment.getAtIndex(JAVA_INT_UNALIGNED, k);
             sum += v;
         }
         return sum;
@@ -132,8 +125,8 @@ public class LoopOverPollutedSegments {
     public int heap_segment_ints_VH() {
         int sum = 0;
         for (int k = 0; k < ELEM_SIZE; k++) {
-            intHandle.set(heapSegmentBytes, (long)k, k + 1);
-            int v = (int) intHandle.get(heapSegmentBytes, (long)k);
+            VH_INT_UNALIGNED.set(heapSegmentBytes, (long)k, k + 1);
+            int v = (int) VH_INT_UNALIGNED.get(heapSegmentBytes, (long)k);
             sum += v;
         }
         return sum;
@@ -143,8 +136,8 @@ public class LoopOverPollutedSegments {
     public int heap_segment_ints_instance() {
         int sum = 0;
         for (int k = 0; k < ELEM_SIZE; k++) {
-            heapSegmentBytes.setAtIndex(JAVA_INT, k, k + 1);
-            int v = heapSegmentBytes.getAtIndex(JAVA_INT, k);
+            heapSegmentBytes.setAtIndex(JAVA_INT_UNALIGNED, k, k + 1);
+            int v = heapSegmentBytes.getAtIndex(JAVA_INT_UNALIGNED, k);
             sum += v;
         }
         return sum;
@@ -154,8 +147,8 @@ public class LoopOverPollutedSegments {
     public int heap_segment_floats_VH() {
         int sum = 0;
         for (int k = 0; k < ELEM_SIZE; k++) {
-            intHandle.set(heapSegmentFloats, (long)k, k + 1);
-            int v = (int)intHandle.get(heapSegmentFloats, (long)k);
+            VH_INT_UNALIGNED.set(heapSegmentFloats, (long)k, k + 1);
+            int v = (int)VH_INT_UNALIGNED.get(heapSegmentFloats, (long)k);
             sum += v;
         }
         return sum;
@@ -165,8 +158,8 @@ public class LoopOverPollutedSegments {
     public int heap_segment_floats_instance() {
         int sum = 0;
         for (int k = 0; k < ELEM_SIZE; k++) {
-            heapSegmentFloats.setAtIndex(JAVA_INT, k, k + 1);
-            int v = heapSegmentFloats.getAtIndex(JAVA_INT, k);
+            heapSegmentFloats.setAtIndex(JAVA_INT_UNALIGNED, k, k + 1);
+            int v = heapSegmentFloats.getAtIndex(JAVA_INT_UNALIGNED, k);
             sum += v;
         }
         return sum;

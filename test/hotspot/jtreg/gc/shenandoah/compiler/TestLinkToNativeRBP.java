@@ -36,9 +36,10 @@
  *
  */
 
-import java.lang.foreign.CLinker;
+import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 
+import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 
@@ -47,8 +48,9 @@ public class TestLinkToNativeRBP {
         System.loadLibrary("LinkToNativeRBP");
     }
 
-    final static CLinker abi = CLinker.systemCLinker();
-    final static MethodHandle foo = abi.downcallHandle(TestLinkToNativeRBP.class.getClassLoader().findNative("foo").get(),
+    final static Linker abi = Linker.nativeLinker();
+    static final SymbolLookup lookup = SymbolLookup.loaderLookup();
+    final static MethodHandle foo = abi.downcallHandle(lookup.lookup("foo").get(),
             FunctionDescriptor.of(ValueLayout.JAVA_INT));
 
     static int foo() throws Throwable {

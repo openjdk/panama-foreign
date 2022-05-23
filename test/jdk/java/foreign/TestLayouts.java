@@ -96,7 +96,7 @@ public class TestLayouts {
                 ValueLayout.JAVA_LONG
         );
         assertEquals(struct.byteSize(), 1 + 1 + 2 + 4 + 8);
-        assertEquals(struct.byteAlignment(), ValueLayout.ADDRESS.byteAlignment());
+        assertEquals(struct.byteAlignment(), 8);
     }
 
     @Test(dataProvider="basicLayouts")
@@ -127,7 +127,38 @@ public class TestLayouts {
                 ValueLayout.JAVA_LONG
         );
         assertEquals(struct.byteSize(), 8);
-        assertEquals(struct.byteAlignment(), ValueLayout.ADDRESS.byteAlignment());
+        assertEquals(struct.byteAlignment(), 8);
+    }
+
+    @Test
+    public void testSequenceBadCount() {
+        assertThrows(IllegalArgumentException.class, // negative
+                () -> MemoryLayout.sequenceLayout(-2, JAVA_SHORT));
+    }
+
+    @Test(dataProvider = "basicLayouts")
+    public void testSequenceInferredCount(MemoryLayout layout) {
+        assertEquals(MemoryLayout.sequenceLayout(-1, layout),
+                     MemoryLayout.sequenceLayout(Long.MAX_VALUE / layout.bitSize(), layout));
+    }
+
+    @Test
+    public void testSequenceOverflow() {
+        assertThrows(IllegalArgumentException.class, // negative
+                () -> MemoryLayout.sequenceLayout(Long.MAX_VALUE, JAVA_SHORT));
+        assertThrows(IllegalArgumentException.class, // flip back to positive
+                () -> MemoryLayout.sequenceLayout(Long.MAX_VALUE/3, JAVA_LONG));
+    }
+
+    @Test
+    public void testStructOverflow() {
+        assertThrows(IllegalArgumentException.class, // negative
+                () -> MemoryLayout.structLayout(MemoryLayout.sequenceLayout(Long.MAX_VALUE, JAVA_BYTE),
+                                                MemoryLayout.sequenceLayout(Long.MAX_VALUE, JAVA_BYTE)));
+        assertThrows(IllegalArgumentException.class, // flip back to positive
+                () -> MemoryLayout.structLayout(MemoryLayout.sequenceLayout(Long.MAX_VALUE, JAVA_BYTE),
+                                                MemoryLayout.sequenceLayout(Long.MAX_VALUE, JAVA_BYTE),
+                                                MemoryLayout.sequenceLayout(Long.MAX_VALUE, JAVA_BYTE)));
     }
 
     @Test(dataProvider = "layoutKinds")

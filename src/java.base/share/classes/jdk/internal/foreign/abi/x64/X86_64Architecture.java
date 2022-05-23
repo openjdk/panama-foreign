@@ -24,10 +24,11 @@
  */
 package jdk.internal.foreign.abi.x64;
 
-import java.util.stream.IntStream;
 import jdk.internal.foreign.abi.ABIDescriptor;
 import jdk.internal.foreign.abi.Architecture;
 import jdk.internal.foreign.abi.VMStorage;
+
+import java.util.stream.IntStream;
 
 public class X86_64Architecture implements Architecture {
     public static final Architecture INSTANCE = new X86_64Architecture();
@@ -152,7 +153,7 @@ public class X86_64Architecture implements Architecture {
             },
             stackAlignment,
             shadowSpace,
-                targetAddrStorage, retBufAddrStorage);
+            targetAddrStorage, retBufAddrStorage);
     }
 
 }

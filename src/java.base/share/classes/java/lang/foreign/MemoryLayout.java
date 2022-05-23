@@ -34,6 +34,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jdk.internal.foreign.LayoutPath;
@@ -82,7 +83,7 @@ import jdk.internal.javac.PreviewFeature;
  * always has the same size in bits, regardless of the platform in which it is used. For derived layouts, the size is computed
  * as follows:
  * <ul>
- *     <li>for a sequence layout <em>S</em> whose element layout is <em>E</em> and size is L,
+ *     <li>for a sequence layout <em>S</em> whose element layout is <em>E</em> and size is <em>L</em>,
  *     the size of <em>S</em> is that of <em>E</em>, multiplied by <em>L</em></li>
  *     <li>for a group layout <em>G</em> with member layouts <em>M1</em>, <em>M2</em>, ... <em>Mn</em> whose sizes are
  *     <em>S1</em>, <em>S2</em>, ... <em>Sn</em>, respectively, the size of <em>G</em> is either <em>S1 + S2 + ... + Sn</em> or
@@ -385,31 +386,6 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
     }
 
     /**
-     * Creates a <em>strided</em> access var handle that can be used to dereference memory at the layout selected by the given layout path,
-     * where the path is considered rooted in this layout. The returned var handle can effectively dereference multiple memory
-     * locations, using a <em>dynamic</em> index (of type {@code long}), which is multiplied by this layout size and then added
-     * to the offset of the selected layout. Equivalent to the following code:
-     * {@snippet lang=java :
-     * MemoryLayout.sequenceLayout(Long.MAX_VALUE, this)
-     *             .varHandle(PathElement.sequenceElement());
-     * }
-     *
-     * @param elements the layout path elements.
-     * @return a var handle which can be used to dereference memory at the (possibly nested) layout selected by the layout path in {@code elements}.
-     * @throws UnsupportedOperationException if the layout path has one or more elements with incompatible alignment constraints.
-     * @throws IllegalArgumentException if the layout path in {@code elements} does not select a value layout (see {@link ValueLayout}).
-     * @see MethodHandles#memorySegmentViewVarHandle
-     */
-    default VarHandle arrayElementVarHandle(PathElement... elements) {
-        Objects.requireNonNull(elements);
-        PathElement[] newElements = new PathElement[elements.length + 1];
-        newElements[0] = PathElement.sequenceElement();
-        System.arraycopy(elements, 0, newElements, 1, elements.length);
-        return computePathOp(LayoutPath.rootPath(MemoryLayout.sequenceLayout(Long.MAX_VALUE, this)),
-                LayoutPath::dereferenceHandle, Set.of(), newElements);
-    }
-
-    /**
      * Creates a method handle which, given a memory segment, returns a {@linkplain MemorySegment#asSlice(long,long) slice}
      * corresponding to the layout selected by the given layout path, where the path is considered rooted in this layout.
      *
@@ -492,9 +468,6 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
      * of sequence element layout can be <em>explicit</em> (see {@link PathElement#sequenceElement(long)}) or
      * <em>implicit</em> (see {@link PathElement#sequenceElement()}). When a path uses one or more implicit
      * sequence path elements, it acquires additional <em>free dimensions</em>.
-     *
-     * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
-     * elements to a method in this class causes a {@link NullPointerException} to be thrown.</p>
      *
      * @implSpec
      * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
@@ -669,16 +642,31 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
     }
 
     /**
-     * Creates a sequence layout with the given element layout and element count.
+     * Creates a sequence layout with the given element layout and element count. If the element count has the
+     * special value {@code -1}, the element count is inferred to be the biggest possible count such that
+     * the sequence layout size does not overflow, using the following formula:
      *
-     * @param elementCount the sequence element count.
+     * <blockquote><pre>{@code
+     * inferredElementCount = Long.MAX_VALUE / elementLayout.bitSize();
+     * }</pre></blockquote>
+     *
+     * @param elementCount the sequence element count; if set to {@code -1}, the sequence element count is inferred.
      * @param elementLayout the sequence element layout.
      * @return the new sequence layout with the given element layout and size.
-     * @throws IllegalArgumentException if {@code elementCount < 0}.
+     * @throws IllegalArgumentException if {@code elementCount < -1}.
+     * @throws IllegalArgumentException if {@code elementCount != -1} and the computation {@code elementCount * elementLayout.bitSize()} overflows.
      */
     static SequenceLayout sequenceLayout(long elementCount, MemoryLayout elementLayout) {
-        AbstractLayout.checkSize(elementCount, true);
-        return new SequenceLayout(elementCount, Objects.requireNonNull(elementLayout));
+        if (elementCount == -1) {
+            // inferred element count
+            long inferredElementCount = Long.MAX_VALUE / elementLayout.bitSize();
+            return new SequenceLayout(inferredElementCount, elementLayout);
+        } else {
+            // explicit element count
+            AbstractLayout.checkSize(elementCount, true);
+            return wrapOverflow(() ->
+                    new SequenceLayout(elementCount, Objects.requireNonNull(elementLayout)));
+        }
     }
 
     /**
@@ -686,13 +674,16 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
      *
      * @param elements The member layouts of the struct layout.
      * @return a struct layout with the given member layouts.
+     * @throws IllegalArgumentException if the sum of the {@linkplain #bitSize() bit sizes} of the member layouts
+     * overflows.
      */
     static GroupLayout structLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
-        return new GroupLayout(GroupLayout.Kind.STRUCT,
-                Stream.of(elements)
-                        .map(Objects::requireNonNull)
-                        .collect(Collectors.toList()));
+        return wrapOverflow(() ->
+                new GroupLayout(GroupLayout.Kind.STRUCT,
+                        Stream.of(elements)
+                                .map(Objects::requireNonNull)
+                                .collect(Collectors.toList())));
     }
 
     /**
@@ -707,5 +698,13 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
                 Stream.of(elements)
                         .map(Objects::requireNonNull)
                         .collect(Collectors.toList()));
+    }
+
+    private static <L extends MemoryLayout> L wrapOverflow(Supplier<L> layoutSupplier) {
+        try {
+            return layoutSupplier.get();
+        } catch (ArithmeticException ex) {
+            throw new IllegalArgumentException("Layout size exceeds Long.MAX_VALUE");
+        }
     }
 }

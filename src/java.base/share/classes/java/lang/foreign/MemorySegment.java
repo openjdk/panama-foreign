@@ -29,11 +29,13 @@ package java.lang.foreign;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Array;
 import java.lang.invoke.MethodHandles;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Spliterator;
 import java.util.stream.Stream;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
@@ -58,12 +60,12 @@ import jdk.internal.vm.annotation.ForceInline;
  * <ul>
  *     <li>{@linkplain MemorySegment#allocateNative(long, long, MemorySession) native memory segments}, backed by off-heap memory;</li>
  *     <li>{@linkplain FileChannel#map(FileChannel.MapMode, long, long, MemorySession) mapped memory segments}, obtained by mapping
- * a file into main memory ({@code mmap}); tha contents of a mapped memory segments can be {@linkplain #force() persisted} and
+ * a file into main memory ({@code mmap}); the contents of a mapped memory segments can be {@linkplain #force() persisted} and
  * {@linkplain #load() loaded} to and from the underlying memory-mapped file;</li>
  *     <li>{@linkplain MemorySegment#ofArray(int[]) array segments}, wrapping an existing, heap-allocated Java array; and</li>
- *     <li>{@linkplain MemorySegment#ofByteBuffer(ByteBuffer) buffer segments}, wrapping an existing {@link ByteBuffer} instance;
+ *     <li>{@linkplain MemorySegment#ofBuffer(Buffer) buffer segments}, wrapping an existing {@link Buffer} instance;
  * buffer memory segments might be backed by either off-heap memory or on-heap memory, depending on the characteristics of the
- * wrapped byte buffer instance. For instance, a buffer memory segment obtained from a byte buffer created with the
+ * wrapped buffer instance. For instance, a buffer memory segment obtained from a byte buffer created with the
  * {@link ByteBuffer#allocateDirect(int)} method will be backed by off-heap memory.</li>
  * </ul>
  *
@@ -83,8 +85,11 @@ import jdk.internal.vm.annotation.ForceInline;
  * session; that is, if the segment is associated with a shared session, it can be accessed by multiple threads;
  * if it is associated with a confined session, it can only be accessed by the thread which owns the memory session.
  * <p>
- * Heap and buffer segments are always associated with a <em>global</em>, shared memory session. This session cannot be closed,
- * and segments associated with it can be considered as <em>always alive</em>.
+ * Heap segments are always associated with the {@linkplain MemorySession#global() global} memory session.
+ * This session cannot be closed, and segments associated with it can be considered as <em>always alive</em>.
+ * Buffer segments are typically associated with the global memory session, with one exception: buffer segments created
+ * from byte buffer instances obtained calling the {@link #asByteBuffer()} method on a memory segment {@code S}
+ * are associated with the same memory session as {@code S}.
  *
  * <h2><a id = "segment-deref">Dereferencing memory segments</a></h2>
  *
@@ -224,7 +229,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * the memory segment.
  * <p>
  * Clients requiring sophisticated, low-level control over mapped memory segments, might consider writing
- * custom mapped memory segment factories; using {@link CLinker}, e.g. on Linux, it is possible to call {@code mmap}
+ * custom mapped memory segment factories; using {@link Linker}, e.g. on Linux, it is possible to call {@code mmap}
  * with the desired parameters; the returned address can be easily wrapped into a memory segment, using
  * {@link MemoryAddress#ofLong(long)} and {@link MemorySegment#ofAddress(MemoryAddress, long, MemorySession)}.
  *
@@ -295,7 +300,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     long byteSize();
 
     /**
-     * Returns a slice of this memory segment, at given offset. The returned segment's base address is the base address
+     * Returns a slice of this memory segment, at the given offset. The returned segment's base address is the base address
      * of this segment plus the given offset; its size is specified by the given argument.
      *
      * @see #asSlice(long)
@@ -308,7 +313,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     MemorySegment asSlice(long offset, long newSize);
 
     /**
-     * Returns a slice of this memory segment, at given offset. The returned segment's base address is the base address
+     * Returns a slice of this memory segment, at the given offset. The returned segment's base address is the base address
      * of this segment plus the given offset; its size is computed by subtracting the specified offset from this segment size.
      * <p>
      * Equivalent to the following code:
@@ -343,7 +348,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     /**
      * Returns {@code true} if this segment is a native segment. A native memory segment is
      * created using the {@link #allocateNative(long, MemorySession)} (and related) factory, or a buffer segment
-     * derived from a {@linkplain ByteBuffer#allocateDirect(int) direct byte buffer} using the {@link #ofByteBuffer(ByteBuffer)} factory,
+     * derived from a {@linkplain ByteBuffer#allocateDirect(int) direct byte buffer} using the {@link #ofBuffer(Buffer)} factory,
      * or if this is a {@linkplain #isMapped() mapped} segment.
      * @return {@code true} if this segment is native segment.
      */
@@ -352,7 +357,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     /**
      * Returns {@code true} if this segment is a mapped segment. A mapped memory segment is
      * created using the {@link FileChannel#map(FileChannel.MapMode, long, long, MemorySession)} factory, or a buffer segment
-     * derived from a {@link java.nio.MappedByteBuffer} using the {@link #ofByteBuffer(ByteBuffer)} factory.
+     * derived from a {@link java.nio.MappedByteBuffer} using the {@link #ofBuffer(Buffer)} factory.
      * @return {@code true} if this segment is a mapped segment.
      */
     boolean isMapped();
@@ -368,9 +373,9 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * this case, or when no overlap occurs, {@code null} is returned.
      *
      * @param other the segment to test for an overlap with this segment.
-     * @return a slice of this segment, or {@code null} if no overlap occurs.
+     * @return a slice of this segment (where overlapping occurs).
      */
-    MemorySegment asOverlappingSlice(MemorySegment other);
+    Optional<MemorySegment> asOverlappingSlice(MemorySegment other);
 
     /**
      * Returns the offset, in bytes, of the provided segment, relative to this
@@ -582,85 +587,85 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     ByteBuffer asByteBuffer();
 
     /**
-     * Copy the contents of this memory segment into a fresh byte array.
+     * Copy the contents of this memory segment into a new byte array.
      * @param elementLayout the source element layout. If the byte order associated with the layout is
-     * different from the native order, a byte swap operation will be performed on each array element.
-     * @return a fresh byte array copy of this memory segment.
+     * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
+     * @return a new byte array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
-     * @throws IllegalStateException if this segment's contents cannot be copied into a {@link byte[]} instance,
+     * @throws IllegalStateException if this segment's contents cannot be copied into a {@code byte[]} instance,
      * e.g. its size is greater than {@link Integer#MAX_VALUE}.
      */
     byte[] toArray(ValueLayout.OfByte elementLayout);
 
     /**
-     * Copy the contents of this memory segment into a fresh short array.
+     * Copy the contents of this memory segment into a new short array.
      * @param elementLayout the source element layout. If the byte order associated with the layout is
-     * different from the native order, a byte swap operation will be performed on each array element.
-     * @return a fresh short array copy of this memory segment.
+     * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
+     * @return a new short array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
-     * @throws IllegalStateException if this segment's contents cannot be copied into a {@link short[]} instance,
+     * @throws IllegalStateException if this segment's contents cannot be copied into a {@code short[]} instance,
      * e.g. because {@code byteSize() % 2 != 0}, or {@code byteSize() / 2 > Integer#MAX_VALUE}
      */
     short[] toArray(ValueLayout.OfShort elementLayout);
 
     /**
-     * Copy the contents of this memory segment into a fresh char array.
+     * Copy the contents of this memory segment into a new char array.
      * @param elementLayout the source element layout. If the byte order associated with the layout is
-     * different from the native order, a byte swap operation will be performed on each array element.
-     * @return a fresh char array copy of this memory segment.
+     * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
+     * @return a new char array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
-     * @throws IllegalStateException if this segment's contents cannot be copied into a {@link char[]} instance,
+     * @throws IllegalStateException if this segment's contents cannot be copied into a {@code char[]} instance,
      * e.g. because {@code byteSize() % 2 != 0}, or {@code byteSize() / 2 > Integer#MAX_VALUE}.
      */
     char[] toArray(ValueLayout.OfChar elementLayout);
 
     /**
-     * Copy the contents of this memory segment into a fresh int array.
+     * Copy the contents of this memory segment into a new int array.
      * @param elementLayout the source element layout. If the byte order associated with the layout is
-     * different from the native order, a byte swap operation will be performed on each array element.
-     * @return a fresh int array copy of this memory segment.
+     * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
+     * @return a new int array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
-     * @throws IllegalStateException if this segment's contents cannot be copied into a {@link int[]} instance,
+     * @throws IllegalStateException if this segment's contents cannot be copied into a {@code int[]} instance,
      * e.g. because {@code byteSize() % 4 != 0}, or {@code byteSize() / 4 > Integer#MAX_VALUE}.
      */
     int[] toArray(ValueLayout.OfInt elementLayout);
 
     /**
-     * Copy the contents of this memory segment into a fresh float array.
+     * Copy the contents of this memory segment into a new float array.
      * @param elementLayout the source element layout. If the byte order associated with the layout is
-     * different from the native order, a byte swap operation will be performed on each array element.
-     * @return a fresh float array copy of this memory segment.
+     * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
+     * @return a new float array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
-     * @throws IllegalStateException if this segment's contents cannot be copied into a {@link float[]} instance,
+     * @throws IllegalStateException if this segment's contents cannot be copied into a {@code float[]} instance,
      * e.g. because {@code byteSize() % 4 != 0}, or {@code byteSize() / 4 > Integer#MAX_VALUE}.
      */
     float[] toArray(ValueLayout.OfFloat elementLayout);
 
     /**
-     * Copy the contents of this memory segment into a fresh long array.
+     * Copy the contents of this memory segment into a new long array.
      * @param elementLayout the source element layout. If the byte order associated with the layout is
-     * different from the native order, a byte swap operation will be performed on each array element.
-     * @return a fresh long array copy of this memory segment.
+     * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
+     * @return a new long array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
-     * @throws IllegalStateException if this segment's contents cannot be copied into a {@link long[]} instance,
+     * @throws IllegalStateException if this segment's contents cannot be copied into a {@code long[]} instance,
      * e.g. because {@code byteSize() % 8 != 0}, or {@code byteSize() / 8 > Integer#MAX_VALUE}.
      */
     long[] toArray(ValueLayout.OfLong elementLayout);
 
     /**
-     * Copy the contents of this memory segment into a fresh double array.
+     * Copy the contents of this memory segment into a new double array.
      * @param elementLayout the source element layout. If the byte order associated with the layout is
-     * different from the native order, a byte swap operation will be performed on each array element.
-     * @return a fresh double array copy of this memory segment.
+     * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
+     * @return a new double array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
-     * @throws IllegalStateException if this segment's contents cannot be copied into a {@link double[]} instance,
+     * @throws IllegalStateException if this segment's contents cannot be copied into a {@code double[]} instance,
      * e.g. because {@code byteSize() % 8 != 0}, or {@code byteSize() / 8 > Integer#MAX_VALUE}.
      */
     double[] toArray(ValueLayout.OfDouble elementLayout);
@@ -676,8 +681,9 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *               the final address of this read operation can be expressed as {@code address().toRowLongValue() + offset}.
      * @return a Java string constructed from the bytes read from the given starting address up to (but not including)
      * the first {@code '\0'} terminator character (assuming one is found).
-     * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform.
-     * @throws IllegalStateException if the size of the native string is greater than the size of this segment.
+     * @throws IllegalArgumentException if the size of the UTF-8 string is greater than the largest string supported by the platform.
+     * @throws IndexOutOfBoundsException if {@code S + offset > byteSize()}, where {@code S} is the size of the UTF-8
+     * string (including the terminator character).
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
      */
@@ -695,8 +701,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this write operation can be expressed as {@code address().toRowLongValue() + offset}.
      * @param str the Java string to be written into this segment.
-     * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform.
-     * @throws IllegalStateException if the size of the native string is greater than the size of this segment.
+     * @throws IndexOutOfBoundsException if {@code str.getBytes().length() + offset >= byteSize()}.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}, or if access occurs from a thread other than the thread owning that session.
      */
@@ -706,9 +711,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
 
 
     /**
-     * Creates a buffer memory segment that models the memory associated with the given byte
-     * buffer. The segment starts relative to the buffer's position (inclusive)
-     * and ends relative to the buffer's limit (exclusive).
+     * Creates a buffer memory segment that models the memory associated with the given {@link Buffer} instance.
+     * The segment starts relative to the buffer's position (inclusive) and ends relative to the buffer's limit (exclusive).
      * <p>
      * If the buffer is {@linkplain ByteBuffer#isReadOnly() read-only}, the resulting segment will also be
      * {@linkplain ByteBuffer#isReadOnly() read-only}. The memory session associated with this segment can either be the
@@ -717,11 +721,11 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * <p>
      * The resulting memory segment keeps a reference to the backing buffer, keeping it <em>reachable</em>.
      *
-     * @param bb the byte buffer backing the buffer memory segment.
+     * @param buffer the buffer instance backing the buffer memory segment.
      * @return a buffer memory segment.
      */
-    static MemorySegment ofByteBuffer(ByteBuffer bb) {
-        return AbstractMemorySegmentImpl.ofBuffer(bb);
+    static MemorySegment ofBuffer(Buffer buffer) {
+        return AbstractMemorySegmentImpl.ofBuffer(buffer);
     }
 
     /**
@@ -804,9 +808,10 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
 
     /**
      * Creates a native memory segment with the given size, base address, and memory session.
-     * This method can be useful when interacting with custom
-     * native memory sources (e.g. custom allocators), where an address to some
-     * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
+     * This method can be useful when interacting with custom memory sources (e.g. custom allocators),
+     * where an address to some underlying memory region is typically obtained from foreign code
+     * (often as a plain {@code long} value).
+     * <p>
      * The returned segment is not read-only (see {@link MemorySegment#isReadOnly()}), and is associated with the
      * provided memory session.
      * <p>
@@ -1732,7 +1737,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * Supported array types are {@code byte[]}, {@code char[]}, {@code short[]}, {@code int[]}, {@code float[]}, {@code long[]} and {@code double[]}.
      * @param srcSegment the source segment.
      * @param srcLayout the source element layout. If the byte order associated with the layout is
-     * different from the native order, a byte swap operation will be performed on each array element.
+     * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
      * @param srcOffset the starting offset, in bytes, of the source segment.
      * @param dstArray the destination array.
      * @param dstIndex the starting index of the destination array.
@@ -1784,7 +1789,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @param srcIndex the starting index of the source array.
      * @param dstSegment the destination segment.
      * @param dstLayout the destination element layout. If the byte order associated with the layout is
-     * different from the native order, a byte swap operation will be performed on each array element.
+     * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
      * @param dstOffset the starting offset, in bytes, of the destination segment.
      * @param elementCount the number of array elements to be copied.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code dstSegment} is not

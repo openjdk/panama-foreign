@@ -41,11 +41,11 @@ import jdk.internal.reflect.Reflection;
  * A variable argument list, similar in functionality to a C {@code va_list}.
  * <p>
  * A variable argument list is a stateful cursor used to iterate over a set of arguments. A variable argument list
- * can be passed by reference e.g. to a {@linkplain CLinker#downcallHandle(FunctionDescriptor) downcall method handle}.
+ * can be passed by reference e.g. to a {@linkplain Linker#downcallHandle(FunctionDescriptor) downcall method handle}.
  * <p>
- * Per the C specification (see C standard 6.5.2.2 Function calls - item 6),
+ * Per the C specification (see C99 standard 6.5.2.2 Function calls - item 6),
  * arguments to variadic calls are erased by way of 'default argument promotions',
- * which erases integral types by way of integer promotion (see C standard 6.3.1.1 - item 2),
+ * which erases integral types by way of integer promotion (see C99 standard 6.3.1.1 - item 2),
  * and which erases all {@code float} arguments to {@code double}.
  * <p>
  * As such, this interface only supports reading {@code int}, {@code double},
@@ -174,6 +174,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * @return a new variable argument list backed by the memory region at {@code address}.
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
      * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
+     * @throws UnsupportedOperationException if the underlying native platform is not supported.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
      * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
@@ -190,7 +191,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * Creates a variable argument list using a builder (see {@link Builder}), with the given
      * memory session.
      * <p>
-     * If this method needs to allocate native memory, such memory will be managed by the given
+     * If this method needs to allocate memory, such memory will be managed by the given
      * memory session, and will be released when the memory session is {@linkplain MemorySession#close closed}.
      * <p>
      * Note that when there are no elements added to the created va list,
@@ -200,6 +201,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      *                of the underlying variable argument list.
      * @param session the memory session to be associated with the new variable arity list.
      * @return a new variable argument list.
+     * @throws UnsupportedOperationException if the underlying native platform is not supported.
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}, or if access occurs from
      * a thread other than the thread {@linkplain MemorySession#ownerThread() owning} {@code session}.
      */
@@ -214,6 +216,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * memory session. The resulting variable argument list does not contain any argument, and throws {@link UnsupportedOperationException}
      * on all operations, except for {@link VaList#address()}, {@link VaList#copy()} and {@link VaList#session()}.
      * @return an empty variable argument list.
+     * @throws UnsupportedOperationException if the underlying native platform is not supported.
      */
     static VaList empty() {
         return SharedUtils.emptyVaList();

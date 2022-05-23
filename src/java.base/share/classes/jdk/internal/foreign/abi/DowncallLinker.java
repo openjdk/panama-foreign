@@ -37,6 +37,7 @@ import java.lang.invoke.MethodType;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Stream;
+
 import static java.lang.invoke.MethodHandles.collectArguments;
 import static java.lang.invoke.MethodHandles.foldArguments;
 import static java.lang.invoke.MethodHandles.identity;
@@ -50,9 +51,7 @@ public class DowncallLinker {
     private static final JavaLangInvokeAccess JLIA = SharedSecrets.getJavaLangInvokeAccess();
 
     private static final MethodHandle MH_INVOKE_INTERP_BINDINGS;
-
     private static final MethodHandle MH_CHECK_SYMBOL;
-
     private static final MethodHandle EMPTY_OBJECT_ARRAY_HANDLE = MethodHandles.constant(Object[].class, new Object[0]);
 
     static {

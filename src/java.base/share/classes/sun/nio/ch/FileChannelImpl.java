@@ -51,6 +51,7 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.MappedMemorySegmentImpl;
 import jdk.internal.foreign.MemorySessionImpl;
+import jdk.internal.misc.Blocker;
 import jdk.internal.misc.ExtendedMapMode;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;
@@ -234,7 +235,12 @@ public class FileChannelImpl
                 if (!isOpen())
                     return 0;
                 do {
-                    n = IOUtil.read(fd, dst, -1, direct, alignment, nd);
+                    long comp = Blocker.begin();
+                    try {
+                        n = IOUtil.read(fd, dst, -1, direct, alignment, nd);
+                    } finally {
+                        Blocker.end(comp);
+                    }
                 } while ((n == IOStatus.INTERRUPTED) && isOpen());
                 return IOStatus.normalize(n);
             } finally {
@@ -263,8 +269,13 @@ public class FileChannelImpl
                 if (!isOpen())
                     return 0;
                 do {
-                    n = IOUtil.read(fd, dsts, offset, length,
-                            direct, alignment, nd);
+                    long comp = Blocker.begin();
+                    try {
+                        n = IOUtil.read(fd, dsts, offset, length, direct, alignment, nd);
+                    } finally {
+                        Blocker.end(comp);
+                    }
+
                 } while ((n == IOStatus.INTERRUPTED) && isOpen());
                 return IOStatus.normalize(n);
             } finally {
@@ -290,7 +301,13 @@ public class FileChannelImpl
                 if (!isOpen())
                     return 0;
                 do {
-                    n = IOUtil.write(fd, src, -1, direct, alignment, nd);
+                    long comp = Blocker.begin();
+                    try {
+                        n = IOUtil.write(fd, src, -1, direct, alignment, nd);
+                    } finally {
+                        Blocker.end(comp);
+                    }
+
                 } while ((n == IOStatus.INTERRUPTED) && isOpen());
                 return IOStatus.normalize(n);
             } finally {
@@ -319,8 +336,12 @@ public class FileChannelImpl
                 if (!isOpen())
                     return 0;
                 do {
-                    n = IOUtil.write(fd, srcs, offset, length,
-                            direct, alignment, nd);
+                    long comp = Blocker.begin();
+                    try {
+                        n = IOUtil.write(fd, srcs, offset, length, direct, alignment, nd);
+                    } finally {
+                        Blocker.end(comp);
+                    }
                 } while ((n == IOStatus.INTERRUPTED) && isOpen());
                 return IOStatus.normalize(n);
             } finally {
@@ -345,8 +366,13 @@ public class FileChannelImpl
                     return 0;
                 boolean append = fdAccess.getAppend(fd);
                 do {
-                    // in append-mode then position is advanced to end before writing
-                    p = (append) ? nd.size(fd) : nd.seek(fd, -1);
+                    long comp = Blocker.begin();
+                    try {
+                        // in append-mode then position is advanced to end before writing
+                        p = (append) ? nd.size(fd) : nd.seek(fd, -1);
+                    } finally {
+                        Blocker.end(comp);
+                    }
                 } while ((p == IOStatus.INTERRUPTED) && isOpen());
                 return IOStatus.normalize(p);
             } finally {
@@ -370,7 +396,12 @@ public class FileChannelImpl
                 if (!isOpen())
                     return null;
                 do {
-                    p = nd.seek(fd, newPosition);
+                    long comp = Blocker.begin();
+                    try {
+                        p = nd.seek(fd, newPosition);
+                    } finally {
+                        Blocker.end(comp);
+                    }
                 } while ((p == IOStatus.INTERRUPTED) && isOpen());
                 return this;
             } finally {
@@ -392,7 +423,12 @@ public class FileChannelImpl
                 if (!isOpen())
                     return -1;
                 do {
-                    s = nd.size(fd);
+                    long comp = Blocker.begin();
+                    try {
+                        s = nd.size(fd);
+                    } finally {
+                        Blocker.end(comp);
+                    }
                 } while ((s == IOStatus.INTERRUPTED) && isOpen());
                 return IOStatus.normalize(s);
             } finally {
@@ -423,14 +459,24 @@ public class FileChannelImpl
                 // get current size
                 long size;
                 do {
-                    size = nd.size(fd);
+                    long comp = Blocker.begin();
+                    try {
+                        size = nd.size(fd);
+                    } finally {
+                        Blocker.end(comp);
+                    }
                 } while ((size == IOStatus.INTERRUPTED) && isOpen());
                 if (!isOpen())
                     return null;
 
                 // get current position
                 do {
-                    p = nd.seek(fd, -1);
+                    long comp = Blocker.begin();
+                    try {
+                        p = nd.seek(fd, -1);
+                    } finally {
+                        Blocker.end(comp);
+                    }
                 } while ((p == IOStatus.INTERRUPTED) && isOpen());
                 if (!isOpen())
                     return null;
@@ -439,7 +485,12 @@ public class FileChannelImpl
                 // truncate file if given size is less than the current size
                 if (newSize < size) {
                     do {
-                        rv = nd.truncate(fd, newSize);
+                        long comp = Blocker.begin();
+                        try {
+                            rv = nd.truncate(fd, newSize);
+                        } finally {
+                            Blocker.end(comp);
+                        }
                     } while ((rv == IOStatus.INTERRUPTED) && isOpen());
                     if (!isOpen())
                         return null;
@@ -449,7 +500,12 @@ public class FileChannelImpl
                 if (p > newSize)
                     p = newSize;
                 do {
-                    rp = nd.seek(fd, p);
+                    long comp = Blocker.begin();
+                    try {
+                        rp = nd.seek(fd, p);
+                    } finally {
+                        Blocker.end(comp);
+                    }
                 } while ((rp == IOStatus.INTERRUPTED) && isOpen());
                 return this;
             } finally {
@@ -470,7 +526,12 @@ public class FileChannelImpl
             if (!isOpen())
                 return;
             do {
-                rv = nd.force(fd, metaData);
+                long comp = Blocker.begin();
+                try {
+                    rv = nd.force(fd, metaData);
+                } finally {
+                    Blocker.end(comp);
+                }
             } while ((rv == IOStatus.INTERRUPTED) && isOpen());
         } finally {
             threads.remove(ti);
@@ -480,9 +541,9 @@ public class FileChannelImpl
     }
 
     // Assume at first that the underlying kernel supports sendfile();
-    // set this to false if we find out later that it doesn't
+    // set this to true if we find out later that it doesn't
     //
-    private static volatile boolean transferSupported = true;
+    private static volatile boolean transferToNotSupported;
 
     // Assume that the underlying kernel sendfile() will work if the target
     // fd is a pipe; set this to false if we find out later that it doesn't
@@ -510,7 +571,12 @@ public class FileChannelImpl
             if (!isOpen())
                 return -1;
             do {
-                n = transferTo0(fd, position, icount, targetFD);
+                long comp = Blocker.begin();
+                try {
+                    n = transferTo0(fd, position, icount, targetFD);
+                } finally {
+                    Blocker.end(comp);
+                }
             } while ((n == IOStatus.INTERRUPTED) && isOpen());
             if (n == IOStatus.UNSUPPORTED_CASE) {
                 if (target instanceof SinkChannelImpl)
@@ -521,7 +587,7 @@ public class FileChannelImpl
             }
             if (n == IOStatus.UNSUPPORTED) {
                 // Don't bother trying again
-                transferSupported = false;
+                transferToNotSupported = true;
                 return IOStatus.UNSUPPORTED;
             }
             return IOStatus.normalize(n);
@@ -535,7 +601,7 @@ public class FileChannelImpl
                                     WritableByteChannel target)
         throws IOException
     {
-        if (!transferSupported)
+        if (transferToNotSupported)
             return IOStatus.UNSUPPORTED;
 
         FileDescriptor targetFD = null;
@@ -580,8 +646,9 @@ public class FileChannelImpl
     }
 
     // Size threshold above which to use a mapped buffer;
-    // transferToArbitraryChannel() is faster for smaller transfers
-    private static final long TRUSTED_TRANSFER_THRESHOLD = 16L*1024L;
+    // transferToArbitraryChannel() and transferFromArbitraryChannel()
+    // are faster for smaller transfers
+    private static final long MAPPED_TRANSFER_THRESHOLD = 16L*1024L;
 
     // Maximum size to map when using a mapped buffer
     private static final long MAPPED_TRANSFER_SIZE = 8L*1024L*1024L;
@@ -590,7 +657,7 @@ public class FileChannelImpl
                                           WritableByteChannel target)
         throws IOException
     {
-        if (count < TRUSTED_TRANSFER_THRESHOLD)
+        if (count < MAPPED_TRANSFER_THRESHOLD)
             return IOStatus.UNSUPPORTED_CASE;
 
         boolean isSelChImpl = (target instanceof SelChImpl);
@@ -715,12 +782,66 @@ public class FileChannelImpl
         return transferToArbitraryChannel(position, count, target);
     }
 
+    // Assume at first that the underlying kernel supports copy_file_range();
+    // set this to true if we find out later that it doesn't
+    //
+    private static volatile boolean transferFromNotSupported;
+
+    private long transferFromDirectlyInternal(FileDescriptor srcFD,
+                                              long position, long count)
+        throws IOException
+    {
+        long n = -1;
+        int ti = -1;
+        try {
+            beginBlocking();
+            ti = threads.add();
+            if (!isOpen())
+                return -1;
+            do {
+                long comp = Blocker.begin();
+                try {
+                    n = transferFrom0(srcFD, fd, position, count);
+                } finally {
+                    Blocker.end(comp);
+                }
+            } while ((n == IOStatus.INTERRUPTED) && isOpen());
+            if (n == IOStatus.UNSUPPORTED) {
+                // Don't bother trying again
+                transferFromNotSupported = true;
+                return IOStatus.UNSUPPORTED;
+            }
+            return IOStatus.normalize(n);
+        } finally {
+            threads.remove(ti);
+            end (n > -1);
+        }
+    }
+
+    private long transferFromDirectly(FileChannelImpl src,
+                                      long position, long count)
+        throws IOException
+    {
+        if (!src.readable)
+            throw new NonReadableChannelException();
+        if (transferFromNotSupported)
+            return IOStatus.UNSUPPORTED;
+        FileDescriptor srcFD = src.fd;
+        if (srcFD == null)
+            return IOStatus.UNSUPPORTED_CASE;
+
+        return transferFromDirectlyInternal(srcFD, position, count);
+    }
+
     private long transferFromFileChannel(FileChannelImpl src,
                                          long position, long count)
         throws IOException
     {
         if (!src.readable)
             throw new NonReadableChannelException();
+        if (count < MAPPED_TRANSFER_THRESHOLD)
+            return IOStatus.UNSUPPORTED_CASE;
+
         synchronized (src.positionLock) {
             long pos = src.position();
             long max = Math.min(count, src.size() - pos);
@@ -810,8 +931,10 @@ public class FileChannelImpl
             return 0;
 
         if (src instanceof FileChannelImpl fci) {
-            long n = transferFromFileChannel(fci, position, count);
-            if (n >= 0)
+            long n;
+            if ((n = transferFromDirectly(fci, position, count)) >= 0)
+                return n;
+            if ((n = transferFromFileChannel(fci, position, count)) >= 0)
                 return n;
         }
 
@@ -848,7 +971,12 @@ public class FileChannelImpl
             if (!isOpen())
                 return -1;
             do {
-                n = IOUtil.read(fd, dst, position, direct, alignment, nd);
+                long comp = Blocker.begin();
+                try {
+                    n = IOUtil.read(fd, dst, position, direct, alignment, nd);
+                } finally {
+                    Blocker.end(comp);
+                }
             } while ((n == IOStatus.INTERRUPTED) && isOpen());
             return IOStatus.normalize(n);
         } finally {
@@ -887,7 +1015,12 @@ public class FileChannelImpl
             if (!isOpen())
                 return -1;
             do {
-                n = IOUtil.write(fd, src, position, direct, alignment, nd);
+                long comp = Blocker.begin();
+                try {
+                    n = IOUtil.write(fd, src, position, direct, alignment, nd);
+                } finally {
+                    Blocker.end(comp);
+                }
             } while ((n == IOStatus.INTERRUPTED) && isOpen());
             return IOStatus.normalize(n);
         } finally {
@@ -936,6 +1069,10 @@ public class FileChannelImpl
         @Override
         public void run() {
             unmap();
+        }
+
+        public long capacity() {
+            return cap;
         }
 
         public void unmap() {
@@ -1050,15 +1187,15 @@ public class FileChannelImpl
             else
                 return Util.newMappedByteBuffer(0, 0, dummy, null, isSync);
         } else if ((!writable) || (prot == MAP_RO)) {
-            return Util.newMappedByteBufferR((int)unmapper.cap,
-                    unmapper.address + unmapper.pagePosition,
-                    unmapper.fd,
-                    unmapper, isSync);
+            return Util.newMappedByteBufferR((int)unmapper.capacity(),
+                    unmapper.address(),
+                    unmapper.fileDescriptor(),
+                    unmapper, unmapper.isSync());
         } else {
-            return Util.newMappedByteBuffer((int)unmapper.cap,
-                    unmapper.address + unmapper.pagePosition,
-                    unmapper.fd,
-                    unmapper, isSync);
+            return Util.newMappedByteBuffer((int)unmapper.capacity(),
+                    unmapper.address(),
+                    unmapper.fileDescriptor(),
+                    unmapper, unmapper.isSync());
         }
     }
 
@@ -1068,7 +1205,7 @@ public class FileChannelImpl
     @Override
     public MemorySegment map(MapMode mode, long offset, long size,
                              MemorySession session)
-            throws IOException, UnsupportedOperationException
+            throws IOException
     {
         Objects.requireNonNull(mode,"Mode is null");
         Objects.requireNonNull(session, "Session is null");
@@ -1126,7 +1263,12 @@ public class FileChannelImpl
             synchronized (positionLock) {
                 long filesize;
                 do {
-                    filesize = nd.size(fd);
+                    long comp = Blocker.begin();
+                    try {
+                        filesize = nd.size(fd);
+                    } finally {
+                        Blocker.end(comp);
+                    }
                 } while ((filesize == IOStatus.INTERRUPTED) && isOpen());
                 if (!isOpen())
                     return null;
@@ -1138,7 +1280,12 @@ public class FileChannelImpl
                     }
                     int rv;
                     do {
-                        rv = nd.truncate(fd, position + size);
+                        long comp = Blocker.begin();
+                        try {
+                            rv = nd.truncate(fd, position + size);
+                        } finally {
+                            Blocker.end(comp);
+                        }
                     } while ((rv == IOStatus.INTERRUPTED) && isOpen());
                     if (!isOpen())
                         return null;
@@ -1153,7 +1300,7 @@ public class FileChannelImpl
                 mapSize = size + pagePosition;
                 try {
                     // If map0 did not throw an exception, the address is valid
-                    addr = map0(prot, mapPosition, mapSize, isSync);
+                    addr = map0(fd, prot, mapPosition, mapSize, isSync);
                 } catch (OutOfMemoryError x) {
                     // An OutOfMemoryError may indicate that we've exhausted
                     // memory so force gc and re-attempt map
@@ -1164,7 +1311,7 @@ public class FileChannelImpl
                         Thread.currentThread().interrupt();
                     }
                     try {
-                        addr = map0(prot, mapPosition, mapSize, isSync);
+                        addr = map0(fd, prot, mapPosition, mapSize, isSync);
                     } catch (OutOfMemoryError y) {
                         // After a second OOME, fail
                         throw new IOException("Map failed", y);
@@ -1328,7 +1475,12 @@ public class FileChannelImpl
                 return null;
             int n;
             do {
-                n = nd.lock(fd, true, position, size, shared);
+                long comp = Blocker.begin();
+                try {
+                    n = nd.lock(fd, true, position, size, shared);
+                } finally {
+                    Blocker.end(comp);
+                }
             } while ((n == FileDispatcher.INTERRUPTED) && isOpen());
             if (isOpen()) {
                 if (n == FileDispatcher.RET_EX_LOCK) {
@@ -1409,7 +1561,8 @@ public class FileChannelImpl
     // -- Native methods --
 
     // Creates a new mapping
-    private native long map0(int prot, long position, long length, boolean isSync)
+    private native long map0(FileDescriptor fd, int prot, long position,
+                             long length, boolean isSync)
         throws IOException;
 
     // Removes an existing mapping
@@ -1420,15 +1573,19 @@ public class FileChannelImpl
     private static native long transferTo0(FileDescriptor src, long position,
                                            long count, FileDescriptor dst);
 
+    private static native long transferFrom0(FileDescriptor src,
+                                             FileDescriptor dst,
+                                             long position, long count);
+
     // Retrieves the maximum size of a transfer
     private static native int maxDirectTransferSize0();
 
-    // Caches fieldIDs
-    private static native long initIDs();
+    // Retrieves allocation granularity
+    private static native long allocationGranularity0();
 
     static {
         IOUtil.load();
-        allocationGranularity = initIDs();
+        allocationGranularity = allocationGranularity0();
         MAX_DIRECT_TRANSFER_SIZE = maxDirectTransferSize0();
     }
 }

@@ -31,12 +31,11 @@ package java.lang.invoke;
 abstract sealed class VarHandleSegmentViewBase extends VarHandle permits
         VarHandleSegmentAsBytes,
         VarHandleSegmentAsChars,
-        VarHandleSegmentAsShorts,
+        VarHandleSegmentAsDoubles,
+        VarHandleSegmentAsFloats,
         VarHandleSegmentAsInts,
         VarHandleSegmentAsLongs,
-        VarHandleSegmentAsFloats,
-        VarHandleSegmentAsDoubles
-{
+        VarHandleSegmentAsShorts {
 
     /** endianness **/
     final boolean be;

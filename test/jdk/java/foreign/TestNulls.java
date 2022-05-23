@@ -47,6 +47,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -95,7 +96,7 @@ public class TestNulls {
             ValueLayout.OfAddress.class,
             GroupLayout.class,
             Addressable.class,
-            CLinker.class,
+            Linker.class,
             VaList.class,
             VaList.Builder.class,
             FunctionDescriptor.class,
@@ -145,6 +146,7 @@ public class TestNulls {
         addDefaultMapping(ByteOrder.class, ByteOrder.nativeOrder());
         addDefaultMapping(Thread.class, Thread.currentThread());
         addDefaultMapping(Cleaner.class, CleanerFactory.cleaner());
+        addDefaultMapping(Buffer.class, ByteBuffer.wrap(new byte[10]));
         addDefaultMapping(ByteBuffer.class, ByteBuffer.wrap(new byte[10]));
         addDefaultMapping(Path.class, Path.of("nonExistent"));
         addDefaultMapping(FileChannel.MapMode.class, FileChannel.MapMode.PRIVATE);
@@ -178,7 +180,7 @@ public class TestNulls {
         addDefaultMapping(SymbolLookup.class, SymbolLookup.loaderLookup());
         addDefaultMapping(MemorySegment.class, MemorySegment.ofArray(new byte[10]));
         addDefaultMapping(FunctionDescriptor.class, FunctionDescriptor.ofVoid());
-        addDefaultMapping(CLinker.class, CLinker.systemCLinker());
+        addDefaultMapping(Linker.class, Linker.nativeLinker());
         addDefaultMapping(VaList.class, VaListHelper.vaList);
         addDefaultMapping(VaList.Builder.class, VaListHelper.vaListBuilder);
         addDefaultMapping(MemorySession.class, MemorySession.openShared());

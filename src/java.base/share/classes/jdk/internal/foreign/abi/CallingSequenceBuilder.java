@@ -24,6 +24,9 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.internal.foreign.Utils;
+import sun.security.action.GetPropertyAction;
+
 import java.lang.foreign.Addressable;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
@@ -36,8 +39,7 @@ import java.util.Deque;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
-import jdk.internal.foreign.Utils;
-import sun.security.action.GetPropertyAction;
+
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.internal.foreign.abi.Binding.Tag.*;
 

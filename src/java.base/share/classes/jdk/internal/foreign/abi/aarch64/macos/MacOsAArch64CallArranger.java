@@ -25,7 +25,7 @@
  */
 package jdk.internal.foreign.abi.aarch64.macos;
 
-import jdk.internal.foreign.abi.aarch64.*;
+import jdk.internal.foreign.abi.aarch64.CallArranger;
 
 /**
  * AArch64 CallArranger specialized for macOS ABI.

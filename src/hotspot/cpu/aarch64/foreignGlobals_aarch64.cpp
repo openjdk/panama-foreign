@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2019, 2021, Arm Limited. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Arm Limited. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,16 +52,16 @@ const ABIDescriptor ForeignGlobals::parse_abi_descriptor(jobject jabi) {
   constexpr Register (*to_Register)(int) = as_Register;
 
   objArrayOop inputStorage = jdk_internal_foreign_abi_ABIDescriptor::inputStorage(abi_oop);
-  loadArray(inputStorage, INTEGER_TYPE, abi._integer_argument_registers, to_Register);
-  loadArray(inputStorage, VECTOR_TYPE, abi._vector_argument_registers, as_FloatRegister);
+  parse_register_array(inputStorage, INTEGER_TYPE, abi._integer_argument_registers, to_Register);
+  parse_register_array(inputStorage, VECTOR_TYPE, abi._vector_argument_registers, as_FloatRegister);
 
   objArrayOop outputStorage = jdk_internal_foreign_abi_ABIDescriptor::outputStorage(abi_oop);
-  loadArray(outputStorage, INTEGER_TYPE, abi._integer_return_registers, to_Register);
-  loadArray(outputStorage, VECTOR_TYPE, abi._vector_return_registers, as_FloatRegister);
+  parse_register_array(outputStorage, INTEGER_TYPE, abi._integer_return_registers, to_Register);
+  parse_register_array(outputStorage, VECTOR_TYPE, abi._vector_return_registers, as_FloatRegister);
 
   objArrayOop volatileStorage = jdk_internal_foreign_abi_ABIDescriptor::volatileStorage(abi_oop);
-  loadArray(volatileStorage, INTEGER_TYPE, abi._integer_additional_volatile_registers, to_Register);
-  loadArray(volatileStorage, VECTOR_TYPE, abi._vector_additional_volatile_registers, as_FloatRegister);
+  parse_register_array(volatileStorage, INTEGER_TYPE, abi._integer_additional_volatile_registers, to_Register);
+  parse_register_array(volatileStorage, VECTOR_TYPE, abi._vector_additional_volatile_registers, as_FloatRegister);
 
   abi._stack_alignment_bytes = jdk_internal_foreign_abi_ABIDescriptor::stackAlignment(abi_oop);
   abi._shadow_space_bytes = jdk_internal_foreign_abi_ABIDescriptor::shadowSpace(abi_oop);

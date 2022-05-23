@@ -24,21 +24,22 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.internal.foreign.SystemLookup;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 
-import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.Objects;
 
-public abstract sealed class AbstractLinker implements CLinker permits LinuxAArch64Linker, MacOsAArch64Linker,
-                                                                       SysVx64Linker, Windowsx64Linker {
+public abstract sealed class AbstractLinker implements Linker permits LinuxAArch64Linker, MacOsAArch64Linker,
+                                                                      SysVx64Linker, Windowsx64Linker {
 
     private final SoftReferenceCache<FunctionDescriptor, MethodHandle> DOWNCALL_CACHE = new SoftReferenceCache<>();
 
@@ -56,8 +57,8 @@ public abstract sealed class AbstractLinker implements CLinker permits LinuxAArc
     protected abstract MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function);
 
     @Override
-    public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, MemorySession session) {
-        Objects.requireNonNull(session);
+    public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, MemorySession scope) {
+        Objects.requireNonNull(scope);
         Objects.requireNonNull(target);
         Objects.requireNonNull(function);
         SharedUtils.checkExceptions(target);
@@ -66,11 +67,14 @@ public abstract sealed class AbstractLinker implements CLinker permits LinuxAArc
         if (!type.equals(target.type())) {
             throw new IllegalArgumentException("Wrong method handle type: " + target.type());
         }
-        MemorySegment symb =  arrangeUpcall(target, target.type(), function, session);
-        return symb;
+        return arrangeUpcall(target, target.type(), function, scope);
     }
 
     protected abstract MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType,
-                                                  FunctionDescriptor function, MemorySession session);
+                                                   FunctionDescriptor function, MemorySession scope);
 
+    @Override
+    public SystemLookup defaultLookup() {
+        return SystemLookup.getInstance();
+    }
 }

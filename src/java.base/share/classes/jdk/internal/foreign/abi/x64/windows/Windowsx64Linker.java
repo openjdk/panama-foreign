@@ -24,6 +24,8 @@
  */
 package jdk.internal.foreign.abi.x64.windows;
 
+import jdk.internal.foreign.abi.AbstractLinker;
+
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
@@ -33,20 +35,10 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.function.Consumer;
 
-import jdk.internal.foreign.abi.AbstractLinker;
-
 /**
  * ABI implementation based on Windows ABI AMD64 supplement v.0.99.6
  */
 public final class Windowsx64Linker extends AbstractLinker {
-
-    public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 4;
-    public static final int MAX_INTEGER_RETURN_REGISTERS = 1;
-    public static final int MAX_VECTOR_ARGUMENT_REGISTERS = 4;
-    public static final int MAX_VECTOR_RETURN_REGISTERS = 1;
-    public static final int MAX_REGISTER_ARGUMENTS = 4;
-    public static final int MAX_REGISTER_RETURNS = 1;
-
     private static Windowsx64Linker instance;
 
     public static Windowsx64Linker getInstance() {
@@ -62,12 +54,12 @@ public final class Windowsx64Linker extends AbstractLinker {
     }
 
     @Override
-    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession session) {
-        return CallArranger.arrangeUpcall(target, targetType, function, session);
+    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession scope) {
+        return CallArranger.arrangeUpcall(target, targetType, function, scope);
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession session) {
-        WinVaList.Builder builder = WinVaList.builder(session);
+    public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession scope) {
+        WinVaList.Builder builder = WinVaList.builder(scope);
         actions.accept(builder);
         return builder.build();
     }

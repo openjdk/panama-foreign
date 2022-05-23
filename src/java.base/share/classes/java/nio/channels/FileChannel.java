@@ -972,7 +972,7 @@ public abstract class FileChannel
 
     /**
      * Maps a region of this channel's file into a new mapped memory segment,
-     * with a given offset, size and memory session.
+     * with the given offset, size and memory session.
      *
      * <p> If the specified mapping mode is
      * {@linkplain FileChannel.MapMode#READ_ONLY READ_ONLY}, the resulting
@@ -1018,7 +1018,7 @@ public abstract class FileChannel
      *
      * @throws IllegalArgumentException
      *         If {@code offset < 0}, {@code size < 0} or
-     *         {@code offset + size < 0}.
+     *         {@code offset + size} overflows the range of {@code long}.
      *
      * @throws IllegalStateException
      *         If the {@code session} is not
@@ -1049,7 +1049,7 @@ public abstract class FileChannel
     @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
     public MemorySegment map(MapMode mode, long offset, long size,
                                       MemorySession session)
-            throws IOException, UnsupportedOperationException
+            throws IOException
     {
         throw new UnsupportedOperationException();
     }

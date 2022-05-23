@@ -24,6 +24,17 @@
  */
 package jdk.internal.foreign.abi.x64.windows;
 
+import jdk.internal.foreign.Utils;
+import jdk.internal.foreign.abi.ABIDescriptor;
+import jdk.internal.foreign.abi.Binding;
+import jdk.internal.foreign.abi.CallingSequence;
+import jdk.internal.foreign.abi.CallingSequenceBuilder;
+import jdk.internal.foreign.abi.DowncallLinker;
+import jdk.internal.foreign.abi.SharedUtils;
+import jdk.internal.foreign.abi.UpcallLinker;
+import jdk.internal.foreign.abi.VMStorage;
+import jdk.internal.foreign.abi.x64.X86_64Architecture;
+
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryAddress;
@@ -34,17 +45,8 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.List;
 import java.util.Optional;
-import jdk.internal.foreign.Utils;
-import jdk.internal.foreign.abi.ABIDescriptor;
-import jdk.internal.foreign.abi.Binding;
-import jdk.internal.foreign.abi.CallingSequence;
-import jdk.internal.foreign.abi.CallingSequenceBuilder;
-import jdk.internal.foreign.abi.DowncallLinker;
-import jdk.internal.foreign.abi.UpcallLinker;
-import jdk.internal.foreign.abi.SharedUtils;
-import jdk.internal.foreign.abi.VMStorage;
-import jdk.internal.foreign.abi.x64.X86_64Architecture;
-import static jdk.internal.foreign.PlatformLayouts.*;
+
+import static jdk.internal.foreign.PlatformLayouts.Win64;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
 
 /**
@@ -54,6 +56,7 @@ import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
  * This includes taking care of synthetic arguments like pointers to return buffers for 'in-memory' returns.
  */
 public class CallArranger {
+    public static final int MAX_REGISTER_ARGUMENTS = 4;
     private static final int STACK_SLOT_SIZE = 8;
 
     private static final ABIDescriptor CWindows = X86_64Architecture.abiFor(
@@ -158,7 +161,7 @@ public class CallArranger {
         }
 
         VMStorage nextStorage(int type, MemoryLayout layout) {
-            if (nRegs >= Windowsx64Linker.MAX_REGISTER_ARGUMENTS) {
+            if (nRegs >= MAX_REGISTER_ARGUMENTS) {
                 assert forArguments : "no stack returns";
                 // stack
                 long alignment = Math.max(SharedUtils.alignment(layout, true), STACK_SLOT_SIZE);

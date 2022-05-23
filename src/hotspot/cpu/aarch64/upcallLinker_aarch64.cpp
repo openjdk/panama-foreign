@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2019, 2021, Arm Limited. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Arm Limited. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -124,17 +124,17 @@ address UpcallLinker::make_upcall_stub(jobject receiver, Method* entry,
   ResourceMark rm;
   const ABIDescriptor abi = ForeignGlobals::parse_abi_descriptor(jabi);
   const CallRegs call_regs = ForeignGlobals::parse_call_regs(jconv);
-  CodeBuffer buffer("upcall_stub_linkToNative", /* code_size = */ 2048, /* locs_size = */ 1024);
+  CodeBuffer buffer("upcall_stub", /* code_size = */ 2048, /* locs_size = */ 1024);
 
   Register shuffle_reg = r19;
-  JavaCallConv out_conv;
-  NativeCallConv in_conv(call_regs._arg_regs, call_regs._args_length);
+  JavaCallingConvention out_conv;
+  NativeCallingConvention in_conv(call_regs._arg_regs);
   ArgumentShuffle arg_shuffle(in_sig_bt, total_in_args, out_sig_bt, total_out_args, &in_conv, &out_conv, shuffle_reg->as_VMReg());
   int stack_slots = SharedRuntime::out_preserve_stack_slots() + arg_shuffle.out_arg_stack_slots();
   int out_arg_area = align_up(stack_slots * VMRegImpl::stack_slot_size, StackAlignmentInBytes);
 
-#ifdef ASSERT
-  LogTarget(Trace, panama) lt;
+#ifndef PRODUCT
+  LogTarget(Trace, foreign, upcall) lt;
   if (lt.is_enabled()) {
     ResourceMark rm;
     LogStream ls(lt);
@@ -149,8 +149,8 @@ address UpcallLinker::make_upcall_stub(jobject receiver, Method* entry,
   }
 
   int reg_save_area_size = compute_reg_save_area_size(abi);
-  RegSpiller arg_spilller(call_regs._arg_regs, call_regs._args_length);
-  RegSpiller result_spiller(call_regs._ret_regs, call_regs._rets_length);
+  RegSpiller arg_spilller(call_regs._arg_regs);
+  RegSpiller result_spiller(call_regs._ret_regs);
 
   int shuffle_area_offset    = 0;
   int res_save_area_offset   = shuffle_area_offset    + out_arg_area;
@@ -239,7 +239,7 @@ address UpcallLinker::make_upcall_stub(jobject receiver, Method* entry,
     // return value shuffle
   if (!needs_return_buffer) {
 #ifdef ASSERT
-    if (call_regs._rets_length == 1) { // 0 or 1
+    if (call_regs._ret_regs.length() == 1) { // 0 or 1
       VMReg j_expected_result_reg;
       switch (ret_type) {
         case T_BOOLEAN:
@@ -259,16 +259,16 @@ address UpcallLinker::make_upcall_stub(jobject receiver, Method* entry,
       }
       // No need to move for now, since CallArranger can pick a return type
       // that goes in the same reg for both CCs. But, at least assert they are the same
-      assert(call_regs._ret_regs[0] == j_expected_result_reg,
-      "unexpected result register: %s != %s", call_regs._ret_regs[0]->name(), j_expected_result_reg->name());
+      assert(call_regs._ret_regs.at(0) == j_expected_result_reg,
+      "unexpected result register: %s != %s", call_regs._ret_regs.at(0)->name(), j_expected_result_reg->name());
     }
 #endif
   } else {
     assert(ret_buf_offset != -1, "no return buffer allocated");
     __ lea(rscratch1, Address(sp, ret_buf_offset));
     int offset = 0;
-    for (int i = 0; i < call_regs._rets_length; i++) {
-      VMReg reg = call_regs._ret_regs[i];
+    for (int i = 0; i < call_regs._ret_regs.length(); i++) {
+      VMReg reg = call_regs._ret_regs.at(i);
       if (reg->is_Register()) {
         __ ldr(reg->as_Register(), Address(rscratch1, offset));
         offset += 8;
@@ -316,10 +316,10 @@ address UpcallLinker::make_upcall_stub(jobject receiver, Method* entry,
 
 #ifndef PRODUCT
   stringStream ss;
-  ss.print("optimized_upcall_stub_%s", entry->signature()->as_C_string());
+  ss.print("upcall_stub_%s", entry->signature()->as_C_string());
   const char* name = _masm->code_string(ss.as_string());
 #else // PRODUCT
-  const char* name = "optimized_upcall_stub";
+  const char* name = "upcall_stub";
 #endif // PRODUCT
 
   UpcallStub* blob

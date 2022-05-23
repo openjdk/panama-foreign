@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,10 +26,6 @@
 
 #include "asm/macroAssembler.hpp"
 #include "utilities/growableArray.hpp"
-
-class outputStream;
-
-constexpr size_t xmm_reg_size = 16; // size of XMM reg
 
 struct ABIDescriptor {
   GrowableArray<Register> _integer_argument_registers;

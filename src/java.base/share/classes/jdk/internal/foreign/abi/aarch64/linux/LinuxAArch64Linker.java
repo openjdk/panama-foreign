@@ -25,13 +25,13 @@
  */
 package jdk.internal.foreign.abi.aarch64.linux;
 
+import jdk.internal.foreign.abi.AbstractLinker;
+import jdk.internal.foreign.abi.aarch64.CallArranger;
+
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
-import jdk.internal.foreign.abi.AbstractLinker;
-import jdk.internal.foreign.abi.aarch64.CallArranger;
-
 import java.lang.foreign.VaList;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -43,8 +43,6 @@ import java.util.function.Consumer;
  */
 public final class LinuxAArch64Linker extends AbstractLinker {
     private static LinuxAArch64Linker instance;
-
-    static final long ADDRESS_SIZE = 64; // bits
 
     public static LinuxAArch64Linker getInstance() {
         if (instance == null) {
@@ -59,8 +57,8 @@ public final class LinuxAArch64Linker extends AbstractLinker {
     }
 
     @Override
-    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession session) {
-        return CallArranger.LINUX.arrangeUpcall(target, targetType, function, session);
+    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession scope) {
+        return CallArranger.LINUX.arrangeUpcall(target, targetType, function, scope);
     }
 
     public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession session) {
@@ -76,5 +74,4 @@ public final class LinuxAArch64Linker extends AbstractLinker {
     public static VaList emptyVaList() {
         return LinuxAArch64VaList.empty();
     }
-
 }

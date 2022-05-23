@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -107,9 +107,14 @@ RuntimeStub* DowncallLinker::make_downcall_stub(BasicType* signature,
                                   g.framesize(),
                                   g.oop_maps(), false);
 
-  if (TraceNativeInvokers) {
-    stub->print_on(tty);
+#ifndef PRODUCT
+  LogTarget(Trace, foreign, downcall) lt;
+  if (lt.is_enabled()) {
+    ResourceMark rm;
+    LogStream ls(lt);
+    stub->print_on(&ls);
   }
+#endif
 
   return stub;
 }
@@ -128,12 +133,12 @@ void DowncallStubGenerator::generate() {
   };
 
   Register shufffle_reg = rbx;
-  JavaCallConv in_conv;
-  NativeCallConv out_conv(_input_registers);
+  JavaCallingConvention in_conv;
+  NativeCallingConvention out_conv(_input_registers);
   ArgumentShuffle arg_shuffle(_signature, _num_args, _signature, _num_args, &in_conv, &out_conv, shufffle_reg->as_VMReg());
 
-#ifdef ASSERT
-  LogTarget(Trace, panama) lt;
+#ifndef PRODUCT
+  LogTarget(Trace, foreign, downcall) lt;
   if (lt.is_enabled()) {
     ResourceMark rm;
     LogStream ls(lt);

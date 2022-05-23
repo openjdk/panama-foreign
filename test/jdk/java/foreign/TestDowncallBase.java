@@ -23,8 +23,8 @@
  */
 
 import java.lang.foreign.Addressable;
-import java.lang.foreign.CLinker;
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.invoke.MethodHandle;
@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 
 public class TestDowncallBase extends CallGeneratorHelper {
 
-    static CLinker ABI = CLinker.systemCLinker();
+    static Linker ABI = Linker.nativeLinker();
 
     Object doCall(Addressable symbol, SegmentAllocator allocator, FunctionDescriptor descriptor, Object[] args) throws Throwable {
         MethodHandle mh = downcallHandle(ABI, symbol, allocator, descriptor);

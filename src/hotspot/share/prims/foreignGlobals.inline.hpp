@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,12 +26,13 @@
 
 #include "prims/foreignGlobals.hpp"
 
+#include "classfile/javaClasses.hpp"
 #include "oops/oopsHierarchy.hpp"
 #include "oops/objArrayOop.hpp"
 #include "oops/oopCast.inline.hpp"
 
 template<typename T, typename Func>
-void ForeignGlobals::loadArray(objArrayOop jarray, int type_index, GrowableArray<T>& array, Func converter) {
+void ForeignGlobals::parse_register_array(objArrayOop jarray, int type_index, GrowableArray<T>& array, Func converter) {
   objArrayOop subarray = oop_cast<objArrayOop>(jarray->obj_at(type_index));
   int subarray_length = subarray->length();
   for (int i = 0; i < subarray_length; i++) {

@@ -31,17 +31,18 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
+import jdk.internal.foreign.MemoryAddressImpl;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
-import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.MemorySessionImpl;
+
+import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 
 import static java.lang.invoke.MethodType.methodType;
 
@@ -229,16 +230,16 @@ public abstract class Binding {
         }
 
         /**
-         * Create a binding context from given native session.
+         * Create a binding context from given native scope.
          */
         public static Context ofBoundedAllocator(long size) {
-            MemorySession session = MemorySession.openConfined();
-            return new Context(SegmentAllocator.newNativeArena(size, session), session);
+            MemorySession scope = MemorySession.openConfined();
+            return new Context(SegmentAllocator.newNativeArena(size, scope), scope);
         }
 
         /**
          * Create a binding context from given segment allocator. The resulting context will throw when
-         * the context's session is accessed.
+         * the context's scope is accessed.
          */
         public static Context ofAllocator(SegmentAllocator allocator) {
             return new Context(allocator, null) {
@@ -250,19 +251,19 @@ public abstract class Binding {
         }
 
         /**
-         * Create a binding context from given session. The resulting context will throw when
+         * Create a binding context from given scope. The resulting context will throw when
          * the context's allocator is accessed.
          */
         public static Context ofSession() {
-            MemorySession session = MemorySession.openConfined();
-            return new Context(null, session) {
+            MemorySession scope = MemorySession.openConfined();
+            return new Context(null, scope) {
                 @Override
                 public SegmentAllocator allocator() { throw new UnsupportedOperationException(); }
             };
         }
 
         /**
-         * Dummy binding context. Throws exceptions when attempting to access session, return a throwing allocator, and has
+         * Dummy binding context. Throws exceptions when attempting to access scope, return a throwing allocator, and has
          * an idempotent {@link #close()}.
          */
         public static final Context DUMMY = new Context(null, null) {
@@ -376,8 +377,8 @@ public abstract class Binding {
     }
 
 
-    public static Builder builder() {
-        return new Builder();
+    public static Binding.Builder builder() {
+        return new Binding.Builder();
     }
 
     @Override
@@ -399,57 +400,57 @@ public abstract class Binding {
     public static class Builder {
         private final List<Binding> bindings = new ArrayList<>();
 
-        public Builder vmStore(VMStorage storage, Class<?> type) {
+        public Binding.Builder vmStore(VMStorage storage, Class<?> type) {
             bindings.add(Binding.vmStore(storage, type));
             return this;
         }
 
-        public Builder vmLoad(VMStorage storage, Class<?> type) {
+        public Binding.Builder vmLoad(VMStorage storage, Class<?> type) {
             bindings.add(Binding.vmLoad(storage, type));
             return this;
         }
 
-        public Builder bufferStore(long offset, Class<?> type) {
+        public Binding.Builder bufferStore(long offset, Class<?> type) {
             bindings.add(Binding.bufferStore(offset, type));
             return this;
         }
 
-        public Builder bufferLoad(long offset, Class<?> type) {
+        public Binding.Builder bufferLoad(long offset, Class<?> type) {
             bindings.add(Binding.bufferLoad(offset, type));
             return this;
         }
 
-        public Builder copy(MemoryLayout layout) {
+        public Binding.Builder copy(MemoryLayout layout) {
             bindings.add(Binding.copy(layout));
             return this;
         }
 
-        public Builder allocate(MemoryLayout layout) {
+        public Binding.Builder allocate(MemoryLayout layout) {
             bindings.add(Binding.allocate(layout));
             return this;
         }
 
-        public Builder boxAddress() {
+        public Binding.Builder boxAddress() {
             bindings.add(Binding.boxAddress());
             return this;
         }
 
-        public Builder unboxAddress() {
+        public Binding.Builder unboxAddress() {
             bindings.add(Binding.unboxAddress());
             return this;
         }
 
-        public Builder unboxAddress(Class<?> carrier) {
+        public Binding.Builder unboxAddress(Class<?> carrier) {
             bindings.add(Binding.unboxAddress(carrier));
             return this;
         }
 
-        public Builder toSegment(MemoryLayout layout) {
+        public Binding.Builder toSegment(MemoryLayout layout) {
             bindings.add(Binding.toSegment(layout));
             return this;
         }
 
-        public Builder dup() {
+        public Binding.Builder dup() {
             bindings.add(Binding.dup());
             return this;
         }
@@ -753,8 +754,8 @@ public abstract class Binding {
             this.alignment = alignment;
         }
 
-        private static MemorySegment allocateBuffer(long size, long allignment, Context context) {
-            return context.allocator().allocate(size, allignment);
+        private static MemorySegment allocateBuffer(long size, long alignment, Context context) {
+            return context.allocator().allocate(size, alignment);
         }
 
         public long size() {

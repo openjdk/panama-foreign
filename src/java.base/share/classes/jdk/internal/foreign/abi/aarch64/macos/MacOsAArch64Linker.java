@@ -25,6 +25,9 @@
  */
 package jdk.internal.foreign.abi.aarch64.macos;
 
+import jdk.internal.foreign.abi.AbstractLinker;
+import jdk.internal.foreign.abi.aarch64.CallArranger;
+
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
@@ -34,17 +37,12 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.function.Consumer;
 
-import jdk.internal.foreign.abi.AbstractLinker;
-import jdk.internal.foreign.abi.aarch64.CallArranger;
-
 /**
  * ABI implementation for macOS on Apple silicon. Based on AAPCS with
  * changes to va_list and passing arguments on the stack.
  */
 public final class MacOsAArch64Linker extends AbstractLinker {
     private static MacOsAArch64Linker instance;
-
-    static final long ADDRESS_SIZE = 64; // bits
 
     public static MacOsAArch64Linker getInstance() {
         if (instance == null) {
@@ -59,8 +57,8 @@ public final class MacOsAArch64Linker extends AbstractLinker {
     }
 
     @Override
-    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession session) {
-        return CallArranger.MACOS.arrangeUpcall(target, targetType, function, session);
+    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession scope) {
+        return CallArranger.MACOS.arrangeUpcall(target, targetType, function, scope);
     }
 
     public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession session) {
@@ -76,5 +74,4 @@ public final class MacOsAArch64Linker extends AbstractLinker {
     public static VaList emptyVaList() {
         return MacOsAArch64VaList.empty();
     }
-
 }

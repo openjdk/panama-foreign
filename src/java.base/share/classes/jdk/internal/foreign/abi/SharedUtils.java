@@ -37,7 +37,7 @@ import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 
 import java.lang.foreign.Addressable;
-import java.lang.foreign.CLinker;
+import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryAddress;
@@ -46,7 +46,6 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.SequenceLayout;
-import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.VaList;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
@@ -62,20 +61,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static java.lang.foreign.ValueLayout.ADDRESS;
-import static java.lang.foreign.ValueLayout.JAVA_BOOLEAN;
-import static java.lang.foreign.ValueLayout.JAVA_BYTE;
-import static java.lang.foreign.ValueLayout.JAVA_CHAR;
-import static java.lang.foreign.ValueLayout.JAVA_DOUBLE;
-import static java.lang.foreign.ValueLayout.JAVA_FLOAT;
-import static java.lang.foreign.ValueLayout.JAVA_INT;
-import static java.lang.foreign.ValueLayout.JAVA_LONG;
-import static java.lang.foreign.ValueLayout.JAVA_SHORT;
-import static java.lang.invoke.MethodHandles.collectArguments;
-import static java.lang.invoke.MethodHandles.dropReturn;
-import static java.lang.invoke.MethodHandles.identity;
-import static java.lang.invoke.MethodHandles.insertArguments;
-import static java.lang.invoke.MethodHandles.permuteArguments;
+import static java.lang.foreign.ValueLayout.*;
+import static java.lang.invoke.MethodHandles.*;
 import static java.lang.invoke.MethodType.methodType;
 
 public class SharedUtils {
@@ -245,7 +232,7 @@ public class SharedUtils {
         throw new IllegalArgumentException("No type for size: " + size + " isFloat=" + useFloat);
     }
 
-    public static CLinker getSystemLinker() {
+    public static Linker getSystemLinker() {
         return switch (CABI.current()) {
             case Win64 -> Windowsx64Linker.getInstance();
             case SysV -> SysVx64Linker.getInstance();
@@ -288,8 +275,9 @@ public class SharedUtils {
         }
         MethodType newType = oldType.dropParameterTypes(destIndex, destIndex + 1);
         int[] reorder = new int[oldType.parameterCount()];
-        if (destIndex < sourceIndex)
+        if (destIndex < sourceIndex) {
             sourceIndex--;
+        }
         for (int i = 0, index = 0; i < reorder.length; i++) {
             if (i != destIndex) {
                 reorder[i] = index++;
@@ -453,6 +441,11 @@ public class SharedUtils {
         }
 
         @Override
+        public MemorySession session() {
+            return MemorySessionImpl.GLOBAL;
+        }
+
+        @Override
         public MemorySessionImpl sessionImpl() {
             return MemorySessionImpl.GLOBAL;
         }
@@ -466,31 +459,27 @@ public class SharedUtils {
         public MemoryAddress address() {
             return address;
         }
-
-        @Override
-        public MemorySession session() {
-            return MemorySessionImpl.GLOBAL;
-        }
     }
 
     static void writeOverSized(MemorySegment ptr, Class<?> type, Object o) {
         // use VH_LONG for integers to zero out the whole register in the process
         if (type == long.class) {
-            ptr.set(JAVA_LONG, 0, (long) o);
+            ptr.set(JAVA_LONG_UNALIGNED, 0, (long) o);
         } else if (type == int.class) {
-            ptr.set(JAVA_LONG, 0, (int) o);
+            ptr.set(JAVA_LONG_UNALIGNED, 0, (int) o);
         } else if (type == short.class) {
-            ptr.set(JAVA_LONG, 0, (short) o);
+            ptr.set(JAVA_LONG_UNALIGNED, 0, (short) o);
         } else if (type == char.class) {
-            ptr.set(JAVA_LONG, 0, (char) o);
+            ptr.set(JAVA_LONG_UNALIGNED, 0, (char) o);
         } else if (type == byte.class) {
-            ptr.set(JAVA_LONG, 0, (byte) o);
+            ptr.set(JAVA_LONG_UNALIGNED, 0, (byte) o);
         } else if (type == float.class) {
-            ptr.set(JAVA_FLOAT, 0, (float) o);
+            ptr.set(JAVA_FLOAT_UNALIGNED, 0, (float) o);
         } else if (type == double.class) {
-            ptr.set(JAVA_DOUBLE, 0, (double) o);
+            ptr.set(JAVA_DOUBLE_UNALIGNED, 0, (double) o);
         } else if (type == boolean.class) {
-            ptr.set(JAVA_BOOLEAN, 0, (boolean) o);
+            boolean b = (boolean)o;
+            ptr.set(JAVA_LONG_UNALIGNED, 0, b ? (long)1 : (long)0);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
@@ -498,19 +487,19 @@ public class SharedUtils {
 
     static void write(MemorySegment ptr, Class<?> type, Object o) {
         if (type == long.class) {
-            ptr.set(JAVA_LONG, 0, (long) o);
+            ptr.set(JAVA_LONG_UNALIGNED, 0, (long) o);
         } else if (type == int.class) {
-            ptr.set(JAVA_INT, 0, (int) o);
+            ptr.set(JAVA_INT_UNALIGNED, 0, (int) o);
         } else if (type == short.class) {
-            ptr.set(JAVA_SHORT, 0, (short) o);
+            ptr.set(JAVA_SHORT_UNALIGNED, 0, (short) o);
         } else if (type == char.class) {
-            ptr.set(JAVA_CHAR, 0, (char) o);
+            ptr.set(JAVA_CHAR_UNALIGNED, 0, (char) o);
         } else if (type == byte.class) {
             ptr.set(JAVA_BYTE, 0, (byte) o);
         } else if (type == float.class) {
-            ptr.set(JAVA_FLOAT, 0, (float) o);
+            ptr.set(JAVA_FLOAT_UNALIGNED, 0, (float) o);
         } else if (type == double.class) {
-            ptr.set(JAVA_DOUBLE, 0, (double) o);
+            ptr.set(JAVA_DOUBLE_UNALIGNED, 0, (double) o);
         } else if (type == boolean.class) {
             ptr.set(JAVA_BOOLEAN, 0, (boolean) o);
         } else {
@@ -520,25 +509,33 @@ public class SharedUtils {
 
     static Object read(MemorySegment ptr, Class<?> type) {
         if (type == long.class) {
-            return ptr.get(JAVA_LONG, 0);
+            return ptr.get(JAVA_LONG_UNALIGNED, 0);
         } else if (type == int.class) {
-            return ptr.get(JAVA_INT, 0);
+            return ptr.get(JAVA_INT_UNALIGNED, 0);
         } else if (type == short.class) {
-            return ptr.get(JAVA_SHORT, 0);
+            return ptr.get(JAVA_SHORT_UNALIGNED, 0);
         } else if (type == char.class) {
-            return ptr.get(JAVA_CHAR, 0);
+            return ptr.get(JAVA_CHAR_UNALIGNED, 0);
         } else if (type == byte.class) {
             return ptr.get(JAVA_BYTE, 0);
         } else if (type == float.class) {
-            return ptr.get(JAVA_FLOAT, 0);
+            return ptr.get(JAVA_FLOAT_UNALIGNED, 0);
         } else if (type == double.class) {
-            return ptr.get(JAVA_DOUBLE, 0);
+            return ptr.get(JAVA_DOUBLE_UNALIGNED, 0);
         } else if (type == boolean.class) {
             return ptr.get(JAVA_BOOLEAN, 0);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
     }
+
+    // unaligned constants
+    public final static ValueLayout.OfShort JAVA_SHORT_UNALIGNED = JAVA_SHORT.withBitAlignment(8);
+    public final static ValueLayout.OfChar JAVA_CHAR_UNALIGNED = JAVA_CHAR.withBitAlignment(8);
+    public final static ValueLayout.OfInt JAVA_INT_UNALIGNED = JAVA_INT.withBitAlignment(8);
+    public final static ValueLayout.OfLong JAVA_LONG_UNALIGNED = JAVA_LONG.withBitAlignment(8);
+    public final static ValueLayout.OfFloat JAVA_FLOAT_UNALIGNED = JAVA_FLOAT.withBitAlignment(8);
+    public final static ValueLayout.OfDouble JAVA_DOUBLE_UNALIGNED = JAVA_DOUBLE.withBitAlignment(8);
 
     public static MethodType inferMethodType(FunctionDescriptor descriptor, boolean upcall) {
         MethodType type = MethodType.methodType(descriptor.returnLayout().isPresent() ?

@@ -25,6 +25,15 @@
  */
 package jdk.internal.foreign.abi.x64.sysv;
 
+import jdk.internal.foreign.abi.ABIDescriptor;
+import jdk.internal.foreign.abi.Binding;
+import jdk.internal.foreign.abi.CallingSequence;
+import jdk.internal.foreign.abi.CallingSequenceBuilder;
+import jdk.internal.foreign.abi.DowncallLinker;
+import jdk.internal.foreign.abi.SharedUtils;
+import jdk.internal.foreign.abi.UpcallLinker;
+import jdk.internal.foreign.abi.VMStorage;
+
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryAddress;
@@ -36,20 +45,10 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.List;
 import java.util.Optional;
-import jdk.internal.foreign.abi.ABIDescriptor;
-import jdk.internal.foreign.abi.Binding;
-import jdk.internal.foreign.abi.CallingSequence;
-import jdk.internal.foreign.abi.CallingSequenceBuilder;
-import jdk.internal.foreign.abi.DowncallLinker;
-import jdk.internal.foreign.abi.UpcallLinker;
-import jdk.internal.foreign.abi.SharedUtils;
-import jdk.internal.foreign.abi.VMStorage;
-import jdk.internal.foreign.abi.x64.X86_64Architecture;
-import static jdk.internal.foreign.PlatformLayouts.*;
-import static jdk.internal.foreign.abi.Binding.*;
+
+import static jdk.internal.foreign.PlatformLayouts.SysV;
+import static jdk.internal.foreign.abi.Binding.vmStore;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
-import static jdk.internal.foreign.abi.x64.sysv.SysVx64Linker.MAX_INTEGER_ARGUMENT_REGISTERS;
-import static jdk.internal.foreign.abi.x64.sysv.SysVx64Linker.MAX_VECTOR_ARGUMENT_REGISTERS;
 
 /**
  * For the SysV x64 C ABI specifically, this class uses namely CallingSequenceBuilder
@@ -58,7 +57,9 @@ import static jdk.internal.foreign.abi.x64.sysv.SysVx64Linker.MAX_VECTOR_ARGUMEN
  * This includes taking care of synthetic arguments like pointers to return buffers for 'in-memory' returns.
  */
 public class CallArranger {
-    private static final ABIDescriptor CSysV = X86_64Architecture.abiFor(
+    public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 6;
+    public static final int MAX_VECTOR_ARGUMENT_REGISTERS = 8;
+    private static final ABIDescriptor CSysV = abiFor(
         new VMStorage[] { rdi, rsi, rdx, rcx, r8, r9, rax },
         new VMStorage[] { xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7 },
         new VMStorage[] { rax, rdx },
@@ -161,12 +162,12 @@ public class CallArranger {
         private int maxRegisterArguments(int type) {
             return type == StorageClasses.INTEGER ?
                     MAX_INTEGER_ARGUMENT_REGISTERS :
-                    SysVx64Linker.MAX_VECTOR_ARGUMENT_REGISTERS;
+                    MAX_VECTOR_ARGUMENT_REGISTERS;
         }
 
         VMStorage stackAlloc() {
             assert forArguments : "no stack returns";
-            VMStorage storage = X86_64Architecture.stackStorage((int)stackOffset);
+            VMStorage storage = stackStorage((int)stackOffset);
             stackOffset++;
             return storage;
         }
@@ -235,7 +236,7 @@ public class CallArranger {
         }
     }
 
-    static abstract class BindingCalculator {
+    abstract static class BindingCalculator {
         protected final StorageCalculator storageCalculator;
 
         protected BindingCalculator(boolean forArguments) {
@@ -254,7 +255,7 @@ public class CallArranger {
         @Override
         List<Binding> getBindings(Class<?> carrier, MemoryLayout layout) {
             TypeClass argumentClass = TypeClass.classifyLayout(layout);
-            Builder bindings = Binding.builder();
+            Binding.Builder bindings = Binding.builder();
             switch (argumentClass.kind()) {
                 case STRUCT: {
                     assert carrier == MemorySegment.class;
@@ -307,7 +308,7 @@ public class CallArranger {
         @Override
         List<Binding> getBindings(Class<?> carrier, MemoryLayout layout) {
             TypeClass argumentClass = TypeClass.classifyLayout(layout);
-            Builder bindings = Binding.builder();
+            Binding.Builder bindings = Binding.builder();
             switch (argumentClass.kind()) {
                 case STRUCT: {
                     assert carrier == MemorySegment.class;

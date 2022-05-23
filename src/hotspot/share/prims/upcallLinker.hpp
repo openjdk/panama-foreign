@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,8 +33,7 @@ class JavaThread;
 class UpcallLinker {
 private:
   static void handle_uncaught_exception(oop exception);
-  static JavaThread* maybe_attach_and_get_thread(bool* should_detach);
-  static void detach_current_thread();
+  static JavaThread* maybe_attach_and_get_thread();
 
   static JavaThread* on_entry(UpcallStub::FrameData* context);
   static void on_exit(UpcallStub::FrameData* context);

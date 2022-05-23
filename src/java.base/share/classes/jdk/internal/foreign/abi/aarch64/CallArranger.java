@@ -30,12 +30,6 @@ import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
-import java.util.List;
-import java.util.Optional;
-import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.ABIDescriptor;
 import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.CallingSequence;
@@ -44,8 +38,16 @@ import jdk.internal.foreign.abi.DowncallLinker;
 import jdk.internal.foreign.abi.UpcallLinker;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.VMStorage;
-import jdk.internal.foreign.abi.aarch64.linux.*;
-import jdk.internal.foreign.abi.aarch64.macos.*;
+import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64CallArranger;
+import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64CallArranger;
+import jdk.internal.foreign.Utils;
+
+import java.lang.foreign.MemorySession;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
+import java.util.List;
+import java.util.Optional;
+
 import static jdk.internal.foreign.PlatformLayouts.*;
 import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.*;
 
@@ -76,7 +78,7 @@ public abstract class CallArranger {
     // Although the AAPCS64 says r0-7 and v0-7 are all valid return
     // registers, it's not possible to generate a C function that uses
     // r2-7 and v4-7 so they are omitted here.
-    private static final ABIDescriptor C = AArch64Architecture.abiFor(
+    private static final ABIDescriptor C = abiFor(
         new VMStorage[] { r0, r1, r2, r3, r4, r5, r6, r7, INDIRECT_RESULT},
         new VMStorage[] { v0, v1, v2, v3, v4, v5, v6, v7 },
         new VMStorage[] { r0, r1 },
@@ -166,7 +168,7 @@ public abstract class CallArranger {
             target = SharedUtils.adaptUpcallForIMR(target, true /* drop return, since we don't have bindings for it */);
         }
 
-        return UpcallLinker.make(C, target, bindings.callingSequence,session);
+        return UpcallLinker.make(C, target, bindings.callingSequence, session);
     }
 
     private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
@@ -206,7 +208,7 @@ public abstract class CallArranger {
             stackOffset = alignedStackOffset;
 
             VMStorage storage =
-                AArch64Architecture.stackStorage((int)(stackOffset / STACK_SLOT_SIZE));
+                stackStorage((int)(stackOffset / STACK_SLOT_SIZE));
             stackOffset += size;
             return storage;
         }
@@ -407,7 +409,7 @@ public abstract class CallArranger {
         }
     }
 
-    class BoxBindingCalculator extends BindingCalculator {
+    class BoxBindingCalculator extends BindingCalculator{
         BoxBindingCalculator(boolean forArguments) {
             super(forArguments);
         }

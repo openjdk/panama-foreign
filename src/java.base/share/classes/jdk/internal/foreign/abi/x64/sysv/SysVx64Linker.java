@@ -25,6 +25,8 @@
 package jdk.internal.foreign.abi.x64.sysv;
 
 
+import jdk.internal.foreign.abi.AbstractLinker;
+
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
@@ -34,21 +36,11 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.function.Consumer;
 
-import jdk.internal.foreign.abi.AbstractLinker;
-
 /**
  * ABI implementation based on System V ABI AMD64 supplement v.0.99.6
  */
 public final class SysVx64Linker extends AbstractLinker {
-    public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 6;
-    public static final int MAX_INTEGER_RETURN_REGISTERS = 2;
-    public static final int MAX_VECTOR_ARGUMENT_REGISTERS = 8;
-    public static final int MAX_VECTOR_RETURN_REGISTERS = 2;
-    public static final int MAX_X87_RETURN_REGISTERS = 2;
-
     private static SysVx64Linker instance;
-
-    static final long ADDRESS_SIZE = 64; // bits
 
     public static SysVx64Linker getInstance() {
         if (instance == null) {
@@ -63,12 +55,12 @@ public final class SysVx64Linker extends AbstractLinker {
     }
 
     @Override
-    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession session) {
-        return CallArranger.arrangeUpcall(target, targetType, function, session);
+    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession scope) {
+        return CallArranger.arrangeUpcall(target, targetType, function, scope);
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession session) {
-        SysVVaList.Builder builder = SysVVaList.builder(session);
+    public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession scope) {
+        SysVVaList.Builder builder = SysVVaList.builder(scope);
         actions.accept(builder);
         return builder.build();
     }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -25,30 +25,24 @@
  */
 package jdk.internal.foreign.abi.x64.sysv;
 
-import java.lang.foreign.Addressable;
-import java.lang.foreign.GroupLayout;
-import java.lang.foreign.MemoryAddress;
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
-import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.VaList;
-import java.lang.foreign.ValueLayout;
+import java.lang.foreign.*;
+
+import jdk.internal.foreign.MemorySessionImpl;
+import jdk.internal.foreign.Scoped;
+import jdk.internal.foreign.Utils;
+import jdk.internal.foreign.abi.SharedUtils;
+import jdk.internal.misc.Unsafe;
+
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import jdk.internal.foreign.AbstractMemorySegmentImpl;
-import jdk.internal.foreign.Scoped;
-import jdk.internal.foreign.MemorySessionImpl;
-import jdk.internal.foreign.Utils;
-import jdk.internal.foreign.abi.SharedUtils;
-import jdk.internal.misc.Unsafe;
+import static jdk.internal.foreign.PlatformLayouts.SysV;
+
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.abi.SharedUtils.THROWING_ALLOCATOR;
-import static jdk.internal.foreign.PlatformLayouts.SysV;
 
 // See https://software.intel.com/sites/default/files/article/402129/mpx-linux64-abi.pdf "3.5.7 Variable Argument Lists"
 public non-sealed class SysVVaList implements VaList, Scoped {
@@ -228,7 +222,7 @@ public non-sealed class SysVVaList implements VaList, Scoped {
             preAlignStack(layout);
             return switch (typeClass.kind()) {
                 case STRUCT -> {
-                    MemorySegment slice = MemorySegment.ofAddress(stackPtr(), layout.byteSize(), sessionImpl());
+                    MemorySegment slice = MemorySegment.ofAddress(stackPtr(), layout.byteSize(), session());
                     MemorySegment seg = allocator.allocate(layout);
                     seg.copyFrom(slice);
                     postAlignStack(layout);
@@ -283,7 +277,7 @@ public non-sealed class SysVVaList implements VaList, Scoped {
     @Override
     public void skip(MemoryLayout... layouts) {
         Objects.requireNonNull(layouts);
-        ((AbstractMemorySegmentImpl)segment).checkValidState();
+        MemorySessionImpl.toSessionImpl(session()).checkValidStateSlow();
         for (MemoryLayout layout : layouts) {
             Objects.requireNonNull(layout);
             TypeClass typeClass = TypeClass.classifyLayout(layout);
@@ -306,18 +300,18 @@ public non-sealed class SysVVaList implements VaList, Scoped {
     }
 
     @Override
-    public MemorySessionImpl sessionImpl() {
-        return ((AbstractMemorySegmentImpl)segment).sessionImpl();
-    }
-
-    @Override
     public MemorySession session() {
         return segment.session();
     }
 
     @Override
+    public MemorySessionImpl sessionImpl() {
+        return MemorySessionImpl.toSessionImpl(session());
+    }
+
+    @Override
     public VaList copy() {
-        MemorySegment copy = MemorySegment.allocateNative(LAYOUT, sessionImpl());
+        MemorySegment copy = MemorySegment.allocateNative(LAYOUT, segment.session());
         copy.copyFrom(segment);
         return new SysVVaList(copy, regSaveArea);
     }

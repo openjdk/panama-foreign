@@ -32,6 +32,7 @@
  * @run testng TestAarch64CallArranger
  */
 
+import java.lang.foreign.Addressable;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
@@ -42,7 +43,6 @@ import jdk.internal.foreign.abi.aarch64.CallArranger;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.lang.foreign.Addressable;
 import java.lang.invoke.MethodType;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;

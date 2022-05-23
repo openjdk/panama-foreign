@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -25,26 +25,19 @@
  */
 package jdk.internal.foreign.abi.x64.windows;
 
-import java.lang.foreign.Addressable;
-import java.lang.foreign.GroupLayout;
-import java.lang.foreign.MemoryAddress;
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
-import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.VaList;
-import java.lang.foreign.ValueLayout;
+import java.lang.foreign.*;
+
+import jdk.internal.foreign.MemorySessionImpl;
+import jdk.internal.foreign.Scoped;
+import jdk.internal.foreign.abi.SharedUtils;
+import jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
+
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import jdk.internal.foreign.AbstractMemorySegmentImpl;
-import jdk.internal.foreign.Scoped;
-import jdk.internal.foreign.MemorySessionImpl;
-import jdk.internal.foreign.abi.SharedUtils;
-import jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.PlatformLayouts.Win64.C_POINTER;
 
 // see vadefs.h (VC header)
@@ -71,9 +64,11 @@ public non-sealed class WinVaList implements VaList, Scoped {
     private static final VaList EMPTY = new SharedUtils.EmptyVaList(MemoryAddress.NULL);
 
     private MemorySegment segment;
+    private final MemorySession session;
 
-    private WinVaList(MemorySegment segment) {
+    private WinVaList(MemorySegment segment, MemorySession session) {
         this.segment = segment;
+        this.session = session;
     }
 
     public static final VaList empty() {
@@ -138,14 +133,14 @@ public non-sealed class WinVaList implements VaList, Scoped {
     @Override
     public void skip(MemoryLayout... layouts) {
         Objects.requireNonNull(layouts);
-        ((AbstractMemorySegmentImpl)segment).checkValidState();
+        MemorySessionImpl.toSessionImpl(session()).checkValidStateSlow();
         Stream.of(layouts).forEach(Objects::requireNonNull);
         segment = segment.asSlice(layouts.length * VA_SLOT_SIZE_BYTES);
     }
 
     static WinVaList ofAddress(MemoryAddress addr, MemorySession session) {
         MemorySegment segment = MemorySegment.ofAddress(addr, Long.MAX_VALUE, session);
-        return new WinVaList(segment);
+        return new WinVaList(segment, session);
     }
 
     static Builder builder(MemorySession session) {
@@ -153,19 +148,19 @@ public non-sealed class WinVaList implements VaList, Scoped {
     }
 
     @Override
-    public MemorySessionImpl sessionImpl() {
-        return ((AbstractMemorySegmentImpl)segment).sessionImpl();
+    public MemorySession session() {
+        return session;
     }
 
     @Override
-    public MemorySession session() {
-        return segment.session();
+    public MemorySessionImpl sessionImpl() {
+        return MemorySessionImpl.toSessionImpl(session());
     }
 
     @Override
     public VaList copy() {
-        ((AbstractMemorySegmentImpl)segment).checkValidState();
-        return new WinVaList(segment);
+        MemorySessionImpl.toSessionImpl(session).checkValidStateSlow();
+        return new WinVaList(segment, session);
     }
 
     @Override
@@ -247,7 +242,7 @@ public non-sealed class WinVaList implements VaList, Scoped {
                 cursor = cursor.asSlice(VA_SLOT_SIZE_BYTES);
             }
 
-            return new WinVaList(segment);
+            return new WinVaList(segment, session);
         }
     }
 }

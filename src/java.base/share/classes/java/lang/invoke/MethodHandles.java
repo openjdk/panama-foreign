@@ -46,6 +46,7 @@ import sun.security.util.SecurityConstants;
 import java.lang.constant.ConstantDescs;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.LambdaForm.BasicType;
 import java.lang.reflect.Constructor;
@@ -7935,6 +7936,7 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      * @return the new memory segment view var handle.
      * @throws IllegalArgumentException if an illegal carrier type is used, or if {@code alignmentBytes} is not a power of two.
      * @throws NullPointerException if {@code layout} is {@code null}.
+     * @see MemoryLayout#varHandle(MemoryLayout.PathElement...)
      * @since 19
      */
     @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
@@ -7984,7 +7986,7 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      * Adapts a target var handle by pre-processing incoming coordinate values using unary filter functions.
      * <p>
      * When calling e.g. {@link VarHandle#get(Object...)} on the resulting var handle, the incoming coordinate values
-     * starting at position {@code pos} (of type {@code C1, C2 ... Cn}, where {@code C1, C2 ... Cn} are the return type
+     * starting at position {@code pos} (of type {@code C1, C2 ... Cn}, where {@code C1, C2 ... Cn} are the return types
      * of the unary filter functions) are transformed into new values (of type {@code S1, S2 ... Sn}, where {@code S1, S2 ... Sn} are the
      * parameter types of the unary filter functions), and then passed (along with any coordinate that was left unaltered
      * by the adaptation) to the target var handle.
@@ -8033,7 +8035,7 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      * @param target the var handle to invoke after the bound coordinates are inserted
      * @param pos the position of the first coordinate to be inserted
      * @param values the series of bound coordinates to insert
-     * @return an adapter var handle which inserts an additional coordinates,
+     * @return an adapter var handle which inserts additional coordinates,
      *         before calling the target var handle
      * @throws IllegalArgumentException if {@code pos} is not between 0 and the target var handle coordinate arity, inclusive,
      * or if more values are provided than the actual number of coordinate types available starting at {@code pos}.
@@ -8149,7 +8151,7 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      * atomic access guarantees as those featured by the target var handle.
      *
      * @param target the var handle to invoke after the dummy coordinates are dropped
-     * @param pos position of first coordinate to drop (zero for the leftmost)
+     * @param pos position of the first coordinate to drop (zero for the leftmost)
      * @param valueTypes the type(s) of the coordinate(s) to drop
      * @return an adapter var handle which drops some dummy coordinates,
      *         before calling the target var handle
