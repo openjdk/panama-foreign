@@ -47,6 +47,7 @@
 #include "oops/accessDecorators.hpp"
 #include "oops/compressedOops.inline.hpp"
 #include "oops/klass.inline.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/icache.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/jniHandles.inline.hpp"
@@ -324,6 +325,41 @@ void MacroAssembler::rt_call(address dest, Register tmp) {
   }
 }
 
+void MacroAssembler::push_cont_fastpath(Register java_thread) {
+  if (!Continuations::enabled()) return;
+  Label done;
+  ldr(rscratch1, Address(java_thread, JavaThread::cont_fastpath_offset()));
+  cmp(sp, rscratch1);
+  br(Assembler::LS, done);
+  mov(rscratch1, sp); // we can't use sp as the source in str
+  str(rscratch1, Address(java_thread, JavaThread::cont_fastpath_offset()));
+  bind(done);
+}
+
+void MacroAssembler::pop_cont_fastpath(Register java_thread) {
+  if (!Continuations::enabled()) return;
+  Label done;
+  ldr(rscratch1, Address(java_thread, JavaThread::cont_fastpath_offset()));
+  cmp(sp, rscratch1);
+  br(Assembler::LO, done);
+  str(zr, Address(java_thread, JavaThread::cont_fastpath_offset()));
+  bind(done);
+}
+
+void MacroAssembler::inc_held_monitor_count(Register java_thread) {
+  if (!Continuations::enabled()) return;
+  incrementw(Address(java_thread, JavaThread::held_monitor_count_offset()));
+}
+
+void MacroAssembler::dec_held_monitor_count(Register java_thread) {
+  if (!Continuations::enabled()) return;
+  decrementw(Address(java_thread, JavaThread::held_monitor_count_offset()));
+}
+
+void MacroAssembler::reset_held_monitor_count(Register java_thread) {
+  strw(zr, Address(java_thread, JavaThread::held_monitor_count_offset()));
+}
+
 void MacroAssembler::reset_last_Java_frame(bool clear_fp) {
   // we must set sp to zero to clear frame
   str(zr, Address(rthread, JavaThread::last_Java_sp_offset()));
@@ -577,9 +613,7 @@ void MacroAssembler::call_VM_helper(Register oop_result, address entry_point, in
 
 // Maybe emit a call via a trampoline.  If the code cache is small
 // trampolines won't be emitted.
-
-address MacroAssembler::trampoline_call(Address entry, CodeBuffer* cbuf) {
-  assert(JavaThread::current()->is_Compiler_thread(), "just checking");
+address MacroAssembler::trampoline_call1(Address entry, CodeBuffer* cbuf, bool check_emit_size) {
   assert(entry.rspec().type() == relocInfo::runtime_call_type
          || entry.rspec().type() == relocInfo::opt_virtual_call_type
          || entry.rspec().type() == relocInfo::static_call_type
@@ -589,12 +623,14 @@ address MacroAssembler::trampoline_call(Address entry, CodeBuffer* cbuf) {
   if (far_branches()) {
     bool in_scratch_emit_size = false;
 #ifdef COMPILER2
-    // We don't want to emit a trampoline if C2 is generating dummy
-    // code during its branch shortening phase.
-    CompileTask* task = ciEnv::current()->task();
-    in_scratch_emit_size =
-      (task != NULL && is_c2_compile(task->comp_level()) &&
-       Compile::current()->output()->in_scratch_emit_size());
+    if (check_emit_size) {
+      // We don't want to emit a trampoline if C2 is generating dummy
+      // code during its branch shortening phase.
+      CompileTask* task = ciEnv::current()->task();
+      in_scratch_emit_size =
+        (task != NULL && is_c2_compile(task->comp_level()) &&
+         Compile::current()->output()->in_scratch_emit_size());
+    }
 #endif
     if (!in_scratch_emit_size) {
       address stub = emit_trampoline_stub(offset(), entry.target());
@@ -799,6 +835,15 @@ void MacroAssembler::get_vm_result_2(Register metadata_result, Register java_thr
 
 void MacroAssembler::align(int modulus) {
   while (offset() % modulus != 0) nop();
+}
+
+void MacroAssembler::post_call_nop() {
+  if (!Continuations::enabled()) {
+    return;
+  }
+  InstructionMark im(this);
+  relocate(post_call_nop_Relocation::spec());
+  nop();
 }
 
 // these are no-ops overridden by InterpreterMacroAssembler
@@ -2207,13 +2252,24 @@ void MacroAssembler::unimplemented(const char* what) {
   stop(buf);
 }
 
+void MacroAssembler::_assert_asm(Assembler::Condition cc, const char* msg) {
+#ifdef ASSERT
+  Label OK;
+  br(cc, OK);
+  stop(msg);
+  bind(OK);
+#endif
+}
+
 // If a constant does not fit in an immediate field, generate some
 // number of MOV instructions and then perform the operation.
-void MacroAssembler::wrap_add_sub_imm_insn(Register Rd, Register Rn, unsigned imm,
+void MacroAssembler::wrap_add_sub_imm_insn(Register Rd, Register Rn, uint64_t imm,
                                            add_sub_imm_insn insn1,
-                                           add_sub_reg_insn insn2) {
+                                           add_sub_reg_insn insn2,
+                                           bool is32) {
   assert(Rd != zr, "Rd = zr and not setting flags?");
-  if (operand_valid_for_add_sub_immediate((int)imm)) {
+  bool fits = operand_valid_for_add_sub_immediate(is32 ? (int32_t)imm : imm);
+  if (fits) {
     (this->*insn1)(Rd, Rn, imm);
   } else {
     if (uabs(imm) < (1 << 24)) {
@@ -2221,7 +2277,7 @@ void MacroAssembler::wrap_add_sub_imm_insn(Register Rd, Register Rn, unsigned im
        (this->*insn1)(Rd, Rd, imm & ((1 << 12)-1));
     } else {
        assert_different_registers(Rd, Rn);
-       mov(Rd, (uint64_t)imm);
+       mov(Rd, imm);
        (this->*insn2)(Rd, Rn, Rd, LSL, 0);
     }
   }
@@ -2229,15 +2285,17 @@ void MacroAssembler::wrap_add_sub_imm_insn(Register Rd, Register Rn, unsigned im
 
 // Separate vsn which sets the flags. Optimisations are more restricted
 // because we must set the flags correctly.
-void MacroAssembler::wrap_adds_subs_imm_insn(Register Rd, Register Rn, unsigned imm,
-                                           add_sub_imm_insn insn1,
-                                           add_sub_reg_insn insn2) {
-  if (operand_valid_for_add_sub_immediate((int)imm)) {
+void MacroAssembler::wrap_adds_subs_imm_insn(Register Rd, Register Rn, uint64_t imm,
+                                             add_sub_imm_insn insn1,
+                                             add_sub_reg_insn insn2,
+                                             bool is32) {
+  bool fits = operand_valid_for_add_sub_immediate(is32 ? (int32_t)imm : imm);
+  if (fits) {
     (this->*insn1)(Rd, Rn, imm);
   } else {
     assert_different_registers(Rd, Rn);
     assert(Rd != zr, "overflow in immediate operand");
-    mov(Rd, (uint64_t)imm);
+    mov(Rd, imm);
     (this->*insn2)(Rd, Rn, Rd, LSL, 0);
   }
 }
@@ -4159,7 +4217,8 @@ void MacroAssembler::movoop(Register dst, jobject obj, bool immediate) {
   // nmethod entry barrier necessitate using the constant pool. They have to be
   // ordered with respected to oop accesses.
   // Using immediate literals would necessitate ISBs.
-  if (BarrierSet::barrier_set()->barrier_set_nmethod() != NULL || !immediate) {
+  BarrierSet* bs = BarrierSet::barrier_set();
+  if ((bs->barrier_set_nmethod() != NULL && bs->barrier_set_assembler()->nmethod_code_patching()) || !immediate) {
     address dummy = address(uintptr_t(pc()) & -wordSize); // A nearby aligned address
     ldr_constant(dst, Address(dummy, rspec));
   } else
@@ -4773,7 +4832,6 @@ address MacroAssembler::zero_words(Register ptr, Register cnt)
       address tpc = trampoline_call(zero_blocks);
       if (tpc == NULL) {
         DEBUG_ONLY(reset_labels(around));
-        assert(false, "failed to allocate space for trampoline");
         return NULL;
       }
     } else {
@@ -4807,10 +4865,11 @@ address MacroAssembler::zero_words(Register ptr, Register cnt)
 // cnt:          Immediate count in HeapWords.
 //
 // r10, r11, rscratch1, and rscratch2 are clobbered.
-void MacroAssembler::zero_words(Register base, uint64_t cnt)
+address MacroAssembler::zero_words(Register base, uint64_t cnt)
 {
   guarantee(zero_words_block_size < BlockZeroingLowLimit,
             "increase BlockZeroingLowLimit");
+  address result = nullptr;
   if (cnt <= (uint64_t)BlockZeroingLowLimit / BytesPerWord) {
 #ifndef PRODUCT
     {
@@ -4844,10 +4903,12 @@ void MacroAssembler::zero_words(Register base, uint64_t cnt)
       stp(zr, zr, Address(base, i * wordSize));
     }
     BLOCK_COMMENT("} zero_words");
+    result = pc();
   } else {
     mov(r10, base); mov(r11, cnt);
-    zero_words(r10, r11);
+    result = zero_words(r10, r11);
   }
+  return result;
 }
 
 // Zero blocks of memory by using DC ZVA.
@@ -5474,9 +5535,9 @@ static int reg2offset_out(VMReg r) {
   return (r->reg2stack() + SharedRuntime::out_preserve_stack_slots()) * VMRegImpl::stack_slot_size;
 }
 
-// On 64 bit we will store integer like items to the stack as
-// 64 bits items (Aarch64 abi) even though java would only store
-// 32bits for a parameter. On 32bit it will simply be 32 bits
+// On 64bit we will store integer like items to the stack as
+// 64bits items (AArch64 ABI) even though java would only store
+// 32bits for a parameter. On 32bit it will simply be 32bits
 // So this routine will do 32->32 on 32bit and 32->64 on 64bit
 void MacroAssembler::move32_64(VMRegPair src, VMRegPair dst, Register tmp) {
   if (src.first()->is_stack()) {
@@ -5490,8 +5551,6 @@ void MacroAssembler::move32_64(VMRegPair src, VMRegPair dst, Register tmp) {
     }
   } else if (dst.first()->is_stack()) {
     // reg to stack
-    // Do we really have to sign extend???
-    // __ movslq(src.first()->as_Register(), src.first()->as_Register());
     str(src.first()->as_Register(), Address(sp, reg2offset_out(dst.first())));
   } else {
     if (dst.first() != src.first()) {
@@ -5621,7 +5680,7 @@ void MacroAssembler::long_move(VMRegPair src, VMRegPair dst, Register tmp) {
 
 // A double move
 void MacroAssembler::double_move(VMRegPair src, VMRegPair dst, Register tmp) {
-  if (src.first()->is_stack()) {
+ if (src.first()->is_stack()) {
     if (dst.first()->is_stack()) {
       ldr(tmp, Address(rfp, reg2offset_in(src.first())));
       str(tmp, Address(sp, reg2offset_out(dst.first())));

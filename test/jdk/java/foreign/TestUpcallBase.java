@@ -22,14 +22,13 @@
  *
  */
 
-import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.NativeSymbol;
-import jdk.incubator.foreign.SymbolLookup;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
+import java.lang.foreign.Addressable;
+import java.lang.foreign.Linker;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemorySession;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
 
-import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.BeforeClass;
 
 import java.lang.invoke.MethodHandle;
@@ -46,8 +45,7 @@ import static org.testng.Assert.assertEquals;
 
 public abstract class TestUpcallBase extends CallGeneratorHelper {
 
-    static CLinker ABI = CLinker.systemCLinker();
-    static final SymbolLookup LOOKUP = SymbolLookup.loaderLookup();
+    static Linker ABI = Linker.nativeLinker();
 
     private static MethodHandle DUMMY;
     private static MethodHandle PASS_AND_SAVE;
@@ -62,11 +60,11 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
         }
     }
 
-    private static NativeSymbol DUMMY_STUB;
+    private static Addressable DUMMY_STUB;
 
     @BeforeClass
     void setup() {
-        DUMMY_STUB = ABI.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), ResourceScope.newImplicitScope());
+        DUMMY_STUB = ABI.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), MemorySession.openImplicit());
     }
 
     static FunctionDescriptor function(Ret ret, List<ParamType> params, List<StructFieldType> fields) {
@@ -82,11 +80,11 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
                 FunctionDescriptor.of(layouts[prefix.size()], layouts);
     }
 
-    static Object[] makeArgs(ResourceScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) throws ReflectiveOperationException {
-        return makeArgs(scope, ret, params, fields, checks, argChecks, List.of());
+    static Object[] makeArgs(MemorySession session, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) throws ReflectiveOperationException {
+        return makeArgs(session, ret, params, fields, checks, argChecks, List.of());
     }
 
-    static Object[] makeArgs(ResourceScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks, List<MemoryLayout> prefix) throws ReflectiveOperationException {
+    static Object[] makeArgs(MemorySession session, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks, List<MemoryLayout> prefix) throws ReflectiveOperationException {
         Object[] args = new Object[prefix.size() + params.size() + 1];
         int argNum = 0;
         for (MemoryLayout layout : prefix) {
@@ -95,11 +93,11 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
         for (int i = 0 ; i < params.size() ; i++) {
             args[argNum++] = makeArg(params.get(i).layout(fields), checks, i == 0);
         }
-        args[argNum] = makeCallback(scope, ret, params, fields, checks, argChecks, prefix);
+        args[argNum] = makeCallback(session, ret, params, fields, checks, argChecks, prefix);
         return args;
     }
 
-    static NativeSymbol makeCallback(ResourceScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks, List<MemoryLayout> prefix) {
+    static Addressable makeCallback(MemorySession session, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks, List<MemoryLayout> prefix) {
         if (params.isEmpty()) {
             return DUMMY_STUB;
         }
@@ -142,14 +140,14 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
         FunctionDescriptor func = ret != Ret.VOID
                 ? FunctionDescriptor.of(firstlayout, paramLayouts)
                 : FunctionDescriptor.ofVoid(paramLayouts);
-        return ABI.upcallStub(mh, func, scope);
+        return ABI.upcallStub(mh, func, session);
     }
 
     static Object passAndSave(Object[] o, AtomicReference<Object[]> ref, int retArg) {
         for (int i = 0; i < o.length; i++) {
             if (o[i] instanceof MemorySegment) {
                 MemorySegment ms = (MemorySegment) o[i];
-                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), ResourceScope.newImplicitScope());
+                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), MemorySession.openImplicit());
                 copy.copyFrom(ms);
                 o[i] = copy;
             }

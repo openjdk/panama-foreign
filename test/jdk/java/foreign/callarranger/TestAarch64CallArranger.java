@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -24,18 +24,19 @@
 
 /*
  * @test
- * @modules jdk.incubator.foreign/jdk.internal.foreign
- *          jdk.incubator.foreign/jdk.internal.foreign.abi
- *          jdk.incubator.foreign/jdk.internal.foreign.abi.aarch64
+ * @enablePreview
+ * @modules java.base/jdk.internal.foreign
+ *          java.base/jdk.internal.foreign.abi
+ *          java.base/jdk.internal.foreign.abi.aarch64
  * @build CallArrangerTestBase
  * @run testng TestAarch64CallArranger
  */
 
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeSymbol;
+import java.lang.foreign.Addressable;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
 import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.aarch64.CallArranger;
@@ -44,7 +45,7 @@ import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodType;
 
-import static jdk.incubator.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.ADDRESS;
 import static jdk.internal.foreign.PlatformLayouts.AArch64.*;
 import static jdk.internal.foreign.abi.Binding.*;
 import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.*;
@@ -62,11 +63,11 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r9, long.class) }
+            { unboxAddress(Addressable.class), vmStore(r9, long.class) }
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -86,11 +87,11 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r9, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r9, long.class) },
             { vmStore(r0, int.class) },
             { vmStore(r1, int.class) },
             { vmStore(r2, int.class) },
@@ -116,11 +117,11 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r9, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r9, long.class) },
             { vmStore(r0, int.class) },
             { vmStore(r1, int.class) },
             { vmStore(v0, float.class) },
@@ -138,11 +139,11 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r9, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r9, long.class) },
             expectedBindings
         });
 
@@ -198,11 +199,11 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r9, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r9, long.class) },
             {
                 copy(struct1),
                 unboxAddress(MemorySegment.class),
@@ -229,11 +230,11 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         assertTrue(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), MethodType.methodType(void.class, NativeSymbol.class, MemoryAddress.class));
+        assertEquals(callingSequence.callerMethodType(), MethodType.methodType(void.class, Addressable.class, MemoryAddress.class));
         assertEquals(callingSequence.functionDesc(), FunctionDescriptor.ofVoid(ADDRESS, C_POINTER));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r9, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r9, long.class) },
             {
                 unboxAddress(),
                 vmStore(r8, long.class)
@@ -253,12 +254,12 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, MemorySegment.class, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, MemorySegment.class, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
             { unboxAddress(MemorySegment.class), vmStore(r10, long.class) },
-            { unboxAddress(NativeSymbol.class), vmStore(r9, long.class) }
+            { unboxAddress(Addressable.class), vmStore(r9, long.class) }
         });
 
         checkReturnBindings(callingSequence, new Binding[]{
@@ -282,12 +283,12 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, MemorySegment.class, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, MemorySegment.class, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
             { unboxAddress(MemorySegment.class), vmStore(r10, long.class) },
-            { unboxAddress(NativeSymbol.class), vmStore(r9, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r9, long.class) },
             { vmStore(v0, float.class) },
             { vmStore(r0, int.class) },
             {
@@ -320,11 +321,11 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r9, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r9, long.class) },
             {
                 dup(),
                 bufferLoad(0, float.class),
@@ -374,11 +375,11 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r9, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r9, long.class) },
             { copy(struct), unboxAddress(MemorySegment.class), vmStore(r0, long.class) },
             { copy(struct), unboxAddress(MemorySegment.class), vmStore(r1, long.class) },
             { vmStore(r2, int.class) },
@@ -398,17 +399,17 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
     public void testVarArgsInRegs() {
         MethodType mt = MethodType.methodType(void.class, int.class, int.class, float.class);
         FunctionDescriptor fd = FunctionDescriptor.ofVoid(C_INT).asVariadic(C_INT, C_FLOAT);
-        FunctionDescriptor fdExpected = FunctionDescriptor.ofVoid(ADDRESS, C_INT).asVariadic(C_INT, C_FLOAT);
+        FunctionDescriptor fdExpected = FunctionDescriptor.ofVoid(ADDRESS, C_INT, C_INT, C_FLOAT);
         CallArranger.Bindings bindings = CallArranger.LINUX.getBindings(mt, fd, false);
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fdExpected);
 
         // This is identical to the non-variadic calling sequence
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r9, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r9, long.class) },
             { vmStore(r0, int.class) },
             { vmStore(r1, int.class) },
             { vmStore(v0, float.class) },
@@ -421,17 +422,17 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
     public void testVarArgsOnStack() {
         MethodType mt = MethodType.methodType(void.class, int.class, int.class, float.class);
         FunctionDescriptor fd = FunctionDescriptor.ofVoid(C_INT).asVariadic(C_INT, C_FLOAT);
-        FunctionDescriptor fdExpected = FunctionDescriptor.ofVoid(ADDRESS, C_INT).asVariadic(C_INT, C_FLOAT);
+        FunctionDescriptor fdExpected = FunctionDescriptor.ofVoid(ADDRESS, C_INT, C_INT, C_FLOAT);
         CallArranger.Bindings bindings = CallArranger.MACOS.getBindings(mt, fd, false);
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fdExpected);
 
         // The two variadic arguments should be allocated on the stack
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r9, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r9, long.class) },
             { vmStore(r0, int.class) },
             { vmStore(stackStorage(0), int.class) },
             { vmStore(stackStorage(1), float.class) },
