@@ -23,8 +23,8 @@
 
 /*
  * @test
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
  * @run testng/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-VerifyDependencies
@@ -32,13 +32,13 @@
  *   TestUpcallAsync
  */
 
-import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeSymbol;
-import jdk.incubator.foreign.ResourceScope;
-import jdk.incubator.foreign.SegmentAllocator;
+import java.lang.foreign.Addressable;
+import java.lang.foreign.Linker;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
+import java.lang.foreign.SegmentAllocator;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
@@ -60,19 +60,19 @@ public class TestUpcallAsync extends TestUpcallBase {
     public void testUpcallsAsync(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        NativeSymbol addr = LOOKUP.lookup(fName).get();
-        try (ResourceScope scope = ResourceScope.newSharedScope()) {
-            SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
+        Addressable addr = findNativeOrThrow(fName);
+        try (MemorySession session = MemorySession.openShared()) {
+            SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
             FunctionDescriptor descriptor = function(ret, paramTypes, fields);
             MethodHandle mh = downcallHandle(ABI, addr, allocator, descriptor);
-            Object[] args = makeArgs(ResourceScope.newImplicitScope(), ret, paramTypes, fields, returnChecks, argChecks);
+            Object[] args = makeArgs(MemorySession.openImplicit(), ret, paramTypes, fields, returnChecks, argChecks);
 
             mh = mh.asSpreader(Object[].class, args.length);
             mh = MethodHandles.insertArguments(mh, 0, (Object) args);
             FunctionDescriptor callbackDesc = descriptor.returnLayout()
                     .map(FunctionDescriptor::of)
                     .orElse(FunctionDescriptor.ofVoid());
-            NativeSymbol callback = ABI.upcallStub(mh.asType(CLinker.upcallType(callbackDesc)), callbackDesc, scope);
+            Addressable callback = ABI.upcallStub(mh.asType(Linker.upcallType(callbackDesc)), callbackDesc, session);
 
             MethodHandle invoker = asyncInvoker(ret, ret == Ret.VOID ? null : paramTypes.get(0), fields);
 
@@ -93,7 +93,7 @@ public class TestUpcallAsync extends TestUpcallBase {
             String name = "call_async_V";
             return INVOKERS.computeIfAbsent(name, symbol ->
                     ABI.downcallHandle(
-                            LOOKUP.lookup(symbol).orElseThrow(),
+                            findNativeOrThrow(symbol),
                             FunctionDescriptor.ofVoid(C_POINTER)));
         }
 
@@ -101,7 +101,7 @@ public class TestUpcallAsync extends TestUpcallBase {
                 + (returnType == ParamType.STRUCT ? "_" + sigCode(fields) : "");
 
         return INVOKERS.computeIfAbsent(name, symbol -> {
-            NativeSymbol invokerSymbol = LOOKUP.lookup(symbol).orElseThrow();
+            Addressable invokerSymbol = findNativeOrThrow(symbol);
             MemoryLayout returnLayout = returnType.layout(fields);
             FunctionDescriptor desc = FunctionDescriptor.of(returnLayout, C_POINTER);
 

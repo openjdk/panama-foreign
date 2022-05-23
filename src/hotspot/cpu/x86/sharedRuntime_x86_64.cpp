@@ -28,11 +28,11 @@
 #endif
 #include "asm/macroAssembler.hpp"
 #include "asm/macroAssembler.inline.hpp"
+#include "code/compiledIC.hpp"
 #include "code/debugInfoRec.hpp"
 #include "code/icBuffer.hpp"
 #include "code/nativeInst.hpp"
 #include "code/vtableStubs.hpp"
-#include "compiler/disassembler.hpp"
 #include "compiler/oopMap.hpp"
 #include "gc/shared/collectedHeap.hpp"
 #include "gc/shared/gcLocker.hpp"
@@ -40,12 +40,13 @@
 #include "gc/shared/barrierSetAssembler.hpp"
 #include "interpreter/interpreter.hpp"
 #include "logging/log.hpp"
-#include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
 #include "memory/universe.hpp"
 #include "oops/compiledICHolder.hpp"
 #include "oops/klass.inline.hpp"
 #include "prims/methodHandles.hpp"
+#include "runtime/continuation.hpp"
+#include "runtime/continuationEntry.inline.hpp"
 #include "runtime/jniHandles.hpp"
 #include "runtime/safepointMechanism.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -152,8 +153,8 @@ class RegisterSaver {
   };
 
  public:
-  static OopMap* save_live_registers(MacroAssembler* masm, int additional_frame_words, int* total_frame_words, bool save_vectors);
-  static void restore_live_registers(MacroAssembler* masm, bool restore_vectors = false);
+  static OopMap* save_live_registers(MacroAssembler* masm, int additional_frame_words, int* total_frame_words, bool save_wide_vectors);
+  static void restore_live_registers(MacroAssembler* masm, bool restore_wide_vectors = false);
 
   // Offsets into the register save area
   // Used by deoptimization when it is managing result register
@@ -174,16 +175,16 @@ class RegisterSaver {
 // "0" is assigned for rax. Thus we need to ignore -Wnonnull.
 PRAGMA_DIAG_PUSH
 PRAGMA_NONNULL_IGNORED
-OopMap* RegisterSaver::save_live_registers(MacroAssembler* masm, int additional_frame_words, int* total_frame_words, bool save_vectors) {
+OopMap* RegisterSaver::save_live_registers(MacroAssembler* masm, int additional_frame_words, int* total_frame_words, bool save_wide_vectors) {
   int off = 0;
   int num_xmm_regs = XMMRegisterImpl::available_xmm_registers();
 #if COMPILER2_OR_JVMCI
-  if (save_vectors && UseAVX == 0) {
-    save_vectors = false; // vectors larger than 16 byte long are supported only with AVX
+  if (save_wide_vectors && UseAVX == 0) {
+    save_wide_vectors = false; // vectors larger than 16 byte long are supported only with AVX
   }
-  assert(!save_vectors || MaxVectorSize <= 64, "Only up to 64 byte long vectors are supported");
+  assert(!save_wide_vectors || MaxVectorSize <= 64, "Only up to 64 byte long vectors are supported");
 #else
-  save_vectors = false; // vectors are generated only by C2 and JVMCI
+  save_wide_vectors = false; // vectors are generated only by C2 and JVMCI
 #endif
 
   // Always make the frame size 16-byte aligned, both vector and non vector stacks are always allocated
@@ -204,7 +205,7 @@ OopMap* RegisterSaver::save_live_registers(MacroAssembler* masm, int additional_
   __ push_CPU_state(); // Push a multiple of 16 bytes
 
   // push cpu state handles this on EVEX enabled targets
-  if (save_vectors) {
+  if (save_wide_vectors) {
     // Save upper half of YMM registers(0..15)
     int base_addr = XSAVE_AREA_YMM_BEGIN;
     for (int n = 0; n < 16; n++) {
@@ -233,11 +234,12 @@ OopMap* RegisterSaver::save_live_registers(MacroAssembler* masm, int additional_
     }
   } else {
     if (VM_Version::supports_evex()) {
-      // Save upper bank of ZMM registers(16..31) for double/float usage
+      // Save upper bank of XMM registers(16..31) for scalar or 16-byte vector usage
       int base_addr = XSAVE_AREA_UPPERBANK;
       off = 0;
+      int vector_len = VM_Version::supports_avx512vl() ?  Assembler::AVX_128bit : Assembler::AVX_512bit;
       for (int n = 16; n < num_xmm_regs; n++) {
-        __ movsd(Address(rsp, base_addr+(off++*64)), as_XMMRegister(n));
+        __ evmovdqul(Address(rsp, base_addr+(off++*64)), as_XMMRegister(n), vector_len);
       }
 #if COMPILER2_OR_JVMCI
       base_addr = XSAVE_AREA_OPMASK_BEGIN;
@@ -301,7 +303,7 @@ OopMap* RegisterSaver::save_live_registers(MacroAssembler* masm, int additional_
   }
 
 #if COMPILER2_OR_JVMCI
-  if (save_vectors) {
+  if (save_wide_vectors) {
     // Save upper half of YMM registers(0..15)
     off = ymm0_off;
     delta = ymm1_off - ymm0_off;
@@ -365,7 +367,7 @@ OopMap* RegisterSaver::save_live_registers(MacroAssembler* masm, int additional_
 }
 PRAGMA_DIAG_POP
 
-void RegisterSaver::restore_live_registers(MacroAssembler* masm, bool restore_vectors) {
+void RegisterSaver::restore_live_registers(MacroAssembler* masm, bool restore_wide_vectors) {
   int num_xmm_regs = XMMRegisterImpl::available_xmm_registers();
   if (frame::arg_reg_save_area_bytes != 0) {
     // Pop arg register save area
@@ -373,18 +375,18 @@ void RegisterSaver::restore_live_registers(MacroAssembler* masm, bool restore_ve
   }
 
 #if COMPILER2_OR_JVMCI
-  if (restore_vectors) {
+  if (restore_wide_vectors) {
     assert(UseAVX > 0, "Vectors larger than 16 byte long are supported only with AVX");
     assert(MaxVectorSize <= 64, "Only up to 64 byte long vectors are supported");
   }
 #else
-  assert(!restore_vectors, "vectors are generated only by C2");
+  assert(!restore_wide_vectors, "vectors are generated only by C2");
 #endif
 
   __ vzeroupper();
 
   // On EVEX enabled targets everything is handled in pop fpu state
-  if (restore_vectors) {
+  if (restore_wide_vectors) {
     // Restore upper half of YMM registers (0..15)
     int base_addr = XSAVE_AREA_YMM_BEGIN;
     for (int n = 0; n < 16; n++) {
@@ -413,11 +415,12 @@ void RegisterSaver::restore_live_registers(MacroAssembler* masm, bool restore_ve
     }
   } else {
     if (VM_Version::supports_evex()) {
-      // Restore upper bank of ZMM registers(16..31) for double/float usage
+      // Restore upper bank of XMM registers(16..31) for scalar or 16-byte vector usage
       int base_addr = XSAVE_AREA_UPPERBANK;
       int off = 0;
+      int vector_len = VM_Version::supports_avx512vl() ?  Assembler::AVX_128bit : Assembler::AVX_512bit;
       for (int n = 16; n < num_xmm_regs; n++) {
-        __ movsd(as_XMMRegister(n), Address(rsp, base_addr+(off++*64)));
+        __ evmovdqul(as_XMMRegister(n), Address(rsp, base_addr+(off++*64)), vector_len);
       }
 #if COMPILER2_OR_JVMCI
       base_addr = XSAVE_AREA_OPMASK_BEGIN;
@@ -938,6 +941,8 @@ void SharedRuntime::gen_i2c_adapter(MacroAssembler *masm,
     }
   }
 
+  __ push_cont_fastpath(r15_thread); // Set JavaThread::_cont_fastpath to the sp of the oldest interpreted frame we know about
+
   // 6243940 We might end up in handle_wrong_method if
   // the callee is deoptimized as we race thru here. If that
   // happens we don't want to take a safepoint because the
@@ -1231,180 +1236,6 @@ static void restore_args(MacroAssembler *masm, int arg_count, int first_arg, VMR
     }
 }
 
-// Different signatures may require very different orders for the move
-// to avoid clobbering other arguments.  There's no simple way to
-// order them safely.  Compute a safe order for issuing stores and
-// break any cycles in those stores.  This code is fairly general but
-// it's not necessary on the other platforms so we keep it in the
-// platform dependent code instead of moving it into a shared file.
-// (See bugs 7013347 & 7145024.)
-// Note that this code is specific to LP64.
-class ComputeMoveOrder: public StackObj {
-  class MoveOperation: public ResourceObj {
-    friend class ComputeMoveOrder;
-   private:
-    VMRegPair        _src;
-    VMRegPair        _dst;
-    int              _src_index;
-    int              _dst_index;
-    bool             _processed;
-    MoveOperation*  _next;
-    MoveOperation*  _prev;
-
-    static int get_id(VMRegPair r) {
-      return r.first()->value();
-    }
-
-   public:
-    MoveOperation(int src_index, VMRegPair src, int dst_index, VMRegPair dst):
-      _src(src)
-    , _dst(dst)
-    , _src_index(src_index)
-    , _dst_index(dst_index)
-    , _processed(false)
-    , _next(NULL)
-    , _prev(NULL) {
-    }
-
-    VMRegPair src() const              { return _src; }
-    int src_id() const                 { return get_id(src()); }
-    int src_index() const              { return _src_index; }
-    VMRegPair dst() const              { return _dst; }
-    void set_dst(int i, VMRegPair dst) { _dst_index = i, _dst = dst; }
-    int dst_index() const              { return _dst_index; }
-    int dst_id() const                 { return get_id(dst()); }
-    MoveOperation* next() const       { return _next; }
-    MoveOperation* prev() const       { return _prev; }
-    void set_processed()               { _processed = true; }
-    bool is_processed() const          { return _processed; }
-
-    // insert
-    void break_cycle(VMRegPair temp_register) {
-      // create a new store following the last store
-      // to move from the temp_register to the original
-      MoveOperation* new_store = new MoveOperation(-1, temp_register, dst_index(), dst());
-
-      // break the cycle of links and insert new_store at the end
-      // break the reverse link.
-      MoveOperation* p = prev();
-      assert(p->next() == this, "must be");
-      _prev = NULL;
-      p->_next = new_store;
-      new_store->_prev = p;
-
-      // change the original store to save it's value in the temp.
-      set_dst(-1, temp_register);
-    }
-
-    void link(GrowableArray<MoveOperation*>& killer) {
-      // link this store in front the store that it depends on
-      MoveOperation* n = killer.at_grow(src_id(), NULL);
-      if (n != NULL) {
-        assert(_next == NULL && n->_prev == NULL, "shouldn't have been set yet");
-        _next = n;
-        n->_prev = this;
-      }
-    }
-  };
-
- private:
-  GrowableArray<MoveOperation*> edges;
-
- public:
-  ComputeMoveOrder(int total_in_args, const VMRegPair* in_regs, int total_c_args, VMRegPair* out_regs,
-                  const BasicType* in_sig_bt, GrowableArray<int>& arg_order, VMRegPair tmp_vmreg) {
-    // Move operations where the dest is the stack can all be
-    // scheduled first since they can't interfere with the other moves.
-    for (int i = total_in_args - 1, c_arg = total_c_args - 1; i >= 0; i--, c_arg--) {
-      if (in_sig_bt[i] == T_ARRAY) {
-        c_arg--;
-        if (out_regs[c_arg].first()->is_stack() &&
-            out_regs[c_arg + 1].first()->is_stack()) {
-          arg_order.push(i);
-          arg_order.push(c_arg);
-        } else {
-          if (out_regs[c_arg].first()->is_stack() ||
-              in_regs[i].first() == out_regs[c_arg].first()) {
-            add_edge(i, in_regs[i].first(), c_arg, out_regs[c_arg + 1]);
-          } else {
-            add_edge(i, in_regs[i].first(), c_arg, out_regs[c_arg]);
-          }
-        }
-      } else if (in_sig_bt[i] == T_VOID) {
-        arg_order.push(i);
-        arg_order.push(c_arg);
-      } else {
-        if (out_regs[c_arg].first()->is_stack() ||
-            in_regs[i].first() == out_regs[c_arg].first()) {
-          arg_order.push(i);
-          arg_order.push(c_arg);
-        } else {
-          add_edge(i, in_regs[i].first(), c_arg, out_regs[c_arg]);
-        }
-      }
-    }
-    // Break any cycles in the register moves and emit the in the
-    // proper order.
-    GrowableArray<MoveOperation*>* stores = get_store_order(tmp_vmreg);
-    for (int i = 0; i < stores->length(); i++) {
-      arg_order.push(stores->at(i)->src_index());
-      arg_order.push(stores->at(i)->dst_index());
-    }
- }
-
-  // Collected all the move operations
-  void add_edge(int src_index, VMRegPair src, int dst_index, VMRegPair dst) {
-    if (src.first() == dst.first()) return;
-    edges.append(new MoveOperation(src_index, src, dst_index, dst));
-  }
-
-  // Walk the edges breaking cycles between moves.  The result list
-  // can be walked in order to produce the proper set of loads
-  GrowableArray<MoveOperation*>* get_store_order(VMRegPair temp_register) {
-    // Record which moves kill which values
-    GrowableArray<MoveOperation*> killer;
-    for (int i = 0; i < edges.length(); i++) {
-      MoveOperation* s = edges.at(i);
-      assert(killer.at_grow(s->dst_id(), NULL) == NULL, "only one killer");
-      killer.at_put_grow(s->dst_id(), s, NULL);
-    }
-    assert(killer.at_grow(MoveOperation::get_id(temp_register), NULL) == NULL,
-           "make sure temp isn't in the registers that are killed");
-
-    // create links between loads and stores
-    for (int i = 0; i < edges.length(); i++) {
-      edges.at(i)->link(killer);
-    }
-
-    // at this point, all the move operations are chained together
-    // in a doubly linked list.  Processing it backwards finds
-    // the beginning of the chain, forwards finds the end.  If there's
-    // a cycle it can be broken at any point,  so pick an edge and walk
-    // backward until the list ends or we end where we started.
-    GrowableArray<MoveOperation*>* stores = new GrowableArray<MoveOperation*>();
-    for (int e = 0; e < edges.length(); e++) {
-      MoveOperation* s = edges.at(e);
-      if (!s->is_processed()) {
-        MoveOperation* start = s;
-        // search for the beginning of the chain or cycle
-        while (start->prev() != NULL && start->prev() != s) {
-          start = start->prev();
-        }
-        if (start->prev() == s) {
-          start->break_cycle(temp_register);
-        }
-        // walk the chain forward inserting to store list
-        while (start != NULL) {
-          stores->append(start);
-          start->set_processed();
-          start = start->next();
-        }
-      }
-    }
-    return stores;
-  }
-};
-
 static void verify_oop_args(MacroAssembler* masm,
                             const methodHandle& method,
                             const BasicType* sig_bt,
@@ -1424,6 +1255,103 @@ static void verify_oop_args(MacroAssembler* masm,
       }
     }
   }
+}
+
+// defined in stubGenerator_x86_64.cpp
+OopMap* continuation_enter_setup(MacroAssembler* masm, int& stack_slots);
+void fill_continuation_entry(MacroAssembler* masm);
+void continuation_enter_cleanup(MacroAssembler* masm);
+
+// enterSpecial(Continuation c, boolean isContinue, boolean isVirtualThread)
+// On entry: c_rarg1 -- the continuation object
+//           c_rarg2 -- isContinue
+//           c_rarg3 -- isVirtualThread
+static void gen_continuation_enter(MacroAssembler* masm,
+                                 const methodHandle& method,
+                                 const BasicType* sig_bt,
+                                 const VMRegPair* regs,
+                                 int& exception_offset,
+                                 OopMapSet*oop_maps,
+                                 int& frame_complete,
+                                 int& stack_slots) {
+  //verify_oop_args(masm, method, sig_bt, regs);
+  AddressLiteral resolve(SharedRuntime::get_resolve_static_call_stub(),
+                         relocInfo::static_call_type);
+
+  stack_slots = 2; // will be overwritten
+  address start = __ pc();
+
+  Label call_thaw, exit;
+
+  __ enter();
+
+  //BarrierSetAssembler* bs = BarrierSet::barrier_set()->barrier_set_assembler();
+  //bs->nmethod_entry_barrier(masm);
+  OopMap* map = continuation_enter_setup(masm, stack_slots);  // kills rax
+
+  // Frame is now completed as far as size and linkage.
+  frame_complete =__ pc() - start;
+  // if isContinue == 0
+  //   _enterSP = sp
+  // end
+
+  fill_continuation_entry(masm); // kills rax
+
+  __ cmpl(c_rarg2, 0);
+  __ jcc(Assembler::notEqual, call_thaw);
+
+  int up = align_up((intptr_t) __ pc() + 1, 4) - (intptr_t) (__ pc() + 1);
+  if (up > 0) {
+    __ nop(up);
+  }
+
+  address mark = __ pc();
+  __ call(resolve);
+  oop_maps->add_gc_map(__ pc() - start, map);
+  __ post_call_nop();
+
+  __ jmp(exit);
+
+  __ bind(call_thaw);
+
+  __ movptr(rbx, (intptr_t) StubRoutines::cont_thaw());
+  __ call(rbx);
+  oop_maps->add_gc_map(__ pc() - start, map->deep_copy());
+  ContinuationEntry::return_pc_offset = __ pc() - start;
+  __ post_call_nop();
+
+  __ bind(exit);
+  continuation_enter_cleanup(masm);
+  __ pop(rbp);
+  __ ret(0);
+
+  /// exception handling
+
+  exception_offset = __ pc() - start;
+
+  continuation_enter_cleanup(masm);
+  __ pop(rbp);
+
+  __ movptr(rbx, rax); // save the exception
+  __ movptr(c_rarg0, Address(rsp, 0));
+
+  __ call_VM_leaf(CAST_FROM_FN_PTR(address,
+        SharedRuntime::exception_handler_for_return_address),
+      r15_thread, c_rarg0);
+  __ mov(rdi, rax);
+  __ movptr(rax, rbx);
+  __ mov(rbx, rdi);
+  __ pop(rdx);
+
+  // continue at exception handler (return address removed)
+  // rax: exception
+  // rbx: exception handler
+  // rdx: throwing pc
+  __ verify_oop(rax);
+  __ jmp(rbx);
+
+  CodeBuffer* cbuf = masm->code_section()->outer();
+  address stub = CompiledStaticCall::emit_to_interp_stub(*cbuf, mark);
 }
 
 static void gen_special_dispatch(MacroAssembler* masm,
@@ -1510,6 +1438,37 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
                                                 BasicType* in_sig_bt,
                                                 VMRegPair* in_regs,
                                                 BasicType ret_type) {
+  if (method->is_continuation_enter_intrinsic()) {
+    vmIntrinsics::ID iid = method->intrinsic_id();
+    intptr_t start = (intptr_t)__ pc();
+    int vep_offset = ((intptr_t)__ pc()) - start;
+    int exception_offset = 0;
+    int frame_complete = 0;
+    int stack_slots = 0;
+    OopMapSet* oop_maps =  new OopMapSet();
+    gen_continuation_enter(masm,
+                         method,
+                         in_sig_bt,
+                         in_regs,
+                         exception_offset,
+                         oop_maps,
+                         frame_complete,
+                         stack_slots);
+    __ flush();
+    nmethod* nm = nmethod::new_native_nmethod(method,
+                                              compile_id,
+                                              masm->code(),
+                                              vep_offset,
+                                              frame_complete,
+                                              stack_slots,
+                                              in_ByteSize(-1),
+                                              in_ByteSize(-1),
+                                              oop_maps,
+                                              exception_offset);
+    ContinuationEntry::set_enter_nmethod(nm);
+    return nm;
+  }
+
   if (method->is_method_handle_intrinsic()) {
     vmIntrinsics::ID iid = method->intrinsic_id();
     intptr_t start = (intptr_t)__ pc();
@@ -1954,7 +1913,6 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
     }
 
     // Slow path will re-enter here
-
     __ bind(lock_done);
   }
 
@@ -2092,7 +2050,6 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
     }
 
     __ bind(done);
-
   }
   {
     SkipIfEqual skip(masm, &DTraceMethodProbes, false);
@@ -2330,7 +2287,7 @@ void SharedRuntime::generate_deopt_blob() {
   // Prolog for non exception case!
 
   // Save everything in sight.
-  map = RegisterSaver::save_live_registers(masm, 0, &frame_size_in_words, /*save_vectors*/ true);
+  map = RegisterSaver::save_live_registers(masm, 0, &frame_size_in_words, /*save_wide_vectors*/ true);
 
   // Normal deoptimization.  Save exec mode for unpack_frames.
   __ movl(r14, Deoptimization::Unpack_deopt); // callee-saved
@@ -2348,7 +2305,7 @@ void SharedRuntime::generate_deopt_blob() {
   // return address is the pc describes what bci to do re-execute at
 
   // No need to update map as each call to save_live_registers will produce identical oopmap
-  (void) RegisterSaver::save_live_registers(masm, 0, &frame_size_in_words, /*save_vectors*/ true);
+  (void) RegisterSaver::save_live_registers(masm, 0, &frame_size_in_words, /*save_wide_vectors*/ true);
 
   __ movl(r14, Deoptimization::Unpack_reexecute); // callee-saved
   __ jmp(cont);
@@ -2367,7 +2324,7 @@ void SharedRuntime::generate_deopt_blob() {
     uncommon_trap_offset = __ pc() - start;
 
     // Save everything in sight.
-    RegisterSaver::save_live_registers(masm, 0, &frame_size_in_words, /*save_vectors*/ true);
+    RegisterSaver::save_live_registers(masm, 0, &frame_size_in_words, /*save_wide_vectors*/ true);
     // fetch_unroll_info needs to call last_java_frame()
     __ set_last_Java_frame(noreg, noreg, NULL);
 
@@ -2414,7 +2371,7 @@ void SharedRuntime::generate_deopt_blob() {
   __ push(0);
 
   // Save everything in sight.
-  map = RegisterSaver::save_live_registers(masm, 0, &frame_size_in_words, /*save_vectors*/ true);
+  map = RegisterSaver::save_live_registers(masm, 0, &frame_size_in_words, /*save_wide_vectors*/ true);
 
   // Now it is safe to overwrite any register
 
@@ -2845,7 +2802,7 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_t
   address call_pc = NULL;
   int frame_size_in_words;
   bool cause_return = (poll_type == POLL_AT_RETURN);
-  bool save_vectors = (poll_type == POLL_AT_VECTOR_LOOP);
+  bool save_wide_vectors = (poll_type == POLL_AT_VECTOR_LOOP);
 
   if (UseRTMLocking) {
     // Abort RTM transaction before calling runtime
@@ -2860,13 +2817,13 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_t
   }
 
   // Save registers, fpu state, and flags
-  map = RegisterSaver::save_live_registers(masm, 0, &frame_size_in_words, save_vectors);
+  map = RegisterSaver::save_live_registers(masm, 0, &frame_size_in_words, save_wide_vectors);
 
   // The following is basically a call_VM.  However, we need the precise
   // address of the call in order to generate an oopmap. Hence, we do all the
   // work ourselves.
 
-  __ set_last_Java_frame(noreg, noreg, NULL);
+  __ set_last_Java_frame(noreg, noreg, NULL);  // JavaFrameAnchor::capture_last_Java_pc() will get the pc from the return address, which we store next:
 
   // The return address must always be correct so that frame constructor never
   // sees an invalid pc.
@@ -2899,7 +2856,7 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_t
 
   // Exception pending
 
-  RegisterSaver::restore_live_registers(masm, save_vectors);
+  RegisterSaver::restore_live_registers(masm, save_wide_vectors);
 
   __ jump(RuntimeAddress(StubRoutines::forward_exception_entry()));
 
@@ -2972,7 +2929,7 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_t
 
   __ bind(no_adjust);
   // Normal exit, restore registers and exit.
-  RegisterSaver::restore_live_registers(masm, save_vectors);
+  RegisterSaver::restore_live_registers(masm, save_wide_vectors);
   __ ret(0);
 
 #ifdef ASSERT
@@ -3012,7 +2969,7 @@ RuntimeStub* SharedRuntime::generate_resolve_blob(address destination, const cha
   int start = __ offset();
 
   // No need to save vector registers since they are caller-saved anyway.
-  map = RegisterSaver::save_live_registers(masm, 0, &frame_size_in_words, /*save_vectors*/ false);
+  map = RegisterSaver::save_live_registers(masm, 0, &frame_size_in_words, /*save_wide_vectors*/ false);
 
   int frame_complete = __ offset();
 

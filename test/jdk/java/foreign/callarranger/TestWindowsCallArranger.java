@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -24,19 +24,20 @@
 
 /*
  * @test
- * @modules jdk.incubator.foreign/jdk.internal.foreign
- *          jdk.incubator.foreign/jdk.internal.foreign.abi
- *          jdk.incubator.foreign/jdk.internal.foreign.abi.x64
- *          jdk.incubator.foreign/jdk.internal.foreign.abi.x64.windows
+ * @enablePreview
+ * @modules java.base/jdk.internal.foreign
+ *          java.base/jdk.internal.foreign.abi
+ *          java.base/jdk.internal.foreign.abi.x64
+ *          java.base/jdk.internal.foreign.abi.x64.windows
  * @build CallArrangerTestBase
  * @run testng TestWindowsCallArranger
  */
 
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeSymbol;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.Addressable;
 import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.x64.windows.CallArranger;
@@ -44,7 +45,7 @@ import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodType;
 
-import static jdk.incubator.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.ADDRESS;
 import static jdk.internal.foreign.PlatformLayouts.Win64.*;
 import static jdk.internal.foreign.abi.Binding.*;
 import static jdk.internal.foreign.abi.Binding.copy;
@@ -61,11 +62,11 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) }
+            { unboxAddress(Addressable.class), vmStore(r10, long.class) }
         });
         checkReturnBindings(callingSequence, new Binding[]{});
     }
@@ -78,11 +79,11 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r10, long.class) },
             { vmStore(rcx, int.class) },
             { vmStore(rdx, int.class) },
             { vmStore(r8, int.class) },
@@ -100,11 +101,11 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r10, long.class) },
             { vmStore(xmm0, double.class) },
             { vmStore(xmm1, double.class) },
             { vmStore(xmm2, double.class) },
@@ -124,11 +125,11 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r10, long.class) },
             { vmStore(rcx, long.class) },
             { vmStore(rdx, long.class) },
             { vmStore(xmm2, float.class) },
@@ -155,11 +156,11 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r10, long.class) },
             { vmStore(rcx, int.class) },
             { vmStore(rdx, int.class) },
             {
@@ -187,16 +188,16 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
         FunctionDescriptor fd = FunctionDescriptor.ofVoid(
                 C_INT, C_DOUBLE).asVariadic(C_INT, C_DOUBLE, C_DOUBLE);
         FunctionDescriptor fdExpected = FunctionDescriptor.ofVoid(
-                ADDRESS, C_INT, C_DOUBLE).asVariadic(C_INT, C_DOUBLE, C_DOUBLE);
+                ADDRESS, C_INT, C_DOUBLE, C_INT, C_DOUBLE, C_DOUBLE);
         CallArranger.Bindings bindings = CallArranger.getBindings(mt, fd, false);
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fdExpected);
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r10, long.class) },
             { vmStore(rcx, int.class) },
             { vmStore(xmm1, double.class) },
             { vmStore(r8, int.class) },
@@ -226,11 +227,11 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r10, long.class) },
             { bufferLoad(0, long.class), vmStore(rcx, long.class) }
         });
 
@@ -256,11 +257,11 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r10, long.class) },
             {
                 copy(struct),
                 unboxAddress(MemorySegment.class),
@@ -287,11 +288,11 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r10, long.class) },
             { unboxAddress(), vmStore(rcx, long.class) }
         });
 
@@ -308,11 +309,11 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r10, long.class) },
         });
 
         checkReturnBindings(callingSequence,
@@ -332,11 +333,11 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
 
         assertTrue(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), MethodType.methodType(void.class, NativeSymbol.class, MemoryAddress.class));
+        assertEquals(callingSequence.callerMethodType(), MethodType.methodType(void.class, Addressable.class, MemoryAddress.class));
         assertEquals(callingSequence.functionDesc(), FunctionDescriptor.ofVoid(ADDRESS, C_POINTER));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r10, long.class) },
             { unboxAddress(), vmStore(rcx, long.class) }
         });
 
@@ -361,11 +362,11 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.methodType(), mt.insertParameterTypes(0, NativeSymbol.class));
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, Addressable.class));
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(NativeSymbol.class), vmStore(r10, long.class) },
+            { unboxAddress(Addressable.class), vmStore(r10, long.class) },
             { copy(struct), unboxAddress(MemorySegment.class), vmStore(rcx, long.class) },
             { vmStore(rdx, int.class) },
             { vmStore(xmm2, double.class) },

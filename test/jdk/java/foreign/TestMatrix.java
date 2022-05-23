@@ -32,8 +32,8 @@
  */
 
 /* @test id=UpcallHighArity-FF
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
  *
  * @run testng/othervm/native/manual
@@ -44,8 +44,8 @@
  */
 
 /* @test id=UpcallHighArity-TF
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
  *
  * @run testng/othervm/native/manual
@@ -56,8 +56,8 @@
  */
 
 /* @test id=UpcallHighArity-FT
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
  *
  * @run testng/othervm/native/manual
@@ -68,8 +68,8 @@
  */
 
 /* @test id=UpcallHighArity-TT
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
  *
  * @run testng/othervm/native/manual
@@ -80,8 +80,8 @@
  */
 
 /* @test id=Downcall-F
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestDowncall
  *
  * @run testng/othervm/native/manual
@@ -91,8 +91,8 @@
  */
 
 /* @test id=Downcall-T
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestDowncall
  *
  * @run testng/othervm/native/manual
@@ -102,8 +102,8 @@
  */
 
 /* @test id=UpcallScope-FF
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
  * @run testng/othervm/native/manual
@@ -114,8 +114,8 @@
  */
 
 /* @test id=UpcallScope-TF
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
  * @run testng/othervm/native/manual
@@ -126,8 +126,8 @@
  */
 
 /* @test id=UpcallScope-FT
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
  * @run testng/othervm/native/manual
@@ -138,8 +138,8 @@
  */
 
 /* @test id=UpcallScope-TT
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
  * @run testng/othervm/native/manual
@@ -150,11 +150,11 @@
  */
 
 /* @test id=UpcallAsync-FF
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/native/manual/timeout=960
+ * @run testng/othervm/native/manual
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
@@ -162,11 +162,11 @@
  */
 
 /* @test id=UpcallAsync-TF
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/native/manual/timeout=960
+ * @run testng/othervm/native/manual
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=false
@@ -174,11 +174,11 @@
  */
 
 /* @test id=UpcallAsync-FT
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/native/manual/timeout=960
+ * @run testng/othervm/native/manual
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
@@ -186,11 +186,11 @@
  */
 
 /* @test id=UpcallAsync-TT
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
- * @run testng/othervm/native/manual/timeout=960
+ * @run testng/othervm/native/manual
  *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
@@ -198,8 +198,8 @@
  */
 
 /* @test id=UpcallStack-FF
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
  * @run testng/othervm/native/manual
@@ -210,8 +210,8 @@
  */
 
 /* @test id=UpcallStack-TF
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
  * @run testng/othervm/native/manual
@@ -222,8 +222,8 @@
  */
 
 /* @test id=UpcallStack-FT
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
  * @run testng/othervm/native/manual
@@ -234,8 +234,8 @@
  */
 
 /* @test id=UpcallStack-TT
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
  * @run testng/othervm/native/manual
@@ -244,4 +244,3 @@
  *   -Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=true
  *   TestUpcallStack
  */
-

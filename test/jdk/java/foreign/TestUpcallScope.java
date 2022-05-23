@@ -23,8 +23,8 @@
 
 /*
  * @test
+ * @enablePreview
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcallBase
  *
  * @run testng/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-VerifyDependencies
@@ -32,9 +32,9 @@
  *   TestUpcallScope
  */
 
-import jdk.incubator.foreign.NativeSymbol;
-import jdk.incubator.foreign.ResourceScope;
-import jdk.incubator.foreign.SegmentAllocator;
+import java.lang.foreign.Addressable;
+import java.lang.foreign.MemorySession;
+import java.lang.foreign.SegmentAllocator;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
@@ -52,11 +52,11 @@ public class TestUpcallScope extends TestUpcallBase {
     public void testUpcalls(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        NativeSymbol addr = LOOKUP.lookup(fName).get();
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
+        Addressable addr = findNativeOrThrow(fName);
+        try (MemorySession session = MemorySession.openConfined()) {
+            SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
             MethodHandle mh = downcallHandle(ABI, addr, allocator, function(ret, paramTypes, fields));
-            Object[] args = makeArgs(scope, ret, paramTypes, fields, returnChecks, argChecks);
+            Object[] args = makeArgs(session, ret, paramTypes, fields, returnChecks, argChecks);
             Object[] callArgs = args;
             Object res = mh.invokeWithArguments(callArgs);
             argChecks.forEach(c -> c.accept(args));
