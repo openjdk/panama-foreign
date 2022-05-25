@@ -1,6 +1,6 @@
 ## State of foreign function support
 
-**May 2022**
+**January 2022**
 
 **Maurizio Cimadamore**
 
@@ -12,7 +12,7 @@ Before we dive into the specifics of the foreign function support, it would be u
 
 Now, in the case of memory segments, the above properties (spatial bounds, temporal bounds and confinement) can be known *in full* when the segment is created. But when we interact with native libraries we often receive *raw* pointers; such pointers have no spatial bounds (does a `char*` in C refer to one `char`, or a `char` array of a given size?), no notion of temporal bounds, nor thread-confinement. Raw addresses in our interop support are modeled using the `MemoryAddress` abstraction.
 
-If clients want to dereference `MemoryAddress`, they can do so *unsafely* in two ways. First, they can use one of the *unsafe* dereference methods provided by `MemoryAddress` (these methods closely mirror those offered by `MemorySegment`); these methods are *restricted* and will generate runtime warnings if called without specifying the `--enable-native-access` command-line flag:
+If clients want to dereference `MemoryAddress`, they can do so *unsafely* in two ways. First, they can use one of the *unsafe* dereference methods provided by `MemoryAddress` (these methods closely mirror those offered by `MemorySegment`); these methods are *restricted* and can only be called if the caller module has been listed in the `--enable-native-access` command-line flag:
 
 ```java
 ...
@@ -24,8 +24,8 @@ Alternatively, the client can create a memory segment from an address *unsafely*
 
 ```java
 MemoryAddress addr = ... //obtain address from native code
-try (MemorySession session = MemorySession openConfined()) {
-	MemorySegment segment = MemorySegment.ofAddress(100, session);
+try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+	MemorySegment segment = MemorySegment.ofAddress(100, scope);
 	int x = segment.get(JAVA_INT, 0);
 }
 ```
@@ -43,9 +43,9 @@ int arr[] = { 0, 1, 2, 3, 4 };
 A variable initializer such as the one above can be implemented as follows, using the Foreign Memory Access API:
 
 ```java
-try (MemorySession session = MemorySession openConfined()) {
-    MemorySegment arr = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(5, JAVA_INT), session);
-    for Memory(int i = 0 ; i < 5 ; i++) {
+try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+    MemorySegment arr = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(5, JAVA_INT), scope);
+    for (int i = 0 ; i < 5 ; i++) {
         arr.setAtIndex(JAVA_INT, i, i);
     }
 }
@@ -57,68 +57,66 @@ There are a number of issues with the above code snippet:
 * allocation is very slow compared to C; allocating the `arr` variable now takes a full `malloc`, while in C the variable was simply stack-allocated
 * when having multiple declarations like the one above, it might become increasingly harder to manage the lifecycle of the various segments
 
-To address these problems, Panama provides a `SegmentAllocator` abstraction, a functional interface which provides methods to allocate commonly used values. Since `MemorySession` implements the `SegmentAllocator` interface, the above code can be rewritten conveniently as follows:
+To address these problems, Panama provides a `SegmentAllocator` abstraction, a functional interface which provides methods to allocate commonly used values. Conveniently, the above code can be rewritten as follows:
 
 ```java
-try (MemorySession session = MemorySession openConfined()) {    
-    MemorySegment arr = session.allocateArray(JAVA_INT, 0, 1, 2, 3, 4);
+try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+    SegmentAllocator allocator = SegmentAllocator.nativeAllocator(scope);
+    MemorySegment arr = allocator.allocateArray(JAVA_INT, new int[] { 0, 1, 2, 3, 4 });
 } // 'arr' is released here
 ```
 
-In the above code, the memory session acts as a *native* allocator (that is, an allocator built on top of `MemorySegment::allocateNative`). The session is then used to create a native array, initialized to the values `0, 1, 2, 3, 4`.  The array initialization is more efficient, compared to the previous snippet, as the Java array is copied *in bulk* into the memory region associated with the newly allocated memory segment. The returned segment is associated with the session which performed the allocation, meaning that the segment will no longer be accessible after the try-with-resource construct.
+In the above code, the resource scope is used to build a *native* allocator (that is, an allocator built on top of `MemorySegment::allocateNative`). The segment allocator is then used to create a native array, initialized to the values `{ 0, 1, 2, 3, 4 }`.  The array initialization is more efficient, compared to the previous snippet, as the Java array is copied *in bulk* into the memory region associated with the newly allocated memory segment. The returned segment is associated with the scope which performed the allocation, meaning that the segment will no longer be accessible after the try-with-resource construct.
 
 Custom segment allocators are also critical to achieve optimal allocation performance; for this reason, a number of predefined allocators are available via factories in the `SegmentAllocator` interface. For instance, it is possible to create an arena-based allocator, as follows:
 
 ```java
-try (MemorySession session = MemorySession openConfined()) {
-    SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
+try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+    SegmentAllocator allocator = SegmentAllocator.newNativeArena(scope);
     for (int i = 0 ; i < 100 ; i++) {
-        allocator.allocateArray(JAVA_INT, 0, 1, 2, 3, 4);
+        allocator.allocateArray(JAVA_INT, new int[] { 0, 1, 2, 3, 4 });
     }
     ...
 } // all memory allocated is released here
 ```
 
-The above code creates a confined session; inside the *try-with-resources*, a new unbounded arena allocation is created, associated with the existing session. The allocator will pre-allocate a native segment, of a specific size, and respond to allocation requests by returning different slices of the pre-allocated segment. If the pre-allocated segment does not have sufficient space to accommodate a new allocation request, a new segment will be allocated. If the session associated with the arena allocator is closed, all memory segments created by the allocator (see the body of the `for` loop) will be deallocated at once. This idiom combines the advantages of deterministic deallocation (provided by the Memory Access API) with a more flexible and scalable allocation scheme, and can be very useful when writing large applications.
+The above code creates a confined scope; inside the *try-with-resources*, a new unbounded arena allocation is created, associated with the existing scope. The allocator will pre-allocate a native segment, of a specific size, and respond to allocation requests by returning different slices of the pre-allocated segment. If the pre-allocated segment does not have sufficient space to accommodate a new allocation request, a new segment will be allocated. If the scope associated with the arena allocator is closed, all memory segments created by the allocator (see the body of the `for` loop) will be deallocated at once. This idiom combines the advantages of deterministic deallocation (provided by the Memory Access API) with a more flexible and scalable allocation scheme, and can be very useful when writing large applications.
 
 For these reasons, all the methods in the Foreign Linker API which *produce* memory segments (see `VaList::nextVarg`), allow an optional allocator to be provided by user code — this is key in ensuring that an application using the Foreign Linker API achieves optimal allocation performances, especially in non-trivial use cases.
 
 ### Symbol lookups
 
-The first ingredient of any foreign function support is a mechanism to lookup symbols in native libraries. In traditional Java/JNI, this is done via the `System::loadLibrary` and `System::load` methods. Unfortunately, these methods do not provide a way for clients to obtain the *address* associated with a given library symbol. For this reason, the Foreign Linker API introduces a new abstraction, namely `SymbolLookup` (similar in spirit to a method handle lookup), which provides capabilities to lookup named symbols; we can obtain a symbol lookup in 3 different ways <a href="#1"><sup>1</sup></a>:
+The first ingredient of any foreign function support is a mechanism to lookup symbols in native libraries. In traditional Java/JNI, this is done via the `System::loadLibrary` and `System::load` methods. Unfortunately, these methods do not provide a way for clients to obtain the *address* associated with a given library symbol. For this reason, the Foreign Linker API introduces a new abstraction, namely `SymbolLookup` (similar in spirit to a method handle lookup), which provides capabilities to lookup named symbols; we can obtain a symbol lookup in 2 different ways <a href="#1"><sup>1</sup></a>:
 
-* `SymbolLookup::libraryLookup(String, MemorySession)` — creates a symbol lookup which can be used to search symbol in a library with the given name. The provided memory session parameter controls the library lifecycle: that is, when the memory session is closed, the library referred to by the lookup will also be closed;
 * `SymbolLookup::loaderLookup` — creates a symbol lookup which can be used to search symbols in all the libraries loaded by the caller's classloader (e.g. using `System::loadLibrary` or `System::load`)
-* `Linker::defaultLookup` — returns the default symbol lookup associated with a `Linker` instance. For instance, the default lookup of the native linker (see `Linker::nativeLinker`) can be used to look up platform-specific symbols in the standard C library (such as `strlen`, or `getpid`).
+* By obtaining a `CLinker` instance. In fact, `CLinker` implements the `SymbolLookup` interface, and can be used to look up platform-specific symbols in the standard C library.
 
-Once a lookup has been obtained, a client can use it to retrieve handles to library symbols (either global variables or functions) using the `lookup(String)` method, which returns an `Optional<MemorySegment>`.  The memory segments returned by the `lookup` are zero-length segments, whose base address is the address of the function or variable in the library.
+Once a lookup has been obtained, a client can use it to retrieve handles to library symbols (either global variables or functions) using the `lookup(String)` method, which returns an `Optional<NativeSymbol>`.  `NativeSymbol` is a class used to model references to library symbols, which implements the `Addressable` interface.
 
-For instance, the following code can be used to look up the `clang_getClangVersion` function provided by the `clang` library; it does so by creating a *library lookup* whose lifecycle is associated to that of a confined memory session.
+For instance, the following code can be used to look up the `clang_getClangVersion` function provided by the `clang` library:
 
 ```java
-try (MemorySession session = MemorySession.openConfined()) {
-    SymbolLookup libclang = SymbolLookup.libraryLookup("libclang.so");
-    MemorySegment clangVersion = libclang.lookup("clang_getClangVersion").get();
-}
+System.loadLibrary("clang");
+NativeSymbol clangVersion = SymbolLookup.loaderLookup().lookup("clang_getClangVersion").get();
 ```
 
 ### C Linker
 
-At the core of Panama foreign function support we find the `Linker` abstraction. This abstraction plays a dual role: first, for downcalls, it allows modelling foreign function calls as plain `MethodHandle` calls (see `Linker::downcallHandle`); second, for upcalls, it allows to convert an existing `MethodHandle` (which might point to some Java method) into a `NativeSymbol` which could then be passed to foreign functions as a function pointer (see `Linker::upcallStub`):
+At the core of Panama foreign function support we find the `CLinker` abstraction. This abstraction plays a dual role: first, for downcalls, it allows modelling native function calls as plain `MethodHandle` calls (see `CLinker::downcallHandle`); second, for upcalls, it allows to convert an existing `MethodHandle` (which might point to some Java method) into a `NativeSymbol` which could then be passed to native functions as a function pointer (see `CLinker::upcallStub`):
 
 ```java
-interface Linker {
+interface CLinker {
     MethodHandle downcallHandle(NativeSymbol func, FunctionDescriptor function);
-    NativeSymbol upcallStub(MethodHandle target, FunctionDescriptor function, MemorySession session);    
+    NativeSymbol upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);    
     ... // some overloads omitted here
 
-    static Linker nativeLinker() { ... }
+    static CLinker systemCLinker() { ... }
 }
 ```
 
 Both functions take a `FunctionDescriptor` instance — essentially an aggregate of memory layouts which is used to describe the argument and return types of a foreign function in full. Supported layouts are *value layouts* (for scalars and pointers) and *group layouts* (for structs/unions). Each layout in a function descriptor is associated with a carrier Java type (see table below); together, all the carrier types associated with layouts in a function descriptor will determine a unique Java `MethodType`  — that is, the Java signature that clients will be using when interacting with said downcall handles, or upcall stubs.
 
-The `Linker::nativeLinker` factory is used to obtain a `Linker` implementation for the ABI associated with the OS and processor where the Java runtime is currently executing. As such, the native linker can be used to call C functions. The following table shows the mapping between C types, layouts and Java carriers under the Linux/macOS native linker implementation; note that the mappings can be platform dependent: on Windows/x64, the C type `long` is 32-bit, so the `JAVA_INT` layout (and the Java carrier `int.class`) would have to be used instead:
+The following table shows the mapping between C types, layouts and Java carriers under the Linux/macOS foreign linker implementation; note that the mappings can be platform dependent: on Windows/x64, the C type `long` is 32-bit, so the `JAVA_INT` layout (and the Java carrier `int.class`) would have to be used instead:
 
 | C type                                                       | Layout                                                       | Java carrier                       |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------- |
@@ -139,7 +137,7 @@ A tool, such as `jextract`, will generate all the required C layouts (for scalar
 
 ### Downcalls
 
-We will now look at how foreign functions can be called from Java using the native linker. Assume we wanted to call the following function from the standard C library:
+We will now look at how foreign functions can be called from Java using the foreign linker abstraction. Assume we wanted to call the following function from the standard C library:
 
 ```c
 size_t strlen(const char *s);
@@ -150,48 +148,50 @@ In order to do that, we have to:
 * lookup the `strlen` symbol
 * describe the signature of the C function using a function descriptor
 
-* create a *downcall* native method handle with the above information, using the native linker
+* create a *downcall* native method handle with the above information, using the standard C foreign linker
 
 Here's an example of how we might want to do that (a full listing of all the examples in this and subsequent sections will be provided in the [appendix](#appendix-full-source-code)):
 
 ```java
-Linker linker = Linker.nativeLinker();
+CLinker linker = CLinker.systemCLinker();
 MethodHandle strlen = linker.downcallHandle(
-		linker.defaultLookup().lookup("strlen").get(),
+		linker.lookup("strlen").get(),
         FunctionDescriptor.of(JAVA_LONG, ADDRESS)
 );
 ```
 
-Note that, since the function `strlen` is part of the standard C library, which is loaded with the VM, we can just use the default lookup of the native linker to look it up. The rest is pretty straightforward — the only tricky detail is how to model `size_t`: typically this type has the size of a pointer, so we can use `JAVA_LONG` both Linux and Windows. On the Java side, we model the `size_t` using a `long` and the pointer is modelled using an `Addressable` parameter.
+Note that, since the function `strlen` is part of the standard C library, which is loaded with the VM, we can just use the system lookup to look it up. The rest is pretty straightforward — the only tricky detail is how to model `size_t`: typically this type has the size of a pointer, so we can use `JAVA_LONG` both Linux and Windows. On the Java side, we model the `size_t` using a `long` and the pointer is modelled using an `Addressable` parameter.
 
-Once we have obtained the downcall method handle, we can just use it as any other method handle<a href="#2"><sup>2</sup></a>:
+Once we have obtained the downcall method handle, we can just use it as any other method handle<a href="#2"><sup>1</sup></a>:
 
 ```java
-try (MemorySession session = MemorySession openConfined()) {
-    long len = strlen.invoke(session.allocateUtf8String("Hello")); // 5
+try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+    SegmentAllocator malloc = SegmentAllocator.nativeAllocator(scope);
+    long len = strlen.invoke(malloc.allocateUtf8String("Hello")); // 5
 }
 ```
 
-Here we are using a memory session to convert a Java string into an off-heap memory segment which contains a `NULL` terminated C string. We then pass that segment to the method handle and retrieve our result in a Java `long`. Note how all this is possible *without* any piece of intervening native code — all the interop code can be expressed in (low level) Java. Note also how we use an explicit memory session to control the lifecycle of the allocated C string, which ensures timely deallocation of the memory segment holding the native string.
+Here we are using a native segment allocator to convert a Java string into an off-heap memory segment which contains a `NULL` terminated C string. We then pass that segment to the method handle and retrieve our result in a Java `long`. Note how all this is possible *without* any piece of intervening native code — all the interop code can be expressed in (low level) Java. Note also how we use an explicit resource scope to control the lifecycle of the allocated C string, which ensures timely deallocation of the memory segment holding the native string.
 
-The `Linker` interface also supports linking of native functions without an address known at link time; when that happens, an address (of type `Addressable`) must be provided when the method handle returned by the linker is invoked — this is very useful to support *virtual calls*. For instance, the above code can be rewritten as follows:
+The `CLinker` interface also supports linking of native functions without an address known at link time; when that happens, an address (of type `Addressable`) must be provided when the method handle returned by the linker is invoked — this is very useful to support *virtual calls*. For instance, the above code can be rewritten as follows:
 
 ```java
 MethodHandle strlen_virtual = linker.downcallHandle( // address parameter missing!
 		FunctionDescriptor.of(JAVA_LONG, ADDRESS)
 );
 
-try (MemorySession session = MemorySession openConfined()) {
+try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+    SegmentAllocator malloc = SegmentAllocator.nativeAllocator(scope);
     long len = strlen_virtual.invoke(
-        linker.defaultLookup().lookup("strlen").get() // address provided here!
-        session.allocateUtf8String("Hello")
+        linker.lookup("strlen").get() // address provided here!
+        malloc.allocateUtf8String("Hello")
     ); // 5
 }
 ```
 
-It is important to note that, albeit the interop code is written in Java, the above code can *not* be considered 100% safe. There are many arbitrary decisions to be made when setting up downcall method handles such as the one above, some of which might be obvious to us (e.g. how many parameters does the function take), but which cannot ultimately be verified by the Panama runtime. After all, a symbol in a dynamic library is nothing but a numeric offset and, unless we are using a shared library with debugging information, no type information is attached to a given library symbol. This means that the Panama runtime has to *trust* the function descriptor passed in<a href="#3"><sup>3</sup></a>; for this reason, the `Linker::nativeLinker` factory is also a restricted method.
+It is important to note that, albeit the interop code is written in Java, the above code can *not* be considered 100% safe. There are many arbitrary decisions to be made when setting up downcall method handles such as the one above, some of which might be obvious to us (e.g. how many parameters does the function take), but which cannot ultimately be verified by the Panama runtime. After all, a symbol in a dynamic library is nothing but a numeric offset and, unless we are using a shared library with debugging information, no type information is attached to a given library symbol. This means that the Panama runtime has to *trust* the function descriptor passed in<a href="#3"><sup>2</sup></a>; for this reason, access to the foreign linker is a restricted operation, which can only be performed if the requesting module is listed in the `--enable-native-access` command-line flag.
 
-If a native function returns a raw pointer (of type `MemoryAddress`), it is then up to the client to make sure that the address is being accessed and disposed of correctly, compatibly with the requirements of the underlying native library. If a native function returns a struct by value, a *fresh*, memory segment is allocated off-heap and returned to the caller. In such cases, the downcall method handle will feature an additional prefix `SegmentAllocator` (see above) parameter which will be used by the downcall method handle to allocate the returned segment. The allocation will likely associate the segment with a memory session that is known to the caller and which can then be used to release the memory associated with that segment. 
+If a native function returns a raw pointer (of type `MemoryAddress`), it is then up to the client to make sure that the address is being accessed and disposed of correctly, compatibly with the requirements of the underlying native library. If a native function returns a struct by value, a *fresh*, memory segment is allocated off-heap and returned to the caller. In such cases, the downcall method handle will feature an additional prefix `SegmentAllocator` (see above) parameter which will be used by the downcall method handle to allocate the returned segment. The allocation will likely associate the segment with a *resource scope* that is known to the caller and which can then be used to release the memory associated with that segment. 
 
 Performance-wise, the reader might ask how efficient calling a foreign function using a native method handle is; the answer is *very*. The JVM comes with some special support for native method handles, so that, if a give method handle is invoked many times (e.g, inside a *hot* loop), the JIT compiler might decide to generate a snippet of assembly code required to call the native function, and execute that directly. In most cases, invoking native function this way is as efficient as doing so through JNI.
 
@@ -207,9 +207,9 @@ void qsort(void *base, size_t nmemb, size_t size,
 The `qsort` function can be used to sort the contents of an array, using a custom comparator function — `compar` — which is passed as a function pointer. To be able to call the `qsort` function from Java we have first to create a downcall method handle for it:
 
 ```java
-Linker linker = Linker.nativeLinker();
+CLinker linker = CLinker.systemCLinker();
 MethodHandle qsort = linker.downcallHandle(
-		linker.defaultLookup().lookup("qsort").get(),
+		CLinker.systemLookup().lookup("qsort").get(),
         FunctionDescriptor.ofVoid(ADDRESS, JAVA_LONG, JAVA_LONG, ADDRESS)
 );
 ```
@@ -240,17 +240,19 @@ MethodHandle comparHandle = MethodHandles.lookup()
 To do that, we first create a function descriptor for the function pointer type, and then we use the `CLinker::upcallType` to turn that function descriptor into a suitable `MethodType` instance to be used in a method handle lookup. Now that we have a method handle for our Java comparator function, we finally have all the ingredients to create an upcall stub, and pass it to the `qsort` downcall handle:
 
 ```java
-try (MemorySession session = MemorySession openConfined()) {
-    NativeSymbol comparFunc = linker.upcallStub(comparHandle, comparDesc, session);
-    MemorySegment array = session.allocateArray(0, 9, 3, 4, 6, 5, 1, 8, 2, 7);
+try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+    NativeSymbol comparFunc = linker.upcallStub(
+        comparHandle, comparDesc, scope);
+    SegmentAllocator malloc = SegmentAllocator.nativeAllocator(scope);
+    MemorySegment array = malloc.allocateArray(new int[] { 0, 9, 3, 4, 6, 5, 1, 8, 2, 7 }));
     qsort.invoke(array, 10L, 4L, comparFunc);
     int[] sorted = array.toArray(JAVA_INT); // [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
 }
 ```
 
-The above code creates an upcall stub — `comparFunc` — a function pointer that can be used to invoke our Java comparator function, of type `NativeSymbol`. The upcall stub is associated with the provided memory session instance; this means that the stub will be uninstalled when the session is closed.
+The above code creates an upcall stub — `comparFunc` — a function pointer that can be used to invoke our Java comparator function, of type `NativeSymbol`. The upcall stub is associated with the provided resource scope instance; this means that the stub will be uninstalled when the resource scope is closed.
 
-The snippet then creates an off-heap array from a Java array, which is then passed to the `qsort` handle, along with the comparator function we obtained from the foreign linker.  As a side effect, after the call, the contents of the off-heap array will be sorted (as instructed by our comparator function, written in Java). We can than extract a new Java array from the segment, which contains the sorted elements. This is a more advanced example, but one that shows how powerful the native interop support provided by the foreign linker abstraction is, allowing full bidirectional interop support between Java and native.
+The snippet then creates an off-heap array from a Java array (using a `SegmentAllocator`), which is then passed to the `qsort` handle, along with the comparator function we obtained from the foreign linker.  As a side effect, after the call, the contents of the off-heap array will be sorted (as instructed by our comparator function, written in Java). We can than extract a new Java array from the segment, which contains the sorted elements. This is a more advanced example, but one that shows how powerful the native interop support provided by the foreign linker abstraction is, allowing full bidirectional interop support between Java and native.
 
 ### Varargs
 
@@ -271,9 +273,9 @@ printf("%d plus %d equals %d", 2, 2, 4);
 To do this using the foreign function support provided by Panama we would have to build a *specialized* downcall handle for that call shape, using the `FunctionDescriptor::asVariadic` to inject additional variadic layouts, as follows:
 
 ```java
-Linker linker = Linker.nativeLinker();
+CLinker linker = CLinker.systemCLinker();
 MethodHandle printf = linker.downcallHandle(
-		linker.defaultLookup().lookup("printf").get(),
+		linker.lookup("printf").get(),
         FunctionDescriptor.of(JAVA_INT, ADDRESS).asVariadic(JAVA_INT, JAVA_INT, JAVA_INT)
 );
 ```
@@ -281,8 +283,9 @@ MethodHandle printf = linker.downcallHandle(
 Then we can call the specialized downcall handle as usual:
 
 ```java
-try (MemorySession session = MemorySession openConfined()) {    
-    printf.invoke(session.allocateUtf8String("%d plus %d equals %d"), 2, 2, 4); //prints "2 plus 2 equals 4"
+try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+    SegmentAllocator malloc = SegmentAllocator.nativeAllocator(scope);
+    printf.invoke(malloc.allocateUtf8String("%d plus %d equals %d"), 2, 2, 4); //prints "2 plus 2 equals 4"
 }
 ```
 
@@ -302,26 +305,27 @@ The behavior of this function is the same as before — the only difference is t
 It is indeed fairly easy to create a downcall for `vprintf`:
 
 ```java
-Linker linker = Linker.nativeLinker();
+CLinker linker = CLinker.systemCLinker();
 MethodHandle vprintf = linker.downcallHandle(
-		linker.defaultLookup().lookup("vprintf").get(),
+		linker.lookup("vprintf").get(),
 		FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS));
 ```
 
 Here, the layout of a `va_list` parameter is simply `ADDRESS` (as va lists are passed by reference). To call the `vprintf` handle we need to create an instance of `VaList` which contains the arguments we want to pass to the `vprintf` function — we can do so, as follows:
 
 ```java
-try (MemorySession session = MemorySession openConfined()) {
+try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+    SegmentAllocator malloc = SegmentAllocator.nativeAllocator(scope);
     vprintf.invoke(
-            session.allocateUtf8String("%d plus %d equals %d"),
+            malloc.allocateUtf8String("%d plus %d equals %d", scope),
             VaList.make(builder ->
                             builder.addVarg(JAVA_INT, 2)
                                    .addVarg(JAVA_INT, 2)
-                                   .addVarg(JAVA_INT, 4), session)
+                                   .addVarg(JAVA_INT, 4), scope)
 ); //prints "2 plus 2 equals 4"
 ```
 
-While the callee has to do more work to call the `vprintf` handle, note that that now we're back in a place where the downcall handle  `vprintf` can be shared across multiple callees. Note that both the format string and the `VaList` are associated with the given memory session — this means that both will remain valid throughout the native function call.
+While the callee has to do more work to call the `vprintf` handle, note that that now we're back in a place where the downcall handle  `vprintf` can be shared across multiple callees. Note that both the format string and the `VaList` are associated with the given resource scope — this means that both will remain valid throughout the native function call.
 
 Using `VaList` also scales to upcall stubs — it is therefore possible for clients to create upcalls stubs which take a `VaList` and then, from the Java upcall, read the arguments packed inside the `VaList` one by one using the methods provided by the `VaList` API (e.g. `VaList::nextVarg(ValueLayout.OfInt)`), which mimics the behavior of the C `va_arg` macro.
 
@@ -330,27 +334,24 @@ Using `VaList` also scales to upcall stubs — it is therefore possible for clie
 The full source code containing most of the code shown throughout this document can be seen below:
 
 ```java
-import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.SymbolLookup;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeSymbol;
-import jdk.incubator.foreign.ResourceScope;
-import jdk.incubator.foreign.SegmentAllocator;
-import jdk.incubator.foreign.VaList;
+import java.lang.foreign.Linker;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.SymbolLookup;
+import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
+import java.lang.foreign.VaList;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.Arrays;
 
-import static jdk.incubator.foreign.ValueLayout.*;
+import static java.lang.foreign.ValueLayout.*;
 
 public class Examples {
 
-    static CLinker LINKER = CLinker.systemCLinker();
+    static Linker LINKER = Linker.nativeLinker();
+    static SymbolLookup STDLIB = LINKER.defaultLookup();
 
     public static void main(String[] args) throws Throwable {
         strlen();
@@ -362,13 +363,12 @@ public class Examples {
 
     public static void strlen() throws Throwable {
         MethodHandle strlen = LINKER.downcallHandle(
-                LINKER.lookup("strlen").get(),
+                STDLIB.lookup("strlen").get(),
                 FunctionDescriptor.of(JAVA_LONG, ADDRESS)
         );
 
-        try (MemorySession session = MemorySession openConfined()) {
-            SegmentAllocator malloc = SegmentAllocator.nativeAllocator(scope);
-            MemorySegment hello = malloc.allocateUtf8String("Hello");
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment hello = session.allocateUtf8String("Hello");
             long len = (long) strlen.invoke(hello); // 5
             System.out.println(len);
         }
@@ -379,11 +379,10 @@ public class Examples {
                 FunctionDescriptor.of(JAVA_LONG, ADDRESS)
         );
 
-        try (MemorySession session = MemorySession openConfined()) {
-            SegmentAllocator malloc = SegmentAllocator.nativeAllocator(scope);
-            MemorySegment hello = malloc.allocateUtf8String("Hello");
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment hello = session.allocateUtf8String("Hello");
             long len = (long) strlen_virtual.invoke(
-                LINKER.lookup("strlen").get(),
+                STDLIB.lookup("strlen").get(),
                 hello); // 5
             System.out.println(len);
         }
@@ -397,20 +396,19 @@ public class Examples {
 
     public static void qsort() throws Throwable {
         MethodHandle qsort = LINKER.downcallHandle(
-                LINKER.lookup("qsort").get(),
+                STDLIB.lookup("qsort").get(),
                 FunctionDescriptor.ofVoid(ADDRESS, JAVA_LONG, JAVA_LONG, ADDRESS)
         );
         FunctionDescriptor comparDesc = FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS);
         MethodHandle comparHandle = MethodHandles.lookup()
                                          .findStatic(Qsort.class, "qsortCompare",
-                                                     CLinker.upcallType(comparDesc));
+                                                     Linker.upcallType(comparDesc));
 
-        try (MemorySession session = MemorySession openConfined()) {
-            NativeSymbol comparFunc = LINKER.upcallStub(
-                comparHandle, comparDesc, scope);
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment comparFunc = LINKER.upcallStub(
+                comparHandle, comparDesc, session);
 
-            SegmentAllocator malloc = SegmentAllocator.nativeAllocator(scope);
-            MemorySegment array = malloc.allocateArray(JAVA_INT, new int[] { 0, 9, 3, 4, 6, 5, 1, 8, 2, 7 });
+            MemorySegment array = session.allocateArray(JAVA_INT, 0, 9, 3, 4, 6, 5, 1, 8, 2, 7);
             qsort.invoke(array, 10L, 4L, comparFunc);
             int[] sorted = array.toArray(JAVA_INT); // [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
             System.out.println(Arrays.toString(sorted));
@@ -419,12 +417,11 @@ public class Examples {
 
     public static void printf() throws Throwable {
         MethodHandle printf = LINKER.downcallHandle(
-                LINKER.lookup("printf").get(),
+                STDLIB.lookup("printf").get(),
                 FunctionDescriptor.of(JAVA_INT, ADDRESS).asVariadic(JAVA_INT, JAVA_INT, JAVA_INT)
         );
-        try (MemorySession session = MemorySession openConfined()) {
-            SegmentAllocator malloc = SegmentAllocator.nativeAllocator(scope);
-            MemorySegment s = malloc.allocateUtf8String("%d plus %d equals %d\n");
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment s = session.allocateUtf8String("%d plus %d equals %d\n");
             printf.invoke(s, 2, 2, 4);
         }
     }
@@ -432,16 +429,15 @@ public class Examples {
     public static void vprintf() throws Throwable {
 
         MethodHandle vprintf = LINKER.downcallHandle(
-                LINKER.lookup("vprintf").get(),
+                STDLIB.lookup("vprintf").get(),
                 FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS));
 
-        try (MemorySession session = MemorySession openConfined()) {
-            SegmentAllocator malloc = SegmentAllocator.nativeAllocator(scope);
-            MemorySegment s = malloc.allocateUtf8String("%d plus %d equals %d\n");
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment s = session.allocateUtf8String("%d plus %d equals %d\n");
             VaList vlist = VaList.make(builder ->
                      builder.addVarg(JAVA_INT, 2)
                             .addVarg(JAVA_INT, 2)
-                            .addVarg(JAVA_INT, 4), scope);
+                            .addVarg(JAVA_INT, 4), session);
             vprintf.invoke(s, vlist);
         }
     }
@@ -450,5 +446,5 @@ public class Examples {
 
 
 
-* <a id="1"/>(<sup>1</sup>):<small> For simplicity, the examples shown in this document use `MethodHandle::invoke` rather than `MethodHandle::invokeExact`; by doing so we avoid having to cast by-reference arguments back to `Addressable`. With `invokeExact` the method handle invocation should be rewritten as `strlen.invokeExact((Addressable)malloc.allocateUtf8String("Hello"));`</small>
+* <a id="1"/>(<sup>1</sup>):<small> For simplicity, the examples shown in this document use `MethodHandle::invoke` rather than `MethodHandle::invokeExact`; by doing so we avoid having to cast by-reference arguments back to `Addressable`. With `invokeExact` the method handle invocation should be rewritten as `strlen.invokeExact((Addressable)session.allocateUtf8String("Hello"));`</small>
 * <a id="2"/>(<sup>2</sup>):<small> In reality this is not entirely new; even in JNI, when you call a `native` method the VM trusts that the corresponding implementing function in C will feature compatible parameter types and return values; if not a crash might occur.</small>
