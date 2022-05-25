@@ -104,7 +104,7 @@ try (MemorySession session = MemorySession.openConfined()) {
 
 ### Linker
 
-At the core of Panama foreign function support we find the `Linker` abstraction. This abstraction plays a dual role: first, for downcalls, it allows modelling foreign function calls as plain `MethodHandle` calls (see `Linker::downcallHandle`); second, for upcalls, it allows to convert an existing `MethodHandle` (which might point to some Java method) into a `NativeSymbol` which could then be passed to foreign functions as a function pointer (see `Linker::upcallStub`):
+At the core of Panama foreign function support we find the `Linker` abstraction. This abstraction plays a dual role: first, for downcalls, it allows modelling foreign function calls as plain `MethodHandle` calls (see `Linker::downcallHandle`); second, for upcalls, it allows to convert an existing `MethodHandle` (which might point to some Java method) into a `MemorySegment` which could then be passed to foreign functions as a function pointer (see `Linker::upcallStub`):
 
 ```java
 interface Linker {
