@@ -133,7 +133,9 @@ try (MemorySession session = MemorySession.openConfined()) {
 
 Here we create another confined session, and then, inside the *try-with-resources* we use the session to create many segments; all such segments share the *same* memory session — meaning that when such session is closed, the memory associated with all these segments will be reclaimed at once.
 
-Working with deterministic deallocation is great in terms of achieving better control as to *when* memory resources are released. But deterministic deallocation present its own challenges. Consider the following method:
+#### Challenges
+
+Working with deterministic deallocation is great in terms of achieving better control as to *when* memory resources are released. But deterministic deallocation present some unique challenges which we discuss here; some of these issues might look surprising, especially coming from a world where deallocation happens implicitly (as in the ByteBuffer API). Consider the following method:
 
 ```java
 void m() {
@@ -198,6 +200,8 @@ class Allocator {
 ```
 
 In the above example, we have tweaked the `Allocator::allocate` method so that it returns a segment associated with a non-closeable view of the private memory session. This means that clients of this method will no longer be able to call `MemorySession::close` on the returned segment.
+
+As we have seen in this session, deterministic deallocation, as most things in computer science, is a trade-off. More specifically, we are trading between predictability of deallocation and simplicity of API and user code. It is ultimately up to developers to pick the solution that works best for their use case. As a general (and rough!) rule of thumb, long-lived, shared memory resources might be better modelled using implicit memory sessions, whereas short-lived, thread-confined memory resources are often modelled using closeable memory sessions.
 
 ### Streaming slices
 
