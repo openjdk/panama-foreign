@@ -108,8 +108,8 @@ At the core of Panama foreign function support we find the `Linker` abstraction.
 
 ```java
 interface Linker {
-    MethodHandle downcallHandle(NativeSymbol func, FunctionDescriptor function);
-    NativeSymbol upcallStub(MethodHandle target, FunctionDescriptor function, MemorySession session);    
+    MethodHandle downcallHandle(Addressable symbol, FunctionDescriptor function);
+    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, MemorySession session);    
     ... // some overloads omitted here
 
     static Linker nativeLinker() { ... }
