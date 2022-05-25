@@ -45,7 +45,7 @@ A variable initializer such as the one above can be implemented as follows, usin
 ```java
 try (MemorySession session = MemorySession openConfined()) {
     MemorySegment arr = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(5, JAVA_INT), session);
-    for Memory(int i = 0 ; i < 5 ; i++) {
+    for (int i = 0 ; i < 5 ; i++) {
         arr.setAtIndex(JAVA_INT, i, i);
     }
 }
