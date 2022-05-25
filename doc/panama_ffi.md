@@ -248,7 +248,7 @@ try (MemorySession session = MemorySession openConfined()) {
 }
 ```
 
-The above code creates an upcall stub — `comparFunc` — a function pointer that can be used to invoke our Java comparator function, of type `NativeSymbol`. The upcall stub is associated with the provided memory session instance; this means that the stub will be uninstalled when the session is closed.
+The above code creates an upcall stub — `comparFunc` — a function pointer that can be used to invoke our Java comparator function, of type `MemorySegment`. The upcall stub is associated with the provided memory session instance; this means that the stub will be uninstalled when the session is closed.
 
 The snippet then creates an off-heap array from a Java array, which is then passed to the `qsort` handle, along with the comparator function we obtained from the foreign linker.  As a side effect, after the call, the contents of the off-heap array will be sorted (as instructed by our comparator function, written in Java). We can than extract a new Java array from the segment, which contains the sorted elements. This is a more advanced example, but one that shows how powerful the native interop support provided by the foreign linker abstraction is, allowing full bidirectional interop support between Java and native.
 
