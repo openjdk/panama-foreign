@@ -241,7 +241,7 @@ To do that, we first create a function descriptor for the function pointer type,
 
 ```java
 try (MemorySession session = MemorySession openConfined()) {
-    NativeSymbol comparFunc = linker.upcallStub(comparHandle, comparDesc, session);
+    MemorySegment comparFunc = linker.upcallStub(comparHandle, comparDesc, session);
     MemorySegment array = session.allocateArray(0, 9, 3, 4, 6, 5, 1, 8, 2, 7);
     qsort.invoke(array, 10L, 4L, comparFunc);
     int[] sorted = array.toArray(JAVA_INT); // [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
