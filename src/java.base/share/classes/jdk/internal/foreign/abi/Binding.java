@@ -339,11 +339,7 @@ public interface Binding {
     }
 
     static UnboxAddress unboxAddress() {
-        return unboxAddress(MemoryAddress.class);
-    }
-
-    static UnboxAddress unboxAddress(Class<?> carrier) {
-        return UnboxAddress.INSTANCE.get(carrier);
+        return UnboxAddress.INSTANCE;
     }
 
     static ToSegment toSegment(MemoryLayout layout) {
@@ -406,11 +402,6 @@ public interface Binding {
 
         public Binding.Builder unboxAddress() {
             bindings.add(Binding.unboxAddress());
-            return this;
-        }
-
-        public Binding.Builder unboxAddress(Class<?> carrier) {
-            bindings.add(Binding.unboxAddress(carrier));
             return this;
         }
 
@@ -606,17 +597,12 @@ public interface Binding {
     }
 
     /**
-     * UNBOX_ADDRESS([carrier])
+     * UNBOX_ADDRESS()
      * Pops a 'MemoryAddress' from the operand stack, converts it to a 'long',
      *     and pushes that onto the operand stack.
      */
-    record UnboxAddress(Class<?> carrier) implements Binding {
-        static final ClassValue<UnboxAddress> INSTANCE = new ClassValue<>() {
-            @Override
-            protected UnboxAddress computeValue(Class<?> type) {
-                return new UnboxAddress(type);
-            }
-        };
+    record UnboxAddress() implements Binding {
+        static final UnboxAddress INSTANCE = new UnboxAddress();
 
         @Override
         public Tag tag() {
@@ -626,7 +612,7 @@ public interface Binding {
         @Override
         public void verify(Deque<Class<?>> stack) {
             Class<?> actualType = stack.pop();
-            SharedUtils.checkType(actualType, carrier);
+            SharedUtils.checkType(actualType, Addressable.class);
             stack.push(long.class);
         }
 

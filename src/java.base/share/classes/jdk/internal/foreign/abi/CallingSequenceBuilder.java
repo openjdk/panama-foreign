@@ -97,11 +97,11 @@ public class CallingSequenceBuilder {
         MethodType calleeMethodType;
         if (!forUpcall) {
             addArgumentBinding(0, Addressable.class, ValueLayout.ADDRESS, List.of(
-                Binding.unboxAddress(Addressable.class),
+                Binding.unboxAddress(),
                 Binding.vmStore(abi.targetAddrStorage(), long.class)));
             if (needsReturnBuffer) {
                 addArgumentBinding(0, MemorySegment.class, ValueLayout.ADDRESS, List.of(
-                    Binding.unboxAddress(MemorySegment.class),
+                    Binding.unboxAddress(),
                     Binding.vmStore(abi.retBufAddrStorage(), long.class)));
             }
 

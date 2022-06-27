@@ -210,13 +210,13 @@ public class CallArranger {
                 case STRUCT_REFERENCE: {
                     assert carrier == MemorySegment.class;
                     bindings.copy(layout)
-                            .unboxAddress(MemorySegment.class);
+                            .unboxAddress();
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
                     bindings.vmStore(storage, long.class);
                     break;
                 }
                 case POINTER: {
-                    bindings.unboxAddress(carrier);
+                    bindings.unboxAddress();
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
                     bindings.vmStore(storage, long.class);
                     break;
