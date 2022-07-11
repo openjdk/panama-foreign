@@ -24,27 +24,17 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.internal.foreign.MemoryAddressImpl;
+
 import java.lang.foreign.Addressable;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.ValueLayout;
-import jdk.internal.foreign.MemoryAddressImpl;
-
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
-import java.util.Objects;
-
-import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
-
-import static java.lang.invoke.MethodType.methodType;
 
 /**
  * The binding operators defined in the Binding class can be combined into argument and return value processing 'recipes'.
@@ -199,7 +189,7 @@ import static java.lang.invoke.MethodType.methodType;
  *
  * --------------------
  */
-public abstract class Binding {
+public interface Binding {
 
     /**
      * A binding context is used as an helper to carry out evaluation of certain bindings; for instance,
@@ -207,7 +197,7 @@ public abstract class Binding {
      * the allocation operation, or {@link ToSegment} bindings, by providing the {@link MemorySession} that
      * should be used to create an unsafe struct from a memory address.
      */
-    public static class Context implements AutoCloseable {
+    class Context implements AutoCloseable {
         private final SegmentAllocator allocator;
         private final MemorySession session;
 
@@ -297,20 +287,12 @@ public abstract class Binding {
         DUP
     }
 
-    private final Tag tag;
+    Tag tag();
 
-    private Binding(Tag tag) {
-        this.tag = tag;
-    }
+    void verify(Deque<Class<?>> stack);
 
-    public Tag tag() {
-        return tag;
-    }
-
-    public abstract void verify(Deque<Class<?>> stack);
-
-    public abstract void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                                   BindingInterpreter.LoadFunc loadFunc, Context context);
+    void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
+                   BindingInterpreter.LoadFunc loadFunc, Context context);
 
     private static void checkType(Class<?> type) {
         if (!type.isPrimitive() || type == void.class)
@@ -322,82 +304,65 @@ public abstract class Binding {
             throw new IllegalArgumentException("Negative offset: " + offset);
     }
 
-    public static VMStore vmStore(VMStorage storage, Class<?> type) {
+    static VMStore vmStore(VMStorage storage, Class<?> type) {
         checkType(type);
         return new VMStore(storage, type);
     }
 
-    public static VMLoad vmLoad(VMStorage storage, Class<?> type) {
+    static VMLoad vmLoad(VMStorage storage, Class<?> type) {
         checkType(type);
         return new VMLoad(storage, type);
     }
 
-    public static BufferStore bufferStore(long offset, Class<?> type) {
+    static BufferStore bufferStore(long offset, Class<?> type) {
         checkType(type);
         checkOffset(offset);
         return new BufferStore(offset, type);
     }
 
-    public static BufferLoad bufferLoad(long offset, Class<?> type) {
+    static BufferLoad bufferLoad(long offset, Class<?> type) {
         checkType(type);
         checkOffset(offset);
         return new BufferLoad(offset, type);
     }
 
-    public static Copy copy(MemoryLayout layout) {
+    static Copy copy(MemoryLayout layout) {
         return new Copy(layout.byteSize(), layout.byteAlignment());
     }
 
-    public static Allocate allocate(MemoryLayout layout) {
+    static Allocate allocate(MemoryLayout layout) {
         return new Allocate(layout.byteSize(), layout.byteAlignment());
     }
 
-    public static BoxAddress boxAddress() {
+    static BoxAddress boxAddress() {
         return BoxAddress.INSTANCE;
     }
 
-    public static UnboxAddress unboxAddress() {
-        return UnboxAddress.INSTANCE.get(MemoryAddress.class);
+    static UnboxAddress unboxAddress() {
+        return UnboxAddress.INSTANCE;
     }
 
-    public static UnboxAddress unboxAddress(Class<?> carrier) {
-        return UnboxAddress.INSTANCE.get(carrier);
-    }
-
-    public static ToSegment toSegment(MemoryLayout layout) {
+    static ToSegment toSegment(MemoryLayout layout) {
         return new ToSegment(layout.byteSize());
     }
 
-    public static ToSegment toSegment(long byteSize) {
+    static ToSegment toSegment(long byteSize) {
         return new ToSegment(byteSize);
     }
 
-    public static Dup dup() {
+    static Dup dup() {
         return Dup.INSTANCE;
     }
 
 
-    public static Binding.Builder builder() {
+    static Binding.Builder builder() {
         return new Binding.Builder();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Binding binding = (Binding) o;
-        return tag == binding.tag;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(tag);
     }
 
     /**
      * A builder helper class for generating lists of Bindings
      */
-    public static class Builder {
+    class Builder {
         private final List<Binding> bindings = new ArrayList<>();
 
         public Binding.Builder vmStore(VMStorage storage, Class<?> type) {
@@ -440,11 +405,6 @@ public abstract class Binding {
             return this;
         }
 
-        public Binding.Builder unboxAddress(Class<?> carrier) {
-            bindings.add(Binding.unboxAddress(carrier));
-            return this;
-        }
-
         public Binding.Builder toSegment(MemoryLayout layout) {
             bindings.add(Binding.toSegment(layout));
             return this;
@@ -456,42 +416,13 @@ public abstract class Binding {
         }
 
         public List<Binding> build() {
-            return new ArrayList<>(bindings);
+            return List.copyOf(bindings);
         }
     }
 
-    abstract static class Move extends Binding {
-        private final VMStorage storage;
-        private final Class<?> type;
-
-        private Move(Tag tag, VMStorage storage, Class<?> type) {
-            super(tag);
-            this.storage = storage;
-            this.type = type;
-        }
-
-        public VMStorage storage() {
-            return storage;
-        }
-
-        public Class<?> type() {
-            return type;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            if (!super.equals(o)) return false;
-            Move move = (Move) o;
-            return Objects.equals(storage, move.storage) &&
-                    Objects.equals(type, move.type);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(super.hashCode(), storage, type);
-        }
+    interface Move extends Binding {
+        VMStorage storage();
+        Class<?> type();
     }
 
     /**
@@ -499,9 +430,10 @@ public abstract class Binding {
      * Pops a [type] from the operand stack, and moves it to [storage location]
      * The [type] must be one of byte, short, char, int, long, float, or double
      */
-    public static class VMStore extends Move {
-        private VMStore(VMStorage storage, Class<?> type) {
-            super(Tag.VM_STORE, storage, type);
+    record VMStore(VMStorage storage, Class<?> type) implements Move {
+        @Override
+        public Tag tag() {
+            return Tag.VM_STORE;
         }
 
         @Override
@@ -516,14 +448,6 @@ public abstract class Binding {
                               BindingInterpreter.LoadFunc loadFunc, Context context) {
             storeFunc.store(storage(), type(), stack.pop());
         }
-
-        @Override
-        public String toString() {
-            return "VMStore{" +
-                    "storage=" + storage() +
-                    ", type=" + type() +
-                    '}';
-        }
     }
 
     /**
@@ -531,9 +455,10 @@ public abstract class Binding {
      * Loads a [type] from [storage location], and pushes it onto the operand stack.
      * The [type] must be one of byte, short, char, int, long, float, or double
      */
-    public static class VMLoad extends Move {
-        private VMLoad(VMStorage storage, Class<?> type) {
-            super(Tag.VM_LOAD, storage, type);
+    record VMLoad(VMStorage storage, Class<?> type) implements Move {
+        @Override
+        public Tag tag() {
+            return Tag.VM_LOAD;
         }
 
         @Override
@@ -546,56 +471,11 @@ public abstract class Binding {
                               BindingInterpreter.LoadFunc loadFunc, Context context) {
             stack.push(loadFunc.load(storage(), type()));
         }
-
-        @Override
-        public String toString() {
-            return "VMLoad{" +
-                    "storage=" + storage() +
-                    ", type=" + type() +
-                    '}';
-        }
     }
 
-    private abstract static class Dereference extends Binding {
-        private final long offset;
-        private final Class<?> type;
-
-        private Dereference(Tag tag, long offset, Class<?> type) {
-            super(tag);
-            this.offset = offset;
-            this.type = type;
-        }
-
-        public long offset() {
-            return offset;
-        }
-
-        public Class<?> type() {
-            return type;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            if (!super.equals(o)) return false;
-            Dereference that = (Dereference) o;
-            return offset == that.offset &&
-                    Objects.equals(type, that.type);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(super.hashCode(), offset, type);
-        }
-
-        public VarHandle varHandle() {
-            // alignment is set to 1 byte here to avoid exceptions for cases where we do super word
-            // copies of e.g. 2 int fields of a struct as a single long, while the struct is only
-            // 4-byte-aligned (since it only contains ints)
-            ValueLayout layout = MemoryLayout.valueLayout(type(), ByteOrder.nativeOrder()).withBitAlignment(8);
-            return MethodHandles.insertCoordinates(MethodHandles.memorySegmentViewVarHandle(layout), 1, offset);
-        }
+    interface Dereference extends Binding {
+        long offset();
+        Class<?> type();
     }
 
     /**
@@ -604,9 +484,10 @@ public abstract class Binding {
      * Stores the [type] to [offset into memory region].
      * The [type] must be one of byte, short, char, int, long, float, or double
      */
-    public static class BufferStore extends Dereference {
-        private BufferStore(long offset, Class<?> type) {
-            super(Tag.BUFFER_STORE, offset, type);
+    record BufferStore(long offset, Class<?> type) implements Dereference {
+        @Override
+        public Tag tag() {
+            return Tag.BUFFER_STORE;
         }
 
         @Override
@@ -625,14 +506,6 @@ public abstract class Binding {
             MemorySegment writeAddress = operand.asSlice(offset());
             SharedUtils.write(writeAddress, type(), value);
         }
-
-        @Override
-        public String toString() {
-            return "BufferStore{" +
-                    "offset=" + offset() +
-                    ", type=" + type() +
-                    '}';
-        }
     }
 
     /**
@@ -641,9 +514,10 @@ public abstract class Binding {
      * and then stores [type] to [offset into memory region] of the MemorySegment.
      * The [type] must be one of byte, short, char, int, long, float, or double
      */
-    public static class BufferLoad extends Dereference {
-        private BufferLoad(long offset, Class<?> type) {
-            super(Tag.BUFFER_LOAD, offset, type);
+    record BufferLoad(long offset, Class<?> type) implements Dereference {
+        @Override
+        public Tag tag() {
+            return Tag.BUFFER_LOAD;
         }
 
         @Override
@@ -661,14 +535,6 @@ public abstract class Binding {
             MemorySegment readAddress = operand.asSlice(offset());
             stack.push(SharedUtils.read(readAddress, type()));
         }
-
-        @Override
-        public String toString() {
-            return "BufferLoad{" +
-                    "offset=" + offset() +
-                    ", type=" + type() +
-                    '}';
-        }
     }
 
     /**
@@ -677,36 +543,15 @@ public abstract class Binding {
      *     and copies contents from a MemorySegment popped from the top of the operand stack into this new buffer,
      *     and pushes the new buffer onto the operand stack
      */
-    public static class Copy extends Binding {
-        private final long size;
-        private final long alignment;
-
-        private Copy(long size, long alignment) {
-            super(Tag.COPY_BUFFER);
-            this.size = size;
-            this.alignment = alignment;
-        }
-
+    record Copy(long size, long alignment) implements Binding {
         private static MemorySegment copyBuffer(MemorySegment operand, long size, long alignment, Context context) {
             return context.allocator().allocate(size, alignment)
                             .copyFrom(operand.asSlice(0, size));
         }
 
-        public long size() {
-            return size;
-        }
-
-        public long alignment() {
-            return alignment;
-        }
-
         @Override
-        public String toString() {
-            return "Copy{" +
-                    "tag=" + tag() +
-                    ", size=" + size +
-                    ", alignment=" + alignment +
-                    '}';
+        public Tag tag() {
+            return Tag.COPY_BUFFER;
         }
 
         @Override
@@ -723,56 +568,20 @@ public abstract class Binding {
             MemorySegment copy = copyBuffer(operand, size, alignment, context);
             stack.push(copy);
         }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            if (!super.equals(o)) return false;
-            Copy copy = (Copy) o;
-            return size == copy.size &&
-                    alignment == copy.alignment;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(super.hashCode(), size, alignment);
-        }
     }
 
     /**
      * ALLOCATE([size], [alignment])
      *   Creates a new MemorySegment with the give [size] and [alignment], and pushes it onto the operand stack.
      */
-    public static class Allocate extends Binding {
-        private final long size;
-        private final long alignment;
-
-        private Allocate(long size, long alignment) {
-            super(Tag.ALLOC_BUFFER);
-            this.size = size;
-            this.alignment = alignment;
-        }
-
+    record Allocate(long size, long alignment) implements Binding {
         private static MemorySegment allocateBuffer(long size, long alignment, Context context) {
             return context.allocator().allocate(size, alignment);
         }
 
-        public long size() {
-            return size;
-        }
-
-        public long alignment() {
-            return alignment;
-        }
-
         @Override
-        public String toString() {
-            return "AllocateBuffer{" +
-                    "tag=" + tag() +
-                    "size=" + size +
-                    ", alignment=" + alignment +
-                    '}';
+        public Tag tag() {
+            return Tag.ALLOC_BUFFER;
         }
 
         @Override
@@ -785,21 +594,6 @@ public abstract class Binding {
                               BindingInterpreter.LoadFunc loadFunc, Context context) {
             stack.push(allocateBuffer(size, alignment, context));
         }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            if (!super.equals(o)) return false;
-            Allocate allocate = (Allocate) o;
-            return size == allocate.size &&
-                    alignment == allocate.alignment;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(super.hashCode(), size, alignment);
-        }
     }
 
     /**
@@ -807,32 +601,18 @@ public abstract class Binding {
      * Pops a 'MemoryAddress' from the operand stack, converts it to a 'long',
      *     and pushes that onto the operand stack.
      */
-    public static class UnboxAddress extends Binding {
+    record UnboxAddress() implements Binding {
+        static final UnboxAddress INSTANCE = new UnboxAddress();
 
-        static final ClassValue<UnboxAddress> INSTANCE = new ClassValue<>() {
-            @Override
-            protected UnboxAddress computeValue(Class<?> type) {
-                return new UnboxAddress(type);
-            }
-        };
-
-        final Class<?> carrier;
-        final MethodHandle toAddress;
-
-        private UnboxAddress(Class<?> carrier) {
-            super(Tag.UNBOX_ADDRESS);
-            this.carrier = carrier;
-            try {
-                this.toAddress = MethodHandles.lookup().findVirtual(carrier, "address", MethodType.methodType(MemoryAddress.class));
-            } catch (Throwable ex) {
-                throw new IllegalArgumentException(ex);
-            }
+        @Override
+        public Tag tag() {
+            return Tag.UNBOX_ADDRESS;
         }
 
         @Override
         public void verify(Deque<Class<?>> stack) {
             Class<?> actualType = stack.pop();
-            SharedUtils.checkType(actualType, carrier);
+            SharedUtils.checkType(actualType, Addressable.class);
             stack.push(long.class);
         }
 
@@ -841,11 +621,6 @@ public abstract class Binding {
                               BindingInterpreter.LoadFunc loadFunc, Context context) {
             stack.push(((Addressable)stack.pop()).address().toRawLongValue());
         }
-
-        @Override
-        public String toString() {
-            return "UnboxAddress{}";
-        }
     }
 
     /**
@@ -853,10 +628,12 @@ public abstract class Binding {
      * Pops a 'long' from the operand stack, converts it to a 'MemoryAddress',
      *     and pushes that onto the operand stack.
      */
-    public static class BoxAddress extends Binding {
-        private static final BoxAddress INSTANCE = new BoxAddress();
-        private BoxAddress() {
-            super(Tag.BOX_ADDRESS);
+    record BoxAddress() implements Binding {
+        static final BoxAddress INSTANCE = new BoxAddress();
+
+        @Override
+        public Tag tag() {
+            return Tag.BOX_ADDRESS;
         }
 
         @Override
@@ -871,11 +648,6 @@ public abstract class Binding {
                               BindingInterpreter.LoadFunc loadFunc, Context context) {
             stack.push(MemoryAddress.ofLong((long) stack.pop()));
         }
-
-        @Override
-        public String toString() {
-            return "BoxAddress{}";
-        }
     }
 
     /**
@@ -883,21 +655,14 @@ public abstract class Binding {
      *   Pops a MemoryAddress from the operand stack, and converts it to a MemorySegment
      *   with the given size, and pushes that onto the operand stack
      */
-    public static class ToSegment extends Binding {
-        private final long size;
-        // FIXME alignment?
-
-        public ToSegment(long size) {
-            super(Tag.TO_SEGMENT);
-            this.size = size;
-        }
-
-        public long size() {
-            return size;
-        }
-
+    record ToSegment(long size) implements Binding {
         private static MemorySegment toSegment(MemoryAddress operand, long size, Context context) {
             return MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size, context.session);
+        }
+
+        @Override
+        public Tag tag() {
+            return Tag.TO_SEGMENT;
         }
 
         @Override
@@ -914,27 +679,6 @@ public abstract class Binding {
             MemorySegment segment = toSegment(operand, size, context);
             stack.push(segment);
         }
-
-        @Override
-        public String toString() {
-            return "ToSegemnt{" +
-                    "size=" + size +
-                    '}';
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            if (!super.equals(o)) return false;
-            ToSegment toSegemnt = (ToSegment) o;
-            return size == toSegemnt.size;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(super.hashCode(), size);
-        }
     }
 
     /**
@@ -942,10 +686,12 @@ public abstract class Binding {
      *   Duplicates the value on the top of the operand stack (without popping it!),
      *   and pushes the duplicate onto the operand stack
      */
-    public static class Dup extends Binding {
-        private static final Dup INSTANCE = new Dup();
-        private Dup() {
-            super(Tag.DUP);
+    record Dup() implements Binding {
+        static final Dup INSTANCE = new Dup();
+
+        @Override
+        public Tag tag() {
+            return Tag.DUP;
         }
 
         @Override
@@ -957,17 +703,6 @@ public abstract class Binding {
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
                               BindingInterpreter.LoadFunc loadFunc, Context context) {
             stack.push(stack.peekLast());
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            return o != null && getClass() == o.getClass();
-        }
-
-        @Override
-        public String toString() {
-            return "Dup{}";
         }
     }
 }

@@ -371,7 +371,7 @@ public class SharedUtils {
     }
 
     static void checkType(Class<?> actualType, Class<?> expectedType) {
-        if (expectedType != actualType) {
+        if (!expectedType.isAssignableFrom(actualType)) {
             throw new IllegalArgumentException(
                     String.format("Invalid operand type: %s. %s expected", actualType, expectedType));
         }
