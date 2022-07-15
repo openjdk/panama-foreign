@@ -2025,6 +2025,39 @@ void C2_MacroAssembler::evmovdqu(BasicType type, KRegister kmask, Address dst, X
   MacroAssembler::evmovdqu(type, kmask, dst, src, merge, vector_len);
 }
 
+void C2_MacroAssembler::vmovmask(BasicType elem_bt, XMMRegister dst, Address src, XMMRegister mask,
+                                 int vec_enc) {
+  switch(elem_bt) {
+    case T_INT:
+    case T_FLOAT:
+      vmaskmovps(dst, src, mask, vec_enc);
+      break;
+    case T_LONG:
+    case T_DOUBLE:
+      vmaskmovpd(dst, src, mask, vec_enc);
+      break;
+    default:
+      fatal("Unsupported type %s", type2name(elem_bt));
+      break;
+  }
+}
+
+void C2_MacroAssembler::vmovmask(BasicType elem_bt, Address dst, XMMRegister src, XMMRegister mask,
+                                 int vec_enc) {
+  switch(elem_bt) {
+    case T_INT:
+    case T_FLOAT:
+      vmaskmovps(dst, src, mask, vec_enc);
+      break;
+    case T_LONG:
+    case T_DOUBLE:
+      vmaskmovpd(dst, src, mask, vec_enc);
+      break;
+    default:
+      fatal("Unsupported type %s", type2name(elem_bt));
+      break;
+  }
+}
 
 void C2_MacroAssembler::reduceFloatMinMax(int opcode, int vlen, bool is_dst_valid,
                                           XMMRegister dst, XMMRegister src,
@@ -4971,6 +5004,7 @@ void C2_MacroAssembler::vector_reverse_byte64(BasicType bt, XMMRegister dst, XMM
       evprord(xtmp1, k0, src, 16, true, vec_enc);
       vector_swap_nbits(8, 0x00FF00FF, dst, xtmp1, xtmp2, rtmp, vec_enc);
       break;
+    case T_CHAR:
     case T_SHORT:
       // Swap upper and lower byte of each word.
       vector_swap_nbits(8, 0x00FF00FF, dst, src, xtmp2, rtmp, vec_enc);
@@ -5002,6 +5036,7 @@ void C2_MacroAssembler::vector_reverse_byte(BasicType bt, XMMRegister dst, XMMRe
     case T_INT:
       vmovdqu(dst, ExternalAddress(StubRoutines::x86::vector_reverse_byte_perm_mask_int()), rtmp, vec_enc);
       break;
+    case T_CHAR:
     case T_SHORT:
       vmovdqu(dst, ExternalAddress(StubRoutines::x86::vector_reverse_byte_perm_mask_short()), rtmp, vec_enc);
       break;
