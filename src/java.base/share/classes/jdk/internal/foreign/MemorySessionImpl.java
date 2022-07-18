@@ -26,9 +26,8 @@
 
 package jdk.internal.foreign;
 
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
-import java.lang.foreign.SegmentAllocator;
+import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Cleaner;
@@ -52,7 +51,8 @@ import sun.nio.ch.DirectBuffer;
  * shared sessions use a more sophisticated synchronization mechanism, which guarantees that no concurrent
  * access is possible when a session is being closed (see {@link jdk.internal.misc.ScopedMemoryAccess}).
  */
-public abstract non-sealed class MemorySessionImpl implements MemorySession, SegmentAllocator {
+public non-sealed abstract class MemorySessionImpl implements MemorySession {
+
     final ResourceList resourceList;
     final Cleaner.Cleanable cleanable;
     final Thread owner;
@@ -78,7 +78,7 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
     @Override
     public void addCloseAction(Runnable runnable) {
         Objects.requireNonNull(runnable);
-        addInternal(ResourceList.ResourceCleanup.ofRunnable(runnable));
+        addOrCleanupIfFail(ResourceList.ResourceCleanup.ofRunnable(runnable));
     }
 
     /**
@@ -118,21 +118,22 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
             cleaner.register(this, resourceList) : null;
     }
 
-    public static MemorySession createConfined(Thread thread, Cleaner cleaner) {
-        return new ConfinedSession(thread, cleaner);
+    public static MemorySession createConfined(Thread thread) {
+        return new ConfinedSession(thread, null);
     }
 
-    public static MemorySession createShared(Cleaner cleaner) {
-        return new SharedSession(cleaner);
+    public static MemorySession createShared() {
+        return new SharedSession(null);
     }
 
-    public static MemorySessionImpl createImplicit() {
-        return new ImplicitSession();
+    public static MemorySessionImpl createImplicit(Object ref, Cleaner cleaner) {
+        return new ImplicitSession(ref, cleaner);
     }
 
     @Override
     public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-        return MemorySegment.allocateNative(bytesSize, bytesAlignment, this);
+        Utils.checkAllocationSizeAndAlign(bytesSize, bytesAlignment);
+        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, bytesAlignment, this);
     }
 
     public abstract void release0();
@@ -148,17 +149,6 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
     @Override
     public final int hashCode() {
         return super.hashCode();
-    }
-
-    @Override
-    public void whileAlive(Runnable action) {
-        Objects.requireNonNull(action);
-        acquire0();
-        try {
-            action.run();
-        } finally {
-            release0();
-        }
     }
 
     /**
@@ -186,7 +176,7 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
     @ForceInline
     public static MemorySessionImpl toSessionImpl(MemorySession session) {
         return session instanceof MemorySessionImpl sessionImpl ?
-                sessionImpl : ((NonCloseableView)session).session;
+                sessionImpl : ((NonCloseableView) session).session;
     }
 
     /**
@@ -251,53 +241,7 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
 
     abstract void justClose();
 
-    /**
-     * The global, non-closeable, shared session. Similar to a shared session, but its {@link #close()} method throws unconditionally.
-     * Adding new resources to the global session, does nothing: as the session can never become not-alive, there is nothing to track.
-     * Acquiring and or releasing a memory session similarly does nothing.
-     */
-    static class GlobalSessionImpl extends MemorySessionImpl {
-
-        final Object ref;
-
-        public GlobalSessionImpl(Object ref) {
-            super(null, null ,null);
-            this.ref = ref;
-        }
-
-        @Override
-        @ForceInline
-        public void release0() {
-            // do nothing
-        }
-
-        @Override
-        public boolean isCloseable() {
-            return false;
-        }
-
-        @Override
-        @ForceInline
-        public void acquire0() {
-            // do nothing
-        }
-
-        @Override
-        void addInternal(ResourceList.ResourceCleanup resource) {
-            // do nothing
-        }
-
-        @Override
-        public void justClose() {
-            throw nonCloseable();
-        }
-    }
-
-    public static final MemorySessionImpl GLOBAL = new GlobalSessionImpl(null);
-
-    public static MemorySessionImpl heapSession(Object ref) {
-        return new GlobalSessionImpl(ref);
-    }
+    public static final MemorySessionImpl GLOBAL = createImplicit(null, CleanerFactory.cleaner());
 
     /**
      * This is an implicit, GC-backed memory session. Implicit sessions cannot be closed explicitly.
@@ -309,8 +253,11 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
      */
     static class ImplicitSession extends SharedSession {
 
-        public ImplicitSession() {
-            super(CleanerFactory.cleaner());
+        final Object attachment;
+
+        public ImplicitSession(Object attachment, Cleaner cleaner) {
+            super(cleaner);
+            this.attachment = attachment;
         }
 
         @Override
@@ -335,8 +282,7 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
     }
 
     /**
-     * This is a non-closeable view of another memory session. Instances of this class are used in resource session
-     * accessors (see {@link MemorySegment#session()}). This class forwards all session methods to the underlying
+     * This is a non-closeable view of another memory session. This class forwards all session methods to the underlying
      * "root" session implementation, and throws {@link UnsupportedOperationException} on close. This class contains
      * a strong reference to the original session, so even if the original session is dropped by the client
      * it would still be reachable by the GC, which is important if the session is implicitly closed.
@@ -371,11 +317,6 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
         @Override
         public int hashCode() {
             return session.hashCode();
-        }
-
-        @Override
-        public void whileAlive(Runnable action) {
-            session.whileAlive(action);
         }
 
         @Override

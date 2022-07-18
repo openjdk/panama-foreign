@@ -63,13 +63,9 @@ import java.util.stream.IntStream;
 
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static java.lang.foreign.ValueLayout.ADDRESS;
-import static java.lang.foreign.ValueLayout.JAVA_BYTE;
-import static java.lang.foreign.ValueLayout.JAVA_CHAR;
 import static java.lang.foreign.ValueLayout.JAVA_DOUBLE;
-import static java.lang.foreign.ValueLayout.JAVA_FLOAT;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static java.lang.foreign.ValueLayout.JAVA_LONG;
-import static java.lang.foreign.ValueLayout.JAVA_SHORT;
 import static jdk.internal.foreign.PlatformLayouts.*;
 import static org.testng.Assert.*;
 
@@ -81,10 +77,14 @@ public class VaListTest extends NativeTestHelper {
     }
 
     private static final MethodHandle ADDRESS_TO_VALIST;
+    private static final MethodHandle VALIST_TO_ADDRESS;
+    private static final MethodHandle SEGMENT_TO_VALIST;
 
     static {
         try {
-            ADDRESS_TO_VALIST = MethodHandles.lookup().findStatic(VaList.class, "ofAddress", MethodType.methodType(VaList.class, MemoryAddress.class, MemorySession.class));
+            ADDRESS_TO_VALIST = MethodHandles.lookup().findStatic(VaList.class, "ofAddress", MethodType.methodType(VaList.class, long.class, MemorySession.class));
+            VALIST_TO_ADDRESS = MethodHandles.lookup().findVirtual(VaList.class, "segment", MethodType.methodType(MemorySegment.class));
+            SEGMENT_TO_VALIST = MethodHandles.lookup().findStatic(VaListTest.class, "segmentToValist", MethodType.methodType(VaList.class, MemorySegment.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -155,7 +155,8 @@ public class VaListTest extends NativeTestHelper {
         Function<ValueLayout.OfInt, BiFunction<Integer, VaList, Integer>> sumIntsJavaFact = layout ->
                 (num, list) -> IntStream.generate(() -> list.nextVarg(layout)).limit(num).sum();
         BiFunction<Integer, VaList, Integer> sumIntsNative
-                = MethodHandleProxies.asInterfaceInstance(BiFunction.class, MH_sumInts);
+                = MethodHandleProxies.asInterfaceInstance(BiFunction.class,
+                MethodHandles.filterArguments(MH_sumInts, 1, VALIST_TO_ADDRESS));
         return new Object[][]{
                 { winVaListFactory,          sumIntsJavaFact.apply(Win64.C_INT),   Win64.C_INT   },
                 { sysvVaListFactory,         sumIntsJavaFact.apply(SysV.C_INT),    SysV.C_INT    },
@@ -170,9 +171,9 @@ public class VaListTest extends NativeTestHelper {
                            BiFunction<Integer, VaList, Integer> sumInts,
                            ValueLayout.OfInt intLayout) {
         VaList vaList = vaListFactory.apply(b ->
-            b.addVarg(intLayout, 10)
-                    .addVarg(intLayout, 15)
-                    .addVarg(intLayout, 20));
+                b.addVarg(intLayout, 10)
+                        .addVarg(intLayout, 15)
+                        .addVarg(intLayout, 20));
         int x = sumInts.apply(3, vaList);
         assertEquals(x, 45);
     }
@@ -183,7 +184,8 @@ public class VaListTest extends NativeTestHelper {
         Function<ValueLayout.OfDouble, BiFunction<Integer, VaList, Double>> sumDoublesJavaFact  = layout ->
                 (num, list) -> DoubleStream.generate(() -> list.nextVarg(layout)).limit(num).sum();
         BiFunction<Integer, VaList, Double> sumDoublesNative
-                = MethodHandleProxies.asInterfaceInstance(BiFunction.class, MH_sumDoubles);
+                = MethodHandleProxies.asInterfaceInstance(BiFunction.class,
+                MethodHandles.filterArguments(MH_sumDoubles, 1, VALIST_TO_ADDRESS));
         return new Object[][]{
                 { winVaListFactory,          sumDoublesJavaFact.apply(Win64.C_DOUBLE),   Win64.C_DOUBLE   },
                 { sysvVaListFactory,         sumDoublesJavaFact.apply(SysV.C_DOUBLE),    SysV.C_DOUBLE    },
@@ -198,9 +200,9 @@ public class VaListTest extends NativeTestHelper {
                               BiFunction<Integer, VaList, Double> sumDoubles,
                               ValueLayout.OfDouble doubleLayout) {
         VaList vaList = vaListFactory.apply(b ->
-            b.addVarg(doubleLayout, 3.0D)
-                    .addVarg(doubleLayout, 4.0D)
-                    .addVarg(doubleLayout, 5.0D));
+                b.addVarg(doubleLayout, 3.0D)
+                        .addVarg(doubleLayout, 4.0D)
+                        .addVarg(doubleLayout, 5.0D));
         double x = sumDoubles.apply(3, vaList);
         assertEquals(x, 12.0D);
     }
@@ -210,10 +212,11 @@ public class VaListTest extends NativeTestHelper {
     public static Object[][] pointers() {
         Function<ValueLayout.OfAddress, Function<VaList, Integer>> getIntJavaFact = layout ->
                 list -> {
-                    MemoryAddress ma = list.nextVarg(layout);
+                    MemorySegment ma = list.nextVarg(layout);
                     return ma.get(JAVA_INT, 0);
                 };
-        Function<VaList, Integer> getIntNative = MethodHandleProxies.asInterfaceInstance(Function.class, MH_getInt);
+        Function<VaList, Integer> getIntNative = MethodHandleProxies.asInterfaceInstance(Function.class,
+                MethodHandles.filterArguments(MH_getInt, 0, VALIST_TO_ADDRESS));
         return new Object[][]{
                 { winVaListFactory,          getIntJavaFact.apply(Win64.C_POINTER),   Win64.C_POINTER   },
                 { sysvVaListFactory,         getIntJavaFact.apply(SysV.C_POINTER),    SysV.C_POINTER    },
@@ -224,13 +227,13 @@ public class VaListTest extends NativeTestHelper {
     }
 
     @Test(dataProvider = "pointers")
-    public void testVaListMemoryAddress(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
+    public void testVaListMemorySegment(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
                                         Function<VaList, Integer> getFromPointer,
                                         ValueLayout.OfAddress pointerLayout) {
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment msInt = MemorySegment.allocateNative(JAVA_INT, session);
+            MemorySegment msInt = session.allocate(JAVA_INT);
             msInt.set(JAVA_INT, 0, 10);
-            VaList vaList = vaListFactory.apply(b -> b.addVarg(pointerLayout, msInt.address()));
+            VaList vaList = vaListFactory.apply(b -> b.addVarg(pointerLayout, msInt));
             int x = getFromPointer.apply(vaList);
             assertEquals(x, 10);
         }
@@ -246,7 +249,7 @@ public class VaListTest extends NativeTestHelper {
         TriFunction<GroupLayout, VarHandle, VarHandle, Function<VaList, Integer>> sumStructJavaFact
                 = (pointLayout, VH_Point_x, VH_Point_y) ->
                 list -> {
-                    MemorySegment struct = MemorySegment.allocateNative(pointLayout, MemorySession.openImplicit());
+                    MemorySegment struct = MemorySession.openImplicit().allocate(pointLayout);
                     list.nextVarg(pointLayout, SegmentAllocator.prefixAllocator(struct));
                     int x = (int) VH_Point_x.get(struct);
                     int y = (int) VH_Point_y.get(struct);
@@ -255,7 +258,8 @@ public class VaListTest extends NativeTestHelper {
 
         TriFunction<GroupLayout, VarHandle, VarHandle, Function<VaList, Integer>> sumStructNativeFact
                 = (pointLayout, VH_Point_x, VH_Point_y) ->
-                MethodHandleProxies.asInterfaceInstance(Function.class, MH_sumStruct);
+                MethodHandleProxies.asInterfaceInstance(Function.class,
+                        MethodHandles.filterArguments(MH_sumStruct, 0, VALIST_TO_ADDRESS));
 
         TriFunction<Function<Consumer<VaList.Builder>, VaList>, MemoryLayout,
                 TriFunction<GroupLayout, VarHandle, VarHandle, Function<VaList, Integer>>, Object[]> argsFact
@@ -283,7 +287,7 @@ public class VaListTest extends NativeTestHelper {
                            Function<VaList, Integer> sumStruct,
                            GroupLayout Point_LAYOUT, VarHandle VH_Point_x, VarHandle VH_Point_y) {
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment struct = MemorySegment.allocateNative(Point_LAYOUT, session);
+            MemorySegment struct = session.allocate(Point_LAYOUT);
             VH_Point_x.set(struct, 5);
             VH_Point_y.set(struct, 10);
 
@@ -299,7 +303,7 @@ public class VaListTest extends NativeTestHelper {
         TriFunction<GroupLayout, VarHandle, VarHandle, Function<VaList, Long>> sumStructJavaFact
                 = (BigPoint_LAYOUT, VH_BigPoint_x, VH_BigPoint_y) ->
                 list -> {
-                    MemorySegment struct = MemorySegment.allocateNative(BigPoint_LAYOUT, MemorySession.openImplicit());
+                    MemorySegment struct = MemorySegment.allocateNative(BigPoint_LAYOUT);
                     list.nextVarg(BigPoint_LAYOUT, SegmentAllocator.prefixAllocator(struct));
                     long x = (long) VH_BigPoint_x.get(struct);
                     long y = (long) VH_BigPoint_y.get(struct);
@@ -308,7 +312,8 @@ public class VaListTest extends NativeTestHelper {
 
         TriFunction<GroupLayout, VarHandle, VarHandle, Function<VaList, Long>> sumStructNativeFact
                 = (pointLayout, VH_BigPoint_x, VH_BigPoint_y) ->
-                MethodHandleProxies.asInterfaceInstance(Function.class, MH_sumBigStruct);
+                MethodHandleProxies.asInterfaceInstance(Function.class,
+                        MethodHandles.filterArguments(MH_sumBigStruct, 0, VALIST_TO_ADDRESS));
 
         TriFunction<Function<Consumer<VaList.Builder>, VaList>, MemoryLayout,
                 TriFunction<GroupLayout, VarHandle, VarHandle, Function<VaList, Long>>, Object[]> argsFact
@@ -336,7 +341,7 @@ public class VaListTest extends NativeTestHelper {
                               Function<VaList, Long> sumBigStruct,
                               GroupLayout BigPoint_LAYOUT, VarHandle VH_BigPoint_x, VarHandle VH_BigPoint_y) {
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment struct = MemorySegment.allocateNative(BigPoint_LAYOUT, session);
+            MemorySegment struct = session.allocate(BigPoint_LAYOUT);
             VH_BigPoint_x.set(struct, 5);
             VH_BigPoint_y.set(struct, 10);
 
@@ -352,7 +357,7 @@ public class VaListTest extends NativeTestHelper {
         TriFunction<GroupLayout, VarHandle, VarHandle, Function<VaList, Float>> sumStructJavaFact
                 = (FloatPoint_LAYOUT, VH_FloatPoint_x, VH_FloatPoint_y) ->
                 list -> {
-                    MemorySegment struct = MemorySegment.allocateNative(FloatPoint_LAYOUT, MemorySession.openImplicit());
+                    MemorySegment struct = MemorySegment.allocateNative(FloatPoint_LAYOUT);
                     list.nextVarg(FloatPoint_LAYOUT, SegmentAllocator.prefixAllocator(struct));
                     float x = (float) VH_FloatPoint_x.get(struct);
                     float y = (float) VH_FloatPoint_y.get(struct);
@@ -361,7 +366,8 @@ public class VaListTest extends NativeTestHelper {
 
         TriFunction<GroupLayout, VarHandle, VarHandle, Function<VaList, Float>> sumStructNativeFact
                 = (pointLayout, VH_FloatPoint_x, VH_FloatPoint_y) ->
-                MethodHandleProxies.asInterfaceInstance(Function.class, MH_sumFloatStruct);
+                MethodHandleProxies.asInterfaceInstance(Function.class,
+                        MethodHandles.filterArguments(MH_sumFloatStruct, 0, VALIST_TO_ADDRESS));
 
         TriFunction<Function<Consumer<VaList.Builder>, VaList>, MemoryLayout,
                 TriFunction<GroupLayout, VarHandle, VarHandle, Function<VaList, Float>>, Object[]> argsFact
@@ -390,7 +396,7 @@ public class VaListTest extends NativeTestHelper {
                                 GroupLayout FloatPoint_LAYOUT,
                                 VarHandle VH_FloatPoint_x, VarHandle VH_FloatPoint_y) {
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment struct = MemorySegment.allocateNative(FloatPoint_LAYOUT, session);
+            MemorySegment struct = session.allocate(FloatPoint_LAYOUT);
             VH_FloatPoint_x.set(struct, 1.234f);
             VH_FloatPoint_y.set(struct, 3.142f);
 
@@ -410,7 +416,7 @@ public class VaListTest extends NativeTestHelper {
         QuadFunc<GroupLayout, VarHandle, VarHandle, VarHandle, Function<VaList, Long>> sumStructJavaFact
                 = (HugePoint_LAYOUT, VH_HugePoint_x, VH_HugePoint_y, VH_HugePoint_z) ->
                 list -> {
-                    MemorySegment struct = MemorySegment.allocateNative(HugePoint_LAYOUT, MemorySession.openImplicit());
+                    MemorySegment struct = MemorySegment.allocateNative(HugePoint_LAYOUT);
                     list.nextVarg(HugePoint_LAYOUT, SegmentAllocator.prefixAllocator(struct));
                     long x = (long) VH_HugePoint_x.get(struct);
                     long y = (long) VH_HugePoint_y.get(struct);
@@ -420,7 +426,8 @@ public class VaListTest extends NativeTestHelper {
 
         QuadFunc<GroupLayout, VarHandle, VarHandle, VarHandle, Function<VaList, Long>> sumStructNativeFact
                 = (pointLayout, VH_HugePoint_x, VH_HugePoint_y, VH_HugePoint_z) ->
-                MethodHandleProxies.asInterfaceInstance(Function.class, MH_sumHugeStruct);
+                MethodHandleProxies.asInterfaceInstance(Function.class,
+                        MethodHandles.filterArguments(MH_sumHugeStruct, 0, VALIST_TO_ADDRESS));
 
         TriFunction<Function<Consumer<VaList.Builder>, VaList>, MemoryLayout,
                 QuadFunc<GroupLayout, VarHandle, VarHandle, VarHandle, Function<VaList, Long>>, Object[]> argsFact
@@ -454,7 +461,7 @@ public class VaListTest extends NativeTestHelper {
         // On AArch64 a struct needs to be larger than 16 bytes to be
         // passed by reference.
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment struct = MemorySegment.allocateNative(HugePoint_LAYOUT, session);
+            MemorySegment struct = session.allocate(HugePoint_LAYOUT);
             VH_HugePoint_x.set(struct, 1);
             VH_HugePoint_y.set(struct, 2);
             VH_HugePoint_z.set(struct, 3);
@@ -486,7 +493,7 @@ public class VaListTest extends NativeTestHelper {
                 };
         SumStackFunc sumStackNative = (longSum, doubleSum, list) -> {
             try {
-                MH_sumStack.invoke(longSum, doubleSum, list);
+                MH_sumStack.invokeExact(longSum, doubleSum, list.segment());
             } catch (Throwable ex) {
                 throw new AssertionError(ex);
             }
@@ -506,8 +513,8 @@ public class VaListTest extends NativeTestHelper {
                           ValueLayout.OfLong longLayout,
                           ValueLayout.OfDouble doubleLayout) {
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment longSum = MemorySegment.allocateNative(longLayout, session);
-            MemorySegment doubleSum = MemorySegment.allocateNative(doubleLayout, session);
+            MemorySegment longSum = session.allocate(longLayout);
+            MemorySegment doubleSum = session.allocate(doubleLayout);
             longSum.set(JAVA_LONG, 0, 0L);
             doubleSum.set(JAVA_DOUBLE, 0, 0D);
 
@@ -534,8 +541,8 @@ public class VaListTest extends NativeTestHelper {
     public void testUpcall(MethodHandle target, MethodHandle callback) throws Throwable {
         FunctionDescriptor desc = FunctionDescriptor.ofVoid(C_POINTER);
         try (MemorySession session = MemorySession.openConfined()) {
-            Addressable stub = abi.upcallStub(callback, desc, session);
-            target.invoke(stub);
+            MemorySegment stub = abi.upcallStub(callback, desc, session);
+            target.invokeExact(stub);
         }
     }
 
@@ -559,7 +566,8 @@ public class VaListTest extends NativeTestHelper {
         Function<ValueLayout.OfInt, BiFunction<Integer, VaList, Integer>> sumIntsJavaFact = layout ->
                 (num, list) -> IntStream.generate(() -> list.nextVarg(layout)).limit(num).sum();
         BiFunction<Integer, VaList, Integer> sumIntsNative
-                = MethodHandleProxies.asInterfaceInstance(BiFunction.class, MH_sumInts);
+                = MethodHandleProxies.asInterfaceInstance(BiFunction.class,
+                MethodHandles.filterArguments(MH_sumInts, 1, VALIST_TO_ADDRESS));
         return new Object[][]{
                 { winVaListScopedFactory,          sumIntsJavaFact.apply(Win64.C_INT),   Win64.C_INT   },
                 { sysvVaListScopedFactory,         sumIntsJavaFact.apply(SysV.C_INT),    SysV.C_INT    },
@@ -576,12 +584,12 @@ public class VaListTest extends NativeTestHelper {
         VaList listLeaked;
         try (MemorySession session = MemorySession.openConfined()) {
             VaList list = vaListFactory.apply(b -> b.addVarg(intLayout, 4)
-                            .addVarg(intLayout, 8), session);
+                    .addVarg(intLayout, 8), session);
             int x = sumInts.apply(2, list);
             assertEquals(x, 12);
             listLeaked = list;
         }
-        assertFalse(listLeaked.session().isAlive());
+        assertFalse(listLeaked.segment().session().isAlive());
     }
 
     @Test(dataProvider = "structs")
@@ -591,11 +599,11 @@ public class VaListTest extends NativeTestHelper {
         MemorySegment pointOut;
         try (MemorySession session = MemorySession.openConfined()) {
             try (MemorySession innerSession = MemorySession.openConfined()) {
-                MemorySegment pointIn = MemorySegment.allocateNative(Point_LAYOUT, innerSession);
+                MemorySegment pointIn = innerSession.allocate(Point_LAYOUT);
                 VH_Point_x.set(pointIn, 3);
                 VH_Point_y.set(pointIn, 6);
                 VaList list = vaListFactory.apply(b -> b.addVarg(Point_LAYOUT, pointIn));
-                pointOut = MemorySegment.allocateNative(Point_LAYOUT, session);
+                pointOut = session.allocate(Point_LAYOUT);
                 list.nextVarg(Point_LAYOUT, SegmentAllocator.prefixAllocator(pointOut));
                 assertEquals((int) VH_Point_x.get(pointOut), 3);
                 assertEquals((int) VH_Point_y.get(pointOut), 6);
@@ -682,14 +690,14 @@ public class VaListTest extends NativeTestHelper {
 
         return new Object[][]{
                 { linkVaListCB("upcallBigStruct"), VaListConsumer.mh(vaList -> {
-                    MemorySegment struct = MemorySegment.allocateNative(BigPoint_LAYOUT, MemorySession.openImplicit());
+                    MemorySegment struct = MemorySegment.allocateNative(BigPoint_LAYOUT);
                     vaList.nextVarg(BigPoint_LAYOUT, SegmentAllocator.prefixAllocator(struct));
                     assertEquals((long) VH_BigPoint_x.get(struct), 8);
                     assertEquals((long) VH_BigPoint_y.get(struct), 16);
                 })},
                 { linkVaListCB("upcallBigStruct"), VaListConsumer.mh(vaList -> {
                     VaList copy = vaList.copy();
-                    MemorySegment struct = MemorySegment.allocateNative(BigPoint_LAYOUT, MemorySession.openImplicit());
+                    MemorySegment struct = MemorySegment.allocateNative(BigPoint_LAYOUT);
                     vaList.nextVarg(BigPoint_LAYOUT, SegmentAllocator.prefixAllocator(struct));
                     assertEquals((long) VH_BigPoint_x.get(struct), 8);
                     assertEquals((long) VH_BigPoint_y.get(struct), 16);
@@ -703,7 +711,7 @@ public class VaListTest extends NativeTestHelper {
                     assertEquals((long) VH_BigPoint_y.get(struct), 16);
                 })},
                 { linkVaListCB("upcallBigStructPlusScalar"), VaListConsumer.mh(vaList -> {
-                    MemorySegment struct = MemorySegment.allocateNative(BigPoint_LAYOUT, MemorySession.openImplicit());
+                    MemorySegment struct = MemorySegment.allocateNative(BigPoint_LAYOUT);
                     vaList.nextVarg(BigPoint_LAYOUT, SegmentAllocator.prefixAllocator(struct));
                     assertEquals((long) VH_BigPoint_x.get(struct), 8);
                     assertEquals((long) VH_BigPoint_y.get(struct), 16);
@@ -715,28 +723,27 @@ public class VaListTest extends NativeTestHelper {
                     assertEquals(vaList.nextVarg(C_LONG_LONG), 42);
                 })},
                 { linkVaListCB("upcallStruct"), VaListConsumer.mh(vaList -> {
-                    MemorySegment struct = MemorySegment.allocateNative(Point_LAYOUT, MemorySession.openImplicit());
+                    MemorySegment struct = MemorySegment.allocateNative(Point_LAYOUT);
                     vaList.nextVarg(Point_LAYOUT, SegmentAllocator.prefixAllocator(struct));
                     assertEquals((int) VH_Point_x.get(struct), 5);
                     assertEquals((int) VH_Point_y.get(struct), 10);
                 })},
                 { linkVaListCB("upcallHugeStruct"), VaListConsumer.mh(vaList -> {
-                    MemorySegment struct = MemorySegment.allocateNative(HugePoint_LAYOUT, MemorySession.openImplicit());
+                    MemorySegment struct = MemorySegment.allocateNative(HugePoint_LAYOUT);
                     vaList.nextVarg(HugePoint_LAYOUT, SegmentAllocator.prefixAllocator(struct));
                     assertEquals((long) VH_HugePoint_x.get(struct), 1);
                     assertEquals((long) VH_HugePoint_y.get(struct), 2);
                     assertEquals((long) VH_HugePoint_z.get(struct), 3);
                 })},
                 { linkVaListCB("upcallFloatStruct"), VaListConsumer.mh(vaList -> {
-                    MemorySegment struct = MemorySegment.allocateNative(FloatPoint_LAYOUT, MemorySession.openImplicit());
+                    MemorySegment struct = MemorySegment.allocateNative(FloatPoint_LAYOUT);
                     vaList.nextVarg(FloatPoint_LAYOUT, SegmentAllocator.prefixAllocator(struct));
                     assertEquals((float) VH_FloatPoint_x.get(struct), 1.0f);
                     assertEquals((float) VH_FloatPoint_y.get(struct), 2.0f);
                 })},
                 { linkVaListCB("upcallMemoryAddress"), VaListConsumer.mh(vaList -> {
-                    MemoryAddress intPtr = vaList.nextVarg(C_POINTER);
-                    MemorySegment ms = MemorySegment.ofAddress(intPtr, C_INT.byteSize(), MemorySession.global());
-                    int x = ms.get(JAVA_INT, 0);
+                    MemorySegment intPtr = vaList.nextVarg(C_POINTER);
+                    int x = intPtr.get(JAVA_INT, 0);
                     assertEquals(x, 10);
                 })},
                 { linkVaListCB("upcallDoubles"), VaListConsumer.mh(vaList -> {
@@ -774,7 +781,7 @@ public class VaListTest extends NativeTestHelper {
                     assertEquals((float) vaList.nextVarg(C_DOUBLE), 13.0F);
                     assertEquals(vaList.nextVarg(C_DOUBLE), 14.0D);
 
-                    MemorySegment buffer = MemorySegment.allocateNative(BigPoint_LAYOUT, MemorySession.openImplicit());
+                    MemorySegment buffer = MemorySegment.allocateNative(BigPoint_LAYOUT);
                     SegmentAllocator bufferAllocator = SegmentAllocator.prefixAllocator(buffer);
 
                     MemorySegment point = vaList.nextVarg(Point_LAYOUT, bufferAllocator);
@@ -816,11 +823,15 @@ public class VaListTest extends NativeTestHelper {
                 MethodHandle handle = MethodHandles.lookup().findVirtual(VaListConsumer.class, "accept",
                         MethodType.methodType(void.class, VaList.class)).bindTo(instance);
                 return MethodHandles.filterArguments(handle, 0,
-                        MethodHandles.insertArguments(ADDRESS_TO_VALIST, 1, MemorySession.openConfined()));
+                        SEGMENT_TO_VALIST);
             } catch (ReflectiveOperationException e) {
                 throw new InternalError(e);
             }
         }
+    }
+
+    static VaList segmentToValist(MemorySegment segment) {
+        return VaList.ofAddress(segment.address(), MemorySession.openImplicit());
     }
 
     @DataProvider
@@ -868,7 +879,7 @@ public class VaListTest extends NativeTestHelper {
             } else if (layout instanceof ValueLayout.OfDouble ofDouble) {
                  builder.addVarg(ofDouble, 1D);
             } else if (layout instanceof ValueLayout.OfAddress ofAddress) {
-                 builder.addVarg(ofAddress, MemoryAddress.ofLong(1));
+                 builder.addVarg(ofAddress, MemorySegment.ofAddress(1));
             }
         }
     }
@@ -890,7 +901,7 @@ public class VaListTest extends NativeTestHelper {
         } else if (layout instanceof ValueLayout.OfDouble ofDouble) {
             assertEquals(vaList.nextVarg(ofDouble), 1D);
         } else if (layout instanceof ValueLayout.OfAddress ofAddress) {
-            assertEquals(vaList.nextVarg(ofAddress), MemoryAddress.ofLong(1));
+            assertEquals(vaList.nextVarg(ofAddress), MemorySegment.ofAddress(1));
         }
     }
 

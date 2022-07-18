@@ -33,7 +33,7 @@ import java.nio.channels.FileChannel.MapMode;
  * JDK-specific map modes.
  *
  * @since 14
- * @see java.nio.channels.FileChannel#map
+ * @see java.nio.channels.FileChannel#mapToSegment
  */
 public class ExtendedMapMode {
     private ExtendedMapMode() { }

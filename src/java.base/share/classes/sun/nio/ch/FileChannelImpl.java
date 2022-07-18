@@ -28,8 +28,8 @@ package sun.nio.ch;
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
+import java.lang.foreign.MemorySegment;
 import java.lang.ref.Cleaner.Cleanable;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -1201,7 +1201,7 @@ public class FileChannelImpl
 
     @Override
     public MemorySegment map(MapMode mode, long offset, long size,
-                             MemorySession session)
+                                      MemorySession session)
             throws IOException
     {
         Objects.requireNonNull(mode,"Mode is null");

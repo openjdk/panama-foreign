@@ -28,10 +28,12 @@ package java.lang.foreign;
 import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.MemorySessionImpl;
+import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.javac.PreviewFeature;
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.NativeLibrary;
 import jdk.internal.loader.RawNativeLibraries;
+import jdk.internal.ref.CleanerFactory;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
@@ -50,11 +52,11 @@ import java.util.function.BiFunction;
  * <p>
  * The address of a symbol is modelled as a zero-length {@linkplain MemorySegment memory segment}. The segment can be used in different ways:
  * <ul>
- *     <li>It can be passed to a {@link Linker} to create a downcall method handle, which can then be used to call the foreign function at the segment's base address.</li>
+ *     <li>It can be passed to a {@link Linker} to create a downcall method handle, which can then be used to call the foreign function at the given address.</li>
  *     <li>It can be passed to an existing {@linkplain Linker#downcallHandle(FunctionDescriptor) downcall method handle}, as an argument to the underlying foreign function.</li>
- *     <li>It can be {@linkplain MemorySegment#set(ValueLayout.OfAddress, long, Addressable) stored} inside another memory segment.</li>
+ *     <li>It can be {@linkplain MemorySegment#set(ValueLayout.OfAddress, long, MemorySegment) stored} inside another memory segment.</li>
  *     <li>It can be used to dereference memory associated with a global variable (this might require
- *     {@link MemorySegment#ofAddress(MemoryAddress, long, MemorySession) resizing} the segment first).</li>
+ *     {@link MemorySegment#ofAddress(long, long, MemorySession) creating an unsafe segment} first).</li>
  * </ul>
  *
  * <h2 id="obtaining">Obtaining a symbol lookup</h2>
@@ -62,9 +64,9 @@ import java.util.function.BiFunction;
  * The factory methods {@link #libraryLookup(String, MemorySession)} and {@link #libraryLookup(Path, MemorySession)}
  * create a symbol lookup for a library known to the operating system. The library is specified by either its name or a path.
  * The library is loaded if not already loaded. The symbol lookup, which is known as a <em>library lookup</em>, is associated
- * with a {@linkplain  MemorySession memory session}; when the session is {@linkplain MemorySession#close() closed}, the library is unloaded:
+ * with a {@linkplain MemorySession memory session}; when the session is {@linkplain MemorySession#close() closed}, the library is unloaded:
  *
- * {@snippet lang=java :
+ * {@snippet lang = java:
  * try (MemorySession session = MemorySession.openConfined()) {
  *     SymbolLookup libGL = SymbolLookup.libraryLookup("libGL.so"); // libGL.so loaded here
  *     MemorySegment glGetString = libGL.lookup("glGetString").orElseThrow();
@@ -138,10 +140,18 @@ public interface SymbolLookup {
      * this method returned.
      * <p>
      * Libraries associated with a class loader are unloaded when the class loader becomes
-     * <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>. The symbol lookup
-     * returned by this method is backed by a {@linkplain MemorySession#asNonCloseable() non-closeable}, shared memory
-     * session which keeps the caller's class loader reachable. Therefore, libraries associated with the caller's class
-     * loader are kept loaded (and their symbols available) as long as a loader lookup for that class loader is reachable.
+     * <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>. The memory session {@code S} associated with
+     * the returned symbol lookup is computed as follows:
+     * <ul>
+     *     <li>if the caller's class loader is either the bootstrap class loader, the
+     *     {@linkplain ClassLoader#getSystemClassLoader() application class loader}, or the
+     *     {@linkplain ClassLoader#getPlatformClassLoader() platform class loader}, then {@code S} is the
+     *     {@linkplain MemorySession#global() global memory session};
+     *     <li>otherwise, {@code S} is an <a href=MemorySession.html#implicit-sessions>implicit session</a>
+     *     that keeps the caller's class loader reachable.
+     *     Therefore, libraries associated with the caller's class loader are kept loaded (and their symbols available)
+     *     as long as a loader lookup for that class loader is reachable.</li>
+     * </ul>
      * <p>
      * In cases where this method is called from a context where there is no caller frame on the stack
      * (e.g. when called directly from a JNI attached thread), the caller's class loader defaults to the
@@ -158,17 +168,22 @@ public interface SymbolLookup {
         ClassLoader loader = caller != null ?
                 caller.getClassLoader() :
                 ClassLoader.getSystemClassLoader();
-        MemorySession loaderSession = (loader == null || loader instanceof BuiltinClassLoader) ?
-                MemorySession.global() : // builtin loaders never go away
-                MemorySessionImpl.heapSession(loader);
+        final MemorySession loaderMemorySession;
+        if (loader == null || loader instanceof BuiltinClassLoader) {
+            // builtin loaders never go away
+            loaderMemorySession = MemorySession.global();
+        } else {
+            // an implicit arena which keeps the classloader reachable
+            loaderMemorySession = MemorySessionImpl.createImplicit(loader, CleanerFactory.cleaner());
+        }
         return name -> {
             Objects.requireNonNull(name);
             JavaLangAccess javaLangAccess = SharedSecrets.getJavaLangAccess();
             // note: ClassLoader::findNative supports a null loader
-            MemoryAddress addr = MemoryAddress.ofLong(javaLangAccess.findNative(loader, name));
-            return addr == MemoryAddress.NULL ?
+            long addr = javaLangAccess.findNative(loader, name);
+            return addr == 0L ?
                     Optional.empty() :
-                    Optional.of(MemorySegment.ofAddress(addr, 0L, loaderSession));
+                    Optional.of(NativeMemorySegmentImpl.makeNativeSegmentUnchecked(addr, 0, loaderMemorySession));
         };
     }
 
@@ -243,10 +258,10 @@ public interface SymbolLookup {
         });
         return name -> {
             Objects.requireNonNull(name);
-            MemoryAddress addr = MemoryAddress.ofLong(library.find(name));
-            return addr == MemoryAddress.NULL
-                    ? Optional.empty() :
-                    Optional.of(MemorySegment.ofAddress(addr, 0L, session));
+            long addr = library.find(name);
+            return addr == 0L ?
+                    Optional.empty() :
+                    Optional.of(MemorySegment.ofAddress(addr, 0, session));
         };
     }
 }

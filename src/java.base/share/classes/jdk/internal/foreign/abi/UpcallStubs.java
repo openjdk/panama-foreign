@@ -24,11 +24,11 @@
  */
 package jdk.internal.foreign.abi;
 
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 
 import jdk.internal.foreign.MemorySessionImpl;
+import jdk.internal.foreign.NativeMemorySegmentImpl;
 
 public class UpcallStubs {
 
@@ -55,6 +55,6 @@ public class UpcallStubs {
                 freeUpcallStub(entry);
             }
         });
-        return MemorySegment.ofAddress(MemoryAddress.ofLong(entry), 0, session);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(entry, 0, session);
     }
 }

@@ -80,7 +80,6 @@ public class TestNulls {
 
     static final Class<?>[] CLASSES = new Class<?>[] {
             MemorySegment.class,
-            MemoryAddress.class,
             MemoryLayout.class,
             MemoryLayout.PathElement.class,
             SequenceLayout.class,
@@ -95,7 +94,6 @@ public class TestNulls {
             ValueLayout.OfDouble.class,
             ValueLayout.OfAddress.class,
             GroupLayout.class,
-            Addressable.class,
             Linker.class,
             VaList.class,
             VaList.Builder.class,
@@ -106,8 +104,6 @@ public class TestNulls {
     };
 
     static final Set<String> EXCLUDE_LIST = Set.of(
-            "java.lang.foreign.MemorySession/openConfined(java.lang.ref.Cleaner)/0/0",
-            "java.lang.foreign.MemorySession/openShared(java.lang.ref.Cleaner)/0/0",
             "java.lang.foreign.MemoryLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "java.lang.foreign.SequenceLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "java.lang.foreign.ValueLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
@@ -162,8 +158,6 @@ public class TestNulls {
         addDefaultMapping(Charset.class, Charset.defaultCharset());
         addDefaultMapping(Consumer.class, x -> {});
         addDefaultMapping(MethodType.class, MethodType.methodType(void.class));
-        addDefaultMapping(MemoryAddress.class, MemoryAddress.ofLong(1));
-        addDefaultMapping(Addressable.class, MemoryAddress.ofLong(1));
         addDefaultMapping(MemoryLayout.class, ValueLayout.JAVA_INT);
         addDefaultMapping(ValueLayout.class, ValueLayout.JAVA_INT);
         addDefaultMapping(ValueLayout.OfAddress.class, ValueLayout.ADDRESS);
@@ -178,7 +172,7 @@ public class TestNulls {
         addDefaultMapping(GroupLayout.class, MemoryLayout.structLayout(ValueLayout.JAVA_INT));
         addDefaultMapping(SequenceLayout.class, MemoryLayout.sequenceLayout(1, ValueLayout.JAVA_INT));
         addDefaultMapping(SymbolLookup.class, SymbolLookup.loaderLookup());
-        addDefaultMapping(MemorySegment.class, MemorySegment.ofArray(new byte[10]));
+        addDefaultMapping(MemorySegment.class, MemorySegment.ofAddress(42));
         addDefaultMapping(FunctionDescriptor.class, FunctionDescriptor.ofVoid());
         addDefaultMapping(Linker.class, Linker.nativeLinker());
         addDefaultMapping(VaList.class, VaListHelper.vaList);

@@ -22,8 +22,9 @@
  */
 package org.openjdk.bench.java.lang.foreign;
 
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
+import java.lang.foreign.MemorySegment;
+
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -72,8 +73,8 @@ public class LoopOverNonConstantFP {
             unsafe.putDouble(unsafe_addrOut + (i * CARRIER_SIZE), i);
         }
         session = MemorySession.openConfined();
-        segmentIn = MemorySegment.allocateNative(ALLOC_SIZE, session);
-        segmentOut = MemorySegment.allocateNative(ALLOC_SIZE, session);
+        segmentIn = session.allocate(ALLOC_SIZE);
+        segmentOut = session.allocate(ALLOC_SIZE);
         for (int i = 0; i < ELEM_SIZE; i++) {
             segmentIn.setAtIndex(JAVA_DOUBLE, i, i);
         }

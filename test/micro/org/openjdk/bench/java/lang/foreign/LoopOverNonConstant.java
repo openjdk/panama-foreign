@@ -23,7 +23,7 @@
 package org.openjdk.bench.java.lang.foreign;
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
+
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -36,6 +36,7 @@ import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 import sun.misc.Unsafe;
 
+import java.lang.foreign.MemorySession;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.TimeUnit;
@@ -66,7 +67,7 @@ public class LoopOverNonConstant extends JavaLayouts {
         for (int i = 0; i < ELEM_SIZE; i++) {
             unsafe.putInt(unsafe_addr + (i * CARRIER_SIZE) , i);
         }
-        segment = MemorySegment.allocateNative(ALLOC_SIZE, MemorySession.openConfined());
+        segment = MemorySession.openConfined().allocate(ALLOC_SIZE);
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_INT.set(segment, (long) i, i);
         }
@@ -155,24 +156,6 @@ public class LoopOverNonConstant extends JavaLayouts {
             res += segment.get(JAVA_INT_UNALIGNED, i * CARRIER_SIZE);
         }
         return res;
-    }
-
-    @Benchmark
-    public int segment_loop_instance_address() {
-        int sum = 0;
-        for (int i = 0; i < ELEM_SIZE; i++) {
-            sum += segment.address().get(JAVA_INT, i * CARRIER_SIZE);
-        }
-        return sum;
-    }
-
-    @Benchmark
-    public int segment_loop_instance_address_index() {
-        int sum = 0;
-        for (int i = 0; i < ELEM_SIZE; i++) {
-            sum += segment.address().getAtIndex(JAVA_INT, i);
-        }
-        return sum;
     }
 
     @Benchmark

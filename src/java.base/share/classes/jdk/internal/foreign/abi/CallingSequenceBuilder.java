@@ -27,7 +27,6 @@ package jdk.internal.foreign.abi;
 import jdk.internal.foreign.Utils;
 import sun.security.action.GetPropertyAction;
 
-import java.lang.foreign.Addressable;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
@@ -96,7 +95,7 @@ public class CallingSequenceBuilder {
         MethodType callerMethodType;
         MethodType calleeMethodType;
         if (!forUpcall) {
-            addArgumentBinding(0, Addressable.class, ValueLayout.ADDRESS, List.of(
+            addArgumentBinding(0, MemorySegment.class, ValueLayout.ADDRESS, List.of(
                 Binding.unboxAddress(),
                 Binding.vmStore(abi.targetAddrStorage(), long.class)));
             if (needsReturnBuffer) {
@@ -111,7 +110,7 @@ public class CallingSequenceBuilder {
             if (needsReturnBuffer) {
                 addArgumentBinding(0, MemorySegment.class, ValueLayout.ADDRESS, List.of(
                         Binding.vmLoad(abi.retBufAddrStorage(), long.class),
-                        Binding.boxAddress(),
+                        Binding.boxAddress(Long.MAX_VALUE),
                         Binding.toSegment(returnBufferSize)));
             }
 

@@ -22,8 +22,8 @@
  */
 
 import java.io.IOException;
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
+import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Random;
@@ -52,8 +52,7 @@ public class AbstractChannelsTest {
     }
 
     static MemorySession closeableSessionOrNull(MemorySession session) {
-        return (session.isCloseable()) ?
-                session : null;
+        return session.isCloseable() ? session : null;
     }
 
     static long remaining(ByteBuffer[] buffers) {
@@ -73,7 +72,7 @@ public class AbstractChannelsTest {
     static final Random RANDOM = RandomFactory.getRandom();
 
     static ByteBuffer segmentBufferOfSize(MemorySession session, int size) {
-        var segment = MemorySegment.allocateNative(size, 1, session);
+        var segment = session.allocate(size, 1);
         for (int i = 0; i < size; i++) {
             segment.set(JAVA_BYTE, i, ((byte)RANDOM.nextInt()));
         }
@@ -180,9 +179,9 @@ public class AbstractChannelsTest {
         static final Supplier<MemorySession> NEW_CONFINED =
                 new SessionSupplier(MemorySession::openConfined, "newConfinedSession()");
         static final Supplier<MemorySession> NEW_SHARED =
-                new SessionSupplier(MemorySession::openShared, "newSharedSession()");
+                new SessionSupplier(() -> MemorySession.openShared(), "newSharedSession()");
         static final Supplier<MemorySession> NEW_IMPLICIT =
-                new SessionSupplier(MemorySession::openImplicit, "newImplicitSession()");
+                new SessionSupplier(() -> MemorySession.openShared(), "newImplicitSession()");
         static final Supplier<MemorySession> GLOBAL =
                 new SessionSupplier(MemorySession::global, "globalSession()");
 

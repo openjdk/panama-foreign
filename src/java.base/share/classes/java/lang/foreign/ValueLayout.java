@@ -36,6 +36,8 @@ import java.util.Optional;
 import jdk.internal.foreign.Utils;
 import jdk.internal.javac.PreviewFeature;
 import jdk.internal.misc.Unsafe;
+import jdk.internal.reflect.CallerSensitive;
+import jdk.internal.reflect.Reflection;
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.Stable;
 import sun.invoke.util.Wrapper;
@@ -98,9 +100,17 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      */
     @Override
     public String toString() {
-        char descriptor = carrier == MemoryAddress.class ? 'A' : carrier.descriptorString().charAt(0);
+        String descriptor;
+        if (this instanceof ValueLayout.OfAddress addressLayout) {
+            descriptor = "A";
+            if (addressLayout.isUnbounded) {
+                descriptor += "!";
+            }
+        } else {
+            descriptor = carrier.descriptorString().substring(0, 1);
+        }
         if (order == ByteOrder.LITTLE_ENDIAN) {
-            descriptor = Character.toLowerCase(descriptor);
+            descriptor = descriptor.toLowerCase();
         }
         return decorateLayoutString(String.format("%s%d", descriptor, bitSize()));
     }
@@ -236,7 +246,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
         if (!isValidCarrier(carrier)) {
             throw new IllegalArgumentException("Invalid carrier: " + carrier.getName());
         }
-        if (carrier == MemoryAddress.class && size != ADDRESS_SIZE_BITS) {
+        if (carrier == MemorySegment.class && size != ADDRESS_SIZE_BITS) {
             throw new IllegalArgumentException("Address size mismatch: " + ADDRESS_SIZE_BITS + " != " + size);
         }
         if (carrier.isPrimitive()) {
@@ -256,7 +266,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
                 || carrier == long.class
                 || carrier == float.class
                 || carrier == double.class
-                || carrier == MemoryAddress.class;
+                || carrier == MemorySegment.class;
     }
 
     @Stable
@@ -568,23 +578,28 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
     }
 
     /**
-     * A value layout whose carrier is {@code MemoryAddress.class}.
+     * A value layout whose carrier is {@code MemorySegment.class}.
      *
      * @since 19
      */
     @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
     public static final class OfAddress extends ValueLayout {
+
+        private final boolean isUnbounded;
+
         OfAddress(ByteOrder order) {
-            super(MemoryAddress.class, order, ADDRESS_SIZE_BITS);
+            super(MemorySegment.class, order, ADDRESS_SIZE_BITS);
+            this.isUnbounded = false; // safe
         }
 
-        OfAddress(ByteOrder order, long size, long alignment, Optional<String> name) {
-            super(MemoryAddress.class, order, size, alignment, name);
+        OfAddress(ByteOrder order, long size, long alignment, boolean isUnbounded, Optional<String> name) {
+            super(MemorySegment.class, order, size, alignment, name);
+            this.isUnbounded = isUnbounded;
         }
 
         @Override
         OfAddress dup(long alignment, Optional<String> name) {
-            return new OfAddress(order(), bitSize(), alignment, name);
+            return new OfAddress(order(), bitSize(), alignment, isUnbounded, name);
         }
 
         @Override
@@ -600,16 +615,54 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
         @Override
         public OfAddress withOrder(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfAddress(order, bitSize(), alignment, name());
+            return new OfAddress(order, bitSize(), alignment, isUnbounded, name());
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return super.equals(other) &&
+                    ((OfAddress)other).isUnbounded == this.isUnbounded;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(super.hashCode(), isUnbounded);
+        }
+
+        /**
+         * Returns an <em>unbounded</em> address layout with the same carrier, alignment constraints, name and order as this address layout,
+         * but with the specified pointee layout. An unbounded address layouts allow raw addresses to be dereferenced
+         * as {@linkplain MemorySegment memory segments} whose size is set to {@link Long#MAX_VALUE}. As such,
+         * these segments be used in subsequent dereference operations.
+         * <p>
+         * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+         * Restricted methods are unsafe, and, if used incorrectly, their use might crash
+         * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+         * restricted methods, and use safe and supported functionalities, where possible.
+         *
+         * @return an unbounded address layout with same characteristics as this layout.
+         * @see #isUnbounded()
+         */
+        @CallerSensitive
+        public OfAddress asUnbounded() {
+            Reflection.ensureNativeAccess(Reflection.getCallerClass(), ValueLayout.OfAddress.class, "asUnsafe");
+            return new OfAddress(order(), bitSize(), alignment, true, name());
+        }
+
+        /**
+         * {@return {@code true}, if this address layout is an {@linkplain #asUnbounded() unbounded address layout}}.
+         */
+        public boolean isUnbounded() {
+            return isUnbounded;
         }
     }
 
     /**
      * A value layout constant whose size is the same as that of a machine address ({@code size_t}),
-     * bit alignment set to {@code sizeof(size_t) * 8}, and byte order set to {@link ByteOrder#nativeOrder()}.
+     * bit alignment set to {@code sizeof(size_t) * 8}, byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemoryLayout.valueLayout(MemoryAddress.class, ByteOrder.nativeOrder())
+     * MemoryLayout.valueLayout(MemorySegment.class, ByteOrder.nativeOrder())
      *             .withBitAlignment(<address size>);
      * }
      */

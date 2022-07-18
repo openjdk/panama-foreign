@@ -26,8 +26,8 @@
 package java.nio.channels;
 
 import java.io.IOException;
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
+import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.spi.AbstractInterruptibleChannel;
@@ -40,6 +40,7 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Collections;
+
 import jdk.internal.javac.PreviewFeature;
 
 /**
@@ -1015,7 +1016,7 @@ public abstract class FileChannel
      *          segment.
      *
      * @param   session
-     *          The segment memory session.
+     *          The segment session.
      *
      * @return  A new mapped memory segment.
      *

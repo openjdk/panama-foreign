@@ -77,7 +77,7 @@ public class ParallelSum extends JavaLayouts {
         for (int i = 0; i < ELEM_SIZE; i++) {
             unsafe.putInt(address + (i * CARRIER_SIZE), i);
         }
-        segment = MemorySegment.allocateNative(ALLOC_SIZE, CARRIER_SIZE, MemorySession.openShared());
+        segment = MemorySession.openShared().allocate(ALLOC_SIZE, CARRIER_SIZE);
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_INT.set(segment, (long) i, i);
         }
@@ -86,7 +86,7 @@ public class ParallelSum extends JavaLayouts {
     @TearDown
     public void tearDown() throws Throwable {
         unsafe.freeMemory(address);
-        segment.session().close();
+        ((MemorySession)segment.session()).close();
     }
 
     @Benchmark

@@ -26,10 +26,11 @@
 
 package jdk.internal.foreign;
 
-import java.lang.foreign.MemoryAddress;
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
+import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
+import java.util.Optional;
+
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;
 import jdk.internal.vm.annotation.ForceInline;
@@ -41,19 +42,17 @@ import sun.security.action.GetBooleanAction;
  */
 public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
-    public static final MemorySegment EVERYTHING = new NativeMemorySegmentImpl(0, Long.MAX_VALUE, false, MemorySessionImpl.GLOBAL) {
-        @Override
-        void checkBounds(long offset, long length) {
-            // do nothing
-        }
-
-        @Override
-        NativeMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySession session) {
-            throw new IllegalStateException();
-        }
-    };
-
     private static final Unsafe unsafe = Unsafe.getUnsafe();
+
+    @Override
+    public long address() {
+        return min;
+    }
+
+    @Override
+    public Optional<Object> array() {
+        return Optional.empty();
+    }
 
     // The maximum alignment supported by malloc - typically 16 on
     // 64-bit platforms and 8 on 32-bit platforms.
@@ -71,12 +70,6 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     @ForceInline
     @Override
-    public MemoryAddress address() {
-        checkValidState();
-        return MemoryAddress.ofLong(unsafeGetOffset());
-    }
-
-    @Override
     NativeMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySession session) {
         return new NativeMemorySegmentImpl(min + offset, size, readOnly, session);
     }
@@ -84,7 +77,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     @Override
     ByteBuffer makeByteBuffer() {
         return nioAccess.newDirectByteBuffer(min, (int) this.length, null,
-                session == MemorySessionImpl.GLOBAL ? null : this);
+                session == MemorySession.global() ? null : this);
     }
 
     @Override
@@ -142,9 +135,18 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         return segment;
     }
 
-    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, MemorySession session) {
-        MemorySessionImpl.toSessionImpl(session).checkValidState();
-        AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, false, session);
-        return segment;
+    // Unsafe native segment factories. These are used by the implementation code, to skip the sanity checks
+    // associated with MemorySegment::ofAddress.
+
+    @ForceInline
+    public static MemorySegment makeNativeSegmentUnchecked(long min, long bytesSize, MemorySession session) {
+        MemorySessionImpl sessionImpl = MemorySessionImpl.toSessionImpl(session);
+        sessionImpl.checkValidState();
+        return new NativeMemorySegmentImpl(min, bytesSize, false, session);
+    }
+
+    @ForceInline
+    public static MemorySegment makeNativeSegmentUnchecked(long min, long bytesSize) {
+        return new NativeMemorySegmentImpl(min, bytesSize, false, MemorySession.global());
     }
 }

@@ -32,7 +32,6 @@
 // -- This file was mechanically generated: Do not edit! -- //
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
 import jdk.incubator.vector.ShortVector;
 import jdk.incubator.vector.VectorMask;

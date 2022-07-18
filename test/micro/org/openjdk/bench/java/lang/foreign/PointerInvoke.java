@@ -25,11 +25,10 @@
 
 package org.openjdk.bench.java.lang.foreign;
 
-import java.lang.foreign.Addressable;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
+
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -42,6 +41,7 @@ import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit;
 public class PointerInvoke extends CLayouts {
 
     MemorySession session = MemorySession.openConfined();
-    MemorySegment segment = MemorySegment.allocateNative(100, session);
+    MemorySegment segment = session.allocate(100);
 
     static {
         System.loadLibrary("Ptr");
@@ -79,22 +79,17 @@ public class PointerInvoke extends CLayouts {
 
     @Benchmark
     public int panama_call_as_long() throws Throwable {
-        return (int)F_LONG.invokeExact(segment.address().toRawLongValue());
+        return (int)F_LONG.invokeExact(segment.address());
     }
 
     @Benchmark
     public int panama_call_as_address() throws Throwable {
-        return (int)F_PTR.invokeExact((Addressable)segment.address());
-    }
-
-    @Benchmark
-    public int panama_call_as_segment() throws Throwable {
-        return (int)F_PTR.invokeExact((Addressable)segment);
+        return (int)F_PTR.invokeExact(segment);
     }
 
     @Benchmark
     public int panama_call_as_new_segment() throws Throwable {
         MemorySegment newSegment = MemorySegment.ofAddress(segment.address(), 100, session);
-        return (int)F_PTR.invokeExact((Addressable)newSegment);
+        return (int)F_PTR.invokeExact(newSegment);
     }
 }

@@ -29,7 +29,6 @@
  */
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import org.testng.annotations.Test;
@@ -59,10 +58,8 @@ public class TestClassLoaderFindNative {
 
     @Test
     public void testVariableSymbolLookup() {
-        MemorySegment segment = MemorySegment.ofAddress(
-                SymbolLookup.loaderLookup().lookup("c").get().address(),
-                ValueLayout.JAVA_INT.byteSize(),
-                MemorySession.global());
+        MemorySegment sym = SymbolLookup.loaderLookup().lookup("c").get();
+        MemorySegment segment = MemorySegment.ofAddress(sym.address(), ValueLayout.JAVA_INT.byteSize(), sym.session());
         assertEquals(segment.get(JAVA_BYTE, 0), 42);
     }
 }

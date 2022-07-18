@@ -28,7 +28,6 @@ import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import sun.security.action.GetPropertyAction;
 
-import java.lang.foreign.Addressable;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.invoke.MethodHandle;
@@ -60,7 +59,7 @@ public class DowncallLinker {
             MH_INVOKE_INTERP_BINDINGS = lookup.findVirtual(DowncallLinker.class, "invokeInterpBindings",
                     methodType(Object.class, SegmentAllocator.class, Object[].class, InvocationData.class));
             MH_CHECK_SYMBOL = lookup.findStatic(SharedUtils.class, "checkSymbol",
-                    methodType(void.class, Addressable.class));
+                    methodType(void.class, MemorySegment.class));
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -110,7 +109,7 @@ public class DowncallLinker {
          }
 
         assert handle.type().parameterType(0) == SegmentAllocator.class;
-        assert handle.type().parameterType(1) == Addressable.class;
+        assert handle.type().parameterType(1) == MemorySegment.class;
         handle = foldArguments(handle, 1, MH_CHECK_SYMBOL);
 
         handle = SharedUtils.swapArguments(handle, 0, 1); // normalize parameter order
@@ -150,10 +149,10 @@ public class DowncallLinker {
     private record InvocationData(MethodHandle leaf, Map<VMStorage, Integer> argIndexMap, Map<VMStorage, Integer> retIndexMap) {}
 
     Object invokeInterpBindings(SegmentAllocator allocator, Object[] args, InvocationData invData) throws Throwable {
-        Binding.Context unboxContext = callingSequence.allocationSize() != 0
-                ? Binding.Context.ofBoundedAllocator(callingSequence.allocationSize())
-                : Binding.Context.DUMMY;
-        try (unboxContext) {
+        Binding.Allocator unboxAllocator = callingSequence.allocationSize() != 0
+                ? Binding.Allocator.of(callingSequence.allocationSize())
+                : Binding.Allocator.DUMMY;
+        try (unboxAllocator) {
             MemorySegment returnBuffer = null;
 
             // do argument processing, get Object[] as result
@@ -161,7 +160,7 @@ public class DowncallLinker {
             if (callingSequence.needsReturnBuffer()) {
                 // we supply the return buffer (argument array does not contain it)
                 Object[] prefixedArgs = new Object[args.length + 1];
-                returnBuffer = unboxContext.allocator().allocate(callingSequence.returnBufferSize());
+                returnBuffer = unboxAllocator.allocate(callingSequence.returnBufferSize());
                 prefixedArgs[0] = returnBuffer;
                 System.arraycopy(args, 0, prefixedArgs, 1, args.length);
                 args = prefixedArgs;
@@ -171,7 +170,7 @@ public class DowncallLinker {
                 BindingInterpreter.unbox(arg, callingSequence.argumentBindings(i),
                         (storage, type, value) -> {
                             leafArgs[invData.argIndexMap.get(storage)] = value;
-                        }, unboxContext);
+                        }, unboxAllocator);
             }
 
             // call leaf
@@ -192,10 +191,10 @@ public class DowncallLinker {
                                 retBufReadOffset += abi.arch.typeSize(storage.type());
                                 return result1;
                             }
-                        }, Binding.Context.ofAllocator(allocator));
+                        }, allocator);
             } else {
                 return BindingInterpreter.box(callingSequence.returnBindings(), (storage, type) -> o,
-                        Binding.Context.ofAllocator(allocator));
+                        allocator);
             }
         }
     }

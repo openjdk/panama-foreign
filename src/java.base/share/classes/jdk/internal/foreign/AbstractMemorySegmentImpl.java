@@ -25,10 +25,9 @@
 
 package jdk.internal.foreign;
 
-import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
 import java.nio.Buffer;
@@ -51,6 +50,7 @@ import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.ScopedMemoryAccess;
+import jdk.internal.ref.CleanerFactory;
 import jdk.internal.util.ArraysSupport;
 import jdk.internal.util.Preconditions;
 import jdk.internal.vm.annotation.ForceInline;
@@ -69,8 +69,6 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegment, SegmentAllocator, Scoped, BiFunction<String, List<Number>, RuntimeException> {
 
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
-
-    static final long NONCE = new Random().nextLong();
 
     static final JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
 
@@ -220,11 +218,6 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     }
 
     @Override
-    public MemoryAddress address() {
-        throw new UnsupportedOperationException("Cannot obtain address of on-heap segment");
-    }
-
-    @Override
     public final ByteBuffer asByteBuffer() {
         checkArraySize("ByteBuffer", 1);
         ByteBuffer _bb = makeByteBuffer();
@@ -248,33 +241,6 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     @Override
     public boolean isNative() {
         return false;
-    }
-
-    @Override
-    public final Optional<MemorySegment> asOverlappingSlice(MemorySegment other) {
-        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)Objects.requireNonNull(other);
-        if (unsafeGetBase() == that.unsafeGetBase()) {  // both either native or heap
-            final long thisStart = this.unsafeGetOffset();
-            final long thatStart = that.unsafeGetOffset();
-            final long thisEnd = thisStart + this.byteSize();
-            final long thatEnd = thatStart + that.byteSize();
-
-            if (thisStart < thatEnd && thisEnd > thatStart) {  //overlap occurs
-                long offsetToThat = this.segmentOffset(that);
-                long newOffset = offsetToThat >= 0 ? offsetToThat : 0;
-                return Optional.of(asSlice(newOffset, Math.min(this.byteSize() - newOffset, that.byteSize() + offsetToThat)));
-            }
-        }
-        return Optional.empty();
-    }
-
-    @Override
-    public final long segmentOffset(MemorySegment other) {
-        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl) Objects.requireNonNull(other);
-        if (unsafeGetBase() == that.unsafeGetBase()) {
-            return that.unsafeGetOffset() - this.unsafeGetOffset();
-        }
-        throw new UnsupportedOperationException("Cannot compute offset from native to heap (or vice versa).");
     }
 
     @Override
@@ -403,11 +369,6 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
                         this, offset, length));
     }
 
-    protected int id() {
-        //compute a stable and random id for this memory segment
-        return Math.abs(Objects.hash(unsafeGetBase(), unsafeGetOffset(), NONCE));
-    }
-
     static class SegmentSplitter implements Spliterator<MemorySegment> {
         AbstractMemorySegmentImpl segment;
         long elemCount;
@@ -486,17 +447,14 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
 
     @Override
     public String toString() {
-        return "MemorySegment{ id=0x" + Long.toHexString(id()) + " limit: " + length + " }";
+        return "MemorySegment{ array: " + array() + " address:" + address() + " limit: " + length + " }";
     }
 
     @Override
     public boolean equals(Object o) {
         return o instanceof AbstractMemorySegmentImpl that &&
-                isNative() == that.isNative() &&
-                unsafeGetOffset() == that.unsafeGetOffset() &&
-                unsafeGetBase() == that.unsafeGetBase() &&
-                length == that.length &&
-                session.equals(that.session);
+                array().equals(that.array()) &&
+                address() == that.address();
     }
 
     @Override
@@ -521,11 +479,12 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
         int size = limit - pos;
 
         AbstractMemorySegmentImpl bufferSegment = (AbstractMemorySegmentImpl)nioAccess.bufferSegment(bb);
-        final MemorySession bufferSession;
+        final MemorySession bufferMemorySession;
         if (bufferSegment != null) {
-            bufferSession = bufferSegment.session;
+            bufferMemorySession = bufferSegment.session();
         } else {
-            bufferSession = MemorySessionImpl.heapSession(bb);
+            // an implicit session which keeps the buffer reachable
+            bufferMemorySession = MemorySessionImpl.createImplicit(bb, CleanerFactory.cleaner());
         }
         boolean readOnly = bb.isReadOnly();
         int scaleFactor = getScaleFactor(bb);
@@ -548,10 +507,10 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
                 throw new AssertionError("Cannot get here");
             }
         } else if (unmapper == null) {
-            return new NativeMemorySegmentImpl(bbAddress + (pos << scaleFactor), size << scaleFactor, readOnly, bufferSession);
+            return new NativeMemorySegmentImpl(bbAddress + (pos << scaleFactor), size << scaleFactor, readOnly, bufferMemorySession);
         } else {
             // we can ignore scale factor here, a mapped buffer is always a byte buffer, so scaleFactor == 0.
-            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, readOnly, bufferSession);
+            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, readOnly, bufferMemorySession);
         }
     }
 

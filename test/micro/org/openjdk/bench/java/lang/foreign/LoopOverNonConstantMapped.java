@@ -23,7 +23,7 @@
 package org.openjdk.bench.java.lang.foreign;
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
+
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -38,6 +38,7 @@ import sun.misc.Unsafe;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.foreign.MemorySession;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
@@ -94,13 +95,13 @@ public class LoopOverNonConstantMapped extends JavaLayouts {
         }
         fileChannel = FileChannel.open(tempPath, StandardOpenOption.READ, StandardOpenOption.WRITE);
         segment = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, ALLOC_SIZE, MemorySession.openConfined());
-        unsafe_addr = segment.address().toRawLongValue();
+        unsafe_addr = segment.address();
     }
 
     @TearDown
     public void tearDown() throws IOException {
         fileChannel.close();
-        segment.session().close();
+        ((MemorySession)segment.session()).close();
         unsafe.invokeCleaner(byteBuffer);
     }
 
@@ -145,15 +146,6 @@ public class LoopOverNonConstantMapped extends JavaLayouts {
         int res = 0;
         for (int i = 0; i < ELEM_SIZE; i ++) {
             res += segment.get(JAVA_INT, i * CARRIER_SIZE);
-        }
-        return res;
-    }
-
-    @Benchmark
-    public int segment_loop_instance_address() {
-        int res = 0;
-        for (int i = 0; i < ELEM_SIZE; i ++) {
-            res += segment.address().get(JAVA_INT, i * CARRIER_SIZE);
         }
         return res;
     }

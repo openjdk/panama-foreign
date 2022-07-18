@@ -25,8 +25,8 @@
 
 package jdk.internal.foreign;
 
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
+import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
 
 public final class ArenaAllocator implements SegmentAllocator {
@@ -49,7 +49,7 @@ public final class ArenaAllocator implements SegmentAllocator {
     }
 
     MemorySegment trySlice(long bytesSize, long bytesAlignment) {
-        long min = segment.address().toRawLongValue();
+        long min = segment.address();
         long start = Utils.alignUp(min + sp, bytesAlignment) - min;
         if (segment.byteSize() - start < bytesSize) {
             return null;
@@ -66,12 +66,13 @@ public final class ArenaAllocator implements SegmentAllocator {
             throw new OutOfMemoryError();
         }
         size += allocatedSize;
-        return MemorySegment.allocateNative(bytesSize, bytesAlignment, session);
+        return session.allocate(bytesSize, bytesAlignment);
     }
 
     @Override
     public MemorySegment allocate(long bytesSize, long bytesAlignment) {
         Utils.checkAllocationSizeAndAlign(bytesSize, bytesAlignment);
+        MemorySessionImpl.toSessionImpl(session).checkValidState();
         // try to slice from current segment first...
         MemorySegment slice = trySlice(bytesSize, bytesAlignment);
         if (slice != null) {

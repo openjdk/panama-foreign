@@ -22,12 +22,11 @@
  */
 package org.openjdk.bench.java.lang.foreign;
 
-import java.lang.foreign.Addressable;
+import java.lang.foreign.MemorySession;
+import java.lang.foreign.MemorySegment;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 
 import java.lang.foreign.SymbolLookup;
@@ -42,51 +41,51 @@ public class CallOverheadHelper extends CLayouts {
 
     static final MethodHandle func;
     static final MethodHandle func_v;
-    static Addressable func_addr;
+    static MemorySegment func_addr;
     static final MethodHandle identity;
     static final MethodHandle identity_v;
-    static Addressable identity_addr;
+    static MemorySegment identity_addr;
     static final MethodHandle identity_struct;
     static final MethodHandle identity_struct_v;
-    static Addressable identity_struct_addr;
+    static MemorySegment identity_struct_addr;
     static final MethodHandle identity_struct_3;
     static final MethodHandle identity_struct_3_v;
-    static Addressable identity_struct_3_addr;
+    static MemorySegment identity_struct_3_addr;
     static final MethodHandle identity_memory_address;
     static final MethodHandle identity_memory_address_v;
-    static Addressable identity_memory_address_addr;
+    static MemorySegment identity_memory_address_addr;
     static final MethodHandle identity_memory_address_3;
     static final MethodHandle identity_memory_address_3_v;
-    static Addressable identity_memory_address_3_addr;
+    static MemorySegment identity_memory_address_3_addr;
     static final MethodHandle args1;
     static final MethodHandle args1_v;
-    static Addressable args1_addr;
+    static MemorySegment args1_addr;
     static final MethodHandle args2;
     static final MethodHandle args2_v;
-    static Addressable args2_addr;
+    static MemorySegment args2_addr;
     static final MethodHandle args3;
     static final MethodHandle args3_v;
-    static Addressable args3_addr;
+    static MemorySegment args3_addr;
     static final MethodHandle args4;
     static final MethodHandle args4_v;
-    static Addressable args4_addr;
+    static MemorySegment args4_addr;
     static final MethodHandle args5;
     static final MethodHandle args5_v;
-    static Addressable args5_addr;
+    static MemorySegment args5_addr;
     static final MethodHandle args10;
     static final MethodHandle args10_v;
-    static Addressable args10_addr;
+    static MemorySegment args10_addr;
 
     static final MemoryLayout POINT_LAYOUT = MemoryLayout.structLayout(
             C_INT, C_INT
     );
 
-    static final MemorySegment sharedPoint = MemorySegment.allocateNative(POINT_LAYOUT, MemorySession.openShared());
-    static final MemorySegment confinedPoint = MemorySegment.allocateNative(POINT_LAYOUT, MemorySession.openConfined());
+    static final MemorySegment sharedPoint = MemorySession.openShared().allocate(POINT_LAYOUT);
+    static final MemorySegment confinedPoint = MemorySession.openConfined().allocate(POINT_LAYOUT);
 
-    static final MemorySegment point = MemorySegment.allocateNative(POINT_LAYOUT, MemorySession.openImplicit());
+    static final MemorySegment point = MemorySegment.allocateNative(POINT_LAYOUT);
 
-    static final SegmentAllocator recycling_allocator = SegmentAllocator.prefixAllocator(MemorySegment.allocateNative(POINT_LAYOUT, MemorySession.openImplicit()));
+    static final SegmentAllocator recycling_allocator = SegmentAllocator.prefixAllocator(MemorySegment.allocateNative(POINT_LAYOUT));
 
     static {
         System.loadLibrary("CallOverheadJNI");

@@ -56,7 +56,7 @@ public class LoopOverPollutedSegments extends JavaLayouts {
 
 
     MemorySession session;
-    MemorySegment nativeSegment, nativeSharedSegment, heapSegmentBytes, heapSegmentFloats;
+    MemorySegment nativeSegment, heapSegmentBytes, heapSegmentFloats;
     byte[] arr;
     long addr;
 
@@ -67,8 +67,8 @@ public class LoopOverPollutedSegments extends JavaLayouts {
             unsafe.putInt(addr + (i * 4), i);
         }
         arr = new byte[ALLOC_SIZE];
-        nativeSegment = MemorySegment.allocateNative(ALLOC_SIZE, 4, session = MemorySession.openConfined());
-        nativeSharedSegment = MemorySegment.allocateNative(ALLOC_SIZE, 4, session);
+        MemorySession session = MemorySession.openConfined();
+        nativeSegment = session.allocate(ALLOC_SIZE, 4);
         heapSegmentBytes = MemorySegment.ofArray(new byte[ALLOC_SIZE]);
         heapSegmentFloats = MemorySegment.ofArray(new float[ELEM_SIZE]);
 
@@ -77,8 +77,6 @@ public class LoopOverPollutedSegments extends JavaLayouts {
                 unsafe.putInt(arr, Unsafe.ARRAY_BYTE_BASE_OFFSET + (i * 4), i);
                 nativeSegment.setAtIndex(JAVA_INT_UNALIGNED, i, i);
                 nativeSegment.setAtIndex(JAVA_FLOAT_UNALIGNED, i, i);
-                nativeSharedSegment.setAtIndex(JAVA_INT_UNALIGNED, i, i);
-                nativeSharedSegment.setAtIndex(JAVA_FLOAT_UNALIGNED, i, i);
                 VH_INT_UNALIGNED.set(nativeSegment, (long)i, i);
                 heapSegmentBytes.setAtIndex(JAVA_INT_UNALIGNED, i, i);
                 heapSegmentBytes.setAtIndex(JAVA_FLOAT_UNALIGNED, i, i);

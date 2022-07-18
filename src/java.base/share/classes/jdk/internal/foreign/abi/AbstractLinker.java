@@ -30,10 +30,10 @@ import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.Objects;
@@ -48,9 +48,9 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
         Objects.requireNonNull(function);
 
         return DOWNCALL_CACHE.get(function, fd -> {
-            MethodType type = SharedUtils.inferMethodType(fd, false);
+            MethodType type = SharedUtils.inferMethodType(fd);
             MethodHandle handle = arrangeDowncall(type, fd);
-            handle = SharedUtils.maybeInsertAllocator(handle);
+            handle = SharedUtils.maybeInsertAllocator(function, handle);
             return handle;
         });
     }
@@ -63,7 +63,7 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
         Objects.requireNonNull(function);
         SharedUtils.checkExceptions(target);
 
-        MethodType type = SharedUtils.inferMethodType(function, true);
+        MethodType type = SharedUtils.inferMethodType(function);
         if (!type.equals(target.type())) {
             throw new IllegalArgumentException("Wrong method handle type: " + target.type());
         }
