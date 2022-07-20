@@ -55,7 +55,7 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
         try {
             DUMMY = MethodHandles.lookup().findStatic(TestUpcallBase.class, "dummy", MethodType.methodType(void.class));
             PASS_AND_SAVE = MethodHandles.lookup().findStatic(TestUpcallBase.class, "passAndSave",
-                    MethodType.methodType(Object.class, Object[].class, AtomicReference.class, int.class, List.class));
+                    MethodType.methodType(Object.class, Object[].class, AtomicReference.class, int.class));
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
@@ -104,12 +104,7 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
         }
 
         AtomicReference<Object[]> box = new AtomicReference<>();
-        List<MemoryLayout> layouts = new ArrayList<>();
-        layouts.addAll(prefix);
-        for (int i = 0 ; i < params.size() ; i++) {
-            layouts.add(params.get(i).layout(fields));
-        }
-        MethodHandle mh = insertArguments(PASS_AND_SAVE, 1, box, prefix.size(), layouts);
+        MethodHandle mh = insertArguments(PASS_AND_SAVE, 1, box, prefix.size());
         mh = mh.asCollector(Object[].class, prefix.size() + params.size());
 
         for(int i = 0; i < prefix.size(); i++) {
@@ -123,13 +118,21 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
             mh = mh.asType(mh.type().changeParameterType(prefix.size() + i, carrier));
 
             final int finalI = prefix.size() + i;
-            addUpcallCheck(box, finalI, layout, argChecks);
+            if (layout instanceof GroupLayout) {
+                argChecks.add(o -> assertStructEquals((MemorySegment) box.get()[finalI], (MemorySegment) o[finalI], layout));
+            } else {
+                argChecks.add(o -> assertEquals(box.get()[finalI], o[finalI]));
+            }
         }
 
         ParamType firstParam = params.get(0);
         MemoryLayout firstlayout = firstParam.layout(fields);
         Class<?> firstCarrier = carrier(firstlayout);
-        addUpcallCheck(box, prefix.size(), firstlayout, argChecks);
+        if (firstlayout instanceof GroupLayout) {
+            checks.add(o -> assertStructEquals((MemorySegment) box.get()[prefix.size()], (MemorySegment) o, firstlayout));
+        } else {
+            checks.add(o -> assertEquals(o, box.get()[prefix.size()]));
+        }
 
         mh = mh.asType(mh.type().changeReturnType(ret == Ret.VOID ? void.class : firstCarrier));
 
@@ -140,17 +143,10 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
         return ABI.upcallStub(mh, func, session);
     }
 
-    static void addUpcallCheck(AtomicReference<Object[]> box, int index, MemoryLayout layout, List<Consumer<Object[]>> argChecks) {
-        if (layout instanceof GroupLayout) {
-            argChecks.add(o -> assertStructEquals((MemorySegment) box.get()[index], (MemorySegment) o[index], layout));
-        } else {
-            argChecks.add(o -> assertEquals(box.get()[index], o[index]));
-        }
-    }
-
-    static Object passAndSave(Object[] o, AtomicReference<Object[]> ref, int retArg, List<MemoryLayout> layouts) {
+    static Object passAndSave(Object[] o, AtomicReference<Object[]> ref, int retArg) {
         for (int i = 0; i < o.length; i++) {
-            if (!isPointer(layouts.get(i)) && o[i] instanceof MemorySegment) {
+            if (o[i] instanceof MemorySegment &&
+                    !((MemorySegment) o[i]).session().equals(MemorySession.global())) {
                 MemorySegment ms = (MemorySegment) o[i];
                 MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), MemorySession.openImplicit());
                 copy.copyFrom(ms);
