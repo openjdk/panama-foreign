@@ -75,15 +75,16 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
                     S_PDI_LAYOUT, C_INT, C_DOUBLE, C_POINTER)
             );
             MH_passAndSave = MethodHandles.lookup().findStatic(TestUpcallHighArity.class, "passAndSave",
-                    MethodType.methodType(void.class, Object[].class, AtomicReference.class, List.class));
+                    MethodType.methodType(void.class, Object[].class, AtomicReference.class));
         } catch (ReflectiveOperationException e) {
             throw new InternalError(e);
         }
     }
 
-    static void passAndSave(Object[] o, AtomicReference<Object[]> ref, List<MemoryLayout> layouts) {
+    static void passAndSave(Object[] o, AtomicReference<Object[]> ref) {
         for (int i = 0; i < o.length; i++) {
-            if (!isPointer(layouts.get(i)) && o[i] instanceof MemorySegment) {
+            if (o[i] instanceof MemorySegment &&
+                    !((MemorySegment)o[i]).session().equals(MemorySession.global())) {
                 MemorySegment ms = (MemorySegment) o[i];
                 MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), MemorySession.openImplicit());
                 copy.copyFrom(ms);
@@ -97,7 +98,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
     public void testUpcall(MethodHandle downcall, MethodType upcallType,
                            FunctionDescriptor upcallDescriptor) throws Throwable {
         AtomicReference<Object[]> capturedArgs = new AtomicReference<>();
-        MethodHandle target = MethodHandles.insertArguments(MH_passAndSave, 1, capturedArgs, upcallDescriptor.argumentLayouts())
+        MethodHandle target = MethodHandles.insertArguments(MH_passAndSave, 1, capturedArgs)
                                          .asCollector(Object[].class, upcallType.parameterCount())
                                          .asType(upcallType);
         try (MemorySession session = MemorySession.openConfined()) {
@@ -113,13 +114,9 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
 
             Object[] capturedArgsArr = capturedArgs.get();
             for (int i = 0; i < capturedArgsArr.length; i++) {
-                if (upcallType.parameterType(i) == MemorySegment.class) {
-                    if (!isPointer(upcallDescriptor.argumentLayouts().get(i))) {
-                        assertStructEquals((MemorySegment) capturedArgsArr[i], (MemorySegment) args[i + 1], argLayouts.get(i));
-                    } else {
-                        assertEquals(((MemorySegment)capturedArgsArr[i]).address(),
-                                     ((MemorySegment)args[i + 1]).address(), "For index " + i);
-                    }
+                if (upcallType.parameterType(i) == MemorySegment.class &&
+                        !isPointer(upcallDescriptor.argumentLayouts().get(i))) {
+                    assertStructEquals((MemorySegment) capturedArgsArr[i], (MemorySegment) args[i + 1], argLayouts.get(i));
                 } else {
                     assertEquals(capturedArgsArr[i], args[i + 1], "For index " + i);
                 }
