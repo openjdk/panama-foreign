@@ -58,7 +58,7 @@ import jdk.internal.vm.annotation.ForceInline;
  *
  * There are many kinds of memory segments:
  * <ul>
- *     <li>{@linkplain MemorySegment#allocateNative(long, long) native memory segments}, backed by off-heap memory;</li>
+ *     <li>{@linkplain MemorySegment#allocateNative(long, long, MemorySession) native memory segments}, backed by off-heap memory;</li>
  *     <li>{@linkplain FileChannel#map(FileChannel.MapMode, long, long, MemorySession) mapped memory segments}, obtained by mapping
  * a file into main memory ({@code mmap}); the contents of a mapped memory segments can be {@linkplain #force() persisted} and
  * {@linkplain #load() loaded} to and from the underlying memory-mapped file;</li>
@@ -69,18 +69,18 @@ import jdk.internal.vm.annotation.ForceInline;
  * {@link ByteBuffer#allocateDirect(int)} method will be backed by off-heap memory.</li>
  * </ul>
  *
- * <h2>Lifecycle and confinement</h2>
+ * <h2 id="lifecyle-confinement">Lifecycle and confinement</h2>
  *
  * Memory segments are associated with a {@linkplain MemorySegment#session() memory session}. As for all resources associated
  * with a memory session, a segment cannot be accessed after its underlying session has been closed. For instance,
  * the following code will result in an exception:
- * {@snippet lang = java:
+ * {@snippet lang=java :
  * MemorySegment segment = null;
  * try (MemorySession session = MemorySession.openConfined()) {
  *     segment = MemorySegment.allocateNative(8, session);
  * }
  * segment.get(ValueLayout.JAVA_LONG, 0); // already closed!
- *}
+ * }
  * Additionally, access to a memory segment is subject to the thread-confinement checks enforced by the owning memory
  * session; that is, if the segment is associated with a shared session, it can be accessed by multiple threads;
  * if it is associated with a confined session, it can only be accessed by the thread which owns the memory session.
@@ -91,7 +91,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * from byte buffer instances obtained calling the {@link #asByteBuffer()} method on a memory segment {@code S}
  * are associated with the same memory session as {@code S}.
  *
- * <h2><a id = "segment-deref">Dereferencing memory segments</a></h2>
+ * <h2 id="segment-deref">Dereferencing memory segments</h2>
  *
  * A memory segment can be read or written using various methods provided in this class (e.g. {@link #get(ValueLayout.OfInt, long)}).
  * Each dereference method takes a {@linkplain ValueLayout value layout}, which specifies the size,
@@ -136,19 +136,19 @@ import jdk.internal.vm.annotation.ForceInline;
  * intHandle.get(segment, 3L); // get int element at offset 3 * 4 = 12
  * }
  *
- * <h2>Slicing memory segments</h2>
+ * <h2 id="slicing">Slicing memory segments</h2>
  *
  * Memory segments support <em>slicing</em>. A memory segment can be used to {@linkplain MemorySegment#asSlice(long, long) obtain}
  * other segments backed by the same underlying memory region, but with <em>stricter</em> spatial bounds than the ones
  * of the original segment:
- * {@snippet lang = java:
+ * {@snippet lang=java :
  * MemorySession session = ...
- * MemorySegment segment = session.allocate(100);
+ * MemorySegment segment = MemorySegment.allocateNative(100, session);
  * MemorySegment slice = segment.asSlice(50, 10);
  * slice.get(ValueLayout.JAVA_INT, 20); // Out of bounds!
  * session.close();
  * slice.get(ValueLayout.JAVA_INT, 0); // Already closed!
- *}
+ * }
  * The above code creates a native segment that is 100 bytes long; then, it creates a slice that starts at offset 50
  * of {@code segment}, and is 10 bytes long. As a result, attempting to read an int value at offset 20 of the
  * {@code slice} segment will result in an exception. The {@linkplain MemorySession temporal bounds} of the original segment
@@ -157,18 +157,18 @@ import jdk.internal.vm.annotation.ForceInline;
  * <p>
  * A client might obtain a {@link Stream} from a segment, which can then be used to slice the segment (according to a given
  * element layout) and even allow multiple threads to work in parallel on disjoint segment slices
- * (to do this, the segment has to be associated with a shared session). The following code can be used to sum all int
+ * (to do this, the segment has to be associated with a shared memory session). The following code can be used to sum all int
  * values in a memory segment in parallel:
  *
  * {@snippet lang=java :
  * try (MemorySession session = MemorySession.openShared()) {
  *     SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.sequenceLayout(1024, ValueLayout.JAVA_INT);
- *     MemorySegment segment = session.allocate(SEQUENCE_LAYOUT);
+ *     MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT, session);
  *     int sum = segment.elements(ValueLayout.JAVA_INT).parallel()
  *                      .mapToInt(s -> s.get(ValueLayout.JAVA_INT, 0))
  *                      .sum();
  * }
- *}
+ * }
  *
  * <h2 id="segment-alignment">Alignment</h2>
  *
@@ -220,7 +220,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * constructed from a {@code byte[]} might have a subset of addresses {@code S} which happen to be 8-byte aligned. But determining
  * which segment addresses belong to {@code S} requires reasoning about details which are ultimately implementation-dependent.
  *
- * <h2>Restricted memory segments</h2>
+ * <h2 id="restricted-segments">Restricted memory segments</h2>
  * Sometimes it is necessary to turn a raw address (e.g. obtained from native code) into a memory segment with
  * full spatial, temporal and confinement bounds. To do this, clients can {@linkplain #ofAddress(long, long, MemorySession)}
  * a native segment <em>unsafely</em>, by providing a new size, as well as a new {@linkplain MemorySession memory session}.
@@ -353,16 +353,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     MemorySegment asReadOnly();
 
     /**
-     * Returns {@code true} if this segment is a native segment. A native memory segment is associated with
-     * an off-heap memory region. This is true if the segment has been obtained in one of the following ways:
-     * <ul>
-     * <li>using the {@link MemorySegment#allocateNative(long, long)} (and related) methods;</li>
-     * <li>using the {@link MemorySession#allocate(long, long)} (and related) methods;</li>
-     * <li>using the {@link #ofBuffer(Buffer)} factory, where the buffer parameter is a {@linkplain ByteBuffer#allocateDirect(int) direct byte buffer};</li>
-     * <li>using the {@link FileChannel#map(FileChannel.MapMode, long, long)} factory, e.g. if this is a {@linkplain #isMapped() mapped} segment;</li>
-     * <li>interacting with {@link Linker} downcall method handles and upcall stubs; or</li>
-     * <li>using the {@link SymbolLookup#lookup(String)} lookup method.</li>
-     * </ul>
+     * Returns {@code true} if this segment is a native segment. A native memory segment is
+     * created using the {@link #allocateNative(long, MemorySession)} (and related) factory, or a buffer segment
+     * derived from a {@linkplain ByteBuffer#allocateDirect(int) direct byte buffer} using the {@link #ofBuffer(Buffer)} factory,
+     * or if this is a {@linkplain #isMapped() mapped} segment.
      * @return {@code true} if this segment is native segment.
      */
     boolean isNative();
@@ -434,7 +428,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Finds and returns the offset, in bytes, of the first mismatch between
      * this segment and the given other segment. The offset is relative to the
-     * start of each segment and will be in the
+     * {@linkplain #address() base address} of each segment and will be in the
      * range of 0 (inclusive) up to the {@linkplain #byteSize() size} (in bytes) of
      * the smaller memory segment (exclusive).
      * <p>
@@ -737,17 +731,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * The segment starts relative to the buffer's position (inclusive) and ends relative to the buffer's limit (exclusive).
      * <p>
      * If the buffer is {@linkplain ByteBuffer#isReadOnly() read-only}, the resulting segment will also be
-     * {@linkplain ByteBuffer#isReadOnly() read-only}. The sesison {@code S} associated with the returned segment is
-     * computed as follows:
-     * <ul>
-     *     <li>if the buffer has been obtained by calling {@link #asByteBuffer()} on a memory segment whose session
-     *     is {@code S'}, then {@code S = S'}; or</li>
-     *     <li>if the buffer is an heap buffer, then {@code A} is the {@linkplain MemorySession#global() global session}; or
-     *     <li>if the buffer is a direct buffer, or mapped byte buffer, then {@code A} is an
-     *     <a href=MemorySession.html#implicit-sessions>implicit session</a> that keeps the buffer reachable.
-     *     Therefore, the off-heap memory associated with the buffer instance will remain available as long as the
-     *     returned segment is reachable.</li>
-     * </ul>
+     * {@linkplain ByteBuffer#isReadOnly() read-only}. The memory session associated with this segment can either be the
+     * {@linkplain MemorySession#global() global} memory session, in case the buffer has been created independently,
+     * or some other memory session, in case the buffer has been obtained using {@link #asByteBuffer()}.
+     * <p>
+     * The resulting memory segment keeps a reference to the backing buffer, keeping it <em>reachable</em>.
      *
      * @param buffer the buffer instance backing the buffer memory segment.
      * @return a buffer memory segment.
@@ -883,13 +871,13 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Creates a native memory segment with the given size, base address and memory session.
+     * Creates a native memory segment with the given size, base address, and memory session.
      * This method can be useful when interacting with custom memory sources (e.g. custom allocators),
      * where an address to some underlying memory region is typically obtained from foreign code
      * (often as a plain {@code long} value).
      * <p>
      * The returned segment is not read-only (see {@link MemorySegment#isReadOnly()}), and is associated with the
-     * provided memory session. When the session is closed, the provided cleanup action will be executed.
+     * provided memory session.
      * <p>
      * Clients should ensure that the address and bounds refer to a valid region of memory that is accessible for reading and,
      * if appropriate, writing; an attempt to access an invalid memory location from Java code will either return an arbitrary value,
@@ -899,6 +887,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
+     *
      *
      * @param address the returned segment's base address.
      * @param bytesSize the desired size.
@@ -916,76 +905,80 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     static MemorySegment ofAddress(long address, long bytesSize, MemorySession session) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddress");
         Objects.requireNonNull(session);
-        if (bytesSize < 0) {
-            throw new IllegalArgumentException("Invalid size : " + bytesSize);
-        }
+        Utils.checkAllocationSizeAndAlign(bytesSize, 1);
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, bytesSize, session);
     }
 
     /**
-     * Creates a native memory segment with the given layout. The returned segment is associated with
-     * an <a href=MemorySession.html#implicit-sessions>implicit session</a>. This means the returned segment
-     * can be accessed by multiple threads, and its backing off-heap memory will not be released as long
-     * as the segment (or any slice derived from it) is kept reachable.
+     * Creates a native memory segment with the given layout and memory session.
+     * A client is responsible for ensuring that the memory session associated with the returned segment is closed
+     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
      * This is equivalent to the following code:
-     * {@snippet lang = java:
-     * allocateNative(layout.byteSize(), layout.byteAlignment());
-     *}
+     * {@snippet lang=java :
+     * allocateNative(layout.bytesSize(), layout.bytesAlignment(), session);
+     * }
      * <p>
      * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      *
      * @param layout the layout of the off-heap memory block backing the native memory segment.
+     * @param session the segment memory session.
      * @return a new native memory segment.
+     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread
+     * {@linkplain MemorySession#ownerThread() owning} {@code session}.
      */
-    static MemorySegment allocateNative(MemoryLayout layout) {
+    static MemorySegment allocateNative(MemoryLayout layout, MemorySession session) {
+        Objects.requireNonNull(session);
         Objects.requireNonNull(layout);
-        return allocateNative(layout.byteSize(), layout.byteAlignment());
+        return allocateNative(layout.byteSize(), layout.byteAlignment(), session);
     }
 
     /**
-     * Creates a native memory segment with the given size (in bytes). The returned segment is associated with
-     * an <a href=MemorySession.html#implicit-sessions>implicit session</a>. This means the returned segment
-     * can be accessed by multiple threads, and its backing off-heap memory will not be released as long
-     * as the segment (or any slice derived from it) is kept reachable.
+     * Creates a native memory segment with the given size (in bytes) and memory session.
+     * A client is responsible for ensuring that the memory session associated with the returned segment is closed
+     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
      * This is equivalent to the following code:
-     * {@snippet lang = java:
-     * allocateNative(bytesSize, 1L);
-     *}
+     * {@snippet lang=java :
+     * allocateNative(bytesSize, 1, session);
+     * }
      * <p>
      * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param session the segment temporal bounds.
      * @return a new native memory segment.
      * @throws IllegalArgumentException if {@code bytesSize < 0}.
+     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread
+     * {@linkplain MemorySession#ownerThread() owning} {@code session}.
      */
-    static MemorySegment allocateNative(long bytesSize) {
-        return allocateNative(bytesSize, 1L);
+    static MemorySegment allocateNative(long bytesSize, MemorySession session) {
+        return allocateNative(bytesSize, 1, session);
     }
 
     /**
-     * Creates a native memory segment with the given size (in bytes), alignment constraint (in bytes).
-     * The returned segment is associated with an <a href=MemorySession.html#implicit-sessions>implicit session</a>.
-     * This means the returned segment can be accessed by multiple threads, and its backing off-heap memory will not
-     * be released as long as the segment (or any slice derived from it) is kept reachable.
-     * <p>
-     * This is equivalent to the following code:
-     * {@snippet lang = java:
-     * MemorySession.openImplicit()
-     *              .allocate(bytesSize, alignmentBytes);
-     *}
+     * Creates a native memory segment with the given size (in bytes), alignment constraint (in bytes) and memory session.
+     * A client is responsible for ensuring that the memory session associated with the returned segment is closed when the
+     * segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
      * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @param alignmentBytes the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param session the segment memory session.
      * @return a new native memory segment.
      * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
      * is not a power of 2.
+     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread
+     * {@linkplain MemorySession#ownerThread() owning} {@code session}.
      */
-    static MemorySegment allocateNative(long bytesSize, long alignmentBytes) {
-        return MemorySession.openImplicit().allocate(bytesSize, alignmentBytes);
+    static MemorySegment allocateNative(long bytesSize, long alignmentBytes, MemorySession session) {
+        Objects.requireNonNull(session);
+        Utils.checkAllocationSizeAndAlign(bytesSize, alignmentBytes);
+        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, alignmentBytes, session);
     }
 
     /**

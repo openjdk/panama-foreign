@@ -50,7 +50,6 @@ import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.ScopedMemoryAccess;
-import jdk.internal.ref.CleanerFactory;
 import jdk.internal.util.ArraysSupport;
 import jdk.internal.util.Preconditions;
 import jdk.internal.vm.annotation.ForceInline;
@@ -479,12 +478,11 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
         int size = limit - pos;
 
         AbstractMemorySegmentImpl bufferSegment = (AbstractMemorySegmentImpl)nioAccess.bufferSegment(bb);
-        final MemorySession bufferMemorySession;
+        final MemorySession bufferSession;
         if (bufferSegment != null) {
-            bufferMemorySession = bufferSegment.session();
+            bufferSession = bufferSegment.session;
         } else {
-            // an implicit session which keeps the buffer reachable
-            bufferMemorySession = MemorySessionImpl.createImplicit(bb, CleanerFactory.cleaner());
+            bufferSession = MemorySessionImpl.heapSession(bb);
         }
         boolean readOnly = bb.isReadOnly();
         int scaleFactor = getScaleFactor(bb);
@@ -507,10 +505,10 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
                 throw new AssertionError("Cannot get here");
             }
         } else if (unmapper == null) {
-            return new NativeMemorySegmentImpl(bbAddress + (pos << scaleFactor), size << scaleFactor, readOnly, bufferMemorySession);
+            return new NativeMemorySegmentImpl(bbAddress + (pos << scaleFactor), size << scaleFactor, readOnly, bufferSession);
         } else {
             // we can ignore scale factor here, a mapped buffer is always a byte buffer, so scaleFactor == 0.
-            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, readOnly, bufferMemorySession);
+            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, readOnly, bufferSession);
         }
     }
 

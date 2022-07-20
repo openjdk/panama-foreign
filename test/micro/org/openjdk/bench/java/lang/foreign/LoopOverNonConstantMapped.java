@@ -23,6 +23,7 @@
 package org.openjdk.bench.java.lang.foreign;
 
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -38,7 +39,6 @@ import sun.misc.Unsafe;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.foreign.MemorySession;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
@@ -101,7 +101,7 @@ public class LoopOverNonConstantMapped extends JavaLayouts {
     @TearDown
     public void tearDown() throws IOException {
         fileChannel.close();
-        ((MemorySession)segment.session()).close();
+        segment.session().close();
         unsafe.invokeCleaner(byteBuffer);
     }
 

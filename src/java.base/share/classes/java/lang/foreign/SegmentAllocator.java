@@ -45,7 +45,7 @@ import jdk.internal.javac.PreviewFeature;
  * <p>
  * This interface also defines factories for commonly used allocators:
  * <ul>
- *     <li>{@link #newNativeArena(MemorySession)} creates an efficient native allocator, where off-heap memory
+ *     <li>{@link #newNativeArena(MemorySession)} creates a more efficient arena-style allocator, where off-heap memory
  *     is allocated in bigger blocks, which are then sliced accordingly to fit allocation requests;</li>
  *     <li>{@link #implicitAllocator()} obtains an allocator which allocates native memory segment in independent,
  *     {@linkplain MemorySession#openImplicit() implicit memory sessions}; and</li>
@@ -389,7 +389,7 @@ public interface SegmentAllocator {
      * the given block size {@code B} and the given arena size {@code A}, and the native segments
      * it allocates are associated with the provided memory session.
      * <p>
-     * The allocator arena is first initialized by {@linkplain MemorySession#allocate(long) allocating} a
+     * The allocator arena is first initialized by {@linkplain MemorySegment#allocateNative(long, MemorySession) allocating} a
      * native memory segment {@code S} of size {@code B}. The allocator then responds to allocation requests in one of the following ways:
      * <ul>
      *     <li>if the size of the allocation requests is smaller than the size of {@code S}, and {@code S} has a <em>free</em>
@@ -457,14 +457,15 @@ public interface SegmentAllocator {
      * Returns an allocator which allocates native segments in independent {@linkplain MemorySession#openImplicit() implicit memory sessions}.
      * Equivalent to (but likely more efficient than) the following code:
      * {@snippet lang=java :
-     * SegmentAllocator implicitAllocator = MemorySegment::allocateNative;
+     * SegmentAllocator implicitAllocator = (size, align) -> MemorySegment.allocateNative(size, align, MemorySession.openImplicit());
      * }
      *
      * @return an allocator which allocates native segments in independent {@linkplain MemorySession#openImplicit() implicit memory sessions}.
      */
     static SegmentAllocator implicitAllocator() {
         class Holder {
-            static final SegmentAllocator IMPLICIT_ALLOCATOR = MemorySegment::allocateNative;
+            static final SegmentAllocator IMPLICIT_ALLOCATOR = (size, align) ->
+                    MemorySegment.allocateNative(size, align, MemorySession.openImplicit());
         }
         return Holder.IMPLICIT_ALLOCATOR;
     }

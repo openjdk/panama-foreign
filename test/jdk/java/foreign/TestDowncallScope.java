@@ -66,7 +66,7 @@ public class TestDowncallScope extends TestDowncallBase {
         try (MemorySession session = MemorySession.openShared()) {
             boolean needsScope = descriptor.returnLayout().map(GroupLayout.class::isInstance).orElse(false);
             SegmentAllocator allocator = needsScope ?
-                    session :
+                    SegmentAllocator.newNativeArena(session) :
                     THROWING_ALLOCATOR;
             Object res = doCall(addr, allocator, descriptor, args);
             if (ret == CallGeneratorHelper.Ret.NON_VOID) {

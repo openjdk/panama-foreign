@@ -28,8 +28,9 @@
  * @run testng/othervm TestMemorySession
  */
 
-import java.lang.foreign.MemorySession;
 import java.lang.ref.Cleaner;
+
+import java.lang.foreign.MemorySession;
 
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.ref.CleanerFactory;
@@ -42,33 +43,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.stream.IntStream;
 
 public class TestMemorySession {
 
     final static int N_THREADS = 100;
 
-    @Test
-    public void testConfined() {
-        AtomicInteger acc = new AtomicInteger();
-        MemorySession session = MemorySession.openConfined();
-        for (int i = 0 ; i < N_THREADS ; i++) {
-            int delta = i;
-            session.addCloseAction(() -> acc.addAndGet(delta));
-        }
-        assertEquals(acc.get(), 0);
-
-        session.close();
-        assertEquals(acc.get(), IntStream.range(0, N_THREADS).sum());
-    }
-
     @Test(dataProvider = "cleaners")
-    public void testSharedSingleThread(Supplier<Cleaner> cleanerSupplier) {
+    public void testConfined(Supplier<Cleaner> cleanerSupplier, UnaryOperator<MemorySession> sessionFunc) {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
         MemorySession session = cleaner != null ?
-                MemorySession.openImplicit(cleaner) : MemorySession.openShared();
+                MemorySession.openConfined(cleaner) :
+                MemorySession.openConfined();
+        session = sessionFunc.apply(session);
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
             session.addCloseAction(() -> acc.addAndGet(delta));
@@ -88,12 +79,40 @@ public class TestMemorySession {
     }
 
     @Test(dataProvider = "cleaners")
-    public void testSharedMultiThread(Supplier<Cleaner> cleanerSupplier) {
+    public void testSharedSingleThread(Supplier<Cleaner> cleanerSupplier, UnaryOperator<MemorySession> sessionFunc) {
+        AtomicInteger acc = new AtomicInteger();
+        Cleaner cleaner = cleanerSupplier.get();
+        MemorySession session = cleaner != null ?
+                MemorySession.openShared(cleaner) :
+                MemorySession.openShared();
+        session = sessionFunc.apply(session);
+        for (int i = 0 ; i < N_THREADS ; i++) {
+            int delta = i;
+            session.addCloseAction(() -> acc.addAndGet(delta));
+        }
+        assertEquals(acc.get(), 0);
+
+        if (cleaner == null) {
+            session.close();
+            assertEquals(acc.get(), IntStream.range(0, N_THREADS).sum());
+        } else {
+            session = null;
+            int expected = IntStream.range(0, N_THREADS).sum();
+            while (acc.get() != expected) {
+                kickGC();
+            }
+        }
+    }
+
+    @Test(dataProvider = "cleaners")
+    public void testSharedMultiThread(Supplier<Cleaner> cleanerSupplier, UnaryOperator<MemorySession> sessionFunc) {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
         List<Thread> threads = new ArrayList<>();
         MemorySession session = cleaner != null ?
-                MemorySession.openImplicit(cleaner) : MemorySession.openShared();
+                MemorySession.openShared(cleaner) :
+                MemorySession.openShared();
+        session = sessionFunc.apply(session);
         AtomicReference<MemorySession> sessionRef = new AtomicReference<>(session);
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
@@ -103,7 +122,8 @@ public class TestMemorySession {
                         acc.addAndGet(delta);
                     });
                 } catch (IllegalStateException ex) {
-                    // already closed - cleanup called automatically
+                    // already closed - we need to call cleanup manually
+                    acc.addAndGet(delta);
                 }
             });
             threads.add(thread);
@@ -197,12 +217,12 @@ public class TestMemorySession {
     }
 
     @Test
-    public void testCloseEmptyConfinedsession() {
+    public void testCloseEmptyConfinedSession() {
         MemorySession.openConfined().close();
     }
 
     @Test
-    public void testCloseEmptySharedsession() {
+    public void testCloseEmptySharedSession() {
         MemorySession.openShared().close();
     }
 
@@ -233,7 +253,9 @@ public class TestMemorySession {
     public void testSessionAcquires(Supplier<MemorySession> sessionFactory) {
         MemorySession session = sessionFactory.get();
         acquireRecursive(session, 5);
-        tryClose(session);
+        if (session.isCloseable()) {
+            session.close();
+        }
     }
 
     private void acquireRecursive(MemorySession session, int acquireCount) {
@@ -244,15 +266,66 @@ public class TestMemorySession {
                 acquireRecursive(session, acquireCount - 1);
             }
             if (session.isCloseable()) {
-                assertThrows(IllegalStateException.class, () -> tryClose(session));
+                assertThrows(IllegalStateException.class, session::close);
             }
         }
     }
 
-    static void tryClose(MemorySession session) {
-        if (session.isCloseable()) {
-            session.close();
+    @Test
+    public void testConfinedSessionWithImplicitDependency() {
+        MemorySession root = MemorySession.openConfined();
+        // Create many implicit sessions which depend on 'root', and let them become unreachable.
+        for (int i = 0; i < N_THREADS; i++) {
+            keepAlive(MemorySession.openConfined(Cleaner.create()), root);
         }
+        // Now let's keep trying to close 'root' until we succeed. This is trickier than it seems: cleanup action
+        // might be called from another thread (the Cleaner thread), so that the confined session lock count is updated racily.
+        // If that happens, the loop below never terminates.
+        while (true) {
+            try {
+                root.close();
+                break; // success!
+            } catch (IllegalStateException ex) {
+                kickGC();
+                for (int i = 0 ; i < N_THREADS ; i++) {  // add more races from current thread
+                    try (MemorySession session = MemorySession.openConfined()) {
+                        keepAlive(session, root);
+                        // dummy
+                    }
+                }
+                // try again
+            }
+        }
+    }
+
+    @Test
+    public void testConfinedSessionWithSharedDependency() {
+        MemorySession root = MemorySession.openConfined();
+        List<Thread> threads = new ArrayList<>();
+        // Create many implicit sessions which depend on 'root', and let them become unreachable.
+        for (int i = 0; i < N_THREADS; i++) {
+            MemorySession session = MemorySession.openShared(); // create session inside same thread!
+            keepAlive(session, root);
+            Thread t = new Thread(session::close); // close from another thread!
+            threads.add(t);
+            t.start();
+        }
+        for (int i = 0 ; i < N_THREADS ; i++) { // add more races from current thread
+            try (MemorySession session = MemorySession.openConfined()) {
+                keepAlive(session, root);
+                // dummy
+            }
+        }
+        threads.forEach(t -> {
+            try {
+                t.join();
+            } catch (InterruptedException ex) {
+                // ok
+            }
+        });
+        // Now let's close 'root'. This is trickier than it seems: releases of the confined session happen in different
+        // threads, so that the confined session lock count is updated racily. If that happens, the following close will blow up.
+        root.close();
     }
 
     private void waitSomeTime() {
@@ -274,9 +347,11 @@ public class TestMemorySession {
     @DataProvider
     static Object[][] cleaners() {
         return new Object[][] {
-                { (Supplier<Cleaner>)() -> null },
-                { (Supplier<Cleaner>)Cleaner::create },
-                { (Supplier<Cleaner>)CleanerFactory::cleaner }
+                { (Supplier<Cleaner>)() -> null, UnaryOperator.identity() },
+                { (Supplier<Cleaner>)Cleaner::create, UnaryOperator.identity() },
+                { (Supplier<Cleaner>)CleanerFactory::cleaner, UnaryOperator.identity() },
+                { (Supplier<Cleaner>)Cleaner::create, (UnaryOperator<MemorySession>)MemorySession::asNonCloseable },
+                { (Supplier<Cleaner>)CleanerFactory::cleaner, (UnaryOperator<MemorySession>)MemorySession::asNonCloseable }
         };
     }
 
@@ -284,15 +359,19 @@ public class TestMemorySession {
     static Object[][] sessions() {
         return new Object[][] {
                 { (Supplier<MemorySession>) MemorySession::openConfined},
-                { (Supplier<MemorySession>) () -> MemorySession.openShared()},
-                { (Supplier<MemorySession>) () -> MemorySession.openShared()},
-                { (Supplier<MemorySession>) MemorySession::global}
+                { (Supplier<MemorySession>) MemorySession::openShared},
+                { (Supplier<MemorySession>) MemorySession::openImplicit},
+                { (Supplier<MemorySession>) MemorySession::global},
+                { (Supplier<MemorySession>) () -> MemorySession.openConfined().asNonCloseable() },
+                { (Supplier<MemorySession>) () -> MemorySession.openShared().asNonCloseable() },
+                { (Supplier<MemorySession>) () -> MemorySession.openImplicit().asNonCloseable() },
+                { (Supplier<MemorySession>) () -> MemorySession.global().asNonCloseable()},
         };
     }
 
     private void keepAlive(MemorySession child, MemorySession parent) {
-        MemorySessionImpl sessionImpl = MemorySessionImpl.toSessionImpl(parent);
-        sessionImpl.acquire0();
-        child.addCloseAction(sessionImpl::release0);
+        MemorySessionImpl parentImpl = MemorySessionImpl.toSessionImpl(parent);
+        parentImpl.acquire0();
+        child.addCloseAction(parentImpl::release0);
     }
 }

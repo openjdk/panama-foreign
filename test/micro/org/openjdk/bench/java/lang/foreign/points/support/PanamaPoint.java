@@ -26,10 +26,9 @@ import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-
+import java.lang.foreign.MemorySession;
 import org.openjdk.bench.java.lang.foreign.CLayouts;
 
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
@@ -65,7 +64,7 @@ public class PanamaPoint extends CLayouts implements AutoCloseable {
     private final MemorySegment segment;
 
     public PanamaPoint(int x, int y) {
-        this.segment = MemorySession.openConfined().allocate(LAYOUT);
+        this.segment = MemorySegment.allocateNative(LAYOUT, MemorySession.openConfined());
         setX(x);
         setY(y);
     }
@@ -104,6 +103,6 @@ public class PanamaPoint extends CLayouts implements AutoCloseable {
 
     @Override
     public void close() {
-        ((MemorySession)segment.session()).close();
+        segment.session().close();
     }
 }

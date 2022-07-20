@@ -27,8 +27,8 @@ package jdk.internal.foreign.abi;
 
 import sun.security.action.GetPropertyAction;
 
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -128,9 +128,9 @@ public class UpcallLinker {
                                   ABIDescriptor abi) {}
 
     private static Object invokeInterpBindings(Object[] lowLevelArgs, InvocationData invData) throws Throwable {
-        Binding.Allocator allocator = invData.callingSequence.allocationSize() != 0
-                ? Binding.Allocator.of(invData.callingSequence.allocationSize())
-                : Binding.Allocator.of();
+        Binding.Context allocator = invData.callingSequence.allocationSize() != 0
+                ? Binding.Context.ofBoundedAllocator(invData.callingSequence.allocationSize())
+                : Binding.Context.ofSession();
         try (allocator) {
             /// Invoke interpreter, got array of high-level arguments back
             Object[] highLevelArgs = new Object[invData.callingSequence.calleeMethodType().parameterCount()];

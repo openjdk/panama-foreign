@@ -78,15 +78,15 @@ public class BindingSpecializer {
 
     private static final String VOID_DESC = methodType(void.class).descriptorString();
 
-    private static final String BINDING_ALLOCATOR_DESC = Binding.Allocator.class.descriptorString();
-    private static final String OF_BOUNDED_ALLOCATOR_DESC = methodType(Binding.Allocator.class, long.class).descriptorString();
-    private static final String OF_UNBOUNDED_ALLOCATOR_DESC = methodType(Binding.Allocator.class).descriptorString();
+    private static final String BINDING_CONTEXT_DESC = Binding.Context.class.descriptorString();
+    private static final String OF_BOUNDED_ALLOCATOR_DESC = methodType(Binding.Context.class, long.class).descriptorString();
+    private static final String OF_SESSION_DESC = methodType(Binding.Context.class).descriptorString();
+    private static final String ALLOCATOR_DESC = methodType(SegmentAllocator.class).descriptorString();
+    private static final String SESSION_DESC = methodType(MemorySession.class).descriptorString();
     private static final String SESSION_IMPL_DESC = methodType(MemorySessionImpl.class).descriptorString();
-
-    private static final String ARENA_DESC = methodType(MemorySession.class).descriptorString();
     private static final String CLOSE_DESC = VOID_DESC;
-    private static final String COPY_DESC = methodType(void.class, MemorySegment.class, long.class, MemorySegment.class, long.class, long.class).descriptorString();
     private static final String ADDRESS_DESC = methodType(long.class).descriptorString();
+    private static final String COPY_DESC = methodType(void.class, MemorySegment.class, long.class, MemorySegment.class, long.class, long.class).descriptorString();
     private static final String OF_LONG_DESC = methodType(MemorySegment.class, long.class, long.class).descriptorString();
     private static final String OF_LONG_UNCHECKED_DESC = methodType(MemorySegment.class, long.class, long.class, MemorySession.class).descriptorString();
     private static final String ALLOCATE_DESC = methodType(MemorySegment.class, long.class, long.class).descriptorString();
@@ -128,7 +128,7 @@ public class BindingSpecializer {
     private int[] scopeSlots;
     private int curScopeLocalIdx = -1;
     private int returnAllocatorIdx = -1;
-    private int INTERNAL_ALLOCATOR_IDX = -1;
+    private int CONTEXT_IDX = -1;
     private int returnBufferIdx = -1;
     private int retValIdx = -1;
     private Deque<Class<?>> typeStack;
@@ -299,14 +299,14 @@ public class BindingSpecializer {
         // create a Binding.Context for this call
         if (callingSequence.allocationSize() != 0) {
             emitConst(callingSequence.allocationSize());
-            emitInvokeStatic(Binding.Allocator.class, "of", OF_BOUNDED_ALLOCATOR_DESC);
+            emitInvokeStatic(Binding.Context.class, "ofBoundedAllocator", OF_BOUNDED_ALLOCATOR_DESC);
         } else if (callingSequence.forUpcall() && needsSession()) {
-            emitInvokeStatic(Binding.Allocator.class, "of", OF_UNBOUNDED_ALLOCATOR_DESC);
+            emitInvokeStatic(Binding.Context.class, "ofSession", OF_SESSION_DESC);
         } else {
-            emitGetStatic(Binding.Allocator.class, "DUMMY", BINDING_ALLOCATOR_DESC);
+            emitGetStatic(Binding.Context.class, "DUMMY", BINDING_CONTEXT_DESC);
         }
-        INTERNAL_ALLOCATOR_IDX = newLocal(Object.class);
-        emitStore(Object.class, INTERNAL_ALLOCATOR_IDX);
+        CONTEXT_IDX = newLocal(Object.class);
+        emitStore(Object.class, CONTEXT_IDX);
 
         // in case the call needs a return buffer, allocate it here.
         // for upcalls the VM wrapper stub allocates the buffer.
@@ -550,14 +550,22 @@ public class BindingSpecializer {
         return idx;
     }
 
+    private void emitLoadInternalSession() {
+        assert CONTEXT_IDX != -1;
+        emitLoad(Object.class, CONTEXT_IDX);
+        emitInvokeVirtual(Binding.Context.class, "session", SESSION_DESC);
+    }
+
     private void emitLoadInternalAllocator() {
-        assert INTERNAL_ALLOCATOR_IDX != -1;
-        emitLoad(Object.class, INTERNAL_ALLOCATOR_IDX);
+        assert CONTEXT_IDX != -1;
+        emitLoad(Object.class, CONTEXT_IDX);
+        emitInvokeVirtual(Binding.Context.class, "allocator", ALLOCATOR_DESC);
     }
 
     private void emitCloseContext() {
-        emitLoadInternalAllocator();
-        emitInvokeVirtual(Binding.Allocator.class, "close", CLOSE_DESC);
+        assert CONTEXT_IDX != -1;
+        emitLoad(Object.class, CONTEXT_IDX);
+        emitInvokeVirtual(Binding.Context.class, "close", CLOSE_DESC);
     }
 
     private void emitToSegment(Binding.ToSegment binding) {
@@ -566,8 +574,7 @@ public class BindingSpecializer {
 
         emitAddress();
         emitConst(size);
-        emitLoadInternalAllocator();
-        emitInvokeVirtual(Binding.Allocator.class, "arena", ARENA_DESC);
+        emitLoadInternalSession();
         emitInvokeStatic(NativeMemorySegmentImpl.class, "makeNativeSegmentUnchecked", OF_LONG_UNCHECKED_DESC);
 
         pushType(MemorySegment.class);

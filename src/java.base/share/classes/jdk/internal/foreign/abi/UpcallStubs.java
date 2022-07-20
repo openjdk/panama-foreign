@@ -55,6 +55,6 @@ public class UpcallStubs {
                 freeUpcallStub(entry);
             }
         });
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(entry, 0, session);
+        return MemorySegment.ofAddress(entry, 0, session);
     }
 }

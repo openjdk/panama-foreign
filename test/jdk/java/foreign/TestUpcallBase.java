@@ -22,10 +22,10 @@
  *
  */
 
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 
@@ -65,7 +65,7 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
 
     @BeforeClass
     void setup() {
-        DUMMY_STUB = ABI.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), MemorySession.openShared());
+        DUMMY_STUB = ABI.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), MemorySession.openImplicit());
     }
 
     static FunctionDescriptor function(Ret ret, List<ParamType> params, List<StructFieldType> fields) {
@@ -152,7 +152,7 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
         for (int i = 0; i < o.length; i++) {
             if (!isPointer(layouts.get(i)) && o[i] instanceof MemorySegment) {
                 MemorySegment ms = (MemorySegment) o[i];
-                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize());
+                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), MemorySession.openImplicit());
                 copy.copyFrom(ms);
                 o[i] = copy;
             }

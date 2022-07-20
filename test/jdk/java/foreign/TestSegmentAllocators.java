@@ -25,7 +25,6 @@
 /*
  * @test
  * @enablePreview
- * @modules java.base/jdk.internal.foreign
  * @run testng/othervm TestSegmentAllocators
  */
 
@@ -47,12 +46,15 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 import static org.testng.Assert.*;
 
 public class TestSegmentAllocators {
 
     final static int ELEMS = 128;
+    final static Class<?> ADDRESS_CARRIER = ValueLayout.ADDRESS.bitSize() == 64 ? long.class : int.class;
 
     @Test(dataProvider = "scalarAllocations")
     @SuppressWarnings("unchecked")
@@ -89,17 +91,12 @@ public class TestSegmentAllocators {
                         //failure is expected if bound
                         assertTrue(isBound);
                     }
-                    if (allocator instanceof AutoCloseable allocatorsession) {
-                        try {
-                            allocatorsession.close();
-                        } catch (Throwable ex) {
-                            throw new AssertionError(ex);
-                        }
-                    }
                 }
-                // addresses should be invalid now
-                for (MemorySegment address : addressList) {
-                    assertFalse(address.session().isAlive());
+                if (allocationFactory != AllocationFactory.IMPLICIT_ALLOCATOR) {
+                    // addresses should be invalid now
+                    for (MemorySegment address : addressList) {
+                        assertFalse(address.session().isAlive());
+                    }
                 }
             }
         }
@@ -108,7 +105,7 @@ public class TestSegmentAllocators {
     static final int SIZE_256M = 1024 * 1024 * 256;
 
     @Test
-    public void testBigAllocationInUnboundedArena() {
+    public void testBigAllocationInUnboundedSession() {
         try (MemorySession session = MemorySession.openConfined()) {
             SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
             for (int i = 8 ; i < SIZE_256M ; i *= 8) {
@@ -125,9 +122,7 @@ public class TestSegmentAllocators {
     public void testTooBigForBoundedArena() {
         try (MemorySession session = MemorySession.openConfined()) {
             SegmentAllocator allocator = SegmentAllocator.newNativeArena(10, session);
-            allocator.allocate(ValueLayout.JAVA_INT);
-            allocator.allocate(ValueLayout.JAVA_INT);
-            assertThrows(OutOfMemoryError.class, () -> allocator.allocate(ValueLayout.JAVA_INT));
+            assertThrows(OutOfMemoryError.class, () -> allocator.allocate(12));
             allocator.allocate(5); // ok
         }
     }
@@ -171,7 +166,7 @@ public class TestSegmentAllocators {
     }
 
     @Test(expectedExceptions = OutOfMemoryError.class)
-    public void testBadsessionNullReturn() {
+    public void testBadArenaNullReturn() {
         SegmentAllocator segmentAllocator = SegmentAllocator.newNativeArena(MemorySession.openImplicit());
         segmentAllocator.allocate(Long.MAX_VALUE, 2);
     }
@@ -207,7 +202,7 @@ public class TestSegmentAllocators {
         SegmentAllocator allocator = new SegmentAllocator() {
             @Override
             public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-                return MemorySegment.allocateNative(bytesSize, bytesAlignment);
+                return MemorySegment.allocateNative(bytesSize, bytesAlignment, MemorySession.openImplicit());
             }
 
             @Override
@@ -230,7 +225,7 @@ public class TestSegmentAllocators {
         };
         for (MemorySession session : sessions) {
             try (session) {
-                SegmentAllocator allocator = allocationFactory.allocator(128, session);
+                SegmentAllocator allocator = allocationFactory.allocator(100, session);
                 MemorySegment address = allocationFunction.allocate(allocator, layout, arr);
                 Z found = arrayHelper.toArray(address, layout);
                 assertEquals(found, arr);
@@ -367,9 +362,10 @@ public class TestSegmentAllocators {
     }
 
     enum AllocationFactory {
-        SLICING_BOUNDED(true, (size, session) -> SegmentAllocator.newNativeArena(size, session)),
-        SLICING_BOUNDED_SMALL_BLOCK(true, (size, session) -> SegmentAllocator.newNativeArena(size, 128, session)),
-        SLICING_UNBOUNDED(false, (size, session) -> SegmentAllocator.newNativeArena(session));
+        ARENA_BOUNDED(true, SegmentAllocator::newNativeArena),
+        ARENA_UNBOUNDED(false, (size, session) -> SegmentAllocator.newNativeArena(session)),
+        NATIVE_ALLOCATOR(false, (size, session) -> session),
+        IMPLICIT_ALLOCATOR(false, (size, session) -> SegmentAllocator.implicitAllocator());
 
         private final boolean isBound;
         private final BiFunction<Long, MemorySession, SegmentAllocator> factory;
@@ -503,7 +499,7 @@ public class TestSegmentAllocators {
         return new Object[][] {
                 { SegmentAllocator.implicitAllocator() },
                 { SegmentAllocator.newNativeArena(MemorySession.global()) },
-                { SegmentAllocator.prefixAllocator(MemorySegment.allocateNative(10)) }
+                { SegmentAllocator.prefixAllocator(MemorySegment.allocateNative(10, MemorySession.global())) },
         };
     }
 }

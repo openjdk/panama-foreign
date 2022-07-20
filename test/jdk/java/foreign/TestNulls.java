@@ -104,6 +104,8 @@ public class TestNulls {
     };
 
     static final Set<String> EXCLUDE_LIST = Set.of(
+            "java.lang.foreign.MemorySession/openConfined(java.lang.ref.Cleaner)/0/0",
+            "java.lang.foreign.MemorySession/openShared(java.lang.ref.Cleaner)/0/0",
             "java.lang.foreign.MemoryLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "java.lang.foreign.SequenceLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "java.lang.foreign.ValueLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
@@ -172,7 +174,7 @@ public class TestNulls {
         addDefaultMapping(GroupLayout.class, MemoryLayout.structLayout(ValueLayout.JAVA_INT));
         addDefaultMapping(SequenceLayout.class, MemoryLayout.sequenceLayout(1, ValueLayout.JAVA_INT));
         addDefaultMapping(SymbolLookup.class, SymbolLookup.loaderLookup());
-        addDefaultMapping(MemorySegment.class, MemorySegment.ofAddress(42));
+        addDefaultMapping(MemorySegment.class, MemorySegment.ofArray(new byte[10]));
         addDefaultMapping(FunctionDescriptor.class, FunctionDescriptor.ofVoid());
         addDefaultMapping(Linker.class, Linker.nativeLinker());
         addDefaultMapping(VaList.class, VaListHelper.vaList);

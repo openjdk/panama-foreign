@@ -77,7 +77,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     @Override
     ByteBuffer makeByteBuffer() {
         return nioAccess.newDirectByteBuffer(min, (int) this.length, null,
-                session == MemorySession.global() ? null : this);
+                session == MemorySessionImpl.GLOBAL ? null : this);
     }
 
     @Override

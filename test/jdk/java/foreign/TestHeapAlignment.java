@@ -31,6 +31,7 @@
 
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,7 +100,7 @@ public class TestHeapAlignment {
         HEAP_FLOAT(MemorySegment.ofArray(new float[2]), 4),
         HEAP_LONG(MemorySegment.ofArray(new long[1]), 8),
         HEAP_DOUBLE(MemorySegment.ofArray(new double[1]), 8),
-        NATIVE(MemorySegment.allocateNative(8), -1);
+        ATIVE(MemorySegment.allocateNative(8, MemorySession.openImplicit()), -1);
 
         final MemorySegment segment;
         final int align;

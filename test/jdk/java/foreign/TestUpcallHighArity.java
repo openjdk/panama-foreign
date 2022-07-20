@@ -33,11 +33,11 @@
  *   TestUpcallHighArity
  */
 
-import java.lang.foreign.MemorySession;
-import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.MemorySegment;
+import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -85,7 +85,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
         for (int i = 0; i < o.length; i++) {
             if (!isPointer(layouts.get(i)) && o[i] instanceof MemorySegment) {
                 MemorySegment ms = (MemorySegment) o[i];
-                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize());
+                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), MemorySession.openImplicit());
                 copy.copyFrom(ms);
                 o[i] = copy;
             }

@@ -23,7 +23,7 @@
 package org.openjdk.bench.java.lang.foreign;
 
 import java.lang.foreign.MemorySegment;
-
+import java.lang.foreign.MemorySession;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -36,7 +36,6 @@ import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 import sun.misc.Unsafe;
 
-import java.lang.foreign.MemorySession;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.TimeUnit;
@@ -67,7 +66,7 @@ public class LoopOverNonConstantShared extends JavaLayouts {
         for (int i = 0; i < ELEM_SIZE; i++) {
             unsafe.putInt(unsafe_addr + (i * CARRIER_SIZE) , i);
         }
-        segment = MemorySession.openShared().allocate(ALLOC_SIZE, CARRIER_SIZE);
+        segment = MemorySegment.allocateNative(ALLOC_SIZE, CARRIER_SIZE, MemorySession.openConfined());
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_INT.set(segment, (long) i, i);
         }
@@ -79,7 +78,7 @@ public class LoopOverNonConstantShared extends JavaLayouts {
 
     @TearDown
     public void tearDown() {
-        ((MemorySession)segment.session()).close();
+        segment.session().close();
         unsafe.invokeCleaner(byteBuffer);
         unsafe.freeMemory(unsafe_addr);
     }

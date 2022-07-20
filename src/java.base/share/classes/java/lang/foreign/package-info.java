@@ -41,12 +41,12 @@
  * For example, to allocate an off-heap memory region big enough to hold 10 values of the primitive type {@code int}, and fill it with values
  * ranging from {@code 0} to {@code 9}, we can use the following code:
  *
- * {@snippet lang = java:
- * MemorySegment segment = MemorySegment.allocateNative(10 * 4);
+ * {@snippet lang=java :
+ * MemorySegment segment = MemorySegment.allocateNative(10 * 4, MemorySession.openImplicit());
  * for (int i = 0 ; i < 10 ; i++) {
  *     segment.setAtIndex(ValueLayout.JAVA_INT, i, i);
  * }
- *}
+ * }
  *
  * This code creates a <em>native</em> memory segment, that is, a memory segment backed by
  * off-heap memory; the size of the segment is 40 bytes, enough to store 10 values of the primitive type {@code int}.
@@ -66,20 +66,20 @@
  * <h3 id="deallocation">Deterministic deallocation</h3>
  *
  * When writing code that manipulates memory segments, especially if backed by memory which resides outside the Java heap, it is
- * often crucial that all the resources associated with a memory segment are released when the segment is no longer in use,
+ * often crucial that the resources associated with a memory segment are released when the segment is no longer in use,
  * and in a timely fashion. For this reason, there might be cases where waiting for the garbage collector to determine that a segment
  * is <a href="../../../java/lang/ref/package.html#reachability">unreachable</a> is not optimal.
  * Clients that operate under these assumptions might want to programmatically release the memory associated
- * with a memory segment. This can be done, using a {@linkplain java.lang.foreign.MemorySession memory session}, as shown below:
+ * with a memory segment. This can be done, using the {@link java.lang.foreign.MemorySession} abstraction, as shown below:
  *
- * {@snippet lang = java:
+ * {@snippet lang=java :
  * try (MemorySession session = MemorySession.openConfined()) {
- *     MemorySegment segment = session.allocate(10 * 4);
+ *     MemorySegment segment = MemorySegment.allocateNative(10 * 4, session);
  *     for (int i = 0 ; i < 10 ; i++) {
  *         segment.setAtIndex(ValueLayout.JAVA_INT, i, i);
  *     }
  * }
- *}
+ * }
  *
  * This example is almost identical to the prior one; this time we first create a so called <em>memory session</em>,
  * which is used to <em>bind</em> the life-cycle of the segment created immediately afterwards. Note the use of the
@@ -110,7 +110,7 @@
  * For example, to compute the length of a string using the C standard library function {@code strlen} on a Linux x64 platform,
  * we can use the following code:
  *
- * {@snippet lang = java:
+ * {@snippet lang=java :
  * Linker linker = Linker.nativeLinker();
  * SymbolLookup stdlib = linker.defaultLookup();
  * MethodHandle strlen = linker.downcallHandle(
@@ -119,10 +119,11 @@
  * );
  *
  * try (MemorySession session = MemorySession.openConfined()) {
- *     MemorySegment cString = session.allocateUtf8String("Hello");
- *     long len = (long)strlen.invokeExact(cString); // 5
+ *     MemorySegment cString = MemorySegment.allocateNative(5 + 1, session);
+ *     cString.setUtf8String(0, "Hello");
+ *     long len = (long)strlen.invoke(cString); // 5
  * }
- *}
+ * }
  *
  * Here, we obtain a {@linkplain java.lang.foreign.Linker#nativeLinker() native linker} and we use it
  * to {@linkplain java.lang.foreign.SymbolLookup#lookup(java.lang.String) look up} the {@code strlen} symbol in the
@@ -224,11 +225,11 @@
  *}
  *
  * The {@link java.lang.foreign.FunctionDescriptor} instance created in the previous step is then used to
- * {@linkplain java.lang.foreign.Linker#upcallStub(java.lang.invoke.MethodHandle, java.lang.foreign.FunctionDescriptor, MemorySession) create}
+ * {@linkplain java.lang.foreign.Linker#upcallStub(java.lang.invoke.MethodHandle, java.lang.foreign.FunctionDescriptor, java.lang.foreign.MemorySession) create}
  * a new upcall stub; the layouts in the function descriptors allow the linker to determine the sequence of steps which
  * allow foreign code to call the stub for {@code intCompareHandle} according to the rules specified by the ABI of the
  * underlying platform.
- * The lifecycle of the upcall stub is tied to the {@linkplain java.lang.foreign.MemorySession session}
+ * The lifecycle of the upcall stub is tied to the {@linkplain java.lang.foreign.MemorySession memory session}
  * provided when the upcall stub is created. This same session is made available by the {@link java.lang.foreign.MemorySegment}
  * instance returned by that method.
  *

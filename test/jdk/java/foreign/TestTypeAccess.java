@@ -28,8 +28,8 @@
  * @run testng TestTypeAccess
  */
 
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
 import org.testng.annotations.*;
 
@@ -54,7 +54,7 @@ public class TestTypeAccess {
     @Test(expectedExceptions=ClassCastException.class)
     public void testMemoryAddressValueGetAsString() {
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment s = session.allocate(8, 8);
+            MemorySegment s = MemorySegment.allocateNative(8, 8, session);
             String address = (String)ADDR_HANDLE.get(s);
         }
     }
@@ -62,7 +62,7 @@ public class TestTypeAccess {
     @Test(expectedExceptions=ClassCastException.class)
     public void testMemoryAddressValueSetAsString() {
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment s = session.allocate(8, 8);
+            MemorySegment s = MemorySegment.allocateNative(8, 8, session);
             ADDR_HANDLE.set(s, "string");
         }
     }
@@ -70,7 +70,7 @@ public class TestTypeAccess {
     @Test(expectedExceptions=WrongMethodTypeException.class)
     public void testMemoryAddressValueGetAsPrimitive() {
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment s = session.allocate(8, 8);
+            MemorySegment s = MemorySegment.allocateNative(8, 8, session);
             int address = (int)ADDR_HANDLE.get(s);
         }
     }
@@ -78,7 +78,7 @@ public class TestTypeAccess {
     @Test(expectedExceptions=WrongMethodTypeException.class)
     public void testMemoryAddressValueSetAsPrimitive() {
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment s = session.allocate(8, 8);
+            MemorySegment s = MemorySegment.allocateNative(8, 8, session);
             ADDR_HANDLE.set(s, 1);
         }
     }

@@ -56,7 +56,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     public void testClosedStruct() throws Throwable {
         MemorySegment segment;
         try (MemorySession session = MemorySession.openConfined()) {
-            segment = session.allocate(POINT);
+            segment = MemorySegment.allocateNative(POINT, session);
         }
         assertFalse(segment.session().isAlive());
         MethodHandle handle = Linker.nativeLinker().downcallHandle(
@@ -73,15 +73,15 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
         for (int i = 0 ; i < 6 ; i++) {
             MemorySegment[] segments = new MemorySegment[]{
-                    MemorySession.openShared().allocate(POINT),
-                    MemorySession.openShared().allocate(POINT),
-                    MemorySession.openShared().allocate(POINT),
-                    MemorySession.openShared().allocate(POINT),
-                    MemorySession.openShared().allocate(POINT),
-                    MemorySession.openShared().allocate(POINT)
+                    MemorySegment.allocateNative(POINT, MemorySession.openShared()),
+                    MemorySegment.allocateNative(POINT, MemorySession.openShared()),
+                    MemorySegment.allocateNative(POINT, MemorySession.openShared()),
+                    MemorySegment.allocateNative(POINT, MemorySession.openShared()),
+                    MemorySegment.allocateNative(POINT, MemorySession.openShared()),
+                    MemorySegment.allocateNative(POINT, MemorySession.openShared())
             };
             // check liveness
-            ((MemorySession)segments[i].session()).close();
+            segments[i].session().close();
             for (int j = 0 ; j < 6 ; j++) {
                 if (i == j) {
                     assertFalse(segments[j].session().isAlive());
@@ -97,7 +97,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
             }
             for (int j = 0 ; j < 6 ; j++) {
                 if (i != j) {
-                    ((MemorySession)segments[j].session()).close(); // should succeed!
+                    segments[j].session().close(); // should succeed!
                 }
             }
         }
@@ -153,7 +153,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
 
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = session.allocate(POINT);
+            MemorySegment segment = MemorySegment.allocateNative(POINT, session);
             handle.invokeExact(segment, sessionChecker(session));
         }
     }
@@ -176,7 +176,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
             MethodHandle handle = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "checkSession",
                     MethodType.methodType(void.class, MemorySession.class));
             handle = handle.bindTo(session);
-            return Linker.nativeLinker().upcallStub(handle, FunctionDescriptor.ofVoid(), MemorySession.openShared());
+            return Linker.nativeLinker().upcallStub(handle, FunctionDescriptor.ofVoid(), MemorySession.openImplicit());
         } catch (Throwable ex) {
             throw new AssertionError(ex);
         }

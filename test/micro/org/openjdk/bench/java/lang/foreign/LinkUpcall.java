@@ -64,7 +64,7 @@ public class LinkUpcall extends CLayouts {
 
     @Benchmark
     public MemorySegment link_blank() {
-        return LINKER.upcallStub(BLANK, BLANK_DESC, MemorySession.openShared());
+        return LINKER.upcallStub(BLANK, BLANK_DESC, MemorySession.openImplicit());
     }
 
     static void blank() {}

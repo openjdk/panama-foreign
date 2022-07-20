@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit;
 public class PointerInvoke extends CLayouts {
 
     MemorySession session = MemorySession.openConfined();
-    MemorySegment segment = session.allocate(100);
+    MemorySegment segment = MemorySegment.allocateNative(100, session);
 
     static {
         System.loadLibrary("Ptr");

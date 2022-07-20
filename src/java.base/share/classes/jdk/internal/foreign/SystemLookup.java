@@ -26,6 +26,7 @@
 package jdk.internal.foreign;
 
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
@@ -84,11 +85,11 @@ public class SystemLookup implements SymbolLookup {
                     libLookup(libs -> libs.load(jdkLibraryPath("syslookup")));
 
             int numSymbols = WindowsFallbackSymbols.values().length;
-            MemorySegment funcs = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(fallbackLibLookup.lookup("funcs").orElseThrow().address(),
-                    ADDRESS.byteSize() * numSymbols);
+            MemorySegment funcs = MemorySegment.ofAddress(fallbackLibLookup.lookup("funcs").orElseThrow().address(),
+                ADDRESS.byteSize() * numSymbols, MemorySession.global());
 
             Function<String, Optional<MemorySegment>> fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.valueOfOrNull(name))
-                .map(symbol -> funcs.getAtIndex(ADDRESS, symbol.ordinal()));
+                .map(symbol -> MemorySegment.ofAddress(funcs.getAtIndex(ADDRESS, symbol.ordinal()).address(), 0L, MemorySession.global()));
 
             final SymbolLookup finalLookup = lookup;
             lookup = name -> finalLookup.lookup(name).or(() -> fallbackLookup.apply(name));
@@ -105,7 +106,7 @@ public class SystemLookup implements SymbolLookup {
                 long addr = lib.lookup(name);
                 return addr == 0 ?
                         Optional.empty() :
-                        Optional.of(MemorySegment.ofAddress(addr));
+                        Optional.of(MemorySegment.ofAddress(addr, 0, MemorySession.global()));
             } catch (NoSuchMethodException e) {
                 return Optional.empty();
             }

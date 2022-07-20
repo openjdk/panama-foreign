@@ -28,9 +28,9 @@
  * @run testng/othervm -Xmx4G -XX:MaxDirectMemorySize=1M --enable-native-access=ALL-UNNAMED TestSegments
  */
 
-import java.lang.foreign.MemorySession;
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -50,19 +50,19 @@ public class TestSegments {
 
     @Test(dataProvider = "badSizeAndAlignments", expectedExceptions = IllegalArgumentException.class)
     public void testBadAllocateAlign(long size, long align) {
-        MemorySegment.allocateNative(size, align);
+        MemorySegment.allocateNative(size, align, MemorySession.openImplicit());
     }
 
     @Test
     public void testZeroLengthNativeSegment() {
         try (MemorySession session = MemorySession.openConfined()) {
-            var segment = session.allocate(0);
+            var segment = MemorySegment.allocateNative(0, session);
             assertEquals(segment.byteSize(), 0);
             MemoryLayout seq = MemoryLayout.sequenceLayout(0, JAVA_INT);
-            segment = session.allocate(seq);
+            segment = MemorySegment.allocateNative(seq, session);
             assertEquals(segment.byteSize(), 0);
             assertEquals(segment.address() % seq.byteAlignment(), 0);
-            segment = session.allocate(0, 4);
+            segment = MemorySegment.allocateNative(0, 4, session);
             assertEquals(segment.byteSize(), 0);
             assertEquals(segment.address() % 4, 0);
             MemorySegment rawAddress = MemorySegment.ofAddress(segment.address(), 0, session);
@@ -74,19 +74,19 @@ public class TestSegments {
     @Test(expectedExceptions = { OutOfMemoryError.class,
                                  IllegalArgumentException.class })
     public void testAllocateTooBig() {
-        MemorySegment.allocateNative(Long.MAX_VALUE);
+        MemorySegment.allocateNative(Long.MAX_VALUE, MemorySession.openImplicit());
     }
 
     @Test(expectedExceptions = OutOfMemoryError.class)
     public void testNativeAllocationTooBig() {
-        MemorySegment segment = MemorySegment.allocateNative(1024 * 1024 * 8 * 2); // 2M
+        MemorySegment segment = MemorySegment.allocateNative(1024 * 1024 * 8 * 2, MemorySession.openImplicit()); // 2M
     }
 
     @Test
     public void testNativeSegmentIsZeroed() {
         VarHandle byteHandle = ValueLayout.JAVA_BYTE.arrayElementVarHandle();
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = session.allocate(1000, 1);
+            MemorySegment segment = MemorySegment.allocateNative(1000, 1, session);
             for (long i = 0 ; i < segment.byteSize() ; i++) {
                 assertEquals(0, (byte)byteHandle.get(segment, i));
             }
@@ -97,7 +97,7 @@ public class TestSegments {
     public void testSlices() {
         VarHandle byteHandle = ValueLayout.JAVA_BYTE.arrayElementVarHandle();
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = session.allocate(10, 1);
+            MemorySegment segment = MemorySegment.allocateNative(10, 1, session);
             //init
             for (byte i = 0 ; i < segment.byteSize() ; i++) {
                 byteHandle.set(segment, (long)i, i);
@@ -117,13 +117,13 @@ public class TestSegments {
     @Test
     public void testEqualsOffHeap() {
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = session.allocate(100);
+            MemorySegment segment = MemorySegment.allocateNative(100, session);
             assertEquals(segment, segment.asReadOnly());
             assertEquals(segment, segment.asSlice(0, 100));
             assertNotEquals(segment, segment.asSlice(10, 90));
             assertEquals(segment, segment.asSlice(0, 90));
             assertEquals(segment, MemorySegment.ofAddress(segment.address(), 100, MemorySession.global()));
-            MemorySegment segment2 = session.allocate(100);
+            MemorySegment segment2 = MemorySegment.allocateNative(100, session);
             assertNotEquals(segment, segment2);
         }
     }
@@ -142,21 +142,21 @@ public class TestSegments {
     @Test(expectedExceptions = IndexOutOfBoundsException.class)
     public void testSmallSegmentMax() {
         long offset = (long)Integer.MAX_VALUE + (long)Integer.MAX_VALUE + 2L + 6L; // overflows to 6 when casted to int
-        MemorySegment memorySegment = MemorySegment.allocateNative(10);
+        MemorySegment memorySegment = MemorySegment.allocateNative(10, MemorySession.openImplicit());
         memorySegment.get(JAVA_INT, offset);
     }
 
     @Test(expectedExceptions = IndexOutOfBoundsException.class)
     public void testSmallSegmentMin() {
         long offset = ((long)Integer.MIN_VALUE * 2L) + 6L; // underflows to 6 when casted to int
-        MemorySegment memorySegment = MemorySegment.allocateNative(10);
+        MemorySegment memorySegment = MemorySegment.allocateNative(10, MemorySession.openImplicit());
         memorySegment.get(JAVA_INT, offset);
     }
 
     @Test
     public void testSegmentOOBMessage() {
         try {
-            var segment = MemorySegment.allocateNative(10);
+            var segment = MemorySegment.allocateNative(10, MemorySession.global());
             segment.getAtIndex(ValueLayout.JAVA_INT, 2);
         } catch (IndexOutOfBoundsException ex) {
             assertTrue(ex.getMessage().contains("Out of bound access"));
@@ -188,12 +188,13 @@ public class TestSegments {
                 () -> MemorySegment.ofArray(new int[] { 1, 2, 3, 4 }),
                 () -> MemorySegment.ofArray(new long[] { 1l, 2l, 3l, 4l } ),
                 () -> MemorySegment.ofArray(new short[] { 1, 2, 3, 4 } ),
-                () -> MemorySegment.allocateNative(4),
-                () -> MemorySegment.allocateNative(4, 8),
-                () -> MemorySegment.allocateNative(JAVA_INT),
-                () -> MemorySession.openShared().allocate(4),
-                () -> MemorySession.openShared().allocate(4, 8),
-                () -> MemorySession.openShared().allocate(JAVA_INT)
+                () -> MemorySegment.allocateNative(4, MemorySession.openImplicit()),
+                () -> MemorySegment.allocateNative(4, 8, MemorySession.openImplicit()),
+                () -> MemorySegment.allocateNative(JAVA_INT, MemorySession.openImplicit()),
+                () -> MemorySegment.allocateNative(4, MemorySession.openImplicit()),
+                () -> MemorySegment.allocateNative(4, 8, MemorySession.openImplicit()),
+                () -> MemorySegment.allocateNative(JAVA_INT, MemorySession.openImplicit())
+
         );
         return l.stream().map(s -> new Object[] { s }).toArray(Object[][]::new);
     }
@@ -222,7 +223,7 @@ public class TestSegments {
         }
 
         static SegmentFactory ofImplicitSession(Function<MemorySession, MemorySegment> segmentFunc) {
-            return new SegmentFactory(MemorySession.openShared(), segmentFunc);
+            return new SegmentFactory(MemorySession.openImplicit(), segmentFunc);
         }
     }
 
@@ -312,6 +313,18 @@ public class TestSegments {
         assertEquals(segment.address(), 0); // base address should be zero (no leaking of impl details)
         MemorySegment end = segment.asSlice(segment.byteSize(), 0);
         assertEquals(end.address(), segment.byteSize()); // end address should be equal to segment byte size
+    }
+
+    @Test
+    public void testSegmentAccessorWithWrappedLifetime() {
+        MemorySession session = MemorySession.openConfined();
+        MemorySession publicSession = session.asNonCloseable();
+        assertEquals(session, publicSession);
+        MemorySegment segment = publicSession.allocate(100);
+        assertThrows(UnsupportedOperationException.class, publicSession::close);
+        assertThrows(UnsupportedOperationException.class, segment.session()::close);
+        session.close();
+        assertFalse(publicSession.isAlive());
     }
 
     @DataProvider(name = "badSizeAndAlignments")

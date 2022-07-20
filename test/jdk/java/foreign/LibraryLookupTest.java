@@ -50,12 +50,12 @@ public class LibraryLookupTest {
 
     @Test
     void testLoadLibraryConfined() {
-        try (MemorySession memorySession0 = MemorySession.openConfined()) {
-            callFunc(loadLibrary(memorySession0));
-            try (MemorySession memorySession1 = MemorySession.openConfined()) {
-                callFunc(loadLibrary(memorySession1));
-                try (MemorySession memorySession2 = MemorySession.openConfined()) {
-                    callFunc(loadLibrary(memorySession2));
+        try (MemorySession session0 = MemorySession.openConfined()) {
+            callFunc(loadLibrary(session0));
+            try (MemorySession session1 = MemorySession.openConfined()) {
+                callFunc(loadLibrary(session1));
+                try (MemorySession session2 = MemorySession.openConfined()) {
+                    callFunc(loadLibrary(session2));
                 }
             }
         }

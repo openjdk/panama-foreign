@@ -30,7 +30,6 @@
  * @run testng/othervm TestSocketChannels
  */
 
-import java.lang.foreign.MemorySession;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -43,7 +42,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import java.lang.foreign.MemorySegment;
-
+import java.lang.foreign.MemorySession;
 import org.testng.annotations.*;
 
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
@@ -66,7 +65,7 @@ public class TestSocketChannels extends AbstractChannelsTest {
              var connectedChannel = connectChannels(server, channel)) {
             MemorySession session = sessionSupplier.get();
             ByteBuffer bb = segmentBufferOfSize(session, 16);
-            ((MemorySession) session).close();
+            ((MemorySession)session).close();
             assertMessage(expectThrows(ISE, () -> channel.read(bb)),                           "Already closed");
             assertMessage(expectThrows(ISE, () -> channel.read(new ByteBuffer[] {bb})),        "Already closed");
             assertMessage(expectThrows(ISE, () -> channel.read(new ByteBuffer[] {bb}, 0, 1)),  "Already closed");
@@ -83,7 +82,7 @@ public class TestSocketChannels extends AbstractChannelsTest {
         try (var channel = SocketChannel.open();
              var server = ServerSocketChannel.open();
              var connectedChannel = connectChannels(server, channel)) {
-            MemorySession session = sessionSupplier.get();
+            MemorySession session = (MemorySession)sessionSupplier.get();
             ByteBuffer[] buffers = segmentBuffersOfSize(8, session, 16);
             session.close();
             assertMessage(expectThrows(ISE, () -> channel.write(buffers)),       "Already closed");
@@ -102,8 +101,8 @@ public class TestSocketChannels extends AbstractChannelsTest {
              var ssc = ServerSocketChannel.open();
              var sc2 = connectChannels(ssc, sc1);
              var scp = closeableSessionOrNull(session = sessionSupplier.get())) {
-            MemorySegment segment1 = session.allocate(10, 1);
-            MemorySegment segment2 = session.allocate(10, 1);
+            MemorySegment segment1 = MemorySegment.allocateNative(10, 1, session);
+            MemorySegment segment2 = MemorySegment.allocateNative(10, 1, session);
             for (int i = 0; i < 10; i++) {
                 segment1.set(JAVA_BYTE, i, (byte) i);
             }
@@ -141,7 +140,7 @@ public class TestSocketChannels extends AbstractChannelsTest {
              var server = ServerSocketChannel.open();
              var connected = connectChannels(server, channel);
              var session = closeableSessionOrNull(sessionSupplier.get())) {
-            var segment = session.allocate(10, 1);
+            var segment = MemorySegment.allocateNative(10, 1, session);
             ByteBuffer bb = segment.asByteBuffer();
             List<ThrowingRunnable> ioOps = List.of(
                     () -> channel.write(bb),

@@ -35,7 +35,7 @@
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
-
+import java.lang.foreign.SegmentAllocator;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
@@ -55,7 +55,8 @@ public class TestUpcallStack extends TestUpcallBase {
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         MemorySegment addr = findNativeOrThrow("s" + fName);
         try (MemorySession session = MemorySession.openConfined()) {
-            MethodHandle mh = downcallHandle(ABI, addr, session, functionStack(ret, paramTypes, fields));
+            SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
+            MethodHandle mh = downcallHandle(ABI, addr, allocator, functionStack(ret, paramTypes, fields));
             Object[] args = makeArgsStack(session, ret, paramTypes, fields, returnChecks, argChecks);
             Object[] callArgs = args;
             Object res = mh.invokeWithArguments(callArgs);

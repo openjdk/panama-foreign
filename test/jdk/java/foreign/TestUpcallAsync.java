@@ -32,12 +32,12 @@
  *   TestUpcallAsync
  */
 
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemoryLayout;
-
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
+import java.lang.foreign.SegmentAllocator;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
@@ -61,9 +61,10 @@ public class TestUpcallAsync extends TestUpcallBase {
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         MemorySegment addr = findNativeOrThrow(fName);
         try (MemorySession session = MemorySession.openShared()) {
+            SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
             FunctionDescriptor descriptor = function(ret, paramTypes, fields);
-            MethodHandle mh = downcallHandle(ABI, addr, session, descriptor);
-            Object[] args = makeArgs(MemorySession.openShared(), ret, paramTypes, fields, returnChecks, argChecks);
+            MethodHandle mh = downcallHandle(ABI, addr, allocator, descriptor);
+            Object[] args = makeArgs(MemorySession.openImplicit(), ret, paramTypes, fields, returnChecks, argChecks);
 
             mh = mh.asSpreader(Object[].class, args.length);
             mh = MethodHandles.insertArguments(mh, 0, (Object) args);

@@ -58,7 +58,8 @@ public class StrLenTest extends CLayouts {
 
     MemorySession session = MemorySession.openConfined();
 
-    SegmentAllocator prefixAllocator;
+    SegmentAllocator segmentAllocator;
+    SegmentAllocator arenaAllocator = SegmentAllocator.newNativeArena(session);
 
     @Param({"5", "20", "100"})
     public int size;
@@ -79,7 +80,7 @@ public class StrLenTest extends CLayouts {
     @Setup
     public void setup() {
         str = makeString(size);
-        prefixAllocator = SegmentAllocator.prefixAllocator(session.allocate(size + 1));
+        segmentAllocator = SegmentAllocator.prefixAllocator(MemorySegment.allocateNative(size + 1, MemorySession.openConfined()));
     }
 
     @TearDown
@@ -95,15 +96,20 @@ public class StrLenTest extends CLayouts {
     @Benchmark
     public int panama_strlen() throws Throwable {
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = session.allocate(str.length() + 1);
+            MemorySegment segment = MemorySegment.allocateNative(str.length() + 1, session);
             segment.setUtf8String(0, str);
             return (int)STRLEN.invokeExact(segment);
         }
     }
 
     @Benchmark
+    public int panama_strlen_arena() throws Throwable {
+        return (int)STRLEN.invokeExact(arenaAllocator.allocateUtf8String(str));
+    }
+
+    @Benchmark
     public int panama_strlen_prefix() throws Throwable {
-        return (int)STRLEN.invokeExact(prefixAllocator.allocateUtf8String(str));
+        return (int)STRLEN.invokeExact(segmentAllocator.allocateUtf8String(str));
     }
 
     @Benchmark

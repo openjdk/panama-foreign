@@ -149,10 +149,10 @@ public class DowncallLinker {
     private record InvocationData(MethodHandle leaf, Map<VMStorage, Integer> argIndexMap, Map<VMStorage, Integer> retIndexMap) {}
 
     Object invokeInterpBindings(SegmentAllocator allocator, Object[] args, InvocationData invData) throws Throwable {
-        Binding.Allocator unboxAllocator = callingSequence.allocationSize() != 0
-                ? Binding.Allocator.of(callingSequence.allocationSize())
-                : Binding.Allocator.DUMMY;
-        try (unboxAllocator) {
+        Binding.Context unboxContext = callingSequence.allocationSize() != 0
+                ? Binding.Context.ofBoundedAllocator(callingSequence.allocationSize())
+                : Binding.Context.DUMMY;
+        try (unboxContext) {
             MemorySegment returnBuffer = null;
 
             // do argument processing, get Object[] as result
@@ -160,7 +160,7 @@ public class DowncallLinker {
             if (callingSequence.needsReturnBuffer()) {
                 // we supply the return buffer (argument array does not contain it)
                 Object[] prefixedArgs = new Object[args.length + 1];
-                returnBuffer = unboxAllocator.allocate(callingSequence.returnBufferSize());
+                returnBuffer = unboxContext.allocator().allocate(callingSequence.returnBufferSize());
                 prefixedArgs[0] = returnBuffer;
                 System.arraycopy(args, 0, prefixedArgs, 1, args.length);
                 args = prefixedArgs;
@@ -170,7 +170,7 @@ public class DowncallLinker {
                 BindingInterpreter.unbox(arg, callingSequence.argumentBindings(i),
                         (storage, type, value) -> {
                             leafArgs[invData.argIndexMap.get(storage)] = value;
-                        }, unboxAllocator);
+                        }, unboxContext);
             }
 
             // call leaf
@@ -191,10 +191,10 @@ public class DowncallLinker {
                                 retBufReadOffset += abi.arch.typeSize(storage.type());
                                 return result1;
                             }
-                        }, allocator);
+                        }, Binding.Context.ofAllocator(allocator));
             } else {
                 return BindingInterpreter.box(callingSequence.returnBindings(), (storage, type) -> o,
-                        allocator);
+                        Binding.Context.ofAllocator(allocator));
             }
         }
     }

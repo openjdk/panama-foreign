@@ -24,26 +24,25 @@
  */
 package jdk.internal.foreign.abi;
 
-import java.lang.foreign.SegmentAllocator;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 
 public class BindingInterpreter {
 
-    static void unbox(Object arg, List<Binding> bindings, StoreFunc storeFunc, SegmentAllocator allocator) {
+    static void unbox(Object arg, List<Binding> bindings, StoreFunc storeFunc, Binding.Context context) {
         Deque<Object> stack = new ArrayDeque<>();
 
         stack.push(arg);
         for (Binding b : bindings) {
-            b.interpret(stack, storeFunc, null, allocator);
+            b.interpret(stack, storeFunc, null, context);
         }
     }
 
-    static Object box(List<Binding> bindings, LoadFunc loadFunc, SegmentAllocator allocator) {
+    static Object box(List<Binding> bindings, LoadFunc loadFunc, Binding.Context context) {
         Deque<Object> stack = new ArrayDeque<>();
         for (Binding b : bindings) {
-            b.interpret(stack, null, loadFunc, allocator);
+            b.interpret(stack, null, loadFunc, context);
         }
        return stack.pop();
     }

@@ -64,7 +64,7 @@ public class QSort extends CLayouts {
     static MemorySegment qsort_addr = abi.defaultLookup().lookup("qsort").get();
 
     static {
-        INPUT_SEGMENT = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(INPUT.length, JAVA_INT));
+        INPUT_SEGMENT = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(INPUT.length, JAVA_INT), MemorySession.global());
         INPUT_SEGMENT.copyFrom(MemorySegment.ofArray(INPUT));
 
         System.loadLibrary("QSortJNI");

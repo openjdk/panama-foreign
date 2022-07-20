@@ -25,8 +25,8 @@
 
 package jdk.internal.foreign;
 
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 
 public final class ArenaAllocator implements SegmentAllocator {
@@ -66,7 +66,7 @@ public final class ArenaAllocator implements SegmentAllocator {
             throw new OutOfMemoryError();
         }
         size += allocatedSize;
-        return session.allocate(bytesSize, bytesAlignment);
+        return MemorySegment.allocateNative(bytesSize, bytesAlignment, session);
     }
 
     @Override
