@@ -386,9 +386,7 @@ public class StdLibTest extends NativeTestHelper {
 
         INTEGRAL(int.class, C_INT, "%d", session -> 42, 42, VaList.Builder::addVarg),
         STRING(MemorySegment.class, C_POINTER, "%s", session -> {
-            var segment = session.allocate(4, 1);
-            segment.setUtf8String(0, "str");
-            return segment;
+            return session.allocateUtf8String("str");
         }, "str", VaList.Builder::addVarg),
         CHAR(byte.class, C_CHAR, "%c", session -> (byte) 'h', 'h', (builder, layout, value) -> builder.addVarg(C_INT, (int)value)),
         DOUBLE(double.class, C_DOUBLE, "%.4f", session ->1.2345d, 1.2345d, VaList.Builder::addVarg);

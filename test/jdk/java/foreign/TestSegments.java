@@ -267,6 +267,13 @@ public class TestSegments {
         }
     }
 
+    @Test(dataProvider = "segmentFactories")
+    public void testNativeSegments(Supplier<MemorySegment> segmentSupplier) {
+        MemorySegment segment = segmentSupplier.get();
+        assertEquals(segment.isNative(), !segment.array().isPresent());
+        tryClose(segment);
+    }
+
     @Test(dataProvider = "segmentFactories", expectedExceptions = UnsupportedOperationException.class)
     public void testFillIllegalAccessMode(Supplier<MemorySegment> segmentSupplier) {
         MemorySegment segment = segmentSupplier.get();

@@ -27,8 +27,8 @@
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestMemoryAccessInstance
  */
 
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -80,7 +80,7 @@ public class TestMemoryAccessInstance {
 
         void test() {
             try (MemorySession session = MemorySession.openConfined()) {
-                MemorySegment segment = session.allocate(128);
+                MemorySegment segment = MemorySegment.allocateNative(128, session);
                 ByteBuffer buffer = segment.asByteBuffer();
                 T t = transform.apply(segment);
                 segmentSetter.set(t, layout, 8, value);
@@ -93,7 +93,7 @@ public class TestMemoryAccessInstance {
         @SuppressWarnings("unchecked")
         void testHyperAligned() {
             try (MemorySession session = MemorySession.openConfined()) {
-                MemorySegment segment = session.allocate(64);
+                MemorySegment segment = MemorySegment.allocateNative(64, session);
                 T t = transform.apply(segment);
                 L alignedLayout = (L)layout.withBitAlignment(layout.byteSize() * 8 * 2);
                 try {

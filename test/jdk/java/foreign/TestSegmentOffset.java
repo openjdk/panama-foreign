@@ -28,11 +28,9 @@
  */
 
 import java.lang.foreign.MemorySegment;
-
+import java.lang.foreign.MemorySession;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import java.lang.foreign.MemorySession;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntFunction;

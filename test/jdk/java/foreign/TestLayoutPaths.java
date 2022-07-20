@@ -28,11 +28,11 @@
  * @run testng TestLayoutPaths
  */
 
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SequenceLayout;
 
 import java.lang.foreign.ValueLayout;
@@ -434,7 +434,7 @@ public class TestLayoutPaths {
         sliceHandle = sliceHandle.asSpreader(long[].class, indexes.length);
 
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = session.allocate(layout);
+            MemorySegment segment = MemorySegment.allocateNative(layout, session);
             MemorySegment slice = (MemorySegment) sliceHandle.invokeExact(segment, indexes);
             assertEquals(slice.address() - segment.address(), expectedBitOffset / 8);
             assertEquals(slice.byteSize(), selected.byteSize());
@@ -469,7 +469,7 @@ public class TestLayoutPaths {
         }
 
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = session.allocate(layout);
+            MemorySegment segment = MemorySegment.allocateNative(layout, session);
 
             try {
                 sliceHandle.invokeExact(segment, 1); // should work
