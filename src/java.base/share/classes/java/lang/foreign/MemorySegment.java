@@ -1982,7 +1982,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Finds and returns the offset, in bytes, of the first mismatch between the source and the destination
+     * Finds and returns the relative offset, in bytes, of the first mismatch between the source and the destination
      * segments. More specifically, the bytes at offset {@code srcOffset} through {@code srcOffset + bytes - 1} in the
      * source segment are compared against the bytes at offset {@code dstOffset} through {@code dstOffset + bytes - 1}
      * in the destination segment.
