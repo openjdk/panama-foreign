@@ -40,6 +40,7 @@ import java.util.Spliterator;
 import java.util.stream.Stream;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.HeapMemorySegmentImpl;
+import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
@@ -48,7 +49,10 @@ import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
+import jdk.internal.util.ArraysSupport;
 import jdk.internal.vm.annotation.ForceInline;
+
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 
 /**
  * A memory segment models a contiguous region of memory. A memory segment is associated with both spatial
@@ -470,6 +474,14 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * the smallest of the segment sizes, and it follows that the offset is only
      * valid for the larger segment. Otherwise, there is no mismatch and {@code
      * -1} is returned.
+     * <p>
+     * This method is equivalent to the following code:
+     * {@snippet lang=java :
+     * long length = Math.min(this.byteSize(), that.byteSize());
+     * long mismatchOffset = MemorySegment.mismatch(this, 0, other, 0, length);
+     * return (mismatchOffset == -1 && this.byteSize() != that.byteSize()) ?
+     *             length : mismatchOffset;
+     * }
      *
      * @param other the segment to be tested for a mismatch with this segment
      * @return the relative offset, in bytes, of the first mismatch between this
@@ -482,6 +494,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with {@code other}.
+     *
+     * @see MemorySegment#mismatch(MemorySegment, long, MemorySegment, long, long)
      */
     long mismatch(MemorySegment other);
 
@@ -1965,5 +1979,70 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
         } else {
             throw new IllegalArgumentException("Not a supported array class: " + arrayType.getSimpleName());
         }
+    }
+
+    /**
+     * Finds and returns the offset, in bytes, of the first mismatch between the source and the destination
+     * segments. More specifically, the bytes at offset {@code srcOffset} through {@code srcOffset + bytes - 1} in the
+     * source segment are compared against the bytes at offset {@code dstOffset} through {@code dstOffset + bytes - 1}
+     * in the destination segment.
+     * <p>
+     * If a mismatch is detected, the returned offset is relative to the {@linkplain #address() base address} of each
+     * segment and will be in the range of 0 (inclusive) up to the {@code length}. Otherwise, there is no mismatch and
+     * {@code -1} is returned.
+     *
+     * @param srcSegment the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
+     * @param dstSegment the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param bytes the number of bytes to be compared.
+     * @return the relative offset, in bytes, of the first mismatch between the source and destination segments,
+     * otherwise -1 if no mismatch.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code srcSegment} is not
+     * {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread owning
+     * the {@linkplain #session() session} associated with {@code srcSegment}.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code dstSegment} is not
+     * {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread owning
+     * the {@linkplain #session() session} associated with {@code dstSegment}.
+     * @throws IndexOutOfBoundsException if {@code srcOffset + bytes > srcSegment.byteSize()} or if
+     * {@code dstOffset + bytes > dstSegment.byteSize()}, or if either {@code srcOffset}, {@code dstOffset}
+     * or {@code bytes} are {@code < 0}.
+     *
+     * @see MemorySegment#mismatch(MemorySegment)
+     */
+    static long mismatch(MemorySegment srcSegment, long srcOffset, MemorySegment dstSegment, long dstOffset, long bytes) {
+        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)Objects.requireNonNull(srcSegment);
+        AbstractMemorySegmentImpl dstImpl = (AbstractMemorySegmentImpl)Objects.requireNonNull(dstSegment);
+        srcImpl.checkAccess(srcOffset, bytes, true);
+        dstImpl.checkAccess(dstOffset, bytes, true);
+        if (dstImpl == srcImpl) {
+            srcImpl.checkValidState();
+            return -1;
+        }
+
+        long i = 0;
+        if (bytes > 7) {
+            if (srcImpl.get(JAVA_BYTE, srcOffset) != dstImpl.get(JAVA_BYTE, dstOffset)) {
+                return 0;
+            }
+            i = AbstractMemorySegmentImpl.vectorizedMismatchLargeForBytes(srcImpl.sessionImpl(), dstImpl.sessionImpl(),
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset,
+                    bytes);
+            if (i >= 0) {
+                return i;
+            }
+            long remaining = ~i;
+            assert remaining < 8 : "remaining greater than 7: " + remaining;
+            i = bytes - remaining;
+        }
+        for (; i < bytes; i++) {
+            if (srcImpl.get(JAVA_BYTE, srcOffset + i) != dstImpl.get(JAVA_BYTE, dstOffset + i)) {
+                return i;
+            }
+        }
+        return -1;
     }
 }
