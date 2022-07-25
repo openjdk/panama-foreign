@@ -153,12 +153,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     @Override
     public long mismatch(MemorySegment other) {
         Objects.requireNonNull(other);
-        long thisSize = byteSize();
-        long thatSize = other.byteSize();
-        long length = Math.min(thisSize, thatSize);
-        long mismatch = MemorySegment.mismatch(this, 0, other, 0, length);
-        return (mismatch == -1 && thisSize != thatSize) ?
-            length : mismatch;
+        return MemorySegment.mismatch(this, 0, byteSize(), other, 0, other.byteSize());
     }
 
     /**
