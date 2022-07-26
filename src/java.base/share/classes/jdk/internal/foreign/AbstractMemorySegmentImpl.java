@@ -152,45 +152,14 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
 
     @Override
     public long mismatch(MemorySegment other) {
-        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)Objects.requireNonNull(other);
-        final long thisSize = this.byteSize();
-        final long thatSize = that.byteSize();
-        final long length = Math.min(thisSize, thatSize);
-        this.checkAccess(0, length, true);
-        that.checkAccess(0, length, true);
-        if (this == other) {
-            checkValidState();
-            return -1;
-        }
-
-        long i = 0;
-        if (length > 7) {
-            if (get(JAVA_BYTE, 0) != that.get(JAVA_BYTE, 0)) {
-                return 0;
-            }
-            i = vectorizedMismatchLargeForBytes(sessionImpl(), that.sessionImpl(),
-                    this.unsafeGetBase(), this.unsafeGetOffset(),
-                    that.unsafeGetBase(), that.unsafeGetOffset(),
-                    length);
-            if (i >= 0) {
-                return i;
-            }
-            long remaining = ~i;
-            assert remaining < 8 : "remaining greater than 7: " + remaining;
-            i = length - remaining;
-        }
-        for (; i < length; i++) {
-            if (get(JAVA_BYTE, i) != that.get(JAVA_BYTE, i)) {
-                return i;
-            }
-        }
-        return thisSize != thatSize ? length : -1;
+        Objects.requireNonNull(other);
+        return MemorySegment.mismatch(this, 0, byteSize(), other, 0, other.byteSize());
     }
 
     /**
      * Mismatch over long lengths.
      */
-    private static long vectorizedMismatchLargeForBytes(MemorySessionImpl aSession, MemorySessionImpl bSession,
+    public static long vectorizedMismatchLargeForBytes(MemorySessionImpl aSession, MemorySessionImpl bSession,
                                                         Object a, long aOffset,
                                                         Object b, long bOffset,
                                                         long length) {
