@@ -238,8 +238,8 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  *
  * {@snippet lang = java:
  * MemorySession session = ... // initialize a memory session
- * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS, 0); // obtain foreign segment (size = 0)
- * MemorySegment segment = MemorySegment.ofAddress(foreign.address(), 4, session); // new segment (size = 4)
+ * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS, 0); // wrap address into segment (size = 0)
+ * MemorySegment segment = MemorySegment.ofAddress(foreign.address(), 4, session); // create new segment (size = 4)
  * int x = segment.get(ValueLayout.JAVA_INT, 0); //ok
  *}
  *
@@ -249,7 +249,7 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * with maximal size (e.g. {@linkplain java.lang.Long#MAX_VALUE}). As such, these segments might be accessed directly, as follows:
  *
  * {@snippet lang = java:
- * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS.asUnbounded(), 0); // obtain foreign segment (size = Long.MAX_VALUE)
+ * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS.asUnbounded(), 0); // wrap address into segment (size = Long.MAX_VALUE)
  * int x = foreign.get(ValueLayout.JAVA_INT, 0); //ok
  *}
  *
