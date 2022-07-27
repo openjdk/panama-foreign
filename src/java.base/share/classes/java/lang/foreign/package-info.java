@@ -139,47 +139,6 @@
  * {@linkplain java.lang.foreign.MemorySegment#setUtf8String(long, java.lang.String) into} zero-terminated, UTF-8 strings and
  * {@linkplain java.lang.foreign.MemorySegment#getUtf8String(long) back}, as demonstrated in the above example.
  *
- * <h3 id="foreign-segments">Foreign memory segments</h3>
- *
- * When a memory segment is created from Java code, the segment properties (spatial bounds, temporal bounds and confinement)
- * are fully known at segment creation. But when interacting with foreign functions, clients will often receive memory segments
- * that wrap <em>raw</em> foreign addresses. We call these segments <em>foreign</em> memory segments.
- * <p>
- * Foreign memory segments are typically modelled using zero-length memory segments backed by the
- * {@linkplain java.lang.foreign.MemorySession#global() global} memory session. As such, attempts to access
- * foreign memory segments will fail with {@link java.lang.IndexOutOfBoundsException}. This is a crucial safety feature:
- * raw foreign addresses are not associated with spatial bounds. For example, the C type {@code char*} can refer to a single {@code char} value,
- * or an array of {@code char} values, of given size. Nor do said addresses have any notion of temporal bounds or thread-confinement.
- * <p>
- * To access foreign memory segments, clients have two options. First, they can
- * {@linkplain java.lang.foreign.MemorySegment#ofAddress(long, long, MemorySession) create}
- * a new native memory segment <em>unsafely</em>. This allows the client to inject extra knowledge about spatial and temporal bounds
- * which might, for instance, be available in the documentation of the foreign function which produced the memory segment.
- * Here is how a foreign segment can be accessed:
- *
- * {@snippet lang = java:
- * MemorySession session = ... // initialize a memory session
- * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS, 0); // obtain foreign segment (size = 0)
- * MemorySegment segment = MemorySegment.ofAddress(foreign.address(), 4, session); // new segment (size = 4)
- * int x = segment.get(ValueLayout.JAVA_INT, 0); //ok
- *}
- *
- * Alternatively, clients can obtain, <em>unsafely</em>, an {@linkplain java.lang.foreign.ValueLayout.OfAddress#asUnbounded() unbound}
- * address value layout. Unbound address value layouts allow the API to view foreign segments as segments with maximal size
- * (e.g. {@linkplain java.lang.Long#MAX_VALUE}), meaning that clients can always access a foreign
- * segment obtained using an unbound address layout:
- *
- * {@snippet lang = java:
- * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS.asUnbounded(), 0); // obtain foreign segment (size = Long.MAX_VALUE)
- * int x = foreign.get(ValueLayout.JAVA_INT, 0); //ok
- *}
- *
- * Which approach is taken largely depends on the information that a client has available when obtaining a memory segment
- * wrapping a native pointer. For instance, if such pointer points to a C struct, the client might prefer to resize the
- * segment unsafely, to match the size of the struct (so that out-of-bounds access will be detected by the API).
- * In other instances, however, there will be no, or little information as to what spatial and/or temporal bounds should
- * be associated with a given native pointer. In these cases using an unbounded address layout might be preferrable.
- *
  * <h3 id="upcalls">Upcalls</h3>
  * The {@link java.lang.foreign.Linker} interface also allows clients to turn an existing method handle (which might point
  * to a Java method) into a memory segment, so that Java code can effectively be passed to other foreign functions.

@@ -206,18 +206,62 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * constructed from a {@code byte[]} might have a subset of addresses {@code S} which happen to be 8-byte aligned. But determining
  * which segment addresses belong to {@code S} requires reasoning about details which are ultimately implementation-dependent.
  *
- * <h2 id="restricted-segments">Restricted memory segments</h2>
- * Sometimes it is necessary to turn a raw address (e.g. obtained from native code) into a memory segment with
- * full spatial, temporal and confinement bounds. To do this, clients can {@linkplain #ofAddress(long, long, MemorySession)}
- * a native segment <em>unsafely</em>, by providing a new size, as well as a new {@linkplain MemorySession memory session}.
- * This is a <a href="package-summary.html#restricted"><em>restricted</em></a> operation and should be used with
- * caution: for instance, an incorrect segment size could result in a VM crash when attempting to access
- * the memory segment.
+ * <h2 id="wrapping-addresses">Wrapping raw addresses</h2>
+ *
+ * When a memory segment is created from Java code using a factory like
+ * {@link java.lang.foreign.MemorySegment#allocateNative(long, java.lang.foreign.MemorySession)}, the segment properties
+ * (spatial bounds, temporal bounds and confinement) are fully known at segment creation.
  * <p>
- * For example, clients requiring sophisticated, low-level control over mapped memory segments, might consider writing
- * custom mapped memory segment factories; using {@link Linker}, e.g. on Linux, it is possible to call {@code mmap}
- * with the desired parameters; the returned address can be easily wrapped into a memory segment, using
- * {@link #ofAddress(long, long, MemorySession)}.
+ * It is sometimes useful to {@linkplain java.lang.foreign.MemorySegment#ofAddress(long) wrap} a memory segment around
+ * a raw address (e.g. a {@code long} value). This results in a zero-length memory segment, associated with the
+ * {@linkplain java.lang.foreign.MemorySession#global() global} memory session. Since such segments feature trivial spatial
+ * bounds, any attempt to access these segments will fail with {@link java.lang.IndexOutOfBoundsException}. This is a
+ * crucial safety feature: as these segments are associated with a memory region whose size is not known, any access
+ * operations involving these segments cannot be validated.
+ * <p>
+ * The need for wrapping segments around raw addresses often arise in the context of interacting with foreign functions.
+ * For example, consider the case of a C function returning the type {@code char*}.
+ * Such a function can be interpreted as returning a pointer to a memory region containing a single {@code char} value;
+ * or, alternatively, as returning a pointer to a memory region containing an array of {@code char} values
+ * (where the size of the array might be provided in a separate parameter). In this case, the pointer returned by the
+ * function is wrapped into a fresh zero-length memory segment.
+ * <p>
+ * A similar situation arises when clients
+ * {@linkplain java.lang.foreign.MemorySegment#get(java.lang.foreign.ValueLayout.OfAddress, long) read} an address from
+ * an existing memory segment. Again, a fresh zero-length native memory segment is constructed from a raw long value
+ * (the value read from the memory segment).
+ * <p>
+ * To access zero-length memory segments, clients have two options. First, they can
+ * {@linkplain java.lang.foreign.MemorySegment#ofAddress(long, long, MemorySession) obtain}
+ * a <em>new</em> native memory segment <em>unsafely</em>. This allows the client to inject extra knowledge about spatial
+ * and temporal bounds, as follows:
+ *
+ * {@snippet lang = java:
+ * MemorySession session = ... // initialize a memory session
+ * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS, 0); // obtain foreign segment (size = 0)
+ * MemorySegment segment = MemorySegment.ofAddress(foreign.address(), 4, session); // new segment (size = 4)
+ * int x = segment.get(ValueLayout.JAVA_INT, 0); //ok
+ *}
+ *
+ * Alternatively, clients can obtain, <em>unsafely</em>, an {@linkplain java.lang.foreign.ValueLayout.OfAddress#asUnbounded() unbound}
+ * address value layout. When an access operation, or a function descriptor that is passed to a downcall method handle,
+ * uses one or more unbound address value layouts, the API will wrap any corresponding raw addresses with native segments
+ * with maximal size (e.g. {@linkplain java.lang.Long#MAX_VALUE}). As such, these segments might be accessed directly, as follows:
+ *
+ * {@snippet lang = java:
+ * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS.asUnbounded(), 0); // obtain foreign segment (size = Long.MAX_VALUE)
+ * int x = foreign.get(ValueLayout.JAVA_INT, 0); //ok
+ *}
+ *
+ * Both {@link #ofAddress(long, long, MemorySession)} and {@link ValueLayout.OfAddress#asUnbounded()} are
+ * <a href="package-summary.html#restricted"><em>restricted</em></a> methods, and should be used with caution:
+ * for instance, sizing a segment incorrectly could result in a VM crash when attempting to access the memory segment.
+ * <p>
+ * Which approach is taken largely depends on the information that a client has available when obtaining a memory segment
+ * wrapping a native pointer. For instance, if such pointer points to a C struct, the client might prefer to resize the
+ * segment unsafely, to match the size of the struct (so that out-of-bounds access will be detected by the API).
+ * In other instances, however, there will be no, or little information as to what spatial and/or temporal bounds should
+ * be associated with a given native pointer. In these cases using an unbounded address layout might be preferrable.
  *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
