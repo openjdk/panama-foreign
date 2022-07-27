@@ -54,65 +54,48 @@ import jdk.internal.vm.annotation.ForceInline;
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 
 /**
- * A memory segment models a contiguous region of memory. A memory segment is associated with both spatial
- * and temporal bounds (e.g. a {@link MemorySession}). Spatial bounds ensure that memory access operations on a memory segment cannot affect a memory location
- * which falls <em>outside</em> the boundaries of the memory segment being accessed. Temporal bounds ensure that memory access
- * operations on a segment cannot occur after the memory session associated with a memory segment has been closed (see {@link MemorySession#close()}).
- *
- * There are many kinds of memory segments:
- * <ul>
- *     <li>{@linkplain MemorySegment#allocateNative(long, long, MemorySession) native memory segments}, backed by off-heap memory;</li>
- *     <li>{@linkplain FileChannel#map(FileChannel.MapMode, long, long, MemorySession) mapped memory segments}, obtained by mapping
- * a file into main memory ({@code mmap}); the contents of a mapped memory segments can be {@linkplain #force() persisted} and
- * {@linkplain #load() loaded} to and from the underlying memory-mapped file;</li>
- *     <li>{@linkplain MemorySegment#ofArray(int[]) array segments}, wrapping an existing, heap-allocated Java array; and</li>
- *     <li>{@linkplain MemorySegment#ofBuffer(Buffer) buffer segments}, wrapping an existing {@link Buffer} instance;
- * buffer memory segments might be backed by either off-heap memory or on-heap memory, depending on the characteristics of the
- * wrapped buffer instance. For instance, a buffer memory segment obtained from a byte buffer created with the
- * {@link ByteBuffer#allocateDirect(int)} method will be backed by off-heap memory.</li>
- * </ul>
- *
- * <h2 id="lifecyle-confinement">Lifecycle and confinement</h2>
- *
- * Memory segments are associated with a {@linkplain MemorySegment#session() memory session}. As for all resources associated
- * with a memory session, a segment cannot be accessed after its underlying session has been closed. For instance,
- * the following code will result in an exception:
- * {@snippet lang=java :
- * MemorySegment segment = null;
- * try (MemorySession session = MemorySession.openConfined()) {
- *     segment = MemorySegment.allocateNative(8, session);
- * }
- * segment.get(ValueLayout.JAVA_LONG, 0); // already closed!
- * }
- * Additionally, access to a memory segment is subject to the thread-confinement checks enforced by the owning memory
- * session; that is, if the segment is associated with a shared session, it can be accessed by multiple threads;
- * if it is associated with a confined session, it can only be accessed by the thread which owns the memory session.
+ * A memory segment provides access to a contiguous region of memory.
  * <p>
- * Heap segments are always associated with the {@linkplain MemorySession#global() global} memory session.
- * This session cannot be closed, and segments associated with it can be considered as <em>always alive</em>.
- * Buffer segments are typically associated with the global memory session, with one exception: buffer segments created
- * from byte buffer instances obtained calling the {@link #asByteBuffer()} method on a memory segment {@code S}
- * are associated with the same memory session as {@code S}.
+ * There are two kinds of memory segments: <em>heap</em> segments, backed by a memory region that resides inside the Java heap
+ * (typically a Java array), and <em>native</em> segments, backed by a memory region that resides outside the Java heap.
+ * <p>
+ * Native segments can sometimes be obtained by mapping a file into main memory ({@code mmap}). Segments obtained in this
+ * way are called <em>mapped</em> segments, and their contents can be {@linkplain #force() persisted} and
+ * {@linkplain #load() loaded} to and from the underlying memory-mapped file.
+ * <p>
+ * All memory segments have an {@linkplain #address() address} and a {@linkplain #byteSize() size}. Together, these ensure
+ * that access operations on a memory segment cannot affect a memory location which falls <em>outside</em> the boundaries of
+ * the memory region associated with the segment being accessed.
+ * <p>
+ * All memory segments are associated with a {@linkplain MemorySession memory session}, which ensures that access operations
+ * on a memory segment cannot occur <em>after</em> the memory region associated with the memory segment being accessed
+ * is no longer available (that is, after the memory session associated with the accessed memory segment has been
+ * {@linkplain MemorySession#close() closed}).
+ * <p>
+ * Finally, access to a memory segment is subject to the thread-confinement checks enforced by the associated memory
+ * session; that is, if the segment is associated with a {@linkplain MemorySession#openShared() shared session},
+ * it can be accessed by multiple threads; if it is associated with a {@linkplain MemorySession#openConfined() confined session},
+ * it can only be accessed by the thread which owns the memory session.
  *
- * <h2 id="segment-deref">Dereferencing memory segments</h2>
+ * <h2 id="segment-deref">Accessing memory segments</h2>
  *
  * A memory segment can be read or written using various methods provided in this class (e.g. {@link #get(ValueLayout.OfInt, long)}).
- * Each dereference method takes a {@linkplain ValueLayout value layout}, which specifies the size,
- * alignment constraints, byte order as well as the Java type associated with the dereference operation, and an offset.
+ * Each access method takes a {@linkplain ValueLayout value layout}, which specifies the size,
+ * alignment constraints, byte order as well as the Java type associated with the access operation, and an offset.
  * For instance, to read an int from a segment, using {@linkplain ByteOrder#nativeOrder() default endianness}, the following code can be used:
  * {@snippet lang=java :
  * MemorySegment segment = ...
  * int value = segment.get(ValueLayout.JAVA_INT, 0);
  * }
  *
- * If the value to be read is stored in memory using {@linkplain ByteOrder#BIG_ENDIAN big-endian} encoding, the dereference operation
+ * If the value to be read is stored in memory using {@linkplain ByteOrder#BIG_ENDIAN big-endian} encoding, the access operation
  * can be expressed as follows:
  * {@snippet lang=java :
  * MemorySegment segment = ...
  * int value = segment.get(ValueLayout.JAVA_INT.withOrder(BIG_ENDIAN), 0);
  * }
  *
- * For more complex dereference operations (e.g. structured memory access), clients can obtain a
+ * For more complex access operations (e.g. structured memory access), clients can obtain a
  * {@linkplain MethodHandles#memorySegmentViewVarHandle(ValueLayout) memory segment view var handle},
  * that is, a var handle that accepts a segment and a {@code long} offset. More complex access var handles
  * can be obtained by adapting a segment var handle view using the var handle combinator functions defined in the
@@ -175,9 +158,9 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  *
  * <h2 id="segment-alignment">Alignment</h2>
  *
- * When dereferencing a memory segment using a layout, the runtime must check that the segment address being dereferenced
+ * When accessing a memory segment using a layout, the runtime must check that the segment address being accessed
  * matches the layout's {@linkplain MemoryLayout#byteAlignment() alignment constraints}. If the segment being
- * dereferenced is a native segment, then it has a concrete {@linkplain #address() base address}, which can
+ * accessed is a native segment, then it has a concrete {@linkplain #address() base address}, which can
  * be used to perform the alignment check. The pseudo-function below demonstrates this:
  *
  * {@snippet lang=java :
@@ -186,7 +169,7 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * }
  * }
  *
- * If, however, the segment being dereferenced is a heap segment, the above function will not work: a heap
+ * If, however, the segment being accessed is a heap segment, the above function will not work: a heap
  * segment's {@linkplain #address() base address} is <em>virtualized</em> and, as such, cannot be used to construct an
  * alignment check. Instead, heap segments are assumed to produce addresses which are never more aligned than the element
  * size of the Java array from which they have originated from, as shown in the following table:
@@ -228,7 +211,7 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * full spatial, temporal and confinement bounds. To do this, clients can {@linkplain #ofAddress(long, long, MemorySession)}
  * a native segment <em>unsafely</em>, by providing a new size, as well as a new {@linkplain MemorySession memory session}.
  * This is a <a href="package-summary.html#restricted"><em>restricted</em></a> operation and should be used with
- * caution: for instance, an incorrect segment size could result in a VM crash when attempting to dereference
+ * caution: for instance, an incorrect segment size could result in a VM crash when attempting to access
  * the memory segment.
  * <p>
  * For example, clients requiring sophisticated, low-level control over mapped memory segments, might consider writing
@@ -357,17 +340,16 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Returns {@code true} if this segment is a native segment. A native memory segment is
-     * created using the {@link #allocateNative(long, MemorySession)} (and related) factory, or a buffer segment
-     * derived from a {@linkplain ByteBuffer#allocateDirect(int) direct byte buffer} using the {@link #ofBuffer(Buffer)} factory,
-     * or if this is a {@linkplain #isMapped() mapped} segment.
+     * created e.g. using the {@link #allocateNative(long, MemorySession)} (and related) factory, or by
+     * {@linkplain #ofBuffer(Buffer) wrapping} a {@linkplain ByteBuffer#allocateDirect(int) direct buffer}.
      * @return {@code true} if this segment is native segment.
      */
     boolean isNative();
 
     /**
-     * Returns {@code true} if this segment is a mapped segment. A mapped memory segment is
-     * created using the {@link FileChannel#map(FileChannel.MapMode, long, long, MemorySession)} factory, or a buffer segment
-     * derived from a {@link java.nio.MappedByteBuffer} using the {@link #ofBuffer(Buffer)} factory.
+     * Returns {@code true} if this segment is a mapped segment. A mapped memory segment is created e.g. using the
+     * {@link FileChannel#map(FileChannel.MapMode, long, long, MemorySession)} factory, or by
+     * {@linkplain #ofBuffer(Buffer) wrapping} a {@linkplain java.nio.MappedByteBuffer mapped byte buffer}.
      * @return {@code true} if this segment is a mapped segment.
      */
     boolean isMapped();
@@ -730,18 +712,27 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
 
     /**
-     * Creates a buffer memory segment that models the memory associated with the given {@link Buffer} instance.
+     * Creates a memory segment that models the memory associated with the given {@link Buffer} instance.
      * The segment starts relative to the buffer's position (inclusive) and ends relative to the buffer's limit (exclusive).
      * <p>
-     * If the buffer is {@linkplain ByteBuffer#isReadOnly() read-only}, the resulting segment will also be
-     * {@linkplain ByteBuffer#isReadOnly() read-only}. The memory session associated with this segment can either be the
-     * {@linkplain MemorySession#global() global} memory session, in case the buffer has been created independently,
-     * or some other memory session, in case the buffer has been obtained using {@link #asByteBuffer()}.
+     * If the buffer is {@linkplain Buffer#isReadOnly() read-only}, the resulting segment will also be
+     * {@linkplain ByteBuffer#isReadOnly() read-only}. Moreover, if the buffer is a {@linkplain Buffer#isDirect() direct buffer},
+     * the return segment is a native memory segment; otherwise the returned memory segment is a heap memory segment.
      * <p>
-     * The resulting memory segment keeps a reference to the backing buffer, keeping it <em>reachable</em>.
+     * The memory session {@code S} associated with the returned segment is
+     * computed as follows:
+     * <ul>
+     *     <li>if the buffer has been obtained by calling {@link #asByteBuffer()} on a memory segment whose session
+     *     is {@code S'}, then {@code S = S'}; or</li>
+     *     <li>if the buffer is an heap buffer, then {@code S} is the {@linkplain MemorySession#global() global session}; or
+     *     <li>if the buffer is a direct buffer, then {@code S} is an
+     *     {@linkplain MemorySession#openImplicit() implicit session} that keeps the buffer reachable.
+     *     Therefore, the off-heap memory associated with the buffer instance will remain available as long as the
+     *     returned segment is reachable.</li>
+     * </ul>
      *
-     * @param buffer the buffer instance backing the buffer memory segment.
-     * @return a buffer memory segment.
+     * @param buffer the buffer instance to be wrapped by a new memory segment.
+     * @return a memory segment, wrapping the given buffer instance.
      */
     static MemorySegment ofBuffer(Buffer buffer) {
         return AbstractMemorySegmentImpl.ofBuffer(buffer);
@@ -1112,9 +1103,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
@@ -1133,9 +1124,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
@@ -1155,9 +1146,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
@@ -1176,9 +1167,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
@@ -1198,9 +1189,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
@@ -1219,9 +1210,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
@@ -1241,9 +1232,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
@@ -1262,9 +1253,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
@@ -1284,9 +1275,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
@@ -1305,9 +1296,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
@@ -1327,9 +1318,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
@@ -1348,9 +1339,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
@@ -1370,9 +1361,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
@@ -1391,9 +1382,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
@@ -1413,9 +1404,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
@@ -1434,9 +1425,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
@@ -1459,9 +1450,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
@@ -1480,9 +1471,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
@@ -1502,10 +1493,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
@@ -1526,10 +1517,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
@@ -1551,10 +1542,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
@@ -1575,10 +1566,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
@@ -1600,10 +1591,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
@@ -1624,10 +1615,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
@@ -1649,10 +1640,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
@@ -1673,10 +1664,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
@@ -1698,10 +1689,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
@@ -1722,10 +1713,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
@@ -1747,10 +1738,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
@@ -1771,10 +1762,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
@@ -1800,10 +1791,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
@@ -1824,10 +1815,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this segment.
-     * @throws IllegalArgumentException if the dereference operation is
+     * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the provided layout,
      * or if the layout alignment is greater than its size.
-     * @throws IndexOutOfBoundsException when the dereference operation falls outside the <em>spatial bounds</em> of the
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */

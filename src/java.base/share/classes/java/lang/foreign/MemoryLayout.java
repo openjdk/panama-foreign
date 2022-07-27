@@ -348,7 +348,7 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
     }
 
     /**
-     * Creates an access var handle that can be used to dereference memory at the layout selected by the given layout path,
+     * Creates an access var handle that can be used to access a memory segment at the layout selected by the given layout path,
      * where the path is considered rooted in this layout.
      * <p>
      * The final memory location accessed by the returned var handle can be computed as follows:
@@ -377,7 +377,7 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
      * features certain <em>access mode restrictions</em>, which are common to all memory segment view handles.
      *
      * @param elements the layout path elements.
-     * @return a var handle which can be used to dereference memory at the (possibly nested) layout selected by the layout path in {@code elements}.
+     * @return a var handle which can be used to access a memory segment at the (possibly nested) layout selected by the layout path in {@code elements}.
      * @throws UnsupportedOperationException if the layout path has one or more elements with incompatible alignment constraints.
      * @throws IllegalArgumentException if the layout path in {@code elements} does not select a value layout (see {@link ValueLayout}).
      * @see MethodHandles#memorySegmentViewVarHandle(ValueLayout)

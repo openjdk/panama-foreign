@@ -132,8 +132,8 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
     }
 
     /**
-     * Creates a <em>strided</em> access var handle that can be used to dereference a multi-dimensional array. The
-     * layout of this array is a sequence layout with {@code shape.length} nested sequence layouts. The element
+     * Creates a <em>strided</em> access var handle that can be used to access a memory segment as multi-dimensional
+     * array. The layout of this array is a sequence layout with {@code shape.length} nested sequence layouts. The element
      * layout of the sequence layout at depth {@code shape.length} is this value layout.
      * As a result, if {@code shape.length == 0}, the array layout will feature only one dimension.
      * <p>
@@ -156,7 +156,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      *
      * The resulting var handle {@code arrayHandle} will feature 3 coordinates of type {@code long}; each coordinate
      * is interpreted as an index into the corresponding sequence layout. If we refer to the var handle coordinates, from left
-     * to right, as {@code x}, {@code y} and {@code z} respectively, the final offset dereferenced by the var handle can be
+     * to right, as {@code x}, {@code y} and {@code z} respectively, the final offset accessed by the var handle can be
      * computed with the following formula:
      *
      * <blockquote><pre>{@code
@@ -180,7 +180,8 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * as the value for {@code z} is outside its specified bounds.
      *
      * @param shape the size of each nested array dimension.
-     * @return a var handle which can be used to dereference a multi-dimensional array, featuring {@code shape.length + 1}
+     * @return a var handle which can be used to access a memory segment as a multi-dimensional array,
+     * featuring {@code shape.length + 1}
      * {@code long} coordinates.
      * @throws IllegalArgumentException if {@code shape[i] < 0}, for at least one index {@code i}.
      * @throws UnsupportedOperationException if {@code bitAlignment() > bitSize()}.
@@ -631,9 +632,9 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
 
         /**
          * Returns an <em>unbounded</em> address layout with the same carrier, alignment constraints, name and order as this address layout,
-         * but with the specified pointee layout. An unbounded address layouts allow raw addresses to be dereferenced
+         * but with the specified pointee layout. An unbounded address layouts allow raw addresses to be accessed
          * as {@linkplain MemorySegment memory segments} whose size is set to {@link Long#MAX_VALUE}. As such,
-         * these segments be used in subsequent dereference operations.
+         * these segments can be used in subsequent access operations.
          * <p>
          * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
          * Restricted methods are unsafe, and, if used incorrectly, their use might crash
