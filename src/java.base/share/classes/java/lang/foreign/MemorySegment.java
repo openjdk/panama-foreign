@@ -208,9 +208,10 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  *
  * <h2 id="wrapping-addresses">Wrapping raw addresses</h2>
  *
- * When a memory segment is created from Java code using a factory like
+ * When a native memory segment is created using a factory like
  * {@link java.lang.foreign.MemorySegment#allocateNative(long, java.lang.foreign.MemorySession)}, the segment properties
- * (spatial bounds, temporal bounds and confinement) are fully known at segment creation.
+ * (spatial bounds, temporal bounds and confinement) are fully known at segment creation, and are used to validate
+ * access operations on the memory segment.
  * <p>
  * It is sometimes useful to {@linkplain java.lang.foreign.MemorySegment#ofAddress(long) wrap} a memory segment around
  * a raw address (e.g. a {@code long} value). This results in a zero-length memory segment, associated with the
@@ -219,7 +220,7 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * crucial safety feature: as these segments are associated with a memory region whose size is not known, any access
  * operations involving these segments cannot be validated.
  * <p>
- * The need for wrapping segments around raw addresses often arise in the context of interacting with foreign functions.
+ * The need for wrapping segments around raw addresses often arises in the context of interacting with foreign functions.
  * For example, consider the case of a C function returning the type {@code char*}.
  * Such a function can be interpreted as returning a pointer to a memory region containing a single {@code char} value;
  * or, alternatively, as returning a pointer to a memory region containing an array of {@code char} values
@@ -231,10 +232,9 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * an existing memory segment. Again, a fresh zero-length native memory segment is constructed from a raw long value
  * (the value read from the memory segment).
  * <p>
- * To access zero-length memory segments, clients have two options. First, they can
+ * To access native zero-length memory segments, clients have two options. First, they can
  * {@linkplain java.lang.foreign.MemorySegment#ofAddress(long, long, MemorySession) obtain}
- * a <em>new</em> native memory segment <em>unsafely</em>. This allows the client to inject extra knowledge about spatial
- * and temporal bounds, as follows:
+ * a <em>new</em> native memory segment <em>unsafely</em>, with new spatial and temporal bounds, as follows:
  *
  * {@snippet lang = java:
  * MemorySession session = ... // initialize a memory session
