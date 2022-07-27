@@ -1446,8 +1446,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Reads an address from this segment at the given offset, with the given layout.
-     *
+     * Reads an address from this segment at the given offset, with the given layout. The read address is wrapped in
+     * a native segment, associated with the {@linkplain MemorySession#global() global} memory session. Under normal conditions,
+     * the size of the returned segment is {@code 0}. However, if the provided layout is an
+     * {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout, then the size of the returned
+     * segment is {@code Long.MAX_VALUE}.
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this read operation can be expressed as {@code address() + offset}.
