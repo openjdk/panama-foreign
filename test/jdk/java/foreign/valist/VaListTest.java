@@ -115,7 +115,7 @@ public class VaListTest extends NativeTestHelper {
     }
 
     private static MethodHandle linkVaList(String symbol, FunctionDescriptor fd) {
-        return linkInternal(symbol, fd);
+        return MethodHandles.filterArguments(linkInternal(symbol, fd), fd.argumentLayouts().size() - 1, VALIST_TO_ADDRESS);
     }
 
 
@@ -157,8 +157,7 @@ public class VaListTest extends NativeTestHelper {
         Function<ValueLayout.OfInt, BiFunction<Integer, VaList, Integer>> sumIntsJavaFact = layout ->
                 (num, list) -> IntStream.generate(() -> list.nextVarg(layout)).limit(num).sum();
         BiFunction<Integer, VaList, Integer> sumIntsNative
-                = MethodHandleProxies.asInterfaceInstance(BiFunction.class,
-                MethodHandles.filterArguments(MH_sumInts, 1, VALIST_TO_ADDRESS));
+                = MethodHandleProxies.asInterfaceInstance(BiFunction.class, MH_sumInts);
         return new Object[][]{
                 { winVaListFactory,          sumIntsJavaFact.apply(Win64.C_INT),   Win64.C_INT   },
                 { sysvVaListFactory,         sumIntsJavaFact.apply(SysV.C_INT),    SysV.C_INT    },
@@ -186,8 +185,7 @@ public class VaListTest extends NativeTestHelper {
         Function<ValueLayout.OfDouble, BiFunction<Integer, VaList, Double>> sumDoublesJavaFact  = layout ->
                 (num, list) -> DoubleStream.generate(() -> list.nextVarg(layout)).limit(num).sum();
         BiFunction<Integer, VaList, Double> sumDoublesNative
-                = MethodHandleProxies.asInterfaceInstance(BiFunction.class,
-                MethodHandles.filterArguments(MH_sumDoubles, 1, VALIST_TO_ADDRESS));
+                = MethodHandleProxies.asInterfaceInstance(BiFunction.class, MH_sumDoubles);
         return new Object[][]{
                 { winVaListFactory,          sumDoublesJavaFact.apply(Win64.C_DOUBLE),   Win64.C_DOUBLE   },
                 { sysvVaListFactory,         sumDoublesJavaFact.apply(SysV.C_DOUBLE),    SysV.C_DOUBLE    },
@@ -217,8 +215,7 @@ public class VaListTest extends NativeTestHelper {
                     MemorySegment ma = list.nextVarg(layout);
                     return ma.get(JAVA_INT, 0);
                 };
-        Function<VaList, Integer> getIntNative = MethodHandleProxies.asInterfaceInstance(Function.class,
-                MethodHandles.filterArguments(MH_getInt, 0, VALIST_TO_ADDRESS));
+        Function<VaList, Integer> getIntNative = MethodHandleProxies.asInterfaceInstance(Function.class, MH_getInt);
         return new Object[][]{
                 { winVaListFactory,          getIntJavaFact.apply(Win64.C_POINTER),   Win64.C_POINTER   },
                 { sysvVaListFactory,         getIntJavaFact.apply(SysV.C_POINTER),    SysV.C_POINTER    },
@@ -260,8 +257,7 @@ public class VaListTest extends NativeTestHelper {
 
         TriFunction<GroupLayout, VarHandle, VarHandle, Function<VaList, Integer>> sumStructNativeFact
                 = (pointLayout, VH_Point_x, VH_Point_y) ->
-                MethodHandleProxies.asInterfaceInstance(Function.class,
-                        MethodHandles.filterArguments(MH_sumStruct, 0, VALIST_TO_ADDRESS));
+                MethodHandleProxies.asInterfaceInstance(Function.class, MH_sumStruct);
 
         TriFunction<Function<Consumer<VaList.Builder>, VaList>, MemoryLayout,
                 TriFunction<GroupLayout, VarHandle, VarHandle, Function<VaList, Integer>>, Object[]> argsFact
@@ -314,8 +310,7 @@ public class VaListTest extends NativeTestHelper {
 
         TriFunction<GroupLayout, VarHandle, VarHandle, Function<VaList, Long>> sumStructNativeFact
                 = (pointLayout, VH_BigPoint_x, VH_BigPoint_y) ->
-                MethodHandleProxies.asInterfaceInstance(Function.class,
-                        MethodHandles.filterArguments(MH_sumBigStruct, 0, VALIST_TO_ADDRESS));
+                MethodHandleProxies.asInterfaceInstance(Function.class, MH_sumBigStruct);
 
         TriFunction<Function<Consumer<VaList.Builder>, VaList>, MemoryLayout,
                 TriFunction<GroupLayout, VarHandle, VarHandle, Function<VaList, Long>>, Object[]> argsFact
@@ -368,8 +363,7 @@ public class VaListTest extends NativeTestHelper {
 
         TriFunction<GroupLayout, VarHandle, VarHandle, Function<VaList, Float>> sumStructNativeFact
                 = (pointLayout, VH_FloatPoint_x, VH_FloatPoint_y) ->
-                MethodHandleProxies.asInterfaceInstance(Function.class,
-                        MethodHandles.filterArguments(MH_sumFloatStruct, 0, VALIST_TO_ADDRESS));
+                MethodHandleProxies.asInterfaceInstance(Function.class, MH_sumFloatStruct);
 
         TriFunction<Function<Consumer<VaList.Builder>, VaList>, MemoryLayout,
                 TriFunction<GroupLayout, VarHandle, VarHandle, Function<VaList, Float>>, Object[]> argsFact
@@ -428,8 +422,7 @@ public class VaListTest extends NativeTestHelper {
 
         QuadFunc<GroupLayout, VarHandle, VarHandle, VarHandle, Function<VaList, Long>> sumStructNativeFact
                 = (pointLayout, VH_HugePoint_x, VH_HugePoint_y, VH_HugePoint_z) ->
-                MethodHandleProxies.asInterfaceInstance(Function.class,
-                        MethodHandles.filterArguments(MH_sumHugeStruct, 0, VALIST_TO_ADDRESS));
+                MethodHandleProxies.asInterfaceInstance(Function.class, MH_sumHugeStruct);
 
         TriFunction<Function<Consumer<VaList.Builder>, VaList>, MemoryLayout,
                 QuadFunc<GroupLayout, VarHandle, VarHandle, VarHandle, Function<VaList, Long>>, Object[]> argsFact
@@ -495,7 +488,7 @@ public class VaListTest extends NativeTestHelper {
                 };
         SumStackFunc sumStackNative = (longSum, doubleSum, list) -> {
             try {
-                MH_sumStack.invokeExact(longSum, doubleSum, list.segment());
+                MH_sumStack.invokeExact(longSum, doubleSum, list);
             } catch (Throwable ex) {
                 throw new AssertionError(ex);
             }
@@ -568,8 +561,7 @@ public class VaListTest extends NativeTestHelper {
         Function<ValueLayout.OfInt, BiFunction<Integer, VaList, Integer>> sumIntsJavaFact = layout ->
                 (num, list) -> IntStream.generate(() -> list.nextVarg(layout)).limit(num).sum();
         BiFunction<Integer, VaList, Integer> sumIntsNative
-                = MethodHandleProxies.asInterfaceInstance(BiFunction.class,
-                MethodHandles.filterArguments(MH_sumInts, 1, VALIST_TO_ADDRESS));
+                = MethodHandleProxies.asInterfaceInstance(BiFunction.class, MH_sumInts);
         return new Object[][]{
                 { winVaListScopedFactory,          sumIntsJavaFact.apply(Win64.C_INT),   Win64.C_INT   },
                 { sysvVaListScopedFactory,         sumIntsJavaFact.apply(SysV.C_INT),    SysV.C_INT    },
