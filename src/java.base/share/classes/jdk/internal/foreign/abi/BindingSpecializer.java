@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.constant.ConstantDescs;
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
@@ -245,21 +246,14 @@ public class BindingSpecializer {
     }
 
     private Class<?> popType(Class<?> expected) {
-        return popType(expected, ASSERT_EQUALS);
-    }
-
-    private Class<?> popType(Class<?> expected, BiPredicate<Class<?>, Class<?>> typePredicate) {
-        Class<?> found;
-        if (!typePredicate.test(expected, found = typeStack.pop())) {
+        Class<?> found = typeStack.pop();
+        if (!expected.equals(found)) {
             throw new IllegalStateException(
                     String.format("Invalid type on binding operand stack; found %s - expected %s",
                             found.descriptorString(), expected.descriptorString()));
         }
         return found;
     }
-
-    private static final BiPredicate<Class<?>, Class<?>> ASSERT_EQUALS = Class::equals;
-    private static final BiPredicate<Class<?>, Class<?>> ASSERT_ASSIGNABLE = Class::isAssignableFrom;
 
     // specialization
 
@@ -285,7 +279,7 @@ public class BindingSpecializer {
             int[] initialScopeSlots = new int[callerMethodType.parameterCount()];
             int numScopes = 0;
             for (int i = 0; i < callerMethodType.parameterCount(); i++) {
-                if (shouldAcquire(callerMethodType.parameterType(i))) {
+                if (shouldAcquire(i)) {
                     int scopeLocal = newLocal(Object.class);
                     initialScopeSlots[numScopes++] = scopeLocal;
                     emitConst(null);
@@ -443,9 +437,20 @@ public class BindingSpecializer {
         return callingSequence.argumentBindings().anyMatch(Binding.ToSegment.class::isInstance);
     }
 
-    private static boolean shouldAcquire(Class<?> type) {
-        // by this time, the only MemorySegment left are those for by-ref args
-        return type == MemorySegment.class;
+    private boolean shouldAcquire(int paramIndex) {
+        if (!callingSequence.forDowncall() || // we only acquire in downcalls
+                paramIndex == 0) { // the first parameter in a downcall is SegmentAllocator
+            return false;
+        }
+
+        // if call needs return buffer, the descriptor has an extra leading layout
+        int offset = callingSequence.needsReturnBuffer() ? 0 : 1;
+        MemoryLayout paramLayout =  callingSequence.functionDesc()
+                                              .argumentLayouts()
+                                              .get(paramIndex - offset);
+
+        // is this an address layout?
+        return paramLayout instanceof ValueLayout.OfAddress;
     }
 
     private void emitCleanup() {
@@ -481,7 +486,7 @@ public class BindingSpecializer {
         Class<?> highLevelType = callerMethodType.parameterType(paramIndex);
         emitLoad(highLevelType, paramIndex2ParamSlot[paramIndex]);
 
-        if (shouldAcquire(highLevelType)) {
+        if (shouldAcquire(paramIndex)) {
             emitDup(Object.class);
             emitAcquireScope();
         }
@@ -676,7 +681,7 @@ public class BindingSpecializer {
     }
 
     private void emitUnboxAddress() {
-        popType(MemorySegment.class, ASSERT_EQUALS);
+        popType(MemorySegment.class);
         emitAddress();
         pushType(long.class);
     }
