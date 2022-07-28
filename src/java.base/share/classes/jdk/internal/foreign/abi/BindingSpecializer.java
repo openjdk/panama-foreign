@@ -434,7 +434,10 @@ public class BindingSpecializer {
     }
 
     private boolean needsSession() {
-        return callingSequence.argumentBindings().anyMatch(Binding.ToSegment.class::isInstance);
+        return callingSequence.argumentBindings()
+                .filter(Binding.BoxAddress.class::isInstance)
+                .map(Binding.BoxAddress.class::cast)
+                .anyMatch(Binding.BoxAddress::needsSession);
     }
 
     private boolean shouldAcquire(int paramIndex) {
@@ -471,7 +474,6 @@ public class BindingSpecializer {
                 case ALLOC_BUFFER -> emitAllocBuffer((Binding.Allocate) binding);
                 case BOX_ADDRESS -> emitBoxAddress((Binding.BoxAddress) binding);
                 case UNBOX_ADDRESS -> emitUnboxAddress();
-                case TO_SEGMENT -> emitToSegment((Binding.ToSegment) binding);
                 case DUP -> emitDupBinding();
             }
         }
@@ -573,17 +575,6 @@ public class BindingSpecializer {
         emitInvokeVirtual(Binding.Context.class, "close", CLOSE_DESC);
     }
 
-    private void emitToSegment(Binding.ToSegment binding) {
-        long size = binding.size();
-        popType(long.class);
-
-        emitConst(size);
-        emitLoadInternalSession();
-        emitInvokeStatic(NativeMemorySegmentImpl.class, "makeNativeSegmentUnchecked", OF_LONG_UNCHECKED_DESC);
-
-        pushType(MemorySegment.class);
-    }
-
     private void emitAddress() {
         emitInvokeInterface(MemorySegment.class, "address", ADDRESS_DESC);
     }
@@ -591,7 +582,12 @@ public class BindingSpecializer {
     private void emitBoxAddress(Binding.BoxAddress boxAddress) {
         popType(long.class);
         emitConst(boxAddress.size());
-        emitInvokeStatic(MemorySegment.class, "ofAddress", OF_LONG_DESC);
+        if (needsSession()) {
+            emitLoadInternalSession();
+            emitInvokeStatic(NativeMemorySegmentImpl.class, "makeNativeSegmentUnchecked", OF_LONG_UNCHECKED_DESC);
+        } else {
+            emitInvokeStatic(NativeMemorySegmentImpl.class, "makeNativeSegmentUnchecked", OF_LONG_DESC);
+        }
         pushType(MemorySegment.class);
     }
 

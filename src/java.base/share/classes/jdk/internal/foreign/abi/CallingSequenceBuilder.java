@@ -110,7 +110,7 @@ public class CallingSequenceBuilder {
             if (needsReturnBuffer) {
                 addArgumentBinding(0, MemorySegment.class, ValueLayout.ADDRESS, List.of(
                         Binding.vmLoad(abi.retBufAddrStorage(), long.class),
-                        Binding.toSegment(returnBufferSize)));
+                        Binding.boxAddress(returnBufferSize)));
             }
 
             callerMethodType = computeCallerTypeForUpcall();
@@ -193,7 +193,6 @@ public class CallingSequenceBuilder {
         //ALLOC_BUFFER,
         //BOX_ADDRESS,
         UNBOX_ADDRESS,
-        //TO_SEGMENT,
         DUP
     );
 
@@ -221,7 +220,6 @@ public class CallingSequenceBuilder {
         ALLOC_BUFFER,
         BOX_ADDRESS,
         //UNBOX_ADDRESS,
-        TO_SEGMENT,
         DUP
     );
 
