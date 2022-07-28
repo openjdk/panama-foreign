@@ -212,6 +212,33 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     }
 
     @Override
+    public final Optional<MemorySegment> asOverlappingSlice(MemorySegment other) {
+        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)Objects.requireNonNull(other);
+        if (unsafeGetBase() == that.unsafeGetBase()) {  // both either native or heap
+            final long thisStart = this.unsafeGetOffset();
+            final long thatStart = that.unsafeGetOffset();
+            final long thisEnd = thisStart + this.byteSize();
+            final long thatEnd = thatStart + that.byteSize();
+
+            if (thisStart < thatEnd && thisEnd > thatStart) {  //overlap occurs
+                long offsetToThat = this.segmentOffset(that);
+                long newOffset = offsetToThat >= 0 ? offsetToThat : 0;
+                return Optional.of(asSlice(newOffset, Math.min(this.byteSize() - newOffset, that.byteSize() + offsetToThat)));
+            }
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public final long segmentOffset(MemorySegment other) {
+        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl) Objects.requireNonNull(other);
+        if (unsafeGetBase() == that.unsafeGetBase()) {
+            return that.unsafeGetOffset() - this.unsafeGetOffset();
+        }
+        throw new UnsupportedOperationException("Cannot compute offset from native to heap (or vice versa).");
+    }
+
+    @Override
     public void load() {
         throw new UnsupportedOperationException("Not a mapped segment");
     }
