@@ -164,10 +164,10 @@
  * int x = segment.get(ValueLayout.JAVA_INT, 0); //ok
  *}
  *
- * Alternatively, clients can obtain, <em>unsafely</em>, an {@linkplain java.lang.foreign.ValueLayout.OfAddress#asUnbounded() unbound}
- * address value layout. Unbound address value layouts allow the API to view foreign segments as segments with maximal size
+ * Alternatively, clients can obtain, <em>unsafely</em>, an {@linkplain java.lang.foreign.ValueLayout.OfAddress#asUnbounded() unbounded}
+ * address value layout. Unbounded address value layouts allow the API to view foreign segments as segments with maximal size
  * (e.g. {@linkplain java.lang.Long#MAX_VALUE}), meaning that clients can always perform dereference operations on a foreign
- * segment obtained using an unbound address layout:
+ * segment obtained using an unbounded address layout:
  *
  * {@snippet lang = java:
  * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS.asUnbounded(), 0); // obtain foreign segment (size = Long.MAX_VALUE)
