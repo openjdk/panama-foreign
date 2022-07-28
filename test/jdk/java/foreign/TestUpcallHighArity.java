@@ -114,8 +114,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
 
             Object[] capturedArgsArr = capturedArgs.get();
             for (int i = 0; i < capturedArgsArr.length; i++) {
-                if (upcallType.parameterType(i) == MemorySegment.class &&
-                        !isPointer(upcallDescriptor.argumentLayouts().get(i))) {
+                if (upcallDescriptor.argumentLayouts().get(i) instanceof GroupLayout) {
                     assertStructEquals((MemorySegment) capturedArgsArr[i], (MemorySegment) args[i + 1], argLayouts.get(i));
                 } else {
                     assertEquals(capturedArgsArr[i], args[i + 1], "For index " + i);
