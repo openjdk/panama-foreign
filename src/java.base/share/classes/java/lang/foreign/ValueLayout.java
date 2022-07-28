@@ -645,7 +645,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
          */
         @CallerSensitive
         public OfAddress asUnbounded() {
-            Reflection.ensureNativeAccess(Reflection.getCallerClass(), ValueLayout.OfAddress.class, "asUnsafe");
+            Reflection.ensureNativeAccess(Reflection.getCallerClass(), ValueLayout.OfAddress.class, "asUnbounded");
             return new OfAddress(order(), bitSize(), alignment, true, name());
         }
 
