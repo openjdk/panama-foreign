@@ -110,7 +110,6 @@ public class CallingSequenceBuilder {
             if (needsReturnBuffer) {
                 addArgumentBinding(0, MemorySegment.class, ValueLayout.ADDRESS, List.of(
                         Binding.vmLoad(abi.retBufAddrStorage(), long.class),
-                        Binding.boxAddress(Long.MAX_VALUE),
                         Binding.toSegment(returnBufferSize)));
             }
 

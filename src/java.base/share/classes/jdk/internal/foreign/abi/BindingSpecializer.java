@@ -575,9 +575,8 @@ public class BindingSpecializer {
 
     private void emitToSegment(Binding.ToSegment binding) {
         long size = binding.size();
-        popType(MemorySegment.class);
+        popType(long.class);
 
-        emitAddress();
         emitConst(size);
         emitLoadInternalSession();
         emitInvokeStatic(NativeMemorySegmentImpl.class, "makeNativeSegmentUnchecked", OF_LONG_UNCHECKED_DESC);

@@ -274,7 +274,6 @@ public class CallArranger {
                     assert carrier == MemorySegment.class;
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
                     bindings.vmLoad(storage, long.class)
-                            .boxAddress(Long.MAX_VALUE)
                             .toSegment(layout);
                     break;
                 }

@@ -454,7 +454,6 @@ public abstract class CallArranger {
                     VMStorage storage = storageCalculator.nextStorage(
                         StorageClasses.INTEGER, AArch64.C_POINTER);
                     bindings.vmLoad(storage, long.class)
-                            .boxAddress(Long.MAX_VALUE)
                             .toSegment(layout);
                     break;
                 }

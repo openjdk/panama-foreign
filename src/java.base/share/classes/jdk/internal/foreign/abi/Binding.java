@@ -597,7 +597,7 @@ public interface Binding {
     /**
      * UNBOX_ADDRESS()
      * Pops a 'MemoryAddress' from the operand stack, converts it to a 'long',
-     *     and pushes that onto the operand stack.
+     * with the given size, and pushes that onto the operand stack
      */
     record UnboxAddress() implements Binding {
         static final UnboxAddress INSTANCE = new UnboxAddress();
@@ -623,7 +623,7 @@ public interface Binding {
 
     /**
      * BOX_ADDRESS()
-     * Pops a 'long' from the operand stack, converts it to a 'MemoryAddress',
+     * Pops a 'long' from the operand stack, converts it to a 'MemorySegment' (with given size),
      *     and pushes that onto the operand stack.
      */
     record BoxAddress(long size) implements Binding {
@@ -649,12 +649,12 @@ public interface Binding {
 
     /**
      * TO_SEGMENT([size])
-     *   Pops a MemoryAddress from the operand stack, and converts it to a MemorySegment
+     *   Pops a 'long' from the operand stack, and converts it to a 'MemorySegment'
      *   with the given size, and pushes that onto the operand stack
      */
     record ToSegment(long size) implements Binding {
-        private static MemorySegment toSegment(MemorySegment operand, long size, Context context) {
-            return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(operand.address(), size, context.session);
+        private static MemorySegment toSegment(long operand, long size, Context context) {
+            return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(operand, size, context.session);
         }
 
         @Override
@@ -665,14 +665,14 @@ public interface Binding {
         @Override
         public void verify(Deque<Class<?>> stack) {
             Class<?> actualType = stack.pop();
-            SharedUtils.checkType(actualType, MemorySegment.class);
+            SharedUtils.checkType(actualType, long.class);
             stack.push(MemorySegment.class);
         }
 
         @Override
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
                               BindingInterpreter.LoadFunc loadFunc, Context context) {
-            MemorySegment operand = (MemorySegment) stack.pop();
+            long operand = (long) stack.pop();
             MemorySegment segment = toSegment(operand, size, context);
             stack.push(segment);
         }
