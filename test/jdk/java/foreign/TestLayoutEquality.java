@@ -36,7 +36,6 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Field;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,7 +45,7 @@ public class TestLayoutEquality {
 
     @Test(dataProvider = "layoutConstants")
     public void testReconstructedEquality(ValueLayout layout) {
-        ValueLayout newLayout = valueLayoutForCarrier(layout.carrier(), layout.order());
+        ValueLayout newLayout = MemoryLayout.valueLayout(layout.carrier(), layout.order());
         newLayout = newLayout.withBitAlignment(layout.bitAlignment());
         if (layout instanceof ValueLayout.OfAddress addressLayout && addressLayout.isUnbounded()) {
             newLayout = ((ValueLayout.OfAddress)newLayout).asUnbounded();
@@ -77,9 +76,5 @@ public class TestLayoutEquality {
             if (f.getName().startsWith("C_"))
                 testValues.add((ValueLayout) f.get(null));
         }
-    }
-
-    static ValueLayout valueLayoutForCarrier(Class<?> carrier, ByteOrder order) {
-        return MemoryLayout.valueLayout(carrier, order);
     }
 }
