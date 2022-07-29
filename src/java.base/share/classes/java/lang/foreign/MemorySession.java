@@ -228,11 +228,12 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     }
 
     /**
-     * Creates and returns a new closeable, thread-confined memory session.
+     * Creates a new closeable, thread-confined memory session.
      * <p>
      * The returned memory session is confined to the current thread.
      * <p>
-     * The returned memory session must eventually be closed to prevent memory leaks.
+     * The returned memory session <em>must</em> eventually be {@linkplain #close() closed}
+     * to prevent memory leaks.
      *
      * @return a new closeable, thread-confined memory session
      */
@@ -241,7 +242,7 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     }
 
     /**
-     * Creates and returns a new closeable, thread-confined memory session, managed by
+     * Creates a new closeable, thread-confined memory session, managed by
      * the provided {@code cleaner}.
      * <p>
      * The returned memory session is confined to the current thread.
@@ -255,12 +256,13 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     }
 
     /**
-     * Creates and returns a new closeable memory session that can be shared across threads.
+     * Creates a new closeable memory session that can be shared across threads.
      * <p>
      * The returned memory session can be used by any thread. Users are responsible for
      * assuring thread-safety across threads that use objects associated with this memory session.
      * <p>
-     * The returned memory session must eventually be closed to prevent memory leaks.
+     * The returned memory session <em>must</em> eventually be {@linkplain #close() closed}
+     * to prevent memory leaks.
      *
      * @return a new closeable memory session that can be shared across threads
      */
@@ -269,7 +271,7 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     }
 
     /**
-     * Creates and returns a new closeable memory session that can be shared across threads,
+     * Creates a new closeable memory session that can be shared across threads,
      * managed by the provided {@code cleaner}.
      * <p>
      * The returned memory session can be used by any thread. Users are responsible for
@@ -285,14 +287,16 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     }
 
     /**
-     * Creates and returns a new non-closeable memory session that can be shared across threads,
+     * Creates a new non-closeable memory session that can be shared across threads,
      * manage by a private {@link Cleaner} instance.
      * <p>
      * This is equivalent to (but likely more efficient than) the following code:
      * {@snippet lang=java :
      * openShared(Cleaner.create()).asNonCloseable();
      * }
-     * @return a non-closeable, thread-shared memory session, managed by a private {@link Cleaner} instance
+     *
+     * @return a new closeable memory session that can be shared across threads, managed
+     * by a private {@link Cleaner} instance
      */
     static MemorySession openImplicit() {
         return MemorySessionImpl.createImplicit();
@@ -300,11 +304,6 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
 
     /**
      * Returns the global memory session.
-     * <p>
-     * The global memory session is non-closeable and can be shared across threads.
-     * <p>
-     * The global memory session is neither ever closed nor ever subject to cleaning.
-     * Heap memory segments are associated with the returned global memory session.
      *
      * @return the global memory session
      */
