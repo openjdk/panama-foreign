@@ -793,5 +793,6 @@ void UpcallStub::print_on(outputStream* st) const {
 }
 
 void UpcallStub::print_value_on(outputStream* st) const {
-  st->print_cr("UpcallStub (" INTPTR_FORMAT  ") used for %s", p2i(this), name());
+  st->print_cr("UpcallStub (" INTPTR_FORMAT  "): %s", p2i(this), name());
+  Disassembler::decode((RuntimeBlob*)this, st);
 }
