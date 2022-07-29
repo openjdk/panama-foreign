@@ -61,13 +61,13 @@ public class TestSegments {
             MemoryLayout seq = MemoryLayout.sequenceLayout(0, JAVA_INT);
             segment = MemorySegment.allocateNative(seq, session);
             assertEquals(segment.byteSize(), 0);
-            assertEquals(segment.address().toRawLongValue() % seq.byteAlignment(), 0);
+            assertEquals(segment.address() % seq.byteAlignment(), 0);
             segment = MemorySegment.allocateNative(0, 4, session);
             assertEquals(segment.byteSize(), 0);
-            assertEquals(segment.address().toRawLongValue() % 4, 0);
-            segment = MemorySegment.ofAddress(segment.address(), 0, session);
-            assertEquals(segment.byteSize(), 0);
-            assertEquals(segment.address().toRawLongValue() % 4, 0);
+            assertEquals(segment.address() % 4, 0);
+            MemorySegment rawAddress = MemorySegment.ofAddress(segment.address(), 0, session);
+            assertEquals(rawAddress.byteSize(), 0);
+            assertEquals(rawAddress.address() % 4, 0);
         }
     }
 
@@ -121,9 +121,8 @@ public class TestSegments {
             assertEquals(segment, segment.asReadOnly());
             assertEquals(segment, segment.asSlice(0, 100));
             assertNotEquals(segment, segment.asSlice(10, 90));
-            assertNotEquals(segment, segment.asSlice(0, 90));
-            assertEquals(segment, MemorySegment.ofAddress(segment.address(), 100, session.asNonCloseable()));
-            assertNotEquals(segment, MemorySegment.ofAddress(segment.address(), 100, MemorySession.global()));
+            assertEquals(segment, segment.asSlice(0, 90));
+            assertEquals(segment, MemorySegment.ofAddress(segment.address(), 100, MemorySession.global()));
             MemorySegment segment2 = MemorySegment.allocateNative(100, session);
             assertNotEquals(segment, segment2);
         }
@@ -135,7 +134,7 @@ public class TestSegments {
         assertEquals(segment, segment.asReadOnly());
         assertEquals(segment, segment.asSlice(0, 100));
         assertNotEquals(segment, segment.asSlice(10, 90));
-        assertNotEquals(segment, segment.asSlice(0, 90));
+        assertEquals(segment, segment.asSlice(0, 90));
         MemorySegment segment2 = MemorySegment.ofArray(new byte[100]);
         assertNotEquals(segment, segment2);
     }
@@ -271,12 +270,7 @@ public class TestSegments {
     @Test(dataProvider = "segmentFactories")
     public void testNativeSegments(Supplier<MemorySegment> segmentSupplier) {
         MemorySegment segment = segmentSupplier.get();
-        try {
-            segment.address();
-            assertTrue(segment.isNative());
-        } catch (UnsupportedOperationException exception) {
-            assertFalse(segment.isNative());
-        }
+        assertEquals(segment.isNative(), !segment.array().isPresent());
         tryClose(segment);
     }
 
@@ -321,10 +315,11 @@ public class TestSegments {
     }
 
     @Test(dataProvider = "heapFactories")
-    public void testBigHeapSegments(IntFunction<MemorySegment> heapSegmentFactory, int factor) {
-        int bigSize = (Integer.MAX_VALUE / factor) + 1;
-        MemorySegment segment = heapSegmentFactory.apply(bigSize);
-        assertTrue(segment.byteSize() > 0);
+    public void testVirtualizedBaseAddress(IntFunction<MemorySegment> heapSegmentFactory, int factor) {
+        MemorySegment segment = heapSegmentFactory.apply(10);
+        assertEquals(segment.address(), 0); // base address should be zero (no leaking of impl details)
+        MemorySegment end = segment.asSlice(segment.byteSize(), 0);
+        assertEquals(end.address(), segment.byteSize()); // end address should be equal to segment byte size
     }
 
     @Test
@@ -351,6 +346,7 @@ public class TestSegments {
     @DataProvider(name = "heapFactories")
     public Object[][] heapFactories() {
         return new Object[][] {
+                { (IntFunction<MemorySegment>) size -> MemorySegment.ofArray(new byte[size]), 1 },
                 { (IntFunction<MemorySegment>) size -> MemorySegment.ofArray(new char[size]), 2 },
                 { (IntFunction<MemorySegment>) size -> MemorySegment.ofArray(new short[size]), 2 },
                 { (IntFunction<MemorySegment>) size -> MemorySegment.ofArray(new int[size]), 4 },

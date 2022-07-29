@@ -113,7 +113,7 @@ public class TestSegmentAllocators {
                 //check size
                 assertEquals(address.byteSize(), i);
                 //check alignment
-                assertEquals(address.address().toRawLongValue() % i, 0);
+                assertEquals(address.address() % i, 0);
             }
         }
     }
@@ -259,7 +259,7 @@ public class TestSegmentAllocators {
             scalarAllocations.add(new Object[] { 42d, factory, ValueLayout.JAVA_DOUBLE.withOrder(ByteOrder.BIG_ENDIAN),
                     (AllocationFunction.OfDouble) SegmentAllocator::allocate,
                     (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
-            scalarAllocations.add(new Object[] { MemoryAddress.ofLong(42), factory, ValueLayout.ADDRESS.withOrder(ByteOrder.BIG_ENDIAN),
+            scalarAllocations.add(new Object[] { MemorySegment.ofAddress(42), factory, ValueLayout.ADDRESS.withOrder(ByteOrder.BIG_ENDIAN),
                     (AllocationFunction.OfAddress) SegmentAllocator::allocate,
                     (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
 
@@ -282,7 +282,7 @@ public class TestSegmentAllocators {
             scalarAllocations.add(new Object[] { 42d, factory, ValueLayout.JAVA_DOUBLE.withOrder(ByteOrder.LITTLE_ENDIAN),
                     (AllocationFunction.OfDouble) SegmentAllocator::allocate,
                     (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
-            scalarAllocations.add(new Object[] { MemoryAddress.ofLong(42), factory, ValueLayout.ADDRESS.withOrder(ByteOrder.BIG_ENDIAN),
+            scalarAllocations.add(new Object[] { MemorySegment.ofAddress(42), factory, ValueLayout.ADDRESS.withOrder(ByteOrder.BIG_ENDIAN),
                     (AllocationFunction.OfAddress) SegmentAllocator::allocate,
                     (Function<MemoryLayout, VarHandle>)l -> l.varHandle() });
         }
@@ -350,7 +350,7 @@ public class TestSegmentAllocators {
         interface OfFloat extends AllocationFunction<Float, ValueLayout.OfFloat> { }
         interface OfLong extends AllocationFunction<Long, ValueLayout.OfLong> { }
         interface OfDouble extends AllocationFunction<Double, ValueLayout.OfDouble> { }
-        interface OfAddress extends AllocationFunction<MemoryAddress, ValueLayout.OfAddress> { }
+        interface OfAddress extends AllocationFunction<MemorySegment, ValueLayout.OfAddress> { }
 
         interface OfByteArray extends AllocationFunction<byte[], ValueLayout.OfByte> { }
         interface OfCharArray extends AllocationFunction<char[], ValueLayout.OfChar> { }
@@ -490,34 +490,6 @@ public class TestSegmentAllocators {
                 double[] found = new double[buffer.limit()];
                 buffer.get(found);
                 return found;
-            }
-        };
-
-        ToArrayHelper<MemoryAddress[]> toAddressArray = new ToArrayHelper<>() {
-            @Override
-            public MemoryAddress[] array() {
-                return switch ((int) ValueLayout.ADDRESS.byteSize()) {
-                    case 4 -> wrap(toIntArray.array());
-                    case 8 -> wrap(toLongArray.array());
-                    default -> throw new IllegalStateException("Cannot get here");
-                };
-            }
-
-            @Override
-            public MemoryAddress[] toArray(MemorySegment segment, ValueLayout layout) {
-                return switch ((int)layout.byteSize()) {
-                    case 4 -> wrap(toIntArray.toArray(segment, layout));
-                    case 8 -> wrap(toLongArray.toArray(segment, layout));
-                    default -> throw new IllegalStateException("Cannot get here");
-                };
-            }
-
-            private MemoryAddress[] wrap(int[] ints) {
-                return IntStream.of(ints).mapToObj(MemoryAddress::ofLong).toArray(MemoryAddress[]::new);
-            }
-
-            private MemoryAddress[] wrap(long[] ints) {
-                return LongStream.of(ints).mapToObj(MemoryAddress::ofLong).toArray(MemoryAddress[]::new);
             }
         };
     }

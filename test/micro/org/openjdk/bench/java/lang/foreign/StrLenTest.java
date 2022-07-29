@@ -25,13 +25,12 @@
 
 package org.openjdk.bench.java.lang.foreign;
 
-import java.lang.foreign.Addressable;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
+
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -99,33 +98,33 @@ public class StrLenTest extends CLayouts {
         try (MemorySession session = MemorySession.openConfined()) {
             MemorySegment segment = MemorySegment.allocateNative(str.length() + 1, session);
             segment.setUtf8String(0, str);
-            return (int)STRLEN.invokeExact((Addressable)segment);
+            return (int)STRLEN.invokeExact(segment);
         }
     }
 
     @Benchmark
     public int panama_strlen_arena() throws Throwable {
-        return (int)STRLEN.invokeExact((Addressable)arenaAllocator.allocateUtf8String(str));
+        return (int)STRLEN.invokeExact(arenaAllocator.allocateUtf8String(str));
     }
 
     @Benchmark
     public int panama_strlen_prefix() throws Throwable {
-        return (int)STRLEN.invokeExact((Addressable)segmentAllocator.allocateUtf8String(str));
+        return (int)STRLEN.invokeExact(segmentAllocator.allocateUtf8String(str));
     }
 
     @Benchmark
     public int panama_strlen_unsafe() throws Throwable {
-        MemoryAddress address = makeStringUnsafe(str);
-        int res = (int) STRLEN.invokeExact((Addressable)address);
+        MemorySegment address = makeStringUnsafe(str);
+        int res = (int) STRLEN.invokeExact(address);
         freeMemory(address);
         return res;
     }
 
-    static MemoryAddress makeStringUnsafe(String s) {
+    static MemorySegment makeStringUnsafe(String s) {
         byte[] bytes = s.getBytes();
         int len = bytes.length;
-        MemoryAddress address = allocateMemory(len + 1);
-        MemorySegment str = MemorySegment.ofAddress(address, len + 1, MemorySession.global());
+        MemorySegment address = allocateMemory(len + 1);
+        MemorySegment str = address.asSlice(0, len + 1);
         str.copyFrom(MemorySegment.ofArray(bytes));
         str.set(JAVA_BYTE, len, (byte)0);
         return address;

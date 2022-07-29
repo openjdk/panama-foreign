@@ -47,7 +47,7 @@ import java.lang.invoke.MethodType;
  * in the JVM and foreign functions in the library. In particular:
  * <ul>
  * <li>A linker allows Java code to link against foreign functions, via
- * {@linkplain #downcallHandle(Addressable, FunctionDescriptor) downcall method handles}; and</li>
+ * {@linkplain #downcallHandle(MemorySegment, FunctionDescriptor) downcall method handles}; and</li>
  * <li>A linker allows foreign functions to call Java method handles,
  * via the generation of {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, MemorySession) upcall stubs}.</li>
  * </ul>
@@ -67,24 +67,19 @@ import java.lang.invoke.MethodType;
  * when complete, a downcall method handle, that is, a method handle that can be used to invoke the target foreign function.
  * <p>
  * The Java {@linkplain java.lang.invoke.MethodType method type} associated with the returned method handle is
- * {@linkplain #downcallType(FunctionDescriptor) derived} from the argument and return layouts in the function descriptor.
+ * {@linkplain #methodType(FunctionDescriptor) derived} from the argument and return layouts in the function descriptor.
  * More specifically, given each layout {@code L} in the function descriptor, a corresponding carrier {@code C} is inferred,
  * as described below:
  * <ul>
- * <li>if {@code L} is a {@link ValueLayout} with carrier {@code E} then there are two cases:
- *     <ul>
- *         <li>if {@code L} occurs in a parameter position and {@code E} is {@code MemoryAddress.class},
- *         then {@code C = Addressable.class};</li>
- *         <li>otherwise, {@code C = E};
- *     </ul></li>
- * <li>or, if {@code L} is a {@link GroupLayout}, then {@code C} is set to {@code MemorySegment.class}</li>
+ * <li>if {@code L} is a {@link ValueLayout} with carrier {@code E} then {@code C = E}; or</li>
+ * <li>if {@code L} is a {@link GroupLayout}, then {@code C} is set to {@code MemorySegment.class}</li>
  * </ul>
  * <p>
  * The downcall method handle type, derived as above, might be decorated by additional leading parameters,
  * in the given order if both are present:
  * <ul>
  * <li>If the downcall method handle is created {@linkplain #downcallHandle(FunctionDescriptor) without specifying a target address},
- * the downcall method handle type features a leading parameter of type {@link Addressable}, from which the
+ * the downcall method handle type features a leading parameter of type {@link MemorySegment}, from which the
  * address of the target foreign function can be derived.</li>
  * <li>If the function descriptor's return layout is a group layout, the resulting downcall method handle accepts
  * an additional leading parameter of type {@link SegmentAllocator}, which is used by the linker runtime to allocate the
@@ -97,22 +92,17 @@ import java.lang.invoke.MethodType;
  * handle and a function descriptor; in this case, the set of memory layouts in the function descriptor
  * specify the signature of the function pointer associated with the upcall stub.
  * <p>
- * The type of the provided method handle has to {@linkplain #upcallType(FunctionDescriptor) match} the Java
+ * The type of the provided method handle has to {@linkplain #methodType(FunctionDescriptor) match} the Java
  * {@linkplain java.lang.invoke.MethodType method type} associated with the upcall stub, which is derived from the argument
  * and return layouts in the function descriptor. More specifically, given each layout {@code L} in the function descriptor,
  * a corresponding carrier {@code C} is inferred, as described below:
  * <ul>
- * <li>If {@code L} is a {@link ValueLayout} with carrier {@code E} then there are two cases:
- *     <ul>
- *         <li>If {@code L} occurs in a return position and {@code E} is {@code MemoryAddress.class},
- *         then {@code C = Addressable.class};</li>
- *         <li>Otherwise, {@code C = E};
- *     </ul></li>
- * <li>Or, if {@code L} is a {@link GroupLayout}, then {@code C} is set to {@code MemorySegment.class}</li>
+ * <li>if {@code L} is a {@link ValueLayout} with carrier {@code E} then {@code C = E}; or</li>
+ * <li>if {@code L} is a {@link GroupLayout}, then {@code C} is set to {@code MemorySegment.class}</li>
  * </ul>
  * Upcall stubs are modelled by instances of type {@link MemorySegment}; upcall stubs can be passed by reference to other
- * downcall method handles (as {@link MemorySegment} implements the {@link Addressable} interface) and,
- * when no longer required, they can be {@linkplain MemorySession#close() released}, via their associated {@linkplain MemorySession session}.
+ * downcall method handles and, when no longer required, they can be {@linkplain MemorySession#close() released},
+ * via their associated {@linkplain MemorySession memory session}.
  *
  * <h2 id="safety">Safety considerations</h2>
  *
@@ -121,23 +111,34 @@ import java.lang.invoke.MethodType;
  * the linker runtime cannot validate linkage requests. When a client interacts with a downcall method handle obtained
  * through an invalid linkage request (e.g. by specifying a function descriptor featuring too many argument layouts),
  * the result of such interaction is unspecified and can lead to JVM crashes. On downcall handle invocation,
- * the linker runtime guarantees the following for any argument that is a memory resource {@code R} (of type {@link MemorySegment}
- * or {@link VaList}):
+ * the linker runtime guarantees the following for any argument {@code A} of type {@link MemorySegment} whose corresponding
+ * layout is {@link ValueLayout#ADDRESS}:
  * <ul>
- *     <li>The memory session of {@code R} is {@linkplain MemorySession#isAlive() alive}. Otherwise, the invocation throws
+ *     <li>The memory session of {@code A} is {@linkplain MemorySession#isAlive() alive}. Otherwise, the invocation throws
  *     {@link IllegalStateException};</li>
  *     <li>The invocation occurs in same thread as the one {@linkplain MemorySession#ownerThread() owning} the memory session of {@code R},
  *     if said session is confined. Otherwise, the invocation throws {@link WrongThreadException}; and</li>
- *     <li>The memory session of {@code R} is {@linkplain MemorySession#whileAlive(Runnable) kept alive} (and cannot be closed) during the invocation.</li>
+ *     <li>The memory session of {@code R} is <em>kept alive</em> (and cannot be closed) during the invocation.</li>
  *</ul>
+ * A downcall method handle created from a function descriptor whose return layout is an
+ * {@linkplain ValueLayout.OfAddress address layout} returns a native memory segment associated with
+ * the {@linkplain MemorySession#global() global session}. Under normal conditions, the size of the returned segment is {@code 0}.
+ * However, if the return layout is an {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout,
+ * then the size of the returned segment is {@code Long.MAX_VALUE}.
  * <p>
  * When creating upcall stubs the linker runtime validates the type of the target method handle against the provided
  * function descriptor and report an error if any mismatch is detected. As for downcalls, JVM crashes might occur,
  * if the foreign code casts the function pointer associated with an upcall stub to a type
  * that is incompatible with the provided function descriptor. Moreover, if the target method
- * handle associated with an upcall stub returns a {@linkplain MemoryAddress memory address}, clients must ensure
+ * handle associated with an upcall stub returns a {@linkplain MemorySegment memory segment}, clients must ensure
  * that this address cannot become invalid after the upcall completes. This can lead to unspecified behavior,
  * and even JVM crashes, since an upcall is typically executed in the context of a downcall method handle invocation.
+ * <p>
+ * An upcall stub argument whose corresponding layout is an {@linkplain ValueLayout.OfAddress address layout}
+ * is a native memory segment associated with the {@linkplain MemorySession#global() global session}.
+ * Under normal conditions, the size of this segment argument is {@code 0}. However, if the layout associated with
+ * the upcall stub argument is an {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout,
+ * then the size of the segment argument is {@code Long.MAX_VALUE}.
  *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
@@ -160,13 +161,13 @@ public sealed interface Linker permits AbstractLinker {
      *     <li>Composite types are modelled by a {@linkplain GroupLayout group layout}. Depending on the ABI of the
      *     returned linker, additional {@linkplain MemoryLayout#paddingLayout(long) padding} member layouts might be required to conform
      *     to the size and alignment constraints of a composite type definition in C (e.g. using {@code struct} or {@code union}); and</li>
-     *     <li>Pointer types are modelled by a {@linkplain ValueLayout value layout} instance with carrier {@link MemoryAddress}.
+     *     <li>Pointer types are modelled by a {@linkplain ValueLayout value layout} instance with carrier {@link MemorySegment}.
      *     Examples of pointer types in C are {@code int**} and {@code int(*)(size_t*, size_t*)};</li>
      * </ul>
      * <p>
      * Any layout not listed above is <em>unsupported</em>; function descriptors containing unsupported layouts
      * will cause an {@link IllegalArgumentException} to be thrown, when used to create a
-     * {@link #downcallHandle(Addressable, FunctionDescriptor) downcall method handle} or an
+     * {@link #downcallHandle(MemorySegment, FunctionDescriptor) downcall method handle} or an
      * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, MemorySession) upcall stub}.
      * <p>
      * Variadic functions (e.g. a C function declared with a trailing ellipses {@code ...} at the end of the formal parameter
@@ -214,9 +215,9 @@ public sealed interface Linker permits AbstractLinker {
      * @param function the function descriptor of the target function.
      * @return a downcall method handle. The method handle type is <a href="Linker.html#downcall-method-handles"><em>inferred</em></a>
      * @throws IllegalArgumentException if the provided function descriptor is not supported by this linker.
-     * or if the symbol is {@link MemoryAddress#NULL}
+     * or if the symbol is {@link MemorySegment#NULL}
      */
-    default MethodHandle downcallHandle(Addressable symbol, FunctionDescriptor function) {
+    default MethodHandle downcallHandle(MemorySegment symbol, FunctionDescriptor function) {
         SharedUtils.checkSymbol(symbol);
         return downcallHandle(function).bindTo(symbol);
     }
@@ -224,15 +225,15 @@ public sealed interface Linker permits AbstractLinker {
     /**
      * Creates a method handle which can be used to call a target foreign function with the given signature.
      * The resulting method handle features a prefix parameter (as the first parameter) corresponding to the foreign function
-     * entry point, of type {@link Addressable}, which is used to specify the address of the target function
+     * entry point, of type {@link MemorySegment}, which is used to specify the address of the target function
      * to be called.
      * <p>
      * If the provided function descriptor's return layout is a {@link GroupLayout}, then the resulting method handle features an
      * additional prefix parameter (inserted immediately after the address parameter), of type {@link SegmentAllocator}),
      * which will be used by the linker runtime to allocate structs returned by-value.
      * <p>
-     * The returned method handle will throw an {@link IllegalArgumentException} if the {@link Addressable} parameter passed to it is
-     * associated with the {@link MemoryAddress#NULL} address, or a {@link NullPointerException} if that parameter is {@code null}.
+     * The returned method handle will throw an {@link IllegalArgumentException} if the {@link MemorySegment} parameter passed to it is
+     * associated with the {@link MemorySegment#NULL} address, or a {@link NullPointerException} if that parameter is {@code null}.
      *
      * @param function the function descriptor of the target function.
      * @return a downcall method handle. The method handle type is <a href="Linker.html#downcall-method-handles"><em>inferred</em></a>
@@ -284,22 +285,12 @@ public sealed interface Linker permits AbstractLinker {
     SymbolLookup defaultLookup();
 
     /**
-     * {@return the downcall method handle {@linkplain MethodType type} associated with the given function descriptor}
+     * {@return the linker method handle {@linkplain MethodType type} associated with the given function descriptor}
      * @param functionDescriptor a function descriptor.
      * @throws IllegalArgumentException if one or more layouts in the function descriptor are not supported
      * (e.g. if they are sequence layouts or padding layouts).
      */
-    static MethodType downcallType(FunctionDescriptor functionDescriptor) {
-        return SharedUtils.inferMethodType(functionDescriptor, false);
-    }
-
-    /**
-     * {@return the method handle {@linkplain MethodType type} associated with an upcall stub with the given function descriptor}
-     * @param functionDescriptor a function descriptor.
-     * @throws IllegalArgumentException if one or more layouts in the function descriptor are not supported
-     * (e.g. if they are sequence layouts or padding layouts).
-     */
-    static MethodType upcallType(FunctionDescriptor functionDescriptor) {
-        return SharedUtils.inferMethodType(functionDescriptor, true);
+    static MethodType methodType(FunctionDescriptor functionDescriptor) {
+        return SharedUtils.inferMethodType(functionDescriptor);
     }
 }

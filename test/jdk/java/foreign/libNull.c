@@ -21,14 +21,12 @@
  * questions.
  */
 
-package invoker;
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
 
-import java.lang.foreign.*;
+#include <stddef.h>
 
-public class Invoker {
-    public static void invoke(MemorySegment symbol) throws Throwable {
-        var linker = Linker.nativeLinker();
-        var handle = linker.downcallHandle(symbol, FunctionDescriptor.ofVoid());
-        handle.invokeExact();
-    }
-}
+EXPORT void* get_null() { return NULL; }

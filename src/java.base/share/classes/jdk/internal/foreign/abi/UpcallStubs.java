@@ -24,7 +24,6 @@
  */
 package jdk.internal.foreign.abi;
 
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 
@@ -55,6 +54,6 @@ public class UpcallStubs {
                 freeUpcallStub(entry);
             }
         });
-        return MemorySegment.ofAddress(MemoryAddress.ofLong(entry), 0, session);
+        return MemorySegment.ofAddress(entry, 0, session);
     }
 }

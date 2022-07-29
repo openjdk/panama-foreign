@@ -25,10 +25,9 @@
 
 package jdk.internal.foreign;
 
-import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
 import java.nio.Buffer;
@@ -69,8 +68,6 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegment, SegmentAllocator, Scoped, BiFunction<String, List<Number>, RuntimeException> {
 
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
-
-    static final long NONCE = new Random().nextLong();
 
     static final JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
 
@@ -186,11 +183,6 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
             remaining -= i;
         }
         return ~remaining;
-    }
-
-    @Override
-    public MemoryAddress address() {
-        throw new UnsupportedOperationException("Cannot obtain address of on-heap segment");
     }
 
     @Override
@@ -372,11 +364,6 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
                         this, offset, length));
     }
 
-    protected int id() {
-        //compute a stable and random id for this memory segment
-        return Math.abs(Objects.hash(unsafeGetBase(), unsafeGetOffset(), NONCE));
-    }
-
     static class SegmentSplitter implements Spliterator<MemorySegment> {
         AbstractMemorySegmentImpl segment;
         long elemCount;
@@ -455,17 +442,14 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
 
     @Override
     public String toString() {
-        return "MemorySegment{ id=0x" + Long.toHexString(id()) + " limit: " + length + " }";
+        return "MemorySegment{ array: " + array() + " address:" + address() + " limit: " + length + " }";
     }
 
     @Override
     public boolean equals(Object o) {
         return o instanceof AbstractMemorySegmentImpl that &&
-                isNative() == that.isNative() &&
-                unsafeGetOffset() == that.unsafeGetOffset() &&
-                unsafeGetBase() == that.unsafeGetBase() &&
-                length == that.length &&
-                session.equals(that.session);
+                array().equals(that.array()) &&
+                address() == that.address();
     }
 
     @Override

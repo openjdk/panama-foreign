@@ -21,14 +21,12 @@
  * questions.
  */
 
-package invoker;
+package org.openjdk.bench.java.lang.foreign.pointers;
 
-import java.lang.foreign.*;
+public abstract class Struct<X extends Struct<X>> {
+    protected final Pointer<X> ptr;
 
-public class Invoker {
-    public static void invoke(MemorySegment symbol) throws Throwable {
-        var linker = Linker.nativeLinker();
-        var handle = linker.downcallHandle(symbol, FunctionDescriptor.ofVoid());
-        handle.invokeExact();
+    public Struct(Pointer<X> ptr) {
+        this.ptr = ptr;
     }
 }

@@ -50,6 +50,11 @@
  *
  * This code creates a <em>native</em> memory segment, that is, a memory segment backed by
  * off-heap memory; the size of the segment is 40 bytes, enough to store 10 values of the primitive type {@code int}.
+ * The off-heap memory associated with the native memory segment will be released when the segment becomes
+ * <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>; this is similar to what happens
+ * with direct buffers created via {@link java.nio.ByteBuffer#allocateDirect(int)}. It is also possible to manage
+ * the lifecycle of allocated native segments more directly, as shown in a later section.
+ * <p>
  * Inside a loop, we then initialize the contents of the memory segment; note how the
  * {@linkplain java.lang.foreign.MemorySegment#setAtIndex(ValueLayout.OfInt, long, int) dereference method}
  * accepts a {@linkplain java.lang.foreign.ValueLayout value layout}, which specifies the size, alignment constraints,
@@ -134,75 +139,90 @@
  * {@linkplain java.lang.foreign.MemorySegment#setUtf8String(long, java.lang.String) into} zero-terminated, UTF-8 strings and
  * {@linkplain java.lang.foreign.MemorySegment#getUtf8String(long) back}, as demonstrated in the above example.
  *
- * <h3 id="addresses">Foreign addresses</h3>
+ * <h3 id="foreign-segments">Foreign memory segments</h3>
  *
  * When a memory segment is created from Java code, the segment properties (spatial bounds, temporal bounds and confinement)
- * are fully known at segment creation. But when interacting with foreign functions, clients will often receive <em>raw</em> pointers.
- * Such pointers have no spatial bounds. For example, the C type {@code char*} can refer to a single {@code char} value,
- * or an array of {@code char} values, of given size. Nor do said pointers have any notion of temporal bounds or thread-confinement.
+ * are fully known at segment creation. But when interacting with foreign functions, clients will often receive memory segments
+ * that wrap <em>raw</em> foreign addresses. We call these segments <em>foreign</em> memory segments.
  * <p>
- * Raw pointers are modelled using the {@link java.lang.foreign.MemoryAddress} class. When clients receive a
- * memory address instance from a foreign function call, they can perform memory dereference on it directly,
- * using one of the many <em>unsafe</em>
- * {@linkplain java.lang.foreign.MemoryAddress#get(java.lang.foreign.ValueLayout.OfInt, long) dereference methods}
- * provided:
+ * Foreign memory segments are typically modelled using zero-length memory segments backed by the
+ * {@linkplain java.lang.foreign.MemorySession#global() global} memory session. As such, attempts to dereference
+ * foreign memory segments will fail with {@link java.lang.IndexOutOfBoundsException}. This is a crucial safety feature:
+ * raw foreign addresses are not associated with spatial bounds. For example, the C type {@code char*} can refer to a single {@code char} value,
+ * or an array of {@code char} values, of given size. Nor do said addresses have any notion of temporal bounds or thread-confinement.
+ * <p>
+ * To dereference foreign memory segments, clients have two options. First, they can
+ * {@linkplain java.lang.foreign.MemorySegment#ofAddress(long, long, MemorySession) create}
+ * a new native memory segment <em>unsafely</em>. This allows the client to inject extra knowledge about spatial and temporal bounds
+ * which might, for instance, be available in the documentation of the foreign function which produced the memory segment.
+ * Here is how a foreign segment can be dereferenced:
  *
- * {@snippet lang=java :
- * MemoryAddress addr = ... // obtain address from foreign function call
- * int x = addr.get(ValueLayout.JAVA_INT, 0);
- * }
+ * {@snippet lang = java:
+ * MemorySession session = ... // initialize a memory session
+ * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS, 0); // obtain foreign segment (size = 0)
+ * MemorySegment segment = MemorySegment.ofAddress(raw.address(), 4, session); // new segment (size = 4)
+ * int x = segment.get(ValueLayout.JAVA_INT, 0); //ok
+ *}
  *
- * Alternatively, the client can
- * {@linkplain java.lang.foreign.MemorySegment#ofAddress(java.lang.foreign.MemoryAddress, long, java.lang.foreign.MemorySession) create}
- * a memory segment <em>unsafely</em>. This allows the client to inject extra knowledge about spatial bounds which might,
- * for instance, be available in the documentation of the foreign function which produced the native address.
- * Here is how an unsafe segment can be created from a memory address:
+ * Alternatively, clients can obtain, <em>unsafely</em>, an {@linkplain java.lang.foreign.ValueLayout.OfAddress#asUnbounded() unbounded}
+ * address value layout. Unbounded address value layouts allow the API to view foreign segments as segments with maximal size
+ * (e.g. {@linkplain java.lang.Long#MAX_VALUE}), meaning that clients can always perform dereference operations on a foreign
+ * segment obtained using an unbounded address layout:
  *
- * {@snippet lang=java :
- * MemorySession session = ... // initialize a memory session object
- * MemoryAddress addr = ... // obtain address from foreign function call
- * MemorySegment segment = MemorySegment.ofAddress(addr, 4, session); // segment is 4 bytes long
- * int x = segment.get(ValueLayout.JAVA_INT, 0);
- * }
+ * {@snippet lang = java:
+ * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS.asUnbounded(), 0); // obtain foreign segment (size = Long.MAX_VALUE)
+ * int x = foreign.get(ValueLayout.JAVA_INT, 0); //ok
+ *}
+ *
+ * Note that there is no <em>correct</em> choice here. Which approach is taken largely depends on the information
+ * that a client has available when obtaining a foreign memory segment. For instance, if such segment points to
+ * a C struct, the client might prefer to resize the foreign segment, to match the size of the struct (so that
+ * out-of-bounds access will be detected by the API). In other instances, however, there will be no, or little
+ * information as to what spatial and/or temporal bounds should be associated with a given foreign segment. In these
+ * cases the second approach is preferrable.
  *
  * <h3 id="upcalls">Upcalls</h3>
  * The {@link java.lang.foreign.Linker} interface also allows clients to turn an existing method handle (which might point
- * to a Java method) into a memory address, so that Java code can effectively be passed to other foreign functions.
+ * to a Java method) into a memory segment, so that Java code can effectively be passed to other foreign functions.
  * For instance, we can write a method that compares two integer values, as follows:
  *
  * {@snippet lang=java :
  * class IntComparator {
- *     static int intCompare(MemoryAddress addr1, MemoryAddress addr2) {
- *         return addr1.get(ValueLayout.JAVA_INT, 0) - addr2.get(ValueLayout.JAVA_INT, 0);
+ *     static int intCompare(MemorySegment addr1, MemorySegment addr2) {
+ *         return addr1.get(ValueLayout.JAVA_INT, 0) -
+ *                addr2.get(ValueLayout.JAVA_INT, 0);
+ *
  *     }
  * }
  * }
  *
- * The above method dereferences two memory addresses containing an integer value, and performs a simple comparison
+ * The above method dereferences two foreign memory segments containing an integer value, and performs a simple comparison
  * by returning the difference between such values. We can then obtain a method handle which targets the above static
  * method, as follows:
  *
- * {@snippet lang=java :
- * FunctionDescriptor intCompareDescriptor = FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS);
+ * {@snippet lang = java:
+ * FunctionDescriptor intCompareDescriptor = FunctionDescriptor.of(ValueLayout.JAVA_INT,
+ *                                                                 ValueLayout.ADDRESS.asUnbounded(),
+ *                                                                 ValueLayout.ADDRESS.asUnbounded());
  * MethodHandle intCompareHandle = MethodHandles.lookup().findStatic(IntComparator.class,
  *                                                 "intCompare",
  *                                                 Linker.upcallType(comparFunction));
- * }
+ *}
  *
  * As before, we need to create a {@link java.lang.foreign.FunctionDescriptor} instance, this time describing the signature
  * of the function pointer we want to create. The descriptor can be used to
- * {@linkplain java.lang.foreign.Linker#upcallType(java.lang.foreign.FunctionDescriptor) derive} a method type
+ * {@linkplain java.lang.foreign.Linker#methodType(java.lang.foreign.FunctionDescriptor) derive} a method type
  * that can be used to look up the method handle for {@code IntComparator.intCompare}.
  * <p>
  * Now that we have a method handle instance, we can turn it into a fresh function pointer,
  * using the {@link java.lang.foreign.Linker} interface, as follows:
  *
- * {@snippet lang=java :
+ * {@snippet lang = java:
  * MemorySession session = ...
- * Addressable comparFunc = Linker.nativeLinker().upcallStub(
+ * MemorySegment comparFunc = Linker.nativeLinker().upcallStub(
  *     intCompareHandle, intCompareDescriptor, session);
  * );
- * }
+ *}
  *
  * The {@link java.lang.foreign.FunctionDescriptor} instance created in the previous step is then used to
  * {@linkplain java.lang.foreign.Linker#upcallStub(java.lang.invoke.MethodHandle, java.lang.foreign.FunctionDescriptor, java.lang.foreign.MemorySession) create}
@@ -216,11 +236,11 @@
  * <h2 id="restricted">Restricted methods</h2>
  * Some methods in this package are considered <em>restricted</em>. Restricted methods are typically used to bind native
  * foreign data and/or functions to first-class Java API elements which can then be used directly by clients. For instance
- * the restricted method {@link java.lang.foreign.MemorySegment#ofAddress(MemoryAddress, long, MemorySession)}
+ * the restricted method {@link java.lang.foreign.MemorySegment#ofAddress(long, long, MemorySession)}
  * can be used to create a fresh segment with the given spatial bounds out of a native address.
  * <p>
  * Binding foreign data and/or functions is generally unsafe and, if done incorrectly, can result in VM crashes, or memory corruption when the bound Java API element is accessed.
- * For instance, in the case of {@link java.lang.foreign.MemorySegment#ofAddress(MemoryAddress, long, MemorySession)},
+ * For instance, in the case of {@link java.lang.foreign.MemorySegment#ofAddress(long, long, MemorySession)},
  * if the provided spatial bounds are incorrect, a client of the segment returned by that method might crash the VM, or corrupt
  * memory when attempting to dereference said segment. For these reasons, it is crucial for code that calls a restricted method
  * to never pass arguments that might cause incorrect binding of foreign data and/or functions to a Java API.
