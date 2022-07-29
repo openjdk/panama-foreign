@@ -623,7 +623,7 @@ public interface Binding {
     /**
      * BOX_ADDRESS()
      * Pops a 'long' from the operand stack, converts it to a 'MemorySegment', with the given size and memory session
-     * (either the context session, or the global session), and pushes that onto the operand stack. 
+     * (either the context session, or the global session), and pushes that onto the operand stack.
      */
     record BoxAddress(long size, boolean needsSession) implements Binding {
 
