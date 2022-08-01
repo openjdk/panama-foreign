@@ -158,24 +158,6 @@ public class LoopOverNonConstant extends JavaLayouts {
     }
 
     @Benchmark
-    public int segment_loop_instance_address() {
-        int sum = 0;
-        for (int i = 0; i < ELEM_SIZE; i++) {
-            sum += segment.address().get(JAVA_INT, i * CARRIER_SIZE);
-        }
-        return sum;
-    }
-
-    @Benchmark
-    public int segment_loop_instance_address_index() {
-        int sum = 0;
-        for (int i = 0; i < ELEM_SIZE; i++) {
-            sum += segment.address().getAtIndex(JAVA_INT, i);
-        }
-        return sum;
-    }
-
-    @Benchmark
     public int segment_loop_slice() {
         int sum = 0;
         MemorySegment base = segment.asSlice(0, segment.byteSize());

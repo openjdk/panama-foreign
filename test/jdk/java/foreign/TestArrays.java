@@ -28,7 +28,6 @@
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestArrays
  */
 
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
@@ -119,7 +118,7 @@ public class TestArrays {
     public void testTooBigForArray(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
         MemoryLayout seq = MemoryLayout.sequenceLayout((Integer.MAX_VALUE * layout.byteSize()) + 1, layout);
         //do not really allocate here, as it's way too much memory
-        MemorySegment segment = MemorySegment.ofAddress(MemoryAddress.NULL, seq.byteSize(), MemorySession.global());
+        MemorySegment segment = MemorySegment.ofAddress(0, seq.byteSize(), MemorySession.global());
         arrayFactory.apply(segment);
     }
 
