@@ -233,3 +233,181 @@ EXPORT void varargs(call_info* info, int num, ...) {
 
     va_end(a_list);
 }
+
+EXPORT float sum_struct_hfa_floats(int num_floats, ...)
+{
+    va_list argptr;
+    va_start(argptr, num_floats);
+
+    float sum = 0.0f;
+
+    switch (num_floats)
+    {
+        case 1: {
+            struct S_F data = va_arg(argptr, struct S_F);
+            sum = data.p0;
+            break;
+        }
+        case 2: {
+            struct S_FF data = va_arg(argptr, struct S_FF);
+            sum = data.p0 + data.p1;
+            break;
+        }
+        case 3: {
+            struct S_FFF data = va_arg(argptr, struct S_FFF);
+            sum = data.p0 + data.p1 + data.p2;
+            break;
+        }
+        case 4: {
+            struct S_FFFF data = va_arg(argptr, struct S_FFFF);
+            sum = data.p0 + data.p1 + data.p2 + data.p3;
+            break;
+        }
+    }
+
+    va_end(argptr);
+    return sum;
+}
+
+EXPORT double sum_struct_hfa_doubles(int num_doubles, ...)
+{
+    va_list argptr;
+    va_start(argptr, num_doubles);
+
+    double sum = 0.0f;
+
+    switch (num_doubles)
+    {
+        case 1: {
+            struct S_D data = va_arg(argptr, struct S_D);
+            sum = data.p0;
+            break;
+        }
+        case 2: {
+            struct S_DD data = va_arg(argptr, struct S_DD);
+            sum = data.p0 + data.p1;
+            break;
+        }
+        case 3: {
+            struct S_DDD data = va_arg(argptr, struct S_DDD);
+            sum = data.p0 + data.p1 + data.p2;
+            break;
+        }
+        case 4: {
+            struct S_DDDD data = va_arg(argptr, struct S_DDDD);
+            sum = data.p0 + data.p1 + data.p2 + data.p3;
+            break;
+        }
+    }
+
+    va_end(argptr);
+    return sum;
+}
+
+EXPORT int sum_spilled_struct_ints(int num_ints,
+    int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, ...)
+{
+    va_list argptr;
+    va_start(argptr, arg6);
+
+    int sum = 0;
+
+    switch (num_ints)
+    {
+        case 1: {
+            struct S_I data = va_arg(argptr, struct S_I);
+            sum += data.p0;
+            break;
+        }
+        case 2: {
+            struct S_II data = va_arg(argptr, struct S_II);
+            sum += data.p0 + data.p1;
+            break;
+        }
+        case 3: {
+            struct S_III data = va_arg(argptr, struct S_III);
+            sum += data.p0 + data.p1 + data.p2;
+            break;
+        }
+        case 4: {
+            struct S_IIII data = va_arg(argptr, struct S_IIII);
+            sum += data.p0 + data.p1 + data.p2 + data.p3;
+            break;
+        }
+    }
+
+    va_end(argptr);
+    return sum;
+}
+
+EXPORT float sum_spilled_struct_hfa_floats(int num_floats,
+    int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, ...)
+{
+    va_list argptr;
+    va_start(argptr, arg6);
+
+    float sum = 0.0f;
+
+    switch (num_floats)
+    {
+        case 1: {
+            struct S_F data = va_arg(argptr, struct S_F);
+            sum = data.p0;
+            break;
+        }
+        case 2: {
+            struct S_FF data = va_arg(argptr, struct S_FF);
+            sum = data.p0 + data.p1;
+            break;
+        }
+        case 3: {
+            struct S_FFF data = va_arg(argptr, struct S_FFF);
+            sum = data.p0 + data.p1 + data.p2;
+            break;
+        }
+        case 4: {
+            struct S_FFFF data = va_arg(argptr, struct S_FFFF);
+            sum = data.p0 + data.p1 + data.p2 + data.p3;
+            break;
+        }
+    }
+
+    va_end(argptr);
+    return sum;
+}
+
+EXPORT double sum_spilled_struct_hfa_doubles(int num_doubles,
+    int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, ...)
+{
+    va_list argptr;
+    va_start(argptr, arg6);
+
+    double sum = 0.0f;
+
+    switch (num_doubles)
+    {
+        case 1: {
+            struct S_D data = va_arg(argptr, struct S_D);
+            sum = data.p0;
+            break;
+        }
+        case 2: {
+            struct S_DD data = va_arg(argptr, struct S_DD);
+            sum = data.p0 + data.p1;
+            break;
+        }
+        case 3: {
+            struct S_DDD data = va_arg(argptr, struct S_DDD);
+            sum = data.p0 + data.p1 + data.p2;
+            break;
+        }
+        case 4: {
+            struct S_DDDD data = va_arg(argptr, struct S_DDDD);
+            sum = data.p0 + data.p1 + data.p2 + data.p3;
+            break;
+        }
+    }
+
+    va_end(argptr);
+    return sum;
+}

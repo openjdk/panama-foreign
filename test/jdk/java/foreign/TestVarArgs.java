@@ -32,9 +32,13 @@
 import java.lang.foreign.Arena;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.PaddingLayout;
+import java.lang.foreign.ValueLayout;
 
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
@@ -46,6 +50,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static java.lang.foreign.MemoryLayout.PathElement.*;
+import static org.testng.Assert.*;
 
 public class TestVarArgs extends CallGeneratorHelper {
 
@@ -64,6 +69,11 @@ public class TestVarArgs extends CallGeneratorHelper {
     }
 
     static final MemorySegment VARARGS_ADDR = findNativeOrThrow("varargs");
+    static final MemorySegment SUM_HFA_FLOATS_ADDR = findNativeOrThrow("sum_struct_hfa_floats");
+    static final MemorySegment SUM_HFA_DOUBLES_ADDR = findNativeOrThrow("sum_struct_hfa_doubles");
+    static final MemorySegment SUM_SPILLED_STRUCT_INTS_ADDR = findNativeOrThrow("sum_spilled_struct_ints");
+    static final MemorySegment SUM_SPILLED_HFA_FLOATS_ADDR = findNativeOrThrow("sum_spilled_struct_hfa_floats");
+    static final MemorySegment SUM_SPILLED_HFA_DOUBLES_ADDR = findNativeOrThrow("sum_spilled_struct_hfa_doubles");
 
     @Test(dataProvider = "functions")
     public void testVarArgs(int count, String fName, Ret ret, // ignore this stuff
@@ -103,6 +113,125 @@ public class TestVarArgs extends CallGeneratorHelper {
             downcallHandle.invokeWithArguments(argValues);
 
             // args checked by upcall
+        }
+    }
+
+    @DataProvider(name = "variadicStructDescriptions")
+    public static Object[][] variadicStructDescriptions() {
+        return new Object[][] {
+            new Object[] { StructFieldType.FLOAT, 0, SUM_HFA_FLOATS_ADDR },
+            new Object[] { StructFieldType.FLOAT, 6, SUM_SPILLED_HFA_FLOATS_ADDR },
+            new Object[] { StructFieldType.DOUBLE, 0, SUM_HFA_DOUBLES_ADDR },
+            new Object[] { StructFieldType.DOUBLE, 6, SUM_SPILLED_HFA_DOUBLES_ADDR },
+            new Object[] { StructFieldType.INT, 6, SUM_SPILLED_STRUCT_INTS_ADDR },
+        };
+    }
+
+    @Test(dataProvider = "variadicStructDescriptions")
+    public void testSumVariadicHfa(StructFieldType structFieldType, int extraIntArgs, MemorySegment foreignFunctionSymbol) throws Throwable {
+        assertTrue(structFieldType == StructFieldType.INT ||
+            structFieldType == StructFieldType.FLOAT ||
+            structFieldType == StructFieldType.DOUBLE);
+
+        int maxFields = structFieldType == StructFieldType.DOUBLE ? 2 : 4;
+
+        for (int num_fields = 1; num_fields <= maxFields; num_fields++) {
+            List<StructFieldType> fields = new ArrayList<StructFieldType>();
+            for (int i=0; i < num_fields; i++) {
+                fields.add(structFieldType);
+            }
+
+            try (Arena arena = Arena.openConfined()) {
+                GroupLayout groupLayout = (GroupLayout)ParamType.STRUCT.layout(fields);
+                MemorySegment structMemorySegment = MemorySegment.allocateNative(groupLayout, arena.session());
+
+                int expectedSumOfFieldsAsInt = 0;
+                float expectedSumOfFieldsAsFloat = 0;
+                double expectedSumOfFieldsAsDouble = 0;
+
+                int fieldId = 1;
+                for (MemoryLayout memberLayout : groupLayout.memberLayouts()) {
+                    if (memberLayout instanceof PaddingLayout) continue;
+
+                    assertTrue(memberLayout instanceof ValueLayout);
+                    assertTrue(!isPointer(memberLayout));
+                    if (isIntegral(memberLayout)) {
+                        assertTrue(structFieldType == StructFieldType.INT);
+                    }
+
+                    VarHandle accessor = groupLayout.varHandle(MemoryLayout.PathElement.groupElement(memberLayout.name().get()));
+
+                    switch (structFieldType) {
+                        case FLOAT: {
+                            float fieldValueAsFloat = fieldId * 42.0f;
+                            expectedSumOfFieldsAsFloat += fieldValueAsFloat;
+                            accessor.set(structMemorySegment, fieldValueAsFloat);
+                            break;
+                        }
+                        case DOUBLE: {
+                            double fieldValueAsDouble = fieldId * 51.75;
+                            expectedSumOfFieldsAsDouble += fieldValueAsDouble;
+                            accessor.set(structMemorySegment, fieldValueAsDouble);
+                            break;
+                        }
+                        case INT: {
+                            int fieldValueAsInt = fieldId * 2022;
+                            expectedSumOfFieldsAsInt += fieldValueAsInt;
+                            accessor.set(structMemorySegment, fieldValueAsInt);
+                            break;
+                        }
+                    }
+
+                    fieldId++;
+                }
+
+                List<MemoryLayout> argLayouts = new ArrayList<>();
+                argLayouts.add(C_INT); // number of fields
+                for (int i=0; i < extraIntArgs; i++) {
+                    argLayouts.add(C_INT);
+                }
+
+                MemoryLayout resLayout;
+
+                switch (structFieldType) {
+                    case FLOAT: resLayout = C_FLOAT; break;
+                    case DOUBLE: resLayout = C_DOUBLE; break;
+                    case INT: resLayout = C_INT; break;
+                    default: throw new UnsupportedOperationException("Unhandled field type " + structFieldType);
+                }
+
+                FunctionDescriptor baseDesc = FunctionDescriptor.of(resLayout, argLayouts.toArray(MemoryLayout[]::new));
+                Linker.Option varargIndex = Linker.Option.firstVariadicArg(baseDesc.argumentLayouts().size());
+                FunctionDescriptor desc = baseDesc.appendArgumentLayouts(groupLayout);
+
+                MethodHandle downcallHandle = LINKER.downcallHandle(foreignFunctionSymbol, desc, varargIndex);
+
+                List<Object> argValues = new ArrayList<>();
+                argValues.add(num_fields);
+
+                for (int i=0; i < extraIntArgs; i++) {
+                    argValues.add(i+1);
+                }
+
+                argValues.add(structMemorySegment);
+
+                Object result = downcallHandle.invokeWithArguments(argValues);
+
+                switch (structFieldType) {
+                    case FLOAT: {
+                        assertEquals((float)result, expectedSumOfFieldsAsFloat);
+                        break;
+                    }
+                    case DOUBLE: {
+                        assertEquals((double)result, expectedSumOfFieldsAsDouble);
+                        break;
+                    }
+                    case INT: {
+                        assertEquals((int)result, expectedSumOfFieldsAsInt);
+                        break;
+                    }
+                }
+            }
         }
     }
 

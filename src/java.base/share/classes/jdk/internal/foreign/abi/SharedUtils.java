@@ -30,6 +30,7 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
+import jdk.internal.foreign.abi.aarch64.windows.WindowsAArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 import jdk.internal.vm.annotation.ForceInline;
@@ -185,6 +186,7 @@ public final class SharedUtils {
             case SYS_V -> SysVx64Linker.getInstance();
             case LINUX_AARCH_64 -> LinuxAArch64Linker.getInstance();
             case MAC_OS_AARCH_64 -> MacOsAArch64Linker.getInstance();
+            case WIN_AARCH_64 -> WindowsAArch64Linker.getInstance();
         };
     }
 
@@ -296,6 +298,7 @@ public final class SharedUtils {
             case SYS_V -> SysVx64Linker.newVaList(actions, session);
             case LINUX_AARCH_64 -> LinuxAArch64Linker.newVaList(actions, session);
             case MAC_OS_AARCH_64 -> MacOsAArch64Linker.newVaList(actions, session);
+            case WIN_AARCH_64 -> WindowsAArch64Linker.newVaList(actions, session);
         };
     }
 
@@ -305,6 +308,7 @@ public final class SharedUtils {
             case SYS_V -> SysVx64Linker.newVaListOfAddress(address, session);
             case LINUX_AARCH_64 -> LinuxAArch64Linker.newVaListOfAddress(address, session);
             case MAC_OS_AARCH_64 -> MacOsAArch64Linker.newVaListOfAddress(address, session);
+            case WIN_AARCH_64 -> WindowsAArch64Linker.newVaListOfAddress(address, session);
         };
     }
 
@@ -314,6 +318,7 @@ public final class SharedUtils {
             case SYS_V -> SysVx64Linker.emptyVaList();
             case LINUX_AARCH_64 -> LinuxAArch64Linker.emptyVaList();
             case MAC_OS_AARCH_64 -> MacOsAArch64Linker.emptyVaList();
+            case WIN_AARCH_64 -> WindowsAArch64Linker.emptyVaList();
         };
     }
 
