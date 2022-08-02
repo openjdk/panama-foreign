@@ -52,9 +52,9 @@ import java.util.function.BiFunction;
  * <ul>
  *     <li>It can be passed to a {@link Linker} to create a downcall method handle, which can then be used to call the foreign function at the segment's base address.</li>
  *     <li>It can be passed to an existing {@linkplain Linker#downcallHandle(FunctionDescriptor) downcall method handle}, as an argument to the underlying foreign function.</li>
- *     <li>It can be {@linkplain MemorySegment#set(ValueLayout.OfAddress, long, Addressable) stored} inside another memory segment.</li>
+ *     <li>It can be {@linkplain MemorySegment#set(ValueLayout.OfAddress, long, MemorySegment) stored} inside another memory segment.</li>
  *     <li>It can be used to dereference memory associated with a global variable (this might require
- *     {@link MemorySegment#ofAddress(MemoryAddress, long, MemorySession) resizing} the segment first).</li>
+ *     {@link MemorySegment#ofAddress(long, long, MemorySession) resizing} the segment first).</li>
  * </ul>
  *
  * <h2 id="obtaining">Obtaining a symbol lookup</h2>
@@ -165,8 +165,8 @@ public interface SymbolLookup {
             Objects.requireNonNull(name);
             JavaLangAccess javaLangAccess = SharedSecrets.getJavaLangAccess();
             // note: ClassLoader::findNative supports a null loader
-            MemoryAddress addr = MemoryAddress.ofLong(javaLangAccess.findNative(loader, name));
-            return addr == MemoryAddress.NULL ?
+            long addr = javaLangAccess.findNative(loader, name);
+            return addr == 0L ?
                     Optional.empty() :
                     Optional.of(MemorySegment.ofAddress(addr, 0L, loaderSession));
         };
@@ -243,10 +243,10 @@ public interface SymbolLookup {
         });
         return name -> {
             Objects.requireNonNull(name);
-            MemoryAddress addr = MemoryAddress.ofLong(library.find(name));
-            return addr == MemoryAddress.NULL
-                    ? Optional.empty() :
-                    Optional.of(MemorySegment.ofAddress(addr, 0L, session));
+            long addr = library.find(name);
+            return addr == 0L ?
+                    Optional.empty() :
+                    Optional.of(MemorySegment.ofAddress(addr, 0, session));
         };
     }
 }

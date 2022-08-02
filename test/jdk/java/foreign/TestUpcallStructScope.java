@@ -37,12 +37,12 @@
  *   TestUpcallStructScope
  */
 
-import java.lang.foreign.Addressable;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
+
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
@@ -90,7 +90,7 @@ public class TestUpcallStructScope extends NativeTestHelper {
         MethodHandle target = methodHandle(capturedSegment::set);
         FunctionDescriptor upcallDesc = FunctionDescriptor.ofVoid(S_PDI_LAYOUT);
         try (MemorySession session = MemorySession.openConfined()) {
-            Addressable upcallStub = LINKER.upcallStub(target, upcallDesc, session);
+            MemorySegment upcallStub = LINKER.upcallStub(target, upcallDesc, session);
             MemorySegment argSegment = MemorySegment.allocateNative(S_PDI_LAYOUT, session);
             MH_do_upcall.invoke(upcallStub, argSegment);
         }

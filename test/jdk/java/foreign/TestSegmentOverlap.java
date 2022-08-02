@@ -123,7 +123,7 @@ public class TestSegmentOverlap {
             assertEquals(slice.asOverlappingSlice(s1).get().session(), slice.session());
 
             if (s1.isNative()) {
-                assertEquals(s1.asOverlappingSlice(slice).get().address(), s1.address().addOffset(offset));
+                assertEquals(s1.asOverlappingSlice(slice).get().address(), s1.address() + offset);
                 assertEquals(slice.asOverlappingSlice(s1).get().address(), slice.address());
             }
             assertTrue(s2.asOverlappingSlice(slice).isEmpty());
