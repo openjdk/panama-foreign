@@ -39,18 +39,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Spliterator;
 import java.util.stream.Stream;
-import jdk.internal.foreign.AbstractMemorySegmentImpl;
-import jdk.internal.foreign.HeapMemorySegmentImpl;
-import jdk.internal.foreign.MemorySessionImpl;
-import jdk.internal.foreign.NativeMemorySegmentImpl;
-import jdk.internal.foreign.Utils;
+
+import jdk.internal.foreign.*;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.javac.PreviewFeature;
 import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
-import jdk.internal.util.ArraysSupport;
 import jdk.internal.vm.annotation.ForceInline;
 
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
@@ -1823,6 +1819,73 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
         layout.accessHandle().set(this, index * layout.byteSize(), value.address());
+    }
+
+    /**
+     * Returns a Stream of human-readable, lines with hexadecimal values for this memory segment.
+     * <p>
+     * The exact format of the stream elements is unspecified and should not
+     * be acted upon programmatically. Loosely speaking, this method renders
+     * a format similar to the *nix command "hexdump -C".
+     * <p>
+     * As an example, a memory segment created, initialized and used as follows
+     * {@snippet lang = java:
+     * MemorySegment memorySegment = memorySession.allocate(64 + 4);
+     * memorySegment.setUtf8String(0, "The quick brown fox jumped over the lazy dog\nSecond line\t:here");
+     * memorySegment.hexStream()
+     *     .forEach(System.out::println);
+     *}
+     * might print to something like this:
+     * {@snippet lang = text:
+     * 0000000000000000  54 68 65 20 71 75 69 63  6B 20 62 72 6F 77 6E 20  |The quick brown |
+     * 0000000000000010  66 6F 78 20 6A 75 6D 70  65 64 20 6F 76 65 72 20  |fox jumped over |
+     * 0000000000000020  74 68 65 20 6C 61 7A 79  20 64 6F 67 0A 53 65 63  |the lazy dog.Sec|
+     * 0000000000000030  6F 6E 64 20 6C 69 6E 65  09 3A 68 65 72 65 00 00  |ond line.:here..|
+     * 0000000000000040  00 00 00 00                                       |....|
+     *}
+     * <p>
+     * Use a {@linkplain MemorySegment#asSlice(long, long) slice} to inspect a specific region
+     * of a memory segment.
+     *
+     * @return a Stream of human-readable, lines with hexadecimal values
+     */
+    default Stream<String> hexStream() {
+        return MemorySegmentRenderUtil.hexStream(this);
+    }
+
+    /**
+     * Returns a human-readable view of this memory segment viewed through
+     * the provided memory layout {@code lens}.
+     * <p>
+     * Lines are separated with the system-dependent line separator {@link System#lineSeparator() }.
+     * Otherwise, the exact format of the returned view is unspecified and should not
+     * be acted upon programmatically.
+     * <p>
+     * As an example, a memory segment viewed though the following memory layout lens
+     * {@snippet lang = java:
+     * var lens = MemoryLayout.structLayout(
+     *         ValueLayout.JAVA_INT.withName("x"),
+     *         ValueLayout.JAVA_INT.withName("y")
+     * ).withName("Point");
+     *}
+     * might be rendered to something like this:
+     * {@snippet lang = text:
+     * Point {
+     *   x=1,
+     *   y=2
+     * }
+     *}
+     * <p>
+     * This method is intended to view memory segments through small and medium-sized memory layout
+     * lenses and is, in all cases, restricted by the inherent String capacity limit.
+     *
+     * @param lens  to use as a lens when viewing the memory segment
+     * @return a view of the memory segment viewed through a memory layout lens
+     * @throws OutOfMemoryError if the view exceeds the array size VM limit
+     */
+    default String viewThrough(MemoryLayout lens) {
+        Objects.requireNonNull(lens);
+        return MemorySegmentRenderUtil.viewThrough(this, lens);
     }
 
     /**
