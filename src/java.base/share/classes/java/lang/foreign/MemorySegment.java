@@ -1824,18 +1824,33 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     /**
      * Returns a Stream of human-readable, lines with hexadecimal values for this memory segment.
      * <p>
-     * The exact format of the stream elements is unspecified and should not
-     * be acted upon programmatically. Loosely speaking, this method renders
-     * a format similar to the *nix command "hexdump -C".
+     * Each element in the stream comprises the following characters:
+     * <ol>
+     *     <li>an initial 64-bit offset (e.g. "0000000000000010").</li>
+     *     <li>a sequence of two spaces (i.e. "  ").</li>
+     *     <li>a sequence of at most eight bytes (e.g. "66 6F 78 20 6A 75 6D 70") where
+     *     each byte is separated by a space.</li>
+     *     <li>a sequence of two spaces (i.e. "  ").</li>
+     *     <li>a sequence of at most eight bytes (e.g. "65 64 20 6F 76 65 72 20") where
+     *     each byte separated by a space.</li>
+     *     <li>a sequence of N spaces (i.e. "  ") such that the intermediate line is aligned to 68 characters</li>
+     *     <li>a "|" separator.</li>
+     *     <li>a sequence of at most 16 printable Ascii characters (values outside [32, 127] will be printed as ".").</li>
+     *     <li>a "|" separator.</li>
+     * </ol>
+     * All the values above are given in hexadecimal form with leading zeros. As there are at most 16 bytes
+     * rendered for each line, there will be N = ({@link #byteSize()} + 15) / 16 elements in the returned stream.
+     * <p>
+     * As a consequence of the above, this method renders to a format similar to the *nix command "hexdump -C".
      * <p>
      * As an example, a memory segment created, initialized and used as follows
      * {@snippet lang = java:
-     * MemorySegment memorySegment = memorySession.allocate(64 + 4);
-     * memorySegment.setUtf8String(0, "The quick brown fox jumped over the lazy dog\nSecond line\t:here");
-     * memorySegment.hexStream()
-     *     .forEach(System.out::println);
+     *   MemorySegment memorySegment = memorySession.allocate(64 + 4);
+     *   memorySegment.setUtf8String(0, "The quick brown fox jumped over the lazy dog\nSecond line\t:here");
+     *   memorySegment.hexDump()
+     *       .forEach(System.out::println);
      *}
-     * might print to something like this:
+     * will be printed as:
      * {@snippet lang = text:
      * 0000000000000000  54 68 65 20 71 75 69 63  6B 20 62 72 6F 77 6E 20  |The quick brown |
      * 0000000000000010  66 6F 78 20 6A 75 6D 70  65 64 20 6F 76 65 72 20  |fox jumped over |
@@ -1846,46 +1861,75 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * <p>
      * Use a {@linkplain MemorySegment#asSlice(long, long) slice} to inspect a specific region
      * of a memory segment.
+     * <p>
+     * This method can be used to dump the contents of various other memory containers such as
+     * {@linkplain ByteBuffer ByteBuffers} and byte arrays by means of first wrapping the container
+     * into a MemorySegment:
+     * {@snippet lang = java:
+     *   MemorySegment.ofArray(byteArray).hexDump();
+     *   MemorySegment.ofBuffer(byteBuffer).hexDump();
+     *}
      *
      * @return a Stream of human-readable, lines with hexadecimal values
      */
-    default Stream<String> hexStream() {
+    default Stream<String> hexDump() {
         return MemorySegmentRenderUtil.hexStream(this);
     }
 
     /**
      * Returns a human-readable view of this memory segment viewed through
-     * the provided memory layout {@code lens}.
+     * the provided memory layout {@code memoryLayout}.
      * <p>
+     * The format of the returned view is as follows:
+     * <ol>
+     *     <li>tag/value pairs are separated with "="</li>
+     *     <li>Each element is tagged with its {@link MemoryLayout#name()} or, if no name exists,
+     *     its {@link MemoryLayout#toString()} representation.</li>
+     *     <li> Values are rendered differently depending on their type:
+     *         <ul>
+     *             <li>Numeric values are rendered in decimal form (e.g 1 or 1.2).</li>
+     *             <li>Boolean values are rendered as {@code true} or {@code false}.</li>
+     *             <li>Char values are rendered as chars.</li>
+     *             <li>Address values are rendered according to their {@code toString()} values.</li>
+     *         </ul>
+     *     </li>
+     *     <li>Grouped layouts are enclosed in curly brackets.</li>
+     *     <li>Structure and sequence elements are separated with ",".</li>
+     *     <li>Union elements are separated with "|".</li>
+     *     <li>Lines are separated with the system-dependent line separator {@link System#lineSeparator() }.</li>
+     * </ol>
      * Lines are separated with the system-dependent line separator {@link System#lineSeparator() }.
      * Otherwise, the exact format of the returned view is unspecified and should not
      * be acted upon programmatically.
      * <p>
-     * As an example, a memory segment viewed though the following memory layout lens
+     * As an example, a memory segment viewed though the following memory layout memoryLayout
      * {@snippet lang = java:
-     * var lens = MemoryLayout.structLayout(
-     *         ValueLayout.JAVA_INT.withName("x"),
-     *         ValueLayout.JAVA_INT.withName("y")
-     * ).withName("Point");
+     *   memorySegment.set(ValueLayout.JAVA_INT, 0, 1);
+     *   memorySegment.set(ValueLayout.JAVA_INT, 4, 2);
+     *
+     *    var memoryLayout = MemoryLayout.structLayout(
+     *           ValueLayout.JAVA_INT.withName("x"),
+     *           ValueLayout.JAVA_INT.withName("y")
+     *   ).withName("Point");
+     *
+     *   System.out.println(memorySegment.toString(memoryLayout));
      *}
-     * might be rendered to something like this:
+     * will print:
      * {@snippet lang = text:
      * Point {
      *   x=1,
      *   y=2
      * }
      *}
-     * <p>
-     * This method is intended to view memory segments through small and medium-sized memory layout
-     * lenses and is, in all cases, restricted by the inherent String capacity limit.
      *
-     * @param lens  to use as a lens when viewing the memory segment
-     * @return a view of the memory segment viewed through a memory layout lens
-     * @throws OutOfMemoryError if the view exceeds the array size VM limit
+     * @param memoryLayout  to use as a memoryLayout when viewing the memory segment
+     * @return a view of the memory segment viewed through a memory layout memoryLayout
+     * @throws OutOfMemoryError if the size of the UTF-8 string is greater than the largest string
+     *         supported by the platform.
      */
-    default String viewThrough(MemoryLayout lens) {
-        Objects.requireNonNull(lens);
-        return MemorySegmentRenderUtil.viewThrough(this, lens);
+    default String toString(MemoryLayout memoryLayout) {
+        Objects.requireNonNull(memoryLayout);
+        return MemorySegmentRenderUtil.viewThrough(this, memoryLayout);
     }
 
     /**

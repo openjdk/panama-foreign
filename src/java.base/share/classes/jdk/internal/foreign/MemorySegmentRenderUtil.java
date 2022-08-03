@@ -108,7 +108,7 @@ public final class MemorySegmentRenderUtil {
 
     /**
      * Returns a human-readable view of the provided {@code memorySegment} viewed through
-     * the provided {@code lens}.
+     * the provided {@code memoryLayout}.
      * <p>
      * Lines are separated with the system-dependent line separator {@link System#lineSeparator() }.
      * Otherwise, the exact format of the returned view is unspecified and should not
@@ -116,7 +116,7 @@ public final class MemorySegmentRenderUtil {
      * <p>
      * As an example, a MemorySegment viewed though the following memory layout
      * {@snippet lang = java:
-     * var lens = MemoryLayout.structLayout(
+     * var memoryLayout = MemoryLayout.structLayout(
      *         ValueLayout.JAVA_INT.withName("x"),
      *         ValueLayout.JAVA_INT.withName("y")
      * ).withName("Point");
@@ -133,14 +133,14 @@ public final class MemorySegmentRenderUtil {
      * and is, in all cases, restricted by the inherent String capacity limit.
      *
      * @param memorySegment to be viewed
-     * @param lens  to use as a lens when viewing the memory segment
+     * @param memoryLayout  to use as a memoryLayout when viewing the memory segment
      * @return a view of the memory segment viewed through the memory layout
      * @throws OutOfMemoryError if the view exceeds the array size VM limit
      */
     public static String viewThrough(MemorySegment memorySegment,
-                                     MemoryLayout lens) {
+                                     MemoryLayout memoryLayout) {
         requireNonNull(memorySegment);
-        requireNonNull(lens);
+        requireNonNull(memoryLayout);
 
         final var sb = new StringBuilder();
         final Consumer<CharSequence> action = line -> {
@@ -149,7 +149,7 @@ public final class MemorySegmentRenderUtil {
             }
             sb.append(line);
         };
-        renderView(memorySegment, lens, action, new ViewState(), "");
+        renderView(memorySegment, memoryLayout, action, new ViewState(), "");
         return sb.toString();
     }
 
@@ -197,9 +197,10 @@ public final class MemorySegmentRenderUtil {
             action.accept(renderValueLayout(state, ofAddress, memorySegment.get(ofAddress, state.indexAndAdd(ofAddress)).toString(), suffix));
             return;
         }
-        if (memoryLayout instanceof PaddingLayout paddingLayout) {
-            action.accept(state.indentSpaces() + paddingLayout.bitSize() + " padding bits");
-            state.indexAndAdd(paddingLayout);
+        // PaddingLayout is package private.
+        if ("java.lang.foreign.PaddingLayout".equals(memoryLayout.getClass().getName())) {
+            action.accept(state.indentSpaces() + memoryLayout.bitSize() + " padding bits");
+            state.indexAndAdd(memoryLayout);
             return;
         }
         if (memoryLayout instanceof GroupLayout groupLayout) {

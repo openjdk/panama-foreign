@@ -35,7 +35,7 @@ import java.util.Optional;
  * @implSpec
  * This class is immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  */
-public final class PaddingLayout extends AbstractLayout implements MemoryLayout {
+/* package-private */ final class PaddingLayout extends AbstractLayout implements MemoryLayout {
 
     PaddingLayout(long size) {
         this(size, 1, Optional.empty());

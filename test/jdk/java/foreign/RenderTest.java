@@ -30,6 +30,8 @@
 
 import java.lang.foreign.*;
 import java.lang.invoke.VarHandle;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -39,6 +41,7 @@ import java.lang.foreign.*;
 
 import org.testng.annotations.*;
 
+import static java.util.stream.Collectors.joining;
 import static org.testng.Assert.*;
 import static jdk.internal.foreign.MemorySegmentRenderUtil.*;
 import static java.util.Objects.requireNonNull;
@@ -46,22 +49,52 @@ import static java.util.Objects.requireNonNull;
 @Test
 public class RenderTest {
 
-    @Test
-    public void testHexStream() {
-        var expect = platformLineSeparated("""
+    private static final int HEX_SEGMENT_SIZE = 64 + 4;
+    private static final String THE_QUICK = "The quick brown fox jumped over the lazy dog\nSecond line\t:here";
+
+    private static final byte[] THE_QUICK_ARRAY = THE_QUICK.getBytes(StandardCharsets.UTF_8);
+    private static final String EXPECTED_HEX = platformLineSeparated("""
                 0000000000000000  54 68 65 20 71 75 69 63  6B 20 62 72 6F 77 6E 20  |The quick brown |
                 0000000000000010  66 6F 78 20 6A 75 6D 70  65 64 20 6F 76 65 72 20  |fox jumped over |
                 0000000000000020  74 68 65 20 6C 61 7A 79  20 64 6F 67 0A 53 65 63  |the lazy dog.Sec|
                 0000000000000030  6F 6E 64 20 6C 69 6E 65  09 3A 68 65 72 65 00 00  |ond line.:here..|
                 0000000000000040  00 00 00 00                                       |....|""");
 
-        var actual = testWithFreshMemorySegment(64 + 4, segment -> {
-            segment.setUtf8String(0, "The quick brown fox jumped over the lazy dog\nSecond line\t:here");
+    @Test
+    public void testHexStream() {
+
+        var actual = testWithFreshMemorySegment(HEX_SEGMENT_SIZE, segment -> {
+            segment.setUtf8String(0, THE_QUICK);
             return hexStream(segment)
-                    .collect(Collectors.joining(System.lineSeparator()));
+                    .collect(joining(System.lineSeparator()));
         });
-        assertEquals(expect, actual);
+        assertEquals(EXPECTED_HEX, actual);
     }
+
+    @Test
+    public void testHexStreamByteArray() {
+
+        var array = new byte[HEX_SEGMENT_SIZE];
+        System.arraycopy(THE_QUICK_ARRAY, 0, array, 0, THE_QUICK.length());
+        var actual = MemorySegment.ofArray(array)
+                .hexDump()
+                .collect(joining(System.lineSeparator()));
+
+        assertEquals(EXPECTED_HEX, actual);
+    }
+
+    @Test
+    public void testHexStreamByteBuffer() {
+
+        var array = new byte[HEX_SEGMENT_SIZE];
+        System.arraycopy(THE_QUICK_ARRAY, 0, array, 0, THE_QUICK.length());
+        var actual = MemorySegment.ofBuffer(ByteBuffer.wrap(array))
+                .hexDump()
+                .collect(joining(System.lineSeparator()));
+
+        assertEquals(EXPECTED_HEX, actual);
+    }
+
 
     @Test
     public void valueLayouts() {
@@ -213,7 +246,7 @@ public class RenderTest {
 
     private static String platformLineSeparated(String s) {
         return s.lines()
-                .collect(Collectors.joining(System.lineSeparator()));
+                .collect(joining(System.lineSeparator()));
     }
 
     private static <T> T testWithFreshMemorySegment(long size,
