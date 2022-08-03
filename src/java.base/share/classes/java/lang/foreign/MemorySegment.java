@@ -180,14 +180,14 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  *
  * {@snippet lang=java :
  * boolean isAligned(MemorySegment segment, long offset, MemoryLayout layout) {
- *   return ((segment.address().toRawLongValue() + offset) % layout.byteAlignment()) == 0
+ *   return ((segment.address().address() + offset) % layout.byteAlignment()) == 0;
  * }
  * }
  *
  * If, however, the segment being dereferenced is a heap segment, the above function will not work: a heap
- * segment's base address is <em>virtualized</em> and, as such, cannot be used to construct an alignment check. Instead,
- * heap segments are assumed to produce addresses which are never more aligned than the element size of the Java array from which
- * they have originated from, as shown in the following table:
+ * segment's {@linkplain #address() base address} is <em>virtualized</em> and, as such, cannot be used to construct an
+ * alignment check. Instead, heap segments are assumed to produce addresses which are never more aligned than the element
+ * size of the Java array from which they have originated from, as shown in the following table:
  *
  * <blockquote><table class="plain">
  * <caption style="display:none">Array type of an array backing a segment and its address alignment</caption>
@@ -222,17 +222,17 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * which segment addresses belong to {@code S} requires reasoning about details which are ultimately implementation-dependent.
  *
  * <h2 id="restricted-segments">Restricted memory segments</h2>
- * Sometimes it is necessary to turn a memory address obtained from native code into a memory segment with
- * full spatial, temporal and confinement bounds. To do this, clients can {@linkplain #ofAddress(MemoryAddress, long, MemorySession) obtain}
- * a native segment <em>unsafely</em> from a give memory address, by providing the segment size, as well as the segment {@linkplain MemorySession session}.
+ * Sometimes it is necessary to turn a raw address (e.g. obtained from native code) into a memory segment with
+ * full spatial, temporal and confinement bounds. To do this, clients can {@linkplain #ofAddress(long, long, MemorySession)}
+ * a native segment <em>unsafely</em>, by providing a new size, as well as a new {@linkplain MemorySession memory session}.
  * This is a <a href="package-summary.html#restricted"><em>restricted</em></a> operation and should be used with
  * caution: for instance, an incorrect segment size could result in a VM crash when attempting to dereference
  * the memory segment.
  * <p>
- * Clients requiring sophisticated, low-level control over mapped memory segments, might consider writing
+ * For example, clients requiring sophisticated, low-level control over mapped memory segments, might consider writing
  * custom mapped memory segment factories; using {@link Linker}, e.g. on Linux, it is possible to call {@code mmap}
  * with the desired parameters; the returned address can be easily wrapped into a memory segment, using
- * {@link MemoryAddress#ofLong(long)} and {@link MemorySegment#ofAddress(MemoryAddress, long, MemorySession)}.
+ * {@link #ofAddress(long, long, MemorySession)}.
  *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
@@ -240,18 +240,23 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface MemorySegment extends Addressable permits AbstractMemorySegmentImpl {
+public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
-     * {@return the base memory address associated with this native memory segment}
-     * @throws UnsupportedOperationException if this segment is not a {@linkplain #isNative() native} segment.
-     * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
-     * {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread other than the thread owning
-     * the {@linkplain #session() session} associated with this segment.
+     * Returns the base address of the memory region associated with this segment. If this memory segment is
+     * a {@linkplain #isNative() native} memory segment, then the returned address is the off-heap address
+     * at which the native memory region associated with this segment starts. If this memory segment is an array
+     * memory segment, the returned address is the byte offset into the {@linkplain #array()} object associated
+     * with this segment. In other words, the base address of an array segment is always <em>virtualized</em>.
+     *
+     * @return the base address of the memory region associated with this segment.
      */
-    @Override
-    MemoryAddress address();
+    long address();
+
+    /**
+     * {@return the Java array associated with this memory segment, if any}
+     */
+    Optional<Object> array();
 
     /**
      * Returns a spliterator for this memory segment. The returned spliterator reports {@link Spliterator#SIZED},
@@ -386,17 +391,20 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * <p>The offset is relative to the base address of this segment and can be
      * a negative or positive value. For instance, if both segments are native
-     * segments, the resulting offset can be computed as follows:
+     * segments, or heap segments backed by the same array, the resulting offset
+     * can be computed as follows:
      *
      * {@snippet lang=java :
-     * other.baseAddress().toRawLongValue() - segment.baseAddress().toRawLongValue()
+     * other.address() - segment.baseAddress()
      * }
      *
-     * If the segments share the same base address, {@code 0} is returned. If
+     * If the segments share the same address, {@code 0} is returned. If
      * {@code other} is a slice of this segment, the offset is always
      * {@code 0 <= x < this.byteSize()}.
      *
      * @param other the segment to retrieve an offset to.
+     * @throws UnsupportedOperationException if the two segments cannot be compared, e.g. because they are of
+     * a different kind, or because they are backed by different Java arrays.
      * @return the relative offset, in bytes, of the provided segment.
      */
     long segmentOffset(MemorySegment other);
@@ -471,12 +479,6 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * the smallest of the segment sizes, and it follows that the offset is only
      * valid for the larger segment. Otherwise, there is no mismatch and {@code
      * -1} is returned.
-     * <p>
-     * This method is equivalent to the following code:
-     * {@snippet lang=java :
-     * return MemorySegment.mismatch(this, 0, this.byteSize(),
-     *                               other, 0, other.byteSize());
-     * }
      *
      * @param other the segment to be tested for a mismatch with this segment
      * @return the relative offset, in bytes, of the first mismatch between this
@@ -489,8 +491,6 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with {@code other}.
-     *
-     * @see MemorySegment#mismatch(MemorySegment, long, long, MemorySegment, long, long)
      */
     long mismatch(MemorySegment other);
 
@@ -724,7 +724,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * java.nio.charset.CharsetDecoder} class should be used when more control
      * over the decoding process is required.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address().toRawLongValue() + offset}.
+     *               the final address of this read operation can be expressed as {@code address() + offset}.
      * @return a Java string constructed from the bytes read from the given starting address up to (but not including)
      * the first {@code '\0'} terminator character (assuming one is found).
      * @throws IllegalArgumentException if the size of the UTF-8 string is greater than the largest string supported by the platform.
@@ -753,7 +753,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * will appear truncated when read again.
      *
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address().toRawLongValue() + offset}.
+     *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param str the Java string to be written into this segment.
      * @throws IndexOutOfBoundsException if {@code str.getBytes().length() + offset >= byteSize()}.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
@@ -861,6 +861,51 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
         return HeapMemorySegmentImpl.OfDouble.fromArray(arr);
     }
 
+    /**
+     * A zero-length native memory segment modelling the {@code NULL} address.
+     */
+    MemorySegment NULL = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(0L, 0);
+
+    /**
+     * Creates a zero-length native memory segment from the given {@linkplain #address() address value}.
+     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
+     * <p>
+     * This is equivalent to the following code:
+     * {@snippet lang = java:
+     * ofAddress(address, 0);
+     *}
+     * @param address the address of the returned native segment.
+     * @return a zero-length native memory segment with the given address.
+     */
+    static MemorySegment ofAddress(long address) {
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, 0);
+    }
+
+    /**
+     * Creates a native memory segment with the given size and {@linkplain #address() address value}.
+     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
+     * <p>
+     * This is equivalent to the following code:
+     * {@snippet lang = java:
+     * ofAddress(address, bytesSize, MemorySession.global());
+     *}
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     * @param address the address of the returned native segment.
+     * @param bytesSize the size (in bytes) of the returned native segment.
+     * @return a zero-length native memory segment with the given address and size.
+     * @throws IllegalArgumentException if {@code bytesSize < 0}.
+     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
+     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
+     */
+    @CallerSensitive
+    static MemorySegment ofAddress(long address, long bytesSize) {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddress");
+        return MemorySegment.ofAddress(address, bytesSize, MemorySession.global());
+    }
 
     /**
      * Creates a native memory segment with the given size, base address, and memory session.
@@ -894,9 +939,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
-    static MemorySegment ofAddress(MemoryAddress address, long bytesSize, MemorySession session) {
+    static MemorySegment ofAddress(long address, long bytesSize, MemorySession session) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddress");
-        Objects.requireNonNull(address);
         Objects.requireNonNull(session);
         Utils.checkAllocationSizeAndAlign(bytesSize, 1);
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, bytesSize, session);
@@ -1096,8 +1140,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address().toRawLongValue() + offset}.
-     * @return a byte value read from this address.
+     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @return a byte value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
@@ -1117,7 +1161,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address().toRawLongValue() + offset}.
+     *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the byte value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1139,8 +1183,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address().toRawLongValue() + offset}.
-     * @return a boolean value read from this address.
+     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @return a boolean value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
@@ -1160,7 +1204,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address().toRawLongValue() + offset}.
+     *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the boolean value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1182,8 +1226,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address().toRawLongValue() + offset}.
-     * @return a char value read from this address.
+     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @return a char value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
@@ -1203,7 +1247,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address().toRawLongValue() + offset}.
+     *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the char value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1225,8 +1269,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address().toRawLongValue() + offset}.
-     * @return a short value read from this address.
+     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @return a short value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
@@ -1246,7 +1290,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address().toRawLongValue() + offset}.
+     *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the short value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1268,8 +1312,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address().toRawLongValue() + offset}.
-     * @return an int value read from this address.
+     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @return an int value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
@@ -1289,7 +1333,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address().toRawLongValue() + offset}.
+     *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the int value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1311,8 +1355,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address().toRawLongValue() + offset}.
-     * @return a float value read from this address.
+     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @return a float value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
@@ -1332,7 +1376,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address().toRawLongValue() + offset}.
+     *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the float value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1354,8 +1398,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address().toRawLongValue() + offset}.
-     * @return a long value read from this address.
+     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @return a long value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
@@ -1375,7 +1419,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address().toRawLongValue() + offset}.
+     *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the long value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1397,8 +1441,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address().toRawLongValue() + offset}.
-     * @return a double value read from this address.
+     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @return a double value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
@@ -1418,7 +1462,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address().toRawLongValue() + offset}.
+     *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the double value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1436,12 +1480,15 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads an address from this segment at the given offset, with the given layout.
-     *
+     * Reads an address from this segment at the given offset, with the given layout. The read address is wrapped in
+     * a native segment, associated with the {@linkplain MemorySession#global() global} memory session. Under normal conditions,
+     * the size of the returned segment is {@code 0}. However, if the provided layout is an
+     * {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout, then the size of the returned
+     * segment is {@code Long.MAX_VALUE}.
      * @param layout the layout of the memory region to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address().toRawLongValue() + offset}.
-     * @return an address value read from this address.
+     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @return a native segment wrapping an address read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
@@ -1452,8 +1499,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * memory segment.
      */
     @ForceInline
-    default MemoryAddress get(ValueLayout.OfAddress layout, long offset) {
-        return (MemoryAddress)layout.accessHandle().get(this, offset);
+    default MemorySegment get(ValueLayout.OfAddress layout, long offset) {
+        return (MemorySegment)layout.accessHandle().get(this, offset);
     }
 
     /**
@@ -1461,7 +1508,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address().toRawLongValue() + offset}.
+     *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the address value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1474,8 +1521,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
-    default void set(ValueLayout.OfAddress layout, long offset, Addressable value) {
-        layout.accessHandle().set(this, offset, value.address());
+    default void set(ValueLayout.OfAddress layout, long offset, MemorySegment value) {
+        layout.accessHandle().set(this, offset, value);
     }
 
     /**
@@ -1483,8 +1530,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address().toRawLongValue() + (index * layout.byteSize())}.
-     * @return a char value read from this address.
+     *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @return a char value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
@@ -1507,7 +1554,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address().toRawLongValue() + (index * layout.byteSize())}.
+     *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @param value the char value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1532,8 +1579,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address().toRawLongValue() + (index * layout.byteSize())}.
-     * @return a short value read from this address.
+     *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @return a short value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
@@ -1556,7 +1603,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address().toRawLongValue() + (index * layout.byteSize())}.
+     *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @param value the short value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1581,8 +1628,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address().toRawLongValue() + (index * layout.byteSize())}.
-     * @return an int value read from this address.
+     *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @return an int value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
@@ -1605,7 +1652,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address().toRawLongValue() + (index * layout.byteSize())}.
+     *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @param value the int value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1630,8 +1677,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address().toRawLongValue() + (index * layout.byteSize())}.
-     * @return a float value read from this address.
+     *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @return a float value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
@@ -1654,7 +1701,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address().toRawLongValue() + (index * layout.byteSize())}.
+     *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @param value the float value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1679,8 +1726,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address().toRawLongValue() + (index * layout.byteSize())}.
-     * @return a long value read from this address.
+     *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @return a long value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
@@ -1703,7 +1750,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address().toRawLongValue() + (index * layout.byteSize())}.
+     *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @param value the long value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1728,8 +1775,8 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address().toRawLongValue() + (index * layout.byteSize())}.
-     * @return a double value read from this address.
+     *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @return a double value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
@@ -1752,7 +1799,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address().toRawLongValue() + (index * layout.byteSize())}.
+     *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @param value the double value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1773,12 +1820,16 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
     }
 
     /**
-     * Reads an address from this segment at the given index, scaled by the given layout size.
+     * Reads an address from this segment at the given at the given index, scaled by the given layout size. The read address is wrapped in
+     * a native segment, associated with the {@linkplain MemorySession#global() global} memory session. Under normal conditions,
+     * the size of the returned segment is {@code 0}. However, if the provided layout is an
+     * {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout, then the size of the returned
+     * segment is {@code Long.MAX_VALUE}.
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address().toRawLongValue() + (index * layout.byteSize())}.
-     * @return an address value read from this address.
+     *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @return a native segment wrapping an address read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
@@ -1790,10 +1841,10 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * memory segment.
      */
     @ForceInline
-    default MemoryAddress getAtIndex(ValueLayout.OfAddress layout, long index) {
+    default MemorySegment getAtIndex(ValueLayout.OfAddress layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        return (MemoryAddress)layout.accessHandle().get(this, index * layout.byteSize());
+        return (MemorySegment)layout.accessHandle().get(this, index * layout.byteSize());
     }
 
     /**
@@ -1801,7 +1852,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address().toRawLongValue() + (index * layout.byteSize())}.
+     *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @param value the address value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1815,10 +1866,10 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
      * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
      */
     @ForceInline
-    default void setAtIndex(ValueLayout.OfAddress layout, long index, Addressable value) {
+    default void setAtIndex(ValueLayout.OfAddress layout, long index, MemorySegment value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        layout.accessHandle().set(this, index * layout.byteSize(), value.address());
+        layout.accessHandle().set(this, index * layout.byteSize(), value);
     }
 
     /**
@@ -1934,24 +1985,24 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
 
     /**
      * Compares the specified object with this memory segment for equality. Returns {@code true} if and only if the specified
-     * object is also a memory segment, and if that segment refers to the same memory region as this segment. More specifically,
-     * for two segments to be considered equals, all the following must be true:
+     * object is also a memory segment, and if that segment refers to the same memory location as this segment. More specifically,
+     * for two segments {@code s1} and {@code s2} to be considered equals, all the following must be true:
      * <ul>
-     *     <li>the two segments must be of the same kind; either both are {@linkplain #isNative() native segments},
-     *     backed by off-heap memory, or both are backed by on-heap memory;
-     *     <li>if the two segments are {@linkplain #isNative() native segments}, their {@link #address() base address}
-     *     must be {@linkplain MemoryAddress#equals(Object) equal}. Otherwise, the two segments must wrap the
-     *     same Java array instance, at the same starting offset;</li>
-     *     <li>the two segments must have the same {@linkplain #byteSize() size}; and</li>
-     *     <li>the two segments must have the {@linkplain MemorySession#equals(Object) same} {@linkplain #session() temporal bounds}.
+     *     <li>{@code s1.array().equals(s2.array())}, that is, the two segments must be of the same kind;
+     *     either both are {@linkplain #isNative() native segments}, backed by off-heap memory, or both are backed by
+     *     the same on-heap Java array;
+     *     <li>{@code s1.address() == s2.address()}, that is, the base address of the two segments should be the same.
+     *     This means that the two segments either refer at the same off-heap memory location, or they refer
+     *     to the same position inside their associated Java array instance.</li>
      * </ul>
      * @apiNote This method does not perform a structural comparison of the contents of the two memory segments. Clients can
-     * compare memory segments structurally by using the {@link #mismatch(MemorySegment)} method instead.
+     * compare memory segments structurally by using the {@link #mismatch(MemorySegment)} method instead. Note that this
+     * method does <em>not</em> compare the temporal and spatial bounds of two segments. As such it is suitable
+     * to perform address checks, such as checking if a native memory segment has the {@code NULL} address.
      *
      * @param that the object to be compared for equality with this memory segment.
      * @return {@code true} if the specified object is equal to this memory segment.
      * @see #mismatch(MemorySegment)
-     * @see #asOverlappingSlice(MemorySegment)
      */
     @Override
     boolean equals(Object that);

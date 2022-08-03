@@ -55,7 +55,7 @@ public class TestTypeAccess {
     public void testMemoryAddressValueGetAsString() {
         try (MemorySession session = MemorySession.openConfined()) {
             MemorySegment s = MemorySegment.allocateNative(8, 8, session);
-            String address = (String)ADDR_HANDLE.get(s.address());
+            String address = (String)ADDR_HANDLE.get(s);
         }
     }
 
@@ -63,7 +63,7 @@ public class TestTypeAccess {
     public void testMemoryAddressValueSetAsString() {
         try (MemorySession session = MemorySession.openConfined()) {
             MemorySegment s = MemorySegment.allocateNative(8, 8, session);
-            ADDR_HANDLE.set(s.address(), "string");
+            ADDR_HANDLE.set(s, "string");
         }
     }
 
@@ -71,7 +71,7 @@ public class TestTypeAccess {
     public void testMemoryAddressValueGetAsPrimitive() {
         try (MemorySession session = MemorySession.openConfined()) {
             MemorySegment s = MemorySegment.allocateNative(8, 8, session);
-            int address = (int)ADDR_HANDLE.get(s.address());
+            int address = (int)ADDR_HANDLE.get(s);
         }
     }
 
@@ -79,7 +79,7 @@ public class TestTypeAccess {
     public void testMemoryAddressValueSetAsPrimitive() {
         try (MemorySession session = MemorySession.openConfined()) {
             MemorySegment s = MemorySegment.allocateNative(8, 8, session);
-            ADDR_HANDLE.set(s.address(), 1);
+            ADDR_HANDLE.set(s, 1);
         }
     }
 

@@ -22,7 +22,6 @@
  */
 package org.openjdk.bench.java.lang.foreign.points.support;
 
-import java.lang.foreign.Addressable;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
@@ -96,7 +95,7 @@ public class PanamaPoint extends CLayouts implements AutoCloseable {
 
     public double distanceToPtrs(PanamaPoint other) {
         try {
-            return (double) MH_distance_ptrs.invokeExact((Addressable)segment, (Addressable)other.segment);
+            return (double) MH_distance_ptrs.invokeExact(segment, other.segment);
         } catch (Throwable throwable) {
             throw new InternalError(throwable);
         }

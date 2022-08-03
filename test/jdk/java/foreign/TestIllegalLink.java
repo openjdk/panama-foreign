@@ -29,10 +29,9 @@
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestIllegalLink
  */
 
-import java.lang.foreign.Addressable;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemoryLayout;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -42,7 +41,7 @@ import static org.testng.Assert.fail;
 
 public class TestIllegalLink extends NativeTestHelper {
 
-    private static final Addressable DUMMY_TARGET = MemoryAddress.ofLong(1);
+    private static final MemorySegment DUMMY_TARGET = MemorySegment.ofAddress(1);
     private static final Linker ABI = Linker.nativeLinker();
 
     @Test(dataProvider = "types")

@@ -200,11 +200,11 @@ public interface SegmentAllocator {
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
      */
-    default MemorySegment allocate(ValueLayout.OfAddress layout, Addressable value) {
+    default MemorySegment allocate(ValueLayout.OfAddress layout, MemorySegment value) {
         Objects.requireNonNull(value);
         Objects.requireNonNull(layout);
         MemorySegment segment = allocate(layout);
-        layout.varHandle().set(segment, value.address());
+        layout.varHandle().set(segment, value);
         return segment;
     }
 

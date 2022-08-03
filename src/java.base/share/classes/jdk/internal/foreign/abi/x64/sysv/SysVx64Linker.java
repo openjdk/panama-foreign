@@ -27,10 +27,9 @@ package jdk.internal.foreign.abi.x64.sysv;
 
 import jdk.internal.foreign.abi.AbstractLinker;
 
-import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.MemoryAddress;
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemorySegment;
 import java.lang.foreign.VaList;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -65,8 +64,8 @@ public final class SysVx64Linker extends AbstractLinker {
         return builder.build();
     }
 
-    public static VaList newVaListOfAddress(MemoryAddress ma, MemorySession session) {
-        return SysVVaList.ofAddress(ma, session);
+    public static VaList newVaListOfAddress(long address, MemorySession session) {
+        return SysVVaList.ofAddress(address, session);
     }
 
     public static VaList emptyVaList() {
