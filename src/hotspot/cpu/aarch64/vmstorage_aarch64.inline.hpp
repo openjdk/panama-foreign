@@ -36,7 +36,7 @@ enum class RegType : int8_t {
   STACK = 2,
 };
 
-constexpr inline VMStorage::stack_type() {
+constexpr inline RegType VMStorage::stack_type() {
   return RegType::STACK;
 }
 
