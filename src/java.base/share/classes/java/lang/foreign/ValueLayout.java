@@ -100,17 +100,9 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      */
     @Override
     public String toString() {
-        String descriptor;
-        if (this instanceof ValueLayout.OfAddress addressLayout) {
-            descriptor = "A";
-            if (addressLayout.isUnbounded) {
-                descriptor += "!";
-            }
-        } else {
-            descriptor = carrier.descriptorString().substring(0, 1);
-        }
+        char descriptor = carrier == MemorySegment.class ? 'A' : carrier.descriptorString().charAt(0);
         if (order == ByteOrder.LITTLE_ENDIAN) {
-            descriptor = descriptor.toLowerCase();
+            descriptor = Character.toLowerCase(descriptor);
         }
         return decorateLayoutString(String.format("%s%d", descriptor, bitSize()));
     }
