@@ -55,6 +55,6 @@ public class TestUnsupportedLinker {
 
     @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testUnsafeVaList() {
-        VaList.ofAddress(MemoryAddress.NULL, MemorySession.openImplicit());
+        VaList.ofAddress(0L, MemorySession.openImplicit());
     }
 }

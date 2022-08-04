@@ -94,9 +94,7 @@ public class RenderTest {
     @Test
     public void valueLayouts() {
 
-        var addressStringValue = MemorySegment.allocateNative(Long.BYTES, ValueLayout.ADDRESS.byteAlignment(), MemorySession.openImplicit())
-                .get(ValueLayout.ADDRESS, 0)
-                .toString();
+        var expectAddress = "0x" + "00".repeat((int) ValueLayout.ADDRESS.byteSize());
 
         record TestInput(ValueLayout layout, String stringValue){};
         List.of(
@@ -108,10 +106,10 @@ public class RenderTest {
                 new TestInput(ValueLayout.JAVA_DOUBLE, "0.0"),
                 new TestInput(ValueLayout.JAVA_CHAR, ""+(char)0),
                 new TestInput(ValueLayout.JAVA_BOOLEAN, "false"),
-                new TestInput(ValueLayout.ADDRESS, addressStringValue)
+                new TestInput(ValueLayout.ADDRESS, expectAddress)
         ).forEach(ti -> {
             var expect = ti.layout() + "=" + ti.stringValue();
-            var actual = testWithFreshMemorySegment(ti.layout().byteSize(), s -> viewThrough(s, ti.layout()));
+            var actual = testWithFreshMemorySegment(ti.layout().byteSize(), s -> MemorySegmentRenderUtil.toString(s, ti.layout()));
             assertEquals(expect, actual);
         });
     }
@@ -167,7 +165,7 @@ public class RenderTest {
             final Point point = new Point(segment);
             point.x(1);
             point.y(2);
-            return viewThrough(segment, Point.LAYOUT);
+            return MemorySegmentRenderUtil.toString(segment, Point.LAYOUT);
         });
 
         assertEquals(expect, actual);
@@ -203,7 +201,7 @@ public class RenderTest {
                     }
                 ]""");
         var actual = testWithFreshMemorySegment(Integer.BYTES * 2 * arraySize, segment ->
-                viewThrough(segment, sequenceLayout));
+                MemorySegmentRenderUtil.toString(segment, sequenceLayout));
 
         assertEquals(expect, actual);
     }
@@ -239,7 +237,7 @@ public class RenderTest {
                     }
                 }""");
         var actual = testWithFreshMemorySegment(Integer.BYTES * 3, segment ->
-                viewThrough(segment, union));
+                MemorySegmentRenderUtil.toString(segment, union));
 
         assertEquals(expect, actual);
     }

@@ -46,6 +46,8 @@ public final class MemorySegmentRenderUtil {
     private static final int HEX_STREAM_BYTES_PER_ROW = 1 << 4; // Should be a power of 2
     private static final int HEX_LINE_LENGTH_EXCLUDING_CHARS = Long.BYTES * 2 + HEX_STREAM_BYTES_PER_ROW * 3 + 4;
 
+    private static final String ADDRESS_FORMATTING = "0x%0" + (ValueLayout.ADDRESS.byteSize() * 2) + "X";
+
     private MemorySegmentRenderUtil() {
     }
 
@@ -97,6 +99,7 @@ public final class MemorySegmentRenderUtil {
      *   MemorySegment.ofArray(byteArray).hexDump();
      *   MemorySegment.ofBuffer(byteBuffer).hexDump();
      *}
+     *
      * @param segment to inspect
      * @return a Stream of human-readable, lines with hexadecimal values
      */
@@ -160,8 +163,8 @@ public final class MemorySegmentRenderUtil {
      * @return a view of the memory segment viewed through the memory layout
      * @throws OutOfMemoryError if the view exceeds the array size VM limit
      */
-    public static String viewThrough(MemorySegment segment,
-                                     MemoryLayout layout) {
+    public static String toString(MemorySegment segment,
+                                  MemoryLayout layout) {
         requireNonNull(segment);
         requireNonNull(layout);
 
@@ -172,15 +175,15 @@ public final class MemorySegmentRenderUtil {
             }
             sb.append(line);
         };
-        renderView(segment, layout, action, new ViewState(), "");
+        toString0(segment, layout, action, new ViewState(), "");
         return sb.toString();
     }
 
-    public static void renderView(MemorySegment segment,
-                                  MemoryLayout layout,
-                                  Consumer<? super CharSequence> action,
-                                  ViewState state,
-                                  String suffix) {
+    public static void toString0(MemorySegment segment,
+                                 MemoryLayout layout,
+                                 Consumer<? super CharSequence> action,
+                                 ViewState state,
+                                 String suffix) {
 
         // TODO: Replace with "patterns in switch statement" once this becomes available.
 
@@ -217,7 +220,8 @@ public final class MemorySegmentRenderUtil {
             return;
         }
         if (layout instanceof ValueLayout.OfAddress ofAddress) {
-            action.accept(renderValueLayout(state, ofAddress, segment.get(ofAddress, state.indexAndAdd(ofAddress)).toString(), suffix));
+            final long address = segment.get(ofAddress, state.indexAndAdd(ofAddress)).address();
+            action.accept(renderValueLayout(state, ofAddress, String.format(ADDRESS_FORMATTING, address), suffix));
             return;
         }
         // PaddingLayout is package private.
@@ -249,7 +253,7 @@ public final class MemorySegmentRenderUtil {
                     // We record the max index used for any union member so we can leave off from there
                     maxIndex = Math.max(maxIndex, state.index());
                 }
-                renderView(segment, members.get(i), action, state, (i != (members.size() - 1)) ? separator : "");
+                toString0(segment, members.get(i), action, state, (i != (members.size() - 1)) ? separator : "");
                 if (groupLayout.isUnion()) {
                     // This is the best we can do.
                     state.index(maxIndex);
@@ -264,7 +268,7 @@ public final class MemorySegmentRenderUtil {
             state.incrementIndent();
             final long elementCount = sequenceLayout.elementCount();
             for (long i = 0; i < elementCount; i++) {
-                renderView(segment, sequenceLayout.elementLayout(), action, state, (i != (elementCount - 1L)) ? "," : "");
+                toString0(segment, sequenceLayout.elementLayout(), action, state, (i != (elementCount - 1L)) ? "," : "");
             }
             state.decrementIndent();
             action.accept(state.indentSpaces() + "]" + suffix);

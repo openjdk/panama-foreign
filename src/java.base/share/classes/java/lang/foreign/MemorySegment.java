@@ -1886,10 +1886,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      *             <li>Numeric values are rendered in decimal form (e.g 1 or 1.2).</li>
      *             <li>Boolean values are rendered as {@code true} or {@code false}.</li>
      *             <li>Character values are rendered as {@code char}.</li>
-     *             <li>Address values are rendered according to their {@code toString()} values.</li>
+     *             <li>Address values are rendered in hexadecimal form e.g. {@code 0x0000000000000000}.</li>
      *         </ul>
      *     </li>
-     *     <li>Grouped layouts are enclosed in curly brackets.</li>
+     *     <li>Values in a group layout are rendered with enclosing curly braces.</li>
      *     <li>Structure and sequence elements are separated with a "," character.</li>
      *     <li>Union elements are separated with a "|" character.</li>
      *     <li>Lines are separated with the system-dependent line separator {@link System#lineSeparator() }.</li>
@@ -1924,7 +1924,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     default String toString(MemoryLayout layout) {
         Objects.requireNonNull(layout);
-        return MemorySegmentRenderUtil.viewThrough(this, layout);
+        return MemorySegmentRenderUtil.toString(this, layout);
     }
 
     /**
