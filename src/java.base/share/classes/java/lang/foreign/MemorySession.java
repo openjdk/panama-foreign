@@ -303,9 +303,7 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     }
 
     /**
-     * Returns the global memory session.
-     *
-     * @return the global memory session
+     * {@return the global memory session}
      */
     static MemorySession global() {
         return MemorySessionImpl.GLOBAL;
