@@ -33,11 +33,7 @@ import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import java.lang.foreign.*;
 
 import org.testng.annotations.*;
 
@@ -65,7 +61,7 @@ public class RenderTest {
 
         var actual = testWithFreshMemorySegment(HEX_SEGMENT_SIZE, segment -> {
             segment.setUtf8String(0, THE_QUICK);
-            return hexStream(segment)
+            return hexDump(segment)
                     .collect(joining(System.lineSeparator()));
         });
         assertEquals(EXPECTED_HEX, actual);

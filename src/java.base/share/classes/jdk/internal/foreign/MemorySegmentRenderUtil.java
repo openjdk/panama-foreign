@@ -25,6 +25,7 @@
 package jdk.internal.foreign;
 
 import java.lang.foreign.*;
+import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.LongStream;
@@ -49,20 +50,35 @@ public final class MemorySegmentRenderUtil {
     }
 
     /**
-     * Returns a Stream of human-readable, lines with hexadecimal values for the provided {@code memorySegment}.
+     * Returns a Stream of human-readable, lines with hexadecimal values for this memory segment.
      * <p>
-     * The exact format of the stream elements is unspecified and should not
-     * be acted upon programmatically. Loosely speaking, this method renders
-     * a format similar to the *nix command "hexdump -C".
+     * Each element in the stream comprises the following characters:
+     * <ol>
+     *     <li>an initial 64-bit offset (e.g. "0000000000000010").</li>
+     *     <li>a sequence of two spaces (i.e. "  ").</li>
+     *     <li>a sequence of at most eight bytes (e.g. "66 6F 78 20 6A 75 6D 70") where
+     *     each byte is separated by a space.</li>
+     *     <li>a sequence of two spaces (i.e. "  ").</li>
+     *     <li>a sequence of at most eight bytes (e.g. "65 64 20 6F 76 65 72 20") where
+     *     each byte separated by a space.</li>
+     *     <li>a sequence of N spaces (i.e. "  ") such that the intermediate line is aligned to 68 characters</li>
+     *     <li>a "|" separator.</li>
+     *     <li>a sequence of at most 16 printable Ascii characters (values outside [32, 127] will be printed as ".").</li>
+     *     <li>a "|" separator.</li>
+     * </ol>
+     * All the values above are given in hexadecimal form with leading zeros. As there are at most 16 bytes
+     * rendered for each line, there will be N = ({@link MemorySegment#byteSize()} + 15) / 16 elements in the returned stream.
      * <p>
-     * As an example, a MemorySegment created and initialized as follows
+     * As a consequence of the above, this method renders to a format similar to the *nix command "hexdump -C".
+     * <p>
+     * As an example, a memory segment created, initialized and used as follows
      * {@snippet lang = java:
-     * MemorySegment memorySegment = memorySession.allocate(64 + 4);
-     * memorySegment.setUtf8String(0, "The quick brown fox jumped over the lazy dog\nSecond line\t:here");
-     * hexStream(memorySegment)
-     *     .forEach(System.out::println);
+     *   MemorySegment memorySegment = memorySession.allocate(64 + 4);
+     *   memorySegment.setUtf8String(0, "The quick brown fox jumped over the lazy dog\nSecond line\t:here");
+     *   memorySegment.hexDump()
+     *       .forEach(System.out::println);
      *}
-     * might print to something like this:
+     * will be printed as:
      * {@snippet lang = text:
      * 0000000000000000  54 68 65 20 71 75 69 63  6B 20 62 72 6F 77 6E 20  |The quick brown |
      * 0000000000000010  66 6F 78 20 6A 75 6D 70  65 64 20 6F 76 65 72 20  |fox jumped over |
@@ -73,11 +89,18 @@ public final class MemorySegmentRenderUtil {
      * <p>
      * Use a {@linkplain MemorySegment#asSlice(long, long) slice} to inspect a specific region
      * of a memory segment.
-     *
-     * @param memorySegment the memory segment to generate hexadecimal values from
+     * <p>
+     * This method can be used to dump the contents of various other memory containers such as
+     * {@linkplain ByteBuffer ByteBuffers} and byte arrays by means of first wrapping the container
+     * into a MemorySegment:
+     * {@snippet lang = java:
+     *   MemorySegment.ofArray(byteArray).hexDump();
+     *   MemorySegment.ofBuffer(byteBuffer).hexDump();
+     *}
+     * @param memorySegment to inspect
      * @return a Stream of human-readable, lines with hexadecimal values
      */
-    public static Stream<String> hexStream(MemorySegment memorySegment) {
+    public static Stream<String> hexDump(MemorySegment memorySegment) {
         requireNonNull(memorySegment);
         // Todo: Investigate how to handle mapped sparse files
 

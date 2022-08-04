@@ -1873,83 +1873,27 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Returns a Stream of human-readable, lines with hexadecimal values for this memory segment.
-     * <p>
-     * Each element in the stream comprises the following characters:
-     * <ol>
-     *     <li>an initial 64-bit offset (e.g. "0000000000000010").</li>
-     *     <li>a sequence of two spaces (i.e. "  ").</li>
-     *     <li>a sequence of at most eight bytes (e.g. "66 6F 78 20 6A 75 6D 70") where
-     *     each byte is separated by a space.</li>
-     *     <li>a sequence of two spaces (i.e. "  ").</li>
-     *     <li>a sequence of at most eight bytes (e.g. "65 64 20 6F 76 65 72 20") where
-     *     each byte separated by a space.</li>
-     *     <li>a sequence of N spaces (i.e. "  ") such that the intermediate line is aligned to 68 characters</li>
-     *     <li>a "|" separator.</li>
-     *     <li>a sequence of at most 16 printable Ascii characters (values outside [32, 127] will be printed as ".").</li>
-     *     <li>a "|" separator.</li>
-     * </ol>
-     * All the values above are given in hexadecimal form with leading zeros. As there are at most 16 bytes
-     * rendered for each line, there will be N = ({@link #byteSize()} + 15) / 16 elements in the returned stream.
-     * <p>
-     * As a consequence of the above, this method renders to a format similar to the *nix command "hexdump -C".
-     * <p>
-     * As an example, a memory segment created, initialized and used as follows
-     * {@snippet lang = java:
-     *   MemorySegment memorySegment = memorySession.allocate(64 + 4);
-     *   memorySegment.setUtf8String(0, "The quick brown fox jumped over the lazy dog\nSecond line\t:here");
-     *   memorySegment.hexDump()
-     *       .forEach(System.out::println);
-     *}
-     * will be printed as:
-     * {@snippet lang = text:
-     * 0000000000000000  54 68 65 20 71 75 69 63  6B 20 62 72 6F 77 6E 20  |The quick brown |
-     * 0000000000000010  66 6F 78 20 6A 75 6D 70  65 64 20 6F 76 65 72 20  |fox jumped over |
-     * 0000000000000020  74 68 65 20 6C 61 7A 79  20 64 6F 67 0A 53 65 63  |the lazy dog.Sec|
-     * 0000000000000030  6F 6E 64 20 6C 69 6E 65  09 3A 68 65 72 65 00 00  |ond line.:here..|
-     * 0000000000000040  00 00 00 00                                       |....|
-     *}
-     * <p>
-     * Use a {@linkplain MemorySegment#asSlice(long, long) slice} to inspect a specific region
-     * of a memory segment.
-     * <p>
-     * This method can be used to dump the contents of various other memory containers such as
-     * {@linkplain ByteBuffer ByteBuffers} and byte arrays by means of first wrapping the container
-     * into a MemorySegment:
-     * {@snippet lang = java:
-     *   MemorySegment.ofArray(byteArray).hexDump();
-     *   MemorySegment.ofBuffer(byteBuffer).hexDump();
-     *}
-     *
-     * @return a Stream of human-readable, lines with hexadecimal values
-     */
-    default Stream<String> hexDump() {
-        return MemorySegmentRenderUtil.hexStream(this);
-    }
-
-    /**
      * Returns a human-readable view of this memory segment viewed through
-     * the provided memory layout {@code memoryLayout}.
+     * the provided {@code memoryLayout}.
      * <p>
      * The format of the returned view is as follows:
      * <ol>
-     *     <li>tag/value pairs are separated with "="</li>
+     *     <li>tag/value pairs are separated with an "=" character.</li>
      *     <li>Each element is tagged with its {@link MemoryLayout#name()} or, if no name exists,
      *     its {@link MemoryLayout#toString()} representation.</li>
      *     <li> Values are rendered differently depending on their type:
      *         <ul>
      *             <li>Numeric values are rendered in decimal form (e.g 1 or 1.2).</li>
      *             <li>Boolean values are rendered as {@code true} or {@code false}.</li>
-     *             <li>Char values are rendered as chars.</li>
+     *             <li>Character values are rendered as {@code char}.</li>
      *             <li>Address values are rendered according to their {@code toString()} values.</li>
      *         </ul>
      *     </li>
      *     <li>Grouped layouts are enclosed in curly brackets.</li>
-     *     <li>Structure and sequence elements are separated with ",".</li>
-     *     <li>Union elements are separated with "|".</li>
+     *     <li>Structure and sequence elements are separated with a "," character.</li>
+     *     <li>Union elements are separated with a "|" character.</li>
      *     <li>Lines are separated with the system-dependent line separator {@link System#lineSeparator() }.</li>
      * </ol>
-     * Lines are separated with the system-dependent line separator {@link System#lineSeparator() }.
      * Otherwise, the exact format of the returned view is unspecified and should not
      * be acted upon programmatically.
      * <p>
