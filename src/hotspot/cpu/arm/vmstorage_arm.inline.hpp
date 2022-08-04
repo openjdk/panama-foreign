@@ -30,7 +30,7 @@
 #include "prims/vmstorageBase.inline.hpp"
 
 enum class RegType : int8_t {
-  STACK = 0;
+  STACK = 0
 };
 
 constexpr inline RegType VMStorage::stack_type() {
