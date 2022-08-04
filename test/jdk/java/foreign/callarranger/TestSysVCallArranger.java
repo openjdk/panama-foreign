@@ -50,6 +50,7 @@ import static java.lang.foreign.ValueLayout.ADDRESS;
 import static jdk.internal.foreign.PlatformLayouts.SysV.*;
 import static jdk.internal.foreign.abi.Binding.*;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
+import static jdk.internal.foreign.abi.x64.X86_64Architecture.Regs.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;

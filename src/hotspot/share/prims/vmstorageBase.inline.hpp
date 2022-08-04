@@ -35,7 +35,6 @@ enum class RegType : int8_t; // defined in arch specific headers
 
 class VMStorage {
 public:
-  constexpr static RegType STACK_TYPE = static_cast<RegType>(0);
   constexpr static RegType INVALID_TYPE = static_cast<RegType>(-1);
 private:
   RegType _type;
@@ -51,7 +50,7 @@ public:
   constexpr VMStorage() : _type(INVALID_TYPE), _reserved(0), _segment_mask(0), _index(0) {};
 
   constexpr static VMStorage reg_storage(RegType type, uint16_t segment_mask, uint32_t index) {
-    assert(type != STACK_TYPE, "can not be stack type");
+    assert(type != stack_type(), "can not be stack type");
     assert(type != INVALID_TYPE, "can not be invalid type");
     VMStorage result;
     result._type = type;
@@ -62,7 +61,7 @@ public:
 
   constexpr static VMStorage stack_storage(uint16_t size, uint32_t index) {
     VMStorage result;
-    result._type = STACK_TYPE;
+    result._type = stack_type();
     result._size = size;
     result._index = index;
     return result;
@@ -78,6 +77,8 @@ public:
     return result;
   }
 
+  constexpr inline static RegType stack_type();
+
   RegType type() const { return _type; }
   uint16_t segment_mask() const { assert(is_reg(), "must be reg"); return _segment_mask; }
   uint16_t stack_size() const { assert(is_stack(), "must be stack"); return _size; }
@@ -85,7 +86,7 @@ public:
 
   bool is_valid() const { return _type != INVALID_TYPE; }
   bool is_reg() const { return is_valid() && !is_stack(); }
-  bool is_stack() const { return _type == STACK_TYPE; }
+  bool is_stack() const { return _type == stack_type(); }
 
   void print_on(outputStream* os) const;
 };

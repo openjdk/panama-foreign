@@ -27,7 +27,7 @@ package jdk.internal.foreign.abi;
 import java.util.Objects;
 
 public class VMStorage {
-    private static final byte STACK_TYPE = 0;
+    private static final byte STACK_TYPE = Architecture.current().stackType();
 
     private final byte type;
     private final short segmentMaskOrSize;
@@ -47,7 +47,8 @@ public class VMStorage {
     }
 
     public static VMStorage regStorage(byte type, short segmentMask, int index, String debugName) {
-        assert type != STACK_TYPE;
+        if (type == STACK_TYPE)
+            throw new IllegalArgumentException("Should not be stack type: " + type);
         return new VMStorage(type, segmentMask, index, debugName);
     }
 
@@ -56,12 +57,14 @@ public class VMStorage {
     }
 
     public short segmentMask() {
-        assert isReg();
+        if (!isReg())
+            throw new IllegalArgumentException("Should be reg type: " + type);
         return segmentMaskOrSize;
     }
 
     public short size() {
-        assert isStack();
+        if (!isStack())
+            throw new IllegalArgumentException("Should be stack type: " + type);
         return segmentMaskOrSize;
     }
 
@@ -84,9 +87,11 @@ public class VMStorage {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        VMStorage vmStorage = (VMStorage) o;
-        return type == vmStorage.type && segmentMaskOrSize == vmStorage.segmentMaskOrSize && index == vmStorage.index && Objects.equals(debugName, vmStorage.debugName);
+        return (o instanceof VMStorage vmStorage)
+            && type == vmStorage.type
+            && segmentMaskOrSize == vmStorage.segmentMaskOrSize
+            && index == vmStorage.index
+            && Objects.equals(debugName, vmStorage.debugName);
     }
 
     @Override

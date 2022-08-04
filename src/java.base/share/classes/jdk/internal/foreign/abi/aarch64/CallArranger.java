@@ -50,6 +50,7 @@ import java.util.Optional;
 
 import static jdk.internal.foreign.PlatformLayouts.*;
 import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.*;
+import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.Regs.*;
 
 /**
  * For the AArch64 C ABI specifically, this class uses CallingSequenceBuilder
@@ -219,18 +220,18 @@ public abstract class CallArranger {
         }
 
         VMStorage[] regAlloc(int type, int count) {
-            if (nRegs[type - 1] + count <= MAX_REGISTER_ARGUMENTS) {
+            if (nRegs[type] + count <= MAX_REGISTER_ARGUMENTS) {
                 VMStorage[] source =
-                    (forArguments ? C.inputStorage : C.outputStorage)[type - 1];
+                    (forArguments ? C.inputStorage : C.outputStorage)[type];
                 VMStorage[] result = new VMStorage[count];
                 for (int i = 0; i < count; i++) {
-                    result[i] = source[nRegs[type - 1]++];
+                    result[i] = source[nRegs[type]++];
                 }
                 return result;
             } else {
                 // Any further allocations for this register type must
                 // be from the stack.
-                nRegs[type - 1] = MAX_REGISTER_ARGUMENTS;
+                nRegs[type] = MAX_REGISTER_ARGUMENTS;
                 return null;
             }
         }
@@ -251,8 +252,8 @@ public abstract class CallArranger {
         void adjustForVarArgs() {
             // This system passes all variadic parameters on the stack. Ensure
             // no further arguments are allocated to registers.
-            nRegs[StorageClasses.INTEGER - 1] = MAX_REGISTER_ARGUMENTS;
-            nRegs[StorageClasses.VECTOR - 1] = MAX_REGISTER_ARGUMENTS;
+            nRegs[StorageClasses.INTEGER] = MAX_REGISTER_ARGUMENTS;
+            nRegs[StorageClasses.VECTOR] = MAX_REGISTER_ARGUMENTS;
             forVarArgs = true;
         }
     }
