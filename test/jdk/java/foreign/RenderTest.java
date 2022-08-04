@@ -35,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.function.Function;
 
+import jdk.internal.foreign.MemorySegmentRenderUtil;
 import org.testng.annotations.*;
 
 import static java.util.stream.Collectors.joining;
@@ -72,8 +73,7 @@ public class RenderTest {
 
         var array = new byte[HEX_SEGMENT_SIZE];
         System.arraycopy(THE_QUICK_ARRAY, 0, array, 0, THE_QUICK.length());
-        var actual = MemorySegment.ofArray(array)
-                .hexDump()
+        var actual = hexDump(MemorySegment.ofArray(array))
                 .collect(joining(System.lineSeparator()));
 
         assertEquals(EXPECTED_HEX, actual);
@@ -84,8 +84,7 @@ public class RenderTest {
 
         var array = new byte[HEX_SEGMENT_SIZE];
         System.arraycopy(THE_QUICK_ARRAY, 0, array, 0, THE_QUICK.length());
-        var actual = MemorySegment.ofBuffer(ByteBuffer.wrap(array))
-                .hexDump()
+        var actual = hexDump(MemorySegment.ofBuffer(ByteBuffer.wrap(array)))
                 .collect(joining(System.lineSeparator()));
 
         assertEquals(EXPECTED_HEX, actual);
@@ -94,6 +93,11 @@ public class RenderTest {
 
     @Test
     public void valueLayouts() {
+
+        var addressStringValue = MemorySegment.allocateNative(Long.BYTES, ValueLayout.ADDRESS.byteAlignment(), MemorySession.openImplicit())
+                .get(ValueLayout.ADDRESS, 0)
+                .toString();
+
         record TestInput(ValueLayout layout, String stringValue){};
         List.of(
                 new TestInput(ValueLayout.JAVA_BYTE, "0"),
@@ -104,7 +108,7 @@ public class RenderTest {
                 new TestInput(ValueLayout.JAVA_DOUBLE, "0.0"),
                 new TestInput(ValueLayout.JAVA_CHAR, ""+(char)0),
                 new TestInput(ValueLayout.JAVA_BOOLEAN, "false"),
-                new TestInput(ValueLayout.ADDRESS, "MemoryAddress{ offset=0x0 }")
+                new TestInput(ValueLayout.ADDRESS, addressStringValue)
         ).forEach(ti -> {
             var expect = ti.layout() + "=" + ti.stringValue();
             var actual = testWithFreshMemorySegment(ti.layout().byteSize(), s -> viewThrough(s, ti.layout()));

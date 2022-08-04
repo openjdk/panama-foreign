@@ -73,9 +73,9 @@ public final class MemorySegmentRenderUtil {
      * <p>
      * As an example, a memory segment created, initialized and used as follows
      * {@snippet lang = java:
-     *   MemorySegment memorySegment = memorySession.allocate(64 + 4);
-     *   memorySegment.setUtf8String(0, "The quick brown fox jumped over the lazy dog\nSecond line\t:here");
-     *   memorySegment.hexDump()
+     *   MemorySegment segment = memorySession.allocate(64 + 4);
+     *   segment.setUtf8String(0, "The quick brown fox jumped over the lazy dog\nSecond line\t:here");
+     *   segment.hexDump()
      *       .forEach(System.out::println);
      *}
      * will be printed as:
@@ -97,15 +97,15 @@ public final class MemorySegmentRenderUtil {
      *   MemorySegment.ofArray(byteArray).hexDump();
      *   MemorySegment.ofBuffer(byteBuffer).hexDump();
      *}
-     * @param memorySegment to inspect
+     * @param segment to inspect
      * @return a Stream of human-readable, lines with hexadecimal values
      */
-    public static Stream<String> hexDump(MemorySegment memorySegment) {
-        requireNonNull(memorySegment);
+    public static Stream<String> hexDump(MemorySegment segment) {
+        requireNonNull(segment);
         // Todo: Investigate how to handle mapped sparse files
 
         final var state = new HexStreamState();
-        return LongStream.range(0, memorySegment.byteSize())
+        return LongStream.range(0, segment.byteSize())
                 .mapToObj(index -> {
                     if (state.isEmpty()) {
                         // We are on a new line: Append the index
@@ -116,9 +116,9 @@ public final class MemorySegmentRenderUtil {
                         state.appendSpace();
                     }
                     // Append the actual memory value
-                    state.appendValue(memorySegment.get(ValueLayout.JAVA_BYTE, index));
+                    state.appendValue(segment.get(ValueLayout.JAVA_BYTE, index));
                     final long nextCnt = index + 1;
-                    if (nextCnt % HEX_STREAM_BYTES_PER_ROW == 0 || nextCnt == memorySegment.byteSize()) {
+                    if (nextCnt % HEX_STREAM_BYTES_PER_ROW == 0 || nextCnt == segment.byteSize()) {
                         // We have a complete line (eiter a full line or the last line)
                         return state.renderLineToStringAndReset();
                     } else {
@@ -130,8 +130,8 @@ public final class MemorySegmentRenderUtil {
     }
 
     /**
-     * Returns a human-readable view of the provided {@code memorySegment} viewed through
-     * the provided {@code memoryLayout}.
+     * Returns a human-readable view of the provided {@code segment} viewed through
+     * the provided {@code layout}.
      * <p>
      * Lines are separated with the system-dependent line separator {@link System#lineSeparator() }.
      * Otherwise, the exact format of the returned view is unspecified and should not
@@ -139,7 +139,7 @@ public final class MemorySegmentRenderUtil {
      * <p>
      * As an example, a MemorySegment viewed though the following memory layout
      * {@snippet lang = java:
-     * var memoryLayout = MemoryLayout.structLayout(
+     * var layout = MemoryLayout.structLayout(
      *         ValueLayout.JAVA_INT.withName("x"),
      *         ValueLayout.JAVA_INT.withName("y")
      * ).withName("Point");
@@ -155,15 +155,15 @@ public final class MemorySegmentRenderUtil {
      * This method is intended to view memory segments through small and medium-sized memory layouts
      * and is, in all cases, restricted by the inherent String capacity limit.
      *
-     * @param memorySegment to be viewed
-     * @param memoryLayout  to use as a memoryLayout when viewing the memory segment
+     * @param segment to be viewed
+     * @param layout  to use as a layout when viewing the memory segment
      * @return a view of the memory segment viewed through the memory layout
      * @throws OutOfMemoryError if the view exceeds the array size VM limit
      */
-    public static String viewThrough(MemorySegment memorySegment,
-                                     MemoryLayout memoryLayout) {
-        requireNonNull(memorySegment);
-        requireNonNull(memoryLayout);
+    public static String viewThrough(MemorySegment segment,
+                                     MemoryLayout layout) {
+        requireNonNull(segment);
+        requireNonNull(layout);
 
         final var sb = new StringBuilder();
         final Consumer<CharSequence> action = line -> {
@@ -172,63 +172,66 @@ public final class MemorySegmentRenderUtil {
             }
             sb.append(line);
         };
-        renderView(memorySegment, memoryLayout, action, new ViewState(), "");
+        renderView(segment, layout, action, new ViewState(), "");
         return sb.toString();
     }
 
-    public static void renderView(MemorySegment memorySegment,
-                                  MemoryLayout memoryLayout,
+    public static void renderView(MemorySegment segment,
+                                  MemoryLayout layout,
                                   Consumer<? super CharSequence> action,
                                   ViewState state,
                                   String suffix) {
 
         // TODO: Replace with "patterns in switch statement" once this becomes available.
 
-        if (memoryLayout instanceof ValueLayout.OfByte ofByte) {
-            action.accept(renderValueLayout(state, ofByte, Byte.toString(memorySegment.get(ofByte, state.indexAndAdd(ofByte))), suffix));
+        if (layout instanceof ValueLayout.OfByte ofByte) {
+            action.accept(renderValueLayout(state, ofByte, Byte.toString(segment.get(ofByte, state.indexAndAdd(ofByte))), suffix));
             return;
         }
-        if (memoryLayout instanceof ValueLayout.OfShort ofShort) {
-            action.accept(renderValueLayout(state, ofShort, Short.toString(memorySegment.get(ofShort, state.indexAndAdd(ofShort))), suffix));
+        if (layout instanceof ValueLayout.OfShort ofShort) {
+            action.accept(renderValueLayout(state, ofShort, Short.toString(segment.get(ofShort, state.indexAndAdd(ofShort))), suffix));
             return;
         }
-        if (memoryLayout instanceof ValueLayout.OfInt ofInt) {
-            action.accept(renderValueLayout(state, ofInt, Integer.toString(memorySegment.get(ofInt, state.indexAndAdd(ofInt))), suffix));
+        if (layout instanceof ValueLayout.OfInt ofInt) {
+            action.accept(renderValueLayout(state, ofInt, Integer.toString(segment.get(ofInt, state.indexAndAdd(ofInt))), suffix));
             return;
         }
-        if (memoryLayout instanceof ValueLayout.OfLong ofLong) {
-            action.accept(renderValueLayout(state, ofLong, Long.toString(memorySegment.get(ofLong, state.indexAndAdd(ofLong))), suffix));
+        if (layout instanceof ValueLayout.OfLong ofLong) {
+            action.accept(renderValueLayout(state, ofLong, Long.toString(segment.get(ofLong, state.indexAndAdd(ofLong))), suffix));
             return;
         }
-        if (memoryLayout instanceof ValueLayout.OfFloat ofFloat) {
-            action.accept(renderValueLayout(state, ofFloat, Float.toString(memorySegment.get(ofFloat, state.indexAndAdd(ofFloat))), suffix));
+        if (layout instanceof ValueLayout.OfFloat ofFloat) {
+            action.accept(renderValueLayout(state, ofFloat, Float.toString(segment.get(ofFloat, state.indexAndAdd(ofFloat))), suffix));
             return;
         }
-        if (memoryLayout instanceof ValueLayout.OfDouble ofDouble) {
-            action.accept(renderValueLayout(state, ofDouble, Double.toString(memorySegment.get(ofDouble, state.indexAndAdd(ofDouble))), suffix));
+        if (layout instanceof ValueLayout.OfDouble ofDouble) {
+            action.accept(renderValueLayout(state, ofDouble, Double.toString(segment.get(ofDouble, state.indexAndAdd(ofDouble))), suffix));
             return;
         }
-        if (memoryLayout instanceof ValueLayout.OfChar ofChar) {
-            action.accept(renderValueLayout(state, ofChar, Character.toString(memorySegment.get(ofChar, state.indexAndAdd(ofChar))), suffix));
+        if (layout instanceof ValueLayout.OfChar ofChar) {
+            action.accept(renderValueLayout(state, ofChar, Character.toString(segment.get(ofChar, state.indexAndAdd(ofChar))), suffix));
             return;
         }
-        if (memoryLayout instanceof ValueLayout.OfBoolean ofBoolean) {
-            action.accept(renderValueLayout(state, ofBoolean, Boolean.toString(memorySegment.get(ofBoolean, state.indexAndAdd(ofBoolean))), suffix));
+        if (layout instanceof ValueLayout.OfBoolean ofBoolean) {
+            action.accept(renderValueLayout(state, ofBoolean, Boolean.toString(segment.get(ofBoolean, state.indexAndAdd(ofBoolean))), suffix));
             return;
         }
-        if (memoryLayout instanceof ValueLayout.OfAddress ofAddress) {
-            action.accept(renderValueLayout(state, ofAddress, memorySegment.get(ofAddress, state.indexAndAdd(ofAddress)).toString(), suffix));
+        if (layout instanceof ValueLayout.OfAddress ofAddress) {
+            action.accept(renderValueLayout(state, ofAddress, segment.get(ofAddress, state.indexAndAdd(ofAddress)).toString(), suffix));
             return;
         }
         // PaddingLayout is package private.
-        if ("java.lang.foreign.PaddingLayout".equals(memoryLayout.getClass().getName())) {
-            action.accept(state.indentSpaces() + memoryLayout.bitSize() + " padding bits");
-            state.indexAndAdd(memoryLayout);
+        if ("java.lang.foreign.PaddingLayout".equals(layout.getClass().getName())) {
+            action.accept(state.indentSpaces() + layout.bitSize() + " padding bits");
+            state.indexAndAdd(layout);
             return;
         }
-        if (memoryLayout instanceof GroupLayout groupLayout) {
+        if (layout instanceof GroupLayout groupLayout) {
 
-            // Strictly, we should provide all permutations of nested unions.
+            /* Strictly, we should provide all permutations of unions.
+             * So, if we have a union U =  (A|B),(C|D) then we should present:
+             * (A,C), (A,D), (B,C) and (B,D)
+             */
 
             final var separator = groupLayout.isStruct()
                     ? ","  // Struct separator
@@ -246,7 +249,7 @@ public final class MemorySegmentRenderUtil {
                     // We record the max index used for any union member so we can leave off from there
                     maxIndex = Math.max(maxIndex, state.index());
                 }
-                renderView(memorySegment, members.get(i), action, state, (i != (members.size() - 1)) ? separator : "");
+                renderView(segment, members.get(i), action, state, (i != (members.size() - 1)) ? separator : "");
                 if (groupLayout.isUnion()) {
                     // This is the best we can do.
                     state.index(maxIndex);
@@ -256,18 +259,18 @@ public final class MemorySegmentRenderUtil {
             action.accept(state.indentSpaces() + "}" + suffix);
             return;
         }
-        if (memoryLayout instanceof SequenceLayout sequenceLayout) {
+        if (layout instanceof SequenceLayout sequenceLayout) {
             action.accept(indentedLabel(state, sequenceLayout) + " [");
             state.incrementIndent();
             final long elementCount = sequenceLayout.elementCount();
             for (long i = 0; i < elementCount; i++) {
-                renderView(memorySegment, sequenceLayout.elementLayout(), action, state, (i != (elementCount - 1L)) ? "," : "");
+                renderView(segment, sequenceLayout.elementLayout(), action, state, (i != (elementCount - 1L)) ? "," : "");
             }
             state.decrementIndent();
             action.accept(state.indentSpaces() + "]" + suffix);
             return;
         }
-        action.accept("Unknown memoryLayout: " + memoryLayout);
+        action.accept("Unknown layout: " + layout);
     }
 
     static String renderValueLayout(ViewState state,

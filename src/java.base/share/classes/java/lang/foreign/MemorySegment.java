@@ -1874,7 +1874,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Returns a human-readable view of this memory segment viewed through
-     * the provided {@code memoryLayout}.
+     * the provided {@code layout}.
      * <p>
      * The format of the returned view is as follows:
      * <ol>
@@ -1897,17 +1897,17 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Otherwise, the exact format of the returned view is unspecified and should not
      * be acted upon programmatically.
      * <p>
-     * As an example, a memory segment viewed though the following memory layout memoryLayout
+     * As an example, a memory segment viewed though the following memory layout
      * {@snippet lang = java:
      *   memorySegment.set(ValueLayout.JAVA_INT, 0, 1);
      *   memorySegment.set(ValueLayout.JAVA_INT, 4, 2);
      *
-     *    var memoryLayout = MemoryLayout.structLayout(
+     *    var layout = MemoryLayout.structLayout(
      *           ValueLayout.JAVA_INT.withName("x"),
      *           ValueLayout.JAVA_INT.withName("y")
      *   ).withName("Point");
      *
-     *   System.out.println(memorySegment.toString(memoryLayout));
+     *   System.out.println(memorySegment.toString(layout));
      *}
      * will print:
      * {@snippet lang = text:
@@ -1917,14 +1917,14 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * }
      *}
      *
-     * @param memoryLayout  to use as a memoryLayout when viewing the memory segment
-     * @return a view of the memory segment viewed through a memory layout memoryLayout
+     * @param layout  to use as a layout when viewing the memory segment
+     * @return a view of the memory segment viewed through a memory layout layout
      * @throws OutOfMemoryError if the size of the UTF-8 string is greater than the largest string
      *         supported by the platform.
      */
-    default String toString(MemoryLayout memoryLayout) {
-        Objects.requireNonNull(memoryLayout);
-        return MemorySegmentRenderUtil.viewThrough(this, memoryLayout);
+    default String toString(MemoryLayout layout) {
+        Objects.requireNonNull(layout);
+        return MemorySegmentRenderUtil.viewThrough(this, layout);
     }
 
     /**
