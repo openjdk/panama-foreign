@@ -55,7 +55,7 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
         try {
             DUMMY = MethodHandles.lookup().findStatic(TestUpcallBase.class, "dummy", MethodType.methodType(void.class));
             PASS_AND_SAVE = MethodHandles.lookup().findStatic(TestUpcallBase.class, "passAndSave",
-                    MethodType.methodType(Object.class, Object[].class, AtomicReference.class, int.class));
+                    MethodType.methodType(Object.class, Object[].class, AtomicReference.class, int.class, List.class));
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
@@ -104,7 +104,12 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
         }
 
         AtomicReference<Object[]> box = new AtomicReference<>();
-        MethodHandle mh = insertArguments(PASS_AND_SAVE, 1, box, prefix.size());
+        List<MemoryLayout> layouts = new ArrayList<>();
+        layouts.addAll(prefix);
+        for (int i = 0 ; i < params.size() ; i++) {
+            layouts.add(params.get(i).layout(fields));
+        }
+        MethodHandle mh = insertArguments(PASS_AND_SAVE, 1, box, prefix.size(), layouts);
         mh = mh.asCollector(Object[].class, prefix.size() + params.size());
 
         for(int i = 0; i < prefix.size(); i++) {
@@ -143,10 +148,9 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
         return ABI.upcallStub(mh, func, session);
     }
 
-    static Object passAndSave(Object[] o, AtomicReference<Object[]> ref, int retArg) {
+    static Object passAndSave(Object[] o, AtomicReference<Object[]> ref, int retArg, List<MemoryLayout> layouts) {
         for (int i = 0; i < o.length; i++) {
-            if (o[i] instanceof MemorySegment &&
-                    !((MemorySegment) o[i]).session().equals(MemorySession.global())) {
+            if (layouts.get(i) instanceof GroupLayout) {
                 MemorySegment ms = (MemorySegment) o[i];
                 MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), MemorySession.openImplicit());
                 copy.copyFrom(ms);

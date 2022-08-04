@@ -44,7 +44,7 @@ public class TestSegmentOffset {
     public void testOffset(SegmentSlice s1, SegmentSlice s2) {
         if (s1.contains(s2)) {
             // check that a segment and its overlapping segment point to same elements
-            long offset = s2.segment.address() - s1.segment.address();
+            long offset = s1.segment.segmentOffset(s2.segment);
             for (int i = 0; i < s2.size(); i++) {
                 out.format("testOffset s1:%s, s2:%s, offset:%d, i:%s\n", s1, s2, offset, i);
                 byte expected = s2.segment.get(JAVA_BYTE, i);
@@ -53,10 +53,16 @@ public class TestSegmentOffset {
             }
         } else if (s1.kind != s2.kind) {
             // check that offset from s1 to s2 fails
-            assertNotEquals(s1.segment.array(), s2.segment.array(), "segments should be of different kinds!");
+            try {
+                long offset = s1.segment.segmentOffset(s2.segment);
+                out.format("testOffset s1:%s, s2:%s, offset:%d\n", s1, s2, offset);
+                fail("offset unexpectedly passed!");
+            } catch (UnsupportedOperationException ex) {
+                assertTrue(ex.getMessage().contains("Cannot compute offset from native to heap (or vice versa)."));
+            }
         } else if (!s2.contains(s1)) {
             // disjoint segments - check that offset is out of bounds
-            long offset = s2.segment.address() - s1.segment.address();
+            long offset = s1.segment.segmentOffset(s2.segment);
             for (int i = 0; i < s2.size(); i++) {
                 out.format("testOffset s1:%s, s2:%s, offset:%d, i:%s\n", s1, s2, offset, i);
                 s2.segment.get(JAVA_BYTE, i);

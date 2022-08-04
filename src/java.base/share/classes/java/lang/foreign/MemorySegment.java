@@ -399,6 +399,45 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     boolean isMapped();
 
     /**
+     * Returns a slice of this segment that is the overlap between this and
+     * the provided segment.
+     *
+     * <p>Two segments {@code S1} and {@code S2} are said to overlap if it is possible to find
+     * at least two slices {@code L1} (from {@code S1}) and {@code L2} (from {@code S2}) that are backed by the
+     * same memory region. As such, it is not possible for a
+     * {@linkplain #isNative() native} segment to overlap with a heap segment; in
+     * this case, or when no overlap occurs, {@code null} is returned.
+     *
+     * @param other the segment to test for an overlap with this segment.
+     * @return a slice of this segment (where overlapping occurs).
+     */
+    Optional<MemorySegment> asOverlappingSlice(MemorySegment other);
+
+    /**
+     * Returns the offset, in bytes, of the provided segment, relative to this
+     * segment.
+     *
+     * <p>The offset is relative to the base address of this segment and can be
+     * a negative or positive value. For instance, if both segments are native
+     * segments, or heap segments backed by the same array, the resulting offset
+     * can be computed as follows:
+     *
+     * {@snippet lang=java :
+     * other.address() - segment.baseAddress()
+     * }
+     *
+     * If the segments share the same address, {@code 0} is returned. If
+     * {@code other} is a slice of this segment, the offset is always
+     * {@code 0 <= x < this.byteSize()}.
+     *
+     * @param other the segment to retrieve an offset to.
+     * @throws UnsupportedOperationException if the two segments cannot be compared, e.g. because they are of
+     * a different kind, or because they are backed by different Java arrays.
+     * @return the relative offset, in bytes, of the provided segment.
+     */
+    long segmentOffset(MemorySegment other);
+
+    /**
      * Fills a value into this memory segment.
      * <p>
      * More specifically, the given value is filled into each address of this
@@ -902,10 +941,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     @CallerSensitive
     static MemorySegment ofAddress(long address, long bytesSize) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddress");
-        if (bytesSize < 0) {
-            throw new IllegalArgumentException("Invalid size : " + bytesSize);
-        }
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, bytesSize);
+        return MemorySegment.ofAddress(address, bytesSize, MemorySession.global());
     }
 
     /**

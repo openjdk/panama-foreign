@@ -28,7 +28,6 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 
 import jdk.internal.foreign.MemorySessionImpl;
-import jdk.internal.foreign.NativeMemorySegmentImpl;
 
 public class UpcallStubs {
 

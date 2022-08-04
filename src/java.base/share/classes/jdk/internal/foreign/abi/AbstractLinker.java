@@ -50,7 +50,7 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
         return DOWNCALL_CACHE.get(function, fd -> {
             MethodType type = SharedUtils.inferMethodType(fd);
             MethodHandle handle = arrangeDowncall(type, fd);
-            handle = SharedUtils.maybeInsertAllocator(function, handle);
+            handle = SharedUtils.maybeInsertAllocator(fd, handle);
             return handle;
         });
     }

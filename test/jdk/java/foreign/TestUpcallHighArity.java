@@ -34,6 +34,7 @@
  */
 
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.GroupLayout;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
@@ -75,16 +76,15 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
                     S_PDI_LAYOUT, C_INT, C_DOUBLE, C_POINTER)
             );
             MH_passAndSave = MethodHandles.lookup().findStatic(TestUpcallHighArity.class, "passAndSave",
-                    MethodType.methodType(void.class, Object[].class, AtomicReference.class));
+                    MethodType.methodType(void.class, Object[].class, AtomicReference.class, List.class));
         } catch (ReflectiveOperationException e) {
             throw new InternalError(e);
         }
     }
 
-    static void passAndSave(Object[] o, AtomicReference<Object[]> ref) {
+    static void passAndSave(Object[] o, AtomicReference<Object[]> ref, List<MemoryLayout> layouts) {
         for (int i = 0; i < o.length; i++) {
-            if (o[i] instanceof MemorySegment &&
-                    !((MemorySegment)o[i]).session().equals(MemorySession.global())) {
+            if (layouts.get(i) instanceof GroupLayout) {
                 MemorySegment ms = (MemorySegment) o[i];
                 MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), MemorySession.openImplicit());
                 copy.copyFrom(ms);
@@ -98,7 +98,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
     public void testUpcall(MethodHandle downcall, MethodType upcallType,
                            FunctionDescriptor upcallDescriptor) throws Throwable {
         AtomicReference<Object[]> capturedArgs = new AtomicReference<>();
-        MethodHandle target = MethodHandles.insertArguments(MH_passAndSave, 1, capturedArgs)
+        MethodHandle target = MethodHandles.insertArguments(MH_passAndSave, 1, capturedArgs, upcallDescriptor.argumentLayouts())
                                          .asCollector(Object[].class, upcallType.parameterCount())
                                          .asType(upcallType);
         try (MemorySession session = MemorySession.openConfined()) {
@@ -114,8 +114,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
 
             Object[] capturedArgsArr = capturedArgs.get();
             for (int i = 0; i < capturedArgsArr.length; i++) {
-                if (upcallType.parameterType(i) == MemorySegment.class &&
-                        !isPointer(upcallDescriptor.argumentLayouts().get(i))) {
+                if (upcallDescriptor.argumentLayouts().get(i) instanceof GroupLayout) {
                     assertStructEquals((MemorySegment) capturedArgsArr[i], (MemorySegment) args[i + 1], argLayouts.get(i));
                 } else {
                     assertEquals(capturedArgsArr[i], args[i + 1], "For index " + i);

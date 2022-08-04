@@ -417,7 +417,7 @@ public abstract class CallArranger {
         List<Binding> getIndirectBindings() {
             return Binding.builder()
                 .vmLoad(INDIRECT_RESULT, long.class)
-                .boxAddress(Long.MAX_VALUE)
+                .boxAddressRaw(Long.MAX_VALUE)
                 .build();
         }
 
@@ -454,8 +454,7 @@ public abstract class CallArranger {
                     VMStorage storage = storageCalculator.nextStorage(
                         StorageClasses.INTEGER, AArch64.C_POINTER);
                     bindings.vmLoad(storage, long.class)
-                            .boxAddress(Long.MAX_VALUE)
-                            .toSegment(layout);
+                            .boxAddress(layout);
                     break;
                 }
                 case STRUCT_HFA: {
@@ -485,7 +484,7 @@ public abstract class CallArranger {
                     VMStorage storage =
                         storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
                     bindings.vmLoad(storage, long.class)
-                            .boxAddress(Utils.pointeeSize(layout));
+                            .boxAddressRaw(Utils.pointeeSize(layout));
                     break;
                 }
                 case INTEGER: {

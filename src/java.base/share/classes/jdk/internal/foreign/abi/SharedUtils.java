@@ -200,8 +200,7 @@ public class SharedUtils {
     }
 
     private static MemorySegment bufferCopy(MemorySegment dest, MemorySegment buffer) {
-        NativeMemorySegmentImpl.makeNativeSegmentUnchecked(dest.address(), buffer.byteSize()).copyFrom(buffer);
-        return dest;
+        return dest.copyFrom(buffer);
     }
 
     public static Class<?> primitiveCarrierForSize(long size, boolean useFloat) {

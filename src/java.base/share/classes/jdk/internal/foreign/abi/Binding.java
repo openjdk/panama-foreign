@@ -192,7 +192,7 @@ public interface Binding {
     /**
      * A binding context is used as an helper to carry out evaluation of certain bindings; for instance,
      * it helps {@link Allocate} bindings, by providing the {@link SegmentAllocator} that should be used for
-     * the allocation operation, or {@link ToSegment} bindings, by providing the {@link MemorySession} that
+     * the allocation operation, or {@link BoxAddress} bindings, by providing the {@link MemorySession} that
      * should be used to create an unsafe struct from a memory address.
      */
     class Context implements AutoCloseable {
@@ -281,7 +281,6 @@ public interface Binding {
         ALLOC_BUFFER,
         BOX_ADDRESS,
         UNBOX_ADDRESS,
-        TO_SEGMENT,
         DUP
     }
 
@@ -332,20 +331,20 @@ public interface Binding {
         return new Allocate(layout.byteSize(), layout.byteAlignment());
     }
 
-    static BoxAddress boxAddress(long size) {
-        return new BoxAddress(size);
+    static BoxAddress boxAddressRaw(long size) {
+        return new BoxAddress(size, false);
+    }
+
+    static BoxAddress boxAddress(MemoryLayout layout) {
+        return new BoxAddress(layout.byteSize(), true);
+    }
+
+    static BoxAddress boxAddress(long byteSize) {
+        return new BoxAddress(byteSize, true);
     }
 
     static UnboxAddress unboxAddress() {
         return UnboxAddress.INSTANCE;
-    }
-
-    static ToSegment toSegment(MemoryLayout layout) {
-        return new ToSegment(layout.byteSize());
-    }
-
-    static ToSegment toSegment(long byteSize) {
-        return new ToSegment(byteSize);
     }
 
     static Dup dup() {
@@ -393,18 +392,18 @@ public interface Binding {
             return this;
         }
 
-        public Binding.Builder boxAddress(long size) {
-            bindings.add(Binding.boxAddress(size));
+        public Binding.Builder boxAddressRaw(long size) {
+            bindings.add(Binding.boxAddressRaw(size));
+            return this;
+        }
+
+        public Binding.Builder boxAddress(MemoryLayout layout) {
+            bindings.add(Binding.boxAddress(layout));
             return this;
         }
 
         public Binding.Builder unboxAddress() {
             bindings.add(Binding.unboxAddress());
-            return this;
-        }
-
-        public Binding.Builder toSegment(MemoryLayout layout) {
-            bindings.add(Binding.toSegment(layout));
             return this;
         }
 
@@ -597,7 +596,7 @@ public interface Binding {
     /**
      * UNBOX_ADDRESS()
      * Pops a 'MemoryAddress' from the operand stack, converts it to a 'long',
-     *     and pushes that onto the operand stack.
+     * with the given size, and pushes that onto the operand stack
      */
     record UnboxAddress() implements Binding {
         static final UnboxAddress INSTANCE = new UnboxAddress();
@@ -623,10 +622,10 @@ public interface Binding {
 
     /**
      * BOX_ADDRESS()
-     * Pops a 'long' from the operand stack, converts it to a 'MemoryAddress',
-     *     and pushes that onto the operand stack.
+     * Pops a 'long' from the operand stack, converts it to a 'MemorySegment', with the given size and memory session
+     * (either the context session, or the global session), and pushes that onto the operand stack. 
      */
-    record BoxAddress(long size) implements Binding {
+    record BoxAddress(long size, boolean needsSession) implements Binding {
 
         @Override
         public Tag tag() {
@@ -643,38 +642,9 @@ public interface Binding {
         @Override
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
                               BindingInterpreter.LoadFunc loadFunc, Context context) {
-            stack.push(MemorySegment.ofAddress((long) stack.pop(), size));
-        }
-    }
-
-    /**
-     * TO_SEGMENT([size])
-     *   Pops a MemoryAddress from the operand stack, and converts it to a MemorySegment
-     *   with the given size, and pushes that onto the operand stack
-     */
-    record ToSegment(long size) implements Binding {
-        private static MemorySegment toSegment(MemorySegment operand, long size, Context context) {
-            return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(operand.address(), size, context.session);
-        }
-
-        @Override
-        public Tag tag() {
-            return Tag.TO_SEGMENT;
-        }
-
-        @Override
-        public void verify(Deque<Class<?>> stack) {
-            Class<?> actualType = stack.pop();
-            SharedUtils.checkType(actualType, MemorySegment.class);
-            stack.push(MemorySegment.class);
-        }
-
-        @Override
-        public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                              BindingInterpreter.LoadFunc loadFunc, Context context) {
-            MemorySegment operand = (MemorySegment) stack.pop();
-            MemorySegment segment = toSegment(operand, size, context);
-            stack.push(segment);
+            MemorySession session = needsSession ?
+                    context.session() : MemorySession.global();
+            stack.push(NativeMemorySegmentImpl.makeNativeSegmentUnchecked((long) stack.pop(), size, session));
         }
     }
 

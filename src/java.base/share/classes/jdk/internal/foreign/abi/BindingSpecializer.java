@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.constant.ConstantDescs;
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
@@ -245,21 +246,14 @@ public class BindingSpecializer {
     }
 
     private Class<?> popType(Class<?> expected) {
-        return popType(expected, ASSERT_EQUALS);
-    }
-
-    private Class<?> popType(Class<?> expected, BiPredicate<Class<?>, Class<?>> typePredicate) {
-        Class<?> found;
-        if (!typePredicate.test(expected, found = typeStack.pop())) {
+        Class<?> found = typeStack.pop();
+        if (!expected.equals(found)) {
             throw new IllegalStateException(
                     String.format("Invalid type on binding operand stack; found %s - expected %s",
                             found.descriptorString(), expected.descriptorString()));
         }
         return found;
     }
-
-    private static final BiPredicate<Class<?>, Class<?>> ASSERT_EQUALS = Class::equals;
-    private static final BiPredicate<Class<?>, Class<?>> ASSERT_ASSIGNABLE = Class::isAssignableFrom;
 
     // specialization
 
@@ -285,7 +279,7 @@ public class BindingSpecializer {
             int[] initialScopeSlots = new int[callerMethodType.parameterCount()];
             int numScopes = 0;
             for (int i = 0; i < callerMethodType.parameterCount(); i++) {
-                if (shouldAcquire(callerMethodType.parameterType(i))) {
+                if (shouldAcquire(i)) {
                     int scopeLocal = newLocal(Object.class);
                     initialScopeSlots[numScopes++] = scopeLocal;
                     emitConst(null);
@@ -440,12 +434,26 @@ public class BindingSpecializer {
     }
 
     private boolean needsSession() {
-        return callingSequence.argumentBindings().anyMatch(Binding.ToSegment.class::isInstance);
+        return callingSequence.argumentBindings()
+                .filter(Binding.BoxAddress.class::isInstance)
+                .map(Binding.BoxAddress.class::cast)
+                .anyMatch(Binding.BoxAddress::needsSession);
     }
 
-    private static boolean shouldAcquire(Class<?> type) {
-        // by this time, the only MemorySegment left are those for by-ref args
-        return type == MemorySegment.class;
+    private boolean shouldAcquire(int paramIndex) {
+        if (!callingSequence.forDowncall() || // we only acquire in downcalls
+                paramIndex == 0) { // the first parameter in a downcall is SegmentAllocator
+            return false;
+        }
+
+        // if call needs return buffer, the descriptor has an extra leading layout
+        int offset = callingSequence.needsReturnBuffer() ? 0 : 1;
+        MemoryLayout paramLayout =  callingSequence.functionDesc()
+                                              .argumentLayouts()
+                                              .get(paramIndex - offset);
+
+        // is this an address layout?
+        return paramLayout instanceof ValueLayout.OfAddress;
     }
 
     private void emitCleanup() {
@@ -466,7 +474,6 @@ public class BindingSpecializer {
                 case ALLOC_BUFFER -> emitAllocBuffer((Binding.Allocate) binding);
                 case BOX_ADDRESS -> emitBoxAddress((Binding.BoxAddress) binding);
                 case UNBOX_ADDRESS -> emitUnboxAddress();
-                case TO_SEGMENT -> emitToSegment((Binding.ToSegment) binding);
                 case DUP -> emitDupBinding();
             }
         }
@@ -481,7 +488,7 @@ public class BindingSpecializer {
         Class<?> highLevelType = callerMethodType.parameterType(paramIndex);
         emitLoad(highLevelType, paramIndex2ParamSlot[paramIndex]);
 
-        if (shouldAcquire(highLevelType)) {
+        if (shouldAcquire(paramIndex)) {
             emitDup(Object.class);
             emitAcquireScope();
         }
@@ -568,18 +575,6 @@ public class BindingSpecializer {
         emitInvokeVirtual(Binding.Context.class, "close", CLOSE_DESC);
     }
 
-    private void emitToSegment(Binding.ToSegment binding) {
-        long size = binding.size();
-        popType(MemorySegment.class);
-
-        emitAddress();
-        emitConst(size);
-        emitLoadInternalSession();
-        emitInvokeStatic(NativeMemorySegmentImpl.class, "makeNativeSegmentUnchecked", OF_LONG_UNCHECKED_DESC);
-
-        pushType(MemorySegment.class);
-    }
-
     private void emitAddress() {
         emitInvokeInterface(MemorySegment.class, "address", ADDRESS_DESC);
     }
@@ -587,7 +582,12 @@ public class BindingSpecializer {
     private void emitBoxAddress(Binding.BoxAddress boxAddress) {
         popType(long.class);
         emitConst(boxAddress.size());
-        emitInvokeStatic(MemorySegment.class, "ofAddress", OF_LONG_DESC);
+        if (needsSession()) {
+            emitLoadInternalSession();
+            emitInvokeStatic(NativeMemorySegmentImpl.class, "makeNativeSegmentUnchecked", OF_LONG_UNCHECKED_DESC);
+        } else {
+            emitInvokeStatic(NativeMemorySegmentImpl.class, "makeNativeSegmentUnchecked", OF_LONG_DESC);
+        }
         pushType(MemorySegment.class);
     }
 
@@ -676,7 +676,7 @@ public class BindingSpecializer {
     }
 
     private void emitUnboxAddress() {
-        popType(MemorySegment.class, ASSERT_EQUALS);
+        popType(MemorySegment.class);
         emitAddress();
         pushType(long.class);
     }

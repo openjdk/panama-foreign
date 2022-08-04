@@ -79,7 +79,7 @@ public class QSort extends CLayouts {
             native_compar = SymbolLookup.loaderLookup().lookup("compar").orElseThrow();
             panama_upcall_compar = abi.upcallStub(
                     lookup().findStatic(QSort.class,
-                            "panama_upcall_compar_resize",
+                            "panama_upcall_compar",
                             MethodType.methodType(int.class, MemorySegment.class, MemorySegment.class)),
                     FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER),
                     MemorySession.global()

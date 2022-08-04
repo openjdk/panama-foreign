@@ -36,6 +36,7 @@ import jdk.internal.foreign.abi.x64.sysv.SysVVaList;
 import jdk.internal.foreign.abi.x64.windows.WinVaList;
 import jdk.internal.javac.PreviewFeature;
 import jdk.internal.reflect.CallerSensitive;
+import jdk.internal.reflect.Reflection;
 
 /**
  * Helper class to create and manipulate variable argument lists, similar in functionality to a C {@code va_list}.
@@ -234,7 +235,7 @@ sealed public interface VaList permits WinVaList, SysVVaList, LinuxAArch64VaList
      *
      * @param address the address of the variable argument list.
      * @param session the memory session to be associated with the returned variable argument list.
-     * @return a new variable argument list backed by a native memory region based starting at the given address value.
+     * @return a new variable argument list backed by a native memory region starting at the given address value.
      * @throws IllegalStateException         if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException          if this method is called from a thread other than the thread
      *                                       {@linkplain MemorySession#ownerThread() owning} {@code session}.
@@ -245,6 +246,8 @@ sealed public interface VaList permits WinVaList, SysVVaList, LinuxAArch64VaList
      */
     @CallerSensitive
     static VaList ofAddress(long address, MemorySession session) {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), VaList.class, "ofAddress");
+        Objects.requireNonNull(session);
         return SharedUtils.newVaListOfAddress(address, session);
     }
 

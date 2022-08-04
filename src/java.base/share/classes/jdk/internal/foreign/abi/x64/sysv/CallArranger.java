@@ -331,7 +331,7 @@ public class CallArranger {
                 case POINTER: {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
                     bindings.vmLoad(storage, long.class)
-                            .boxAddress(Utils.pointeeSize(layout));
+                            .boxAddressRaw(Utils.pointeeSize(layout));
                     break;
                 }
                 case INTEGER: {

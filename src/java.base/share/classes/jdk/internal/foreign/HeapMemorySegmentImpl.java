@@ -42,11 +42,11 @@ import jdk.internal.vm.annotation.ForceInline;
  * a base object (typically an array). To enhance performances, the access to the base object needs to feature
  * sharp type information, as well as sharp null-check information. For this reason, many concrete subclasses
  * of {@link HeapMemorySegmentImpl} are defined (e.g. {@link OfFloat}, so that each subclass can override the
- * {@link HeapMemorySegmentImpl#base()} method so that it returns an array of the correct (sharp) type. Note that
+ * {@link HeapMemorySegmentImpl#unsafeGetBase()} method so that it returns an array of the correct (sharp) type. Note that
  * the field type storing the 'base' coordinate is just Object; similarly, all the constructor in the subclasses
  * accept an Object 'base' parameter instead of a sharper type (e.g. {@code byte[]}). This is deliberate, as
  * using sharper types would require use of type-conversions, which in turn would inhibit some C2 optimizations,
- * such as the elimination of store barriers in methods like {@link HeapMemorySegmentImpl#dup(long, long, int, MemorySession)}.
+ * such as the elimination of store barriers in methods like {@link HeapMemorySegmentImpl#dup(long, long, boolean, MemorySession)}.
  */
 public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
@@ -64,11 +64,6 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
     @Override
     public Optional<Object> array() {
         return Optional.of(base);
-    }
-
-    @Override
-    public long maxAlignMask() {
-        return 0;
     }
 
     @ForceInline
