@@ -31,10 +31,14 @@
 
 // keep in sync with jdk/internal/foreign/abi/aarch64/AArch64Architecture
 enum class RegType : int8_t {
-  STACK = 0,
-  INTEGER = 1,
-  VECTOR = 2,
+  INTEGER = 0,
+  VECTOR = 1,
+  STACK = 2,
 };
+
+constexpr inline VMStorage::stack_type() {
+  return RegType::STACK;
+}
 
 constexpr uint16_t REG64_MASK = 0b0000000000000001;
 constexpr uint16_t V128_MASK  = 0b0000000000000001;

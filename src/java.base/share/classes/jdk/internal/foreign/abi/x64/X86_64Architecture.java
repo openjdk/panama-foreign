@@ -27,6 +27,7 @@ package jdk.internal.foreign.abi.x64;
 import jdk.internal.foreign.abi.ABIDescriptor;
 import jdk.internal.foreign.abi.Architecture;
 import jdk.internal.foreign.abi.VMStorage;
+import jdk.internal.foreign.abi.aarch64.AArch64Architecture;
 
 import java.util.stream.IntStream;
 
@@ -64,62 +65,69 @@ public class X86_64Architecture implements Architecture {
         throw new IllegalArgumentException("Invalid Storage Class: " +cls);
     }
 
-    public interface StorageClasses {
-        byte STACK = 0;
-        byte INTEGER = 1;
-        byte VECTOR = 2;
-        byte X87 = 3;
+    @Override
+    public byte stackType() {
+        return StorageClasses.STACK;
     }
 
-    public static final VMStorage rax = integerRegister(0, "rax");
-    public static final VMStorage rcx = integerRegister(1, "rcx");
-    public static final VMStorage rdx = integerRegister(2, "rdx");
-    public static final VMStorage rbx = integerRegister(3, "rbx");
-    public static final VMStorage rsp = integerRegister(4, "rsp");
-    public static final VMStorage rbp = integerRegister(5, "rbp");
-    public static final VMStorage rsi = integerRegister(6, "rsi");
-    public static final VMStorage rdi = integerRegister(7, "rdi");
-    public static final VMStorage r8 =  integerRegister(8, "r8");
-    public static final VMStorage r9 =  integerRegister(9, "r9");
-    public static final VMStorage r10 = integerRegister(10, "r10");
-    public static final VMStorage r11 = integerRegister(11, "r11");
-    public static final VMStorage r12 = integerRegister(12, "r12");
-    public static final VMStorage r13 = integerRegister(13, "r13");
-    public static final VMStorage r14 = integerRegister(14, "r14");
-    public static final VMStorage r15 = integerRegister(15, "r15");
+    public interface StorageClasses {
+        byte INTEGER = 0;
+        byte VECTOR = 1;
+        byte X87 = 2;
+        byte STACK = 3;
+    }
 
-    public static final VMStorage xmm0 =  vectorRegister(0, "xmm0");
-    public static final VMStorage xmm1 =  vectorRegister(1, "xmm1");
-    public static final VMStorage xmm2 =  vectorRegister(2, "xmm2");
-    public static final VMStorage xmm3 =  vectorRegister(3, "xmm3");
-    public static final VMStorage xmm4 =  vectorRegister(4, "xmm4");
-    public static final VMStorage xmm5 =  vectorRegister(5, "xmm5");
-    public static final VMStorage xmm6 =  vectorRegister(6, "xmm6");
-    public static final VMStorage xmm7 =  vectorRegister(7, "xmm7");
-    public static final VMStorage xmm8 =  vectorRegister(8, "xmm8");
-    public static final VMStorage xmm9 =  vectorRegister(9, "xmm9");
-    public static final VMStorage xmm10 = vectorRegister(10, "xmm10");
-    public static final VMStorage xmm11 = vectorRegister(11, "xmm11");
-    public static final VMStorage xmm12 = vectorRegister(12, "xmm12");
-    public static final VMStorage xmm13 = vectorRegister(13, "xmm13");
-    public static final VMStorage xmm14 = vectorRegister(14, "xmm14");
-    public static final VMStorage xmm15 = vectorRegister(15, "xmm15");
-    public static final VMStorage xmm16 = vectorRegister(16, "xmm16");
-    public static final VMStorage xmm17 = vectorRegister(17, "xmm17");
-    public static final VMStorage xmm18 = vectorRegister(18, "xmm18");
-    public static final VMStorage xmm19 = vectorRegister(19, "xmm19");
-    public static final VMStorage xmm20 = vectorRegister(20, "xmm20");
-    public static final VMStorage xmm21 = vectorRegister(21, "xmm21");
-    public static final VMStorage xmm22 = vectorRegister(22, "xmm22");
-    public static final VMStorage xmm23 = vectorRegister(23, "xmm23");
-    public static final VMStorage xmm24 = vectorRegister(24, "xmm24");
-    public static final VMStorage xmm25 = vectorRegister(25, "xmm25");
-    public static final VMStorage xmm26 = vectorRegister(26, "xmm26");
-    public static final VMStorage xmm27 = vectorRegister(27, "xmm27");
-    public static final VMStorage xmm28 = vectorRegister(28, "xmm28");
-    public static final VMStorage xmm29 = vectorRegister(29, "xmm29");
-    public static final VMStorage xmm30 = vectorRegister(30, "xmm30");
-    public static final VMStorage xmm31 = vectorRegister(31, "xmm31");
+    public static class Regs { // break circular dependency
+        public static final VMStorage rax = integerRegister(0, "rax");
+        public static final VMStorage rcx = integerRegister(1, "rcx");
+        public static final VMStorage rdx = integerRegister(2, "rdx");
+        public static final VMStorage rbx = integerRegister(3, "rbx");
+        public static final VMStorage rsp = integerRegister(4, "rsp");
+        public static final VMStorage rbp = integerRegister(5, "rbp");
+        public static final VMStorage rsi = integerRegister(6, "rsi");
+        public static final VMStorage rdi = integerRegister(7, "rdi");
+        public static final VMStorage r8 = integerRegister(8, "r8");
+        public static final VMStorage r9 = integerRegister(9, "r9");
+        public static final VMStorage r10 = integerRegister(10, "r10");
+        public static final VMStorage r11 = integerRegister(11, "r11");
+        public static final VMStorage r12 = integerRegister(12, "r12");
+        public static final VMStorage r13 = integerRegister(13, "r13");
+        public static final VMStorage r14 = integerRegister(14, "r14");
+        public static final VMStorage r15 = integerRegister(15, "r15");
+
+        public static final VMStorage xmm0 = vectorRegister(0, "xmm0");
+        public static final VMStorage xmm1 = vectorRegister(1, "xmm1");
+        public static final VMStorage xmm2 = vectorRegister(2, "xmm2");
+        public static final VMStorage xmm3 = vectorRegister(3, "xmm3");
+        public static final VMStorage xmm4 = vectorRegister(4, "xmm4");
+        public static final VMStorage xmm5 = vectorRegister(5, "xmm5");
+        public static final VMStorage xmm6 = vectorRegister(6, "xmm6");
+        public static final VMStorage xmm7 = vectorRegister(7, "xmm7");
+        public static final VMStorage xmm8 = vectorRegister(8, "xmm8");
+        public static final VMStorage xmm9 = vectorRegister(9, "xmm9");
+        public static final VMStorage xmm10 = vectorRegister(10, "xmm10");
+        public static final VMStorage xmm11 = vectorRegister(11, "xmm11");
+        public static final VMStorage xmm12 = vectorRegister(12, "xmm12");
+        public static final VMStorage xmm13 = vectorRegister(13, "xmm13");
+        public static final VMStorage xmm14 = vectorRegister(14, "xmm14");
+        public static final VMStorage xmm15 = vectorRegister(15, "xmm15");
+        public static final VMStorage xmm16 = vectorRegister(16, "xmm16");
+        public static final VMStorage xmm17 = vectorRegister(17, "xmm17");
+        public static final VMStorage xmm18 = vectorRegister(18, "xmm18");
+        public static final VMStorage xmm19 = vectorRegister(19, "xmm19");
+        public static final VMStorage xmm20 = vectorRegister(20, "xmm20");
+        public static final VMStorage xmm21 = vectorRegister(21, "xmm21");
+        public static final VMStorage xmm22 = vectorRegister(22, "xmm22");
+        public static final VMStorage xmm23 = vectorRegister(23, "xmm23");
+        public static final VMStorage xmm24 = vectorRegister(24, "xmm24");
+        public static final VMStorage xmm25 = vectorRegister(25, "xmm25");
+        public static final VMStorage xmm26 = vectorRegister(26, "xmm26");
+        public static final VMStorage xmm27 = vectorRegister(27, "xmm27");
+        public static final VMStorage xmm28 = vectorRegister(28, "xmm28");
+        public static final VMStorage xmm29 = vectorRegister(29, "xmm29");
+        public static final VMStorage xmm30 = vectorRegister(30, "xmm30");
+        public static final VMStorage xmm31 = vectorRegister(31, "xmm31");
+    }
 
     private static VMStorage integerRegister(int index, String debugName) {
         return VMStorage.regStorage(StorageClasses.INTEGER, REG64_MASK, index, debugName);

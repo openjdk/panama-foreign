@@ -50,6 +50,7 @@ import java.util.Optional;
 import static jdk.internal.foreign.PlatformLayouts.SysV;
 import static jdk.internal.foreign.abi.Binding.vmStore;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
+import static jdk.internal.foreign.abi.x64.X86_64Architecture.Regs.*;
 
 /**
  * For the SysV x64 C ABI specifically, this class uses namely CallingSequenceBuilder
@@ -179,7 +180,7 @@ public class CallArranger {
             int registerCount = registerCount(type);
             if (registerCount < maxRegisterArguments(type)) {
                 VMStorage[] source =
-                    (forArguments ? CSysV.inputStorage : CSysV.outputStorage)[type - 1];
+                    (forArguments ? CSysV.inputStorage : CSysV.outputStorage)[type];
                 incrementRegisterCount(type);
                 return source[registerCount];
             } else {

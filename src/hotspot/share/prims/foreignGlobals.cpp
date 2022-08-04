@@ -56,7 +56,7 @@ VMStorage ForeignGlobals::parse_vmstorage(oop storage) {
   jint index = jdk_internal_foreign_abi_VMStorage::index(storage);
 
   RegType rType = static_cast<RegType>(type);
-  if (rType == VMStorage::STACK_TYPE) {
+  if (rType == VMStorage::stack_type()) {
     return VMStorage::stack_storage(segment_mask_or_size, index);
   } else {
     return VMStorage::reg_storage(rType, segment_mask_or_size, index);

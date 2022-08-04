@@ -47,6 +47,7 @@ import java.util.Optional;
 
 import static jdk.internal.foreign.PlatformLayouts.Win64;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
+import static jdk.internal.foreign.abi.x64.X86_64Architecture.Regs.*;
 
 /**
  * For the Windowx x64 C ABI specifically, this class uses CallingSequenceBuilder
@@ -173,12 +174,12 @@ public class CallArranger {
             return (forArguments
                     ? CWindows.inputStorage
                     : CWindows.outputStorage)
-                 [type - 1][nRegs++];
+                 [type][nRegs++];
         }
 
         public VMStorage extraVarargsStorage() {
             assert forArguments;
-            return CWindows.inputStorage[StorageClasses.INTEGER - 1][nRegs - 1];
+            return CWindows.inputStorage[StorageClasses.INTEGER][nRegs - 1];
         }
     }
 
