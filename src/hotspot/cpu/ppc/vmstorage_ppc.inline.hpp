@@ -31,4 +31,9 @@
 
 enum class RegType : int8_t {};
 
+inline VMStorage as_VMStorage(VMReg reg) {
+  ShouldNotReachHere();
+  return VMStorage::invalid();
+}
+
 #endif // SHARE_PRIMS_VMSTORAGE_PPC

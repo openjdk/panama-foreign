@@ -141,6 +141,19 @@ int NativeCallingConvention::calling_convention(const BasicType* sig_bt, VMStora
   return stk_bytes;
 }
 
+int JavaCallingConvention::calling_convention(const BasicType* sig_bt, VMStorage* regs, int num_args) const {
+  VMRegPair* vm_regs = NEW_RESOURCE_ARRAY(VMRegPair, num_args);
+  int slots = SharedRuntime::java_calling_convention(sig_bt, vm_regs, num_args);
+  for (int i = 0; i < num_args; i++) {
+    VMRegPair pair = vm_regs[i];
+    // note, we ignore second here. Signature should consist of register-size values. So there should be
+    // no need for multi-register pairs.
+    //assert(!pair.first()->is_valid() || pair.is_single_reg(), "must be: %s");
+    regs[i] = as_VMStorage(pair.first());
+  }
+  return slots << LogBytesPerInt;
+}
+
 class ComputeMoveOrder: public StackObj {
   class MoveOperation: public ResourceObj {
     friend class ComputeMoveOrder;
@@ -334,12 +347,6 @@ ArgumentShuffle::ArgumentShuffle(
   VMStorage* out_regs = NEW_RESOURCE_ARRAY(VMStorage, num_out_args);
   _out_arg_bytes = output_conv->calling_convention(out_sig_bt, out_regs, num_out_args);
 
-  // Compute a valid move order, using tmp_vmreg to break any cycles.
-  // Note that ComputeMoveOrder ignores the upper half of our VMRegPairs.
-  // We are not moving Java values here, only register-sized values,
-  // so we shouldn't have to worry about the upper half any ways.
-  // This should work fine on 32-bit as well, since we would only be
-  // moving 32-bit sized values (i.e. low-level MH shouldn't take any double/long).
   _moves = ComputeMoveOrder::compute_move_order(num_in_args, in_regs,
                                                 num_out_args, out_regs,
                                                 in_sig_bt, shuffle_temp);
