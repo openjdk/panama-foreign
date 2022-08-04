@@ -28,6 +28,7 @@
 
 #include <cstdint>
 
+#include "code/vmreg.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/ostream.hpp"
 
@@ -67,7 +68,7 @@ public:
     return result;
   }
 
-  constexpr static VMStorage stack_storage(VMReg vmreg) {
+  static VMStorage stack_storage(VMReg reg) {
     return stack_storage(BytesPerWord, checked_cast<uint16_t>(reg->reg2stack() * VMRegImpl::stack_slot_size));
   }
 

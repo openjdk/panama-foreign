@@ -27,6 +27,7 @@
 #include <cstdint>
 
 #include "asm/register.hpp"
+#include "code/vmreg.inline.hpp"
 #include "prims/vmstorageBase.inline.hpp"
 
 // keep in sync with jdk/internal/foreign/abi/x64/X86_64Architecture
