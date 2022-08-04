@@ -58,7 +58,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     // 64-bit platforms and 8 on 32-bit platforms.
     private static final long MAX_MALLOC_ALIGN = Unsafe.ADDRESS_SIZE == 4 ? 8 : 16;
 
-    private static final boolean skipZeroMemory = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.skipZeroMemory");
+    private static final boolean SKIP_ZERO_MEMORY = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.skipZeroMemory");
 
     final long min;
 
@@ -115,7 +115,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         nioAccess.reserveMemory(alignedSize, bytesSize);
 
         long buf = unsafe.allocateMemory(alignedSize);
-        if (!skipZeroMemory) {
+        if (!SKIP_ZERO_MEMORY) {
             unsafe.setMemory(buf, alignedSize, (byte)0);
         }
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
