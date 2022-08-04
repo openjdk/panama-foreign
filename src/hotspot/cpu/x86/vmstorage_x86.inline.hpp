@@ -38,6 +38,7 @@ enum class RegType : int8_t {
   INVALID = -1
 };
 
+// need to define this before constructing VMStorage (below)
 constexpr inline RegType VMStorage::stack_type() {
   return RegType::STACK;
 }
@@ -57,6 +58,18 @@ inline Register as_Register(VMStorage vms) {
 inline XMMRegister as_XMMRegister(VMStorage vms) {
   assert(vms.type() == RegType::VECTOR, "not the right type");
   return ::as_XMMRegister(vms.index());
+}
+
+inline VMReg as_VMReg(VMStorage vms) {
+  switch (vms.type()) {
+    case RegType::INTEGER: return as_Register(vms)->as_VMReg();
+    case RegType::VECTOR:  return as_XMMRegister(vms)->as_VMReg();
+    case RegType::STACK: {
+      assert((vms.index() % VMRegImpl::stack_slot_size) == 0, "can not represent as VMReg");
+      return VMRegImpl::stack2reg(vms.index() / VMRegImpl::stack_slot_size);
+    }
+    default: ShouldNotReachHere(); return VMRegImpl::Bad();
+  }
 }
 
 inline VMStorage as_VMStorage(Register reg) {

@@ -51,8 +51,3 @@ void RegSpiller::pd_load_reg(MacroAssembler* masm, int offset, VMStorage reg) {
 void ArgumentShuffle::pd_generate(MacroAssembler* masm, VMStorage tmp, int in_stk_bias, int out_stk_bias) const {
   Unimplemented();
 }
-
-int JavaCallingConvention::calling_convention(const BasicType* sig_bt, VMStorage* regs, int num_args) const {
-  Unimplemented();
-  return 0;
-}
