@@ -145,7 +145,8 @@ static void move_stack(MacroAssembler* masm, Register tmp_reg, int in_stk_bias, 
       }
       break;
     case RegType::STACK:
-      assert(from_reg.stack_size() == to_reg.stack_size(), "must be same");
+      // We assume 8 bytes stack size when converting from VMReg (Java CC)
+      //assert(from_reg.stack_size() == to_reg.stack_size(), "must be same");
       switch (from_reg.stack_size()) {
         // FIXME use correctly sized loads & stores
         case 8: case 4: case 2: case 1:
