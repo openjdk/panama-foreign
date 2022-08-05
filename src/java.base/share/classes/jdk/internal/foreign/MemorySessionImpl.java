@@ -341,7 +341,7 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
      * a strong reference to the original session, so even if the original session is dropped by the client
      * it would still be reachable by the GC, which is important if the session is implicitly closed.
      */
-    public final static class NonCloseableView implements MemorySession {
+    public static final class NonCloseableView implements MemorySession {
         final MemorySessionImpl session;
 
         public NonCloseableView(MemorySessionImpl session) {

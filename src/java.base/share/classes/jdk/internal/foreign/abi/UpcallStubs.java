@@ -29,7 +29,10 @@ import java.lang.foreign.MemorySession;
 
 import jdk.internal.foreign.MemorySessionImpl;
 
-public class UpcallStubs {
+public final class UpcallStubs {
+
+    private UpcallStubs() {
+    }
 
     private static void freeUpcallStub(long stubAddress) {
         if (!freeUpcallStub0(stubAddress)) {
