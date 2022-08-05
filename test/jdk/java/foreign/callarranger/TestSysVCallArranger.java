@@ -54,7 +54,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 public class TestSysVCallArranger extends CallArrangerTestBase {
-    
+
     private static final short STACK_SLOT_SIZE = 8;
 
     @Test

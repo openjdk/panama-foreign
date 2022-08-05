@@ -52,7 +52,7 @@ import static jdk.internal.foreign.abi.x64.X86_64Architecture.Regs.*;
 import static org.testng.Assert.*;
 
 public class TestWindowsCallArranger extends CallArrangerTestBase {
-    
+
     private static final short STACK_SLOT_SIZE = 8;
 
     @Test

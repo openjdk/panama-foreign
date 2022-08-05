@@ -54,11 +54,6 @@ public class AArch64Architecture implements Architecture {
         throw new IllegalArgumentException("Invalid Storage Class: " + cls);
     }
 
-    @Override
-    public byte stackType() {
-        return StorageClasses.STACK;
-    }
-
     public interface StorageClasses {
         byte INTEGER = 0;
         byte VECTOR = 1;
