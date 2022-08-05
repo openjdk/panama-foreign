@@ -24,19 +24,7 @@
  */
 package jdk.internal.foreign.abi;
 
-import jdk.internal.foreign.CABI;
-import jdk.internal.foreign.abi.aarch64.AArch64Architecture;
-import jdk.internal.foreign.abi.x64.X86_64Architecture;
-
 public interface Architecture {
     boolean isStackType(int cls);
     int typeSize(int cls);
-    byte stackType();
-
-    static Architecture current() {
-        return switch (CABI.current()) {
-            case SysV, Win64 -> X86_64Architecture.INSTANCE;
-            case LinuxAArch64, MacOsAArch64 -> AArch64Architecture.INSTANCE;
-        };
-    }
 }

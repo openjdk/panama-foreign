@@ -142,7 +142,7 @@ public class AArch64Architecture implements Architecture {
     }
 
     public static VMStorage stackStorage(short size, int byteOffset) {
-        return VMStorage.stackStorage(size, byteOffset);
+        return VMStorage.stackStorage(StorageClasses.STACK, size, byteOffset);
     }
 
     public static ABIDescriptor abiFor(VMStorage[] inputIntRegs,

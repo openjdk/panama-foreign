@@ -27,8 +27,6 @@ package jdk.internal.foreign.abi;
 import java.util.Objects;
 
 public class VMStorage {
-    private static final byte STACK_TYPE = Architecture.current().stackType();
-
     private final byte type;
     private final short segmentMaskOrSize;
     private final int index;
@@ -42,13 +40,11 @@ public class VMStorage {
         this.debugName = debugName;
     }
 
-    public static VMStorage stackStorage(short size, int byteOffset) {
-        return new VMStorage(STACK_TYPE, size, byteOffset, "Stack@" + byteOffset);
+    public static VMStorage stackStorage(byte type, short size, int byteOffset) {
+        return new VMStorage(type, size, byteOffset, "Stack@" + byteOffset);
     }
 
     public static VMStorage regStorage(byte type, short segmentMask, int index, String debugName) {
-        if (type == STACK_TYPE)
-            throw new IllegalArgumentException("Should not be stack type: " + type);
         return new VMStorage(type, segmentMask, index, debugName);
     }
 
@@ -56,15 +52,7 @@ public class VMStorage {
         return type;
     }
 
-    public short segmentMask() {
-        if (!isReg())
-            throw new IllegalArgumentException("Should be reg type: " + type);
-        return segmentMaskOrSize;
-    }
-
-    public short size() {
-        if (!isStack())
-            throw new IllegalArgumentException("Should be stack type: " + type);
+    public short segmentMaskOrSize() {
         return segmentMaskOrSize;
     }
 
@@ -74,14 +62,6 @@ public class VMStorage {
 
     public String name() {
         return debugName;
-    }
-
-    public boolean isStack() {
-        return type == STACK_TYPE;
-    }
-
-    public boolean isReg() {
-        return !isStack();
     }
 
     @Override
