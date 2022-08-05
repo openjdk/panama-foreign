@@ -22,11 +22,9 @@
  *
  */
 
-import java.lang.foreign.Addressable;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
@@ -395,13 +393,13 @@ public class CallGeneratorHelper extends NativeTestHelper {
             if (check) {
                 checks.add(o -> {
                     try {
-                        assertEquals(o, segment.address());
+                        assertEquals(o, segment);
                     } catch (Throwable ex) {
                         throw new IllegalStateException(ex);
                     }
                 });
             }
-            return segment.address();
+            return segment;
         } else if (layout instanceof ValueLayout) {
             if (isIntegral(layout)) {
                 if (check) {
@@ -447,19 +445,17 @@ public class CallGeneratorHelper extends NativeTestHelper {
         }
     }
 
-    static Class<?> carrier(MemoryLayout layout, boolean param) {
+    static Class<?> carrier(MemoryLayout layout) {
         if (layout instanceof GroupLayout) {
             return MemorySegment.class;
-        } if (isPointer(layout)) {
-            return param ? Addressable.class : MemoryAddress.class;
-        } else if (layout instanceof ValueLayout valueLayout) {
+        } if (layout instanceof ValueLayout valueLayout) {
             return valueLayout.carrier();
         } else {
             throw new IllegalStateException("Unexpected layout: " + layout);
         }
     }
 
-    MethodHandle downcallHandle(Linker abi, Addressable symbol, SegmentAllocator allocator, FunctionDescriptor descriptor) {
+    MethodHandle downcallHandle(Linker abi, MemorySegment symbol, SegmentAllocator allocator, FunctionDescriptor descriptor) {
         MethodHandle mh = abi.downcallHandle(symbol, descriptor);
         if (descriptor.returnLayout().isPresent() && descriptor.returnLayout().get() instanceof GroupLayout) {
             mh = mh.bindTo(allocator);

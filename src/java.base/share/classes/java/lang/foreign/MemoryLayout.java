@@ -357,9 +357,8 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
      * address = base + offset
      * }</pre></blockquote>
      *
-     * where {@code base} denotes the base address expressed by the {@link MemorySegment} access coordinate
-     * (see {@link MemorySegment#address()} and {@link MemoryAddress#toRawLongValue()}) and {@code offset}
-     * can be expressed in the following form:
+     * where {@code base} denotes the base address associated with the {@link MemorySegment} access coordinate
+     * (see {@link MemorySegment#address()} and {@code offset} can be expressed in the following form:
      *
      * <blockquote><pre>{@code
      * offset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
@@ -632,7 +631,7 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
      *     <li>{@link ValueLayout.OfFloat}, for {@code float.class}</li>
      *     <li>{@link ValueLayout.OfLong}, for {@code long.class}</li>
      *     <li>{@link ValueLayout.OfDouble}, for {@code double.class}</li>
-     *     <li>{@link ValueLayout.OfAddress}, for {@code MemoryAddress.class}</li>
+     *     <li>{@link ValueLayout.OfAddress}, for {@code MemorySegment.class}</li>
      * </ul>
      * @param carrier the value layout carrier.
      * @param order the value layout's byte order.
@@ -658,7 +657,7 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
             return new ValueLayout.OfLong(order);
         } else if (carrier == double.class) {
             return new ValueLayout.OfDouble(order);
-        } else if (carrier == MemoryAddress.class) {
+        } else if (carrier == MemorySegment.class) {
             return new ValueLayout.OfAddress(order);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + carrier.getName());

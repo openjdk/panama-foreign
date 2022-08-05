@@ -39,7 +39,7 @@ import jdk.internal.javac.PreviewFeature;
 /**
  * A function descriptor is made up of zero or more argument layouts and zero or one return layout. A function descriptor
  * is used to model the signature of foreign functions when creating
- * {@linkplain Linker#downcallHandle(Addressable, FunctionDescriptor) downcall method handles} or
+ * {@linkplain Linker#downcallHandle(MemorySegment, FunctionDescriptor) downcall method handles} or
  * {@linkplain Linker#upcallStub(MethodHandle, FunctionDescriptor, MemorySession) upcall stubs}.
  *
  * @implSpec
@@ -49,7 +49,7 @@ import jdk.internal.javac.PreviewFeature;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed class FunctionDescriptor permits FunctionDescriptor.VariadicFunction {
+public sealed class FunctionDescriptor {
 
     private final MemoryLayout resLayout;
     private final List<MemoryLayout> argLayouts;
@@ -214,7 +214,7 @@ public sealed class FunctionDescriptor permits FunctionDescriptor.VariadicFuncti
 
         private final int firstVariadicIndex;
 
-        public VariadicFunction(FunctionDescriptor descriptor, MemoryLayout... argLayouts) {
+        VariadicFunction(FunctionDescriptor descriptor, MemoryLayout... argLayouts) {
             super(descriptor.returnLayout().orElse(null),
                     Stream.concat(descriptor.argumentLayouts().stream(), Stream.of(argLayouts)).toList());
             this.firstVariadicIndex = descriptor.argumentLayouts().size();

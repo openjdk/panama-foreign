@@ -25,7 +25,6 @@
 
 package jdk.internal.foreign;
 
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SymbolLookup;
@@ -90,7 +89,7 @@ public class SystemLookup implements SymbolLookup {
                 ADDRESS.byteSize() * numSymbols, MemorySession.global());
 
             Function<String, Optional<MemorySegment>> fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.valueOfOrNull(name))
-                .map(symbol -> MemorySegment.ofAddress(funcs.getAtIndex(ADDRESS, symbol.ordinal()), 0L, MemorySession.global()));
+                .map(symbol -> MemorySegment.ofAddress(funcs.getAtIndex(ADDRESS, symbol.ordinal()).address(), 0L, MemorySession.global()));
 
             final SymbolLookup finalLookup = lookup;
             lookup = name -> finalLookup.lookup(name).or(() -> fallbackLookup.apply(name));
@@ -107,7 +106,7 @@ public class SystemLookup implements SymbolLookup {
                 long addr = lib.lookup(name);
                 return addr == 0 ?
                         Optional.empty() :
-                        Optional.of(MemorySegment.ofAddress(MemoryAddress.ofLong(addr), 0, MemorySession.global()));
+                        Optional.of(MemorySegment.ofAddress(addr, 0, MemorySession.global()));
             } catch (NoSuchMethodException e) {
                 return Optional.empty();
             }

@@ -27,7 +27,6 @@ package jdk.internal.foreign.abi.aarch64;
 
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import jdk.internal.foreign.abi.ABIDescriptor;
@@ -130,7 +129,7 @@ public abstract class CallArranger {
 
         boolean returnInMemory = isInMemoryReturn(cDesc.returnLayout());
         if (returnInMemory) {
-            csb.addArgumentBindings(MemoryAddress.class, AArch64.C_POINTER,
+            csb.addArgumentBindings(MemorySegment.class, AArch64.C_POINTER,
                     argCalc.getIndirectBindings());
         } else if (cDesc.returnLayout().isPresent()) {
             Class<?> carrier = mt.returnType();
@@ -420,7 +419,7 @@ public abstract class CallArranger {
         List<Binding> getIndirectBindings() {
             return Binding.builder()
                 .vmLoad(INDIRECT_RESULT, long.class)
-                .boxAddress()
+                .boxAddressRaw(Long.MAX_VALUE)
                 .build();
         }
 
@@ -457,8 +456,7 @@ public abstract class CallArranger {
                     VMStorage storage = storageCalculator.nextStorage(
                         StorageClasses.INTEGER, AArch64.C_POINTER);
                     bindings.vmLoad(storage, long.class)
-                            .boxAddress()
-                            .toSegment(layout);
+                            .boxAddress(layout);
                     break;
                 }
                 case STRUCT_HFA: {
@@ -488,7 +486,7 @@ public abstract class CallArranger {
                     VMStorage storage =
                         storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
                     bindings.vmLoad(storage, long.class)
-                            .boxAddress();
+                            .boxAddressRaw(Utils.pointeeSize(layout));
                     break;
                 }
                 case INTEGER: {

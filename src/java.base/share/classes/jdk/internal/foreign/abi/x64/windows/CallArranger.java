@@ -35,12 +35,11 @@ import jdk.internal.foreign.abi.UpcallLinker;
 import jdk.internal.foreign.abi.VMStorage;
 import jdk.internal.foreign.abi.x64.X86_64Architecture;
 
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.List;
@@ -105,7 +104,7 @@ public class CallArranger {
 
         boolean returnInMemory = isInMemoryReturn(cDesc.returnLayout());
         if (returnInMemory) {
-            Class<?> carrier = MemoryAddress.class;
+            Class<?> carrier = MemorySegment.class;
             MemoryLayout layout = Win64.C_POINTER;
             csb.addArgumentBindings(carrier, layout, false);
             if (forUpcall) {
@@ -276,14 +275,13 @@ public class CallArranger {
                     assert carrier == MemorySegment.class;
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
                     bindings.vmLoad(storage, long.class)
-                            .boxAddress()
-                            .toSegment(layout);
+                            .boxAddress(layout);
                     break;
                 }
                 case POINTER: {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
                     bindings.vmLoad(storage, long.class)
-                            .boxAddress();
+                            .boxAddressRaw(Utils.pointeeSize(layout));
                     break;
                 }
                 case INTEGER: {

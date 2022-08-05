@@ -34,7 +34,6 @@
  */
 
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import jdk.internal.foreign.abi.Binding;
@@ -43,7 +42,6 @@ import jdk.internal.foreign.abi.x64.sysv.CallArranger;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.lang.foreign.Addressable;
 import java.lang.invoke.MethodType;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
@@ -67,7 +65,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, Addressable.class));
+        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, MemorySegment.class));
         assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
@@ -95,7 +93,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, Addressable.class));
+        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, MemorySegment.class));
         assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
@@ -126,7 +124,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, Addressable.class));
+        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, MemorySegment.class));
         assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
@@ -156,7 +154,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, Addressable.class));
+        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, MemorySegment.class));
         assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
@@ -186,7 +184,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, Addressable.class));
+        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, MemorySegment.class));
         assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
@@ -211,7 +209,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, Addressable.class));
+        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, MemorySegment.class));
         assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
@@ -242,7 +240,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, Addressable.class));
+        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, MemorySegment.class));
         assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
@@ -277,7 +275,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, Addressable.class));
+        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, MemorySegment.class));
         assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
@@ -334,7 +332,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, Addressable.class));
+        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, MemorySegment.class));
         assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
@@ -371,13 +369,13 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
      */
     @Test
     public void testMemoryAddress() {
-        MethodType mt = MethodType.methodType(void.class, MemoryAddress.class);
+        MethodType mt = MethodType.methodType(void.class, MemorySegment.class);
         FunctionDescriptor fd = FunctionDescriptor.ofVoid( C_POINTER);
         CallArranger.Bindings bindings = CallArranger.getBindings(mt, fd, false);
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, Addressable.class));
+        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, MemorySegment.class));
         assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
@@ -399,7 +397,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, Addressable.class));
+        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, MemorySegment.class));
         assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
@@ -458,7 +456,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertFalse(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, MemorySegment.class, Addressable.class));
+        assertEquals(callingSequence.callerMethodType(), mt.appendParameterTypes(long.class).insertParameterTypes(0, MemorySegment.class, MemorySegment.class));
         assertEquals(callingSequence.functionDesc(), fd.appendArgumentLayouts(C_LONG).insertArgumentLayouts(0, ADDRESS, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
@@ -490,7 +488,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         assertTrue(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
-        assertEquals(callingSequence.callerMethodType(), MethodType.methodType(void.class, Addressable.class, MemoryAddress.class, long.class));
+        assertEquals(callingSequence.callerMethodType(), MethodType.methodType(void.class, MemorySegment.class, MemorySegment.class, long.class));
         assertEquals(callingSequence.functionDesc(), FunctionDescriptor.ofVoid(ADDRESS, C_POINTER, C_LONG));
 
         checkArgumentBindings(callingSequence, new Binding[][]{

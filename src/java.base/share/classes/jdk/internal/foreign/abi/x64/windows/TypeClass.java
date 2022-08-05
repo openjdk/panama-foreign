@@ -25,8 +25,8 @@
 package jdk.internal.foreign.abi.x64.windows;
 
 import java.lang.foreign.GroupLayout;
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 
 enum TypeClass {
@@ -57,7 +57,7 @@ enum TypeClass {
             } else {
                 return FLOAT;
             }
-        } else if (carrier == MemoryAddress.class) {
+        } else if (carrier == MemorySegment.class) {
             return POINTER;
         } else {
             throw new IllegalStateException("Cannot get here: " + carrier.getName());

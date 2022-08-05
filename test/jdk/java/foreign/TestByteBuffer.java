@@ -29,7 +29,6 @@
  */
 
 import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySession;
@@ -426,7 +425,7 @@ public class TestByteBuffer {
             Buffer bb = bufferFactory.apply(segment.asByteBuffer());
             assertTrue(bb.isDirect());
             DirectBuffer directBuffer = ((DirectBuffer)bb);
-            assertEquals(directBuffer.address(), segment.address().toRawLongValue());
+            assertEquals(directBuffer.address(), segment.address());
             assertTrue((directBuffer.attachment() == null) == (bb instanceof ByteBuffer));
             assertTrue(directBuffer.cleaner() == null);
         }
@@ -492,7 +491,7 @@ public class TestByteBuffer {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testTooBigForByteBuffer() {
-        MemorySegment segment = MemorySegment.ofAddress(MemoryAddress.NULL, Integer.MAX_VALUE + 10L, MemorySession.openImplicit());
+        MemorySegment segment = MemorySegment.ofAddress(0, Integer.MAX_VALUE + 10L, MemorySession.openImplicit());
         segment.asByteBuffer();
     }
 

@@ -39,7 +39,7 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
     @Stable
     long cachedSize;
 
-    public AbstractLayout(long size, long alignment, Optional<String> name) {
+    AbstractLayout(long size, long alignment, Optional<String> name) {
         this.size = size;
         this.alignment = alignment;
         this.name = name;
