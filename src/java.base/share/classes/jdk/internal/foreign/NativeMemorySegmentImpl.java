@@ -64,7 +64,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     @ForceInline
     NativeMemorySegmentImpl(long min, long length, boolean readOnly, MemorySession session) {
-        super(length, readOnly, 0, session);
+        super(length, readOnly, session);
         this.min = min;
     }
 

@@ -66,10 +66,12 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * {@link MappedMemorySegmentImpl}.
  */
 public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegment, SegmentAllocator, Scoped, BiFunction<String, List<Number>, RuntimeException> {
+    private static final long MAX_ALIGN_1 = 1;
+    private static final long MAX_ALIGN_2 = 2;
+    private static final long MAX_ALIGN_4 = 4;
+    private static final long MAX_ALIGN_8 = 8;
 
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
-
-    private final long maxAlignMask;
 
     static final JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
 
@@ -78,10 +80,9 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     final MemorySession session;
 
     @ForceInline
-    AbstractMemorySegmentImpl(long length, boolean readOnly, long maxAlignMask, MemorySession session) {
+    AbstractMemorySegmentImpl(long length, boolean readOnly, MemorySession session) {
         this.length = length;
         this.readOnly = readOnly;
-        this.maxAlignMask = maxAlignMask;
         this.session = session;
     }
 
@@ -322,8 +323,26 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
 
     // Helper methods
 
+    @ForceInline
     public final long maxAlignMask() {
-        return maxAlignMask;
+        if (this instanceof NativeMemorySegmentImpl) {
+            return 0;
+        } else if (this instanceof HeapMemorySegmentImpl.OfByte) {
+            return MAX_ALIGN_1;
+        } else if (this instanceof HeapMemorySegmentImpl.OfChar) {
+            return MAX_ALIGN_2;
+        } else if (this instanceof HeapMemorySegmentImpl.OfShort) {
+            return MAX_ALIGN_2;
+        } else if (this instanceof HeapMemorySegmentImpl.OfInt) {
+            return MAX_ALIGN_4;
+        } else if (this instanceof HeapMemorySegmentImpl.OfLong) {
+            return MAX_ALIGN_8;
+        } else if (this instanceof HeapMemorySegmentImpl.OfFloat) {
+            return MAX_ALIGN_4;
+        } else if (this instanceof HeapMemorySegmentImpl.OfDouble) {
+            return MAX_ALIGN_8;
+        }
+        throw new IllegalStateException("Unknown memory segment");
     }
 
     @ForceInline
