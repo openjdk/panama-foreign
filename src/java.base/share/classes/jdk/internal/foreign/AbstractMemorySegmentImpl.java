@@ -69,6 +69,8 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
 
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
+    private final long maxAlignMask;
+
     static final JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
 
     final long length;
@@ -76,9 +78,10 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     final MemorySession session;
 
     @ForceInline
-    AbstractMemorySegmentImpl(long length, boolean readOnly, MemorySession session) {
+    AbstractMemorySegmentImpl(long length, boolean readOnly, long maxAlignMask, MemorySession session) {
         this.length = length;
         this.readOnly = readOnly;
+        this.maxAlignMask = maxAlignMask;
         this.session = session;
     }
 
@@ -319,7 +322,9 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
 
     // Helper methods
 
-    public abstract long maxAlignMask();
+    public final long maxAlignMask() {
+        return maxAlignMask;
+    }
 
     @ForceInline
     public final boolean isAlignedForElement(long offset, MemoryLayout layout) {

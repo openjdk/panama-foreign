@@ -64,7 +64,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     @ForceInline
     NativeMemorySegmentImpl(long min, long length, boolean readOnly, MemorySession session) {
-        super(length, readOnly, session);
+        super(length, readOnly, 0, session);
         this.min = min;
     }
 
@@ -93,11 +93,6 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     @Override
     public Object unsafeGetBase() {
         return null;
-    }
-
-    @Override
-    public long maxAlignMask() {
-        return 0;
     }
 
     // factories

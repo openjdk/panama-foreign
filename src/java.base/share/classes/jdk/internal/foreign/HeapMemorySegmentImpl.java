@@ -67,8 +67,8 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     @ForceInline
-    HeapMemorySegmentImpl(long offset, Object base, long length, boolean readOnly) {
-        super(length, readOnly, MemorySession.global());
+    HeapMemorySegmentImpl(long offset, Object base, long length, boolean readOnly, long maxAlignMask) {
+        super(length, readOnly, maxAlignMask, MemorySession.global());
         this.offset = offset;
         this.base = base;
     }
@@ -95,7 +95,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
     public static class OfByte extends HeapMemorySegmentImpl {
 
         OfByte(long offset, Object base, long length, boolean readOnly) {
-            super(offset, base, length, readOnly);
+            super(offset, base, length, readOnly, MAX_ALIGN_1);
         }
 
         @Override
@@ -115,11 +115,6 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        public long maxAlignMask() {
-            return MAX_ALIGN_1;
-        }
-
-        @Override
         public long address() {
             return offset - Unsafe.ARRAY_BYTE_BASE_OFFSET;
         }
@@ -128,7 +123,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
     public static class OfChar extends HeapMemorySegmentImpl {
 
         OfChar(long offset, Object base, long length, boolean readOnly) {
-            super(offset, base, length, readOnly);
+            super(offset, base, length, readOnly, MAX_ALIGN_2);
         }
 
         @Override
@@ -148,11 +143,6 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        public long maxAlignMask() {
-            return MAX_ALIGN_2;
-        }
-
-        @Override
         public long address() {
             return offset - Unsafe.ARRAY_CHAR_BASE_OFFSET;
         }
@@ -161,7 +151,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
     public static class OfShort extends HeapMemorySegmentImpl {
 
         OfShort(long offset, Object base, long length, boolean readOnly) {
-            super(offset, base, length, readOnly);
+            super(offset, base, length, readOnly, MAX_ALIGN_2);
         }
 
         @Override
@@ -181,11 +171,6 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        public long maxAlignMask() {
-            return MAX_ALIGN_2;
-        }
-
-        @Override
         public long address() {
             return offset - Unsafe.ARRAY_SHORT_BASE_OFFSET;
         }
@@ -194,7 +179,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
     public static class OfInt extends HeapMemorySegmentImpl {
 
         OfInt(long offset, Object base, long length, boolean readOnly) {
-            super(offset, base, length, readOnly);
+            super(offset, base, length, readOnly, MAX_ALIGN_4);
         }
 
         @Override
@@ -214,11 +199,6 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        public long maxAlignMask() {
-            return MAX_ALIGN_4;
-        }
-
-        @Override
         public long address() {
             return offset - Unsafe.ARRAY_INT_BASE_OFFSET;
         }
@@ -227,7 +207,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
     public static class OfLong extends HeapMemorySegmentImpl {
 
         OfLong(long offset, Object base, long length, boolean readOnly) {
-            super(offset, base, length, readOnly);
+            super(offset, base, length, readOnly, MAX_ALIGN_8);
         }
 
         @Override
@@ -247,11 +227,6 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        public long maxAlignMask() {
-            return MAX_ALIGN_8;
-        }
-
-        @Override
         public long address() {
             return offset - Unsafe.ARRAY_LONG_BASE_OFFSET;
         }
@@ -260,7 +235,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
     public static class OfFloat extends HeapMemorySegmentImpl {
 
         OfFloat(long offset, Object base, long length, boolean readOnly) {
-            super(offset, base, length, readOnly);
+            super(offset, base, length, readOnly, MAX_ALIGN_4);
         }
 
         @Override
@@ -280,11 +255,6 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        public long maxAlignMask() {
-            return MAX_ALIGN_4;
-        }
-
-        @Override
         public long address() {
             return offset - Unsafe.ARRAY_FLOAT_BASE_OFFSET;
         }
@@ -293,7 +263,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
     public static class OfDouble extends HeapMemorySegmentImpl {
 
         OfDouble(long offset, Object base, long length, boolean readOnly) {
-            super(offset, base, length, readOnly);
+            super(offset, base, length, readOnly, MAX_ALIGN_8);
         }
 
         @Override
@@ -310,11 +280,6 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE;
             return new OfDouble(Unsafe.ARRAY_DOUBLE_BASE_OFFSET, arr, byteSize, false);
-        }
-
-        @Override
-        public long maxAlignMask() {
-            return MAX_ALIGN_8;
         }
 
         @Override
