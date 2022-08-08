@@ -105,7 +105,7 @@ void ArgumentShuffle::print_on(outputStream* os) const {
 
 int NativeCallingConvention::calling_convention(const BasicType* sig_bt, VMStorage* out_regs, int num_args) const {
   int src_pos = 0;
-  int stk_bytes = 0;
+  uint32_t max_stack_offset = 0;
   for (int i = 0; i < num_args; i++) {
     switch (sig_bt[i]) {
       case T_BOOLEAN:
@@ -117,7 +117,7 @@ int NativeCallingConvention::calling_convention(const BasicType* sig_bt, VMStora
         VMStorage reg = _input_regs.at(src_pos++);
         out_regs[i] = reg;
         if (reg.is_stack())
-          stk_bytes += reg.stack_size();
+          max_stack_offset = MAX2(max_stack_offset, reg.index() + reg.stack_size());
         break;
       }
       case T_LONG:
@@ -126,7 +126,7 @@ int NativeCallingConvention::calling_convention(const BasicType* sig_bt, VMStora
         VMStorage reg = _input_regs.at(src_pos++);
         out_regs[i] = reg;
         if (reg.is_stack())
-          stk_bytes += reg.stack_size();
+          max_stack_offset = MAX2(max_stack_offset, reg.index() + reg.stack_size());
         break;
       }
       case T_VOID: // Halves of longs and doubles
@@ -138,7 +138,7 @@ int NativeCallingConvention::calling_convention(const BasicType* sig_bt, VMStora
         break;
     }
   }
-  return stk_bytes;
+  return align_up(max_stack_offset, 8);
 }
 
 int JavaCallingConvention::calling_convention(const BasicType* sig_bt, VMStorage* regs, int num_args) const {
