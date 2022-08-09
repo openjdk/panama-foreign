@@ -26,6 +26,7 @@ package jdk.internal.foreign.abi.x64.sysv;
 
 
 import jdk.internal.foreign.abi.AbstractLinker;
+import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.FunctionDescriptor;
@@ -39,15 +40,17 @@ import java.util.function.Consumer;
  * ABI implementation based on System V ABI AMD64 supplement v.0.99.6
  */
 public final class SysVx64Linker extends AbstractLinker {
-    private static SysVx64Linker instance;
-
-    public static SysVx64Linker getInstance() {
-        if (instance == null) {
-            instance = new SysVx64Linker();
-        }
-        return instance;
+    private static final class Holder {
+        private static final SysVx64Linker INSTANCE = new SysVx64Linker();
     }
 
+    public static SysVx64Linker getInstance() {
+        return SysVx64Linker.Holder.INSTANCE;
+    }
+
+    private SysVx64Linker() {
+        // Ensure there is only one instance
+    }
     @Override
     protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function) {
         return CallArranger.arrangeDowncall(inferredMethodType, function);

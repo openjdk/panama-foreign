@@ -27,6 +27,7 @@ package jdk.internal.foreign.abi.aarch64.linux;
 
 import jdk.internal.foreign.abi.AbstractLinker;
 import jdk.internal.foreign.abi.aarch64.CallArranger;
+import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.FunctionDescriptor;
@@ -41,13 +42,16 @@ import java.util.function.Consumer;
  * the ARM 64-bit Architecture".
  */
 public final class LinuxAArch64Linker extends AbstractLinker {
-    private static LinuxAArch64Linker instance;
+    private static final class Holder {
+        private static final LinuxAArch64Linker INSTANCE = new LinuxAArch64Linker();
+    }
 
     public static LinuxAArch64Linker getInstance() {
-        if (instance == null) {
-            instance = new LinuxAArch64Linker();
-        }
-        return instance;
+        return Holder.INSTANCE;
+    }
+
+    private LinuxAArch64Linker() {
+        // Ensure there is only one instance
     }
 
     @Override

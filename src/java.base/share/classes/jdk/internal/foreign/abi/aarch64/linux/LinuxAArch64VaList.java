@@ -26,6 +26,7 @@
 package jdk.internal.foreign.abi.aarch64.linux;
 
 import java.lang.foreign.*;
+
 import jdk.internal.foreign.abi.aarch64.TypeClass;
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.Utils;
@@ -63,24 +64,24 @@ public non-sealed class LinuxAArch64VaList implements VaList {
     // } va_list;
 
     static final GroupLayout LAYOUT = MemoryLayout.structLayout(
-        AArch64.C_POINTER.withName("__stack"),
-        AArch64.C_POINTER.withName("__gr_top"),
-        AArch64.C_POINTER.withName("__vr_top"),
-        AArch64.C_INT.withName("__gr_offs"),
-        AArch64.C_INT.withName("__vr_offs")
+            AArch64.C_POINTER.withName("__stack"),
+            AArch64.C_POINTER.withName("__gr_top"),
+            AArch64.C_POINTER.withName("__vr_top"),
+            AArch64.C_INT.withName("__gr_offs"),
+            AArch64.C_INT.withName("__vr_offs")
     ).withName("__va_list");
 
     private static final long STACK_SLOT_SIZE = 8;
 
     private static final MemoryLayout GP_REG
-        = MemoryLayout.paddingLayout(64).withBitAlignment(64);
+            = MemoryLayout.paddingLayout(64).withBitAlignment(64);
     private static final MemoryLayout FP_REG
-        = MemoryLayout.paddingLayout(128).withBitAlignment(128);
+            = MemoryLayout.paddingLayout(128).withBitAlignment(128);
 
     private static final MemoryLayout LAYOUT_GP_REGS
-        = MemoryLayout.sequenceLayout(MAX_REGISTER_ARGUMENTS, GP_REG);
+            = MemoryLayout.sequenceLayout(MAX_REGISTER_ARGUMENTS, GP_REG);
     private static final MemoryLayout LAYOUT_FP_REGS
-        = MemoryLayout.sequenceLayout(MAX_REGISTER_ARGUMENTS, FP_REG);
+            = MemoryLayout.sequenceLayout(MAX_REGISTER_ARGUMENTS, FP_REG);
 
     private static final int GP_SLOT_SIZE = (int) GP_REG.byteSize();
     private static final int FP_SLOT_SIZE = (int) FP_REG.byteSize();
@@ -92,12 +93,12 @@ public non-sealed class LinuxAArch64VaList implements VaList {
     private static final VarHandle VH_gr_top = LAYOUT.varHandle(groupElement("__gr_top"));
     private static final VarHandle VH_vr_top = LAYOUT.varHandle(groupElement("__vr_top"));
     private static final VarHandle VH_gr_offs
-        = LAYOUT.varHandle(groupElement("__gr_offs"));
+            = LAYOUT.varHandle(groupElement("__gr_offs"));
     private static final VarHandle VH_vr_offs
-        = LAYOUT.varHandle(groupElement("__vr_offs"));
+            = LAYOUT.varHandle(groupElement("__vr_offs"));
 
     private static final VaList EMPTY
-        = new SharedUtils.EmptyVaList(emptyListAddress());
+            = new SharedUtils.EmptyVaList(emptyListAddress());
 
     private final MemorySegment segment;
     private MemorySegment stack;
@@ -119,8 +120,8 @@ public non-sealed class LinuxAArch64VaList implements VaList {
     private static LinuxAArch64VaList readFromAddress(long address, MemorySession session) {
         MemorySegment segment = MemorySegment.ofAddress(address, LAYOUT.byteSize(), session);
         MemorySegment stack = stackPtr(segment); // size unknown
-        MemorySegment gpRegsArea = grTop(segment).asSlice(-MAX_GP_OFFSET, MAX_GP_OFFSET);
-        MemorySegment fpRegsArea = vrTop(segment).asSlice(-MAX_FP_OFFSET, MAX_FP_OFFSET);
+        MemorySegment gpRegsArea = MemorySegment.ofAddress(grTop(segment).address() - MAX_GP_OFFSET, MAX_GP_OFFSET, session);
+        MemorySegment fpRegsArea = MemorySegment.ofAddress(vrTop(segment).address() - MAX_FP_OFFSET, MAX_FP_OFFSET, session);
         return new LinuxAArch64VaList(segment, stack, gpRegsArea, MAX_GP_OFFSET, fpRegsArea, MAX_FP_OFFSET);
     }
 
@@ -247,7 +248,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
     @Override
     public MemorySegment nextVarg(GroupLayout layout, SegmentAllocator allocator) {
         Objects.requireNonNull(allocator);
-        return (MemorySegment) read( layout, allocator);
+        return (MemorySegment) read(layout, allocator);
     }
 
     private Object read(MemoryLayout layout) {
@@ -296,7 +297,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                     // Struct is passed with each element in a separate floating
                     // point register.
                     MemorySegment value = allocator.allocate(layout);
-                    GroupLayout group = (GroupLayout)layout;
+                    GroupLayout group = (GroupLayout) layout;
                     long offset = 0;
                     for (MemoryLayout elem : group.memberLayouts()) {
                         assert elem.byteSize() <= 8;
@@ -312,7 +313,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                     // Struct is passed indirectly via a pointer in an integer register.
                     VarHandle ptrReader = AArch64.C_POINTER.varHandle();
                     MemorySegment ptr = (MemorySegment) ptrReader.get(
-                        gpRegsArea.asSlice(currentGPOffset()));
+                            gpRegsArea.asSlice(currentGPOffset()));
                     consumeGPSlots(1);
 
                     MemorySegment slice = MemorySegment.ofAddress(ptr.address(), layout.byteSize(), segment.session());
@@ -420,12 +421,12 @@ public non-sealed class LinuxAArch64VaList implements VaList {
     @Override
     public String toString() {
         return "LinuxAArch64VaList{"
-            + "__stack=" + stackPtr()
-            + ", __gr_top=" + grTop()
-            + ", __vr_top=" + vrTop()
-            + ", __gr_offs=" + grOffs()
-            + ", __vr_offs=" + vrOffs()
-            + '}';
+                + "__stack=" + stackPtr()
+                + ", __gr_top=" + grTop()
+                + ", __vr_top=" + vrTop()
+                + ", __gr_offs=" + grOffs()
+                + ", __vr_offs=" + vrOffs()
+                + '}';
     }
 
     public static non-sealed class Builder implements VaList.Builder {
@@ -491,7 +492,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                         // Struct is passed with each element in a separate floating
                         // point register.
                         MemorySegment valueSegment = (MemorySegment) value;
-                        GroupLayout group = (GroupLayout)layout;
+                        GroupLayout group = (GroupLayout) layout;
                         long offset = 0;
                         for (MemoryLayout elem : group.memberLayouts()) {
                             assert elem.byteSize() <= 8;
@@ -506,7 +507,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                         MemorySegment valueSegment = (MemorySegment) value;
                         VarHandle writer = AArch64.C_POINTER.varHandle();
                         writer.set(gpRegs.asSlice(currentGPOffset),
-                                   valueSegment);
+                                valueSegment);
                         currentGPOffset += GP_SLOT_SIZE;
                     }
                     case POINTER, INTEGER -> {
@@ -537,7 +538,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
             MemorySegment stackArgsSegment;
             if (!stackArgs.isEmpty()) {
                 long stackArgsSize = stackArgs.stream()
-                    .reduce(0L, (acc, e) -> acc + Utils.alignUp(e.layout.byteSize(), STACK_SLOT_SIZE), Long::sum);
+                        .reduce(0L, (acc, e) -> acc + Utils.alignUp(e.layout.byteSize(), STACK_SLOT_SIZE), Long::sum);
                 stackArgsSegment = session.allocate(stackArgsSize, 16);
                 MemorySegment writeCursor = stackArgsSegment;
                 for (SimpleVaArg arg : stackArgs) {
