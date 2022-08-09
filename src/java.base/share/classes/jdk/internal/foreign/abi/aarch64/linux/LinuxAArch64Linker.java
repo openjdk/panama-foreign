@@ -41,11 +41,12 @@ import java.util.function.Consumer;
  * the ARM 64-bit Architecture".
  */
 public final class LinuxAArch64Linker extends AbstractLinker {
-    private static final class Holder {
-        private static final LinuxAArch64Linker INSTANCE = new LinuxAArch64Linker();
-    }
 
     public static LinuxAArch64Linker getInstance() {
+        final class Holder {
+            private static final LinuxAArch64Linker INSTANCE = new LinuxAArch64Linker();
+        }
+
         return Holder.INSTANCE;
     }
 

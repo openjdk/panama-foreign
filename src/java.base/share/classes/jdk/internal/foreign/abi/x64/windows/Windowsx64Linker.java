@@ -39,11 +39,11 @@ import java.util.function.Consumer;
  */
 public final class Windowsx64Linker extends AbstractLinker {
 
-    private static final class Holder {
-        private static final Windowsx64Linker INSTANCE = new Windowsx64Linker();
-    }
-
     public static Windowsx64Linker getInstance() {
+        final class Holder {
+            private static final Windowsx64Linker INSTANCE = new Windowsx64Linker();
+        }
+
         return Holder.INSTANCE;
     }
 

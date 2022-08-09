@@ -39,12 +39,13 @@ import java.util.function.Consumer;
  * ABI implementation based on System V ABI AMD64 supplement v.0.99.6
  */
 public final class SysVx64Linker extends AbstractLinker {
-    private static final class Holder {
-        private static final SysVx64Linker INSTANCE = new SysVx64Linker();
-    }
 
     public static SysVx64Linker getInstance() {
-        return SysVx64Linker.Holder.INSTANCE;
+        final class Holder {
+            private static final SysVx64Linker INSTANCE = new SysVx64Linker();
+        }
+
+        return Holder.INSTANCE;
     }
 
     private SysVx64Linker() {
