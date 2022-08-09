@@ -374,7 +374,7 @@ public final class SharedUtils {
         return new NoSuchElementException("No such element: " + layout);
     }
 
-    public final static class SimpleVaArg {
+    public static final class SimpleVaArg {
         public final MemoryLayout layout;
         public final Object value;
 
