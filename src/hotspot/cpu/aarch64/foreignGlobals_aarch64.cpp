@@ -109,15 +109,16 @@ static void move_reg64(MacroAssembler* masm, int out_stk_bias,
       break;
     case StorageType::STACK:
       out_bias = out_stk_bias;
-    case StorageType::FRAME_DATA:
+    case StorageType::FRAME_DATA: {
+      Address dest(sp, to_reg.index() + out_bias);
       switch (to_reg.stack_size()) {
-        // FIXME use correctly sized stores
-        case 8: case 4: case 2: case 1:
-          masm->str(from_reg, Address(sp, to_reg.offset() + out_stk_bias));
-        break;
+        case 8: masm->str (from_reg, dest); break;
+        case 4: masm->strw(from_reg, dest); break;
+        case 2: masm->strh(from_reg, dest); break;
+        case 1: masm->strb(from_reg, dest); break;
         default: ShouldNotReachHere();
       }
-      break;
+    } break;
     default: ShouldNotReachHere();
   }
 }
@@ -130,10 +131,12 @@ static void move_stack(MacroAssembler* masm, Register tmp_reg, int in_stk_bias, 
     case StorageType::INTEGER:
       assert(to_reg.segment_mask() == REG64_MASK, "only moves to 64-bit registers supported");
       switch (from_reg.stack_size()) {
-        // FIXME use correctly sized loads
-        case 8: case 4: case 2: case 1:
-          masm->ldr(as_Register(to_reg), from_addr);
-        break;
+        // FIXME these loads zero upper bits of the register
+        // should we sign extend instead?
+        case 8: masm->ldr (as_Register(to_reg), from_addr); break;
+        case 4: masm->ldrw(as_Register(to_reg), from_addr); break;
+        case 2: masm->ldrh(as_Register(to_reg), from_addr); break;
+        case 1: masm->ldrb(as_Register(to_reg), from_addr); break;
         default: ShouldNotReachHere();
       }
       break;
@@ -151,18 +154,23 @@ static void move_stack(MacroAssembler* masm, Register tmp_reg, int in_stk_bias, 
       break;
     case StorageType::STACK:
       out_bias = out_stk_bias;
-    case StorageType::FRAME_DATA:
-      // We assume 8 bytes stack size when converting from VMReg (Java CC)
-      //assert(from_reg.stack_size() == to_reg.stack_size(), "must be same");
+    case StorageType::FRAME_DATA: {
       switch (from_reg.stack_size()) {
-        // FIXME use correctly sized loads & stores
-        case 8: case 4: case 2: case 1:
-          masm->ldr(tmp_reg, from_addr);
-          masm->str(tmp_reg, Address(sp, to_reg.offset() + out_bias));
-        break;
+        case 8: masm->ldr (tmp_reg, from_addr); break;
+        case 4: masm->ldrw(tmp_reg, from_addr); break;
+        case 2: masm->ldrh(tmp_reg, from_addr); break;
+        case 1: masm->ldrb(tmp_reg, from_addr); break;
         default: ShouldNotReachHere();
       }
-      break;
+      Address dest(sp, to_reg.offset() + out_bias);
+      switch (to_reg.stack_size()) {
+        case 8: masm->str (tmp_reg, dest); break;
+        case 4: masm->strw(tmp_reg, dest); break;
+        case 2: masm->strh(tmp_reg, dest); break;
+        case 1: masm->strb(tmp_reg, dest); break;
+        default: ShouldNotReachHere();
+      }
+    } break;
     default: ShouldNotReachHere();
   }
 }
