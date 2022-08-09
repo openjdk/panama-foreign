@@ -27,7 +27,6 @@ package jdk.internal.foreign.abi.aarch64.macos;
 
 import jdk.internal.foreign.abi.AbstractLinker;
 import jdk.internal.foreign.abi.aarch64.CallArranger;
-import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;

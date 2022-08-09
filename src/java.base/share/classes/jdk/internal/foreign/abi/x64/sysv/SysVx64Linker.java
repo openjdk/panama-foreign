@@ -26,7 +26,6 @@ package jdk.internal.foreign.abi.x64.sysv;
 
 
 import jdk.internal.foreign.abi.AbstractLinker;
-import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.FunctionDescriptor;
