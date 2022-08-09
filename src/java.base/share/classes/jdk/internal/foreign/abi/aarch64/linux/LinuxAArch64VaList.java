@@ -26,7 +26,6 @@
 package jdk.internal.foreign.abi.aarch64.linux;
 
 import java.lang.foreign.*;
-
 import jdk.internal.foreign.abi.aarch64.TypeClass;
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.Utils;
@@ -248,7 +247,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
     @Override
     public MemorySegment nextVarg(GroupLayout layout, SegmentAllocator allocator) {
         Objects.requireNonNull(allocator);
-        return (MemorySegment) read(layout, allocator);
+        return (MemorySegment) read( layout, allocator);
     }
 
     private Object read(MemoryLayout layout) {
@@ -297,7 +296,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                     // Struct is passed with each element in a separate floating
                     // point register.
                     MemorySegment value = allocator.allocate(layout);
-                    GroupLayout group = (GroupLayout) layout;
+                    GroupLayout group = (GroupLayout)layout;
                     long offset = 0;
                     for (MemoryLayout elem : group.memberLayouts()) {
                         assert elem.byteSize() <= 8;
@@ -313,7 +312,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                     // Struct is passed indirectly via a pointer in an integer register.
                     VarHandle ptrReader = AArch64.C_POINTER.varHandle();
                     MemorySegment ptr = (MemorySegment) ptrReader.get(
-                            gpRegsArea.asSlice(currentGPOffset()));
+                        gpRegsArea.asSlice(currentGPOffset()));
                     consumeGPSlots(1);
 
                     MemorySegment slice = MemorySegment.ofAddress(ptr.address(), layout.byteSize(), segment.session());
@@ -421,12 +420,12 @@ public non-sealed class LinuxAArch64VaList implements VaList {
     @Override
     public String toString() {
         return "LinuxAArch64VaList{"
-                + "__stack=" + stackPtr()
-                + ", __gr_top=" + grTop()
-                + ", __vr_top=" + vrTop()
-                + ", __gr_offs=" + grOffs()
-                + ", __vr_offs=" + vrOffs()
-                + '}';
+            + "__stack=" + stackPtr()
+            + ", __gr_top=" + grTop()
+            + ", __vr_top=" + vrTop()
+            + ", __gr_offs=" + grOffs()
+            + ", __vr_offs=" + vrOffs()
+            + '}';
     }
 
     public static non-sealed class Builder implements VaList.Builder {
@@ -492,7 +491,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                         // Struct is passed with each element in a separate floating
                         // point register.
                         MemorySegment valueSegment = (MemorySegment) value;
-                        GroupLayout group = (GroupLayout) layout;
+                        GroupLayout group = (GroupLayout)layout;
                         long offset = 0;
                         for (MemoryLayout elem : group.memberLayouts()) {
                             assert elem.byteSize() <= 8;
@@ -507,7 +506,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                         MemorySegment valueSegment = (MemorySegment) value;
                         VarHandle writer = AArch64.C_POINTER.varHandle();
                         writer.set(gpRegs.asSlice(currentGPOffset),
-                                valueSegment);
+                                   valueSegment);
                         currentGPOffset += GP_SLOT_SIZE;
                     }
                     case POINTER, INTEGER -> {
@@ -538,7 +537,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
             MemorySegment stackArgsSegment;
             if (!stackArgs.isEmpty()) {
                 long stackArgsSize = stackArgs.stream()
-                        .reduce(0L, (acc, e) -> acc + Utils.alignUp(e.layout.byteSize(), STACK_SLOT_SIZE), Long::sum);
+                    .reduce(0L, (acc, e) -> acc + Utils.alignUp(e.layout.byteSize(), STACK_SLOT_SIZE), Long::sum);
                 stackArgsSegment = session.allocate(stackArgsSize, 16);
                 MemorySegment writeCursor = stackArgsSegment;
                 for (SimpleVaArg arg : stackArgs) {
