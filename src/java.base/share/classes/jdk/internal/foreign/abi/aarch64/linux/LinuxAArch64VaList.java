@@ -64,24 +64,24 @@ public non-sealed class LinuxAArch64VaList implements VaList {
     // } va_list;
 
     static final GroupLayout LAYOUT = MemoryLayout.structLayout(
-            AArch64.C_POINTER.withName("__stack"),
-            AArch64.C_POINTER.withName("__gr_top"),
-            AArch64.C_POINTER.withName("__vr_top"),
-            AArch64.C_INT.withName("__gr_offs"),
-            AArch64.C_INT.withName("__vr_offs")
+        AArch64.C_POINTER.withName("__stack"),
+        AArch64.C_POINTER.withName("__gr_top"),
+        AArch64.C_POINTER.withName("__vr_top"),
+        AArch64.C_INT.withName("__gr_offs"),
+        AArch64.C_INT.withName("__vr_offs")
     ).withName("__va_list");
 
     private static final long STACK_SLOT_SIZE = 8;
 
     private static final MemoryLayout GP_REG
-            = MemoryLayout.paddingLayout(64).withBitAlignment(64);
+        = MemoryLayout.paddingLayout(64).withBitAlignment(64);
     private static final MemoryLayout FP_REG
-            = MemoryLayout.paddingLayout(128).withBitAlignment(128);
+        = MemoryLayout.paddingLayout(128).withBitAlignment(128);
 
     private static final MemoryLayout LAYOUT_GP_REGS
-            = MemoryLayout.sequenceLayout(MAX_REGISTER_ARGUMENTS, GP_REG);
+        = MemoryLayout.sequenceLayout(MAX_REGISTER_ARGUMENTS, GP_REG);
     private static final MemoryLayout LAYOUT_FP_REGS
-            = MemoryLayout.sequenceLayout(MAX_REGISTER_ARGUMENTS, FP_REG);
+        = MemoryLayout.sequenceLayout(MAX_REGISTER_ARGUMENTS, FP_REG);
 
     private static final int GP_SLOT_SIZE = (int) GP_REG.byteSize();
     private static final int FP_SLOT_SIZE = (int) FP_REG.byteSize();
@@ -93,12 +93,12 @@ public non-sealed class LinuxAArch64VaList implements VaList {
     private static final VarHandle VH_gr_top = LAYOUT.varHandle(groupElement("__gr_top"));
     private static final VarHandle VH_vr_top = LAYOUT.varHandle(groupElement("__vr_top"));
     private static final VarHandle VH_gr_offs
-            = LAYOUT.varHandle(groupElement("__gr_offs"));
+        = LAYOUT.varHandle(groupElement("__gr_offs"));
     private static final VarHandle VH_vr_offs
-            = LAYOUT.varHandle(groupElement("__vr_offs"));
+        = LAYOUT.varHandle(groupElement("__vr_offs"));
 
     private static final VaList EMPTY
-            = new SharedUtils.EmptyVaList(emptyListAddress());
+        = new SharedUtils.EmptyVaList(emptyListAddress());
 
     private final MemorySegment segment;
     private MemorySegment stack;
