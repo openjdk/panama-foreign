@@ -448,19 +448,15 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     @Override
     public boolean equals(Object o) {
         return o instanceof AbstractMemorySegmentImpl that &&
-                array().equals(that.array()) &&
-                address() == that.address();
+                unsafeGetBase() == that.unsafeGetBase() &&
+                unsafeGetOffset() == that.unsafeGetOffset();
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
-                isNative(),
                 unsafeGetOffset(),
-                unsafeGetBase(),
-                length,
-                session
-        );
+                unsafeGetBase());
     }
 
     public static AbstractMemorySegmentImpl ofBuffer(Buffer bb) {
