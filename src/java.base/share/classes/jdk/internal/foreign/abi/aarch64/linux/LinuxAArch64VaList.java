@@ -119,8 +119,8 @@ public non-sealed class LinuxAArch64VaList implements VaList {
     private static LinuxAArch64VaList readFromAddress(long address, MemorySession session) {
         MemorySegment segment = MemorySegment.ofAddress(address, LAYOUT.byteSize(), session);
         MemorySegment stack = stackPtr(segment); // size unknown
-        MemorySegment gpRegsArea = grTop(segment).asSlice(-MAX_GP_OFFSET, MAX_GP_OFFSET);
-        MemorySegment fpRegsArea = vrTop(segment).asSlice(-MAX_FP_OFFSET, MAX_FP_OFFSET);
+        MemorySegment gpRegsArea = MemorySegment.ofAddress(grTop(segment).address() - MAX_GP_OFFSET, MAX_GP_OFFSET, session);
+        MemorySegment fpRegsArea = MemorySegment.ofAddress(vrTop(segment).address() - MAX_FP_OFFSET, MAX_FP_OFFSET, session);
         return new LinuxAArch64VaList(segment, stack, gpRegsArea, MAX_GP_OFFSET, fpRegsArea, MAX_FP_OFFSET);
     }
 
