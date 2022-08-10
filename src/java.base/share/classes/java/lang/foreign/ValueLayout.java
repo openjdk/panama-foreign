@@ -140,11 +140,11 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      *
      * Can be used to access a multi-dimensional array whose layout is as follows:
      *
-     * {@snippet lang=java :
-     * SequenceLayout arrayLayout = MemoryLayout.sequenceLayout(-1,
+     * {@snippet lang = java:
+     * SequenceLayout arrayLayout = MemoryLayout.sequenceLayout(
      *                                      MemoryLayout.sequenceLayout(10,
      *                                                  MemoryLayout.sequenceLayout(20, ValueLayout.JAVA_INT)));
-     * }
+     *}
      *
      * The resulting var handle {@code arrayHandle} will feature 3 coordinates of type {@code long}; each coordinate
      * is interpreted as an index into the corresponding sequence layout. If we refer to the var handle coordinates, from left
@@ -190,7 +190,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
             layout = MemoryLayout.sequenceLayout(size, layout);
             path.add(PathElement.sequenceElement());
         }
-        layout = MemoryLayout.sequenceLayout(-1, layout);
+        layout = MemoryLayout.sequenceLayout(layout);
         path.add(PathElement.sequenceElement());
         return layout.varHandle(path.toArray(new PathElement[0]));
     }
