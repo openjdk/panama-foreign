@@ -39,32 +39,25 @@ public:
   constexpr static RegType INVALID_TYPE = static_cast<RegType>(-1);
 private:
   RegType _type;
-  uint8_t _reserved;
-  union {
-    uint16_t _segment_mask;
-    uint16_t _size;
-  };
-  uint32_t _index; // stack offset in bytes for stack storage
+  // 1 byte of padding
+  uint16_t _segment_mask_or_size;
+  uint32_t _index_or_offset; // stack offset in bytes for stack storage
 
   friend bool operator==(const VMStorage& a, const VMStorage& b);
+  constexpr VMStorage(RegType type, uint16_t segment_mask_or_size, uint32_t index_or_offset)
+    : _type(type), _segment_mask_or_size(segment_mask_or_size), _index_or_offset(index_or_offset) {};
 public:
-  constexpr VMStorage() : _type(INVALID_TYPE), _reserved(0), _segment_mask(0), _index(0) {};
+  constexpr VMStorage() : _type(INVALID_TYPE), _segment_mask_or_size(0), _index_or_offset(0) {};
 
   constexpr static VMStorage reg_storage(RegType type, uint16_t segment_mask, uint32_t index) {
     assert(type != stack_type(), "can not be stack type");
     assert(type != INVALID_TYPE, "can not be invalid type");
-    VMStorage result;
-    result._type = type;
-    result._segment_mask = segment_mask;
-    result._index = index;
+    VMStorage result(type, segment_mask, index);
     return result;
   }
 
-  constexpr static VMStorage stack_storage(uint16_t size, uint32_t index) {
-    VMStorage result;
-    result._type = stack_type();
-    result._size = size;
-    result._index = index;
+  constexpr static VMStorage stack_storage(uint16_t size, uint32_t offset) {
+    VMStorage result(stack_type(), size, offset);
     return result;
   }
 
@@ -80,10 +73,13 @@ public:
 
   constexpr inline static RegType stack_type();
 
-  RegType type() const { return _type; }
-  uint16_t segment_mask() const { assert(is_reg(), "must be reg"); return _segment_mask; }
-  uint16_t stack_size() const { assert(is_stack(), "must be stack"); return _size; }
-  uint32_t index() const { assert(is_valid(), "no index"); return _index; }
+  RegType type()              const { return _type; }
+  // type specific accessors to make calling code more readable
+  uint16_t segment_mask()     const { assert(is_reg(), "must be reg");     return _segment_mask_or_size; }
+  uint16_t stack_size()       const { assert(is_stack(), "must be stack"); return _segment_mask_or_size; }
+  uint32_t index()            const { assert(is_reg(), "must be reg");     return _index_or_offset; }
+  uint32_t offset()           const { assert(is_stack(), "must be stack"); return _index_or_offset; }
+  uint32_t index_or_offset()  const { assert(is_valid(), "must be valid"); return _index_or_offset; }
 
   bool is_valid() const { return _type != INVALID_TYPE; }
   bool is_reg() const { return is_valid() && !is_stack(); }
@@ -94,10 +90,8 @@ public:
 
 inline bool operator==(const VMStorage& a, const VMStorage& b) {
   return a._type == b._type
-    && a._index == b._index
-    && (a.is_stack()
-      ? a._size == b._size
-      : a._segment_mask == b._segment_mask);
+    && a._index_or_offset == b._index_or_offset
+    && a._segment_mask_or_size == b._segment_mask_or_size;
 }
 
 #endif // SHARE_PRIMS_VMSTORAGEBASE

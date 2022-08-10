@@ -107,7 +107,7 @@ static void move_reg64(MacroAssembler* masm, int out_stk_bias,
       break;
     case RegType::STACK:
       assert(to_reg.stack_size() == 8, "only moves with 64-bit targets supported");
-      masm->movq(Address(rsp, to_reg.index() + out_stk_bias), from_reg);
+      masm->movq(Address(rsp, to_reg.offset() + out_stk_bias), from_reg);
       break;
     default: ShouldNotReachHere();
   }
@@ -127,7 +127,7 @@ static void move_stack64(MacroAssembler* masm, Register tmp_reg, int in_stk_bias
     case RegType::STACK:
       assert(to_reg.stack_size() == 8, "only moves with 64-bit targets supported");
       masm->movq(tmp_reg, Address(rbp, RBP_BIAS + from_offset + in_stk_bias));
-      masm->movq(Address(rsp, to_reg.index() + out_stk_bias), tmp_reg);
+      masm->movq(Address(rsp, to_reg.offset() + out_stk_bias), tmp_reg);
       break;
     default: ShouldNotReachHere();
   }
@@ -146,7 +146,7 @@ static void move_xmm(MacroAssembler* masm, int out_stk_bias,
       break;
     case RegType::STACK:
       assert(to_reg.stack_size() == 8, "only moves with 64-bit targets supported");
-      masm->movq(Address(rsp, to_reg.index() + out_stk_bias), from_reg);
+      masm->movq(Address(rsp, to_reg.offset() + out_stk_bias), from_reg);
       break;
     default: ShouldNotReachHere();
   }
@@ -170,7 +170,7 @@ void ArgumentShuffle::pd_generate(MacroAssembler* masm, VMStorage tmp, int in_st
         break;
       case RegType::STACK:
         assert(from_reg.stack_size() == 8, "only stack_size 8 supported");
-        move_stack64(masm, tmp_reg, in_stk_bias, out_stk_bias, from_reg.index(), to_reg);
+        move_stack64(masm, tmp_reg, in_stk_bias, out_stk_bias, from_reg.offset(), to_reg);
         break;
       default: ShouldNotReachHere();
     }

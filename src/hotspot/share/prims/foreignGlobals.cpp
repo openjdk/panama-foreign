@@ -53,13 +53,13 @@ const CallRegs ForeignGlobals::parse_call_regs(jobject jconv) {
 VMStorage ForeignGlobals::parse_vmstorage(oop storage) {
   jbyte type = jdk_internal_foreign_abi_VMStorage::type(storage);
   jshort segment_mask_or_size = jdk_internal_foreign_abi_VMStorage::segment_mask_or_size(storage);
-  jint index = jdk_internal_foreign_abi_VMStorage::index(storage);
+  jint index_or_offset = jdk_internal_foreign_abi_VMStorage::index_or_offset(storage);
 
   RegType rType = static_cast<RegType>(type);
   if (rType == VMStorage::stack_type()) {
-    return VMStorage::stack_storage(segment_mask_or_size, index);
+    return VMStorage::stack_storage(segment_mask_or_size, index_or_offset);
   } else {
-    return VMStorage::reg_storage(rType, segment_mask_or_size, index);
+    return VMStorage::reg_storage(rType, segment_mask_or_size, index_or_offset);
   }
 }
 
@@ -117,7 +117,7 @@ int NativeCallingConvention::calling_convention(const BasicType* sig_bt, VMStora
         VMStorage reg = _input_regs.at(src_pos++);
         out_regs[i] = reg;
         if (reg.is_stack())
-          max_stack_offset = MAX2(max_stack_offset, reg.index() + reg.stack_size());
+          max_stack_offset = MAX2(max_stack_offset, reg.offset() + reg.stack_size());
         break;
       }
       case T_LONG:
@@ -126,7 +126,7 @@ int NativeCallingConvention::calling_convention(const BasicType* sig_bt, VMStora
         VMStorage reg = _input_regs.at(src_pos++);
         out_regs[i] = reg;
         if (reg.is_stack())
-          max_stack_offset = MAX2(max_stack_offset, reg.index() + reg.stack_size());
+          max_stack_offset = MAX2(max_stack_offset, reg.offset() + reg.stack_size());
         break;
       }
       case T_VOID: // Halves of longs and doubles
@@ -166,9 +166,9 @@ class ComputeMoveOrder: public StackObj {
     BasicType       _bt;
 
     static int get_id(VMStorage r) {
-      assert((r.index() & 0xFF000000) == 0, "index too large");
+      assert((r.index_or_offset() & 0xFF000000) == 0, "index or offset too large");
       // assuming mask and size doesn't matter for now
-      return ((int) r.type()) | (r.index() << 8);
+      return ((int) r.type()) | (r.index_or_offset() << 8);
     }
 
    public:

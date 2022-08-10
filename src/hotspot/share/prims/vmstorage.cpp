@@ -25,6 +25,6 @@
 #include "prims/vmstorage.inline.hpp"
 
 void VMStorage::print_on(outputStream* os) const {
-  os->print("{type=%d, index=%d, %s=%d}", static_cast<int8_t>(_type), _index,
-    is_stack() ? "size" : "segment_mask", is_stack() ? _size : _segment_mask);
+  os->print("{type=%d, index=%d, %s=%d}", static_cast<int8_t>(_type), _index_or_offset,
+    is_stack() ? "size" : "segment_mask", _segment_mask_or_size);
 }

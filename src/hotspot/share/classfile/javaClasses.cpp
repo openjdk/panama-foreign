@@ -4289,13 +4289,13 @@ oop jdk_internal_foreign_abi_ABIDescriptor::retBufAddrStorage(oop entry) {
 }
 
 int jdk_internal_foreign_abi_VMStorage::_type_offset;
-int jdk_internal_foreign_abi_VMStorage::_index_offset;
+int jdk_internal_foreign_abi_VMStorage::_indexOrOffset_offset;
 int jdk_internal_foreign_abi_VMStorage::_segmentMaskOrSize_offset;
 int jdk_internal_foreign_abi_VMStorage::_debugName_offset;
 
 #define VMStorage_FIELDS_DO(macro) \
   macro(_type_offset,              k, "type",              byte_signature, false); \
-  macro(_index_offset,             k, "index",             int_signature, false); \
+  macro(_indexOrOffset_offset,     k, "indexOrOffset",     int_signature, false); \
   macro(_segmentMaskOrSize_offset, k, "segmentMaskOrSize", short_signature, false); \
   macro(_debugName_offset,         k, "debugName",         string_signature, false); \
 
@@ -4318,8 +4318,8 @@ jbyte jdk_internal_foreign_abi_VMStorage::type(oop entry) {
   return entry->byte_field(_type_offset);
 }
 
-jint jdk_internal_foreign_abi_VMStorage::index(oop entry) {
-  return entry->int_field(_index_offset);
+jint jdk_internal_foreign_abi_VMStorage::index_or_offset(oop entry) {
+  return entry->int_field(_indexOrOffset_offset);
 }
 
 jshort jdk_internal_foreign_abi_VMStorage::segment_mask_or_size(oop entry) {

@@ -110,7 +110,7 @@ static void move_reg64(MacroAssembler* masm, int out_stk_bias,
       switch (to_reg.stack_size()) {
         // FIXME use correctly sized stores
         case 8: case 4: case 2: case 1:
-          masm->str(from_reg, Address(sp, to_reg.index() + out_stk_bias));
+          masm->str(from_reg, Address(sp, to_reg.offset() + out_stk_bias));
         break;
         default: ShouldNotReachHere();
       }
@@ -127,7 +127,7 @@ static void move_stack(MacroAssembler* masm, Register tmp_reg, int in_stk_bias, 
       switch (from_reg.stack_size()) {
         // FIXME use correctly sized loads
         case 8: case 4: case 2: case 1:
-          masm->ldr(as_Register(to_reg), Address(rfp, RFP_BIAS + from_reg.index() + in_stk_bias));
+          masm->ldr(as_Register(to_reg), Address(rfp, RFP_BIAS + from_reg.offset() + in_stk_bias));
         break;
         default: ShouldNotReachHere();
       }
@@ -136,10 +136,10 @@ static void move_stack(MacroAssembler* masm, Register tmp_reg, int in_stk_bias, 
       assert(to_reg.segment_mask() == V128_MASK, "only moves to v128 registers supported");
       switch (from_reg.stack_size()) {
         case 8:
-          masm->ldrd(as_FloatRegister(to_reg), Address(rfp, RFP_BIAS + from_reg.index() + in_stk_bias));
+          masm->ldrd(as_FloatRegister(to_reg), Address(rfp, RFP_BIAS + from_reg.offset() + in_stk_bias));
         break;
         case 4:
-          masm->ldrs(as_FloatRegister(to_reg), Address(rfp, RFP_BIAS + from_reg.index() + in_stk_bias));
+          masm->ldrs(as_FloatRegister(to_reg), Address(rfp, RFP_BIAS + from_reg.offset() + in_stk_bias));
         break;
         default: ShouldNotReachHere();
       }
@@ -150,8 +150,8 @@ static void move_stack(MacroAssembler* masm, Register tmp_reg, int in_stk_bias, 
       switch (from_reg.stack_size()) {
         // FIXME use correctly sized loads & stores
         case 8: case 4: case 2: case 1:
-          masm->ldr(tmp_reg, Address(rfp, RFP_BIAS + from_reg.index() + in_stk_bias));
-          masm->str(tmp_reg, Address(sp, to_reg.index() + out_stk_bias));
+          masm->ldr(tmp_reg, Address(rfp, RFP_BIAS + from_reg.offset() + in_stk_bias));
+          masm->str(tmp_reg, Address(sp, to_reg.offset() + out_stk_bias));
         break;
         default: ShouldNotReachHere();
       }
@@ -170,10 +170,10 @@ static void move_v128(MacroAssembler* masm, int out_stk_bias,
     case RegType::STACK:
       switch(to_reg.stack_size()) {
         case 8:
-          masm->strd(from_reg, Address(sp, to_reg.index() + out_stk_bias));
+          masm->strd(from_reg, Address(sp, to_reg.offset() + out_stk_bias));
         break;
         case 4:
-          masm->strs(from_reg, Address(sp, to_reg.index() + out_stk_bias));
+          masm->strs(from_reg, Address(sp, to_reg.offset() + out_stk_bias));
         break;
         default: ShouldNotReachHere();
       }

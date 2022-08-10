@@ -37,7 +37,7 @@ void ForeignGlobals::parse_register_array(objArrayOop jarray, int type_index, Gr
   int subarray_length = subarray->length();
   for (int i = 0; i < subarray_length; i++) {
     oop storage = subarray->obj_at(i);
-    jint index = jdk_internal_foreign_abi_VMStorage::index(storage);
+    jint index = jdk_internal_foreign_abi_VMStorage::index_or_offset(storage);
     array.push(converter(index));
   }
 }
