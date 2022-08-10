@@ -27,7 +27,6 @@
 #include "memory/resourceArea.hpp"
 #include "prims/foreignGlobals.inline.hpp"
 #include "runtime/jniHandles.inline.hpp"
-#include "runtime/jniHandles.inline.hpp"
 
 #define FOREIGN_ABI "jdk/internal/foreign/abi/"
 
