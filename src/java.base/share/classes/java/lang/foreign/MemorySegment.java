@@ -33,6 +33,7 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Objects;
@@ -56,11 +57,17 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 /**
  * A memory segment provides access to a contiguous region of memory.
  * <p>
- * There are two kinds of memory segments: <em>heap</em> segments, backed by a memory region that resides inside the Java heap
- * (typically a Java array), and <em>native</em> segments, backed by a memory region that resides outside the Java heap.
+ * There are two kinds of memory segments: <em>heap</em> segments, backed by a memory region that resides inside the
+ * Java heap, and <em>native</em> segments, backed by a memory region that resides outside the Java heap.
  * <p>
- * Native segments can sometimes be obtained by mapping a file into main memory ({@code mmap}). Segments obtained in this
- * way are called <em>mapped</em> segments, and their contents can be {@linkplain #force() persisted} and
+ * Heap segments can be obtained by wrapping an existing Java array instance,
+ * using one of the {@link MemorySegment#ofArray(int[])} factory methods.
+ * <p>
+ * Native segments can be obtained in two ways: first, by calling one of the {@link MemorySegment#allocateNative(MemoryLayout, MemorySession)}
+ * factory methods, which return a memory segment backed by a new off-heap memory region with given size and alignment
+ * constraints. Alternatively, native segments can be obtained by {@link FileChannel#map(MapMode, long, long, MemorySession) mapping}
+ * a file into a new off-heap memory region (in some systems, this operation is sometimes referred to as {@code mmap}).
+ * Segments obtained in this way are called <em>mapped</em> segments, and their contents can be {@linkplain #force() persisted} and
  * {@linkplain #load() loaded} to and from the underlying memory-mapped file.
  * <p>
  * All memory segments have an {@linkplain #address() address} and a {@linkplain #byteSize() size}. Together, these ensure
@@ -206,31 +213,29 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * constructed from a {@code byte[]} might have a subset of addresses {@code S} which happen to be 8-byte aligned. But determining
  * which segment addresses belong to {@code S} requires reasoning about details which are ultimately implementation-dependent.
  *
- * <h2 id="wrapping-addresses">Wrapping raw addresses</h2>
+ * <h2 id="wrapping-addresses">Zero-length memory segments</h2>
  *
- * When a native memory segment is created using a factory like
- * {@link java.lang.foreign.MemorySegment#allocateNative(long, java.lang.foreign.MemorySession)}, the segment properties
- * (spatial bounds, temporal bounds and confinement) are fully known at segment creation, and are used to validate
- * access operations on the memory segment.
+ * When interacting with foreign functions, it is common for those functions to allocate a region of memory and
+ * return a pointer to that region. For example, consider a C function whose return type is {@code char*}.
+ * Such a function can be interpreted as returning a pointer to a region containing a single char value;
+ * or, alternatively, as returning a pointer to a region containing an array of char values
+ * (where the size of the array might be provided in a separate parameter). The Java runtime has no insight
+ * into the size of the region; only the address of the start of the region, stored in the pointer, is available.
  * <p>
- * It is sometimes useful to {@linkplain java.lang.foreign.MemorySegment#ofAddress(long) wrap} a memory segment around
- * a raw address (e.g. a {@code long} value). This results in a zero-length memory segment, associated with the
- * {@linkplain java.lang.foreign.MemorySession#global() global} memory session. Since such segments feature trivial spatial
- * bounds, any attempt to access these segments will fail with {@link java.lang.IndexOutOfBoundsException}. This is a
- * crucial safety feature: as these segments are associated with a memory region whose size is not known, any access
- * operations involving these segments cannot be validated.
+ * The API uses a memory segment to represent a pointer returned from a foreign function. The address of the segment is
+ * the address stored in the pointer, and the size of the segment is zero. Similarly, the API returns a memory segment
+ * of size zero when a client reads an <em>address</em> from within a segment.
  * <p>
- * The need for wrapping segments around raw addresses often arises in the context of interacting with foreign functions.
- * For example, consider the case of a C function returning the type {@code char*}.
- * Such a function can be interpreted as returning a pointer to a memory region containing a single {@code char} value;
- * or, alternatively, as returning a pointer to a memory region containing an array of {@code char} values
- * (where the size of the array might be provided in a separate parameter). In this case, the pointer returned by the
- * function is wrapped into a fresh zero-length memory segment.
+ * Since a zero-length segment feature trivial spatial bounds, any attempt to access these segments will fail with
+ * {@link IndexOutOfBoundsException}. This is a crucial safety feature: as these segments are associated with a memory
+ * region whose size is not known, any access operations involving these segments cannot be validated.
+ * In effect, a zero-length memory segment <em>wraps</em> an address, and it cannot be used without explicit intent.
  * <p>
- * A similar situation arises when clients
- * {@linkplain java.lang.foreign.MemorySegment#get(java.lang.foreign.ValueLayout.OfAddress, long) read} an address from
- * an existing memory segment. Again, a fresh zero-length native memory segment is constructed from a raw long value
- * (the value read from the memory segment).
+ * Zero-length memory segments obtained when interacting with foreign functions are associated with the
+ * {@link MemorySession#global() global} memory session. This is because the Java runtime, in addition to having no insight
+ * into the size of the memory region associated with a pointer returned from a foreign function, it also has no insight
+ * into the lifetime intended for said memory region by the foreign function that allocated it. The global memory
+ * session ensures that the obtained segment can be passed, opaquely, to other pointer-accepting foreign functions.
  * <p>
  * To access native zero-length memory segments, clients have two options. First, they can
  * {@linkplain java.lang.foreign.MemorySegment#ofAddress(long, long, MemorySession) obtain}
