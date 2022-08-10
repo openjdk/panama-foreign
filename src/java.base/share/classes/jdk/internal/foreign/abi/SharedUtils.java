@@ -146,7 +146,7 @@ public class SharedUtils {
     }
 
     /**
-     * Takes a MethodHandle that takes an input buffer as a first argument (a MemoryAddress), and returns nothing,
+     * Takes a MethodHandle that takes an input buffer as a first argument (a MemorySegment), and returns nothing,
      * and adapts it to return a MemorySegment, by allocating a MemorySegment for the input
      * buffer, calling the target MethodHandle, and then returning the allocated MemorySegment.
      *
@@ -161,22 +161,22 @@ public class SharedUtils {
         if (handle.type().returnType() != void.class)
             throw new IllegalArgumentException("return expected to be void for in memory returns: " + handle.type());
         if (handle.type().parameterType(2) != MemorySegment.class)
-            throw new IllegalArgumentException("MemoryAddress expected as third param: " + handle.type());
+            throw new IllegalArgumentException("MemorySegment expected as third param: " + handle.type());
         if (cDesc.returnLayout().isEmpty())
             throw new IllegalArgumentException("Return layout needed: " + cDesc);
 
         MethodHandle ret = identity(MemorySegment.class); // (MemorySegment) MemorySegment
-        handle = collectArguments(ret, 1, handle); // (MemorySegment, Addressable, SegmentAllocator, MemoryAddress, ...) MemorySegment
-        handle = mergeArguments(handle, 0, 3);  // (MemorySegment, Addressable, SegmentAllocator, ...) MemorySegment
-        handle = collectArguments(handle, 0, insertArguments(MH_ALLOC_BUFFER, 1, cDesc.returnLayout().get())); // (SegmentAllocator, Addressable, SegmentAllocator, ...) MemoryAddress
-        handle = mergeArguments(handle, 0, 2);  // (SegmentAllocator, Addressable, ...) MemoryAddress
-        handle = swapArguments(handle, 0, 1); // (Addressable, SegmentAllocator, ...) MemoryAddress
+        handle = collectArguments(ret, 1, handle); // (MemorySegment, MemorySegment, SegmentAllocator, MemorySegment, ...) MemorySegment
+        handle = mergeArguments(handle, 0, 3);  // (MemorySegment, MemorySegment, SegmentAllocator, ...) MemorySegment
+        handle = collectArguments(handle, 0, insertArguments(MH_ALLOC_BUFFER, 1, cDesc.returnLayout().get())); // (SegmentAllocator, MemorySegment, SegmentAllocator, ...) MemorySegment
+        handle = mergeArguments(handle, 0, 2);  // (SegmentAllocator, MemorySegment, ...) MemorySegment
+        handle = swapArguments(handle, 0, 1); // (MemorySegment, SegmentAllocator, ...) MemorySegment
         return handle;
     }
 
     /**
      * Takes a MethodHandle that returns a MemorySegment, and adapts it to take an input buffer as a first argument
-     * (a MemoryAddress), and upon invocation, copies the contents of the returned MemorySegment into the input buffer
+     * (a MemorySegment), and upon invocation, copies the contents of the returned MemorySegment into the input buffer
      * passed as the first argument.
      *
      * @param target the target handle to adapt
@@ -186,7 +186,7 @@ public class SharedUtils {
         if (target.type().returnType() != MemorySegment.class)
             throw new IllegalArgumentException("Must return MemorySegment for IMR");
 
-        target = collectArguments(MH_BUFFER_COPY, 1, target); // (MemoryAddress, ...) MemoryAddress
+        target = collectArguments(MH_BUFFER_COPY, 1, target); // (MemorySegment, ...) MemorySegment
 
         if (dropReturn) { // no handling for return value, need to drop it
             target = dropReturn(target);
