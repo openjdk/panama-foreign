@@ -24,7 +24,8 @@
 /*
  * @test
  * @enablePreview
- * @run testng TestLayouts
+ * @modules java.base/jdk.internal.misc
+ * @run testng TestValueLayouts
  */
 
 import org.testng.annotations.*;
@@ -40,22 +41,12 @@ public class TestValueLayouts {
 
     @Test
     public void testByte() {
-        testAligned(JAVA_INT, int.class, Byte.SIZE);
-    }
-
-    @Test
-    public void testByteUnaligned() {
-        testUnaligned(JAVA_INT_UNALIGNED, int.class, Byte.SIZE);
+        testAligned(JAVA_BYTE, byte.class, Byte.SIZE);
     }
 
     @Test
     public void testBoolean() {
         testAligned(JAVA_BOOLEAN, boolean.class, Byte.SIZE);
-    }
-
-    @Test
-    public void testBooleanUnaligned() {
-        testUnaligned(JAVA_BOOLEAN_UNALIGNED, boolean.class, Byte.SIZE);
     }
 
     @Test
@@ -84,7 +75,7 @@ public class TestValueLayouts {
     }
 
     @Test
-    public void testIntUnaligned() {
+    public void testLongUnaligned() {
         testUnaligned(JAVA_LONG_UNALIGNED, long.class, Long.SIZE);
     }
 
@@ -104,7 +95,7 @@ public class TestValueLayouts {
     }
 
     @Test
-    public void testFloatUnaligned() {
+    public void testDoubleUnaligned() {
         testUnaligned(JAVA_DOUBLE_UNALIGNED, double.class, Double.SIZE);
     }
 
@@ -124,10 +115,9 @@ public class TestValueLayouts {
     }
 
     @Test
-    public void testCharUnaligned() {
+    public void testAddressUnaligned() {
         testUnaligned(ADDRESS_UNALIGNED, MemorySegment.class, Unsafe.ADDRESS_SIZE * 8L);
     }
-
 
     void testAligned(ValueLayout layout,
                      Class<?> carrier,
@@ -150,8 +140,8 @@ public class TestValueLayouts {
         assertEquals(layout.order(), ByteOrder.nativeOrder());
         assertEquals(layout.bitAlignment(), bitAlignment);
         assertTrue(layout.name().isEmpty());
-        assertEquals(layout.byteSize(), layout.bitSize() * 8);
-        assertEquals(layout.byteAlignment(), layout.bitAlignment() * 8);
+        assertEquals(layout.byteSize(), layout.bitSize() / 8);
+        assertEquals(layout.byteAlignment(), layout.bitAlignment() / 8);
 
     }
 

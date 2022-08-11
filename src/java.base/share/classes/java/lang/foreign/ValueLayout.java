@@ -754,32 +754,6 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
     public static final OfAddress ADDRESS_UNALIGNED = unaligned(ADDRESS);
 
     /**
-     * An unaligned value layout constant whose size is the same as that of a Java {@code byte},
-     * and byte order set to {@link ByteOrder#nativeOrder()}.
-     * Equivalent to the following code:
-     * {@snippet lang=java :
-     * MemoryLayout.valueLayout(byte.class, ByteOrder.nativeOrder())
-     *             .withBitAlignment(8);
-     * }
-     * @apiNote Care should be taken when using unaligned value layouts as they may induce
-     *          performance and portability issues.
-     */
-    public static final OfByte JAVA_BYTE_UNALIGNED = unaligned(JAVA_BYTE);
-
-    /**
-     * An unaligned value layout constant whose size is the same as that of a Java {@code boolean}
-     * and byte order set to {@link ByteOrder#nativeOrder()}.
-     * Equivalent to the following code:
-     * {@snippet lang=java :
-     * MemoryLayout.valueLayout(boolean.class, ByteOrder.nativeOrder())
-     *             .withBitAlignment(8);
-     * }
-     * @apiNote Care should be taken when using unaligned value layouts as they may induce
-     *          performance and portability issues.
-     */
-    public static final OfBoolean JAVA_BOOLEAN_UNALIGNED = unaligned(JAVA_BOOLEAN);
-
-    /**
      * An unaligned value layout constant whose size is the same as that of a Java {@code char}
      * and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
