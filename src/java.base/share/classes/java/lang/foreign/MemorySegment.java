@@ -63,7 +63,7 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * Heap segments can be obtained by wrapping an existing Java array instance,
  * using one of the {@link MemorySegment#ofArray(int[])} factory methods.
  * <p>
- * Native segments can be obtained in two ways: first, by calling one of the {@link MemorySegment#allocateNative(MemoryLayout, MemorySession)}
+ * Native segments can be obtained by calling one of the {@link MemorySegment#allocateNative(MemoryLayout, MemorySession)}
  * factory methods, which return a memory segment backed by a new off-heap region of memory with given size and alignment
  * constraints. Alternatively, native segments can be obtained by {@link FileChannel#map(MapMode, long, long, MemorySession) mapping}
  * a file into a new off-heap region of memory (in some systems, this operation is sometimes referred to as {@code mmap}).
@@ -71,22 +71,23 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * {@linkplain #load() loaded} to and from the underlying memory-mapped file.
  * <p>
  * All memory segments have an {@linkplain #address() address} and a {@linkplain #byteSize() size}. Together, these ensure
- * that access operations on a memory segment cannot affect an address which falls <em>outside</em> the boundaries of
- * the region of memory associated with the segment being accessed.
+ * that access operations on a memory segment (described below) cannot affect an address which falls <em>outside</em>
+ * the boundaries of the region of memory associated with the memory segment. (Access operations are described below.)
+ * That is, a memory segment has <em>spatial bounds</em>.
  * <p>
- * All memory segments are associated with a {@linkplain MemorySession memory session}, which ensures that access operations
- * on a memory segment cannot occur <em>after</em> the region of memory associated with the memory segment being accessed
- * is no longer available (that is, after the memory session associated with the accessed memory segment has been
- * {@linkplain MemorySession#close() closed}).
+ * All memory segments are associated with a {@linkplain MemorySession memory session}. This ensures that access operations
+ * on a memory segment cannot occur when the region of memory associated with the memory segment is no longer available
+ * (e.g. after the memory session associated with the accessed memory segment has been {@linkplain MemorySession#close() closed}).
+ * That is, a memory segment has <em>temporal bounds</em>.
  * <p>
- * Finally, access to a memory segment is subject to the thread-confinement checks enforced by the associated memory
+ * Finally, access operations on a memory segment are subject to the thread-confinement checks enforced by the associated memory
  * session; that is, if the segment is associated with a {@linkplain MemorySession#openShared() shared session},
  * it can be accessed by multiple threads; if it is associated with a {@linkplain MemorySession#openConfined() confined session},
  * it can only be accessed by the thread which owns the memory session.
  *
  * <h2 id="segment-deref">Accessing memory segments</h2>
  *
- * A memory segment can be read or written using various methods provided in this class (e.g. {@link #get(ValueLayout.OfInt, long)}).
+ * A memory segment can be read or written using various access methods provided in this class (e.g. {@link #get(ValueLayout.OfInt, long)}).
  * Each access method takes a {@linkplain ValueLayout value layout}, which specifies the size,
  * alignment constraints, byte order as well as the Java type associated with the access operation, and an offset.
  * For instance, to read an int from a segment, using {@linkplain ByteOrder#nativeOrder() default endianness}, the following code can be used:
@@ -131,9 +132,9 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  *
  * <h2 id="slicing">Slicing memory segments</h2>
  *
- * Memory segments support <em>slicing</em>. A memory segment can be used to {@linkplain MemorySegment#asSlice(long, long) obtain}
- * other segments backed by the same underlying region of memory, but with <em>stricter</em> spatial bounds than the ones
- * of the original segment:
+ * Memory segments support <em>slicing</em>. {@linkplain MemorySegment#asSlice(long, long) Slicing} a memory segment
+ * returns a new memory segment that is backed by the same region of memory as the original, but with <em>stricter</em>
+ * spatial bounds than those of the original:
  * {@snippet lang=java :
  * MemorySession session = ...
  * MemorySegment segment = MemorySegment.allocateNative(100, session);
@@ -165,21 +166,24 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  *
  * <h2 id="segment-alignment">Alignment</h2>
  *
- * When accessing a memory segment using a layout, the runtime must check that the segment address being accessed
- * matches the layout's {@linkplain MemoryLayout#byteAlignment() alignment constraints}. If the segment being
- * accessed is a native segment, then it has a concrete {@linkplain #address() base address}, which can
+ * Access operations on a memory segment are constrained not only by the spatial and temporal bounds of the segment,
+ * but also by the alignment constraints of the layout specified to the operation. An access operation can access only
+ * those offsets in the segment that are <em>aligned</em> according to the layout.
+ * <p>
+ * If the segment being accessed is a native segment, then it has a concrete {@linkplain #address() base address}, which can
  * be used to perform the alignment check. The pseudo-function below demonstrates this:
  *
  * {@snippet lang=java :
  * boolean isAligned(MemorySegment segment, long offset, MemoryLayout layout) {
- *   return ((segment.address().address() + offset) % layout.byteAlignment()) == 0;
+ *   return ((segment.address() + offset) % layout.byteAlignment()) == 0;
  * }
  * }
  *
- * If, however, the segment being accessed is a heap segment, the above function will not work: a heap
- * segment's {@linkplain #address() base address} is <em>virtualized</em> and, as such, cannot be used to construct an
- * alignment check. Instead, heap segments are assumed to produce addresses which are never more aligned than the element
- * size of the Java array from which they have originated from, as shown in the following table:
+ * If the segment being accessed is a heap segment, the above function will not work: the region of memory associated
+ * with heap segment is managed (and moved around) by the garbage collector. As such the base address of a heap segment
+ * is not guaranteed to be stable, and the above function cannot be used when heap segments are involved.
+ * For this reason, the layout specified to access operation involving a heap segment cannot feature alignment
+ * constraints that are greater than the element size of the Java array backing heap segment, as shown in the following table:
  *
  * <blockquote><table class="plain">
  * <caption style="display:none">Array type of an array backing a segment and its address alignment</caption>
@@ -209,22 +213,23 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * </tbody>
  * </table></blockquote>
  *
- * Note that the above definition is conservative: it might be possible, for instance, that a heap segment
- * constructed from a {@code byte[]} might have a subset of addresses {@code S} which happen to be 8-byte aligned. But determining
- * which segment addresses belong to {@code S} requires reasoning about details which are ultimately implementation-dependent.
+ * Note that the above definition is conservative: it might be possible, for instance, for a heap segment
+ * constructed from a {@code byte[]} ti have a subset of addresses {@code S} which happen to be 8-byte aligned. But determining
+ * which addresses belong to {@code S} requires reasoning about details which are ultimately implementation-dependent.
  *
  * <h2 id="wrapping-addresses">Zero-length memory segments</h2>
  *
- * When interacting with foreign functions, it is common for those functions to allocate a region of memory and
- * return a pointer to that region. For example, consider a C function whose return type is {@code char*}.
- * Such a function can be interpreted as returning a pointer to a region containing a single char value;
- * or, alternatively, as returning a pointer to a region containing an array of char values
- * (where the size of the array might be provided in a separate parameter). The Java runtime has no insight
- * into the size of the region; only the address of the start of the region, stored in the pointer, is available.
+ * When interacting with <a href="../package-info.html#ffa></a>foreign functions</a>, it is common for those functions
+ * to allocate a region of memory and return a pointer to that region. Modeling the region of memory with a memory segment
+ * is challenging because the Java runtime has no insight into the size of the region. Only the address of the start of
+ * the region, stored in the pointer, is available. For example, a C function with return type {@code char*} might return
+ * a pointer to a region containing a single {@code char} value, or to a region containing an array of {@code char} values,
+ * where the size of the array might be provided in a separate parameter. The size of the array is not readily apparent
+ * to the code calling the foreign function and hoping to use its result.
  * <p>
- * The API uses a memory segment to represent a pointer returned from a foreign function. The address of the segment is
- * the address stored in the pointer, and the size of the segment is zero. Similarly, the API returns a memory segment
- * of size zero when a client reads an <em>address</em> from within a segment.
+ * The {@link Linker} represents a pointer returned from a foreign function with a <em>zero-length memory segment</em>.
+ * The address of the segment is the address stored in the pointer. Similarly, when a client reads an <em>address</em> from
+ * a memory segment, a zero-length memory segment is returned.
  * <p>
  * Since a zero-length segment feature trivial spatial bounds, any attempt to access these segments will fail with
  * {@link IndexOutOfBoundsException}. This is a crucial safety feature: as these segments are associated with a memory
