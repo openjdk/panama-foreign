@@ -650,126 +650,6 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
     }
 
     /**
-     * This class contains a number of unaligned value layouts.
-     * <p>
-     * @apiNote Care should be taken when using unaligned value layouts as they may induce
-     *          performance and portability issues.
-     */
-    public static final class Unaligned {
-        // These less frequently used constants are lazily initialized and not directly visible in ValueLayout
-        private Unaligned() { }
-
-        /**
-         * An unaligned value layout constant whose size is the same as that of a machine address ({@code size_t}),
-         * and byte order set to {@link ByteOrder#nativeOrder()}.
-         * Equivalent to the following code:
-         * {@snippet lang=java :
-         * MemoryLayout.valueLayout(MemorySegment.class, ByteOrder.nativeOrder());
-         * }
-         * @apiNote Care should be taken when using unaligned value layouts as they may induce
-         *          performance and portability issues.
-         */
-        public static final OfAddress UNALIGNED_ADDRESS = new OfAddress(ByteOrder.nativeOrder());
-
-        /**
-         * An unaligned value layout constant whose size is the same as that of a Java {@code byte},
-         * and byte order set to {@link ByteOrder#nativeOrder()}.
-         * Equivalent to the following code:
-         * {@snippet lang=java :
-         * MemoryLayout.valueLayout(byte.class, ByteOrder.nativeOrder());
-         * }
-         * @apiNote Care should be taken when using unaligned value layouts as they may induce
-         *          performance and portability issues.
-         */
-        public static final OfByte UNALIGNED_JAVA_BYTE = new OfByte(ByteOrder.nativeOrder());
-
-        /**
-         * An unaligned value layout constant whose size is the same as that of a Java {@code boolean}
-         * and byte order set to {@link ByteOrder#nativeOrder()}.
-         * Equivalent to the following code:
-         * {@snippet lang=java :
-         * MemoryLayout.valueLayout(boolean.class, ByteOrder.nativeOrder());
-         * }
-         * @apiNote Care should be taken when using unaligned value layouts as they may induce
-         *          performance and portability issues.
-         */
-        public static final OfBoolean UNALIGNED_JAVA_BOOLEAN = new OfBoolean(ByteOrder.nativeOrder());
-
-        /**
-         * An unaligned value layout constant whose size is the same as that of a Java {@code char}
-         * and byte order set to {@link ByteOrder#nativeOrder()}.
-         * Equivalent to the following code:
-         * {@snippet lang=java :
-         * MemoryLayout.valueLayout(char.class, ByteOrder.nativeOrder());
-         * }
-         * @apiNote Care should be taken when using unaligned value layouts as they may induce
-         *          performance and portability issues.
-         */
-        public static final OfChar UNALIGNED_JAVA_CHAR = new OfChar(ByteOrder.nativeOrder());
-
-        /**
-         * An unaligned value layout constant whose size is the same as that of a Java {@code short}
-         * and byte order set to {@link ByteOrder#nativeOrder()}.
-         * Equivalent to the following code:
-         * {@snippet lang=java :
-         * MemoryLayout.valueLayout(short.class, ByteOrder.nativeOrder());
-         * }
-         * @apiNote Care should be taken when using unaligned value layouts as they may induce
-         *          performance and portability issues.
-         */
-        public static final OfShort UNALIGNED_JAVA_SHORT = new OfShort(ByteOrder.nativeOrder());
-
-        /**
-         * An unaligned value layout constant whose size is the same as that of a Java {@code int}
-         * and byte order set to {@link ByteOrder#nativeOrder()}.
-         * Equivalent to the following code:
-         * {@snippet lang=java :
-         * MemoryLayout.valueLayout(int.class, ByteOrder.nativeOrder());
-         * }
-         * @apiNote Care should be taken when using unaligned value layouts as they may induce
-         *          performance and portability issues.
-         */
-        public static final OfInt UNALIGNED_JAVA_INT = new OfInt(ByteOrder.nativeOrder());
-
-        /**
-         * An unaligned value layout constant whose size is the same as that of a Java {@code long}
-         * and byte order set to {@link ByteOrder#nativeOrder()}.
-         * Equivalent to the following code:
-         * {@snippet lang=java :
-         * MemoryLayout.valueLayout(long.class, ByteOrder.nativeOrder());
-         * }
-         * @apiNote Care should be taken when using unaligned value layouts as they may induce
-         *          performance and portability issues.
-         */
-        public static final OfLong UNALIGNED_JAVA_LONG = new OfLong(ByteOrder.nativeOrder());
-
-        /**
-         * An unaligned value layout constant whose size is the same as that of a Java {@code float}
-         * and byte order set to {@link ByteOrder#nativeOrder()}.
-         * Equivalent to the following code:
-         * {@snippet lang=java :
-         * MemoryLayout.valueLayout(float.class, ByteOrder.nativeOrder());
-         * }
-         * @apiNote Care should be taken when using unaligned value layouts as they may induce
-         *          performance and portability issues.
-         */
-        public static final OfFloat UNALIGNED_JAVA_FLOAT = new OfFloat(ByteOrder.nativeOrder());
-
-        /**
-         * An unaligned value layout constant whose size is the same as that of a Java {@code double}
-         * and byte order set to {@link ByteOrder#nativeOrder()}.
-         * Equivalent to the following code:
-         * {@snippet lang=java :
-         * MemoryLayout.valueLayout(double.class, ByteOrder.nativeOrder());
-         * }
-         * @apiNote Care should be taken when using unaligned value layouts as they may induce
-         *          performance and portability issues.
-         */
-        public static final OfDouble UNALIGNED_JAVA_DOUBLE = new OfDouble(ByteOrder.nativeOrder());
-
-    }
-
-    /**
      * A value layout constant whose size is the same as that of a machine address ({@code size_t}),
      * bit alignment set to {@code sizeof(size_t) * 8}, byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
@@ -778,8 +658,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      *             .withBitAlignment(<address size>);
      * }
      */
-    public static final OfAddress ADDRESS = new OfAddress(ByteOrder.nativeOrder())
-            .withBitAlignment(ValueLayout.ADDRESS_SIZE_BITS);
+    public static final OfAddress ADDRESS = new OfAddress(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code byte},
@@ -789,7 +668,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * MemoryLayout.valueLayout(byte.class, ByteOrder.nativeOrder()).withBitAlignment(8);
      * }
      */
-    public static final OfByte JAVA_BYTE = new OfByte(ByteOrder.nativeOrder()).withBitAlignment(8);
+    public static final OfByte JAVA_BYTE = new OfByte(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code boolean},
@@ -799,7 +678,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * MemoryLayout.valueLayout(boolean.class, ByteOrder.nativeOrder()).withBitAlignment(8);
      * }
      */
-    public static final OfBoolean JAVA_BOOLEAN = new OfBoolean(ByteOrder.nativeOrder()).withBitAlignment(8);
+    public static final OfBoolean JAVA_BOOLEAN = new OfBoolean(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code char},
@@ -809,7 +688,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * MemoryLayout.valueLayout(char.class, ByteOrder.nativeOrder()).withBitAlignment(16);
      * }
      */
-    public static final OfChar JAVA_CHAR = new OfChar(ByteOrder.nativeOrder()).withBitAlignment(16);
+    public static final OfChar JAVA_CHAR = new OfChar(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code short},
@@ -819,7 +698,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * MemoryLayout.valueLayout(short.class, ByteOrder.nativeOrder()).withBitAlignment(16);
      * }
      */
-    public static final OfShort JAVA_SHORT = new OfShort(ByteOrder.nativeOrder()).withBitAlignment(16);
+    public static final OfShort JAVA_SHORT = new OfShort(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code int},
@@ -829,7 +708,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * MemoryLayout.valueLayout(int.class, ByteOrder.nativeOrder()).withBitAlignment(32);
      * }
      */
-    public static final OfInt JAVA_INT = new OfInt(ByteOrder.nativeOrder()).withBitAlignment(32);
+    public static final OfInt JAVA_INT = new OfInt(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code long},
@@ -839,8 +718,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * MemoryLayout.valueLayout(long.class, ByteOrder.nativeOrder()).withBitAlignment(64);
      * }
      */
-    public static final OfLong JAVA_LONG = new OfLong(ByteOrder.nativeOrder())
-            .withBitAlignment(64);
+    public static final OfLong JAVA_LONG = new OfLong(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code float},
@@ -850,7 +728,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * MemoryLayout.valueLayout(float.class, ByteOrder.nativeOrder()).withBitAlignment(32);
      * }
      */
-    public static final OfFloat JAVA_FLOAT = new OfFloat(ByteOrder.nativeOrder()).withBitAlignment(32);
+    public static final OfFloat JAVA_FLOAT = new OfFloat(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code double},
@@ -860,5 +738,128 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * MemoryLayout.valueLayout(double.class, ByteOrder.nativeOrder()).withBitAlignment(64);
      * }
      */
-    public static final OfDouble JAVA_DOUBLE = new OfDouble(ByteOrder.nativeOrder()).withBitAlignment(64);
+    public static final OfDouble JAVA_DOUBLE = new OfDouble(ByteOrder.nativeOrder());
+
+    /**
+     * An unaligned value layout constant whose size is the same as that of a machine address ({@code size_t}),
+     * and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * {@snippet lang=java :
+     * MemoryLayout.valueLayout(MemorySegment.class, ByteOrder.nativeOrder())
+     *             .withBitAlignment(8);
+     * }
+     * @apiNote Care should be taken when using unaligned value layouts as they may induce
+     *          performance and portability issues.
+     */
+    public static final OfAddress ADDRESS_UNALIGNED = unaligned(ADDRESS);
+
+    /**
+     * An unaligned value layout constant whose size is the same as that of a Java {@code byte},
+     * and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * {@snippet lang=java :
+     * MemoryLayout.valueLayout(byte.class, ByteOrder.nativeOrder())
+     *             .withBitAlignment(8);
+     * }
+     * @apiNote Care should be taken when using unaligned value layouts as they may induce
+     *          performance and portability issues.
+     */
+    public static final OfByte JAVA_BYTE_UNALIGNED = unaligned(JAVA_BYTE);
+
+    /**
+     * An unaligned value layout constant whose size is the same as that of a Java {@code boolean}
+     * and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * {@snippet lang=java :
+     * MemoryLayout.valueLayout(boolean.class, ByteOrder.nativeOrder())
+     *             .withBitAlignment(8);
+     * }
+     * @apiNote Care should be taken when using unaligned value layouts as they may induce
+     *          performance and portability issues.
+     */
+    public static final OfBoolean JAVA_BOOLEAN_UNALIGNED = unaligned(JAVA_BOOLEAN);
+
+    /**
+     * An unaligned value layout constant whose size is the same as that of a Java {@code char}
+     * and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * {@snippet lang=java :
+     * MemoryLayout.valueLayout(char.class, ByteOrder.nativeOrder())
+     *             .withBitAlignment(8);
+     * }
+     * @apiNote Care should be taken when using unaligned value layouts as they may induce
+     *          performance and portability issues.
+     */
+    public static final OfChar JAVA_CHAR_UNALIGNED = unaligned(JAVA_CHAR);
+
+    /**
+     * An unaligned value layout constant whose size is the same as that of a Java {@code short}
+     * and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * {@snippet lang=java :
+     * MemoryLayout.valueLayout(short.class, ByteOrder.nativeOrder())
+     *             .withBitAlignment(8);
+     * }
+     * @apiNote Care should be taken when using unaligned value layouts as they may induce
+     *          performance and portability issues.
+     */
+    public static final OfShort JAVA_SHORT_UNALIGNED = unaligned(JAVA_SHORT);
+
+    /**
+     * An unaligned value layout constant whose size is the same as that of a Java {@code int}
+     * and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * {@snippet lang=java :
+     * MemoryLayout.valueLayout(int.class, ByteOrder.nativeOrder())
+     *             .withBitAlignment(8);
+     * }
+     * @apiNote Care should be taken when using unaligned value layouts as they may induce
+     *          performance and portability issues.
+     */
+    public static final OfInt JAVA_INT_UNALIGNED = unaligned(JAVA_INT);
+
+    /**
+     * An unaligned value layout constant whose size is the same as that of a Java {@code long}
+     * and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * {@snippet lang=java :
+     * MemoryLayout.valueLayout(long.class, ByteOrder.nativeOrder())
+     *             .withBitAlignment(8);
+     * }
+     * @apiNote Care should be taken when using unaligned value layouts as they may induce
+     *          performance and portability issues.
+     */
+    public static final OfLong JAVA_LONG_UNALIGNED = unaligned(JAVA_LONG);
+
+    /**
+     * An unaligned value layout constant whose size is the same as that of a Java {@code float}
+     * and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * {@snippet lang=java :
+     * MemoryLayout.valueLayout(float.class, ByteOrder.nativeOrder())
+     *             .withBitAlignment(8);
+     * }
+     * @apiNote Care should be taken when using unaligned value layouts as they may induce
+     *          performance and portability issues.
+     */
+    public static final OfFloat JAVA_FLOAT_UNALIGNED = unaligned(JAVA_FLOAT);
+
+    /**
+     * An unaligned value layout constant whose size is the same as that of a Java {@code double}
+     * and byte order set to {@link ByteOrder#nativeOrder()}.
+     * Equivalent to the following code:
+     * {@snippet lang=java :
+     * MemoryLayout.valueLayout(double.class, ByteOrder.nativeOrder())
+     *             .withBitAlignment(8);
+     * }
+     * @apiNote Care should be taken when using unaligned value layouts as they may induce
+     *          performance and portability issues.
+     */
+    public static final OfDouble JAVA_DOUBLE_UNALIGNED = unaligned(JAVA_DOUBLE);
+
+    @SuppressWarnings("unchecked")
+    private static <T extends MemoryLayout> T unaligned(T layout) {
+        return (T) layout.withBitAlignment(8);
+    }
+
 }
