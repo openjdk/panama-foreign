@@ -57,25 +57,25 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 /**
  * A memory segment provides access to a contiguous region of memory.
  * <p>
- * There are two kinds of memory segments: <em>heap</em> segments, backed by a memory region that resides inside the
- * Java heap, and <em>native</em> segments, backed by a memory region that resides outside the Java heap.
+ * There are two kinds of memory segments: <em>heap</em> segments, backed by a region of memory that resides inside the
+ * Java heap, and <em>native</em> segments, backed by a region of memory that resides outside the Java heap.
  * <p>
  * Heap segments can be obtained by wrapping an existing Java array instance,
  * using one of the {@link MemorySegment#ofArray(int[])} factory methods.
  * <p>
  * Native segments can be obtained in two ways: first, by calling one of the {@link MemorySegment#allocateNative(MemoryLayout, MemorySession)}
- * factory methods, which return a memory segment backed by a new off-heap memory region with given size and alignment
+ * factory methods, which return a memory segment backed by a new off-heap region of memory with given size and alignment
  * constraints. Alternatively, native segments can be obtained by {@link FileChannel#map(MapMode, long, long, MemorySession) mapping}
- * a file into a new off-heap memory region (in some systems, this operation is sometimes referred to as {@code mmap}).
+ * a file into a new off-heap region of memory (in some systems, this operation is sometimes referred to as {@code mmap}).
  * Segments obtained in this way are called <em>mapped</em> segments, and their contents can be {@linkplain #force() persisted} and
  * {@linkplain #load() loaded} to and from the underlying memory-mapped file.
  * <p>
  * All memory segments have an {@linkplain #address() address} and a {@linkplain #byteSize() size}. Together, these ensure
- * that access operations on a memory segment cannot affect a memory location which falls <em>outside</em> the boundaries of
- * the memory region associated with the segment being accessed.
+ * that access operations on a memory segment cannot affect an address which falls <em>outside</em> the boundaries of
+ * the region of memory associated with the segment being accessed.
  * <p>
  * All memory segments are associated with a {@linkplain MemorySession memory session}, which ensures that access operations
- * on a memory segment cannot occur <em>after</em> the memory region associated with the memory segment being accessed
+ * on a memory segment cannot occur <em>after</em> the region of memory associated with the memory segment being accessed
  * is no longer available (that is, after the memory session associated with the accessed memory segment has been
  * {@linkplain MemorySession#close() closed}).
  * <p>
@@ -132,7 +132,7 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * <h2 id="slicing">Slicing memory segments</h2>
  *
  * Memory segments support <em>slicing</em>. A memory segment can be used to {@linkplain MemorySegment#asSlice(long, long) obtain}
- * other segments backed by the same underlying memory region, but with <em>stricter</em> spatial bounds than the ones
+ * other segments backed by the same underlying region of memory, but with <em>stricter</em> spatial bounds than the ones
  * of the original segment:
  * {@snippet lang=java :
  * MemorySession session = ...
@@ -233,8 +233,8 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * <p>
  * Zero-length memory segments obtained when interacting with foreign functions are associated with the
  * {@link MemorySession#global() global} memory session. This is because the Java runtime, in addition to having no insight
- * into the size of the memory region associated with a pointer returned from a foreign function, it also has no insight
- * into the lifetime intended for said memory region by the foreign function that allocated it. The global memory
+ * into the size of the region of memory associated with a pointer returned from a foreign function, it also has no insight
+ * into the lifetime intended for said region of memory by the foreign function that allocated it. The global memory
  * session ensures that the obtained segment can be passed, opaquely, to other pointer-accepting foreign functions.
  * <p>
  * To access native zero-length memory segments, clients have two options. First, they can
@@ -277,13 +277,13 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
-     * Returns the base address of the memory region associated with this segment. If this memory segment is
+     * Returns the base address of the region of memory associated with this segment. If this memory segment is
      * a {@linkplain #isNative() native} memory segment, then the returned address is the off-heap address
-     * at which the native memory region associated with this segment starts. If this memory segment is an array
+     * at which the native region of memory associated with this segment starts. If this memory segment is an array
      * memory segment, the returned address is the byte offset into the {@linkplain #array()} object associated
      * with this segment. In other words, the base address of an array segment is always <em>virtualized</em>.
      *
-     * @return the base address of the memory region associated with this segment.
+     * @return the base address of the region of memory associated with this segment.
      */
     long address();
 
@@ -409,7 +409,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      *
      * <p>Two segments {@code S1} and {@code S2} are said to overlap if it is possible to find
      * at least two slices {@code L1} (from {@code S1}) and {@code L2} (from {@code S2}) that are backed by the
-     * same memory region. As such, it is not possible for a
+     * same region of memory. As such, it is not possible for a
      * {@linkplain #isNative() native} segment to overlap with a heap segment; in
      * this case, or when no overlap occurs, {@code null} is returned.
      *
@@ -952,14 +952,14 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Creates a native memory segment with the given size, base address, and memory session.
      * This method can be useful when interacting with custom memory sources (e.g. custom allocators),
-     * where an address to some underlying memory region is typically obtained from foreign code
+     * where an address to some underlying region of memory is typically obtained from foreign code
      * (often as a plain {@code long} value).
      * <p>
      * The returned segment is not read-only (see {@link MemorySegment#isReadOnly()}), and is associated with the
      * provided memory session.
      * <p>
      * Clients should ensure that the address and bounds refer to a valid region of memory that is accessible for reading and,
-     * if appropriate, writing; an attempt to access an invalid memory location from Java code will either return an arbitrary value,
+     * if appropriate, writing; an attempt to access an invalid address from Java code will either return an arbitrary value,
      * have no visible effect, or cause an unspecified exception to be thrown.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
@@ -1180,7 +1180,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Reads a byte from this segment at the given offset, with the given layout.
      *
-     * @param layout the layout of the memory region to be read.
+     * @param layout the layout of the region of memory to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this read operation can be expressed as {@code address() + offset}.
      * @return a byte value read from this segment.
@@ -1201,7 +1201,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Writes a byte into this segment at the given offset, with the given layout.
      *
-     * @param layout the layout of the memory region to be written.
+     * @param layout the layout of the region of memory to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the byte value to be written.
@@ -1223,7 +1223,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Reads a boolean from this segment at the given offset, with the given layout.
      *
-     * @param layout the layout of the memory region to be read.
+     * @param layout the layout of the region of memory to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this read operation can be expressed as {@code address() + offset}.
      * @return a boolean value read from this segment.
@@ -1244,7 +1244,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Writes a boolean into this segment at the given offset, with the given layout.
      *
-     * @param layout the layout of the memory region to be written.
+     * @param layout the layout of the region of memory to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the boolean value to be written.
@@ -1266,7 +1266,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Reads a char from this segment at the given offset, with the given layout.
      *
-     * @param layout the layout of the memory region to be read.
+     * @param layout the layout of the region of memory to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this read operation can be expressed as {@code address() + offset}.
      * @return a char value read from this segment.
@@ -1287,7 +1287,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Writes a char into this segment at the given offset, with the given layout.
      *
-     * @param layout the layout of the memory region to be written.
+     * @param layout the layout of the region of memory to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the char value to be written.
@@ -1309,7 +1309,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Reads a short from this segment at the given offset, with the given layout.
      *
-     * @param layout the layout of the memory region to be read.
+     * @param layout the layout of the region of memory to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this read operation can be expressed as {@code address() + offset}.
      * @return a short value read from this segment.
@@ -1330,7 +1330,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Writes a short into this segment at the given offset, with the given layout.
      *
-     * @param layout the layout of the memory region to be written.
+     * @param layout the layout of the region of memory to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the short value to be written.
@@ -1352,7 +1352,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Reads an int from this segment at the given offset, with the given layout.
      *
-     * @param layout the layout of the memory region to be read.
+     * @param layout the layout of the region of memory to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this read operation can be expressed as {@code address() + offset}.
      * @return an int value read from this segment.
@@ -1373,7 +1373,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Writes an int into this segment at the given offset, with the given layout.
      *
-     * @param layout the layout of the memory region to be written.
+     * @param layout the layout of the region of memory to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the int value to be written.
@@ -1395,7 +1395,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Reads a float from this segment at the given offset, with the given layout.
      *
-     * @param layout the layout of the memory region to be read.
+     * @param layout the layout of the region of memory to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this read operation can be expressed as {@code address() + offset}.
      * @return a float value read from this segment.
@@ -1416,7 +1416,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Writes a float into this segment at the given offset, with the given layout.
      *
-     * @param layout the layout of the memory region to be written.
+     * @param layout the layout of the region of memory to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the float value to be written.
@@ -1438,7 +1438,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Reads a long from this segment at the given offset, with the given layout.
      *
-     * @param layout the layout of the memory region to be read.
+     * @param layout the layout of the region of memory to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this read operation can be expressed as {@code address() + offset}.
      * @return a long value read from this segment.
@@ -1459,7 +1459,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Writes a long into this segment at the given offset, with the given layout.
      *
-     * @param layout the layout of the memory region to be written.
+     * @param layout the layout of the region of memory to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the long value to be written.
@@ -1481,7 +1481,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Reads a double from this segment at the given offset, with the given layout.
      *
-     * @param layout the layout of the memory region to be read.
+     * @param layout the layout of the region of memory to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this read operation can be expressed as {@code address() + offset}.
      * @return a double value read from this segment.
@@ -1502,7 +1502,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Writes a double into this segment at the given offset, with the given layout.
      *
-     * @param layout the layout of the memory region to be written.
+     * @param layout the layout of the region of memory to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the double value to be written.
@@ -1527,7 +1527,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * the size of the returned segment is {@code 0}. However, if the provided layout is an
      * {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout, then the size of the returned
      * segment is {@code Long.MAX_VALUE}.
-     * @param layout the layout of the memory region to be read.
+     * @param layout the layout of the region of memory to be read.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this read operation can be expressed as {@code address() + offset}.
      * @return a native segment wrapping an address read from this segment.
@@ -1548,7 +1548,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Writes an address into this segment at the given offset, with the given layout.
      *
-     * @param layout the layout of the memory region to be written.
+     * @param layout the layout of the region of memory to be written.
      * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param value the address value to be written.
@@ -1570,7 +1570,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Reads a char from this segment at the given index, scaled by the given layout size.
      *
-     * @param layout the layout of the memory region to be read.
+     * @param layout the layout of the region of memory to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @return a char value read from this segment.
@@ -1594,7 +1594,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Writes a char into this segment at the given index, scaled by the given layout size.
      *
-     * @param layout the layout of the memory region to be written.
+     * @param layout the layout of the region of memory to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @param value the char value to be written.
@@ -1619,7 +1619,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Reads a short from this segment at the given index, scaled by the given layout size.
      *
-     * @param layout the layout of the memory region to be read.
+     * @param layout the layout of the region of memory to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @return a short value read from this segment.
@@ -1643,7 +1643,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Writes a short into this segment at the given index, scaled by the given layout size.
      *
-     * @param layout the layout of the memory region to be written.
+     * @param layout the layout of the region of memory to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @param value the short value to be written.
@@ -1668,7 +1668,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Reads an int from this segment at the given index, scaled by the given layout size.
      *
-     * @param layout the layout of the memory region to be read.
+     * @param layout the layout of the region of memory to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @return an int value read from this segment.
@@ -1692,7 +1692,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Writes an int into this segment at the given index, scaled by the given layout size.
      *
-     * @param layout the layout of the memory region to be written.
+     * @param layout the layout of the region of memory to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @param value the int value to be written.
@@ -1717,7 +1717,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Reads a float from this segment at the given index, scaled by the given layout size.
      *
-     * @param layout the layout of the memory region to be read.
+     * @param layout the layout of the region of memory to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @return a float value read from this segment.
@@ -1741,7 +1741,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Writes a float into this segment at the given index, scaled by the given layout size.
      *
-     * @param layout the layout of the memory region to be written.
+     * @param layout the layout of the region of memory to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @param value the float value to be written.
@@ -1766,7 +1766,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Reads a long from this segment at the given index, scaled by the given layout size.
      *
-     * @param layout the layout of the memory region to be read.
+     * @param layout the layout of the region of memory to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @return a long value read from this segment.
@@ -1790,7 +1790,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Writes a long into this segment at the given index, scaled by the given layout size.
      *
-     * @param layout the layout of the memory region to be written.
+     * @param layout the layout of the region of memory to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @param value the long value to be written.
@@ -1815,7 +1815,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Reads a double from this segment at the given index, scaled by the given layout size.
      *
-     * @param layout the layout of the memory region to be read.
+     * @param layout the layout of the region of memory to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @return a double value read from this segment.
@@ -1839,7 +1839,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Writes a double into this segment at the given index, scaled by the given layout size.
      *
-     * @param layout the layout of the memory region to be written.
+     * @param layout the layout of the region of memory to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @param value the double value to be written.
@@ -1868,7 +1868,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout, then the size of the returned
      * segment is {@code Long.MAX_VALUE}.
      *
-     * @param layout the layout of the memory region to be read.
+     * @param layout the layout of the region of memory to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @return a native segment wrapping an address read from this segment.
@@ -1892,7 +1892,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Writes an address into this segment at the given index, scaled by the given layout size.
      *
-     * @param layout the layout of the memory region to be written.
+     * @param layout the layout of the region of memory to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
      *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
      * @param value the address value to be written.
@@ -1916,14 +1916,14 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Compares the specified object with this memory segment for equality. Returns {@code true} if and only if the specified
-     * object is also a memory segment, and if that segment refers to the same memory location as this segment. More specifically,
-     * for two segments {@code s1} and {@code s2} to be considered equals, all the following must be true:
+     * object is also a memory segment, and if the two segments refer to the same location, in some region of memory.
+     * More specifically, for two segments {@code s1} and {@code s2} to be considered equals, all the following must be true:
      * <ul>
      *     <li>{@code s1.array().equals(s2.array())}, that is, the two segments must be of the same kind;
      *     either both are {@linkplain #isNative() native segments}, backed by off-heap memory, or both are backed by
      *     the same on-heap Java array;
      *     <li>{@code s1.address() == s2.address()}, that is, the base address of the two segments should be the same.
-     *     This means that the two segments either refer at the same off-heap memory location, or they refer
+     *     This means that the two segments either refer at the same location in some off-heap region of memory, or they refer
      *     to the same position inside their associated Java array instance.</li>
      * </ul>
      * @apiNote This method does not perform a structural comparison of the contents of the two memory segments. Clients can

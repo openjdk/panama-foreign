@@ -235,7 +235,7 @@ public sealed interface VaList permits WinVaList, SysVVaList, LinuxAArch64VaList
      *
      * @param address the address of the variable argument list.
      * @param session the memory session to be associated with the returned variable argument list.
-     * @return a new variable argument list backed by a native memory region starting at the given address value.
+     * @return a new variable argument list backed by an off-heap region of memory starting at the given address value.
      * @throws IllegalStateException         if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException          if this method is called from a thread other than the thread
      *                                       {@linkplain MemorySession#ownerThread() owning} {@code session}.

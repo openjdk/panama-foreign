@@ -46,7 +46,7 @@ import sun.invoke.util.Wrapper;
  * A value layout. A value layout is used to model the memory layout associated with values of basic data types, such as <em>integral</em> types
  * (either signed or unsigned) and <em>floating-point</em> types. Each value layout has a size, an alignment (in bits),
  * a {@linkplain ByteOrder byte order}, and a <em>carrier</em>, that is, the Java type that should be used when
- * {@linkplain MemorySegment#get(OfInt, long) accessing} a memory region using the value layout.
+ * {@linkplain MemorySegment#get(OfInt, long) accessing} a region of memory using the value layout.
  * <p>
  * This class defines useful value layout constants for Java primitive types and addresses.
  * The layout constants in this class make implicit alignment and byte-ordering assumption: all layout

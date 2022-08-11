@@ -402,7 +402,7 @@ public interface SegmentAllocator {
      * </ul>
      * <p>
      * This segment allocator can be useful when clients want to perform multiple allocation requests while avoiding the
-     * cost associated with allocating a new off-heap memory region upon each allocation request.
+     * cost associated with allocating a new off-heap region of memory upon each allocation request.
      * <p>
      * The returned allocator might throw an {@link OutOfMemoryError} if the total memory allocated with this allocator
      * exceeds the arena size {@code A}, or the system capacity. Furthermore, the returned allocator is not thread safe.

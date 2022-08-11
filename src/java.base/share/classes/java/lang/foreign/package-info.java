@@ -31,15 +31,15 @@
  *
  * <p>
  * The main abstraction introduced to support foreign memory access is {@link java.lang.foreign.MemorySegment}, which
- * models a contiguous memory region, residing either inside or outside the Java heap. The contents of a memory
+ * models a contiguous region of memory, residing either inside or outside the Java heap. The contents of a memory
  * segment can be described using a {@link java.lang.foreign.MemoryLayout memory layout}, which provides
  * basic operations to query sizes, offsets and alignment constraints. Memory layouts also provide
  * an alternate, more abstract way, to <a href=MemorySegment.html#segment-deref>access memory segments</a>
  * using {@linkplain java.lang.foreign.MemoryLayout#varHandle(java.lang.foreign.MemoryLayout.PathElement...) access var handles},
  * which can be computed using <a href="MemoryLayout.html#layout-paths"><em>layout paths</em></a>.
  *
- * For example, to allocate an off-heap memory region big enough to hold 10 values of the primitive type {@code int}, and fill it with values
- * ranging from {@code 0} to {@code 9}, we can use the following code:
+ * For example, to allocate an off-heap region of memory big enough to hold 10 values of the primitive type {@code int},
+ * and fill it with values ranging from {@code 0} to {@code 9}, we can use the following code:
  *
  * {@snippet lang=java :
  * MemorySegment segment = MemorySegment.allocateNative(10 * 4, MemorySession.openImplicit());
@@ -97,7 +97,7 @@
  * Since memory segments can be closed (see above), segments are also validated (upon access) to make sure that
  * the memory session associated with the segment being accessed has not been closed prematurely.
  * We call this guarantee <em>temporal safety</em>. Together, spatial and temporal safety ensure that each memory access
- * operation either succeeds - and accesses a valid memory location - or fails.
+ * operation either succeeds - and accesses a valid location of the region of memory associated with the memory segment - or fails.
  *
  * <h2 id="ffa">Foreign function access</h2>
  * The key abstractions introduced to support foreign function access are {@link java.lang.foreign.SymbolLookup},

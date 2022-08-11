@@ -83,7 +83,7 @@ import java.lang.invoke.MethodType;
  * address of the target foreign function can be derived.</li>
  * <li>If the function descriptor's return layout is a group layout, the resulting downcall method handle accepts
  * an additional leading parameter of type {@link SegmentAllocator}, which is used by the linker runtime to allocate the
- * memory region associated with the struct returned by the downcall method handle.</li>
+ * region of memory associated with the struct returned by the downcall method handle.</li>
  * </ul>
  * <p>
  * On downcall handle invocation, the linker runtime guarantees the following for any argument {@code A} of type
@@ -142,8 +142,8 @@ import java.lang.invoke.MethodType;
  * <p>
  * For instance, memory segments passed by-value can be decomposed, on some ABIs, into their component fields,
  * which are then stored in registers and/or stack slots before the foreign function call takes place.
- * Conversely, memory segments passed by-reference can be passed more efficiently, on some ABIs, by only passing the address
- * of the memory region associated with the memory segment.
+ * Conversely, memory segments passed by-reference can be passed more efficiently, on some ABIs, by only passing the
+ * starting address of the region of memory associated with the memory segment.
  * <p>
  * The {@code Linker} reifies this distinction, by describing by-value and by-reference parameters and return values
  * using different memory layouts: by-value parameters and return values are modelled using a {@link GroupLayout}.
