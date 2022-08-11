@@ -231,8 +231,8 @@ public final class SharedUtils {
         return switch (CABI.current()) {
             case WIN_64 -> Windowsx64Linker.getInstance();
             case SYS_V -> SysVx64Linker.getInstance();
-            case LINUX_A_ARCH_64 -> LinuxAArch64Linker.getInstance();
-            case MAC_OS_A_ARCH_64 -> MacOsAArch64Linker.getInstance();
+            case LINUX_AARCH_64 -> LinuxAArch64Linker.getInstance();
+            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.getInstance();
         };
     }
 
@@ -335,8 +335,8 @@ public final class SharedUtils {
         return switch (CABI.current()) {
             case WIN_64 -> Windowsx64Linker.newVaList(actions, session);
             case SYS_V -> SysVx64Linker.newVaList(actions, session);
-            case LINUX_A_ARCH_64 -> LinuxAArch64Linker.newVaList(actions, session);
-            case MAC_OS_A_ARCH_64 -> MacOsAArch64Linker.newVaList(actions, session);
+            case LINUX_AARCH_64 -> LinuxAArch64Linker.newVaList(actions, session);
+            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.newVaList(actions, session);
         };
     }
 
@@ -344,8 +344,8 @@ public final class SharedUtils {
         return switch (CABI.current()) {
             case WIN_64 -> Windowsx64Linker.newVaListOfAddress(address, session);
             case SYS_V -> SysVx64Linker.newVaListOfAddress(address, session);
-            case LINUX_A_ARCH_64 -> LinuxAArch64Linker.newVaListOfAddress(address, session);
-            case MAC_OS_A_ARCH_64 -> MacOsAArch64Linker.newVaListOfAddress(address, session);
+            case LINUX_AARCH_64 -> LinuxAArch64Linker.newVaListOfAddress(address, session);
+            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.newVaListOfAddress(address, session);
         };
     }
 
@@ -353,8 +353,8 @@ public final class SharedUtils {
         return switch (CABI.current()) {
             case WIN_64 -> Windowsx64Linker.emptyVaList();
             case SYS_V -> SysVx64Linker.emptyVaList();
-            case LINUX_A_ARCH_64 -> LinuxAArch64Linker.emptyVaList();
-            case MAC_OS_A_ARCH_64 -> MacOsAArch64Linker.emptyVaList();
+            case LINUX_AARCH_64 -> LinuxAArch64Linker.emptyVaList();
+            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.emptyVaList();
         };
     }
 
