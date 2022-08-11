@@ -681,11 +681,12 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
 
     /**
      * Creates a sequence layout with the given element layout and the maximum element
-     * count such that it does not overflow a {@code long}, using the following formula:
+     * count such that it does not overflow a {@code long}.
      *
-     * <blockquote><pre>{@code
-     * maxElementCount = Long.MAX_VALUE / elementLayout.bitSize();
-     * }</pre></blockquote>
+     * This is equivalent to the following code:
+     * {@snippet lang = java:
+     * sequenceLayout(Long.MAX_VALUE / elementLayout.bitSize(), elementLayout);
+     * }
      *
      * @param elementLayout the sequence element layout.
      * @return a new sequence layout with the given element layout and maximum element count.
