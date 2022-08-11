@@ -75,25 +75,25 @@ import java.lang.invoke.MethodType;
  * <li>if {@code L} is a {@link GroupLayout}, then {@code C} is set to {@code MemorySegment.class}</li>
  * </ul>
  * <p>
- * The downcall method handle type, derived as above, might be decorated by additional leading parameters,
+ * The method type of the downcall method handle, derived as above, might be decorated by additional leading parameters,
  * in the given order if both are present:
  * <ul>
  * <li>If the downcall method handle is created {@linkplain #downcallHandle(FunctionDescriptor) without specifying a target address},
  * the downcall method handle type features a leading parameter of type {@link MemorySegment}, from which the
  * address of the target foreign function can be derived.</li>
  * <li>If the function descriptor's return layout is a group layout, the resulting downcall method handle accepts
- * an additional leading parameter of type {@link SegmentAllocator}, which is used by the linker runtime to allocate the
+ * an additional leading parameter of type {@link SegmentAllocator}, which is used by the linker to allocate the
  * region of memory associated with the struct returned by the downcall method handle.</li>
  * </ul>
  * <p>
- * On downcall handle invocation, the linker runtime guarantees the following for any argument {@code A} of type
+ * When a downcall method handle is invoked, the linker guarantees the following for any argument {@code A} of type
  * {@link MemorySegment} whose corresponding layout is {@link ValueLayout#ADDRESS}:
  * <ul>
  *     <li>The memory session of {@code A} is {@linkplain MemorySession#isAlive() alive}. Otherwise, the invocation throws
  *     {@link IllegalStateException};</li>
- *     <li>The invocation occurs in same thread as the one {@linkplain MemorySession#ownerThread() owning} the memory session of {@code R},
+ *     <li>The invocation occurs in same thread as the one {@linkplain MemorySession#ownerThread() owning} the memory session of {@code S},
  *     if said session is confined. Otherwise, the invocation throws {@link WrongThreadException}; and</li>
- *     <li>The memory session of {@code R} is <em>kept alive</em> (and cannot be closed) during the invocation.</li>
+ *     <li>The memory session of {@code S} is <em>kept alive</em> (and cannot be closed) during the invocation.</li>
  *</ul>
  * A downcall method handle created from a function descriptor whose return layout is an
  * {@linkplain ValueLayout.OfAddress address layout} returns a native memory segment associated with
@@ -119,14 +119,6 @@ import java.lang.invoke.MethodType;
  * downcall method handles and, when no longer required, they can be {@linkplain MemorySession#close() released},
  * via their associated {@linkplain MemorySession memory session}.
  * <p>
- * When creating upcall stubs the linker runtime validates the type of the target method handle against the provided
- * function descriptor and report an error if any mismatch is detected. As for downcalls, JVM crashes might occur,
- * if the foreign code casts the function pointer associated with an upcall stub to a type
- * that is incompatible with the provided function descriptor. Moreover, if the target method
- * handle associated with an upcall stub returns a {@linkplain MemorySegment memory segment}, clients must ensure
- * that this address cannot become invalid after the upcall completes. This can lead to unspecified behavior,
- * and even JVM crashes, since an upcall is typically executed in the context of a downcall method handle invocation.
- * <p>
  * An upcall stub argument whose corresponding layout is an {@linkplain ValueLayout.OfAddress address layout}
  * is a native memory segment associated with the {@linkplain MemorySession#global() global session}.
  * Under normal conditions, the size of this segment argument is {@code 0}. However, if the layout associated with
@@ -138,7 +130,7 @@ import java.lang.invoke.MethodType;
  * When interacting with foreign functions, it is common for those functions to exchange data
  * with their callers. Data is typically exchanged either <em>by-value</em>, or <em>by-reference</em>.
  * The choice of passing data by-value or by-reference can have deep implications for the calling convention
- * supported by a given {@code Linker} implementation.
+ * supported by a given linker.
  * <p>
  * For instance, memory segments passed by-value can be decomposed, on some ABIs, into their component fields,
  * which are then stored in registers and/or stack slots before the foreign function call takes place.
@@ -211,9 +203,17 @@ import java.lang.invoke.MethodType;
  *
  * Creating a downcall method handle is intrinsically unsafe. A symbol in a foreign library does not, in general,
  * contain enough signature information (e.g. arity and types of foreign function parameters). As a consequence,
- * the linker runtime cannot validate linkage requests. When a client interacts with a downcall method handle obtained
+ * the linker cannot validate linkage requests. When a client interacts with a downcall method handle obtained
  * through an invalid linkage request (e.g. by specifying a function descriptor featuring too many argument layouts),
  * the result of such interaction is unspecified and can lead to JVM crashes.
+ * <p>
+ * When creating upcall stubs the linker runtime validates the type of the target method handle against the provided
+ * function descriptor and report an error if any mismatch is detected. As for downcalls, JVM crashes might occur,
+ * if the foreign code casts the function pointer associated with an upcall stub to a type that is incompatible with
+ * the provided function descriptor. Moreover, if the target method handle associated with an upcall stub returns
+ * a {@linkplain MemorySegment memory segment}, clients must ensure that this address cannot become invalid after the
+ * upcall completes. This can lead to unspecified behavior, and even JVM crashes, since an upcall is typically executed
+ * in the context of a downcall method handle invocation.
  *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
@@ -278,8 +278,8 @@ public sealed interface Linker permits AbstractLinker {
      * Creates a method handle which can be used to call a target foreign function with the given signature and address.
      * <p>
      * If the provided method type's return type is {@code MemorySegment}, then the resulting method handle features
-     * an additional prefix parameter, of type {@link SegmentAllocator}, which will be used by the linker runtime
-     * to allocate structs returned by-value.
+     * an additional prefix parameter, of type {@link SegmentAllocator}, which will be used by the linker to allocate
+     * structs returned by-value.
      * <p>
      * Calling this method is equivalent to the following code:
      * {@snippet lang=java :
@@ -305,7 +305,7 @@ public sealed interface Linker permits AbstractLinker {
      * <p>
      * If the provided function descriptor's return layout is a {@link GroupLayout}, then the resulting method handle features an
      * additional prefix parameter (inserted immediately after the address parameter), of type {@link SegmentAllocator}),
-     * which will be used by the linker runtime to allocate structs returned by-value.
+     * which will be used by the linker to allocate structs returned by-value.
      * <p>
      * The returned method handle will throw an {@link IllegalArgumentException} if the {@link MemorySegment} parameter passed to it is
      * associated with the {@link MemorySegment#NULL} address, or a {@link NullPointerException} if that parameter is {@code null}.
