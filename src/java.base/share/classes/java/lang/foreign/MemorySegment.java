@@ -71,8 +71,8 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * {@linkplain #load() loaded} to and from the underlying memory-mapped file.
  * <p>
  * All memory segments have an {@linkplain #address() address} and a {@linkplain #byteSize() size}. Together, these ensure
- * that access operations on a memory segment (described below) cannot affect an address which falls <em>outside</em>
- * the boundaries of the region of memory associated with the memory segment. (Access operations are described below.)
+ * that access operations on a memory segment cannot affect an address which falls <em>outside</em> the boundaries of
+ * the region of memory associated with the memory segment. (Access operations are described below.)
  * That is, a memory segment has <em>spatial bounds</em>.
  * <p>
  * All memory segments are associated with a {@linkplain MemorySession memory session}. This ensures that access operations
@@ -132,7 +132,7 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  *
  * <h2 id="slicing">Slicing memory segments</h2>
  *
- * Memory segments support <em>slicing</em>. {@linkplain MemorySegment#asSlice(long, long) Slicing} a memory segment
+ * Memory segments support {@linkplain MemorySegment#asSlice(long, long) slicing}. Slicing a memory segment
  * returns a new memory segment that is backed by the same region of memory as the original, but with <em>stricter</em>
  * spatial bounds than those of the original:
  * {@snippet lang=java :
@@ -180,10 +180,12 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * }
  *
  * If the segment being accessed is a heap segment, the above function will not work: the region of memory associated
- * with heap segment is managed (and moved around) by the garbage collector. As such the base address of a heap segment
- * is not guaranteed to be stable, and the above function cannot be used when heap segments are involved.
- * For this reason, the layout specified to access operation involving a heap segment cannot feature alignment
- * constraints that are greater than the element size of the Java array backing heap segment, as shown in the following table:
+ * with a heap segment is managed (and moved around) by the garbage collector. The base address of a heap memory segment
+ * is implementation-specific, and is not exposed by the {@link #address()} method. For this reason, the layout specified
+ * to an access operation involving a heap segment cannot feature alignment constraints that are greater than the
+ * alignment constraints of the region of memory associated with the heap segment. If a heap memory segment has been
+ * obtained from a Java array, the alignment constraints of the region of memory backing the heap segment are assumed
+ * to match the array element size, as shown in the following table:
  *
  * <blockquote><table class="plain">
  * <caption style="display:none">Array type of an array backing a segment and its address alignment</caption>
@@ -214,12 +216,13 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * </table></blockquote>
  *
  * Note that the above definition is conservative: it might be possible, for instance, for a heap segment
- * constructed from a {@code byte[]} ti have a subset of addresses {@code S} which happen to be 8-byte aligned. But determining
- * which addresses belong to {@code S} requires reasoning about details which are ultimately implementation-dependent.
+ * constructed from a {@code byte[]} to have a subset of offsets {@code A} which happen to correspond to 8-byte aligned
+ * addresses. But determining which memory segment offsets belong to {@code A} requires reasoning about details which
+ * are ultimately implementation-specific.
  *
  * <h2 id="wrapping-addresses">Zero-length memory segments</h2>
  *
- * When interacting with <a href="../package-info.html#ffa></a>foreign functions</a>, it is common for those functions
+ * When interacting with <a href="package-summary.html#ffa">foreign functions</a>, it is common for those functions
  * to allocate a region of memory and return a pointer to that region. Modeling the region of memory with a memory segment
  * is challenging because the Java runtime has no insight into the size of the region. Only the address of the start of
  * the region, stored in the pointer, is available. For example, a C function with return type {@code char*} might return
@@ -231,9 +234,9 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * The address of the segment is the address stored in the pointer. Similarly, when a client reads an <em>address</em> from
  * a memory segment, a zero-length memory segment is returned.
  * <p>
- * Since a zero-length segment feature trivial spatial bounds, any attempt to access these segments will fail with
- * {@link IndexOutOfBoundsException}. This is a crucial safety feature: as these segments are associated with a memory
- * region whose size is not known, any access operations involving these segments cannot be validated.
+ * Since a zero-length segment features trivial spatial bounds, any attempt to access these segments will fail with
+ * {@link IndexOutOfBoundsException}. This is a crucial safety feature: as these segments are associated with a region
+ * of memory whose size is not known, any access operations involving these segments cannot be validated.
  * In effect, a zero-length memory segment <em>wraps</em> an address, and it cannot be used without explicit intent.
  * <p>
  * Zero-length memory segments obtained when interacting with foreign functions are associated with the

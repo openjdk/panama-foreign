@@ -86,14 +86,14 @@ import java.lang.invoke.MethodType;
  * region of memory associated with the struct returned by the downcall method handle.</li>
  * </ul>
  * <p>
- * When a downcall method handle is invoked, the linker guarantees the following for any argument {@code A} of type
+ * When a downcall method handle is invoked, the linker guarantees the following for any argument {@code R} of type
  * {@link MemorySegment} whose corresponding layout is {@link ValueLayout#ADDRESS}:
  * <ul>
- *     <li>The memory session of {@code A} is {@linkplain MemorySession#isAlive() alive}. Otherwise, the invocation throws
+ *     <li>The memory session of {@code R} is {@linkplain MemorySession#isAlive() alive}. Otherwise, the invocation throws
  *     {@link IllegalStateException};</li>
- *     <li>The invocation occurs in same thread as the one {@linkplain MemorySession#ownerThread() owning} the memory session of {@code S},
+ *     <li>The invocation occurs in same thread as the one {@linkplain MemorySession#ownerThread() owning} the memory session of {@code R},
  *     if said session is confined. Otherwise, the invocation throws {@link WrongThreadException}; and</li>
- *     <li>The memory session of {@code S} is <em>kept alive</em> (and cannot be closed) during the invocation.</li>
+ *     <li>The memory session of {@code R} is <em>kept alive</em> (and cannot be closed) during the invocation.</li>
  *</ul>
  * A downcall method handle created from a function descriptor whose return layout is an
  * {@linkplain ValueLayout.OfAddress address layout} returns a native memory segment associated with
