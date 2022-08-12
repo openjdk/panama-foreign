@@ -44,7 +44,7 @@ import jdk.internal.javac.PreviewFeature;
  * can be used to specify the cleanup code that must run when a given resource (or set of resources) is no longer in use.
  * When a memory session is closed, the {@linkplain #addCloseAction(Runnable) close actions}
  * associated with that session are executed (in unspecified order). For instance, closing the memory session associated with
- * one or more {@linkplain MemorySegment#allocateNative(long, long, MemorySession) native memory segments} results in releasing
+ * one or more {@linkplain MemorySegment#allocateNative(long, long, MemorySession) native segments} results in releasing
  * the off-heap memory associated with said segments.
  * <p>
  * The {@linkplain #global() global session} is a memory session that cannot be closed.

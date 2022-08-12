@@ -96,7 +96,7 @@ import java.lang.invoke.MethodType;
  *     <li>The memory session of {@code R} is <em>kept alive</em> (and cannot be closed) during the invocation.</li>
  *</ul>
  * A downcall method handle created from a function descriptor whose return layout is an
- * {@linkplain ValueLayout.OfAddress address layout} returns a native memory segment associated with
+ * {@linkplain ValueLayout.OfAddress address layout} returns a native segment associated with
  * the {@linkplain MemorySession#global() global session}. Under normal conditions, the size of the returned segment is {@code 0}.
  * However, if the return layout is an {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout,
  * then the size of the returned segment is {@code Long.MAX_VALUE}.
@@ -120,7 +120,7 @@ import java.lang.invoke.MethodType;
  * via their associated {@linkplain MemorySession memory session}.
  * <p>
  * An upcall stub argument whose corresponding layout is an {@linkplain ValueLayout.OfAddress address layout}
- * is a native memory segment associated with the {@linkplain MemorySession#global() global session}.
+ * is a native segment associated with the {@linkplain MemorySession#global() global session}.
  * Under normal conditions, the size of this segment argument is {@code 0}. However, if the layout associated with
  * the upcall stub argument is an {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout,
  * then the size of the segment argument is {@code Long.MAX_VALUE}.

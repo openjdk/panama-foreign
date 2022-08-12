@@ -50,7 +50,7 @@
  *
  * This code creates a <em>native</em> memory segment, that is, a memory segment backed by
  * off-heap memory; the size of the segment is 40 bytes, enough to store 10 values of the primitive type {@code int}.
- * The off-heap memory associated with the native memory segment will be released when the segment becomes
+ * The off-heap memory associated with the native segment will be released when the segment becomes
  * <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>; this is similar to what happens
  * with direct buffers created via {@link java.nio.ByteBuffer#allocateDirect(int)}. It is also possible to manage
  * the lifecycle of allocated native segments more directly, as shown in a later section.

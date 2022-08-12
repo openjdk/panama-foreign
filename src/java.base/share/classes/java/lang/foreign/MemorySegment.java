@@ -87,8 +87,8 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  *
  * <h2 id="segment-deref">Accessing memory segments</h2>
  *
- * A memory segment can be read or written using various access methods provided in this class (e.g. {@link #get(ValueLayout.OfInt, long)}).
- * Each access method takes a {@linkplain ValueLayout value layout}, which specifies the size,
+ * A memory segment can be read or written using various access operations provided in this class (e.g. {@link #get(ValueLayout.OfInt, long)}).
+ * Each access operation takes a {@linkplain ValueLayout value layout}, which specifies the size,
  * alignment constraints, byte order as well as the Java type associated with the access operation, and an offset.
  * For instance, to read an int from a segment, using {@linkplain ByteOrder#nativeOrder() default endianness}, the following code can be used:
  * {@snippet lang=java :
@@ -180,19 +180,19 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * }
  *
  * If the segment being accessed is a heap segment, the above function will not work: the region of memory associated
- * with a heap segment is managed (and moved around) by the garbage collector. The base address of a heap memory segment
+ * with a heap segment is managed (and moved around) by the garbage collector. The base address of a heap segment
  * is implementation-specific, and is not exposed by the {@link #address()} method. For this reason, the layout specified
  * to an access operation involving a heap segment cannot feature alignment constraints that are greater than the
- * alignment constraints of the region of memory associated with the heap segment. If a heap memory segment has been
- * obtained from a Java array, the alignment constraints of the region of memory backing the heap segment are assumed
- * to match the array element size, as shown in the following table:
+ * alignment constraints of the region of memory associated with the heap segment. If a heap segment has been
+ * obtained from a Java array, the <em>maximum</em> supported alignment constraints of the region of memory backing
+ * the heap segment are derived from the array element size, as shown in the following table:
  *
  * <blockquote><table class="plain">
  * <caption style="display:none">Array type of an array backing a segment and its address alignment</caption>
  * <thead>
  * <tr>
  *     <th scope="col">Array type</th>
- *     <th scope="col">Alignment</th>
+ *     <th scope="col">Maximum supported alignment constraints (in bytes)</th>
  * </tr>
  * </thead>
  * <tbody>
@@ -216,9 +216,30 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * </table></blockquote>
  *
  * Note that the above definition is conservative: it might be possible, for instance, for a heap segment
- * constructed from a {@code byte[]} to have a subset of offsets {@code A} which happen to correspond to 8-byte aligned
- * addresses. But determining which memory segment offsets belong to {@code A} requires reasoning about details which
- * are ultimately implementation-specific.
+ * constructed from a {@code byte[]} to have a subset of offsets which happen to correspond to 8-byte aligned
+ * addresses. But, since the heap segment can support up to 1-byte alignment constraints (as per above table),
+ * any attempt to access the segment using a layout featuring stricter alignment constraints will fail,
+ * as demonstrated in the following example:
+ *
+ * {@snippet lang=java :
+ * MemorySegment byteSegment = MemorySegment.ofArray(new byte[10]);
+ * byteSegment.get(ValueLayout.JAVA_INT, 0); // fails: layout alignment is 4, segment max alignment is 1
+ * }
+ *
+ * In such circumstances, clients have two options. They can use a heap segment backed by a different array
+ * type (e.g. {@code long[]}), capable of supporting stricter maximum alignment constraints:
+ *
+ * {@snippet lang=java :
+ * MemorySegment longSegment = MemorySegment.ofArray(new long[10]);
+ * longSegment.get(ValueLayout.JAVA_INT, 0); // ok: layout alignment is 4, segment max alignment is 8
+ * }
+ *
+ * Alternatively, they can invoke the access operation with a layout with weaker alignment constraints:
+ *
+ * {@snippet lang=java :
+ * MemorySegment byteSegment = MemorySegment.ofArray(new byte[10]);
+ * byteSegment.get(ValueLayout.JAVA_INT.withBitAlignment(8), 0); // ok: layout alignment is 1, segment max alignment is 1
+ * }
  *
  * <h2 id="wrapping-addresses">Zero-length memory segments</h2>
  *
@@ -231,8 +252,8 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * to the code calling the foreign function and hoping to use its result.
  * <p>
  * The {@link Linker} represents a pointer returned from a foreign function with a <em>zero-length memory segment</em>.
- * The address of the segment is the address stored in the pointer. Similarly, when a client reads an <em>address</em> from
- * a memory segment, a zero-length memory segment is returned.
+ * The address of the segment is the address stored in the pointer. The size of the segment is zero. Similarly, when a
+ * client reads an <em>address</em> from a memory segment, a zero-length memory segment is returned.
  * <p>
  * Since a zero-length segment features trivial spatial bounds, any attempt to access these segments will fail with
  * {@link IndexOutOfBoundsException}. This is a crucial safety feature: as these segments are associated with a region
@@ -247,7 +268,7 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * <p>
  * To access native zero-length memory segments, clients have two options. First, they can
  * {@linkplain java.lang.foreign.MemorySegment#ofAddress(long, long, MemorySession) obtain}
- * a <em>new</em> native memory segment <em>unsafely</em>, with new spatial and temporal bounds, as follows:
+ * a <em>new</em> native segment <em>unsafely</em>, with new spatial and temporal bounds, as follows:
  *
  * {@snippet lang = java:
  * MemorySession session = ... // initialize a memory session
@@ -285,11 +306,15 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
-     * Returns the base address of the region of memory associated with this segment. If this memory segment is
-     * a {@linkplain #isNative() native} memory segment, then the returned address is the off-heap address
-     * at which the native region of memory associated with this segment starts. If this memory segment is an array
-     * memory segment, the returned address is the byte offset into the {@linkplain #array()} object associated
-     * with this segment. In other words, the base address of an array segment is always <em>virtualized</em>.
+     * Returns the base address of the region of memory associated with this segment.
+     * <p>
+     * If this memory segment is a {@linkplain #isNative() native} segment, then the returned base address is the
+     * starting address of the native region of memory associated with this segment.
+     * <p>
+     * If this memory segment is a heap segment, its associated region of memory is managed by the garbage collector.
+     * That is, the starting address of the memory region is implementation-specific and can change over time.
+     * In this case, the returned base address is expressed as the byte offset into the {@linkplain #array() heap-allocated object}
+     * associated with this segment.
      *
      * @return the base address of the region of memory associated with this segment.
      */
@@ -396,7 +421,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     MemorySegment asReadOnly();
 
     /**
-     * Returns {@code true} if this segment is a native segment. A native memory segment is
+     * Returns {@code true} if this segment is a native segment. A native segment is
      * created e.g. using the {@link #allocateNative(long, MemorySession)} (and related) factory, or by
      * {@linkplain #ofBuffer(Buffer) wrapping} a {@linkplain ByteBuffer#allocateDirect(int) direct buffer}.
      * @return {@code true} if this segment is native segment.
@@ -630,7 +655,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Wraps this segment in a {@link ByteBuffer}. Some properties of the returned buffer are linked to
      * the properties of this segment. For instance, if this segment is <em>immutable</em>
      * (e.g. the segment is a read-only segment, see {@link #isReadOnly()}), then the resulting buffer is <em>read-only</em>
-     * (see {@link ByteBuffer#isReadOnly()}). Additionally, if this is a native memory segment, the resulting buffer is
+     * (see {@link ByteBuffer#isReadOnly()}). Additionally, if this is a native segment, the resulting buffer is
      * <em>direct</em> (see {@link ByteBuffer#isDirect()}).
      * <p>
      * The returned buffer's position (see {@link ByteBuffer#position()}) is initially set to zero, while
@@ -813,7 +838,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * <p>
      * If the buffer is {@linkplain Buffer#isReadOnly() read-only}, the resulting segment will also be
      * {@linkplain ByteBuffer#isReadOnly() read-only}. Moreover, if the buffer is a {@linkplain Buffer#isDirect() direct buffer},
-     * the return segment is a native memory segment; otherwise the returned memory segment is a heap memory segment.
+     * the return segment is a native segment; otherwise the returned memory segment is a heap segment.
      * <p>
      * The memory session {@code S} associated with the returned segment is
      * computed as follows:
@@ -835,7 +860,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Creates an array memory segment that models the memory associated with the given heap-allocated byte array.
+     * Creates a heap segment that models the region of memory associated with the given heap-allocated byte array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
@@ -846,7 +871,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Creates an array memory segment that models the memory associated with the given heap-allocated char array.
+     * Creates a heap segment that models the region of memory associated with the given char array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
@@ -857,7 +882,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Creates an array memory segment that models the memory associated with the given heap-allocated short array.
+     * Creates a heap segment that models the region of memory associated with the given short array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
@@ -868,7 +893,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Creates an array memory segment that models the memory associated with the given heap-allocated int array.
+     * Creates a heap segment that models the region of memory associated with the given int array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
@@ -879,7 +904,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Creates an array memory segment that models the memory associated with the given heap-allocated float array.
+     * Creates a heap segment that models the region of memory associated with the given float array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
@@ -890,7 +915,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Creates an array memory segment that models the memory associated with the given heap-allocated long array.
+     * Creates a heap segment that models the region of memory associated with the given long array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
@@ -901,7 +926,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Creates an array memory segment that models the memory associated with the given heap-allocated double array.
+     * Creates a heap segment that models the region of memory associated with the given double array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
      * @param arr the primitive array backing the array memory segment.
@@ -912,12 +937,12 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * A zero-length native memory segment modelling the {@code NULL} address.
+     * A zero-length native segment modelling the {@code NULL} address.
      */
     MemorySegment NULL = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(0L, 0);
 
     /**
-     * Creates a zero-length native memory segment from the given {@linkplain #address() address value}.
+     * Creates a zero-length native segment from the given {@linkplain #address() address value}.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      * <p>
      * This is equivalent to the following code:
@@ -925,14 +950,14 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * ofAddress(address, 0);
      *}
      * @param address the address of the returned native segment.
-     * @return a zero-length native memory segment with the given address.
+     * @return a zero-length native segment with the given address.
      */
     static MemorySegment ofAddress(long address) {
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, 0);
     }
 
     /**
-     * Creates a native memory segment with the given size and {@linkplain #address() address value}.
+     * Creates a native segment with the given size and {@linkplain #address() address value}.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      * <p>
      * This is equivalent to the following code:
@@ -945,7 +970,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * restricted methods, and use safe and supported functionalities, where possible.
      * @param address the address of the returned native segment.
      * @param bytesSize the size (in bytes) of the returned native segment.
-     * @return a zero-length native memory segment with the given address and size.
+     * @return a zero-length native segment with the given address and size.
      * @throws IllegalArgumentException if {@code bytesSize < 0}.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
      * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
@@ -958,7 +983,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Creates a native memory segment with the given size, base address, and memory session.
+     * Creates a native segment with the given size, base address, and memory session.
      * This method can be useful when interacting with custom memory sources (e.g. custom allocators),
      * where an address to some underlying region of memory is typically obtained from foreign code
      * (often as a plain {@code long} value).
@@ -979,7 +1004,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @param address the returned segment's base address.
      * @param bytesSize the desired size.
      * @param session the native segment memory session.
-     * @return a native memory segment with the given base address, size and memory session.
+     * @return a native segment with the given base address, size and memory session.
      * @throws IllegalArgumentException if {@code bytesSize < 0}.
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread
@@ -997,7 +1022,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Creates a native memory segment with the given layout and memory session.
+     * Creates a native segment with the given layout and memory session.
      * A client is responsible for ensuring that the memory session associated with the returned segment is closed
      * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
@@ -1006,11 +1031,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * allocateNative(layout.bytesSize(), layout.bytesAlignment(), session);
      * }
      * <p>
-     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     * The block of off-heap memory associated with the returned native segment is initialized to zero.
      *
-     * @param layout the layout of the off-heap memory block backing the native memory segment.
+     * @param layout the layout of the off-heap memory block backing the native segment.
      * @param session the segment memory session.
-     * @return a new native memory segment.
+     * @return a new native segment.
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread
      * {@linkplain MemorySession#ownerThread() owning} {@code session}.
@@ -1022,7 +1047,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Creates a native memory segment with the given size (in bytes) and memory session.
+     * Creates a native segment with the given size (in bytes) and memory session.
      * A client is responsible for ensuring that the memory session associated with the returned segment is closed
      * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
@@ -1031,11 +1056,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * allocateNative(bytesSize, 1, session);
      * }
      * <p>
-     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     * The block of off-heap memory associated with the returned native segment is initialized to zero.
      *
-     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native segment.
      * @param session the segment temporal bounds.
-     * @return a new native memory segment.
+     * @return a new native segment.
      * @throws IllegalArgumentException if {@code bytesSize < 0}.
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread
@@ -1046,16 +1071,16 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Creates a native memory segment with the given size (in bytes), alignment constraint (in bytes) and memory session.
+     * Creates a native segment with the given size (in bytes), alignment constraint (in bytes) and memory session.
      * A client is responsible for ensuring that the memory session associated with the returned segment is closed when the
      * segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
-     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     * The block of off-heap memory associated with the returned native segment is initialized to zero.
      *
-     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
-     * @param alignmentBytes the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native segment.
+     * @param alignmentBytes the alignment constraint (in bytes) of the off-heap memory block backing the native segment.
      * @param session the segment memory session.
-     * @return a new native memory segment.
+     * @return a new native segment.
      * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
      * is not a power of 2.
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
@@ -1937,7 +1962,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @apiNote This method does not perform a structural comparison of the contents of the two memory segments. Clients can
      * compare memory segments structurally by using the {@link #mismatch(MemorySegment)} method instead. Note that this
      * method does <em>not</em> compare the temporal and spatial bounds of two segments. As such it is suitable
-     * to perform address checks, such as checking if a native memory segment has the {@code NULL} address.
+     * to perform address checks, such as checking if a native segment has the {@code NULL} address.
      *
      * @param that the object to be compared for equality with this memory segment.
      * @return {@code true} if the specified object is equal to this memory segment.

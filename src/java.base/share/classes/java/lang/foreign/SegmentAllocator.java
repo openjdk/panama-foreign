@@ -47,7 +47,7 @@ import jdk.internal.javac.PreviewFeature;
  * <ul>
  *     <li>{@link #newNativeArena(MemorySession)} creates a more efficient arena-style allocator, where off-heap memory
  *     is allocated in bigger blocks, which are then sliced accordingly to fit allocation requests;</li>
- *     <li>{@link #implicitAllocator()} obtains an allocator which allocates native memory segment in independent,
+ *     <li>{@link #implicitAllocator()} obtains an allocator which allocates native segment in independent,
  *     {@linkplain MemorySession#openImplicit() implicit memory sessions}; and</li>
  *     <li>{@link #prefixAllocator(MemorySegment)} obtains an allocator which wraps a segment (either on-heap or off-heap)
  *     and recycles its content upon each new allocation request.</li>
@@ -80,7 +80,7 @@ public interface SegmentAllocator {
      * @implSpec the default implementation for this method copies the contents of the provided Java string
      * into a new memory segment obtained by calling {@code this.allocate(str.length() + 1)}.
      * @param str the Java string to be converted into a C string.
-     * @return a new native memory segment containing the converted C string.
+     * @return a new native segment containing the converted C string.
      */
     default MemorySegment allocateUtf8String(String str) {
         Objects.requireNonNull(str);
@@ -347,7 +347,7 @@ public interface SegmentAllocator {
     MemorySegment allocate(long bytesSize, long bytesAlignment);
 
     /**
-     * Creates an unbounded arena-based allocator used to allocate native memory segments.
+     * Creates an unbounded arena-based allocator used to allocate native segments.
      * The returned allocator features a predefined block size and maximum arena size, and the segments it allocates
      * are associated with the provided memory session. Equivalent to the following code:
      * {@snippet lang=java :
@@ -365,7 +365,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Creates an arena-based allocator used to allocate native memory segments.
+     * Creates an arena-based allocator used to allocate native segments.
      * The returned allocator features a block size set to the specified arena size, and the native segments
      * it allocates are associated with the provided memory session. Equivalent to the following code:
      * {@snippet lang=java :
@@ -385,12 +385,12 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Creates an arena-based allocator used to allocate native memory segments. The returned allocator features
+     * Creates an arena-based allocator used to allocate native segments. The returned allocator features
      * the given block size {@code B} and the given arena size {@code A}, and the native segments
      * it allocates are associated with the provided memory session.
      * <p>
      * The allocator arena is first initialized by {@linkplain MemorySegment#allocateNative(long, MemorySession) allocating} a
-     * native memory segment {@code S} of size {@code B}. The allocator then responds to allocation requests in one of the following ways:
+     * native segment {@code S} of size {@code B}. The allocator then responds to allocation requests in one of the following ways:
      * <ul>
      *     <li>if the size of the allocation requests is smaller than the size of {@code S}, and {@code S} has a <em>free</em>
      *     slice {@code S'} which fits that allocation request, return that {@code S'}.
