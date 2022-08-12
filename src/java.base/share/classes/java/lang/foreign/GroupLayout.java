@@ -89,8 +89,8 @@ public final class GroupLayout extends AbstractLayout implements MemoryLayout {
         this(kind, elements, kind.alignof(elements), Optional.empty());
     }
 
-    GroupLayout(Kind kind, List<MemoryLayout> elements, long alignment, Optional<String> name) {
-        super(kind.sizeof(elements), alignment, name);
+    GroupLayout(Kind kind, List<MemoryLayout> elements, long bitAlignment, Optional<String> name) {
+        super(kind.sizeof(elements), bitAlignment, name);
         this.kind = kind;
         this.elements = elements;
     }
@@ -157,13 +157,13 @@ public final class GroupLayout extends AbstractLayout implements MemoryLayout {
     }
 
     @Override
-    GroupLayout dup(long alignment, Optional<String> name) {
-        return new GroupLayout(kind, elements, alignment, name);
+    GroupLayout dup(long bitAlignment, Optional<String> name) {
+        return new GroupLayout(kind, elements, bitAlignment, name);
     }
 
     @Override
     boolean hasNaturalAlignment() {
-        return alignment == kind.alignof(elements);
+        return bitAlignment == kind.alignof(elements);
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout
@@ -181,7 +181,7 @@ public final class GroupLayout extends AbstractLayout implements MemoryLayout {
      * {@inheritDoc}
      */
     @Override
-    public GroupLayout withBitAlignment(long alignmentBits) {
-        return (GroupLayout)super.withBitAlignment(alignmentBits);
+    public GroupLayout withBitAlignment(long bitAlignment) {
+        return (GroupLayout)super.withBitAlignment(bitAlignment);
     }
 }

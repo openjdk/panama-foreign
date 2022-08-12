@@ -33,22 +33,22 @@ import jdk.internal.vm.annotation.Stable;
 
 abstract non-sealed class AbstractLayout implements MemoryLayout {
 
-    private final long size;
-    final long alignment;
+    private final long bitSize;
+    final long bitAlignment;
     private final Optional<String> name;
     @Stable
-    long cachedSize;
+    long byteSize;
 
-    AbstractLayout(long size, long alignment, Optional<String> name) {
-        this.size = size;
-        this.alignment = alignment;
+    AbstractLayout(long bitSize, long bitAlignment, Optional<String> name) {
+        this.bitSize = bitSize;
+        this.bitAlignment = bitAlignment;
         this.name = name;
     }
 
     @Override
     public AbstractLayout withName(String name) {
         Objects.requireNonNull(name);
-        return dup(alignment, Optional.of(name));
+        return dup(bitAlignment, Optional.of(name));
     }
 
     @Override
@@ -56,12 +56,12 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
         return name;
     }
 
-    abstract AbstractLayout dup(long alignment, Optional<String> name);
+    abstract AbstractLayout dup(long bitAlignment, Optional<String> name);
 
     @Override
-    public AbstractLayout withBitAlignment(long alignmentBits) {
-        checkAlignment(alignmentBits);
-        return dup(alignmentBits, name);
+    public AbstractLayout withBitAlignment(long bitAlignment) {
+        checkAlignment(bitAlignment);
+        return dup(bitAlignment, name);
     }
 
     void checkAlignment(long alignmentBitCount) {
@@ -83,22 +83,22 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
 
     @Override
     public final long bitAlignment() {
-        return alignment;
+        return bitAlignment;
     }
 
     @Override
     @ForceInline
     public long byteSize() {
-        if (cachedSize == 0) {
-            cachedSize = Utils.bitsToBytesOrThrow(bitSize(),
+        if (byteSize == 0) {
+            byteSize = Utils.bitsToBytesOrThrow(bitSize(),
                     () -> new UnsupportedOperationException("Cannot compute byte size; bit size is not a multiple of 8"));
         }
-        return cachedSize;
+        return byteSize;
     }
 
     @Override
     public long bitSize() {
-        return size;
+        return bitSize;
     }
 
     String decorateLayoutString(String s) {
@@ -106,13 +106,13 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
             s = String.format("%s(%s)", s, name().get());
         }
         if (!hasNaturalAlignment()) {
-            s = alignment + "%" + s;
+            s = bitAlignment + "%" + s;
         }
         return s;
     }
 
     boolean hasNaturalAlignment() {
-        return size == alignment;
+        return bitSize == bitAlignment;
     }
 
     @Override
@@ -128,7 +128,7 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(name, size, alignment);
+        return Objects.hash(name, bitSize, bitAlignment);
     }
 
     /**
@@ -156,8 +156,8 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
 
         return other instanceof AbstractLayout otherLayout &&
                 name.equals(otherLayout.name) &&
-                size == otherLayout.size &&
-                alignment == otherLayout.alignment;
+                bitSize == otherLayout.bitSize &&
+                bitAlignment == otherLayout.bitAlignment;
     }
 
     /**

@@ -64,8 +64,8 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
         this(elemCount, elementLayout, elementLayout.bitAlignment(), Optional.empty());
     }
 
-    SequenceLayout(long elemCount, MemoryLayout elementLayout, long alignment, Optional<String> name) {
-        super(Math.multiplyExact(elemCount, elementLayout.bitSize()), alignment, name);
+    SequenceLayout(long elemCount, MemoryLayout elementLayout, long bitAlignment, Optional<String> name) {
+        super(Math.multiplyExact(elemCount, elementLayout.bitSize()), bitAlignment, name);
         this.elemCount = elemCount;
         this.elementLayout = elementLayout;
     }
@@ -93,7 +93,7 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
      */
     public SequenceLayout withElementCount(long elementCount) {
         AbstractLayout.checkSize(elementCount, true);
-        return new SequenceLayout(elementCount, elementLayout, alignment, name());
+        return new SequenceLayout(elementCount, elementLayout, bitAlignment, name());
     }
 
     /**
@@ -222,13 +222,13 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
     }
 
     @Override
-    SequenceLayout dup(long alignment, Optional<String> name) {
-        return new SequenceLayout(elementCount(), elementLayout, alignment, name);
+    SequenceLayout dup(long bitAlignment, Optional<String> name) {
+        return new SequenceLayout(elementCount(), elementLayout, bitAlignment, name);
     }
 
     @Override
     boolean hasNaturalAlignment() {
-        return alignment == elementLayout.bitAlignment();
+        return bitAlignment == elementLayout.bitAlignment();
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout
@@ -246,7 +246,7 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
      * {@inheritDoc}
      */
     @Override
-    public SequenceLayout withBitAlignment(long alignmentBits) {
-        return (SequenceLayout)super.withBitAlignment(alignmentBits);
+    public SequenceLayout withBitAlignment(long bitAlignment) {
+        return (SequenceLayout)super.withBitAlignment(bitAlignment);
     }
 }

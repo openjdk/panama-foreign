@@ -37,12 +37,12 @@ import java.util.Optional;
  */
 /* package-private */ final class PaddingLayout extends AbstractLayout implements MemoryLayout {
 
-    PaddingLayout(long size) {
-        this(size, 1, Optional.empty());
+    PaddingLayout(long bitSize) {
+        this(bitSize, 1, Optional.empty());
     }
 
-    PaddingLayout(long size, long alignment, Optional<String> name) {
-        super(size, alignment, name);
+    PaddingLayout(long bitSize, long bitAlignment, Optional<String> name) {
+        super(bitSize, bitAlignment, name);
     }
 
     @Override
@@ -70,8 +70,8 @@ import java.util.Optional;
     }
 
     @Override
-    PaddingLayout dup(long alignment, Optional<String> name) {
-        return new PaddingLayout(bitSize(), alignment, name);
+    PaddingLayout dup(long bitAlignment, Optional<String> name) {
+        return new PaddingLayout(bitSize(), bitAlignment, name);
     }
 
     @Override
@@ -94,7 +94,7 @@ import java.util.Optional;
      * {@inheritDoc}
      */
     @Override
-    public PaddingLayout withBitAlignment(long alignmentBits) {
-        return (PaddingLayout)super.withBitAlignment(alignmentBits);
+    public PaddingLayout withBitAlignment(long bitAlignment) {
+        return (PaddingLayout)super.withBitAlignment(bitAlignment);
     }
 }
