@@ -75,8 +75,8 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
         checkSize(size, false);
     }
 
-    static void checkSize(long size, boolean includeZero) {
-        if (size < 0 || (!includeZero && size == 0)) {
+    static void checkSize(long size, boolean allowZero) {
+        if (size < 0 || (!allowZero && size == 0)) {
             throw new IllegalArgumentException("Invalid size for layout: " + size);
         }
     }
