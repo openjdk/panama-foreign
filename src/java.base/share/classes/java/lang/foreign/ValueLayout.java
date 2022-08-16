@@ -751,7 +751,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
      */
-    public static final OfAddress ADDRESS_UNALIGNED = unaligned(ADDRESS);
+    public static final OfAddress ADDRESS_UNALIGNED = ADDRESS.withBitAlignment(8);
 
     /**
      * An unaligned value layout constant whose size is the same as that of a Java {@code char}
@@ -764,7 +764,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
      */
-    public static final OfChar JAVA_CHAR_UNALIGNED = unaligned(JAVA_CHAR);
+    public static final OfChar JAVA_CHAR_UNALIGNED = JAVA_CHAR.withBitAlignment(8);
 
     /**
      * An unaligned value layout constant whose size is the same as that of a Java {@code short}
@@ -777,7 +777,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
      */
-    public static final OfShort JAVA_SHORT_UNALIGNED = unaligned(JAVA_SHORT);
+    public static final OfShort JAVA_SHORT_UNALIGNED = JAVA_SHORT.withBitAlignment(8);
 
     /**
      * An unaligned value layout constant whose size is the same as that of a Java {@code int}
@@ -790,7 +790,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
      */
-    public static final OfInt JAVA_INT_UNALIGNED = unaligned(JAVA_INT);
+    public static final OfInt JAVA_INT_UNALIGNED = JAVA_INT.withBitAlignment(8);
 
     /**
      * An unaligned value layout constant whose size is the same as that of a Java {@code long}
@@ -803,7 +803,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
      */
-    public static final OfLong JAVA_LONG_UNALIGNED = unaligned(JAVA_LONG);
+    public static final OfLong JAVA_LONG_UNALIGNED = JAVA_LONG.withBitAlignment(8);
 
     /**
      * An unaligned value layout constant whose size is the same as that of a Java {@code float}
@@ -816,7 +816,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
      */
-    public static final OfFloat JAVA_FLOAT_UNALIGNED = unaligned(JAVA_FLOAT);
+    public static final OfFloat JAVA_FLOAT_UNALIGNED = JAVA_FLOAT.withBitAlignment(8);
 
     /**
      * An unaligned value layout constant whose size is the same as that of a Java {@code double}
@@ -829,11 +829,6 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
      */
-    public static final OfDouble JAVA_DOUBLE_UNALIGNED = unaligned(JAVA_DOUBLE);
-
-    @SuppressWarnings("unchecked")
-    private static <T extends MemoryLayout> T unaligned(T layout) {
-        return (T) layout.withBitAlignment(8);
-    }
+    public static final OfDouble JAVA_DOUBLE_UNALIGNED = JAVA_DOUBLE.withBitAlignment(8);
 
 }
