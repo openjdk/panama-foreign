@@ -745,8 +745,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemoryLayout.valueLayout(MemorySegment.class, ByteOrder.nativeOrder())
-     *             .withBitAlignment(8);
+     * ADDRESS.withBitAlignment(8);
      * }
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
@@ -758,8 +757,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemoryLayout.valueLayout(char.class, ByteOrder.nativeOrder())
-     *             .withBitAlignment(8);
+     * JAVA_CHAR.withBitAlignment(8);
      * }
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
@@ -771,8 +769,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemoryLayout.valueLayout(short.class, ByteOrder.nativeOrder())
-     *             .withBitAlignment(8);
+     * JAVA_SHORT.withBitAlignment(8);
      * }
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
@@ -784,8 +781,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemoryLayout.valueLayout(int.class, ByteOrder.nativeOrder())
-     *             .withBitAlignment(8);
+     * JAVA_INT.withBitAlignment(8);
      * }
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
@@ -797,8 +793,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemoryLayout.valueLayout(long.class, ByteOrder.nativeOrder())
-     *             .withBitAlignment(8);
+     * JAVA_LONG.withBitAlignment(8);
      * }
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
@@ -810,8 +805,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemoryLayout.valueLayout(float.class, ByteOrder.nativeOrder())
-     *             .withBitAlignment(8);
+     * JAVA_FLOAT.withBitAlignment(8);
      * }
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
@@ -823,8 +817,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemoryLayout.valueLayout(double.class, ByteOrder.nativeOrder())
-     *             .withBitAlignment(8);
+     * JAVA_DOUBLE.withBitAlignment(8);
      * }
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
