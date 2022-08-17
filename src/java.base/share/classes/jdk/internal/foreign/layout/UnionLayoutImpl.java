@@ -23,28 +23,32 @@
  *  questions.
  *
  */
-package java.lang.foreign;
+package jdk.internal.foreign.layout;
 
-import jdk.internal.foreign.layout.PaddingLayoutImpl;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.UnionLayout;
+import java.util.List;
+import java.util.Optional;
 
-/**
- * A padding layout. A padding layout specifies the size of extra space which is typically not accessed by applications,
- * and is typically used for aligning member layouts around word boundaries.
- *
- * @implSpec
- * Implementing classes are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
- */
-public sealed interface PaddingLayout extends MemoryLayout permits PaddingLayoutImpl {
+public final class UnionLayoutImpl extends AbstractGroupLayout<UnionLayoutImpl> implements UnionLayout {
 
-    /**
-     * {@inheritDoc}
-     */
+    private static final Kind KIND = Kind.UNION;
+
+    private UnionLayoutImpl(List<MemoryLayout> elements) {
+        super(KIND, elements);
+    }
+
+    private UnionLayoutImpl(List<MemoryLayout> elements, long bitAlignment, Optional<String> name) {
+        super(KIND, elements, bitAlignment, name);
+    }
+
     @Override
-    PaddingLayout withName(String name);
+    UnionLayoutImpl dup(long bitAlignment, Optional<String> name) {
+        return new UnionLayoutImpl(memberLayouts(), bitAlignment, name);
+    }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    PaddingLayout withBitAlignment(long bitAlignment);
+    public static UnionLayout of(List<MemoryLayout> elements) {
+        return new UnionLayoutImpl(elements);
+    }
+
 }

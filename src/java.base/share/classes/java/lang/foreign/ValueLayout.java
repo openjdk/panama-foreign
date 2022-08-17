@@ -28,19 +28,12 @@ package java.lang.foreign;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
-import jdk.internal.foreign.Utils;
+import jdk.internal.foreign.layout.MemoryLayoutUtil;
+import jdk.internal.foreign.layout.ValueLayouts;
 import jdk.internal.javac.PreviewFeature;
-import jdk.internal.misc.Unsafe;
 import jdk.internal.reflect.CallerSensitive;
-import jdk.internal.reflect.Reflection;
-import jdk.internal.vm.annotation.ForceInline;
-import jdk.internal.vm.annotation.Stable;
-import sun.invoke.util.Wrapper;
 
 /**
  * A value layout. A value layout is used to model the memory layout associated with values of basic data types, such as <em>integral</em> types
@@ -53,36 +46,17 @@ import sun.invoke.util.Wrapper;
  * constants in this class are byte-aligned, and their byte order is set to the {@linkplain ByteOrder#nativeOrder() platform default},
  * thus making it easy to work with other APIs, such as arrays and {@link java.nio.ByteBuffer}.
  *
- * @implSpec
- * This class and its subclasses are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
+ * @implSpec implementing classes and subclasses are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
-
-    private final Class<?> carrier;
-    private final ByteOrder order;
-
-    private static final int ADDRESS_SIZE_BITS = Unsafe.ADDRESS_SIZE * 8;
-
-    ValueLayout(Class<?> carrier, ByteOrder order, long bitSize) {
-        this(carrier, order, bitSize, bitSize, Optional.empty());
-    }
-
-    ValueLayout(Class<?> carrier, ByteOrder order, long bitSize, long bitAlignment, Optional<String> name) {
-        super(bitSize, bitAlignment, name);
-        this.carrier = carrier;
-        this.order = order;
-        checkCarrierSize(carrier, bitSize);
-    }
+public sealed interface ValueLayout extends MemoryLayout {
 
     /**
      * {@return the value's byte order}
      */
-    public ByteOrder order() {
-        return order;
-    }
+    ByteOrder order();
 
     /**
      * Returns a value layout with the same carrier, alignment constraints and name as this value layout,
@@ -91,37 +65,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * @param order the desired byte order.
      * @return a value layout with the given byte order.
      */
-    public ValueLayout withOrder(ByteOrder order) {
-        return new ValueLayout(carrier, Objects.requireNonNull(order), bitSize(), bitAlignment, name());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String toString() {
-        char descriptor = carrier == MemorySegment.class ? 'A' : carrier.descriptorString().charAt(0);
-        if (order == ByteOrder.LITTLE_ENDIAN) {
-            descriptor = Character.toLowerCase(descriptor);
-        }
-        return decorateLayoutString(String.format("%s%d", descriptor, bitSize()));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!super.equals(other)) {
-            return false;
-        }
-        return other instanceof ValueLayout otherValue &&
-                carrier.equals(otherValue.carrier) &&
-                order.equals(otherValue.order);
-    }
+    ValueLayout withOrder(ByteOrder order);
 
     /**
      * Creates a <em>strided</em> access var handle that can be used to dereference a multi-dimensional array. The
@@ -180,133 +124,44 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * @see MemoryLayout#varHandle(PathElement...)
      * @see SequenceLayout
      */
-    public VarHandle arrayElementVarHandle(int... shape) {
-        Objects.requireNonNull(shape);
-        MemoryLayout layout = this;
-        List<PathElement> path = new ArrayList<>();
-        for (int i = shape.length ; i > 0 ; i--) {
-            int size = shape[i - 1];
-            if (size < 0) throw new IllegalArgumentException("Invalid shape size: " + size);
-            layout = MemoryLayout.sequenceLayout(size, layout);
-            path.add(PathElement.sequenceElement());
-        }
-        layout = MemoryLayout.sequenceLayout(layout);
-        path.add(PathElement.sequenceElement());
-        return layout.varHandle(path.toArray(new PathElement[0]));
-    }
+    VarHandle arrayElementVarHandle(int... shape);
 
     /**
      * {@return the carrier associated with this value layout}
      */
-    public Class<?> carrier() {
-        return carrier;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), order, carrier);
-    }
+    Class<?> carrier();
 
     @Override
-    ValueLayout dup(long bitAlignment, Optional<String> name) {
-        return new ValueLayout(carrier, order, bitSize(), bitAlignment, name());
-    }
+    ValueLayout withName(String name);
 
-    //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout
-    //but that causes issues with javadoc, see JDK-8224052
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public ValueLayout withName(String name) {
-        return (ValueLayout)super.withName(name);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ValueLayout withBitAlignment(long bitAlignment) {
-        return (ValueLayout)super.withBitAlignment(bitAlignment);
-    }
-
-    static void checkCarrierSize(Class<?> carrier, long size) {
-        if (!isValidCarrier(carrier)) {
-            throw new IllegalArgumentException("Invalid carrier: " + carrier.getName());
-        }
-        if (carrier == MemorySegment.class && size != ADDRESS_SIZE_BITS) {
-            throw new IllegalArgumentException("Address size mismatch: " + ADDRESS_SIZE_BITS + " != " + size);
-        }
-        if (carrier.isPrimitive()) {
-            int expectedSize =  carrier == boolean.class ? 8 : Wrapper.forPrimitiveType(carrier).bitWidth();
-            if (size != expectedSize) {
-                throw new IllegalArgumentException("Carrier size mismatch: " + carrier.getName() + " != " + size);
-            }
-        }
-    }
-
-    static boolean isValidCarrier(Class<?> carrier) {
-        return carrier == boolean.class
-                || carrier == byte.class
-                || carrier == short.class
-                || carrier == char.class
-                || carrier == int.class
-                || carrier == long.class
-                || carrier == float.class
-                || carrier == double.class
-                || carrier == MemorySegment.class;
-    }
-
-    @Stable
-    private VarHandle handle;
-
-    @ForceInline
-    VarHandle accessHandle() {
-        if (handle == null) {
-            // this store to stable field is safe, because return value of 'makeMemoryAccessVarHandle' has stable identity
-            handle = Utils.makeSegmentViewVarHandle(this);
-        }
-        return handle;
-    }
+    ValueLayout withBitAlignment(long bitAlignment);
 
     /**
      * A value layout whose carrier is {@code boolean.class}.
      *
      * @since 19
      */
-    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-    public static final class OfBoolean extends ValueLayout {
-        OfBoolean(ByteOrder order) {
-            super(boolean.class, order, 8);
-        }
-
-        OfBoolean(ByteOrder order, long bitAlignment, Optional<String> name) {
-            super(boolean.class, order, 8, bitAlignment, name);
-        }
+    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
+    sealed interface OfBoolean extends ValueLayout permits ValueLayouts.OfBooleanImpl {
 
         @Override
-        OfBoolean dup(long bitAlignment, Optional<String> name) {
-            return new OfBoolean(order(), bitAlignment, name);
-        }
+        OfBoolean withName(String name);
 
         @Override
-        public OfBoolean withName(String name) {
-            return (OfBoolean)super.withName(name);
-        }
+        OfBoolean withBitAlignment(long alignmentBits);
 
         @Override
-        public OfBoolean withBitAlignment(long bitAlignment) {
-            return (OfBoolean)super.withBitAlignment(bitAlignment);
-        }
+        OfBoolean withOrder(ByteOrder order);
 
-        @Override
-        public OfBoolean withOrder(ByteOrder order) {
+        /**
+         * {@return an OfBoolean with the provided {@code order}} ;
+         *
+         * @param order the byte order to use
+         */
+        static OfBoolean of(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfBoolean(order, bitAlignment, name());
+            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfBooleanImpl.ofNativeOrder(), order);
         }
     }
 
@@ -315,35 +170,26 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      *
      * @since 19
      */
-    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-    public static final class OfByte extends ValueLayout {
-        OfByte(ByteOrder order) {
-            super(byte.class, order, 8);
-        }
-
-        OfByte(ByteOrder order, long bitAlignment, Optional<String> name) {
-            super(byte.class, order, 8, bitAlignment, name);
-        }
+    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
+    sealed interface OfByte extends ValueLayout permits ValueLayouts.OfByteImpl {
 
         @Override
-        OfByte dup(long bitAlignment, Optional<String> name) {
-            return new OfByte(order(), bitAlignment, name);
-        }
+        OfByte withName(String name);
 
         @Override
-        public OfByte withName(String name) {
-            return (OfByte)super.withName(name);
-        }
+        OfByte withBitAlignment(long alignmentBits);
 
         @Override
-        public OfByte withBitAlignment(long bitAlignment) {
-            return (OfByte)super.withBitAlignment(bitAlignment);
-        }
+        OfByte withOrder(ByteOrder order);
 
-        @Override
-        public OfByte withOrder(ByteOrder order) {
+        /**
+         * {@return an OfByte with the provided {@code order}} ;
+         *
+         * @param order the byte order to use
+         */
+        static OfByte of(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfByte(order, bitAlignment, name());
+            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfByteImpl.ofNativeOrder(), order);
         }
     }
 
@@ -352,35 +198,26 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      *
      * @since 19
      */
-    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-    public static final class OfChar extends ValueLayout {
-        OfChar(ByteOrder order) {
-            super(char.class, order, 16);
-        }
-
-        OfChar(ByteOrder order, long bitAlignment, Optional<String> name) {
-            super(char.class, order, 16, bitAlignment, name);
-        }
+    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
+    sealed interface OfChar extends ValueLayout permits ValueLayouts.OfCharImpl {
 
         @Override
-        OfChar dup(long bitAlignment, Optional<String> name) {
-            return new OfChar(order(), bitAlignment, name);
-        }
+        OfChar withName(String name);
 
         @Override
-        public OfChar withName(String name) {
-            return (OfChar)super.withName(name);
-        }
+        OfChar withBitAlignment(long alignmentBits);
 
         @Override
-        public OfChar withBitAlignment(long bitAlignment) {
-            return (OfChar)super.withBitAlignment(bitAlignment);
-        }
+        OfChar withOrder(ByteOrder order);
 
-        @Override
-        public OfChar withOrder(ByteOrder order) {
+        /**
+         * {@return an OfChar with the provided {@code order}} ;
+         *
+         * @param order the byte order to use
+         */
+        static OfChar of(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfChar(order, bitAlignment, name());
+            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfCharImpl.ofNativeOrder(), order);
         }
     }
 
@@ -389,35 +226,26 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      *
      * @since 19
      */
-    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-    public static final class OfShort extends ValueLayout {
-        OfShort(ByteOrder order) {
-            super(short.class, order, 16);
-        }
-
-        OfShort(ByteOrder order, long bitAlignment, Optional<String> name) {
-            super(short.class, order, 16, bitAlignment, name);
-        }
+    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
+    sealed interface OfShort extends ValueLayout permits ValueLayouts.OfShortImpl {
 
         @Override
-        OfShort dup(long bitAlignment, Optional<String> name) {
-            return new OfShort(order(), bitAlignment, name);
-        }
+        OfShort withName(String name);
 
         @Override
-        public OfShort withName(String name) {
-            return (OfShort)super.withName(name);
-        }
+        OfShort withBitAlignment(long alignmentBits);
 
         @Override
-        public OfShort withBitAlignment(long bitAlignment) {
-            return (OfShort)super.withBitAlignment(bitAlignment);
-        }
+        OfShort withOrder(ByteOrder order);
 
-        @Override
-        public OfShort withOrder(ByteOrder order) {
+        /**
+         * {@return an OfShort with the provided {@code order}} ;
+         *
+         * @param order the byte order to use
+         */
+        static OfShort of(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfShort(order, bitAlignment, name());
+            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfShortImpl.ofNativeOrder(), order);
         }
     }
 
@@ -426,35 +254,26 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      *
      * @since 19
      */
-    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-    public static final class OfInt extends ValueLayout {
-        OfInt(ByteOrder order) {
-            super(int.class, order, 32);
-        }
-
-        OfInt(ByteOrder order, long bitAlignment, Optional<String> name) {
-            super(int.class, order, 32, bitAlignment, name);
-        }
+    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
+    sealed interface OfInt extends ValueLayout permits ValueLayouts.OfIntImpl {
 
         @Override
-        OfInt dup(long bitAlignment, Optional<String> name) {
-            return new OfInt(order(), bitAlignment, name);
-        }
+        OfInt withName(String name);
 
         @Override
-        public OfInt withName(String name) {
-            return (OfInt)super.withName(name);
-        }
+        OfInt withBitAlignment(long alignmentBits);
 
         @Override
-        public OfInt withBitAlignment(long bitAlignment) {
-            return (OfInt)super.withBitAlignment(bitAlignment);
-        }
+        OfInt withOrder(ByteOrder order);
 
-        @Override
-        public OfInt withOrder(ByteOrder order) {
+        /**
+         * {@return an OfInt with the provided {@code order}} ;
+         *
+         * @param order the byte order to use
+         */
+        static OfInt of(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfInt(order, bitAlignment, name());
+            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfIntImpl.ofNativeOrder(), order);
         }
     }
 
@@ -463,35 +282,26 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      *
      * @since 19
      */
-    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-    public static final class OfFloat extends ValueLayout {
-        OfFloat(ByteOrder order) {
-            super(float.class, order, 32);
-        }
-
-        OfFloat(ByteOrder order, long bitAlignment, Optional<String> name) {
-            super(float.class, order, 32, bitAlignment, name);
-        }
+    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
+    sealed interface OfFloat extends ValueLayout permits ValueLayouts.OfFloatImpl {
 
         @Override
-        OfFloat dup(long bitAlignment, Optional<String> name) {
-            return new OfFloat(order(), bitAlignment, name);
-        }
+        OfFloat withName(String name);
 
         @Override
-        public OfFloat withName(String name) {
-            return (OfFloat)super.withName(name);
-        }
+        OfFloat withBitAlignment(long alignmentBits);
 
         @Override
-        public OfFloat withBitAlignment(long bitAlignment) {
-            return (OfFloat)super.withBitAlignment(bitAlignment);
-        }
+        OfFloat withOrder(ByteOrder order);
 
-        @Override
-        public OfFloat withOrder(ByteOrder order) {
+        /**
+         * {@return an OfFloat with the provided {@code order}} ;
+         *
+         * @param order the byte order to use
+         */
+        static OfFloat of(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfFloat(order, bitAlignment, name());
+            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfFloatImpl.ofNativeOrder(), order);
         }
     }
 
@@ -500,35 +310,26 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      *
      * @since 19
      */
-    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-    public static final class OfLong extends ValueLayout {
-        OfLong(ByteOrder order) {
-            super(long.class, order, 64);
-        }
-
-        OfLong(ByteOrder order, long bitAlignment, Optional<String> name) {
-            super(long.class, order, 64, bitAlignment, name);
-        }
+    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
+    sealed interface OfLong extends ValueLayout permits ValueLayouts.OfLongImpl {
 
         @Override
-        OfLong dup(long bitAlignment, Optional<String> name) {
-            return new OfLong(order(), bitAlignment, name);
-        }
+        OfLong withName(String name);
 
         @Override
-        public OfLong withName(String name) {
-            return (OfLong)super.withName(name);
-        }
+        OfLong withBitAlignment(long alignmentBits);
 
         @Override
-        public OfLong withBitAlignment(long bitAlignment) {
-            return (OfLong)super.withBitAlignment(bitAlignment);
-        }
+        OfLong withOrder(ByteOrder order);
 
-        @Override
-        public OfLong withOrder(ByteOrder order) {
+        /**
+         * {@return an OfLong with the provided {@code order}} ;
+         *
+         * @param order the byte order to use
+         */
+        static OfLong of(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfLong(order, bitAlignment, name());
+            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfLongImpl.ofNativeOrder(), order);
         }
     }
 
@@ -537,35 +338,26 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      *
      * @since 19
      */
-    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-    public static final class OfDouble extends ValueLayout {
-        OfDouble(ByteOrder order) {
-            super(double.class, order, 64);
-        }
-
-        OfDouble(ByteOrder order, long bitAlignment, Optional<String> name) {
-            super(double.class, order, 64, bitAlignment, name);
-        }
+    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
+    sealed interface OfDouble extends ValueLayout permits ValueLayouts.OfDoubleImpl {
 
         @Override
-        OfDouble dup(long bitAlignment, Optional<String> name) {
-            return new OfDouble(order(), bitAlignment, name);
-        }
+        OfDouble withName(String name);
 
         @Override
-        public OfDouble withName(String name) {
-            return (OfDouble)super.withName(name);
-        }
+        OfDouble withBitAlignment(long alignmentBits);
 
         @Override
-        public OfDouble withBitAlignment(long bitAlignment) {
-            return (OfDouble)super.withBitAlignment(bitAlignment);
-        }
+        OfDouble withOrder(ByteOrder order);
 
-        @Override
-        public OfDouble withOrder(ByteOrder order) {
+        /**
+         * {@return an OfDouble with the provided {@code order}} ;
+         *
+         * @param order the byte order to use
+         */
+        static OfDouble of(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfDouble(order, bitAlignment, name());
+            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfDoubleImpl.ofNativeOrder(), order);
         }
     }
 
@@ -574,52 +366,17 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      *
      * @since 19
      */
-    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-    public static final class OfAddress extends ValueLayout {
-
-        private final boolean isUnbounded;
-
-        OfAddress(ByteOrder order) {
-            super(MemorySegment.class, order, ADDRESS_SIZE_BITS);
-            this.isUnbounded = false; // safe
-        }
-
-        OfAddress(ByteOrder order, long bitSize, long bitAlignment, boolean isUnbounded, Optional<String> name) {
-            super(MemorySegment.class, order, bitSize, bitAlignment, name);
-            this.isUnbounded = isUnbounded;
-        }
+    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
+    sealed interface OfAddress extends ValueLayout permits ValueLayouts.OfAddressImpl {
 
         @Override
-        OfAddress dup(long bitAlignment, Optional<String> name) {
-            return new OfAddress(order(), bitSize(), bitAlignment, isUnbounded, name);
-        }
+        OfAddress withName(String name);
 
         @Override
-        public OfAddress withName(String name) {
-            return (OfAddress)super.withName(name);
-        }
+        OfAddress withBitAlignment(long alignmentBits);
 
         @Override
-        public OfAddress withBitAlignment(long bitAlignment) {
-            return (OfAddress)super.withBitAlignment(bitAlignment);
-        }
-
-        @Override
-        public OfAddress withOrder(ByteOrder order) {
-            Objects.requireNonNull(order);
-            return new OfAddress(order, bitSize(), bitAlignment, isUnbounded, name());
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return super.equals(other) &&
-                    ((OfAddress)other).isUnbounded == this.isUnbounded;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(super.hashCode(), isUnbounded);
-        }
+        OfAddress withOrder(ByteOrder order);
 
         /**
          * Returns an <em>unbounded</em> address layout with the same carrier, alignment constraints, name and order as this address layout,
@@ -636,16 +393,21 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
          * @see #isUnbounded()
          */
         @CallerSensitive
-        public OfAddress asUnbounded() {
-            Reflection.ensureNativeAccess(Reflection.getCallerClass(), ValueLayout.OfAddress.class, "asUnbounded");
-            return new OfAddress(order(), bitSize(), bitAlignment, true, name());
-        }
+        OfAddress asUnbounded();
 
         /**
          * {@return {@code true}, if this address layout is an {@linkplain #asUnbounded() unbounded address layout}}.
          */
-        public boolean isUnbounded() {
-            return isUnbounded;
+        boolean isUnbounded();
+
+        /**
+         * {@return an OfAddress with the provided {@code order}} ;
+         *
+         * @param order the byte order to use
+         */
+        static OfAddress of(ByteOrder order) {
+            Objects.requireNonNull(order);
+            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfAddressImpl.ofNativeOrder(), order);
         }
     }
 
@@ -654,91 +416,89 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      * bit alignment set to {@code sizeof(size_t) * 8}, byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemoryLayout.valueLayout(MemorySegment.class, ByteOrder.nativeOrder())
+     * OfAddress.of(ByteOrder.nativeOrder())
      *             .withBitAlignment(<address size>);
      * }
      */
-    public static final OfAddress ADDRESS = new OfAddress(ByteOrder.nativeOrder())
-            .withBitAlignment(ValueLayout.ADDRESS_SIZE_BITS);
+    OfAddress ADDRESS = ValueLayouts.OfAddressImpl.ofNativeOrder();
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code byte},
      * bit alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemoryLayout.valueLayout(byte.class, ByteOrder.nativeOrder()).withBitAlignment(8);
+     * OfByte.of(ByteOrder.nativeOrder()).withBitAlignment(8);
      * }
      */
-    public static final OfByte JAVA_BYTE = new OfByte(ByteOrder.nativeOrder()).withBitAlignment(8);
+    OfByte JAVA_BYTE = ValueLayouts.OfByteImpl.ofNativeOrder();
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code boolean},
      * bit alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemoryLayout.valueLayout(boolean.class, ByteOrder.nativeOrder()).withBitAlignment(8);
+     * OfBoolean.of(ByteOrder.nativeOrder()).withBitAlignment(8);
      * }
      */
-    public static final OfBoolean JAVA_BOOLEAN = new OfBoolean(ByteOrder.nativeOrder()).withBitAlignment(8);
+    OfBoolean JAVA_BOOLEAN = ValueLayouts.OfBooleanImpl.ofNativeOrder();
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code char},
      * bit alignment set to 16, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemoryLayout.valueLayout(char.class, ByteOrder.nativeOrder()).withBitAlignment(16);
+     * OfChar.of(ByteOrder.nativeOrder()).withBitAlignment(16);
      * }
      */
-    public static final OfChar JAVA_CHAR = new OfChar(ByteOrder.nativeOrder()).withBitAlignment(16);
+    OfChar JAVA_CHAR = ValueLayouts.OfCharImpl.ofNativeOrder();
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code short},
      * bit alignment set to 16, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemoryLayout.valueLayout(short.class, ByteOrder.nativeOrder()).withBitAlignment(16);
+     * OfShort.of(ByteOrder.nativeOrder()).withBitAlignment(16);
      * }
      */
-    public static final OfShort JAVA_SHORT = new OfShort(ByteOrder.nativeOrder()).withBitAlignment(16);
+    OfShort JAVA_SHORT = ValueLayouts.OfShortImpl.ofNativeOrder();
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code int},
      * bit alignment set to 32, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemoryLayout.valueLayout(int.class, ByteOrder.nativeOrder()).withBitAlignment(32);
+     * OfInt.of(ByteOrder.nativeOrder()).withBitAlignment(32);
      * }
      */
-    public static final OfInt JAVA_INT = new OfInt(ByteOrder.nativeOrder()).withBitAlignment(32);
+    OfInt JAVA_INT = ValueLayouts.OfIntImpl.ofNativeOrder();
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code long},
      * bit alignment set to 64, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemoryLayout.valueLayout(long.class, ByteOrder.nativeOrder()).withBitAlignment(64);
+     * OfLong.of(ByteOrder.nativeOrder()).withBitAlignment(64);
      * }
      */
-    public static final OfLong JAVA_LONG = new OfLong(ByteOrder.nativeOrder())
-            .withBitAlignment(64);
+    OfLong JAVA_LONG = ValueLayouts.OfLongImpl.ofNativeOrder();
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code float},
      * bit alignment set to 32, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemoryLayout.valueLayout(float.class, ByteOrder.nativeOrder()).withBitAlignment(32);
+     * OfFloat.of(ByteOrder.nativeOrder()).withBitAlignment(32);
      * }
      */
-    public static final OfFloat JAVA_FLOAT = new OfFloat(ByteOrder.nativeOrder()).withBitAlignment(32);
+    OfFloat JAVA_FLOAT = ValueLayouts.OfFloatImpl.ofNativeOrder();
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code double},
      * bit alignment set to 64, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemoryLayout.valueLayout(double.class, ByteOrder.nativeOrder()).withBitAlignment(64);
+     * OfDouble.of(ByteOrder.nativeOrder()).withBitAlignment(64);
      * }
      */
-    public static final OfDouble JAVA_DOUBLE = new OfDouble(ByteOrder.nativeOrder()).withBitAlignment(64);
+    OfDouble JAVA_DOUBLE = ValueLayouts.OfDoubleImpl.ofNativeOrder();
 }

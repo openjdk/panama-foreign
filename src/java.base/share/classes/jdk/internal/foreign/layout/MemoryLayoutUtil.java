@@ -23,28 +23,37 @@
  *  questions.
  *
  */
-package java.lang.foreign;
+package jdk.internal.foreign.layout;
 
-import jdk.internal.foreign.layout.PaddingLayoutImpl;
+import java.lang.foreign.ValueLayout;
+import java.nio.ByteOrder;
 
-/**
- * A padding layout. A padding layout specifies the size of extra space which is typically not accessed by applications,
- * and is typically used for aligning member layouts around word boundaries.
- *
- * @implSpec
- * Implementing classes are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
- */
-public sealed interface PaddingLayout extends MemoryLayout permits PaddingLayoutImpl {
+import static java.util.Objects.requireNonNull;
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    PaddingLayout withName(String name);
+public final class MemoryLayoutUtil {
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    PaddingLayout withBitAlignment(long bitAlignment);
+    private MemoryLayoutUtil() {
+    }
+
+    public static void checkSize(long size) {
+        checkSize(size, false);
+    }
+
+    public static void checkSize(long size, boolean includeZero) {
+        if (size < 0 || (!includeZero && size == 0)) {
+            throw new IllegalArgumentException("Invalid size for layout: " + size);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <V extends ValueLayout> V createIfNeeded(V nativeOrderValueLayout,
+                                                           ByteOrder newByteOrder) {
+        requireNonNull(nativeOrderValueLayout);
+        if (ByteOrder.nativeOrder() == newByteOrder) {
+            return nativeOrderValueLayout;
+        } else {
+            // This cast will always succeed because ValueLayout::withOrder returns an instance of the same type.
+            return (V) nativeOrderValueLayout.withOrder(newByteOrder);
+        }
+    }
 }

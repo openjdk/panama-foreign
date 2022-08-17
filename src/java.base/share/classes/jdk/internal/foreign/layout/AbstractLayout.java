@@ -23,18 +23,20 @@
  *  questions.
  *
  */
-package java.lang.foreign;
+package jdk.internal.foreign.layout;
 
-import java.util.Objects;
-import java.util.Optional;
 import jdk.internal.foreign.Utils;
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.Stable;
 
-abstract non-sealed class AbstractLayout implements MemoryLayout {
+import java.lang.foreign.*;
+import java.util.Objects;
+import java.util.Optional;
+
+abstract class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout> {
 
     private final long bitSize;
-    final long bitAlignment;
+    public final long bitAlignment;
     private final Optional<String> name;
     @Stable
     long byteSize;
@@ -45,48 +47,33 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
         this.name = name;
     }
 
-    @Override
-    public AbstractLayout withName(String name) {
+    public L withName(String name) {
         Objects.requireNonNull(name);
         return dup(bitAlignment, Optional.of(name));
     }
 
-    @Override
     public final Optional<String> name() {
         return name;
     }
 
-    abstract AbstractLayout dup(long bitAlignment, Optional<String> name);
+    abstract L dup(long alignment, Optional<String> name);
 
-    @Override
-    public AbstractLayout withBitAlignment(long bitAlignment) {
-        checkAlignment(bitAlignment);
-        return dup(bitAlignment, name);
+    public L withBitAlignment(long alignmentBits) {
+        checkAlignment(alignmentBits);
+        return dup(alignmentBits, name);
     }
 
-    void checkAlignment(long alignmentBitCount) {
+    public void checkAlignment(long alignmentBitCount) {
         if (((alignmentBitCount & (alignmentBitCount - 1)) != 0L) || //alignment must be a power of two
                 (alignmentBitCount < 8)) { //alignment must be greater than 8
             throw new IllegalArgumentException("Invalid alignment: " + alignmentBitCount);
         }
     }
 
-    static void checkSize(long size) {
-        checkSize(size, false);
-    }
-
-    static void checkSize(long size, boolean allowZero) {
-        if (size < 0 || (!allowZero && size == 0)) {
-            throw new IllegalArgumentException("Invalid size for layout: " + size);
-        }
-    }
-
-    @Override
     public final long bitAlignment() {
         return bitAlignment;
     }
 
-    @Override
     @ForceInline
     public long byteSize() {
         if (byteSize == 0) {
@@ -96,12 +83,11 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
         return byteSize;
     }
 
-    @Override
     public long bitSize() {
         return bitSize;
     }
 
-    String decorateLayoutString(String s) {
+    public String decorateLayoutString(String s) {
         if (name().isPresent()) {
             s = String.format("%s(%s)", s, name().get());
         }
@@ -111,11 +97,10 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
         return s;
     }
 
-    boolean hasNaturalAlignment() {
+    public boolean hasNaturalAlignment() {
         return bitSize == bitAlignment;
     }
 
-    @Override
     public boolean isPadding() {
         return this instanceof PaddingLayout;
     }
@@ -154,7 +139,7 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
             return true;
         }
 
-        return other instanceof AbstractLayout otherLayout &&
+        return other instanceof AbstractLayout<?> otherLayout &&
                 name.equals(otherLayout.name) &&
                 bitSize == otherLayout.bitSize &&
                 bitAlignment == otherLayout.bitAlignment;
