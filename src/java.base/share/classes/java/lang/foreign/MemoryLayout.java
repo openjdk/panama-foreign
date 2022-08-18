@@ -185,7 +185,7 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
     Optional<String> name();
 
     /**
-     * Returns a memory layout with the same size and alignment constraints as this layout,
+     * Returns a memory layout of the same type with the same size and alignment constraints as this layout,
      * but with the specified name.
      *
      * @param name the layout name.
@@ -235,7 +235,7 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
     }
 
     /**
-     * Returns a memory layout with the same size and name as this layout,
+     * Returns a memory layout of the same type with the same size and name as this layout,
      * but with the specified alignment constraints (in bits).
      *
      * @param bitAlignment the layout alignment constraint, expressed in bits.
