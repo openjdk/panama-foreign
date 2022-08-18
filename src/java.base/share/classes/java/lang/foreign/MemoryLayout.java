@@ -615,7 +615,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * @return the new selector layout.
      * @throws IllegalArgumentException if {@code size <= 0}.
      */
-    static MemoryLayout paddingLayout(long size) {
+    static PaddingLayout paddingLayout(long size) {
         MemoryLayoutUtil.checkSize(size);
         return PaddingLayoutImpl.create(size);
     }
@@ -705,7 +705,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * @throws IllegalArgumentException if the sum of the {@linkplain #bitSize() bit sizes} of the member layouts
      * overflows.
      */
-    static GroupLayout structLayout(MemoryLayout... elements) {
+    static StructLayout structLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
         return wrapOverflow(() ->
                 StructLayoutImpl.of(Stream.of(elements)
@@ -719,7 +719,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * @param elements The member layouts of the union layout.
      * @return a union layout with the given member layouts.
      */
-    static GroupLayout unionLayout(MemoryLayout... elements) {
+    static UnionLayout unionLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
         return UnionLayoutImpl.of(Stream.of(elements)
                 .map(Objects::requireNonNull)
