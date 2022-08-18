@@ -250,14 +250,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
     }
 
     static boolean isValidCarrier(Class<?> carrier) {
-        return carrier == boolean.class
-                || carrier == byte.class
-                || carrier == short.class
-                || carrier == char.class
-                || carrier == int.class
-                || carrier == long.class
-                || carrier == float.class
-                || carrier == double.class
+        return (carrier.isPrimitive() && carrier != void.class)
                 || carrier == MemorySegment.class;
     }
 

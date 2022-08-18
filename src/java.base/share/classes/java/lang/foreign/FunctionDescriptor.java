@@ -26,7 +26,6 @@ package java.lang.foreign;
 
 import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -81,8 +80,7 @@ public sealed class FunctionDescriptor {
      */
     public static FunctionDescriptor of(MemoryLayout resLayout, MemoryLayout... argLayouts) {
         Objects.requireNonNull(resLayout);
-        Objects.requireNonNull(argLayouts);
-        Arrays.stream(argLayouts).forEach(Objects::requireNonNull);
+        assertVarargsNonNull(argLayouts);
         return new FunctionDescriptor(resLayout, List.of(argLayouts));
     }
 
@@ -92,8 +90,7 @@ public sealed class FunctionDescriptor {
      * @return the new function descriptor.
      */
     public static FunctionDescriptor ofVoid(MemoryLayout... argLayouts) {
-        Objects.requireNonNull(argLayouts);
-        Arrays.stream(argLayouts).forEach(Objects::requireNonNull);
+        assertVarargsNonNull(argLayouts);
         return new FunctionDescriptor(null, List.of(argLayouts));
     }
 
@@ -107,8 +104,7 @@ public sealed class FunctionDescriptor {
      * @return a variadic function descriptor, or this descriptor if {@code variadicLayouts.length == 0}.
      */
     public FunctionDescriptor asVariadic(MemoryLayout... variadicLayouts) {
-        Objects.requireNonNull(variadicLayouts);
-        Arrays.stream(variadicLayouts).forEach(Objects::requireNonNull);
+        assertVarargsNonNull(variadicLayouts);
         return variadicLayouts.length == 0 ? this : new VariadicFunction(this, variadicLayouts);
     }
 
@@ -243,6 +239,13 @@ public sealed class FunctionDescriptor {
         @Override
         public FunctionDescriptor dropReturnLayout() {
             throw new UnsupportedOperationException();
+        }
+    }
+
+    private static void assertVarargsNonNull(Object[] args) {
+        Objects.requireNonNull(args);
+        for (Object arg : args) {
+            Objects.requireNonNull(arg);
         }
     }
 }

@@ -35,7 +35,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jdk.internal.foreign.LayoutPath;
 import jdk.internal.foreign.LayoutPath.PathElementImpl.PathKind;
@@ -710,7 +709,7 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
                 new GroupLayout(GroupLayout.Kind.STRUCT,
                         Stream.of(elements)
                                 .map(Objects::requireNonNull)
-                                .collect(Collectors.toList())));
+                                .toList()));
     }
 
     /**
@@ -724,7 +723,7 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
         return new GroupLayout(GroupLayout.Kind.UNION,
                 Stream.of(elements)
                         .map(Objects::requireNonNull)
-                        .collect(Collectors.toList()));
+                        .toList());
     }
 
     private static <L extends MemoryLayout> L wrapOverflow(Supplier<L> layoutSupplier) {
