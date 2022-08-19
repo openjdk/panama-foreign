@@ -64,7 +64,7 @@ public final class ValueLayouts {
     private ValueLayouts() {
     }
 
-    abstract static class AbstractValueLayout<V extends AbstractValueLayout<V> & ValueLayout> extends AbstractLayout<V> implements InternalValueLayout {
+    abstract static class AbstractValueLayout<V extends AbstractValueLayout<V> & ValueLayout> extends AbstractLayout<V> {
 
         private final Class<?> carrier;
         private final ByteOrder order;

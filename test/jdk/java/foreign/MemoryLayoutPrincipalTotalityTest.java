@@ -24,7 +24,7 @@
 /*
  * @test
  * @enablePreview
- * @run testng/othervm --enable-native-access=ALL-UNNAMED MemoryLayoutPrincipalTotalityTest
+ * @run testng/othervm MemoryLayoutPrincipalTotalityTest
  */
 
 import org.testng.annotations.*;

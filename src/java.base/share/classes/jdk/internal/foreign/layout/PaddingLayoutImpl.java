@@ -74,7 +74,7 @@ public final class PaddingLayoutImpl extends AbstractLayout<PaddingLayoutImpl> i
     }
 
 
-    public static PaddingLayout create(long bitSize) {
+    public static PaddingLayout of(long bitSize) {
         return new PaddingLayoutImpl(bitSize);
     }
 
