@@ -213,8 +213,6 @@ public final class ValueLayouts {
     @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     public static final class OfBooleanImpl extends AbstractValueLayout<OfBooleanImpl> implements ValueLayout.OfBoolean {
 
-        private static final OfBoolean NATIVE_ORDER = new OfBooleanImpl(ByteOrder.nativeOrder());
-
         private OfBooleanImpl(ByteOrder order) {
             super(boolean.class, order, 8);
         }
@@ -234,8 +232,8 @@ public final class ValueLayouts {
             return new OfBooleanImpl(order, bitAlignment, name());
         }
 
-        public static OfBoolean ofNativeOrder() {
-            return NATIVE_ORDER;
+        public static OfBoolean of(ByteOrder order) {
+            return new OfBooleanImpl(order);
         }
     }
 
@@ -246,8 +244,6 @@ public final class ValueLayouts {
      */
     @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     public static final class OfByteImpl extends AbstractValueLayout<OfByteImpl> implements ValueLayout.OfByte {
-
-        private static final OfByte NATIVE_ORDER = new OfByteImpl(ByteOrder.nativeOrder());
 
         private OfByteImpl(ByteOrder order) {
             super(byte.class, order, 8);
@@ -268,8 +264,8 @@ public final class ValueLayouts {
             return new OfByteImpl(order, bitAlignment, name());
         }
 
-        public static OfByte ofNativeOrder() {
-            return NATIVE_ORDER;
+        public static OfByte of(ByteOrder order) {
+            return new OfByteImpl(order);
         }
     }
 
@@ -302,8 +298,8 @@ public final class ValueLayouts {
             return new OfCharImpl(order, bitAlignment, name());
         }
 
-        public static OfChar ofNativeOrder() {
-            return NATIVE_ORDER;
+        public static OfChar of(ByteOrder order) {
+            return new OfCharImpl(order);
         }
     }
 
@@ -336,8 +332,8 @@ public final class ValueLayouts {
             return new OfShortImpl(order, bitAlignment, name());
         }
 
-        public static OfShort ofNativeOrder() {
-            return NATIVE_ORDER;
+        public static OfShort of(ByteOrder order) {
+            return new OfShortImpl(order);
         }
     }
 
@@ -370,8 +366,8 @@ public final class ValueLayouts {
             return new OfIntImpl(order, bitAlignment, name());
         }
 
-        public static OfInt ofNativeOrder() {
-            return NATIVE_ORDER;
+        public static OfInt of(ByteOrder order) {
+            return new OfIntImpl(order);
         }
     }
 
@@ -404,8 +400,8 @@ public final class ValueLayouts {
             return new OfFloatImpl(order, bitAlignment, name());
         }
 
-        public static OfFloat ofNativeOrder() {
-            return NATIVE_ORDER;
+        public static OfFloat of(ByteOrder order) {
+            return new OfFloatImpl(order);
         }
     }
 
@@ -438,8 +434,8 @@ public final class ValueLayouts {
             return new OfLongImpl(order, bitAlignment, name());
         }
 
-        public static OfLong ofNativeOrder() {
-            return NATIVE_ORDER;
+        public static OfLong of(ByteOrder order) {
+            return new OfLongImpl(order);
         }
     }
 
@@ -450,8 +446,6 @@ public final class ValueLayouts {
      */
     @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     public static final class OfDoubleImpl extends AbstractValueLayout<OfDoubleImpl> implements ValueLayout.OfDouble {
-
-        private static final OfDouble NATIVE_ORDER = new OfDoubleImpl(ByteOrder.nativeOrder());
 
         private OfDoubleImpl(ByteOrder order) {
             super(double.class, order, 64);
@@ -472,8 +466,8 @@ public final class ValueLayouts {
             return new OfDoubleImpl(order, bitAlignment, name());
         }
 
-        public static OfDouble ofNativeOrder() {
-            return NATIVE_ORDER;
+        public static OfDouble of(ByteOrder order) {
+            return new OfDoubleImpl(order);
         }
 
     }
@@ -485,8 +479,6 @@ public final class ValueLayouts {
      */
     @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     public static final class OfAddressImpl extends AbstractValueLayout<OfAddressImpl> implements ValueLayout.OfAddress {
-
-        private static final OfAddress NATIVE_ORDER = new OfAddressImpl(ByteOrder.nativeOrder());
 
         private final boolean isUnbounded;
 
@@ -535,8 +527,8 @@ public final class ValueLayouts {
             return isUnbounded;
         }
 
-        public static OfAddress ofNativeOrder() {
-            return NATIVE_ORDER;
+        public static OfAddress of(ByteOrder order) {
+            return new OfAddressImpl(order);
         }
     }
 

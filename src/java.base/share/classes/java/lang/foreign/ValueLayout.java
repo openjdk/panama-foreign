@@ -161,7 +161,7 @@ public sealed interface ValueLayout extends MemoryLayout {
          */
         static OfBoolean of(ByteOrder order) {
             Objects.requireNonNull(order);
-            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfBooleanImpl.ofNativeOrder(), order);
+            return ValueLayouts.OfBooleanImpl.of(order);
         }
     }
 
@@ -189,7 +189,7 @@ public sealed interface ValueLayout extends MemoryLayout {
          */
         static OfByte of(ByteOrder order) {
             Objects.requireNonNull(order);
-            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfByteImpl.ofNativeOrder(), order);
+            return ValueLayouts.OfByteImpl.of(order);
         }
     }
 
@@ -217,7 +217,7 @@ public sealed interface ValueLayout extends MemoryLayout {
          */
         static OfChar of(ByteOrder order) {
             Objects.requireNonNull(order);
-            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfCharImpl.ofNativeOrder(), order);
+            return ValueLayouts.OfCharImpl.of(order);
         }
     }
 
@@ -245,7 +245,7 @@ public sealed interface ValueLayout extends MemoryLayout {
          */
         static OfShort of(ByteOrder order) {
             Objects.requireNonNull(order);
-            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfShortImpl.ofNativeOrder(), order);
+            return ValueLayouts.OfShortImpl.of(order);
         }
     }
 
@@ -273,7 +273,7 @@ public sealed interface ValueLayout extends MemoryLayout {
          */
         static OfInt of(ByteOrder order) {
             Objects.requireNonNull(order);
-            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfIntImpl.ofNativeOrder(), order);
+            return ValueLayouts.OfIntImpl.of(order);
         }
     }
 
@@ -301,7 +301,7 @@ public sealed interface ValueLayout extends MemoryLayout {
          */
         static OfFloat of(ByteOrder order) {
             Objects.requireNonNull(order);
-            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfFloatImpl.ofNativeOrder(), order);
+            return ValueLayouts.OfFloatImpl.of(order);
         }
     }
 
@@ -329,7 +329,7 @@ public sealed interface ValueLayout extends MemoryLayout {
          */
         static OfLong of(ByteOrder order) {
             Objects.requireNonNull(order);
-            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfLongImpl.ofNativeOrder(), order);
+            return ValueLayouts.OfLongImpl.of(order);
         }
     }
 
@@ -357,7 +357,7 @@ public sealed interface ValueLayout extends MemoryLayout {
          */
         static OfDouble of(ByteOrder order) {
             Objects.requireNonNull(order);
-            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfDoubleImpl.ofNativeOrder(), order);
+            return ValueLayouts.OfDoubleImpl.of(order);
         }
     }
 
@@ -407,7 +407,7 @@ public sealed interface ValueLayout extends MemoryLayout {
          */
         static OfAddress of(ByteOrder order) {
             Objects.requireNonNull(order);
-            return MemoryLayoutUtil.createIfNeeded(ValueLayouts.OfAddressImpl.ofNativeOrder(), order);
+            return ValueLayouts.OfAddressImpl.of(order);
         }
     }
 
@@ -420,7 +420,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      *             .withBitAlignment(<address size>);
      * }
      */
-    OfAddress ADDRESS = ValueLayouts.OfAddressImpl.ofNativeOrder();
+    OfAddress ADDRESS = OfAddress.of(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code byte},
@@ -430,7 +430,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * OfByte.of(ByteOrder.nativeOrder()).withBitAlignment(8);
      * }
      */
-    OfByte JAVA_BYTE = ValueLayouts.OfByteImpl.ofNativeOrder();
+    OfByte JAVA_BYTE = OfByte.of(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code boolean},
@@ -440,7 +440,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * OfBoolean.of(ByteOrder.nativeOrder()).withBitAlignment(8);
      * }
      */
-    OfBoolean JAVA_BOOLEAN = ValueLayouts.OfBooleanImpl.ofNativeOrder();
+    OfBoolean JAVA_BOOLEAN = OfBoolean.of(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code char},
@@ -450,7 +450,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * OfChar.of(ByteOrder.nativeOrder()).withBitAlignment(16);
      * }
      */
-    OfChar JAVA_CHAR = ValueLayouts.OfCharImpl.ofNativeOrder();
+    OfChar JAVA_CHAR = OfChar.of(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code short},
@@ -460,7 +460,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * OfShort.of(ByteOrder.nativeOrder()).withBitAlignment(16);
      * }
      */
-    OfShort JAVA_SHORT = ValueLayouts.OfShortImpl.ofNativeOrder();
+    OfShort JAVA_SHORT = OfShort.of(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code int},
@@ -470,7 +470,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * OfInt.of(ByteOrder.nativeOrder()).withBitAlignment(32);
      * }
      */
-    OfInt JAVA_INT = ValueLayouts.OfIntImpl.ofNativeOrder();
+    OfInt JAVA_INT = OfInt.of(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code long},
@@ -480,7 +480,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * OfLong.of(ByteOrder.nativeOrder()).withBitAlignment(64);
      * }
      */
-    OfLong JAVA_LONG = ValueLayouts.OfLongImpl.ofNativeOrder();
+    OfLong JAVA_LONG = OfLong.of(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code float},
@@ -490,7 +490,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * OfFloat.of(ByteOrder.nativeOrder()).withBitAlignment(32);
      * }
      */
-    OfFloat JAVA_FLOAT = ValueLayouts.OfFloatImpl.ofNativeOrder();
+    OfFloat JAVA_FLOAT = OfFloat.of(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code double},
@@ -500,7 +500,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * OfDouble.of(ByteOrder.nativeOrder()).withBitAlignment(64);
      * }
      */
-    OfDouble JAVA_DOUBLE = ValueLayouts.OfDoubleImpl.ofNativeOrder();
+    OfDouble JAVA_DOUBLE = OfDouble.of(ByteOrder.nativeOrder());
 
     /**
      * An unaligned value layout constant whose size is the same as that of a machine address ({@code size_t}),
