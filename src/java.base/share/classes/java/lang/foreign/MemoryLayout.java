@@ -617,7 +617,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      */
     static PaddingLayout paddingLayout(long size) {
         MemoryLayoutUtil.checkSize(size);
-        return PaddingLayoutImpl.create(size);
+        return PaddingLayoutImpl.of(size);
     }
 
     /**
