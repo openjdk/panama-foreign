@@ -52,7 +52,9 @@ import sun.nio.ch.DirectBuffer;
  * shared sessions use a more sophisticated synchronization mechanism, which guarantees that no concurrent
  * access is possible when a session is being closed (see {@link jdk.internal.misc.ScopedMemoryAccess}).
  */
-public abstract non-sealed class MemorySessionImpl implements MemorySession, SegmentAllocator {
+public abstract sealed class MemorySessionImpl
+        implements MemorySession, SegmentAllocator
+        permits ConfinedSession, MemorySessionImpl.GlobalSessionImpl, SharedSession {
     final ResourceList resourceList;
     final Cleaner.Cleanable cleanable;
     final Thread owner;
@@ -256,7 +258,7 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
      * Adding new resources to the global session, does nothing: as the session can never become not-alive, there is nothing to track.
      * Acquiring and or releasing a memory session similarly does nothing.
      */
-    static class GlobalSessionImpl extends MemorySessionImpl {
+    static final class GlobalSessionImpl extends MemorySessionImpl {
 
         final Object ref;
 
@@ -307,7 +309,7 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
      * {@link DirectBuffer#address()}, where obtaining an address of a buffer instance associated
      * with a potentially closeable session is forbidden.
      */
-    static class ImplicitSession extends SharedSession {
+    static final class ImplicitSession extends SharedSession {
 
         public ImplicitSession() {
             super(CleanerFactory.cleaner());
