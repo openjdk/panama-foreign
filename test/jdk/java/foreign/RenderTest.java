@@ -115,6 +115,16 @@ public class RenderTest {
     }
 
     @Test
+    public void test4kHexDump() {
+        try (var session = MemorySession.openConfined()) {
+            var segment = session.allocate(2048);
+            MemorySegmentRenderUtil.hexDump(segment)
+                    .forEach(System.out::println);
+        }
+
+    }
+
+    @Test
     public void point() {
 
         final class Point {
