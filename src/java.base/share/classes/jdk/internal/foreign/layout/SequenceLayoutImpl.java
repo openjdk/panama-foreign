@@ -72,7 +72,7 @@ public final class SequenceLayoutImpl extends AbstractLayout<SequenceLayoutImpl>
      */
     public SequenceLayout withElementCount(long elementCount) {
         MemoryLayoutUtil.checkSize(elementCount, true);
-        return new SequenceLayoutImpl(elementCount, elementLayout, bitAlignment, name());
+        return new SequenceLayoutImpl(elementCount, elementLayout, bitAlignment(), name());
     }
 
     /**
@@ -209,7 +209,7 @@ public final class SequenceLayoutImpl extends AbstractLayout<SequenceLayoutImpl>
 
     @Override
     public boolean hasNaturalAlignment() {
-        return bitAlignment == elementLayout.bitAlignment();
+        return bitAlignment() == elementLayout.bitAlignment();
     }
 
     public static SequenceLayout of(long elementCount, MemoryLayout elementLayout) {

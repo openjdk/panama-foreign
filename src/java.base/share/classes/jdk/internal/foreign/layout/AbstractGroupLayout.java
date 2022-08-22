@@ -47,7 +47,88 @@ import java.util.stream.Collectors;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L> & MemoryLayout> extends AbstractLayout<L> {
+public sealed abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L> & MemoryLayout>
+        extends AbstractLayout<L>
+        permits StructLayoutImpl, UnionLayoutImpl {
+
+    private final Kind kind;
+    private final List<MemoryLayout> elements;
+
+    AbstractGroupLayout(Kind kind, List<MemoryLayout> elements) {
+        this(kind, elements, kind.alignof(elements), Optional.empty());
+    }
+
+    AbstractGroupLayout(Kind kind, List<MemoryLayout> elements, long bitAlignment, Optional<String> name) {
+        super(kind.sizeof(elements), bitAlignment, name); // Subclassing creates toctou problems here
+        this.kind = kind;
+        this.elements = List.copyOf(elements);
+    }
+
+    /**
+     * Returns the member layouts associated with this group.
+     *
+     * @apiNote the order in which member layouts are returned is the same order in which member layouts have
+     * been passed to one of the group layout factory methods (see {@link MemoryLayout#structLayout(MemoryLayout...)},
+     * {@link MemoryLayout#unionLayout(MemoryLayout...)}).
+     *
+     * @return the member layouts associated with this group.
+     */
+    public final List<MemoryLayout> memberLayouts() {
+        return elements; // "elements" are already unmodifiable.
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public final String toString() {
+        return decorateLayoutString(elements.stream()
+                .map(Object::toString)
+                .collect(Collectors.joining(kind.delimTag, "[", "]")));
+    }
+
+    /**
+     * {@return {@code true}, if this group layout is a struct layout}
+     */
+    public final boolean isStruct() {
+        return kind == Kind.STRUCT;
+    }
+
+    /**
+     * {@return {@code true}, if this group layout is a union layout}
+     */
+    public final boolean isUnion() {
+        return kind == Kind.UNION;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public final boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!super.equals(other)) {
+            return false;
+        }
+        return other instanceof AbstractGroupLayout<?> otherGroup &&
+                kind == otherGroup.kind &&
+                elements.equals(otherGroup.elements);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public final int hashCode() {
+        return Objects.hash(super.hashCode(), kind, elements);
+    }
+
+    @Override
+    public final boolean hasNaturalAlignment() {
+        return bitAlignment() == kind.alignof(elements);
+    }
 
     /**
      * The group kind.
@@ -79,88 +160,10 @@ public abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L> & Mem
         }
 
         long alignof(List<MemoryLayout> elems) {
-            return elems.stream().mapToLong(MemoryLayout::bitAlignment).max() // max alignment in case we have member layouts
+            return elems.stream()
+                    .mapToLong(MemoryLayout::bitAlignment)
+                    .max() // max alignment in case we have member layouts
                     .orElse(1); // or minimal alignment if no member layout is given
         }
     }
-
-    private final Kind kind;
-    private final List<MemoryLayout> elements;
-
-    AbstractGroupLayout(Kind kind, List<MemoryLayout> elements) {
-        this(kind, elements, kind.alignof(elements), Optional.empty());
-    }
-
-    AbstractGroupLayout(Kind kind, List<MemoryLayout> elements, long alignment, Optional<String> name) {
-        super(kind.sizeof(elements), alignment, name);
-        this.kind = kind;
-        this.elements = List.copyOf(elements);
-    }
-
-    /**
-     * Returns the member layouts associated with this group.
-     *
-     * @apiNote the order in which member layouts are returned is the same order in which member layouts have
-     * been passed to one of the group layout factory methods (see {@link MemoryLayout#structLayout(MemoryLayout...)},
-     * {@link MemoryLayout#unionLayout(MemoryLayout...)}).
-     *
-     * @return the member layouts associated with this group.
-     */
-    public List<MemoryLayout> memberLayouts() {
-        return elements; // "elements" are already unmodifiable.
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String toString() {
-        return decorateLayoutString(elements.stream()
-                .map(Object::toString)
-                .collect(Collectors.joining(kind.delimTag, "[", "]")));
-    }
-
-    /**
-     * {@return {@code true}, if this group layout is a struct layout}
-     */
-    public boolean isStruct() {
-        return kind == Kind.STRUCT;
-    }
-
-    /**
-     * {@return {@code true}, if this group layout is a union layout}
-     */
-    public boolean isUnion() {
-        return kind == Kind.UNION;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!super.equals(other)) {
-            return false;
-        }
-        return other instanceof AbstractGroupLayout<?> otherGroup &&
-                kind == otherGroup.kind &&
-                elements.equals(otherGroup.elements);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), kind, elements);
-    }
-
-    @Override
-    public boolean hasNaturalAlignment() {
-        return bitAlignment == kind.alignof(elements);
-    }
-
 }

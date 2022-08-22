@@ -32,14 +32,12 @@ import java.util.Optional;
 
 public final class StructLayoutImpl extends AbstractGroupLayout<StructLayoutImpl> implements StructLayout {
 
-    private static final Kind KIND = Kind.STRUCT;
-
     private StructLayoutImpl(List<MemoryLayout> elements) {
-        super(KIND, elements);
+        super(Kind.STRUCT, elements);
     }
 
     private StructLayoutImpl(List<MemoryLayout> elements, long bitAlignment, Optional<String> name) {
-        super(KIND, elements, bitAlignment, name);
+        super(Kind.STRUCT, elements, bitAlignment, name);
     }
 
     @Override

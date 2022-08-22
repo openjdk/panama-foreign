@@ -45,15 +45,4 @@ public final class MemoryLayoutUtil {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public static <V extends ValueLayout> V createIfNeeded(V nativeOrderValueLayout,
-                                                           ByteOrder newByteOrder) {
-        requireNonNull(nativeOrderValueLayout);
-        if (ByteOrder.nativeOrder() == newByteOrder) {
-            return nativeOrderValueLayout;
-        } else {
-            // This cast will always succeed because ValueLayout::withOrder returns an instance of the same type.
-            return (V) nativeOrderValueLayout.withOrder(newByteOrder);
-        }
-    }
 }

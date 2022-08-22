@@ -32,14 +32,12 @@ import java.util.Optional;
 
 public final class UnionLayoutImpl extends AbstractGroupLayout<UnionLayoutImpl> implements UnionLayout {
 
-    private static final Kind KIND = Kind.UNION;
-
     private UnionLayoutImpl(List<MemoryLayout> elements) {
-        super(KIND, elements);
+        super(Kind.UNION, elements);
     }
 
     private UnionLayoutImpl(List<MemoryLayout> elements, long bitAlignment, Optional<String> name) {
-        super(KIND, elements, bitAlignment, name);
+        super(Kind.UNION, elements, bitAlignment, name);
     }
 
     @Override

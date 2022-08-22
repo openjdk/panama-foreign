@@ -33,13 +33,14 @@ import java.lang.foreign.*;
 import java.util.Objects;
 import java.util.Optional;
 
-abstract class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout> {
+abstract sealed class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout>
+        permits AbstractGroupLayout, PaddingLayoutImpl, SequenceLayoutImpl, ValueLayouts.AbstractValueLayout {
 
     private final long bitSize;
-    public final long bitAlignment;
+    private final long bitAlignment;
     private final Optional<String> name;
     @Stable
-    long byteSize;
+    private long byteSize;
 
     AbstractLayout(long bitSize, long bitAlignment, Optional<String> name) {
         this.bitSize = bitSize;
@@ -47,7 +48,7 @@ abstract class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout> {
         this.name = name;
     }
 
-    public L withName(String name) {
+    public final L withName(String name) {
         Objects.requireNonNull(name);
         return dup(bitAlignment, Optional.of(name));
     }
@@ -56,18 +57,9 @@ abstract class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout> {
         return name;
     }
 
-    abstract L dup(long alignment, Optional<String> name);
-
-    public L withBitAlignment(long alignmentBits) {
+    public final L withBitAlignment(long alignmentBits) {
         checkAlignment(alignmentBits);
         return dup(alignmentBits, name);
-    }
-
-    public void checkAlignment(long alignmentBitCount) {
-        if (((alignmentBitCount & (alignmentBitCount - 1)) != 0L) || //alignment must be a power of two
-                (alignmentBitCount < 8)) { //alignment must be greater than 8
-            throw new IllegalArgumentException("Invalid alignment: " + alignmentBitCount);
-        }
     }
 
     public final long bitAlignment() {
@@ -75,7 +67,7 @@ abstract class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout> {
     }
 
     @ForceInline
-    public long byteSize() {
+    public final long byteSize() {
         if (byteSize == 0) {
             byteSize = Utils.bitsToBytesOrThrow(bitSize(),
                     () -> new UnsupportedOperationException("Cannot compute byte size; bit size is not a multiple of 8"));
@@ -83,18 +75,8 @@ abstract class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout> {
         return byteSize;
     }
 
-    public long bitSize() {
+    public final long bitSize() {
         return bitSize;
-    }
-
-    public String decorateLayoutString(String s) {
-        if (name().isPresent()) {
-            s = String.format("%s(%s)", s, name().get());
-        }
-        if (!hasNaturalAlignment()) {
-            s = bitAlignment + "%" + s;
-        }
-        return s;
     }
 
     public boolean hasNaturalAlignment() {
@@ -102,7 +84,7 @@ abstract class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout> {
     }
 
     public boolean isPadding() {
-        return this instanceof PaddingLayout;
+        return false;
     }
 
     // the following methods have to copy the same Javadoc as in MemoryLayout, or subclasses will just show
@@ -149,4 +131,25 @@ abstract class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout> {
      * {@return the string representation of this layout}
      */
     public abstract String toString();
+
+    abstract L dup(long alignment, Optional<String> name);
+
+    String decorateLayoutString(String s) {
+        if (name().isPresent()) {
+            s = String.format("%s(%s)", s, name().get());
+        }
+        if (!hasNaturalAlignment()) {
+            s = bitAlignment + "%" + s;
+        }
+        return s;
+    }
+
+    private static void checkAlignment(long alignmentBitCount) {
+        if (((alignmentBitCount & (alignmentBitCount - 1)) != 0L) || //alignment must be a power of two
+                (alignmentBitCount < 8)) { //alignment must be greater than 8
+            throw new IllegalArgumentException("Invalid alignment: " + alignmentBitCount);
+        }
+    }
+
+
 }

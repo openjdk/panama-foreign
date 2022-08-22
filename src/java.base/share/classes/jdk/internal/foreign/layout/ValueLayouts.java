@@ -64,12 +64,14 @@ public final class ValueLayouts {
     private ValueLayouts() {
     }
 
-    abstract static class AbstractValueLayout<V extends AbstractValueLayout<V> & ValueLayout> extends AbstractLayout<V> {
+    abstract sealed static class AbstractValueLayout<V extends AbstractValueLayout<V> & ValueLayout> extends AbstractLayout<V> {
+
+        static final int ADDRESS_SIZE_BITS = Unsafe.ADDRESS_SIZE * 8;
 
         private final Class<?> carrier;
         private final ByteOrder order;
-
-        static final int ADDRESS_SIZE_BITS = Unsafe.ADDRESS_SIZE * 8;
+        @Stable
+        private VarHandle handle;
 
         AbstractValueLayout(Class<?> carrier, ByteOrder order, long bitSize) {
             this(carrier, order, bitSize, bitSize, Optional.empty());
@@ -85,7 +87,7 @@ public final class ValueLayouts {
         /**
          * {@return the value's byte order}
          */
-        public ByteOrder order() {
+        public final ByteOrder order() {
             return order;
         }
 
@@ -102,7 +104,7 @@ public final class ValueLayouts {
          * {@inheritDoc}
          */
         @Override
-        public String toString() {
+        public final String toString() {
             char descriptor = carrier == MemorySegment.class ? 'A' : carrier.descriptorString().charAt(0);
             if (order == ByteOrder.LITTLE_ENDIAN) {
                 descriptor = Character.toLowerCase(descriptor);
@@ -127,7 +129,7 @@ public final class ValueLayouts {
         }
 
 
-        public VarHandle arrayElementVarHandle(int... shape) {
+        public final VarHandle arrayElementVarHandle(int... shape) {
             Objects.requireNonNull(shape);
             MemoryLayout layout = self();
             List<MemoryLayout.PathElement> path = new ArrayList<>();
@@ -145,7 +147,7 @@ public final class ValueLayouts {
         /**
          * {@return the carrier associated with this value layout}
          */
-        public Class<?> carrier() {
+        public final Class<?> carrier() {
             return carrier;
         }
 
@@ -187,11 +189,9 @@ public final class ValueLayouts {
                     || carrier == MemorySegment.class;
         }
 
-        @Stable
-        private VarHandle handle;
 
         @ForceInline
-        public VarHandle accessHandle() {
+        public final VarHandle accessHandle() {
             if (handle == null) {
                 // this store to stable field is safe, because return value of 'makeMemoryAccessVarHandle' has stable identity
                 handle = Utils.makeSegmentViewVarHandle(self());
@@ -200,7 +200,7 @@ public final class ValueLayouts {
         }
 
         @SuppressWarnings("unchecked")
-        V self() {
+        final V self() {
             return (V) this;
         }
     }
@@ -229,7 +229,7 @@ public final class ValueLayouts {
         @Override
         public OfBooleanImpl withOrder(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfBooleanImpl(order, bitAlignment, name());
+            return new OfBooleanImpl(order, bitAlignment(), name());
         }
 
         public static OfBoolean of(ByteOrder order) {
@@ -261,7 +261,7 @@ public final class ValueLayouts {
         @Override
         public OfByteImpl withOrder(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfByteImpl(order, bitAlignment, name());
+            return new OfByteImpl(order, bitAlignment(), name());
         }
 
         public static OfByte of(ByteOrder order) {
@@ -295,7 +295,7 @@ public final class ValueLayouts {
         @Override
         public OfCharImpl withOrder(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfCharImpl(order, bitAlignment, name());
+            return new OfCharImpl(order, bitAlignment(), name());
         }
 
         public static OfChar of(ByteOrder order) {
@@ -329,7 +329,7 @@ public final class ValueLayouts {
         @Override
         public OfShortImpl withOrder(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfShortImpl(order, bitAlignment, name());
+            return new OfShortImpl(order, bitAlignment(), name());
         }
 
         public static OfShort of(ByteOrder order) {
@@ -363,7 +363,7 @@ public final class ValueLayouts {
         @Override
         public OfIntImpl withOrder(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfIntImpl(order, bitAlignment, name());
+            return new OfIntImpl(order, bitAlignment(), name());
         }
 
         public static OfInt of(ByteOrder order) {
@@ -397,7 +397,7 @@ public final class ValueLayouts {
         @Override
         public OfFloatImpl withOrder(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfFloatImpl(order, bitAlignment, name());
+            return new OfFloatImpl(order, bitAlignment(), name());
         }
 
         public static OfFloat of(ByteOrder order) {
@@ -431,7 +431,7 @@ public final class ValueLayouts {
         @Override
         public OfLongImpl withOrder(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfLongImpl(order, bitAlignment, name());
+            return new OfLongImpl(order, bitAlignment(), name());
         }
 
         public static OfLong of(ByteOrder order) {
@@ -463,7 +463,7 @@ public final class ValueLayouts {
         @Override
         public OfDoubleImpl withOrder(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfDoubleImpl(order, bitAlignment, name());
+            return new OfDoubleImpl(order, bitAlignment(), name());
         }
 
         public static OfDouble of(ByteOrder order) {
@@ -501,7 +501,7 @@ public final class ValueLayouts {
         @Override
         public OfAddressImpl withOrder(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfAddressImpl(order, bitSize(), bitAlignment, isUnbounded, name());
+            return new OfAddressImpl(order, bitSize(), bitAlignment(), isUnbounded, name());
         }
 
         @Override
@@ -519,7 +519,7 @@ public final class ValueLayouts {
         @CallerSensitive
         public OfAddress asUnbounded() {
             Reflection.ensureNativeAccess(Reflection.getCallerClass(), OfAddress.class, "asUnbounded");
-            return new OfAddressImpl(order(), bitSize(), bitAlignment, true, name());
+            return new OfAddressImpl(order(), bitSize(), bitAlignment(), true, name());
         }
 
         @Override
