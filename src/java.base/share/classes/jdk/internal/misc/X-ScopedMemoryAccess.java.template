@@ -357,11 +357,18 @@ public class ScopedMemoryAccess {
                                           VectorSupport.LoadOperation<AbstractMemorySegmentImpl, V, S> defaultImpl) {
         try {
             session.checkValidStateRaw();
-
-            return VectorSupport.load(vmClass, e, length,
-                    msp.unsafeGetBase(), msp.unsafeGetOffset() + offset,
-                    msp, offset, s,
-                    defaultImpl);
+            Object base = msp.unsafeGetBase();
+            if (base == null) {
+                return VectorSupport.load(vmClass, e, length,
+                        null, msp.unsafeGetOffset() + offset,
+                        msp, offset, s,
+                        defaultImpl);
+            } else {
+                return VectorSupport.load(vmClass, e, length,
+                                        msp.unsafeGetBase(), msp.unsafeGetOffset() + offset,
+                                        msp, offset, s,
+                                        defaultImpl);
+            }
         } finally {
             Reference.reachabilityFence(session);
         }
@@ -448,12 +455,20 @@ public class ScopedMemoryAccess {
                                               VectorSupport.StoreVectorOperation<AbstractMemorySegmentImpl, V> defaultImpl) {
         try {
             session.checkValidStateRaw();
-
-            VectorSupport.store(vmClass, e, length,
-                    msp.unsafeGetBase(), msp.unsafeGetOffset() + offset,
-                    v,
-                    msp, offset,
-                    defaultImpl);
+            Object base = msp.unsafeGetBase();
+            if (base == null) {
+                VectorSupport.store(vmClass, e, length,
+                        null, msp.unsafeGetOffset() + offset,
+                        v,
+                        msp, offset,
+                        defaultImpl);
+            } else {
+                VectorSupport.store(vmClass, e, length,
+                                    msp.unsafeGetBase(), msp.unsafeGetOffset() + offset,
+                                    v,
+                                    msp, offset,
+                                    defaultImpl);
+            }
         } finally {
             Reference.reachabilityFence(session);
         }
