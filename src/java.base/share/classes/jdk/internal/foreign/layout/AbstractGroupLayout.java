@@ -107,7 +107,7 @@ public abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L> & Mem
      * @return the member layouts associated with this group.
      */
     public List<MemoryLayout> memberLayouts() {
-        return Collections.unmodifiableList(elements);
+        return elements; // "elements" are already unmodifiable.
     }
 
     /**
