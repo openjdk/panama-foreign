@@ -32,7 +32,6 @@ import java.lang.foreign.*;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -212,7 +211,7 @@ public class RenderTest {
 
         MemoryLayout layout = MemoryLayout.structLayout(
                 // These are in bit alignment order (descending) for all platforms
-                // in order to be naturally aligned.
+                // in order for each element to be aligned to its type's bit alignment.
                 Stream.of(
                                 JAVA_LONG,
                                 JAVA_DOUBLE,
