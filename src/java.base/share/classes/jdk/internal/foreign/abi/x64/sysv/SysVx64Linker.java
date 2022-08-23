@@ -39,15 +39,18 @@ import java.util.function.Consumer;
  * ABI implementation based on System V ABI AMD64 supplement v.0.99.6
  */
 public final class SysVx64Linker extends AbstractLinker {
-    private static SysVx64Linker instance;
 
     public static SysVx64Linker getInstance() {
-        if (instance == null) {
-            instance = new SysVx64Linker();
+        final class Holder {
+            private static final SysVx64Linker INSTANCE = new SysVx64Linker();
         }
-        return instance;
+
+        return Holder.INSTANCE;
     }
 
+    private SysVx64Linker() {
+        // Ensure there is only one instance
+    }
     @Override
     protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function) {
         return CallArranger.arrangeDowncall(inferredMethodType, function);

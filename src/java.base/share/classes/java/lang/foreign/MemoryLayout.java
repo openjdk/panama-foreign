@@ -185,7 +185,7 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
     Optional<String> name();
 
     /**
-     * Returns a memory layout with the same size and alignment constraints as this layout,
+     * Returns a memory layout of the same type with the same size and alignment constraints as this layout,
      * but with the specified name.
      *
      * @param name the layout name.
@@ -235,7 +235,7 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
     }
 
     /**
-     * Returns a memory layout with the same size and name as this layout,
+     * Returns a memory layout of the same type with the same size and name as this layout,
      * but with the specified alignment constraints (in bits).
      *
      * @param bitAlignment the layout alignment constraint, expressed in bits.
@@ -665,31 +665,35 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
     }
 
     /**
-     * Creates a sequence layout with the given element layout and element count. If the element count has the
-     * special value {@code -1}, the element count is inferred to be the biggest possible count such that
-     * the sequence layout size does not overflow, using the following formula:
+     * Creates a sequence layout with the given element layout and element count.
      *
-     * <blockquote><pre>{@code
-     * inferredElementCount = Long.MAX_VALUE / elementLayout.bitSize();
-     * }</pre></blockquote>
-     *
-     * @param elementCount the sequence element count; if set to {@code -1}, the sequence element count is inferred.
+     * @param elementCount the sequence element count.
      * @param elementLayout the sequence element layout.
      * @return the new sequence layout with the given element layout and size.
-     * @throws IllegalArgumentException if {@code elementCount < -1}.
-     * @throws IllegalArgumentException if {@code elementCount != -1} and the computation {@code elementCount * elementLayout.bitSize()} overflows.
+     * @throws IllegalArgumentException if {@code elementCount } is negative.
      */
     static SequenceLayout sequenceLayout(long elementCount, MemoryLayout elementLayout) {
-        if (elementCount == -1) {
-            // inferred element count
-            long inferredElementCount = Long.MAX_VALUE / elementLayout.bitSize();
-            return new SequenceLayout(inferredElementCount, elementLayout);
-        } else {
-            // explicit element count
             AbstractLayout.checkSize(elementCount, true);
+            Objects.requireNonNull(elementLayout);
             return wrapOverflow(() ->
-                    new SequenceLayout(elementCount, Objects.requireNonNull(elementLayout)));
-        }
+                    new SequenceLayout(elementCount, elementLayout));
+    }
+
+    /**
+     * Creates a sequence layout with the given element layout and the maximum element
+     * count such that it does not overflow a {@code long}.
+     *
+     * This is equivalent to the following code:
+     * {@snippet lang = java:
+     * sequenceLayout(Long.MAX_VALUE / elementLayout.bitSize(), elementLayout);
+     * }
+     *
+     * @param elementLayout the sequence element layout.
+     * @return a new sequence layout with the given element layout and maximum element count.
+     */
+    static SequenceLayout sequenceLayout(MemoryLayout elementLayout) {
+        Objects.requireNonNull(elementLayout);
+        return sequenceLayout(Long.MAX_VALUE / elementLayout.bitSize(), elementLayout);
     }
 
     /**

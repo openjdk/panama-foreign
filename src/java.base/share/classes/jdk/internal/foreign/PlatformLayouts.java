@@ -25,10 +25,13 @@
  */
 package jdk.internal.foreign;
 
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.ValueLayout;
 
-public class PlatformLayouts {
+public final class PlatformLayouts {
+
+    private PlatformLayouts() {
+        //just the one
+    }
 
     /**
      * This class defines layout constants modelling standard primitive types supported by the x64 SystemV ABI.

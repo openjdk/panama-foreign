@@ -138,8 +138,13 @@ public class TestLayouts {
 
     @Test(dataProvider = "basicLayouts")
     public void testSequenceInferredCount(MemoryLayout layout) {
-        assertEquals(MemoryLayout.sequenceLayout(-1, layout),
+        assertEquals(MemoryLayout.sequenceLayout(layout),
                      MemoryLayout.sequenceLayout(Long.MAX_VALUE / layout.bitSize(), layout));
+    }
+
+    public void testSequenceNegativeElementCount() {
+        assertThrows(IllegalArgumentException.class, // negative
+                () -> MemoryLayout.sequenceLayout(-1, JAVA_SHORT));
     }
 
     @Test
