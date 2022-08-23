@@ -29,7 +29,6 @@
  */
 
 import java.lang.foreign.Linker;
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.VaList;
 import java.lang.foreign.ValueLayout;
