@@ -30,7 +30,6 @@ import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.Objects;
 
-import jdk.internal.foreign.layout.MemoryLayoutUtil;
 import jdk.internal.foreign.layout.ValueLayouts;
 import jdk.internal.javac.PreviewFeature;
 import jdk.internal.reflect.CallerSensitive;
@@ -135,6 +134,7 @@ public sealed interface ValueLayout extends MemoryLayout {
     ValueLayout withName(String name);
 
     @Override
+
     ValueLayout withBitAlignment(long bitAlignment);
 
     /**

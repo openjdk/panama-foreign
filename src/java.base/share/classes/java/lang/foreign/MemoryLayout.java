@@ -35,7 +35,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jdk.internal.foreign.LayoutPath;
 import jdk.internal.foreign.LayoutPath.PathElementImpl.PathKind;
@@ -710,7 +709,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
         return wrapOverflow(() ->
                 StructLayoutImpl.of(Stream.of(elements)
                         .map(Objects::requireNonNull)
-                        .collect(Collectors.toList())));
+                        .toList()));
     }
 
     /**
@@ -723,7 +722,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
         Objects.requireNonNull(elements);
         return UnionLayoutImpl.of(Stream.of(elements)
                 .map(Objects::requireNonNull)
-                .collect(Collectors.toList()));
+                .toList());
     }
 
     private static <L extends MemoryLayout> L wrapOverflow(Supplier<L> layoutSupplier) {

@@ -25,12 +25,7 @@
 package java.lang.foreign;
 
 import java.lang.invoke.MethodHandle;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -81,8 +76,7 @@ public sealed class FunctionDescriptor {
      */
     public static FunctionDescriptor of(MemoryLayout resLayout, MemoryLayout... argLayouts) {
         Objects.requireNonNull(resLayout);
-        Objects.requireNonNull(argLayouts);
-        Arrays.stream(argLayouts).forEach(Objects::requireNonNull);
+        // Null checks are implicit in List.of(argLayouts)
         return new FunctionDescriptor(resLayout, List.of(argLayouts));
     }
 
@@ -92,8 +86,7 @@ public sealed class FunctionDescriptor {
      * @return the new function descriptor.
      */
     public static FunctionDescriptor ofVoid(MemoryLayout... argLayouts) {
-        Objects.requireNonNull(argLayouts);
-        Arrays.stream(argLayouts).forEach(Objects::requireNonNull);
+        // Null checks are implicit in List.of(argLayouts)
         return new FunctionDescriptor(null, List.of(argLayouts));
     }
 
@@ -107,8 +100,7 @@ public sealed class FunctionDescriptor {
      * @return a variadic function descriptor, or this descriptor if {@code variadicLayouts.length == 0}.
      */
     public FunctionDescriptor asVariadic(MemoryLayout... variadicLayouts) {
-        Objects.requireNonNull(variadicLayouts);
-        Arrays.stream(variadicLayouts).forEach(Objects::requireNonNull);
+        // Null checks are implicit in the constructor of VariadicFunction
         return variadicLayouts.length == 0 ? this : new VariadicFunction(this, variadicLayouts);
     }
 
@@ -214,9 +206,16 @@ public sealed class FunctionDescriptor {
 
         private final int firstVariadicIndex;
 
+        /**
+         * Constructor.
+         *
+         * @param descriptor the original functional descriptor
+         * @param argLayouts the memory layouts to apply
+         * @throws NullPointerException if any of the provided parameters or array elements are {@code null}
+         */
         VariadicFunction(FunctionDescriptor descriptor, MemoryLayout... argLayouts) {
             super(descriptor.returnLayout().orElse(null),
-                    Stream.concat(descriptor.argumentLayouts().stream(), Stream.of(argLayouts)).toList());
+                    Stream.concat(descriptor.argumentLayouts().stream(), Arrays.stream(argLayouts).map(Objects::requireNonNull)).toList());
             this.firstVariadicIndex = descriptor.argumentLayouts().size();
         }
 
