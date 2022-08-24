@@ -1922,7 +1922,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default String toString(MemoryLayout layout, MemoryInspection.ValueLayoutRenderer renderer) {
         Objects.requireNonNull(layout);
         Objects.requireNonNull(renderer);
-        return MemorySegmentRenderUtil.toString(this, layout, renderer);
+        return MemoryInspectionUtil.toString(this, layout, renderer);
     }
 
     /**

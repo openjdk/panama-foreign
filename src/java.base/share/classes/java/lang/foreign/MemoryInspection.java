@@ -1,16 +1,17 @@
 package java.lang.foreign;
 
-import jdk.internal.foreign.MemorySegmentRenderUtil;
+import jdk.internal.foreign.MemoryInspectionUtil;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.stream.Stream;
 
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static java.util.Objects.requireNonNull;
-import static jdk.internal.foreign.MemorySegmentRenderUtil.*;
+import static jdk.internal.foreign.MemoryInspectionUtil.*;
 
 /**
- * Class that support inspection of various memory abstractions such as
+ * Class that supports inspection of various memory abstractions such as memory of type
  * MemorySegment, ByteBuffer and byte arrays.
  * <p>
  * The methods in this class are not thread safe.
@@ -81,7 +82,7 @@ public final class MemoryInspection {
                                              Adapter<M> adapter) {
         requireNonNull(memory);
         requireNonNull(adapter);
-        return MemorySegmentRenderUtil.hexDump(memory, adapter);
+        return MemoryInspectionUtil.hexDump(memory, adapter);
     }
 
     /**
@@ -128,7 +129,7 @@ public final class MemoryInspection {
         requireNonNull(renderer);
 
         if (memory instanceof MemorySegment segment && adapter == MEMORY_SEGMENT_MEMORY_ADAPTER) {
-            return MemorySegmentRenderUtil.toString(segment, layout, renderer);
+            return MemoryInspectionUtil.toString(segment, layout, renderer);
         }
         long length = adapter.length(memory);
         try (var session = MemorySession.openConfined()) {
@@ -136,7 +137,7 @@ public final class MemoryInspection {
             for (long i = 0; i < length; i++) {
                 segment.set(JAVA_BYTE, i, adapter.get(memory, i));
             }
-            return MemorySegmentRenderUtil.toString(segment, layout, renderer);
+            return MemoryInspectionUtil.toString(segment, layout, renderer);
         }
     }
 
@@ -184,6 +185,15 @@ public final class MemoryInspection {
          */
         static Adapter<byte[]> ofByteArray() {
             return BYTE_ARRAY_MEMORY_ADAPTER;
+        }
+
+        /**
+         * {@return a {@code MemoryAdapter<int[]> } that reads byte values from an int array}
+         * <p>
+         * Bytes are read according to the {@linkplain ByteOrder#nativeOrder() native order}
+         */
+        static Adapter<int[]> ofIntArray() {
+            return INT_ARRAY_MEMORY_ADAPTER;
         }
 
     }

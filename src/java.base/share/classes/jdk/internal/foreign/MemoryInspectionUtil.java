@@ -26,6 +26,7 @@ package jdk.internal.foreign;
 
 import java.lang.foreign.*;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.LongStream;
@@ -35,9 +36,9 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Internal class to support rendering of MemorySegments into various formats.
+ * Internal class to support inspection of memory abstractions like MemorySegments into various formats.
  */
-public final class MemorySegmentRenderUtil {
+public final class MemoryInspectionUtil {
 
     private static final byte[] UPPERCASE_HEX_DIGITS = {
             '0', '1', '2', '3', '4', '5', '6', '7',
@@ -50,8 +51,9 @@ public final class MemorySegmentRenderUtil {
     public static final MemoryInspection.Adapter<MemorySegment> MEMORY_SEGMENT_MEMORY_ADAPTER = new MemorySegmentMemoryAdapter();
     public static final MemoryInspection.Adapter<ByteBuffer> BYTE_BUFFER_MEMORY_ADAPTER = new ByteBufferMemoryAdapter();
     public static final MemoryInspection.Adapter<byte[]> BYTE_ARRAY_MEMORY_ADAPTER = new ByteArrayMemoryAdapter();
+    public static final MemoryInspection.Adapter<int[]> INT_ARRAY_MEMORY_ADAPTER = new IntArrayMemoryAdapter();
 
-    private MemorySegmentRenderUtil() {
+    private MemoryInspectionUtil() {
     }
 
     /**
@@ -459,9 +461,34 @@ public final class MemorySegmentRenderUtil {
         public long length(byte[] byteArray) {
             return byteArray.length;
         }
+
         @Override
         public String toString() {
             return singletonToString(ByteArrayMemoryAdapter.class);
+        }
+    }
+
+    private static final class IntArrayMemoryAdapter implements MemoryInspection.Adapter<int[]> {
+
+        @Override
+        public byte get(int[] intArray, long offset) {
+            int intOffset = Math.toIntExact(offset);
+            int index = intOffset / Integer.BYTES;
+            int subIndex = intOffset & (Integer.BYTES - 1);
+            int value = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN
+                    ? Integer.reverseBytes(intArray[index])
+                    : intArray[index];
+            return (byte) ((value >> (8 * subIndex)) & 0xff);
+        }
+
+        @Override
+        public long length(int[] byteArray) {
+            return byteArray.length * (long) Integer.BYTES;
+        }
+
+        @Override
+        public String toString() {
+            return singletonToString(IntArrayMemoryAdapter.class);
         }
     }
 
