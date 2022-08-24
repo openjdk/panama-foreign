@@ -1938,7 +1938,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
             throw new IllegalArgumentException("Incompatible value layout: " + srcLayout);
         }
         int dstBase = (int)baseAndScale;
-        long dstWidth = (int)(baseAndScale >> 32); // Use long arithmetics, JDK-8292851
+        long dstWidth = (int)(baseAndScale >> 32); // Use long arithmetics below
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
         Utils.checkElementAlignment(srcLayout, "Source layout alignment greater than its size");
         if (!srcImpl.isAlignedForElement(srcOffset, srcLayout)) {
@@ -1990,7 +1990,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
             throw new IllegalArgumentException("Incompatible value layout: " + dstLayout);
         }
         int srcBase = (int)baseAndScale;
-        long srcWidth = (int)(baseAndScale >> 32); // Use long arithmetics, JDK-8292851
+        long srcWidth = (int)(baseAndScale >> 32); // Use long arithmetics below
         Objects.checkFromIndexSize(srcIndex, elementCount, Array.getLength(srcArray));
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
         Utils.checkElementAlignment(dstLayout, "Destination layout alignment greater than its size");
