@@ -23,28 +23,21 @@
  *  questions.
  *
  */
-package java.lang.foreign;
+package jdk.internal.foreign.layout;
 
-import jdk.internal.foreign.layout.PaddingLayoutImpl;
+public final class MemoryLayoutUtil {
 
-/**
- * A padding layout. A padding layout specifies the size of extra space which is typically not accessed by applications,
- * and is typically used for aligning member layouts around word boundaries.
- *
- * @implSpec
- * Implementing classes are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
- */
-public sealed interface PaddingLayout extends MemoryLayout permits PaddingLayoutImpl {
+    private MemoryLayoutUtil() {
+    }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    PaddingLayout withName(String name);
+    public static void checkSize(long size) {
+        checkSize(size, false);
+    }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    PaddingLayout withBitAlignment(long bitAlignment);
+    public static void checkSize(long size, boolean includeZero) {
+        if (size < 0 || (!includeZero && size == 0)) {
+            throw new IllegalArgumentException("Invalid size for layout: " + size);
+        }
+    }
+
 }

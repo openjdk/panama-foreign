@@ -25,26 +25,23 @@
  */
 package java.lang.foreign;
 
-import jdk.internal.foreign.layout.PaddingLayoutImpl;
+import jdk.internal.foreign.layout.UnionLayoutImpl;
+import jdk.internal.javac.PreviewFeature;
 
 /**
- * A padding layout. A padding layout specifies the size of extra space which is typically not accessed by applications,
- * and is typically used for aligning member layouts around word boundaries.
+ * A <em>union</em> layout where member layouts are laid out at the same starting offset (see {@link MemoryLayout#unionLayout(MemoryLayout...)}).
  *
  * @implSpec
  * Implementing classes are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
+ *
+ * @since 19
  */
-public sealed interface PaddingLayout extends MemoryLayout permits PaddingLayoutImpl {
+@PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
+public sealed interface UnionLayout extends GroupLayout permits UnionLayoutImpl {
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    PaddingLayout withName(String name);
+    UnionLayout withName(String name);
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    PaddingLayout withBitAlignment(long bitAlignment);
+    UnionLayout withBitAlignment(long alignmentBits);
 }
