@@ -358,6 +358,7 @@ public class ScopedMemoryAccess {
         try {
             session.checkValidStateRaw();
             Object base = msp.unsafeGetBase();
+            // Check base to unswitch loop
             if (base == null) {
                 return VectorSupport.load(vmClass, e, length,
                         null, msp.unsafeGetOffset() + offset,
@@ -365,9 +366,9 @@ public class ScopedMemoryAccess {
                         defaultImpl);
             } else {
                 return VectorSupport.load(vmClass, e, length,
-                                        msp.unsafeGetBase(), msp.unsafeGetOffset() + offset,
-                                        msp, offset, s,
-                                        defaultImpl);
+                        base, msp.unsafeGetOffset() + offset,
+                        msp, offset, s,
+                        defaultImpl);
             }
         } finally {
             Reference.reachabilityFence(session);
@@ -410,11 +411,19 @@ public class ScopedMemoryAccess {
                                                 VectorSupport.LoadVectorMaskedOperation<AbstractMemorySegmentImpl, V, S, M> defaultImpl) {
         try {
             session.checkValidStateRaw();
-
-            return VectorSupport.loadMasked(vmClass, maskClass, e, length,
-                    msp.unsafeGetBase(), msp.unsafeGetOffset() + offset, m, offsetInRange,
-                    msp, offset, s,
-                    defaultImpl);
+            Object base = msp.unsafeGetBase();
+            // Check base to unswitch loop
+            if (base == null) {
+                return VectorSupport.loadMasked(vmClass, maskClass, e, length,
+                        null, msp.unsafeGetOffset() + offset, m, offsetInRange,
+                        msp, offset, s,
+                        defaultImpl);
+            } else {
+                return VectorSupport.loadMasked(vmClass, maskClass, e, length,
+                        base, msp.unsafeGetOffset() + offset, m, offsetInRange,
+                        msp, offset, s,
+                        defaultImpl);
+            }
         } finally {
             Reference.reachabilityFence(session);
         }
@@ -456,6 +465,7 @@ public class ScopedMemoryAccess {
         try {
             session.checkValidStateRaw();
             Object base = msp.unsafeGetBase();
+            // Check base to unswitch loop
             if (base == null) {
                 VectorSupport.store(vmClass, e, length,
                         null, msp.unsafeGetOffset() + offset,
@@ -464,10 +474,10 @@ public class ScopedMemoryAccess {
                         defaultImpl);
             } else {
                 VectorSupport.store(vmClass, e, length,
-                                    msp.unsafeGetBase(), msp.unsafeGetOffset() + offset,
-                                    v,
-                                    msp, offset,
-                                    defaultImpl);
+                        base, msp.unsafeGetOffset() + offset,
+                        v,
+                        msp, offset,
+                        defaultImpl);
             }
         } finally {
             Reference.reachabilityFence(session);
@@ -509,12 +519,22 @@ public class ScopedMemoryAccess {
                                                     VectorSupport.StoreVectorMaskedOperation<AbstractMemorySegmentImpl, V, M> defaultImpl) {
         try {
             session.checkValidStateRaw();
+            Object base = msp.unsafeGetBase();
+            // Check base to unswitch loop
+            if (base == null) {
+                VectorSupport.storeMasked(vmClass, maskClass, e, length,
+                        null, msp.unsafeGetOffset() + offset,
+                        v, m,
+                        msp, offset,
+                        defaultImpl);
+            } else {
+                VectorSupport.storeMasked(vmClass, maskClass, e, length,
+                        base, msp.unsafeGetOffset() + offset,
+                        v, m,
+                        msp, offset,
+                        defaultImpl);
 
-            VectorSupport.storeMasked(vmClass, maskClass, e, length,
-                    msp.unsafeGetBase(), msp.unsafeGetOffset() + offset,
-                    v, m,
-                    msp, offset,
-                    defaultImpl);
+            }
         } finally {
             Reference.reachabilityFence(session);
         }
