@@ -25,14 +25,11 @@
  */
 package jdk.internal.foreign.layout;
 
-import jdk.internal.javac.PreviewFeature;
-
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.SequenceLayout;
 import java.util.Objects;
 import java.util.Optional;
 
-@PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
 public final class SequenceLayoutImpl extends AbstractLayout<SequenceLayoutImpl> implements SequenceLayout {
 
     private final long elemCount;

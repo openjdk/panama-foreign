@@ -56,9 +56,7 @@ import java.util.Optional;
  * thus making it easy to work with other APIs, such as arrays and {@link java.nio.ByteBuffer}.
  *
  * @implSpec This class and its subclasses are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
- * @since 19
  */
-@PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
 public final class ValueLayouts {
 
     private ValueLayouts() {
@@ -100,9 +98,6 @@ public final class ValueLayouts {
          */
         abstract V withOrder(ByteOrder order);
 
-        /**
-         * {@inheritDoc}
-         */
         @Override
         public final String toString() {
             char descriptor = carrier == MemorySegment.class ? 'A' : carrier.descriptorString().charAt(0);
@@ -112,9 +107,6 @@ public final class ValueLayouts {
             return decorateLayoutString(String.format("%s%d", descriptor, bitSize()));
         }
 
-        /**
-         * {@inheritDoc}
-         */
         @Override
         public boolean equals(Object other) {
             if (this == other) {
@@ -127,7 +119,6 @@ public final class ValueLayouts {
                     carrier.equals(otherValue.carrier) &&
                     order.equals(otherValue.order);
         }
-
 
         public final VarHandle arrayElementVarHandle(int... shape) {
             Objects.requireNonNull(shape);
@@ -151,9 +142,6 @@ public final class ValueLayouts {
             return carrier;
         }
 
-        /**
-         * {@inheritDoc}
-         */
         @Override
         public int hashCode() {
             return Objects.hash(super.hashCode(), order, carrier);
@@ -205,12 +193,6 @@ public final class ValueLayouts {
         }
     }
 
-    /**
-     * A value layout whose carrier is {@code boolean.class}.
-     *
-     * @since 19
-     */
-    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     public static final class OfBooleanImpl extends AbstractValueLayout<OfBooleanImpl> implements ValueLayout.OfBoolean {
 
         private OfBooleanImpl(ByteOrder order) {
@@ -237,12 +219,6 @@ public final class ValueLayouts {
         }
     }
 
-    /**
-     * A value layout whose carrier is {@code byte.class}.
-     *
-     * @since 19
-     */
-    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     public static final class OfByteImpl extends AbstractValueLayout<OfByteImpl> implements ValueLayout.OfByte {
 
         private OfByteImpl(ByteOrder order) {
@@ -269,15 +245,7 @@ public final class ValueLayouts {
         }
     }
 
-    /**
-     * A value layout whose carrier is {@code char.class}.
-     *
-     * @since 19
-     */
-    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     public static final class OfCharImpl extends AbstractValueLayout<OfCharImpl> implements ValueLayout.OfChar {
-
-        private static final OfChar NATIVE_ORDER = new OfCharImpl(ByteOrder.nativeOrder());
 
         private OfCharImpl(ByteOrder order) {
             super(char.class, order, 16);
@@ -303,15 +271,7 @@ public final class ValueLayouts {
         }
     }
 
-    /**
-     * A value layout whose carrier is {@code short.class}.
-     *
-     * @since 19
-     */
-    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     public static final class OfShortImpl extends AbstractValueLayout<OfShortImpl> implements ValueLayout.OfShort {
-
-        private static final OfShort NATIVE_ORDER = new OfShortImpl(ByteOrder.nativeOrder());
 
         private OfShortImpl(ByteOrder order) {
             super(short.class, order, 16);
@@ -337,15 +297,7 @@ public final class ValueLayouts {
         }
     }
 
-    /**
-     * A value layout whose carrier is {@code int.class}.
-     *
-     * @since 19
-     */
-    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     public static final class OfIntImpl extends AbstractValueLayout<OfIntImpl> implements ValueLayout.OfInt {
-
-        private static final OfInt NATIVE_ORDER = new OfIntImpl(ByteOrder.nativeOrder());
 
         private OfIntImpl(ByteOrder order) {
             super(int.class, order, 32);
@@ -371,15 +323,7 @@ public final class ValueLayouts {
         }
     }
 
-    /**
-     * A value layout whose carrier is {@code float.class}.
-     *
-     * @since 19
-     */
-    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     public static final class OfFloatImpl extends AbstractValueLayout<OfFloatImpl> implements ValueLayout.OfFloat {
-
-        private static final OfFloat NATIVE_ORDER = new OfFloatImpl(ByteOrder.nativeOrder());
 
         private OfFloatImpl(ByteOrder order) {
             super(float.class, order, 32);
@@ -405,15 +349,7 @@ public final class ValueLayouts {
         }
     }
 
-    /**
-     * A value layout whose carrier is {@code long.class}.
-     *
-     * @since 19
-     */
-    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     public static final class OfLongImpl extends AbstractValueLayout<OfLongImpl> implements ValueLayout.OfLong {
-
-        private static final OfLong NATIVE_ORDER = new OfLongImpl(ByteOrder.nativeOrder());
 
         private OfLongImpl(ByteOrder order) {
             super(long.class, order, 64);
@@ -439,12 +375,6 @@ public final class ValueLayouts {
         }
     }
 
-    /**
-     * A value layout whose carrier is {@code double.class}.
-     *
-     * @since 19
-     */
-    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     public static final class OfDoubleImpl extends AbstractValueLayout<OfDoubleImpl> implements ValueLayout.OfDouble {
 
         private OfDoubleImpl(ByteOrder order) {
@@ -472,12 +402,6 @@ public final class ValueLayouts {
 
     }
 
-    /**
-     * A value layout whose carrier is {@code MemorySegment.class}.
-     *
-     * @since 19
-     */
-    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     public static final class OfAddressImpl extends AbstractValueLayout<OfAddressImpl> implements ValueLayout.OfAddress {
 
         private final boolean isUnbounded;
@@ -496,7 +420,6 @@ public final class ValueLayouts {
         OfAddressImpl dup(long alignment, Optional<String> name) {
             return new OfAddressImpl(order(), bitSize(), alignment, isUnbounded, name);
         }
-
 
         @Override
         public OfAddressImpl withOrder(ByteOrder order) {

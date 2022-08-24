@@ -25,11 +25,6 @@
  */
 package jdk.internal.foreign.layout;
 
-import java.lang.foreign.ValueLayout;
-import java.nio.ByteOrder;
-
-import static java.util.Objects.requireNonNull;
-
 public final class MemoryLayoutUtil {
 
     private MemoryLayoutUtil() {

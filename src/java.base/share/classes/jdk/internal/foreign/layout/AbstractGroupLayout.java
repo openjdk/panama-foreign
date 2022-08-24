@@ -25,10 +25,7 @@
  */
 package jdk.internal.foreign.layout;
 
-import jdk.internal.javac.PreviewFeature;
-
 import java.lang.foreign.MemoryLayout;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -46,7 +43,6 @@ import java.util.stream.Collectors;
  *
  * @since 19
  */
-@PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
 public sealed abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L> & MemoryLayout>
         extends AbstractLayout<L>
         permits StructLayoutImpl, UnionLayoutImpl {
