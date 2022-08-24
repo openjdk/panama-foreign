@@ -642,23 +642,23 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
         Objects.requireNonNull(carrier);
         Objects.requireNonNull(order);
         if (carrier == boolean.class) {
-            return ValueLayout.OfBoolean.of(order);
+            return ValueLayouts.OfBooleanImpl.of(order);
         } else if (carrier == char.class) {
-            return ValueLayout.OfChar.of(order);
+            return ValueLayouts.OfCharImpl.of(order);
         } else if (carrier == byte.class) {
-            return ValueLayout.OfByte.of(order);
+            return ValueLayouts.OfByteImpl.of(order);
         } else if (carrier == short.class) {
-            return ValueLayout.OfShort.of(order);
+            return ValueLayouts.OfShortImpl.of(order);
         } else if (carrier == int.class) {
-            return ValueLayout.OfInt.of(order);
+            return ValueLayouts.OfIntImpl.of(order);
         } else if (carrier == float.class) {
-            return ValueLayout.OfFloat.of(order);
+            return ValueLayouts.OfFloatImpl.of(order);
         } else if (carrier == long.class) {
-            return ValueLayout.OfLong.of(order);
+            return ValueLayouts.OfLongImpl.of(order);
         } else if (carrier == double.class) {
-            return ValueLayout.OfDouble.of(order);
+            return ValueLayouts.OfDoubleImpl.of(order);
         } else if (carrier == MemorySegment.class) {
-            return ValueLayout.OfAddress.of(order);
+            return ValueLayouts.OfAddressImpl.of(order);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + carrier.getName());
         }
