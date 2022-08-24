@@ -38,7 +38,6 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Spliterator;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import jdk.internal.foreign.*;
@@ -51,7 +50,6 @@ import jdk.internal.reflect.Reflection;
 import jdk.internal.vm.annotation.ForceInline;
 
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
-import static jdk.internal.foreign.MemorySegmentRenderUtil.STANDARD_VALUE_LAYOUT_RENDERER;
 
 /**
  * A memory segment models a contiguous region of memory. A memory segment is associated with both spatial
@@ -1902,7 +1900,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      *           ValueLayout.JAVA_INT.withName("y")
      *   ).withName("Point");
      *
-     *   System.out.println(memorySegment.toString(layout, ValueLayoutRenderer.standard()));
+     *   System.out.println(memorySegment.toString(layout, MemoryInspection.ValueLayoutRenderer.standard()));
      *}
      * will print:
      * {@snippet lang = text:
@@ -1913,15 +1911,15 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      *}
      *
      * @param layout   to use as a layout when viewing the memory segment
-     * @param renderer to apply when formatting value layouts. {@link ValueLayoutRenderer#standard()} can
+     * @param renderer to apply when formatting value layouts. {@link MemoryInspection.ValueLayoutRenderer#standard()} can
      *                 be used if no custom formatting is needed.
      * @return a view of the memory segment viewed through a memory layout
      * @throws OutOfMemoryError if the size of the UTF-8 string is greater than the largest string
      *         supported by the platform.
-     * @see ValueLayoutRenderer
-     * @see ValueLayoutRenderer#standard()
+     * @see MemoryInspection.ValueLayoutRenderer
+     * @see MemoryInspection.ValueLayoutRenderer#standard()
      */
-    default String toString(MemoryLayout layout, ValueLayoutRenderer renderer) {
+    default String toString(MemoryLayout layout, MemoryInspection.ValueLayoutRenderer renderer) {
         Objects.requireNonNull(layout);
         Objects.requireNonNull(renderer);
         return MemorySegmentRenderUtil.toString(this, layout, renderer);
@@ -2156,145 +2154,4 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
         return srcBytes != dstBytes ? bytes : -1;
     }
 
-    /**
-     * An interface that can be used to specify custom rendering of value
-     * layouts via the {@link MemorySegment#toString(MemoryLayout, ValueLayoutRenderer)} method.
-     * <p>
-     * The render methods take two parameters:
-     * <ul>
-     *     <li>layout: This can be used to select different formatting for different paths</li>
-     *     <li>value: The actual value</li>
-     * </ul>
-     * <p>
-     * The {@linkplain ValueLayoutRenderer#standard() standard() } value layout renderer is path
-     * agnostic and will thus render all layouts of the same type the same way.
-     * @see MemorySegment#toString(MemoryLayout, ValueLayoutRenderer)
-     */
-    interface ValueLayoutRenderer {
-        /**
-         * Renders the provided {@code layout} and {@code value} to a String.
-         *
-         * @param layout the layout to render
-         * @param value  the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfBoolean layout, boolean value) {
-            Objects.requireNonNull(layout);
-            return Boolean.toString(value);
-        }
-
-        /**
-         * Renders the provided {@code layout} and {@code value} to a String.
-         *
-         * @param layout the layout to render
-         * @param value  the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfByte layout, byte value) {
-            Objects.requireNonNull(layout);
-            return Byte.toString(value);
-        }
-
-        /**
-         * Renders the provided {@code layout} and {@code value} to a String.
-         *
-         * @param layout the layout to render
-         * @param value  the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfChar layout, char value) {
-            Objects.requireNonNull(layout);
-            return Character.toString(value);
-        }
-
-        /**
-         * Renders the provided {@code layout} and {@code value} to a String.
-         *
-         * @param layout the layout to render
-         * @param value  the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfShort layout, short value) {
-            Objects.requireNonNull(layout);
-            return Short.toString(value);
-        }
-
-        /**
-         * Renders the provided {@code layout} and {@code value} to a String.
-         *
-         * @param layout the layout to render
-         * @param value  the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfInt layout, int value) {
-            Objects.requireNonNull(layout);
-            return Integer.toString(value);
-        }
-
-        /**
-         * Renders the provided {@code layout} and {@code value} to a String.
-         *
-         * @param layout the layout to render
-         * @param value  the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfLong layout, long value) {
-            Objects.requireNonNull(layout);
-            return Long.toString(value);
-        }
-
-        /**
-         * Renders the provided {@code layout} and {@code value} to a String.
-         *
-         * @param layout the layout to render
-         * @param value  the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfFloat layout, float value) {
-            Objects.requireNonNull(layout);
-            return Float.toString(value);
-        }
-
-        /**
-         * Renders the provided {@code layout} and {@code value} to a String.
-         *
-         * @param layout the layout to render
-         * @param value  the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfDouble layout, double value) {
-            Objects.requireNonNull(layout);
-            return Double.toString(value);
-        }
-
-        /**
-         * Renders the provided {@code layout} and {@code value} to a String.
-         *
-         * @param layout the layout to render
-         * @param value  the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfAddress layout, MemorySegment value) {
-            Objects.requireNonNull(layout);
-            return String.format("0x%0" + (ValueLayout.ADDRESS.byteSize() * 2) + "X", value.address());
-        }
-
-        /**
-         * {@return a standard value layout renderer that will render numeric values into decimal form and where
-         * other value types are rendered to a reasonable "natural" form}
-         * <p>
-         * More specifically, values types are rendered as follows:
-         * <ul>
-         *     <li>Numeric values are rendered in decimal form (e.g 1 or 1.2).</li>
-         *     <li>Boolean values are rendered as {@code true} or {@code false}.</li>
-         *     <li>Character values are rendered as {@code char}.</li>
-         *     <li>Address values are rendered in hexadecimal form e.g. {@code 0x0000000000000000} (on 64-bit platforms) or
-         *     {@code 0x00000000} (on 32-bit platforms)</li>
-         * </ul>
-         */
-        static ValueLayoutRenderer standard() {
-            return STANDARD_VALUE_LAYOUT_RENDERER;
-        }
-
-    }
 }

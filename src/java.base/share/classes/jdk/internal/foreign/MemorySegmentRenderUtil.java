@@ -28,10 +28,10 @@ import java.lang.foreign.*;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -44,18 +44,18 @@ public final class MemorySegmentRenderUtil {
             '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
     };
 
-    private static final int HEX_STREAM_BYTES_PER_ROW = 1 << 4; // Should be a power of 2
+    private static final int HEX_STREAM_BYTES_PER_ROW = 16; // Must be a power of 2 and is 16 by convention
     private static final int HEX_LINE_LENGTH_EXCLUDING_CHARS = Long.BYTES * 2 + HEX_STREAM_BYTES_PER_ROW * 3 + 4;
-
-    private static final String ADDRESS_FORMATTING = "0x%0" + (ValueLayout.ADDRESS.byteSize() * 2) + "X";
-
-    public static final MemorySegment.ValueLayoutRenderer STANDARD_VALUE_LAYOUT_RENDERER = new StandardValueLayoutRenderer();
+    public static final MemoryInspection.ValueLayoutRenderer STANDARD_VALUE_LAYOUT_RENDERER = new StandardValueLayoutRenderer();
+    public static final MemoryInspection.Adapter<MemorySegment> MEMORY_SEGMENT_MEMORY_ADAPTER = new MemorySegmentMemoryAdapter();
+    public static final MemoryInspection.Adapter<ByteBuffer> BYTE_BUFFER_MEMORY_ADAPTER = new ByteBufferMemoryAdapter();
+    public static final MemoryInspection.Adapter<byte[]> BYTE_ARRAY_MEMORY_ADAPTER = new ByteArrayMemoryAdapter();
 
     private MemorySegmentRenderUtil() {
     }
 
     /**
-     * Returns a Stream of human-readable, lines with hexadecimal values for this memory segment.
+     * Returns a Stream of human-readable, lines with hexadecimal values for this memory memory.
      * <p>
      * Each element in the stream comprises the following characters:
      * <ol>
@@ -76,11 +76,11 @@ public final class MemorySegmentRenderUtil {
      * <p>
      * As a consequence of the above, this method renders to a format similar to the *nix command "hexdump -C".
      * <p>
-     * As an example, a memory segment created, initialized and used as follows
+     * As an example, a memory memory created, initialized and used as follows
      * {@snippet lang = java:
-     *   MemorySegment segment = memorySession.allocate(64 + 4);
-     *   segment.setUtf8String(0, "The quick brown fox jumped over the lazy dog\nSecond line\t:here");
-     *   segment.hexDump()
+     *   MemorySegment memory = memorySession.allocate(64 + 4);
+     *   memory.setUtf8String(0, "The quick brown fox jumped over the lazy dog\nSecond line\t:here");
+     *   memory.hexDump()
      *       .forEach(System.out::println);
      *}
      * will be printed as:
@@ -93,7 +93,7 @@ public final class MemorySegmentRenderUtil {
      *}
      * <p>
      * Use a {@linkplain MemorySegment#asSlice(long, long) slice} to inspect a specific region
-     * of a memory segment.
+     * of a memory memory.
      * <p>
      * This method can be used to dump the contents of various other memory containers such as
      * {@linkplain ByteBuffer ByteBuffers} and byte arrays by means of first wrapping the container
@@ -103,15 +103,21 @@ public final class MemorySegmentRenderUtil {
      *   MemorySegment.ofBuffer(byteBuffer).hexDump();
      *}
      *
-     * @param segment to inspect
+     * @param memory to inspect
      * @return a Stream of human-readable, lines with hexadecimal values
+     * @throws RuntimeException depending on the provided extractors whose exceptions will be relayed to the
+     *                          call site.
      */
-    public static Stream<String> hexDump(MemorySegment segment) {
-        requireNonNull(segment);
+    public static <M> Stream<String> hexDump(M memory,
+                                             MemoryInspection.Adapter<M> adapter) {
+        requireNonNull(memory);
+        requireNonNull(adapter);
+
         // Todo: Investigate how to handle mapped sparse files
 
         final var state = new HexStreamState();
-        return LongStream.range(0, segment.byteSize())
+        final long lastIndex = adapter.length(memory);
+        return LongStream.range(0, lastIndex)
                 .mapToObj(index -> {
                     if (state.isEmpty()) {
                         // We are on a new line: Append the index
@@ -122,9 +128,9 @@ public final class MemorySegmentRenderUtil {
                         state.appendSpace();
                     }
                     // Append the actual memory value
-                    state.appendValue(segment.get(ValueLayout.JAVA_BYTE, index));
+                    state.appendValue(adapter.get(memory, index));
                     final long nextCnt = index + 1;
-                    if (nextCnt % HEX_STREAM_BYTES_PER_ROW == 0 || nextCnt == segment.byteSize()) {
+                    if (nextCnt % HEX_STREAM_BYTES_PER_ROW == 0 || nextCnt == lastIndex) {
                         // We have a complete line (eiter a full line or the last line)
                         return state.renderLineToStringAndReset();
                     } else {
@@ -168,7 +174,7 @@ public final class MemorySegmentRenderUtil {
      */
     public static String toString(MemorySegment segment,
                                   MemoryLayout layout,
-                                  MemorySegment.ValueLayoutRenderer renderer) {
+                                  MemoryInspection.ValueLayoutRenderer renderer) {
         requireNonNull(segment);
         requireNonNull(layout);
         requireNonNull(renderer);
@@ -186,7 +192,7 @@ public final class MemorySegmentRenderUtil {
 
     public static void toString0(MemorySegment segment,
                                  MemoryLayout layout,
-                                 MemorySegment.ValueLayoutRenderer renderer,
+                                 MemoryInspection.ValueLayoutRenderer renderer,
                                  Consumer<? super CharSequence> action,
                                  ViewState state,
                                  String suffix) {
@@ -401,11 +407,66 @@ public final class MemorySegmentRenderUtil {
                 : '.';
     }
 
-    private static final class StandardValueLayoutRenderer implements MemorySegment.ValueLayoutRenderer {
+    private static final class StandardValueLayoutRenderer implements MemoryInspection.ValueLayoutRenderer {
         @Override
         public String toString() {
-            return StandardValueLayoutRenderer.class.getSimpleName();
+            return singletonToString(StandardValueLayoutRenderer.class);
         }
+    }
+
+    private static final class MemorySegmentMemoryAdapter implements MemoryInspection.Adapter<MemorySegment> {
+        @Override
+        public byte get(MemorySegment memorySegment, long offset) {
+            return memorySegment.get(JAVA_BYTE, offset);
+        }
+
+        @Override
+        public long length(MemorySegment memorySegment) {
+            return memorySegment.byteSize();
+        }
+
+        @Override
+        public String toString() {
+            return singletonToString(MemorySegmentMemoryAdapter.class);
+        }
+    }
+
+    private static final class ByteBufferMemoryAdapter implements MemoryInspection.Adapter<ByteBuffer> {
+        @Override
+        public byte get(ByteBuffer byteBuffer, long offset) {
+            return byteBuffer.get(Math.toIntExact(offset));
+        }
+
+        @Override
+        public long length(ByteBuffer byteBuffer) {
+            return byteBuffer.remaining();
+        }
+
+        @Override
+        public String toString() {
+            return singletonToString(ByteBufferMemoryAdapter.class);
+        }
+    }
+
+    private static final class ByteArrayMemoryAdapter implements MemoryInspection.Adapter<byte[]> {
+
+        @Override
+        public byte get(byte[] byteArray, long offset) {
+            return byteArray[Math.toIntExact(offset)];
+        }
+
+        @Override
+        public long length(byte[] byteArray) {
+            return byteArray.length;
+        }
+        @Override
+        public String toString() {
+            return singletonToString(ByteArrayMemoryAdapter.class);
+        }
+    }
+
+    private static String singletonToString(Class<?> implementingClass) {
+        return "The " + implementingClass.getName() + " singleton";
     }
 
 }

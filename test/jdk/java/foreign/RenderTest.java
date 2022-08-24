@@ -66,7 +66,7 @@ public class RenderTest {
 
         var actual = testWithFreshMemorySegment(HEX_SEGMENT_SIZE, segment -> {
             segment.setUtf8String(0, THE_QUICK);
-            return hexDump(segment)
+            return hexDump(segment, MemoryInspection.Adapter.ofMemorySegment())
                     .collect(joining(System.lineSeparator()));
         });
         assertEquals(actual, EXPECTED_HEX);
@@ -75,9 +75,9 @@ public class RenderTest {
     @Test
     public void testHexStreamByteArray() {
 
-        var array = new byte[HEX_SEGMENT_SIZE];
+        final byte[] array = new byte[HEX_SEGMENT_SIZE];
         System.arraycopy(THE_QUICK_ARRAY, 0, array, 0, THE_QUICK.length());
-        var actual = hexDump(MemorySegment.ofArray(array))
+        var actual = hexDump(array, MemoryInspection.Adapter.ofByteArray())
                 .collect(joining(System.lineSeparator()));
 
         assertEquals(actual, EXPECTED_HEX);
@@ -88,7 +88,8 @@ public class RenderTest {
 
         var array = new byte[HEX_SEGMENT_SIZE];
         System.arraycopy(THE_QUICK_ARRAY, 0, array, 0, THE_QUICK.length());
-        var actual = hexDump(MemorySegment.ofBuffer(ByteBuffer.wrap(array)))
+        var bb = ByteBuffer.wrap(array);
+        var actual = hexDump(bb, MemoryInspection.Adapter.ofByteBuffer())
                 .collect(joining(System.lineSeparator()));
 
         assertEquals(actual, EXPECTED_HEX);
@@ -115,7 +116,7 @@ public class RenderTest {
                 new TestInput(ValueLayout.ADDRESS, EXPECT_ADDRESS)
         ).forEach(ti -> {
             var expect = ti.layout() + "=" + ti.stringValue();
-            var actual = testWithFreshMemorySegment(ti.layout().byteSize(), s -> MemorySegmentRenderUtil.toString(s, ti.layout(), MemorySegment.ValueLayoutRenderer.standard()));
+            var actual = testWithFreshMemorySegment(ti.layout().byteSize(), s -> MemorySegmentRenderUtil.toString(s, ti.layout(), MemoryInspection.ValueLayoutRenderer.standard()));
             assertEquals(actual, expect);
         });
     }
@@ -145,7 +146,7 @@ public class RenderTest {
             for (int i = 0; i < segment.byteSize(); i++) {
                 segment.set(ValueLayout.JAVA_BYTE, i, (byte) i);
             }
-            var actual = MemorySegmentRenderUtil.hexDump(segment)
+            var actual = MemorySegmentRenderUtil.hexDump(segment, MemoryInspection.Adapter.ofMemorySegment())
                     .collect(joining(System.lineSeparator()));
             assertEquals(actual, expect);
         }
@@ -158,7 +159,7 @@ public class RenderTest {
             for (int i = 0; i < segment.byteSize(); i++) {
                 segment.set(ValueLayout.JAVA_BYTE, i, (byte) i);
             }
-            MemorySegmentRenderUtil.hexDump(segment)
+            MemorySegmentRenderUtil.hexDump(segment, MemoryInspection.Adapter.ofMemorySegment())
                     .forEach(l -> assertEquals(l.length(), "0000000000000000  00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F  |................|".length()));
         }
     }
@@ -176,7 +177,7 @@ public class RenderTest {
             final Point point = new Point(segment);
             point.x(1);
             point.y(2);
-            return MemorySegmentRenderUtil.toString(segment, Point.LAYOUT, MemorySegment.ValueLayoutRenderer.standard());
+            return MemorySegmentRenderUtil.toString(segment, Point.LAYOUT, MemoryInspection.ValueLayoutRenderer.standard());
         });
 
         assertEquals(actual, expect);
@@ -195,7 +196,7 @@ public class RenderTest {
             final Point point = new Point(segment);
             point.x(1);
             point.y(2);
-            return MemorySegmentRenderUtil.toString(segment, Point.LAYOUT, new MemorySegment.ValueLayoutRenderer() {
+            return MemorySegmentRenderUtil.toString(segment, Point.LAYOUT, new MemoryInspection.ValueLayoutRenderer() {
                 @Override
                 public String render(ValueLayout.OfInt layout, int value) {
                     return String.format("0x%04x", value);
@@ -243,7 +244,7 @@ public class RenderTest {
 
 
         var actual = testWithFreshMemorySegment(layout.byteSize(), segment ->
-                MemorySegmentRenderUtil.toString(segment, layout, MemorySegment.ValueLayoutRenderer.standard()));
+                MemorySegmentRenderUtil.toString(segment, layout, MemoryInspection.ValueLayoutRenderer.standard()));
 
         assertEquals(actual, expect);
     }
@@ -279,7 +280,7 @@ public class RenderTest {
                     }
                 ]""");
         var actual = testWithFreshMemorySegment(Integer.BYTES * 2 * arraySize, segment ->
-                MemorySegmentRenderUtil.toString(segment, sequenceLayout, MemorySegment.ValueLayoutRenderer.standard()));
+                MemorySegmentRenderUtil.toString(segment, sequenceLayout, MemoryInspection.ValueLayoutRenderer.standard()));
 
         assertEquals(actual, expect);
     }
@@ -315,7 +316,7 @@ public class RenderTest {
                     }
                 }""");
         var actual = testWithFreshMemorySegment(Integer.BYTES * 3, segment ->
-                MemorySegmentRenderUtil.toString(segment, union, MemorySegment.ValueLayoutRenderer.standard()));
+                MemorySegmentRenderUtil.toString(segment, union, MemoryInspection.ValueLayoutRenderer.standard()));
 
         assertEquals(actual, expect);
     }
