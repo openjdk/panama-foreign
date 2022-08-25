@@ -35,11 +35,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jdk.internal.foreign.LayoutPath;
 import jdk.internal.foreign.LayoutPath.PathElementImpl.PathKind;
 import jdk.internal.foreign.Utils;
+import jdk.internal.foreign.layout.*;
 import jdk.internal.javac.PreviewFeature;
 
 /**
@@ -165,7 +165,7 @@ import jdk.internal.javac.PreviewFeature;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, GroupLayout, PaddingLayout, ValueLayout {
+public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, PaddingLayout, ValueLayout {
 
     /**
      * {@return the layout size, in bits}
@@ -614,9 +614,9 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
      * @return the new selector layout.
      * @throws IllegalArgumentException if {@code size <= 0}.
      */
-    static MemoryLayout paddingLayout(long size) {
-        AbstractLayout.checkSize(size);
-        return new PaddingLayout(size);
+    static PaddingLayout paddingLayout(long size) {
+        MemoryLayoutUtil.checkSize(size);
+        return PaddingLayoutImpl.of(size);
     }
 
     /**
@@ -642,23 +642,23 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
         Objects.requireNonNull(carrier);
         Objects.requireNonNull(order);
         if (carrier == boolean.class) {
-            return new ValueLayout.OfBoolean(order);
+            return ValueLayouts.OfBooleanImpl.of(order);
         } else if (carrier == char.class) {
-            return new ValueLayout.OfChar(order);
+            return ValueLayouts.OfCharImpl.of(order);
         } else if (carrier == byte.class) {
-            return new ValueLayout.OfByte(order);
+            return ValueLayouts.OfByteImpl.of(order);
         } else if (carrier == short.class) {
-            return new ValueLayout.OfShort(order);
+            return ValueLayouts.OfShortImpl.of(order);
         } else if (carrier == int.class) {
-            return new ValueLayout.OfInt(order);
+            return ValueLayouts.OfIntImpl.of(order);
         } else if (carrier == float.class) {
-            return new ValueLayout.OfFloat(order);
+            return ValueLayouts.OfFloatImpl.of(order);
         } else if (carrier == long.class) {
-            return new ValueLayout.OfLong(order);
+            return ValueLayouts.OfLongImpl.of(order);
         } else if (carrier == double.class) {
-            return new ValueLayout.OfDouble(order);
+            return ValueLayouts.OfDoubleImpl.of(order);
         } else if (carrier == MemorySegment.class) {
-            return new ValueLayout.OfAddress(order);
+            return ValueLayouts.OfAddressImpl.of(order);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + carrier.getName());
         }
@@ -673,10 +673,10 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
      * @throws IllegalArgumentException if {@code elementCount } is negative.
      */
     static SequenceLayout sequenceLayout(long elementCount, MemoryLayout elementLayout) {
-            AbstractLayout.checkSize(elementCount, true);
-            Objects.requireNonNull(elementLayout);
-            return wrapOverflow(() ->
-                    new SequenceLayout(elementCount, elementLayout));
+        MemoryLayoutUtil.checkSize(elementCount, true);
+        Objects.requireNonNull(elementLayout);
+        return wrapOverflow(() ->
+                SequenceLayoutImpl.of(elementCount, elementLayout));
     }
 
     /**
@@ -704,13 +704,12 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
      * @throws IllegalArgumentException if the sum of the {@linkplain #bitSize() bit sizes} of the member layouts
      * overflows.
      */
-    static GroupLayout structLayout(MemoryLayout... elements) {
+    static StructLayout structLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
         return wrapOverflow(() ->
-                new GroupLayout(GroupLayout.Kind.STRUCT,
-                        Stream.of(elements)
-                                .map(Objects::requireNonNull)
-                                .collect(Collectors.toList())));
+                StructLayoutImpl.of(Stream.of(elements)
+                        .map(Objects::requireNonNull)
+                        .toList()));
     }
 
     /**
@@ -719,12 +718,11 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
      * @param elements The member layouts of the union layout.
      * @return a union layout with the given member layouts.
      */
-    static GroupLayout unionLayout(MemoryLayout... elements) {
+    static UnionLayout unionLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
-        return new GroupLayout(GroupLayout.Kind.UNION,
-                Stream.of(elements)
-                        .map(Objects::requireNonNull)
-                        .collect(Collectors.toList()));
+        return UnionLayoutImpl.of(Stream.of(elements)
+                .map(Objects::requireNonNull)
+                .toList());
     }
 
     private static <L extends MemoryLayout> L wrapOverflow(Supplier<L> layoutSupplier) {
