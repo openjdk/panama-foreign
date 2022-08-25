@@ -90,7 +90,8 @@ public class TestMemoryInspection {
                 new TestInput(ValueLayout.ADDRESS, EXPECT_ADDRESS)
         ).forEach(ti -> {
             var expect = ti.layout() + "=" + ti.stringValue();
-            var actual = testWithFreshMemorySegment(ti.layout().byteSize(), s -> MemoryInspectionUtil.toString(s, ti.layout(), MemoryInspection.ValueLayoutRenderer.standard()));
+            var actual = testWithFreshMemorySegment(ti.layout().byteSize(), s -> MemoryInspection.inspect(s, ti.layout(), MemoryInspection.ValueLayoutRenderer.standard()))
+                    .collect(joining(System.lineSeparator()));
             assertEquals(actual, expect);
         });
     }
@@ -151,7 +152,8 @@ public class TestMemoryInspection {
             final Point point = new Point(segment);
             point.x(1);
             point.y(2);
-            return MemoryInspectionUtil.toString(segment, Point.LAYOUT, MemoryInspection.ValueLayoutRenderer.standard());
+            return MemoryInspection.inspect(segment, Point.LAYOUT, MemoryInspection.ValueLayoutRenderer.standard())
+                    .collect(joining(System.lineSeparator()));
         });
 
         assertEquals(actual, expect);
@@ -170,12 +172,13 @@ public class TestMemoryInspection {
             final Point point = new Point(segment);
             point.x(1);
             point.y(2);
-            return MemoryInspectionUtil.toString(segment, Point.LAYOUT, new MemoryInspection.ValueLayoutRenderer() {
+            return MemoryInspectionUtil.inspect(segment, Point.LAYOUT, new MemoryInspection.ValueLayoutRenderer() {
                 @Override
                 public String render(ValueLayout.OfInt intLayout, int value) {
                     return String.format("0x%04x", value);
                 }
-            });
+            })
+                    .collect(joining(System.lineSeparator()));
         });
 
         assertEquals(actual, expect);
@@ -218,7 +221,8 @@ public class TestMemoryInspection {
 
 
         var actual = testWithFreshMemorySegment(layout.byteSize(), segment ->
-                MemoryInspectionUtil.toString(segment, layout, MemoryInspection.ValueLayoutRenderer.standard()));
+                MemoryInspection.inspect(segment, layout, MemoryInspection.ValueLayoutRenderer.standard()))
+                .collect(joining(System.lineSeparator()));
 
         assertEquals(actual, expect);
     }
@@ -254,7 +258,8 @@ public class TestMemoryInspection {
                     }
                 ]""");
         var actual = testWithFreshMemorySegment(Integer.BYTES * 2 * arraySize, segment ->
-                MemoryInspectionUtil.toString(segment, sequenceLayout, MemoryInspection.ValueLayoutRenderer.standard()));
+                MemoryInspection.inspect(segment, sequenceLayout, MemoryInspection.ValueLayoutRenderer.standard()))
+                .collect(joining(System.lineSeparator()));
 
         assertEquals(actual, expect);
     }
@@ -290,7 +295,8 @@ public class TestMemoryInspection {
                     }
                 }""");
         var actual = testWithFreshMemorySegment(Integer.BYTES * 3, segment ->
-                MemoryInspectionUtil.toString(segment, union, MemoryInspection.ValueLayoutRenderer.standard()));
+                MemoryInspectionUtil.inspect(segment, union, MemoryInspection.ValueLayoutRenderer.standard()))
+                .collect(joining(System.lineSeparator()));
 
         assertEquals(actual, expect);
     }

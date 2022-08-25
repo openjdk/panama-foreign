@@ -26,9 +26,10 @@ package jdk.internal.foreign;
 
 import java.lang.foreign.*;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
@@ -168,7 +169,7 @@ public final class MemoryInspectionUtil {
      * @return a view of the memory segment viewed through the memory layout
      * @throws OutOfMemoryError if the view exceeds the array size VM limit
      */
-    public static String toString(MemorySegment segment,
+    private static String toString(MemorySegment segment,
                                   MemoryLayout layout,
                                   MemoryInspection.ValueLayoutRenderer renderer) {
         requireNonNull(segment);
@@ -176,7 +177,7 @@ public final class MemoryInspectionUtil {
         requireNonNull(renderer);
 
         final var sb = new StringBuilder();
-        final Consumer<CharSequence> action = line -> {
+        final Consumer<String> action = line -> {
             if (!sb.isEmpty()) {
                 sb.append(System.lineSeparator());
             }
@@ -186,10 +187,22 @@ public final class MemoryInspectionUtil {
         return sb.toString();
     }
 
-    public static void toString0(MemorySegment segment,
+    public static Stream<String> inspect(MemorySegment segment,
+                                         MemoryLayout layout,
+                                         MemoryInspection.ValueLayoutRenderer renderer) {
+        requireNonNull(segment);
+        requireNonNull(layout);
+        requireNonNull(renderer);
+
+        final var builder = Stream.<String>builder();
+        toString0(segment, layout, renderer, builder::add, new ViewState(), "");
+        return builder.build();
+    }
+
+    private static void toString0(MemorySegment segment,
                                  MemoryLayout layout,
                                  MemoryInspection.ValueLayoutRenderer renderer,
-                                 Consumer<? super CharSequence> action,
+                                 Consumer<String> action,
                                  ViewState state,
                                  String suffix) {
 

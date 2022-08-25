@@ -2,6 +2,8 @@ package java.lang.foreign;
 
 import jdk.internal.foreign.MemoryInspectionUtil;
 
+import java.util.stream.Stream;
+
 import static java.util.Objects.requireNonNull;
 import static jdk.internal.foreign.MemoryInspectionUtil.*;
 
@@ -21,8 +23,7 @@ public final class MemoryInspection {
      * Returns a human-readable view of the provided {@linkplain MemorySegment memory} viewed
      * through the provided {@code layout} using the provided {@linkplain ValueLayoutRenderer renderer}.
      * <p>
-     * Lines are separated with the system-dependent line separator {@link System#lineSeparator() }.
-     * Otherwise, the exact format of the returned view is unspecified and should not
+     * The exact format of the returned view is unspecified and should not
      * be acted upon programmatically.
      * <p>
      * As an example, a MemorySegment viewed though the following memory layout
@@ -31,6 +32,10 @@ public final class MemoryInspection {
      *         ValueLayout.JAVA_INT.withName("x"),
      *         ValueLayout.JAVA_INT.withName("y")
      * ).withName("Point");
+     *
+     * MemoryInspection.inspect(segment, layout, ValueLayoutRenderer.standard())
+     *     .forEach(System.out::println);
+     *
      *}
      * might be rendered to something like this:
      * {@snippet lang = text:
@@ -40,26 +45,25 @@ public final class MemoryInspection {
      * }
      *}
      * <p>
-     * This method is intended to view memory abstractions through small and medium-sized memory layouts.
+     * This method is intended to view memory segments through small and medium-sized memory layouts.
      *
      * @param segment  to be viewed
      * @param layout   to use as a layout when viewing the memory segment
      * @param renderer to apply when rendering value layouts
      * @return a view of the memory abstraction viewed through the memory layout
-     * @throws OutOfMemoryError if the view exceeds the array size VM limit
      */
-    public static String toString(MemorySegment segment,
-                                  MemoryLayout layout,
-                                  ValueLayoutRenderer renderer) {
+    public static Stream<String> inspect(MemorySegment segment,
+                                         MemoryLayout layout,
+                                         ValueLayoutRenderer renderer) {
         requireNonNull(segment);
         requireNonNull(layout);
         requireNonNull(renderer);
-        return MemoryInspectionUtil.toString(segment, layout, renderer);
+        return MemoryInspectionUtil.inspect(segment, layout, renderer);
     }
 
     /**
      * An interface that can be used to specify custom rendering of value
-     * layouts via the {@link MemoryInspection#toString(MemorySegment, MemoryLayout, ValueLayoutRenderer)} method.
+     * layouts via the {@link MemoryInspection#inspect(MemorySegment, MemoryLayout, ValueLayoutRenderer)} method.
      * <p>
      * The render methods take two parameters:
      * <ul>
@@ -70,7 +74,7 @@ public final class MemoryInspection {
      * The {@linkplain ValueLayoutRenderer#standard() standard() } value layout renderer is path
      * agnostic and will thus render all layouts of the same type the same way.
      *
-     * @see MemoryInspection#toString(MemorySegment, MemoryLayout, ValueLayoutRenderer)
+     * @see MemoryInspection#inspect(MemorySegment, MemoryLayout, ValueLayoutRenderer)
      */
     public interface ValueLayoutRenderer {
         /**
