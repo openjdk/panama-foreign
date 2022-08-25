@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,8 @@ import org.testng.SkipException;
 import java.io.CharArrayWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.nio.CharBuffer;
 import java.util.Arrays;
 import java.util.HexFormat;
@@ -42,6 +44,7 @@ import static org.testng.Assert.expectThrows;
 
 /*
  * @test
+ * @enablePreview
  * @summary Check HexFormat formatting and parsing
  * @run testng/othervm HexFormatTest
  */
@@ -268,12 +271,15 @@ public class HexFormatTest {
 
     @Test
     static void testFormatHexNPE() {
-        assertThrows(NPE, () -> HexFormat.of().formatHex(null));
+        assertThrows(NPE, () -> HexFormat.of().formatHex((byte[])null));
+        assertThrows(NPE, () -> HexFormat.of().formatHex((MemorySegment)null));
         assertThrows(NPE, () -> HexFormat.of().formatHex(null, 0, 1));
-        assertThrows(NPE, () -> HexFormat.of().formatHex(null, null));
+        assertThrows(NPE, () -> HexFormat.of().formatHex(null, (byte[])null));
+        assertThrows(NPE, () -> HexFormat.of().formatHex(null, (MemorySegment) null));
         assertThrows(NPE,  () -> HexFormat.of().formatHex(null, null, 0, 0));
         StringBuilder sb = new StringBuilder();
-        assertThrows(NPE, () -> HexFormat.of().formatHex(sb, null));
+        assertThrows(NPE, () -> HexFormat.of().formatHex(sb, (byte[])null));
+        assertThrows(NPE, () -> HexFormat.of().formatHex(sb, (MemorySegment)null));
         assertThrows(NPE, () -> HexFormat.of().formatHex(sb, null, 0, 1));
     }
 
@@ -336,6 +342,22 @@ public class HexFormatTest {
                                    HexFormat hex) {
         byte[] expected = genBytes('A', 15);
         String res = hex.formatHex(expected);
+        testFormatter(expected, res, delimiter, prefix, suffix, uppercase);
+    }
+
+    @Test(dataProvider="HexFormattersParsers")
+    static void testFormatterMemorySegment(String delimiter, String prefix, String suffix,
+                              boolean uppercase,
+                              HexFormat hex) {
+        byte[] expected = genBytes('A', 15);
+        var segment = MemorySegment.ofArray(expected);
+        String res = hex.formatHex(segment);
+        testFormatter(expected, res, delimiter, prefix, suffix, uppercase);
+    }
+
+    static void testFormatter(byte[] expected, String res,
+                              String delimiter, String prefix, String suffix,
+                              boolean uppercase) {
         assertTrue(res.startsWith(prefix), "Prefix not found");
         assertTrue(res.endsWith(suffix), "Suffix not found");
         int expectedLen = expected.length * (2 + prefix.length() +
@@ -431,6 +453,20 @@ public class HexFormatTest {
         byte[] expected = genBytes('A', 15);
         StringBuilder sb = new StringBuilder();
         StringBuilder s = hex.formatHex(sb, expected);
+        testFormatHexAppendable(expected, sb, s, hex);
+    }
+
+    @Test(dataProvider="HexFormattersParsers")
+    static void testFormatHexAppendableMemorySegment(String unused1, String unused2, String unused3,
+                                     boolean unused4, HexFormat hex) {
+        byte[] expected = genBytes('A', 15);
+        var segment = MemorySegment.ofArray(expected);
+        StringBuilder sb = new StringBuilder();
+        StringBuilder s = hex.formatHex(sb, segment);
+        testFormatHexAppendable(expected, sb, s, hex);
+    }
+
+    static void testFormatHexAppendable(byte[] expected, StringBuilder sb, StringBuilder s, HexFormat hex) {
         assertEquals(s, sb, "formatHex returned unknown StringBuilder");
         System.out.println("    formatted: " + s);
 
@@ -556,6 +592,18 @@ public class HexFormatTest {
         assertEquals(sb.length(), 0, "length should not change");
 
     }
+
+    @Test(dataProvider="HexFormattersParsers")
+    static void testZeroLengthMemorySegment(String delimiter, String prefix, String suffix, boolean uppercase,
+                                HexFormat hex) {
+        // Test formatting of zero length byte arrays, should produce no output
+        var segment = MemorySegment.ofArray(new byte[0]);
+        StringBuilder sb = new StringBuilder();
+        assertEquals(hex.formatHex(segment), "", "Zero length");
+
+        hex.formatHex(sb, segment);
+        assertEquals(sb.length(), 0, "length should not change");
+    }
     private static String escapeNL(String string) {
         return string.replace("\n", "\\n")
                 .replace("\r", "\\r");
@@ -614,6 +662,8 @@ public class HexFormatTest {
         Appendable throwingAppendable = new ThrowingAppendable();
         assertThrows(UncheckedIOException.class,
                 () -> hex.formatHex(throwingAppendable, new byte[1]));
+        assertThrows(UncheckedIOException.class,
+                () -> hex.formatHex(throwingAppendable, MemorySegment.ofArray(new byte[1])));
         assertThrows(UncheckedIOException.class,
                 () -> hex.formatHex(throwingAppendable, new byte[1], 0, 1));
         assertThrows(UncheckedIOException.class,

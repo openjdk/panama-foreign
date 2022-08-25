@@ -30,6 +30,8 @@ import jdk.internal.access.SharedSecrets;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
@@ -375,6 +377,70 @@ public final class HexFormat {
      */
     public <A extends Appendable> A formatHex(A out, byte[] bytes) {
         return formatHex(out, bytes, 0, bytes.length);
+    }
+
+    /**
+     * Returns a hexadecimal string formatted from the provided {@linkplain MemorySegment segment}.
+     * Each byte value is formatted as the prefix, two hexadecimal characters
+     * {@linkplain #isUpperCase selected from} uppercase or lowercase digits, and the suffix.
+     * A delimiter follows each formatted value, except the last.
+     * <p>
+     * The behavior is equivalent to
+     * {@link #formatHex(Appendable, MemorySegment) formatHex(new StringBuilder(), segment).toString())}.
+     * <p>
+     * To view parts of a memory segment, use {@linkplain MemorySegment#asSlice(long) a slice}.
+     *
+     * @param segment a non-null memory segment
+     * @return a string hexadecimal formatting of the byte array
+     * @throws UncheckedIOException if an I/O exception occurs appending to the output
+     * @see #formatHex(Appendable, MemorySegment)
+     */
+    public String formatHex(MemorySegment segment) {
+        return formatHex(new StringBuilder(), segment).toString();
+    }
+
+    /**
+     * Appends formatted hexadecimal strings from the provided {@linkplain MemorySegment segment}
+     * to the provided {@linkplain Appendable out}.
+     * Each byte value is formatted as the prefix, two hexadecimal characters
+     * {@linkplain #isUpperCase selected from} uppercase or lowercase digits, and the suffix.
+     * A delimiter follows each formatted value, except the last.
+     * The formatted hexadecimal strings are appended in zero or more calls to the {@link Appendable} methods.
+     * <p>
+     * To view parts of a memory segment, use {@linkplain MemorySegment#asSlice(long) a slice}.
+     *
+     * @param <A> The type of {@code Appendable}
+     * @param out an {@code Appendable}, non-null
+     * @param segment a memory segment
+     * @return the {@code Appendable}
+     * @throws UncheckedIOException if an I/O exception occurs appending to the output
+     */
+    public <A extends Appendable> A formatHex(A out, MemorySegment segment) {
+        Objects.requireNonNull(out, "out");
+        Objects.requireNonNull(segment, "segment");
+
+        long length = segment.byteSize();
+        if (length > 0) {
+            try {
+                String between = suffix + delimiter + prefix;
+                out.append(prefix);
+                toHexDigits(out, segment.get(ValueLayout.JAVA_BYTE, 0));
+                if (between.isEmpty()) {
+                    for (long i = 1; i < length; i++) {
+                        toHexDigits(out, segment.get(ValueLayout.JAVA_BYTE, i));
+                    }
+                } else {
+                    for (long i = 1; i < length; i++) {
+                        out.append(between);
+                        toHexDigits(out, segment.get(ValueLayout.JAVA_BYTE, i));
+                    }
+                }
+                out.append(suffix);
+            } catch (IOException ioe) {
+                throw new UncheckedIOException(ioe.getMessage(), ioe);
+            }
+        }
+        return out;
     }
 
     /**

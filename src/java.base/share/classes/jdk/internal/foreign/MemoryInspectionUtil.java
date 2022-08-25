@@ -238,9 +238,9 @@ public final class MemoryInspectionUtil {
             return;
         }
         // PaddingLayout is package private.
-        if ("java.lang.foreign.PaddingLayout".equals(layout.getClass().getName())) {
-            action.accept(state.indentSpaces() + layout.bitSize() + " padding bits");
-            state.indexAndAdd(layout);
+        if (layout instanceof PaddingLayout paddingLayout) {
+            action.accept(state.indentSpaces() + paddingLayout.bitSize() + " padding bits");
+            state.indexAndAdd(paddingLayout);
             return;
         }
         if (layout instanceof GroupLayout groupLayout) {
