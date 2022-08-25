@@ -39,8 +39,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Spliterator;
 import java.util.stream.Stream;
-
-import jdk.internal.foreign.*;
+import jdk.internal.foreign.AbstractMemorySegmentImpl;
+import jdk.internal.foreign.HeapMemorySegmentImpl;
+import jdk.internal.foreign.NativeMemorySegmentImpl;
+import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.layout.ValueLayouts;
 import jdk.internal.javac.PreviewFeature;
@@ -2101,5 +2103,4 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
         }
         return srcBytes != dstBytes ? bytes : -1;
     }
-
 }
