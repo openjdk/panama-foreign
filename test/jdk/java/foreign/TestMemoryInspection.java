@@ -66,51 +66,11 @@ public class TestMemoryInspection {
 
         var actual = testWithFreshMemorySegment(HEX_SEGMENT_SIZE, segment -> {
             segment.setUtf8String(0, THE_QUICK);
-            return hexDump(segment, Adapter.ofMemorySegment())
+            return hexDump(segment)
                     .collect(joining(System.lineSeparator()));
         });
         assertEquals(actual, EXPECTED_HEX);
     }
-
-    @Test
-    public void testHexStreamByteArray() {
-
-        final byte[] array = new byte[HEX_SEGMENT_SIZE];
-        System.arraycopy(THE_QUICK_ARRAY, 0, array, 0, THE_QUICK.length());
-        var actual = hexDump(array, Adapter.ofByteArray())
-                .collect(joining(System.lineSeparator()));
-
-        assertEquals(actual, EXPECTED_HEX);
-    }
-
-    public void testHexStreamIntArray() {
-
-        final byte[] byteArray = new byte[HEX_SEGMENT_SIZE];
-        System.arraycopy(THE_QUICK_ARRAY, 0, byteArray, 0, THE_QUICK.length());
-        final var intByteBuffer = ByteBuffer.wrap(byteArray).asIntBuffer();
-        final int[] array = new int[HEX_SEGMENT_SIZE / Integer.BYTES];
-        for (int i = 0; i < array.length; i++) {
-            array[i] = intByteBuffer.get(i);
-        }
-
-        var actual = hexDump(array, Adapter.ofIntArray())
-                .collect(joining(System.lineSeparator()));
-
-        assertEquals(actual, EXPECTED_HEX);
-    }
-
-    @Test
-    public void testHexStreamByteBuffer() {
-
-        var array = new byte[HEX_SEGMENT_SIZE];
-        System.arraycopy(THE_QUICK_ARRAY, 0, array, 0, THE_QUICK.length());
-        var bb = ByteBuffer.wrap(array);
-        var actual = hexDump(bb, Adapter.ofByteBuffer())
-                .collect(joining(System.lineSeparator()));
-
-        assertEquals(actual, EXPECTED_HEX);
-    }
-
 
     @Test
     public void valueLayouts() {
@@ -160,7 +120,7 @@ public class TestMemoryInspection {
             for (int i = 0; i < segment.byteSize(); i++) {
                 segment.set(ValueLayout.JAVA_BYTE, i, (byte) i);
             }
-            var actual = MemoryInspectionUtil.hexDump(segment, Adapter.ofMemorySegment())
+            var actual = MemoryInspectionUtil.hexDump(segment)
                     .collect(joining(System.lineSeparator()));
             assertEquals(actual, expect);
         }
@@ -173,7 +133,7 @@ public class TestMemoryInspection {
             for (int i = 0; i < segment.byteSize(); i++) {
                 segment.set(ValueLayout.JAVA_BYTE, i, (byte) i);
             }
-            MemoryInspectionUtil.hexDump(segment, Adapter.ofMemorySegment())
+            MemoryInspectionUtil.hexDump(segment)
                     .forEach(l -> assertEquals(l.length(), "0000000000000000  00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F  |................|".length()));
         }
     }

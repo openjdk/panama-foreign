@@ -59,7 +59,7 @@ public final class MemoryInspection {
 
     /**
      * An interface that can be used to specify custom rendering of value
-     * layouts via the {@link MemorySegment#toString(MemoryLayout, ValueLayoutRenderer)} method.
+     * layouts via the {@link MemoryInspection#toString(MemorySegment, MemoryLayout, ValueLayoutRenderer)} method.
      * <p>
      * The render methods take two parameters:
      * <ul>
@@ -70,7 +70,7 @@ public final class MemoryInspection {
      * The {@linkplain ValueLayoutRenderer#standard() standard() } value layout renderer is path
      * agnostic and will thus render all layouts of the same type the same way.
      *
-     * @see MemorySegment#toString(MemoryLayout, ValueLayoutRenderer)
+     * @see MemoryInspection#toString(MemorySegment, MemoryLayout, ValueLayoutRenderer)
      */
     public interface ValueLayoutRenderer {
         /**
