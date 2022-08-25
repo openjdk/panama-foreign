@@ -2,11 +2,6 @@ package java.lang.foreign;
 
 import jdk.internal.foreign.MemoryInspectionUtil;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.stream.Stream;
-
-import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static java.util.Objects.requireNonNull;
 import static jdk.internal.foreign.MemoryInspectionUtil.*;
 
@@ -23,9 +18,8 @@ public final class MemoryInspection {
     }
 
     /**
-     * Returns a human-readable view of the provided {@code memory} abstraction by optionally
-     * (if not a {@link MemorySession} and {@link Adapter#ofMemorySegment()} already) copying the contents
-     * to a fresh MemorySegment and then view the resulting MemorySegment through the provided {@code layout}.
+     * Returns a human-readable view of the provided {@linkplain MemorySegment memory} viewed
+     * through the provided {@code layout} using the provided {@linkplain ValueLayoutRenderer renderer}.
      * <p>
      * Lines are separated with the system-dependent line separator {@link System#lineSeparator() }.
      * Otherwise, the exact format of the returned view is unspecified and should not
@@ -48,91 +42,19 @@ public final class MemoryInspection {
      * <p>
      * This method is intended to view memory abstractions through small and medium-sized memory layouts.
      *
-     * @param memory   to be viewed
-     * @param adapter  to apply to the provided memory to determine the size and content of the memory abstraction.
+     * @param segment  to be viewed
      * @param layout   to use as a layout when viewing the memory segment
      * @param renderer to apply when rendering value layouts
-     * @param <M>      the memory abstraction type.
      * @return a view of the memory abstraction viewed through the memory layout
      * @throws OutOfMemoryError if the view exceeds the array size VM limit
      */
-    public static <M> String toString(M memory,
-                                      Adapter<M> adapter,
-                                      MemoryLayout layout,
-                                      ValueLayoutRenderer renderer) {
-        requireNonNull(memory);
-        requireNonNull(adapter);
+    public static String toString(MemorySegment segment,
+                                  MemoryLayout layout,
+                                  ValueLayoutRenderer renderer) {
+        requireNonNull(segment);
         requireNonNull(layout);
         requireNonNull(renderer);
-
-        if (memory instanceof MemorySegment segment && adapter == MEMORY_SEGMENT_MEMORY_ADAPTER) {
-            return MemoryInspectionUtil.toString(segment, layout, renderer);
-        }
-        long length = adapter.length(memory);
-        try (var session = MemorySession.openConfined()) {
-            var segment = session.allocate(length, Long.SIZE);
-            for (long i = 0; i < length; i++) {
-                segment.set(JAVA_BYTE, i, adapter.get(memory, i));
-            }
-            return MemoryInspectionUtil.toString(segment, layout, renderer);
-        }
-    }
-
-    /**
-     * General memory adapter for rendering any memory abstraction.
-     *
-     * @param <M> the type of memory abstraction (e.g. ByteBuffer, MemorySegment or byte array)
-     */
-    public interface Adapter<M> {
-
-        /**
-         * {@return a byte from the provided {@code  memory} at the provided {@code offset}}.
-         *
-         * @param memory the memory to read from
-         * @param offset the offset in memory to read from
-         * @throws RuntimeException if the provided offset is out of bounds or, depending on the memory
-         *                          abstraction, for other reasons. The type of exception depends on the underlying
-         *                          memory.
-         */
-        byte get(M memory, long offset);
-
-        /**
-         * {@return the length of this memory abstraction}
-         *
-         * @param memory the memory to read from
-         */
-        long length(M memory);
-
-        /**
-         * {@return a {@code MemoryAdapter<MemorySegment> } that reads byte values from a {@link MemorySegment}}
-         */
-        static Adapter<MemorySegment> ofMemorySegment() {
-            return MEMORY_SEGMENT_MEMORY_ADAPTER;
-        }
-
-        /**
-         * {@return a {@code MemoryAdapter<ByteBuffer> } that reads byte values from a {@link ByteBuffer}}
-         */
-        static Adapter<ByteBuffer> ofByteBuffer() {
-            return BYTE_BUFFER_MEMORY_ADAPTER;
-        }
-
-        /**
-         * {@return a {@code MemoryAdapter<byte[]> } that reads byte values from a byte array}
-         */
-        static Adapter<byte[]> ofByteArray() {
-            return BYTE_ARRAY_MEMORY_ADAPTER;
-        }
-
-        /**
-         * {@return a {@code MemoryAdapter<int[]> } that reads byte values from an int array}
-         * <p>
-         * Bytes are read according to the {@linkplain ByteOrder#nativeOrder() native order}
-         */
-        static Adapter<int[]> ofIntArray() {
-            return INT_ARRAY_MEMORY_ADAPTER;
-        }
-
+        return MemoryInspectionUtil.toString(segment, layout, renderer);
     }
 
     /**
@@ -152,110 +74,110 @@ public final class MemoryInspection {
      */
     public interface ValueLayoutRenderer {
         /**
-         * Renders the provided {@code layout} and {@code value} to a String.
+         * Renders the provided {@code booleanLayout} and {@code value} to a String.
          *
-         * @param layout the layout to render
-         * @param value  the value to render
+         * @param booleanLayout the layout to render
+         * @param value         the value to render
          * @return rendered String
          */
-        default String render(ValueLayout.OfBoolean layout, boolean value) {
-            requireNonNull(layout);
+        default String render(ValueLayout.OfBoolean booleanLayout, boolean value) {
+            requireNonNull(booleanLayout);
             return Boolean.toString(value);
         }
 
         /**
-         * Renders the provided {@code layout} and {@code value} to a String.
+         * Renders the provided {@code booleanLayout} and {@code value} to a String.
          *
-         * @param layout the layout to render
-         * @param value  the value to render
+         * @param booleanLayout the layout to render
+         * @param value         the value to render
          * @return rendered String
          */
-        default String render(ValueLayout.OfByte layout, byte value) {
-            requireNonNull(layout);
+        default String render(ValueLayout.OfByte booleanLayout, byte value) {
+            requireNonNull(booleanLayout);
             return Byte.toString(value);
         }
 
         /**
-         * Renders the provided {@code layout} and {@code value} to a String.
+         * Renders the provided {@code charLayout} and {@code value} to a String.
          *
-         * @param layout the layout to render
-         * @param value  the value to render
+         * @param charLayout the layout to render
+         * @param value      the value to render
          * @return rendered String
          */
-        default String render(ValueLayout.OfChar layout, char value) {
-            requireNonNull(layout);
+        default String render(ValueLayout.OfChar charLayout, char value) {
+            requireNonNull(charLayout);
             return Character.toString(value);
         }
 
         /**
-         * Renders the provided {@code layout} and {@code value} to a String.
+         * Renders the provided {@code sortLayout} and {@code value} to a String.
          *
-         * @param layout the layout to render
-         * @param value  the value to render
+         * @param sortLayout the layout to render
+         * @param value      the value to render
          * @return rendered String
          */
-        default String render(ValueLayout.OfShort layout, short value) {
-            requireNonNull(layout);
+        default String render(ValueLayout.OfShort sortLayout, short value) {
+            requireNonNull(sortLayout);
             return Short.toString(value);
         }
 
         /**
-         * Renders the provided {@code layout} and {@code value} to a String.
+         * Renders the provided {@code intLayout} and {@code value} to a String.
          *
-         * @param layout the layout to render
-         * @param value  the value to render
+         * @param intLayout the layout to render
+         * @param value     the value to render
          * @return rendered String
          */
-        default String render(ValueLayout.OfInt layout, int value) {
-            requireNonNull(layout);
+        default String render(ValueLayout.OfInt intLayout, int value) {
+            requireNonNull(intLayout);
             return Integer.toString(value);
         }
 
         /**
-         * Renders the provided {@code layout} and {@code value} to a String.
+         * Renders the provided {@code longLayout} and {@code value} to a String.
          *
-         * @param layout the layout to render
-         * @param value  the value to render
+         * @param longLayout the layout to render
+         * @param value      the value to render
          * @return rendered String
          */
-        default String render(ValueLayout.OfLong layout, long value) {
-            requireNonNull(layout);
+        default String render(ValueLayout.OfLong longLayout, long value) {
+            requireNonNull(longLayout);
             return Long.toString(value);
         }
 
         /**
-         * Renders the provided {@code layout} and {@code value} to a String.
+         * Renders the provided {@code floatLayout} and {@code value} to a String.
          *
-         * @param layout the layout to render
-         * @param value  the value to render
+         * @param floatLayout the layout to render
+         * @param value       the value to render
          * @return rendered String
          */
-        default String render(ValueLayout.OfFloat layout, float value) {
-            requireNonNull(layout);
+        default String render(ValueLayout.OfFloat floatLayout, float value) {
+            requireNonNull(floatLayout);
             return Float.toString(value);
         }
 
         /**
-         * Renders the provided {@code layout} and {@code value} to a String.
+         * Renders the provided {@code doubleLayout} and {@code value} to a String.
          *
-         * @param layout the layout to render
-         * @param value  the value to render
+         * @param doubleLayout the layout to render
+         * @param value        the value to render
          * @return rendered String
          */
-        default String render(ValueLayout.OfDouble layout, double value) {
-            requireNonNull(layout);
+        default String render(ValueLayout.OfDouble doubleLayout, double value) {
+            requireNonNull(doubleLayout);
             return Double.toString(value);
         }
 
         /**
-         * Renders the provided {@code layout} and {@code value} to a String.
+         * Renders the provided {@code addressLayout} and {@code value} to a String.
          *
-         * @param layout the layout to render
-         * @param value  the value to render
+         * @param addressLayout the layout to render
+         * @param value         the value to render
          * @return rendered String
          */
-        default String render(ValueLayout.OfAddress layout, MemorySegment value) {
-            requireNonNull(layout);
+        default String render(ValueLayout.OfAddress addressLayout, MemorySegment value) {
+            requireNonNull(addressLayout);
             return String.format("0x%0" + (ValueLayout.ADDRESS.byteSize() * 2) + "X", value.address());
         }
 

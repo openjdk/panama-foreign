@@ -1874,59 +1874,6 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Returns a human-readable view of this memory segment viewed through
-     * the provided {@code layout} and {@code renderer}.
-     * <p>
-     * The format of the returned view is as follows:
-     * <ol>
-     *     <li>tag/value pairs are separated with an "=" character.</li>
-     *     <li>Each element is tagged with its {@link MemoryLayout#name()} or, if no name exists,
-     *     its {@link MemoryLayout#toString()} representation.</li>
-     *     <li>Values are rendered as specified by the provided {@code renderer}</li>
-     *     <li>Values in a group layout are rendered with enclosing curly braces.</li>
-     *     <li>Structure and sequence elements are separated with a "," character.</li>
-     *     <li>Union elements are separated with a "|" character.</li>
-     *     <li>Lines are separated with the system-dependent line separator {@link System#lineSeparator() }.</li>
-     * </ol>
-     * Otherwise, the exact format of the returned view is unspecified and should not
-     * be acted upon programmatically.
-     * <p>
-     * As an example, a memory segment viewed though the following memory layout
-     * {@snippet lang = java:
-     *   memorySegment.set(ValueLayout.JAVA_INT, 0, 1);
-     *   memorySegment.set(ValueLayout.JAVA_INT, 4, 2);
-     *
-     *    var layout = MemoryLayout.structLayout(
-     *           ValueLayout.JAVA_INT.withName("x"),
-     *           ValueLayout.JAVA_INT.withName("y")
-     *   ).withName("Point");
-     *
-     *   System.out.println(memorySegment.toString(layout, MemoryInspection.ValueLayoutRenderer.standard()));
-     *}
-     * will print:
-     * {@snippet lang = text:
-     * Point {
-     *   x=1,
-     *   y=2
-     * }
-     *}
-     *
-     * @param layout   to use as a layout when viewing the memory segment
-     * @param renderer to apply when formatting value layouts. {@link MemoryInspection.ValueLayoutRenderer#standard()} can
-     *                 be used if no custom formatting is needed.
-     * @return a view of the memory segment viewed through a memory layout
-     * @throws OutOfMemoryError if the size of the UTF-8 string is greater than the largest string
-     *         supported by the platform.
-     * @see MemoryInspection.ValueLayoutRenderer
-     * @see MemoryInspection.ValueLayoutRenderer#standard()
-     */
-    default String toString(MemoryLayout layout, MemoryInspection.ValueLayoutRenderer renderer) {
-        Objects.requireNonNull(layout);
-        Objects.requireNonNull(renderer);
-        return MemoryInspectionUtil.toString(this, layout, renderer);
-    }
-
-    /**
      * Compares the specified object with this memory segment for equality. Returns {@code true} if and only if the specified
      * object is also a memory segment, and if that segment refers to the same memory location as this segment. More specifically,
      * for two segments {@code s1} and {@code s2} to be considered equals, all the following must be true:

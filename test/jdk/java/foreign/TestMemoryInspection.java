@@ -66,7 +66,7 @@ public class TestMemoryInspection {
 
         var actual = testWithFreshMemorySegment(HEX_SEGMENT_SIZE, segment -> {
             segment.setUtf8String(0, THE_QUICK);
-            return hexDump(segment, MemoryInspection.Adapter.ofMemorySegment())
+            return hexDump(segment, Adapter.ofMemorySegment())
                     .collect(joining(System.lineSeparator()));
         });
         assertEquals(actual, EXPECTED_HEX);
@@ -77,7 +77,7 @@ public class TestMemoryInspection {
 
         final byte[] array = new byte[HEX_SEGMENT_SIZE];
         System.arraycopy(THE_QUICK_ARRAY, 0, array, 0, THE_QUICK.length());
-        var actual = hexDump(array, MemoryInspection.Adapter.ofByteArray())
+        var actual = hexDump(array, Adapter.ofByteArray())
                 .collect(joining(System.lineSeparator()));
 
         assertEquals(actual, EXPECTED_HEX);
@@ -93,7 +93,7 @@ public class TestMemoryInspection {
             array[i] = intByteBuffer.get(i);
         }
 
-        var actual = hexDump(array, MemoryInspection.Adapter.ofIntArray())
+        var actual = hexDump(array, Adapter.ofIntArray())
                 .collect(joining(System.lineSeparator()));
 
         assertEquals(actual, EXPECTED_HEX);
@@ -105,7 +105,7 @@ public class TestMemoryInspection {
         var array = new byte[HEX_SEGMENT_SIZE];
         System.arraycopy(THE_QUICK_ARRAY, 0, array, 0, THE_QUICK.length());
         var bb = ByteBuffer.wrap(array);
-        var actual = hexDump(bb, MemoryInspection.Adapter.ofByteBuffer())
+        var actual = hexDump(bb, Adapter.ofByteBuffer())
                 .collect(joining(System.lineSeparator()));
 
         assertEquals(actual, EXPECTED_HEX);
@@ -160,7 +160,7 @@ public class TestMemoryInspection {
             for (int i = 0; i < segment.byteSize(); i++) {
                 segment.set(ValueLayout.JAVA_BYTE, i, (byte) i);
             }
-            var actual = MemoryInspectionUtil.hexDump(segment, MemoryInspection.Adapter.ofMemorySegment())
+            var actual = MemoryInspectionUtil.hexDump(segment, Adapter.ofMemorySegment())
                     .collect(joining(System.lineSeparator()));
             assertEquals(actual, expect);
         }
@@ -173,7 +173,7 @@ public class TestMemoryInspection {
             for (int i = 0; i < segment.byteSize(); i++) {
                 segment.set(ValueLayout.JAVA_BYTE, i, (byte) i);
             }
-            MemoryInspectionUtil.hexDump(segment, MemoryInspection.Adapter.ofMemorySegment())
+            MemoryInspectionUtil.hexDump(segment, Adapter.ofMemorySegment())
                     .forEach(l -> assertEquals(l.length(), "0000000000000000  00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F  |................|".length()));
         }
     }
@@ -197,33 +197,6 @@ public class TestMemoryInspection {
         assertEquals(actual, expect);
     }
 
-
-    @Test
-    public void pointByteBuffer() {
-
-        var expect = platformLineSeparated("""
-                Point {
-                    x=1,
-                    y=2
-                }""");
-
-        var actual = testWithFreshMemorySegment(Integer.BYTES * 2, segment -> {
-            final Point point = new Point(segment);
-            point.x(1);
-            point.y(2);
-
-            ByteBuffer byteBuffer = segment.asByteBuffer();
-
-            return MemoryInspection.toString(
-                    byteBuffer,
-                    MemoryInspection.Adapter.ofByteBuffer(),
-                    Point.LAYOUT,
-                    MemoryInspection.ValueLayoutRenderer.standard());
-        });
-
-        assertEquals(actual, expect);
-    }
-
     @Test
     public void pointCustomRenderer() {
 
@@ -239,7 +212,7 @@ public class TestMemoryInspection {
             point.y(2);
             return MemoryInspectionUtil.toString(segment, Point.LAYOUT, new MemoryInspection.ValueLayoutRenderer() {
                 @Override
-                public String render(ValueLayout.OfInt layout, int value) {
+                public String render(ValueLayout.OfInt intLayout, int value) {
                     return String.format("0x%04x", value);
                 }
             });

@@ -48,10 +48,10 @@ public final class MemoryInspectionUtil {
     private static final int HEX_STREAM_BYTES_PER_ROW = 16; // Must be a power of 2 and is 16 by convention
     private static final int HEX_LINE_LENGTH_EXCLUDING_CHARS = Long.BYTES * 2 + HEX_STREAM_BYTES_PER_ROW * 3 + 4;
     public static final MemoryInspection.ValueLayoutRenderer STANDARD_VALUE_LAYOUT_RENDERER = new StandardValueLayoutRenderer();
-    public static final MemoryInspection.Adapter<MemorySegment> MEMORY_SEGMENT_MEMORY_ADAPTER = new MemorySegmentMemoryAdapter();
-    public static final MemoryInspection.Adapter<ByteBuffer> BYTE_BUFFER_MEMORY_ADAPTER = new ByteBufferMemoryAdapter();
-    public static final MemoryInspection.Adapter<byte[]> BYTE_ARRAY_MEMORY_ADAPTER = new ByteArrayMemoryAdapter();
-    public static final MemoryInspection.Adapter<int[]> INT_ARRAY_MEMORY_ADAPTER = new IntArrayMemoryAdapter();
+    public static final Adapter<MemorySegment> MEMORY_SEGMENT_MEMORY_ADAPTER = new MemorySegmentMemoryAdapter();
+    public static final Adapter<ByteBuffer> BYTE_BUFFER_MEMORY_ADAPTER = new ByteBufferMemoryAdapter();
+    public static final Adapter<byte[]> BYTE_ARRAY_MEMORY_ADAPTER = new ByteArrayMemoryAdapter();
+    public static final Adapter<int[]> INT_ARRAY_MEMORY_ADAPTER = new IntArrayMemoryAdapter();
 
     private MemoryInspectionUtil() {
     }
@@ -111,7 +111,7 @@ public final class MemoryInspectionUtil {
      *                          call site.
      */
     public static <M> Stream<String> hexDump(M memory,
-                                             MemoryInspection.Adapter<M> adapter) {
+                                             Adapter<M> adapter) {
         requireNonNull(memory);
         requireNonNull(adapter);
 
@@ -304,6 +304,63 @@ public final class MemoryInspectionUtil {
                 .orElseGet(layout::toString);
     }
 
+    /**
+     * General memory adapter for rendering any memory abstraction.
+     *
+     * @param <M> the type of memory abstraction (e.g. ByteBuffer, MemorySegment or byte array)
+     */
+    public interface Adapter<M> {
+
+        /**
+         * {@return a byte from the provided {@code  memory} at the provided {@code offset}}.
+         *
+         * @param memory the memory to read from
+         * @param offset the offset in memory to read from
+         * @throws RuntimeException if the provided offset is out of bounds or, depending on the memory
+         *                          abstraction, for other reasons. The type of exception depends on the underlying
+         *                          memory.
+         */
+        byte get(M memory, long offset);
+
+        /**
+         * {@return the length of this memory abstraction}
+         *
+         * @param memory the memory to read from
+         */
+        long length(M memory);
+
+        /**
+         * {@return a {@code MemoryAdapter<MemorySegment> } that reads byte values from a {@link MemorySegment}}
+         */
+        static Adapter<MemorySegment> ofMemorySegment() {
+            return MEMORY_SEGMENT_MEMORY_ADAPTER;
+        }
+
+        /**
+         * {@return a {@code MemoryAdapter<ByteBuffer> } that reads byte values from a {@link ByteBuffer}}
+         */
+        static Adapter<ByteBuffer> ofByteBuffer() {
+            return BYTE_BUFFER_MEMORY_ADAPTER;
+        }
+
+        /**
+         * {@return a {@code MemoryAdapter<byte[]> } that reads byte values from a byte array}
+         */
+        static Adapter<byte[]> ofByteArray() {
+            return BYTE_ARRAY_MEMORY_ADAPTER;
+        }
+
+        /**
+         * {@return a {@code MemoryAdapter<int[]> } that reads byte values from an int array}
+         * <p>
+         * Bytes are read according to the {@linkplain ByteOrder#nativeOrder() native order}
+         */
+        static Adapter<int[]> ofIntArray() {
+            return INT_ARRAY_MEMORY_ADAPTER;
+        }
+
+    }
+
     static final class HexStreamState {
         private final StringBuilder line = new StringBuilder();
         private final StringBuilder chars = new StringBuilder();
@@ -416,7 +473,7 @@ public final class MemoryInspectionUtil {
         }
     }
 
-    private static final class MemorySegmentMemoryAdapter implements MemoryInspection.Adapter<MemorySegment> {
+    private static final class MemorySegmentMemoryAdapter implements Adapter<MemorySegment> {
         @Override
         public byte get(MemorySegment memorySegment, long offset) {
             return memorySegment.get(JAVA_BYTE, offset);
@@ -433,7 +490,7 @@ public final class MemoryInspectionUtil {
         }
     }
 
-    private static final class ByteBufferMemoryAdapter implements MemoryInspection.Adapter<ByteBuffer> {
+    private static final class ByteBufferMemoryAdapter implements Adapter<ByteBuffer> {
         @Override
         public byte get(ByteBuffer byteBuffer, long offset) {
             return byteBuffer.get(Math.toIntExact(offset));
@@ -450,7 +507,7 @@ public final class MemoryInspectionUtil {
         }
     }
 
-    private static final class ByteArrayMemoryAdapter implements MemoryInspection.Adapter<byte[]> {
+    private static final class ByteArrayMemoryAdapter implements Adapter<byte[]> {
 
         @Override
         public byte get(byte[] byteArray, long offset) {
@@ -468,7 +525,7 @@ public final class MemoryInspectionUtil {
         }
     }
 
-    private static final class IntArrayMemoryAdapter implements MemoryInspection.Adapter<int[]> {
+    private static final class IntArrayMemoryAdapter implements Adapter<int[]> {
 
         @Override
         public byte get(int[] intArray, long offset) {
