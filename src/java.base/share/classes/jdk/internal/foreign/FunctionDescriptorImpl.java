@@ -105,7 +105,8 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
      * @throws IllegalArgumentException if {@code index < 0 || index > argumentLayouts().size()}.
      */
     public FunctionDescriptorImpl insertArgumentLayouts(int index, MemoryLayout... addedLayouts) {
-        checkIndex(index);
+        if (index < 0 || index > argLayouts.size())
+            throw new IllegalArgumentException("Index out of bounds: " + index);
         List<MemoryLayout> added = List.of(addedLayouts); // null check on array and its elements
         List<MemoryLayout> newLayouts = new ArrayList<>(argLayouts.size() + addedLayouts.length);
         newLayouts.addAll(argLayouts.subList(0, index));
@@ -176,11 +177,6 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
         return Objects.hash(argLayouts, resLayout, firstVariadicArgumentIndex());
     }
 
-    final void checkIndex(int index) {
-        if (index < 0 || index > argLayouts.size())
-            throw new IllegalArgumentException("Index out of bounds: " + index);
-    }
-
     public static FunctionDescriptor of(MemoryLayout resLayout, List<MemoryLayout> argLayouts) {
         return new FunctionDescriptorImpl(resLayout, argLayouts);
     }
@@ -213,16 +209,11 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
 
         @Override
         public FunctionDescriptorImpl insertArgumentLayouts(int index, MemoryLayout... addedLayouts) {
-            checkIndex(index);
-            for (MemoryLayout layout : addedLayouts) {
-                requireNonNull(layout);
-            }
             throw newUnsupportedOperationException();
         }
 
         @Override
         public FunctionDescriptorImpl changeReturnLayout(MemoryLayout newReturn) {
-            requireNonNull(newReturn);
             throw newUnsupportedOperationException();
         }
 
