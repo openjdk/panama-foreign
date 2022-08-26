@@ -32,18 +32,10 @@ import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
+import jdk.internal.foreign.layout.PaddingLayoutImpl;
 import jdk.internal.vm.annotation.ForceInline;
 
-import java.lang.foreign.Linker;
-import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.GroupLayout;
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
-import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.SequenceLayout;
-import java.lang.foreign.VaList;
-import java.lang.foreign.ValueLayout;
+import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -118,7 +110,7 @@ public final class SharedUtils {
             return alignmentOfArray((SequenceLayout) t, isVar);
         } else if (t instanceof GroupLayout) {
             return alignmentOfContainer((GroupLayout) t);
-        } else if (t.isPadding()) {
+        } else if (t instanceof PaddingLayout) {
             return 1;
         } else {
             throw new IllegalArgumentException("Invalid type: " + t);

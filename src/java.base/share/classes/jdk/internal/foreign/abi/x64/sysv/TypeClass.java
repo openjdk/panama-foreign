@@ -24,11 +24,8 @@
  */
 package jdk.internal.foreign.abi.x64.sysv;
 
-import java.lang.foreign.GroupLayout;
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SequenceLayout;
-import java.lang.foreign.ValueLayout;
+import java.lang.foreign.*;
+
 import jdk.internal.foreign.Utils;
 
 import java.util.ArrayList;
@@ -193,7 +190,7 @@ class TypeClass {
         List<ArgumentClassImpl>[] groups = new List[nEightbytes];
         for (MemoryLayout l : group.memberLayouts()) {
             groupByEightBytes(l, offset, groups);
-            if (group.isStruct()) {
+            if (group instanceof StructLayout) {
                 offset += l.byteSize();
             }
         }
@@ -201,18 +198,16 @@ class TypeClass {
     }
 
     private static void groupByEightBytes(MemoryLayout l, long offset, List<ArgumentClassImpl>[] groups) {
-        if (l instanceof GroupLayout) {
-            GroupLayout group = (GroupLayout)l;
+        if (l instanceof GroupLayout group) {
             for (MemoryLayout m : group.memberLayouts()) {
                 groupByEightBytes(m, offset, groups);
-                if (group.isStruct()) {
+                if (group instanceof StructLayout) {
                     offset += m.byteSize();
                 }
             }
-        } else if (l.isPadding()) {
+        } else if (l instanceof PaddingLayout) {
             return;
-        } else if (l instanceof SequenceLayout) {
-            SequenceLayout seq = (SequenceLayout)l;
+        } else if (l instanceof SequenceLayout seq) {
             MemoryLayout elem = seq.elementLayout();
             for (long i = 0 ; i < seq.elementCount() ; i++) {
                 groupByEightBytes(elem, offset, groups);

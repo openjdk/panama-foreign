@@ -60,10 +60,8 @@ public enum TypeClass {
     }
 
     static boolean isHomogeneousFloatAggregate(MemoryLayout type) {
-        if (!(type instanceof GroupLayout))
+        if (!(type instanceof GroupLayout groupLayout))
             return false;
-
-        GroupLayout groupLayout = (GroupLayout)type;
 
         final int numElements = groupLayout.memberLayouts().size();
         if (numElements > 4 || numElements == 0)

@@ -53,16 +53,6 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      */
     List<MemoryLayout> memberLayouts();
 
-    /**
-     * {@return {@code true}, if this group layout is a struct layout}
-     */
-    boolean isStruct();
-
-    /**
-     * {@return {@code true}, if this group layout is a union layout}
-     */
-    boolean isUnion();
-
     @Override
     GroupLayout withName(String name);
 

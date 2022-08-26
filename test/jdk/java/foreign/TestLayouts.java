@@ -168,7 +168,7 @@ public class TestLayouts {
 
     @Test(dataProvider = "layoutKinds")
     public void testPadding(LayoutKind kind) {
-        assertEquals(kind == LayoutKind.PADDING, kind.layout.isPadding());
+        assertEquals(kind == LayoutKind.PADDING, kind.layout instanceof PaddingLayout);
     }
 
     @Test(dataProvider="layoutsAndAlignments")
