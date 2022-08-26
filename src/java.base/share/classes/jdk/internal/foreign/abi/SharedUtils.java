@@ -40,6 +40,7 @@ import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
+import java.lang.foreign.PaddingLayout;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.VaList;
@@ -118,7 +119,7 @@ public final class SharedUtils {
             return alignmentOfArray((SequenceLayout) t, isVar);
         } else if (t instanceof GroupLayout) {
             return alignmentOfContainer((GroupLayout) t);
-        } else if (t.isPadding()) {
+        } else if (t instanceof PaddingLayout) {
             return 1;
         } else {
             throw new IllegalArgumentException("Invalid type: " + t);

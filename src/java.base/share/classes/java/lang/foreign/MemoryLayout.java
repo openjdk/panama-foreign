@@ -458,11 +458,6 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
     }
 
     /**
-     * {@return true, if this layout is a padding layout}
-     */
-    boolean isPadding();
-
-    /**
      * An element in a <a href="MemoryLayout.html#layout-paths"><em>layout path</em></a>. There
      * are two kinds of path elements: <em>group path elements</em> and <em>sequence path elements</em>. Group
      * path elements are used to select a named member layout within a {@link GroupLayout}. Sequence
@@ -587,8 +582,8 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      *     and {@linkplain ValueLayout#carrier() carrier}</li>
      *     <li>two sequence layouts are considered equal if they have the same element count (see {@link SequenceLayout#elementCount()}), and
      *     if their element layouts (see {@link SequenceLayout#elementLayout()}) are also equal</li>
-     *     <li>two group layouts are considered equal if they are of the same kind (see {@link GroupLayout#isStruct()},
-     *     {@link GroupLayout#isUnion()}) and if their member layouts (see {@link GroupLayout#memberLayouts()}) are also equal</li>
+     *     <li>two group layouts are considered equal if they are of the same type (see {@link StructLayout},
+     *     {@link UnionLayout}) and if their member layouts (see {@link GroupLayout#memberLayouts()}) are also equal</li>
      * </ul>
      *
      * @param other the object to be compared for equality with this layout.
