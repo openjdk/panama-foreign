@@ -1138,7 +1138,7 @@ public final class HexFormat {
      * As an example, a segment created, initialized and used as follows
      * {@snippet lang = java:
      *   MemorySegment segment = memorySession.allocateUtf8String("The quick brown fox jumped over the lazy dog\nSecond line\t:here");
-     *   HexFormat.hexDump(segment)
+     *   HexFormat.dump(segment)
      *       .forEach(System.out::println);
      *}
      * will be printed as:
@@ -1146,8 +1146,7 @@ public final class HexFormat {
      * 0000000000000000  54 68 65 20 71 75 69 63  6B 20 62 72 6F 77 6E 20  |The quick brown |
      * 0000000000000010  66 6F 78 20 6A 75 6D 70  65 64 20 6F 76 65 72 20  |fox jumped over |
      * 0000000000000020  74 68 65 20 6C 61 7A 79  20 64 6F 67 0A 53 65 63  |the lazy dog.Sec|
-     * 0000000000000030  6F 6E 64 20 6C 69 6E 65  09 3A 68 65 72 65 00 00  |ond line.:here..|
-     * 0000000000000040  00 00 00 00                                       |....|
+     * 0000000000000030  6F 6E 64 20 6C 69 6E 65  09 3A 68 65 72 65 00     |ond line.:here.|
      *}
      * <p>
      * Use a {@linkplain MemorySegment#asSlice(long, long) slice} to inspect a specific region
@@ -1170,7 +1169,6 @@ public final class HexFormat {
      */
     public static Stream<String> dump(MemorySegment segment) {
         requireNonNull(segment);
-
 
         // Todo: Investigate how to handle mapped sparse files
 
