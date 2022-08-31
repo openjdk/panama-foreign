@@ -30,11 +30,15 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
+import java.lang.foreign.ValueLayout;
 import java.nio.CharBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.Locale;
+import java.util.function.Function;
 
+import static java.util.stream.Collectors.joining;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertSame;
@@ -779,6 +783,86 @@ public class HexFormatTest {
             System.out.println("    Parsed:    " + Arrays.toString(parsed));
             assert(Arrays.equals(bytes, parsed));
             assertTrue(Arrays.equals(bytes, parsed));
+        }
+    }
+
+
+    private static final int HEX_SEGMENT_SIZE = 64 + 4;
+    private static final String THE_QUICK = "The quick brown fox jumped over the lazy dog\nSecond line\t:here";
+
+    private static final byte[] THE_QUICK_ARRAY = THE_QUICK.getBytes(StandardCharsets.UTF_8);
+    private static final String EXPECTED_HEX = platformLineSeparated("""
+            0000000000000000  54 68 65 20 71 75 69 63  6B 20 62 72 6F 77 6E 20  |The quick brown |
+            0000000000000010  66 6F 78 20 6A 75 6D 70  65 64 20 6F 76 65 72 20  |fox jumped over |
+            0000000000000020  74 68 65 20 6C 61 7A 79  20 64 6F 67 0A 53 65 63  |the lazy dog.Sec|
+            0000000000000030  6F 6E 64 20 6C 69 6E 65  09 3A 68 65 72 65 00 00  |ond line.:here..|
+            0000000000000040  00 00 00 00                                       |....|""");
+
+    private static final String EXPECT_ADDRESS = "0x" + "00".repeat((int) ValueLayout.ADDRESS.byteSize());
+
+    @Test
+    public void testHexStream() {
+
+        var actual = testWithFreshMemorySegment(HEX_SEGMENT_SIZE, segment -> {
+            segment.setUtf8String(0, THE_QUICK);
+            return HexFormat.dump(segment)
+                    .collect(joining(System.lineSeparator()));
+        });
+        assertEquals(actual, EXPECTED_HEX);
+    }
+    @Test
+    public void test256HexDump() {
+        var expect = platformLineSeparated("""
+                0000000000000000  00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F  |................|
+                0000000000000010  10 11 12 13 14 15 16 17  18 19 1A 1B 1C 1D 1E 1F  |................|
+                0000000000000020  20 21 22 23 24 25 26 27  28 29 2A 2B 2C 2D 2E 2F  | !"#$%&'()*+,-./|
+                0000000000000030  30 31 32 33 34 35 36 37  38 39 3A 3B 3C 3D 3E 3F  |0123456789:;<=>?|
+                0000000000000040  40 41 42 43 44 45 46 47  48 49 4A 4B 4C 4D 4E 4F  |@ABCDEFGHIJKLMNO|
+                0000000000000050  50 51 52 53 54 55 56 57  58 59 5A 5B 5C 5D 5E 5F  |PQRSTUVWXYZ[\\]^_|
+                0000000000000060  60 61 62 63 64 65 66 67  68 69 6A 6B 6C 6D 6E 6F  |`abcdefghijklmno|
+                0000000000000070  70 71 72 73 74 75 76 77  78 79 7A 7B 7C 7D 7E 7F  |pqrstuvwxyz{|}~.|
+                0000000000000080  80 81 82 83 84 85 86 87  88 89 8A 8B 8C 8D 8E 8F  |................|
+                0000000000000090  90 91 92 93 94 95 96 97  98 99 9A 9B 9C 9D 9E 9F  |................|
+                00000000000000A0  A0 A1 A2 A3 A4 A5 A6 A7  A8 A9 AA AB AC AD AE AF  |................|
+                00000000000000B0  B0 B1 B2 B3 B4 B5 B6 B7  B8 B9 BA BB BC BD BE BF  |................|
+                00000000000000C0  C0 C1 C2 C3 C4 C5 C6 C7  C8 C9 CA CB CC CD CE CF  |................|
+                00000000000000D0  D0 D1 D2 D3 D4 D5 D6 D7  D8 D9 DA DB DC DD DE DF  |................|
+                00000000000000E0  E0 E1 E2 E3 E4 E5 E6 E7  E8 E9 EA EB EC ED EE EF  |................|
+                00000000000000F0  F0 F1 F2 F3 F4 F5 F6 F7  F8 F9 FA FB FC FD FE FF  |................|""");
+
+        try (var session = MemorySession.openConfined()) {
+            var segment = session.allocate(256);
+            for (int i = 0; i < segment.byteSize(); i++) {
+                segment.set(ValueLayout.JAVA_BYTE, i, (byte) i);
+            }
+            var actual = HexFormat.dump(segment)
+                    .collect(joining(System.lineSeparator()));
+            assertEquals(actual, expect);
+        }
+    }
+
+    @Test
+    public void test4kHexDump() {
+        try (var session = MemorySession.openConfined()) {
+            var segment = session.allocate(2048);
+            for (int i = 0; i < segment.byteSize(); i++) {
+                segment.set(ValueLayout.JAVA_BYTE, i, (byte) i);
+            }
+            HexFormat.dump(segment)
+                    .forEach(l -> assertEquals(l.length(), "0000000000000000  00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F  |................|".length()));
+        }
+    }
+
+    private static String platformLineSeparated(String s) {
+        return s.lines()
+                .collect(joining(System.lineSeparator()));
+    }
+
+    private static <T> T testWithFreshMemorySegment(long size,
+                                                    Function<MemorySegment, T> mapper) {
+        try (final MemorySession session = MemorySession.openConfined()) {
+            var segment = session.allocate(size);
+            return mapper.apply(segment);
         }
     }
 

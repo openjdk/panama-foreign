@@ -31,10 +31,17 @@ import jdk.internal.access.SharedSecrets;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
+import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
+
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@code HexFormat} converts between bytes and chars and hex-encoded strings which may include
@@ -178,6 +185,9 @@ public final class HexFormat {
             new HexFormat("", "", "", LOWERCASE_DIGITS);
 
     private static final byte[] EMPTY_BYTES = {};
+
+    private static final int DUMP_BYTES_PER_ROW = 16;
+    private static final int DUMP_LINE_LENGTH_EXCLUDING_CHARS = Long.BYTES * 2 + DUMP_BYTES_PER_ROW * 3 + 4;
 
     private final String delimiter;
     private final String prefix;
@@ -1103,6 +1113,74 @@ public final class HexFormat {
     }
 
     /**
+     * Returns a Stream of human-readable, string elements with hexadecimal and character values for
+     * the provided {@code segment}.
+     * <p>
+     * Each element in the stream comprises the following characters:
+     * <ol>
+     *     <li>a 64-bit offset in hexadecimal form (e.g. "0000000000000010").</li>
+     *     <li>a sequence of two spaces (i.e. "  ").</li>
+     *     <li>a sequence of at most eight bytes in hexadecimal form (e.g. "66 6F 78 20 6A 75 6D 70") where
+     *     each byte is separated by a space.</li>
+     *     <li>a sequence of two spaces (i.e. "  ").</li>
+     *     <li>a sequence of at most eight bytes in hexadecimal form (e.g. "65 64 20 6F 76 65 72 20") where
+     *     each byte separated by a space.</li>
+     *     <li>a sequence of N spaces (i.e. "  ") such that the intermediate line is aligned to 68 characters</li>
+     *     <li>a "|" separator.</li>
+     *     <li>a sequence of at most 16 printable Ascii characters (values outside [32, 127] will be printed as ".").</li>
+     *     <li>a "|" separator.</li>
+     * </ol>
+     * All the values in hexadecimal form are in upper case and with leading zeros. As there are at most 16 bytes
+     * rendered for each line, there will be N = ({@link MemorySegment#byteSize()} + 15) / 16 elements in the returned stream.
+     * <p>
+     * As a consequence of the above, this method renders to a format similar to the *nix command "hexdump -C".
+     * <p>
+     * As an example, a segment created, initialized and used as follows
+     * {@snippet lang = java:
+     *   MemorySegment segment = memorySession.allocateUtf8String("The quick brown fox jumped over the lazy dog\nSecond line\t:here");
+     *   HexFormat.hexDump(segment)
+     *       .forEach(System.out::println);
+     *}
+     * will be printed as:
+     * {@snippet lang = text:
+     * 0000000000000000  54 68 65 20 71 75 69 63  6B 20 62 72 6F 77 6E 20  |The quick brown |
+     * 0000000000000010  66 6F 78 20 6A 75 6D 70  65 64 20 6F 76 65 72 20  |fox jumped over |
+     * 0000000000000020  74 68 65 20 6C 61 7A 79  20 64 6F 67 0A 53 65 63  |the lazy dog.Sec|
+     * 0000000000000030  6F 6E 64 20 6C 69 6E 65  09 3A 68 65 72 65 00 00  |ond line.:here..|
+     * 0000000000000040  00 00 00 00                                       |....|
+     *}
+     * <p>
+     * Use a {@linkplain MemorySegment#asSlice(long, long) slice} to inspect a specific region
+     * of a segment.
+     * <p>
+     * This method can be used to dump the contents of various other memory containers such as
+     * {@linkplain ByteBuffer ByteBuffers} and byte arrays by means of first wrapping the container
+     * into a MemorySegment:
+     * {@snippet lang = java:
+     *   HexFormat.dump(MemorySegment.ofArray(byteArray));
+     *   HexFormat.dump(MemorySegment.ofBuffer(byteBuffer));
+     *}
+     *
+     * @param segment to dump
+     * @return a Stream of human-readable, string elements with hexadecimal values and characters
+     * @throws IllegalStateException if the {@linkplain MemorySegment#session() session} associated with this
+     *                               segment is not {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException  if this method is called from a thread other than the thread owning
+     *                               the {@linkplain MemorySegment#session() session} associated with this segment.
+     */
+    public static Stream<String> dump(MemorySegment segment) {
+        requireNonNull(segment);
+
+
+        // Todo: Investigate how to handle mapped sparse files
+
+        final var state = new DumpState(segment);
+        return LongStream.range(0, state.lastIndex())
+                .mapToObj(state::mapIndexToLineOrNull)
+                .filter(Objects::nonNull);
+    }
+
+    /**
      * Returns {@code true} if the other object is a {@code HexFormat}
      * with the same parameters.
      *
@@ -1149,4 +1227,92 @@ public final class HexFormat {
                 "\", prefix: \"" + prefix +
                 "\", suffix: \"" + suffix + "\"");
     }
+
+    private static final class DumpState {
+        private final StringBuilder line = new StringBuilder();
+        private final StringBuilder chars = new StringBuilder();
+        private final HexFormat hexFormat = HexFormat.of().withUpperCase();
+        private final MemorySegment segment;
+        private final long lastIndex;
+
+        DumpState(MemorySegment segment) {
+            this.segment = segment;
+            this.lastIndex = segment.byteSize();
+        }
+
+        /**
+         * Returns a new complete line (either a full line or the last line) for the provided {@code index}
+         * or {@code null} if the provided {@code index} is not at the end of a full line or at the end of the
+         * last line.
+         * <p>
+         * Note: This method is <em>stateful</em> and requires invocations with index in order 0, 1, ..., N
+         *
+         * @param index the index
+         * @return a new line or {@code null}
+         */
+        String mapIndexToLineOrNull(long index) {
+            if (isEmpty()) {
+                // We are on a new line: Append the index
+                appendIndex(index);
+            }
+            if (index % (DUMP_BYTES_PER_ROW >>> 1) == 0) {
+                // We are either at the beginning or halfway through: add an extra space for readability
+                appendSpace();
+            }
+            // Append the actual memory value
+            appendValue(segment.get(JAVA_BYTE, index));
+            final long nextCnt = index + 1;
+            if (nextCnt % DUMP_BYTES_PER_ROW == 0 || nextCnt == lastIndex) {
+                // We have a complete line (eiter a full line or the last line)
+                return renderLineToStringAndReset();
+            } else {
+                // For this count, there was no line break so pass null and filter it away later
+                return null;
+            }
+        }
+
+        boolean isEmpty() {
+            return line.isEmpty();
+        }
+
+        void appendIndex(long index) {
+            line.append(hexFormat.toHexDigits(index));
+            appendSpace();
+        }
+
+        void appendValue(byte val) {
+            line.append(hexFormat.toHexDigits(val));
+            chars.append(viewByteAsAscii(val));
+            appendSpace();
+        }
+
+        String renderLineToStringAndReset() {
+            while (line.length() < DUMP_LINE_LENGTH_EXCLUDING_CHARS) {
+                // Pad if necessary
+                appendSpace();
+            }
+            line.append('|').append(chars).append('|');
+
+            final String result = line.toString();
+            line.setLength(0);
+            chars.setLength(0);
+            return result;
+        }
+
+        void appendSpace() {
+            line.append(' ');
+        }
+
+        long lastIndex() {
+            return lastIndex;
+        }
+
+        static char viewByteAsAscii(byte b) {
+            final int value = Byte.toUnsignedInt(b);
+            return (value >= 32 && value < 127)
+                    ? (char) value
+                    : '.';
+        }
+    }
+
 }
