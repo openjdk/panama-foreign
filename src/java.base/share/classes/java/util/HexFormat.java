@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,10 +33,11 @@ import java.io.UncheckedIOException;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
-import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.function.ToLongFunction;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
@@ -87,8 +88,7 @@ import static java.util.Objects.requireNonNull;
  * Each byte value is parsed from the prefix, two case insensitive hexadecimal characters,
  * and the suffix. A delimiter follows each formatted value, except the last.
  *
- * @apiNote
- * For example, an individual byte is converted to a string of hexadecimal digits using
+ * @apiNote For example, an individual byte is converted to a string of hexadecimal digits using
  * {@link HexFormat#toHexDigits(int) toHexDigits(int)} and converted from a string to a
  * primitive value using {@link HexFormat#fromHexDigits(CharSequence) fromHexDigits(string)}.
  * <pre>{@code
@@ -139,7 +139,6 @@ import static java.util.Objects.requireNonNull;
  * <p>
  * Unless otherwise noted, passing a null argument to any method will cause a
  * {@link java.lang.NullPointerException NullPointerException} to be thrown.
- *
  * @since 17
  */
 
@@ -163,7 +162,7 @@ public final class HexFormat {
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-             0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1,
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1,
             -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
             -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -187,7 +186,6 @@ public final class HexFormat {
     private static final byte[] EMPTY_BYTES = {};
 
     private static final int DUMP_BYTES_PER_ROW = 16;
-    private static final int DUMP_LINE_LENGTH_EXCLUDING_CHARS = Long.BYTES * 2 + DUMP_BYTES_PER_ROW * 3 + 4;
 
     private final String delimiter;
     private final String prefix;
@@ -198,9 +196,9 @@ public final class HexFormat {
      * Returns a HexFormat with a delimiter, prefix, suffix, and array of digits.
      *
      * @param delimiter a delimiter, non-null
-     * @param prefix a prefix, non-null
-     * @param suffix a suffix, non-null
-     * @param digits byte array of digits indexed by low nibble, non-null
+     * @param prefix    a prefix, non-null
+     * @param suffix    a suffix, non-null
+     * @param digits    byte array of digits indexed by low nibble, non-null
      * @throws NullPointerException if any argument is null
      */
     private HexFormat(String delimiter, String prefix, String suffix, byte[] digits) {
@@ -241,6 +239,7 @@ public final class HexFormat {
 
     /**
      * Returns a copy of this {@code HexFormat} with the delimiter.
+     *
      * @param delimiter the delimiter, non-null, may be empty
      * @return a copy of this {@code HexFormat} with the delimiter
      */
@@ -320,7 +319,7 @@ public final class HexFormat {
      * otherwise {@code false}.
      *
      * @return {@code true} if the hexadecimal digits are uppercase,
-     *          otherwise {@code false}
+     * otherwise {@code false}
      */
     public boolean isUpperCase() {
         return Arrays.equals(digits, UPPERCASE_DIGITS);
@@ -331,7 +330,7 @@ public final class HexFormat {
      * Each byte value is formatted as the prefix, two hexadecimal characters
      * {@linkplain #isUpperCase selected from} uppercase or lowercase digits, and the suffix.
      * A delimiter follows each formatted value, except the last.
-     *
+     * <p>
      * The behavior is equivalent to
      * {@link #formatHex(byte[], int, int) formatHex(bytes, 0, bytes.length))}.
      *
@@ -348,14 +347,14 @@ public final class HexFormat {
      * {@linkplain #isUpperCase selected from} uppercase or lowercase digits, and the suffix.
      * A delimiter follows each formatted value, except the last.
      *
-     * @param bytes a non-null array of bytes
+     * @param bytes     a non-null array of bytes
      * @param fromIndex the initial index of the range, inclusive
-     * @param toIndex the final index of the range, exclusive
+     * @param toIndex   the final index of the range, exclusive
      * @return a string hexadecimal formatting each byte of the array range
      * @throws IndexOutOfBoundsException if the array range is out of bounds
      */
     public String formatHex(byte[] bytes, int fromIndex, int toIndex) {
-        Objects.requireNonNull(bytes,"bytes");
+        Objects.requireNonNull(bytes, "bytes");
         Objects.checkFromToIndex(fromIndex, toIndex, bytes.length);
         if (toIndex - fromIndex == 0) {
             return "";
@@ -379,8 +378,8 @@ public final class HexFormat {
      * A delimiter follows each formatted value, except the last.
      * The formatted hexadecimal strings are appended in zero or more calls to the {@link Appendable} methods.
      *
-     * @param <A> The type of {@code Appendable}
-     * @param out an {@code Appendable}, non-null
+     * @param <A>   The type of {@code Appendable}
+     * @param out   an {@code Appendable}, non-null
      * @param bytes a byte array
      * @return the {@code Appendable}
      * @throws UncheckedIOException if an I/O exception occurs appending to the output
@@ -402,7 +401,11 @@ public final class HexFormat {
      *
      * @param segment a non-null memory segment
      * @return a string hexadecimal formatting of the byte array
-     * @throws UncheckedIOException if an I/O exception occurs appending to the output
+     * @throws UncheckedIOException  if an I/O exception occurs appending to the output
+     * @throws IllegalStateException if the {@linkplain MemorySegment#session() session} associated with this
+     *                               segment is not {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException  if this method is called from a thread other than the thread owning
+     *                               the {@linkplain MemorySegment#session() session} associated with this segment.
      * @see #formatHex(Appendable, MemorySegment)
      */
     public String formatHex(MemorySegment segment) {
@@ -419,11 +422,15 @@ public final class HexFormat {
      * <p>
      * To view parts of a memory segment, use {@linkplain MemorySegment#asSlice(long) a slice}.
      *
-     * @param <A> The type of {@code Appendable}
-     * @param out an {@code Appendable}, non-null
+     * @param <A>     The type of {@code Appendable}
+     * @param out     an {@code Appendable}, non-null
      * @param segment a memory segment
      * @return the {@code Appendable}
-     * @throws UncheckedIOException if an I/O exception occurs appending to the output
+     * @throws UncheckedIOException  if an I/O exception occurs appending to the output
+     * @throws IllegalStateException if the {@linkplain MemorySegment#session() session} associated with this
+     *                               segment is not {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException  if this method is called from a thread other than the thread owning
+     *                               the {@linkplain MemorySegment#session() session} associated with this segment.
      */
     public <A extends Appendable> A formatHex(A out, MemorySegment segment) {
         Objects.requireNonNull(out, "out");
@@ -460,14 +467,14 @@ public final class HexFormat {
      * A delimiter follows each formatted value, except the last.
      * The formatted hexadecimal strings are appended in zero or more calls to the {@link Appendable} methods.
      *
-     * @param <A> The type of {@code Appendable}
-     * @param out an {@code Appendable}, non-null
-     * @param bytes a byte array, non-null
+     * @param <A>       The type of {@code Appendable}
+     * @param out       an {@code Appendable}, non-null
+     * @param bytes     a byte array, non-null
      * @param fromIndex the initial index of the range, inclusive
-     * @param toIndex the final index of the range, exclusive.
+     * @param toIndex   the final index of the range, exclusive.
      * @return the {@code Appendable}
      * @throws IndexOutOfBoundsException if the array range is out of bounds
-     * @throws UncheckedIOException if an I/O exception occurs appending to the output
+     * @throws UncheckedIOException      if an I/O exception occurs appending to the output
      */
     public <A extends Appendable> A formatHex(A out, byte[] bytes, int fromIndex, int toIndex) {
         Objects.requireNonNull(out, "out");
@@ -504,11 +511,11 @@ public final class HexFormat {
      * Prefix and suffix must be empty and the delimiter
      * must be empty or a single byte character, otherwise null is returned.
      *
-     * @param bytes the bytes, non-null
+     * @param bytes     the bytes, non-null
      * @param fromIndex the initial index of the range, inclusive
-     * @param toIndex the final index of the range, exclusive.
+     * @param toIndex   the final index of the range, exclusive.
      * @return a String formatted or null for non-single byte delimiter
-     *         or non-empty prefix or suffix
+     * or non-empty prefix or suffix
      */
     private String formatOptDelimiter(byte[] bytes, int fromIndex, int toIndex) {
         byte[] rep;
@@ -520,8 +527,8 @@ public final class HexFormat {
             // Allocate the byte array and fill in the hex pairs for each byte
             rep = new byte[checkMaxArraySize(length * 2L)];
             for (int i = 0; i < length; i++) {
-                rep[i * 2] = (byte)toHighHexDigit(bytes[fromIndex + i]);
-                rep[i * 2 + 1] = (byte)toLowHexDigit(bytes[fromIndex + i]);
+                rep[i * 2] = (byte) toHighHexDigit(bytes[fromIndex + i]);
+                rep[i * 2 + 1] = (byte) toLowHexDigit(bytes[fromIndex + i]);
             }
         } else if (delimiter.length() == 1 && delimiter.charAt(0) < 256) {
             // Allocate the byte array and fill in the characters for the first byte
@@ -532,7 +539,7 @@ public final class HexFormat {
             rep[1] = (byte) toLowHexDigit(bytes[fromIndex]);
             for (int i = 1; i < length; i++) {
                 rep[i * 3 - 1] = (byte) sep;
-                rep[i * 3    ] = (byte) toHighHexDigit(bytes[fromIndex + i]);
+                rep[i * 3] = (byte) toHighHexDigit(bytes[fromIndex + i]);
                 rep[i * 3 + 1] = (byte) toLowHexDigit(bytes[fromIndex + i]);
             }
         } else {
@@ -559,23 +566,23 @@ public final class HexFormat {
         if (length > Integer.MAX_VALUE)
             throw new OutOfMemoryError("String size " + length +
                     " exceeds maximum " + Integer.MAX_VALUE);
-        return (int)length;
+        return (int) length;
     }
 
     /**
      * Returns a byte array containing hexadecimal values parsed from the string.
-     *
+     * <p>
      * Each byte value is parsed from the prefix, two case insensitive hexadecimal characters,
      * and the suffix. A delimiter follows each formatted value, except the last.
      * The delimiters, prefixes, and suffixes strings must be present; they may be empty strings.
      * A valid string consists only of the above format.
      *
      * @param string a string containing the byte values with prefix, hexadecimal digits, suffix,
-     *            and delimiters
+     *               and delimiters
      * @return a byte array with the values parsed from the string
      * @throws IllegalArgumentException if the prefix or suffix is not present for each byte value,
-     *          the byte values are not hexadecimal characters, or if the delimiter is not present
-     *          after all but the last byte value
+     *                                  the byte values are not hexadecimal characters, or if the delimiter is not present
+     *                                  after all but the last byte value
      */
     public byte[] parseHex(CharSequence string) {
         return parseHex(string, 0, string.length());
@@ -583,20 +590,20 @@ public final class HexFormat {
 
     /**
      * Returns a byte array containing hexadecimal values parsed from a range of the string.
-     *
+     * <p>
      * Each byte value is parsed from the prefix, two case insensitive hexadecimal characters,
      * and the suffix. A delimiter follows each formatted value, except the last.
      * The delimiters, prefixes, and suffixes strings must be present; they may be empty strings.
      * A valid string consists only of the above format.
      *
-     * @param string a string range containing hexadecimal digits,
-     *           delimiters, prefix, and suffix.
+     * @param string    a string range containing hexadecimal digits,
+     *                  delimiters, prefix, and suffix.
      * @param fromIndex the initial index of the range, inclusive
-     * @param toIndex the final index of the range, exclusive.
+     * @param toIndex   the final index of the range, exclusive.
      * @return a byte array with the values parsed from the string range
-     * @throws IllegalArgumentException if the prefix or suffix is not present for each byte value,
-     *          the byte values are not hexadecimal characters, or if the delimiter is not present
-     *          after all but the last byte value
+     * @throws IllegalArgumentException  if the prefix or suffix is not present for each byte value,
+     *                                   the byte values are not hexadecimal characters, or if the delimiter is not present
+     *                                   after all but the last byte value
      * @throws IndexOutOfBoundsException if the string range is out of bounds
      */
     public byte[] parseHex(CharSequence string, int fromIndex, int toIndex) {
@@ -622,7 +629,7 @@ public final class HexFormat {
         checkLiteral(string, 0, prefix);
         checkLiteral(string, string.length() - suffix.length(), suffix);
         String between = suffix + delimiter + prefix;
-        final int len = (int)((string.length() - valueChars) / stride + 1L);
+        final int len = (int) ((string.length() - valueChars) / stride + 1L);
         byte[] bytes = new byte[len];
         int i, offset;
         for (i = 0, offset = prefix.length(); i < len - 1; i++, offset += 2 + between.length()) {
@@ -637,20 +644,20 @@ public final class HexFormat {
     /**
      * Returns a byte array containing hexadecimal values parsed from
      * a range of the character array.
-     *
+     * <p>
      * Each byte value is parsed from the prefix, two case insensitive hexadecimal characters,
      * and the suffix. A delimiter follows each formatted value, except the last.
      * The delimiters, prefixes, and suffixes strings must be present; they may be empty strings.
      * A valid character array range consists only of the above format.
      *
-     * @param chars a character array range containing an even number of hexadecimal digits,
-     *          delimiters, prefix, and suffix.
+     * @param chars     a character array range containing an even number of hexadecimal digits,
+     *                  delimiters, prefix, and suffix.
      * @param fromIndex the initial index of the range, inclusive
-     * @param toIndex the final index of the range, exclusive.
+     * @param toIndex   the final index of the range, exclusive.
      * @return a byte array with the values parsed from the character array range
-     * @throws IllegalArgumentException if the prefix or suffix is not present for each byte value,
-     *          the byte values are not hexadecimal characters, or if the delimiter is not present
-     *          after all but the last byte value
+     * @throws IllegalArgumentException  if the prefix or suffix is not present for each byte value,
+     *                                   the byte values are not hexadecimal characters, or if the delimiter is not present
+     *                                   after all but the last byte value
      * @throws IndexOutOfBoundsException if the character array range is out of bounds
      */
     public byte[] parseHex(char[] chars, int fromIndex, int toIndex) {
@@ -664,13 +671,13 @@ public final class HexFormat {
      * Compare the literal and throw an exception if it does not match.
      * Pre-condition:  {@code index + literal.length() <= string.length()}.
      *
-     * @param string a CharSequence
-     * @param index the index of the literal in the CharSequence
+     * @param string  a CharSequence
+     * @param index   the index of the literal in the CharSequence
      * @param literal the expected literal
      * @throws IllegalArgumentException if the literal is not present
      */
     private static void checkLiteral(CharSequence string, int index, String literal) {
-        assert index <= string.length() - literal.length()  : "pre-checked invariant error";
+        assert index <= string.length() - literal.length() : "pre-checked invariant error";
         if (literal.isEmpty() ||
                 (literal.length() == 1 && literal.charAt(0) == string.charAt(index))) {
             return;
@@ -680,7 +687,7 @@ public final class HexFormat {
                 throw new IllegalArgumentException(escapeNL("found: \"" +
                         string.subSequence(index, index + literal.length()) +
                         "\", expected: \"" + literal + "\", index: " + index +
-                        " ch: " + (int)string.charAt(index + i)));
+                        " ch: " + (int) string.charAt(index + i)));
             }
         }
     }
@@ -707,7 +714,7 @@ public final class HexFormat {
      * @return the hexadecimal character for the low 4 bits {@code 0-3} of the value
      */
     public char toLowHexDigit(int value) {
-        return (char)digits[value & 0xf];
+        return (char) digits[value & 0xf];
     }
 
     /**
@@ -721,7 +728,7 @@ public final class HexFormat {
      * @return the hexadecimal character for the bits {@code 4-7} of the value
      */
     public char toHighHexDigit(int value) {
-        return (char)digits[(value >> 4) & 0xf];
+        return (char) digits[(value >> 4) & 0xf];
     }
 
     /**
@@ -731,8 +738,8 @@ public final class HexFormat {
      * The hexadecimal characters are appended in one or more calls to the
      * {@link Appendable} methods. The delimiter, prefix and suffix are not used.
      *
-     * @param <A> The type of {@code Appendable}
-     * @param out an {@code Appendable}, non-null
+     * @param <A>   The type of {@code Appendable}
+     * @param out   an {@code Appendable}, non-null
      * @param value a byte value
      * @return the {@code Appendable}
      * @throws UncheckedIOException if an I/O exception occurs appending to the output
@@ -759,8 +766,8 @@ public final class HexFormat {
      */
     public String toHexDigits(byte value) {
         byte[] rep = new byte[2];
-        rep[0] = (byte)toHighHexDigit(value);
-        rep[1] = (byte)toLowHexDigit(value);
+        rep[0] = (byte) toHighHexDigit(value);
+        rep[1] = (byte) toLowHexDigit(value);
         try {
             return jla.newStringNoRepl(rep, StandardCharsets.ISO_8859_1);
         } catch (CharacterCodingException cce) {
@@ -778,7 +785,7 @@ public final class HexFormat {
      * @return the four hexadecimal characters for the {@code char} value
      */
     public String toHexDigits(char value) {
-        return toHexDigits((short)value);
+        return toHexDigits((short) value);
     }
 
     /**
@@ -792,10 +799,10 @@ public final class HexFormat {
      */
     public String toHexDigits(short value) {
         byte[] rep = new byte[4];
-        rep[0] = (byte)toHighHexDigit((byte)(value >> 8));
-        rep[1] = (byte)toLowHexDigit((byte)(value >> 8));
-        rep[2] = (byte)toHighHexDigit((byte)value);
-        rep[3] = (byte)toLowHexDigit((byte)value);
+        rep[0] = (byte) toHighHexDigit((byte) (value >> 8));
+        rep[1] = (byte) toLowHexDigit((byte) (value >> 8));
+        rep[2] = (byte) toHighHexDigit((byte) value);
+        rep[3] = (byte) toLowHexDigit((byte) value);
 
         try {
             return jla.newStringNoRepl(rep, StandardCharsets.ISO_8859_1);
@@ -816,14 +823,14 @@ public final class HexFormat {
      */
     public String toHexDigits(int value) {
         byte[] rep = new byte[8];
-        rep[0] = (byte)toHighHexDigit((byte)(value >> 24));
-        rep[1] = (byte)toLowHexDigit((byte)(value >> 24));
-        rep[2] = (byte)toHighHexDigit((byte)(value >> 16));
-        rep[3] = (byte)toLowHexDigit((byte)(value >> 16));
-        rep[4] = (byte)toHighHexDigit((byte)(value >> 8));
-        rep[5] = (byte)toLowHexDigit((byte)(value >> 8));
-        rep[6] = (byte)toHighHexDigit((byte)value);
-        rep[7] = (byte)toLowHexDigit((byte)value);
+        rep[0] = (byte) toHighHexDigit((byte) (value >> 24));
+        rep[1] = (byte) toLowHexDigit((byte) (value >> 24));
+        rep[2] = (byte) toHighHexDigit((byte) (value >> 16));
+        rep[3] = (byte) toLowHexDigit((byte) (value >> 16));
+        rep[4] = (byte) toHighHexDigit((byte) (value >> 8));
+        rep[5] = (byte) toLowHexDigit((byte) (value >> 8));
+        rep[6] = (byte) toHighHexDigit((byte) value);
+        rep[7] = (byte) toLowHexDigit((byte) value);
 
         try {
             return jla.newStringNoRepl(rep, StandardCharsets.ISO_8859_1);
@@ -844,22 +851,22 @@ public final class HexFormat {
      */
     public String toHexDigits(long value) {
         byte[] rep = new byte[16];
-        rep[0] = (byte)toHighHexDigit((byte)(value >>> 56));
-        rep[1] = (byte)toLowHexDigit((byte)(value >>> 56));
-        rep[2] = (byte)toHighHexDigit((byte)(value >>> 48));
-        rep[3] = (byte)toLowHexDigit((byte)(value >>> 48));
-        rep[4] = (byte)toHighHexDigit((byte)(value >>> 40));
-        rep[5] = (byte)toLowHexDigit((byte)(value >>> 40));
-        rep[6] = (byte)toHighHexDigit((byte)(value >>> 32));
-        rep[7] = (byte)toLowHexDigit((byte)(value >>> 32));
-        rep[8] = (byte)toHighHexDigit((byte)(value >>> 24));
-        rep[9] = (byte)toLowHexDigit((byte)(value >>> 24));
-        rep[10] = (byte)toHighHexDigit((byte)(value >>> 16));
-        rep[11] = (byte)toLowHexDigit((byte)(value >>> 16));
-        rep[12] = (byte)toHighHexDigit((byte)(value >>> 8));
-        rep[13] = (byte)toLowHexDigit((byte)(value >>> 8));
-        rep[14] = (byte)toHighHexDigit((byte)value);
-        rep[15] = (byte)toLowHexDigit((byte)value);
+        rep[0] = (byte) toHighHexDigit((byte) (value >>> 56));
+        rep[1] = (byte) toLowHexDigit((byte) (value >>> 56));
+        rep[2] = (byte) toHighHexDigit((byte) (value >>> 48));
+        rep[3] = (byte) toLowHexDigit((byte) (value >>> 48));
+        rep[4] = (byte) toHighHexDigit((byte) (value >>> 40));
+        rep[5] = (byte) toLowHexDigit((byte) (value >>> 40));
+        rep[6] = (byte) toHighHexDigit((byte) (value >>> 32));
+        rep[7] = (byte) toLowHexDigit((byte) (value >>> 32));
+        rep[8] = (byte) toHighHexDigit((byte) (value >>> 24));
+        rep[9] = (byte) toLowHexDigit((byte) (value >>> 24));
+        rep[10] = (byte) toHighHexDigit((byte) (value >>> 16));
+        rep[11] = (byte) toLowHexDigit((byte) (value >>> 16));
+        rep[12] = (byte) toHighHexDigit((byte) (value >>> 8));
+        rep[13] = (byte) toLowHexDigit((byte) (value >>> 8));
+        rep[14] = (byte) toHighHexDigit((byte) value);
+        rep[15] = (byte) toLowHexDigit((byte) value);
 
         try {
             return jla.newStringNoRepl(rep, StandardCharsets.ISO_8859_1);
@@ -874,10 +881,10 @@ public final class HexFormat {
      * is formatted as if by {@link #toLowHexDigit(int) toLowHexDigit(nibble)}.
      * The delimiter, prefix and suffix are not used.
      *
-     * @param value a {@code long} value
+     * @param value  a {@code long} value
      * @param digits the number of hexadecimal digits to return, 0 to 16
      * @return the hexadecimal characters for the {@code long} value
-     * @throws  IllegalArgumentException if {@code digits} is negative or greater than 16
+     * @throws IllegalArgumentException if {@code digits} is negative or greater than 16
      */
     public String toHexDigits(long value, int digits) {
         if (digits < 0 || digits > 16)
@@ -886,7 +893,7 @@ public final class HexFormat {
             return "";
         byte[] rep = new byte[digits];
         for (int i = rep.length - 1; i >= 0; i--) {
-            rep[i] = (byte)toLowHexDigit((byte)(value));
+            rep[i] = (byte) toLowHexDigit((byte) (value));
             value = value >>> 4;
         }
         try {
@@ -903,7 +910,7 @@ public final class HexFormat {
      * @param string a string containing an even number of only hex digits
      * @return a byte array
      * @throws IllegalArgumentException if the string length is not valid or
-     *          the string contains non-hexadecimal characters
+     *                                  the string contains non-hexadecimal characters
      */
     private static byte[] parseNoDelimiter(CharSequence string) {
         if ((string.length() & 1) != 0)
@@ -922,8 +929,8 @@ public final class HexFormat {
      * Check the number of requested digits against a limit.
      *
      * @param fromIndex the initial index of the range, inclusive
-     * @param toIndex the final index of the range, exclusive.
-     * @param limit the maximum allowed
+     * @param toIndex   the final index of the range, exclusive.
+     * @param limit     the maximum allowed
      * @return the length of the range
      */
     private static int checkDigitCount(int fromIndex, int toIndex, int limit) {
@@ -942,9 +949,10 @@ public final class HexFormat {
      * <li>{@code 'A' ('\u005Cu0041')} through {@code 'F' ('\u005Cu0046')} inclusive, and
      * <li>{@code 'a' ('\u005Cu0061')} through {@code 'f' ('\u005Cu0066')} inclusive.
      * </ul>
+     *
      * @param ch a codepoint
      * @return {@code true} if the character is valid a hexadecimal character,
-     *          otherwise {@code false}
+     * otherwise {@code false}
      */
     public static boolean isHexDigit(int ch) {
         return ((ch >>> 8) == 0 && DIGITS[ch] >= 0);
@@ -961,7 +969,7 @@ public final class HexFormat {
      *
      * @param ch a character or codepoint
      * @return the value {@code 0-15}
-     * @throws  NumberFormatException if the codepoint is not a hexadecimal character
+     * @throws NumberFormatException if the codepoint is not a hexadecimal character
      */
     public static int fromHexDigit(int ch) {
         int value;
@@ -977,12 +985,12 @@ public final class HexFormat {
      * inclusive, must be valid hex digits according to {@link #fromHexDigit(int)}.
      *
      * @param string a CharSequence containing the characters
-     * @param index the index of the first character of the range
+     * @param index  the index of the first character of the range
      * @return the value parsed from the string range
-     * @throws  NumberFormatException if any of the characters in the range
-     *          is not a hexadecimal character
-     * @throws  IndexOutOfBoundsException if the range is out of bounds
-     *          for the {@code CharSequence}
+     * @throws NumberFormatException     if any of the characters in the range
+     *                                   is not a hexadecimal character
+     * @throws IndexOutOfBoundsException if the range is out of bounds
+     *                                   for the {@code CharSequence}
      */
     private static int fromHexDigits(CharSequence string, int index) {
         int high = fromHexDigit(string.charAt(index));
@@ -996,19 +1004,15 @@ public final class HexFormat {
      * using {@link #fromHexDigit(int)} to form an unsigned value.
      * The value is zero extended to 32 bits and is returned as an {@code int}.
      *
-     * @apiNote
-     * {@link Integer#parseInt(String, int) Integer.parseInt(s, 16)} and
+     * @param string to parse
+     * @return the parsed int value
+     * @apiNote {@link Integer#parseInt(String, int) Integer.parseInt(s, 16)} and
      * {@link Integer#parseUnsignedInt(String, int) Integer.parseUnsignedInt(s, 16)}
      * are similar but allow all Unicode hexadecimal digits defined by
      * {@link Character#digit(char, int) Character.digit(ch, 16)}.
      * {@code HexFormat} uses only hexadecimal characters
      * {@code "0-9"}, {@code "A-F"} and {@code "a-f"}.
      * Signed hexadecimal strings can be parsed with {@link Integer#parseInt(String, int)}.
-     *
-     * @param string a CharSequence containing up to eight hexadecimal characters
-     * @return the value parsed from the string
-     * @throws  IllegalArgumentException if the string length is greater than eight (8) or
-     *      if any of the characters is not a hexadecimal character
      */
     public static int fromHexDigits(CharSequence string) {
         return fromHexDigits(string, 0, string.length());
@@ -1022,23 +1026,21 @@ public final class HexFormat {
      * using {@link #fromHexDigit(int)} to form an unsigned value.
      * The value is zero extended to 32 bits and is returned as an {@code int}.
      *
-     * @apiNote
-     * {@link Integer#parseInt(String, int) Integer.parseInt(s, 16)} and
+     * @param string    a CharSequence containing the characters
+     * @param fromIndex the initial index of the range, inclusive
+     * @param toIndex   the final index of the range, exclusive.
+     * @return the value parsed from the string range
+     * @throws IndexOutOfBoundsException if the range is out of bounds
+     *                                   for the {@code CharSequence}
+     * @throws IllegalArgumentException  if length of the range is greater than eight (8) or
+     *                                   if any of the characters is not a hexadecimal character
+     * @apiNote {@link Integer#parseInt(String, int) Integer.parseInt(s, 16)} and
      * {@link Integer#parseUnsignedInt(String, int) Integer.parseUnsignedInt(s, 16)}
      * are similar but allow all Unicode hexadecimal digits defined by
      * {@link Character#digit(char, int) Character.digit(ch, 16)}.
      * {@code HexFormat} uses only hexadecimal characters
      * {@code "0-9"}, {@code "A-F"} and {@code "a-f"}.
      * Signed hexadecimal strings can be parsed with {@link Integer#parseInt(String, int)}.
-     *
-     * @param string a CharSequence containing the characters
-     * @param fromIndex the initial index of the range, inclusive
-     * @param toIndex the final index of the range, exclusive.
-     * @return the value parsed from the string range
-     * @throws  IndexOutOfBoundsException if the range is out of bounds
-     *          for the {@code CharSequence}
-     * @throws  IllegalArgumentException if length of the range is greater than eight (8) or
-     *          if any of the characters is not a hexadecimal character
      */
     public static int fromHexDigits(CharSequence string, int fromIndex, int toIndex) {
         Objects.requireNonNull(string, "string");
@@ -1057,19 +1059,15 @@ public final class HexFormat {
      * using {@link #fromHexDigit(int)} to form an unsigned value.
      * The value is zero extended to 64 bits and is returned as a {@code long}.
      *
-     * @apiNote
-     * {@link Long#parseLong(String, int) Long.parseLong(s, 16)} and
+     * @param string to parse
+     * @return the parsed long value
+     * @apiNote {@link Long#parseLong(String, int) Long.parseLong(s, 16)} and
      * {@link Long#parseUnsignedLong(String, int) Long.parseUnsignedLong(s, 16)}
      * are similar but allow all Unicode hexadecimal digits defined by
      * {@link Character#digit(char, int) Character.digit(ch, 16)}.
      * {@code HexFormat} uses only hexadecimal characters
      * {@code "0-9"}, {@code "A-F"} and {@code "a-f"}.
      * Signed hexadecimal strings can be parsed with {@link Long#parseLong(String, int)}.
-     *
-     * @param string a CharSequence containing up to sixteen hexadecimal characters
-     * @return the value parsed from the string
-     * @throws  IllegalArgumentException if the string length is greater than sixteen (16) or
-     *         if any of the characters is not a hexadecimal character
      */
     public static long fromHexDigitsToLong(CharSequence string) {
         return fromHexDigitsToLong(string, 0, string.length());
@@ -1083,23 +1081,21 @@ public final class HexFormat {
      * using {@link #fromHexDigit(int)} to form an unsigned value.
      * The value is zero extended to 64 bits and is returned as a {@code long}.
      *
-     * @apiNote
-     * {@link Long#parseLong(String, int) Long.parseLong(s, 16)} and
+     * @param string    a CharSequence containing the characters
+     * @param fromIndex the initial index of the range, inclusive
+     * @param toIndex   the final index of the range, exclusive.
+     * @return the value parsed from the string range
+     * @throws IndexOutOfBoundsException if the range is out of bounds
+     *                                   for the {@code CharSequence}
+     * @throws IllegalArgumentException  if the length of the range is greater than sixteen (16) or
+     *                                   if any of the characters is not a hexadecimal character
+     * @apiNote {@link Long#parseLong(String, int) Long.parseLong(s, 16)} and
      * {@link Long#parseUnsignedLong(String, int) Long.parseUnsignedLong(s, 16)}
      * are similar but allow all Unicode hexadecimal digits defined by
      * {@link Character#digit(char, int) Character.digit(ch, 16)}.
      * {@code HexFormat} uses only hexadecimal characters
      * {@code "0-9"}, {@code "A-F"} and {@code "a-f"}.
      * Signed hexadecimal strings can be parsed with {@link Long#parseLong(String, int)}.
-     *
-     * @param string a CharSequence containing the characters
-     * @param fromIndex the initial index of the range, inclusive
-     * @param toIndex the final index of the range, exclusive.
-     * @return the value parsed from the string range
-     * @throws  IndexOutOfBoundsException if the range is out of bounds
-     *          for the {@code CharSequence}
-     * @throws  IllegalArgumentException if the length of the range is greater than sixteen (16) or
-     *          if any of the characters is not a hexadecimal character
      */
     public static long fromHexDigitsToLong(CharSequence string, int fromIndex, int toIndex) {
         Objects.requireNonNull(string, "string");
@@ -1113,79 +1109,13 @@ public final class HexFormat {
     }
 
     /**
-     * Returns a Stream of human-readable, string elements with hexadecimal and character values for
-     * the provided {@code segment}.
-     * <p>
-     * Each element in the stream comprises the following characters:
-     * <ol>
-     *     <li>a 64-bit offset in hexadecimal form (e.g. "0000000000000010").</li>
-     *     <li>a sequence of two spaces (i.e. "  ").</li>
-     *     <li>a sequence of at most eight bytes in hexadecimal form (e.g. "66 6F 78 20 6A 75 6D 70") where
-     *     each byte is separated by a space.</li>
-     *     <li>a sequence of two spaces (i.e. "  ").</li>
-     *     <li>a sequence of at most eight bytes in hexadecimal form (e.g. "65 64 20 6F 76 65 72 20") where
-     *     each byte separated by a space.</li>
-     *     <li>a sequence of N spaces (i.e. "  ") such that the intermediate line is aligned to 68 characters</li>
-     *     <li>a "|" separator.</li>
-     *     <li>a sequence of at most 16 printable Ascii characters (values outside [32, 127] will be printed as ".").</li>
-     *     <li>a "|" separator.</li>
-     * </ol>
-     * All the values in hexadecimal form are in upper case and with leading zeros. As there are at most 16 bytes
-     * rendered for each line, there will be N = ({@link MemorySegment#byteSize()} + 15) / 16 elements in the returned stream.
-     * <p>
-     * As a consequence of the above, this method renders to a format similar to the *nix command "hexdump -C".
-     * <p>
-     * As an example, a segment created, initialized and used as follows
-     * {@snippet lang = java:
-     *   MemorySegment segment = memorySession.allocateUtf8String("The quick brown fox jumped over the lazy dog\nSecond line\t:here");
-     *   HexFormat.dump(segment)
-     *       .forEach(System.out::println);
-     *}
-     * will be printed as:
-     * {@snippet lang = text:
-     * 0000000000000000  54 68 65 20 71 75 69 63  6B 20 62 72 6F 77 6E 20  |The quick brown |
-     * 0000000000000010  66 6F 78 20 6A 75 6D 70  65 64 20 6F 76 65 72 20  |fox jumped over |
-     * 0000000000000020  74 68 65 20 6C 61 7A 79  20 64 6F 67 0A 53 65 63  |the lazy dog.Sec|
-     * 0000000000000030  6F 6E 64 20 6C 69 6E 65  09 3A 68 65 72 65 00     |ond line.:here.|
-     *}
-     * <p>
-     * Use a {@linkplain MemorySegment#asSlice(long, long) slice} to inspect a specific region
-     * of a segment.
-     * <p>
-     * This method can be used to dump the contents of various other memory containers such as
-     * {@linkplain ByteBuffer ByteBuffers} and byte arrays by means of first wrapping the container
-     * into a MemorySegment:
-     * {@snippet lang = java:
-     *   HexFormat.dump(MemorySegment.ofArray(byteArray));
-     *   HexFormat.dump(MemorySegment.ofBuffer(byteBuffer));
-     *}
-     *
-     * @param segment to dump
-     * @return a Stream of human-readable, string elements with hexadecimal values and characters
-     * @throws IllegalStateException if the {@linkplain MemorySegment#session() session} associated with this
-     *                               segment is not {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException  if this method is called from a thread other than the thread owning
-     *                               the {@linkplain MemorySegment#session() session} associated with this segment.
-     */
-    public static Stream<String> dump(MemorySegment segment) {
-        requireNonNull(segment);
-
-        // Todo: Investigate how to handle mapped sparse files
-
-        final var state = new DumpState(segment);
-        return LongStream.range(0, state.lastIndex())
-                .mapToObj(state::mapIndexToLineOrNull)
-                .filter(Objects::nonNull);
-    }
-
-    /**
      * Returns {@code true} if the other object is a {@code HexFormat}
      * with the same parameters.
      *
      * @param o an object, may be null
      * @return {@code true} if the other object is a {@code HexFormat} and the parameters
-     *         uppercase, delimiter, prefix, and suffix are equal;
-     *         otherwise {@code false}
+     * uppercase, delimiter, prefix, and suffix are equal;
+     * otherwise {@code false}
      */
     @Override
     public boolean equals(Object o) {
@@ -1226,91 +1156,660 @@ public final class HexFormat {
                 "\", suffix: \"" + suffix + "\"");
     }
 
-    private static final class DumpState {
-        private final StringBuilder line = new StringBuilder();
-        private final StringBuilder chars = new StringBuilder();
-        private final HexFormat hexFormat = HexFormat.of().withUpperCase();
-        private final MemorySegment segment;
-        private final long lastIndex;
 
-        DumpState(MemorySegment segment) {
-            this.segment = segment;
-            this.lastIndex = segment.byteSize();
+    /**
+     * A
+     *
+     * @param args B
+     */
+    public static void main(String[] args) {
+        final MemoryDumper dumper = MemoryDumper.builder()
+                .addIndexColumn()
+                .addDataColumn()
+                .build();
+
+        try (var session = MemorySession.openConfined()) {
+            dumper.dump(session.allocateUtf8String("navigare necesse est"))
+                    .forEach(System.out::println);
+        }
+
+    }
+
+    /**
+     * A class providing memory abstractions to be dumped into
+     * various formats.
+     *
+     * @author Per Minborg
+     * @since 20
+     */
+    public interface MemoryDumper {
+
+        /**
+         * Returns a Stream of string elements with values for the provided {@code memory} byte array.
+         * <p>
+         * Each element in the stream depends on how this MemoryDumper was configured via its {@linkplain #builder()}.
+         * <p>
+         * As an example, an array created, initialized and used as follows
+         * {@snippet lang = java:
+         *   byte[] bytes = "The quick brown fox jumped over the lazy dog\nSecond line\t:here".getBytes(StandardCharsets.UTF_8);
+         *   MemoryDumper.builder()
+         *      .addIndexColumn()
+         *      .addDataColumn()
+         *      .withColumnPrefix("|")
+         *      .withColumnSuffix("|")
+         *      .addDataColumn(Builder.ColumnRenderer.ofAscii())
+         *      .build()
+         *      .dump(bytes)
+         *      .forEach(System.out::println);
+         *}
+         * will be printed as:
+         * {@snippet lang = text:
+         * 0000000000000000 54 68 65 20 71 75 69 63 6b 20 62 72 6f 77 6e 20 |The quick brown |
+         * 0000000000000010 66 6f 78 20 6a 75 6d 70 65 64 20 6f 76 65 72 20 |fox jumped over |
+         * 0000000000000020 74 68 65 20 6c 61 7a 79 20 64 6f 67 0a 53 65 63 |the lazy dog.Sec|
+         * 0000000000000030 6f 6e 64 20 6c 69 6e 65 09 3a 68 65 72 65 00    |ond line.:here._|
+         *}
+         *
+         * @param bytes to dump
+         * @return a Stream of string elements
+         */
+        Stream<String> dump(byte[] bytes);
+
+        /**
+         * Returns a Stream of string elements with values for the provided {@code memory} byte array staring
+         * at the provided {@code fromIndex} (inclusive) and ending at the provided {@code toIndex} (exclusive).
+         * <p>
+         * Each element in the stream depends on how this MemoryDumper was configured via its {@linkplain #builder()}.
+         * <p>
+         * As an example, an array created, initialized and used as follows
+         * {@snippet lang = java:
+         *   byte[] bytes = "The quick brown fox jumped over the lazy dog\nSecond line\t:here".getBytes(StandardCharsets.UTF_8);
+         *   MemoryDumper.builder()
+         *      .addIndexColumn()
+         *      .addDataColumn()
+         *      .withColumnPrefix("|")
+         *      .withColumnSuffix("|")
+         *      .addDataColumn(Builder.ColumnRenderer.ofAscii())
+         *      .build()
+         *      .dump(bytes, 0, 16)
+         *      .forEach(System.out::println);
+         *}
+         * will be printed as:
+         * {@snippet lang = text:
+         * 0000000000000000 54 68 65 20 71 75 69 63 6b 20 62 72 6f 77 6e 20 |The quick brown |
+         *}
+         *
+         * @param bytes     to dump
+         * @param fromIndex the initial index of the range, inclusive
+         * @param toIndex   the final index of the range, exclusive.
+         * @return a Stream of string elements
+         */
+        Stream<String> dump(byte[] bytes, int fromIndex, int toIndex);
+
+        /**
+         * Returns a Stream of string elements with values for the provided {@code memory} segment.
+         * <p>
+         * Each element in the stream depends on how this MemoryDumper was configured via its {@linkplain #builder()}.
+         * <p>
+         * As an example, an array created, initialized and used as follows
+         * {@snippet lang = java:
+         * MemoryDumper dumper = MemoryDumper.builder()
+         *            .addIndexColumn()
+         *            .addDataColumn()
+         *            .withColumnPrefix("|")
+         *            .withColumnSuffix("|")
+         *            .addDataColumn(Builder.ColumnRenderer.ofAscii())
+         *            .build();
+         *
+         *    try (MemorySession session = MemorySession.openConfined()) {
+         *       MemorySegment segment = session.allocateUtf8String("The quick brown fox jumped over the lazy dog\nSecond line\t:here");
+         *      dumper.dump(bytes)
+         *          .forEach(System.out::println);
+         *    }
+         *}
+         * will be printed as:
+         * {@snippet lang = text:
+         * 0000000000000000 54 68 65 20 71 75 69 63 6b 20 62 72 6f 77 6e 20 |The quick brown |
+         * 0000000000000010 66 6f 78 20 6a 75 6d 70 65 64 20 6f 76 65 72 20 |fox jumped over |
+         * 0000000000000020 74 68 65 20 6c 61 7a 79 20 64 6f 67 0a 53 65 63 |the lazy dog.Sec|
+         * 0000000000000030 6f 6e 64 20 6c 69 6e 65 09 3a 68 65 72 65 00    |ond line.:here._|
+         *}
+         *
+         * @param segment to dump
+         * @return a Stream of string elements
+         */
+        Stream<String> dump(MemorySegment segment);
+
+        /**
+         * {@return a new builder that can be used to configure and create MemoryDumper instances.}
+         */
+        static Builder builder() {
+            return new StandardMemoryDumperBuilder();
         }
 
         /**
-         * Returns a new complete line (either a full line or the last line) for the provided {@code index}
-         * or {@code null} if the provided {@code index} is not at the end of a full line or at the end of the
-         * last line.
+         * {@return a standard MemoryDumper that will format memory segments in human readable form}
          * <p>
-         * Note: This method is <em>stateful</em> and requires invocations with index in order 0, 1, ..., N
+         * As an example, a memory segment, initialized and used as follows
+         * {@snippet lang = java:
+         * MemoryDumper dumper = MemoryDumper.standard();
          *
-         * @param index the index
+         *    try (MemorySession session = MemorySession.openConfined()) {
+         *       MemorySegment segment = session.allocateUtf8String("The quick brown fox jumped over the lazy dog\nSecond line\t:here");
+         *      dumper.dump(bytes)
+         *          .forEach(System.out::println);
+         *    }
+         *}
+         * will be printed as:
+         * {@snippet lang = text:
+         * 0000000000000000 54 68 65 20 71 75 69 63 6b 20 62 72 6f 77 6e 20 |The quick brown |
+         * 0000000000000010 66 6f 78 20 6a 75 6d 70 65 64 20 6f 76 65 72 20 |fox jumped over |
+         * 0000000000000020 74 68 65 20 6c 61 7a 79 20 64 6f 67 0a 53 65 63 |the lazy dog.Sec|
+         * 0000000000000030 6f 6e 64 20 6c 69 6e 65 09 3a 68 65 72 65 00    |ond line.:here._|
+         *}
+         */
+        static MemoryDumper standard() {
+            return StandardMemoryDumper.STANDARD;
+        }
+
+        /**
+         * A non-threadsafe builder for MemoryDumper instances.
+         *
+         * @since 20
+         */
+        interface Builder {
+
+            /**
+             * Configures the number of bytes per line in.
+             * <p>
+             * Unless configured otherwise, the default number of bytes per line is 16.
+             *
+             * @param bytesPerLine the number of bytes per line (non-negative)
+             * @return this Builder
+             * @throws IllegalArgumentException if the provided {@code bytes} are negative
+             */
+            Builder withBytesPerLine(int bytesPerLine);
+
+            /**
+             * Configures the column prefix for subsequent index and data columns.
+             * <p>
+             * Unless configured otherwise, the default column prefix is "" (an empty String).
+             *
+             * @param prefix the column prefix (non-null)
+             * @return this Builder
+             * @throws NullPointerException if the provided {@code prefix} is {@code null}
+             */
+            Builder withColumnPrefix(String prefix);
+
+            /**
+             * Configures the column suffix for subsequent index and data columns.
+             * <p>
+             * Unless configured otherwise, the default suffix is "" (an empty String).
+             *
+             * @param suffix the column suffix (non-null)
+             * @return this Builder
+             * @throws NullPointerException if the provided {@code suffix} is {@code null}
+             */
+            Builder withColumnSuffix(String suffix);
+
+            /**
+             * Configures the column delimiter for subsequent index and data columns.
+             * <p>
+             * The column delimiter will be inserted between columns (i.e. not after the last column).
+             * Unless configured otherwise, the default suffix is " " (a single space).
+             *
+             * @param delimiter the column delimiter (non-null)
+             * @return this Builder
+             * @throws NullPointerException if the provided {@code delimiter} is {@code null}
+             */
+            Builder withColumnDelimiter(String delimiter);
+
+            /**
+             * Adds an index column with 8 bytes (64-bit) index with hexadecimal values formatted by
+             * the default {@link HexFormat#of()} formatter.
+             *
+             * @return this Builder
+             */
+            Builder addIndexColumn();
+
+            /**
+             * Adds an index column with the provided {@code  bytes} index with hexadecimal values formatted by
+             * the default {@link HexFormat#of()} formatter.
+             *
+             * @param bytes the number of bytes to render in the index (in the range [1, 8])
+             * @return this Builder
+             * @throws IllegalArgumentException if the provided {@code bytes} is outside the range [1, 8]
+             */
+            Builder addIndexColumn(int bytes);
+
+            /**
+             * Adds an index column with the provided {@code  bytes} index with hexadecimal values formatted by
+             * the provided {@code formatter }.
+             *
+             * @param bytes     the number of bytes to render in the index (in the range [1, 8])
+             * @param formatter the formatter to use for byte values in the index
+             * @return this Builder
+             * @throws IllegalArgumentException if the provided {@code bytes} is outside the range [1, 8]
+             * @throws NullPointerException     if the provided {@code formatter} is {@code null}
+             */
+            Builder addIndexColumn(int bytes, HexFormat formatter);
+
+            /**
+             * Adds an index column with the provided {@code  bytes} index with hexadecimal values formatted by
+             * the provided {@code renderer }.
+             * <p>
+             * Indexes used by the provided {@code renderer} are counted as byte indexes with the index value itself
+             * and runs from the provided {@code bytes - 1} to 0.
+             *
+             * @param bytes    the number of bytes to render in the index (in the range [1, 8])
+             * @param renderer the renderer to use for byte values in the index
+             * @return this Builder
+             * @throws IllegalArgumentException if the provided {@code bytes} is outside the range [1, 8]
+             * @throws NullPointerException     if the provided {@code renderer} is {@code null}
+             */
+            Builder addIndexColumn(int bytes, ColumnRenderer renderer);
+
+            /**
+             * Adds a data column with hexadecimal values formatted by
+             * a {@code HexFormat.ofDelimiter(" ")} formatter.
+             *
+             * @return this Builder
+             */
+            Builder addDataColumn();
+
+            /**
+             * Adds a data column with hexadecimal values formatted by
+             * the provided {@code formatter }.
+             *
+             * @param formatter the formatter to use for byte values in a row
+             * @return this Builder
+             * @throws NullPointerException if the provided {@code formatter} is {@code null}
+             */
+            Builder addDataColumn(HexFormat formatter);
+
+            /**
+             * Adds a data column with hexadecimal values formatted by
+             * the provided {@code renderer }.
+             *
+             * @param renderer the renderer to use for byte values in a row
+             * @return this Builder
+             * @throws NullPointerException if the provided {@code renderer} is {@code null}
+             */
+            Builder addDataColumn(ColumnRenderer renderer);
+
+            /**
+             * {@return a new MemoryDumper instance with configurations made so far.}
+             */
+            MemoryDumper build();
+
+            /**
+             * Represents a function that accepts a long index and a byte value and produces a CharSequence such
+             * as a String.
+             *
+             * @since 20
+             */
+            @FunctionalInterface
+            interface ColumnRenderer {
+
+                /**
+                 * {@return a rendering of the provided {@code bytes} with the provided {@code BytesPerLine} }
+                 * <p>
+                 * Note: On the last line, chars may be padded using the ' ' character.
+                 *
+                 * @param bytesPerLine the bytes per line
+                 * @param bytes        the byte array to render
+                 */
+                String render(int bytesPerLine, byte[] bytes);
+
+                /**
+                 * {@return a ByteRenderer that renders bytes into human readable characters.}
+                 */
+                static ColumnRenderer ofAscii() {
+                    return (bytePerLine, bytes) -> {
+                        StringBuilder sb = new StringBuilder();
+                        for (int i = 0; i < bytePerLine; i++) {
+                            if (i >= bytes.length) {
+                                // Padding on the last line
+                                sb.append(" ");
+                            } else {
+                                final byte val = bytes[i];
+                                if (val >= 32 && val < 127) {
+                                    sb.append((char) val);
+                                } else {
+                                    sb.append(".");
+                                }
+                            }
+                        }
+                        return sb.toString();
+                    };
+                }
+
+                /**
+                 * {@return a ByteReader that renders bytes as per the provided {@code formatter}}
+                 *
+                 * @param formatter to use when formatting values
+                 */
+                static ColumnRenderer of(HexFormat formatter) {
+                    requireNonNull(formatter);
+                    return new ByteRenderedFromHexFormat(formatter);
+                }
+
+            }
+
+        }
+
+    }
+
+    private static final class ByteRenderedFromHexFormat implements MemoryDumper.Builder.ColumnRenderer {
+
+        private final HexFormat formatter;
+
+        public ByteRenderedFromHexFormat(HexFormat formatter) {
+            this.formatter = formatter;
+        }
+
+        @Override
+        public String render(int bytesPerLine, byte[] bytes) {
+            final var sb = new StringBuilder();
+            if (bytesPerLine == bytes.length) {
+                formatter.formatHex(sb, bytes);
+            } else {
+                // We are on the last line which needs padding
+                final var expanded = new byte[bytesPerLine];
+                System.arraycopy(bytes, 0, expanded, 0, bytes.length);
+                formatter.formatHex(sb, expanded);
+                final int bytesToRemove = bytesPerLine - bytes.length;
+                final int charsToRemove = bytesToRemove * (formatter.prefix().length()+formatter.suffix().length()+2) +
+                                          (bytesToRemove -1) * formatter.delimiter().length();
+                // Erase the excess part
+                for (int i = 0; i < charsToRemove; i++) {
+                    sb.setCharAt(sb.length() - i - 1, ' ');
+                }
+            }
+            return sb.toString();
+        }
+    }
+
+    private static final class StandardMemoryDumperBuilder implements MemoryDumper.Builder {
+
+        private final List<Column> columns;
+        private int bytesPerLine = 16;
+        private String columnPrefix = "";
+        private String columnSuffix = "";
+        private String columnDelimiter = " ";
+
+        StandardMemoryDumperBuilder() {
+            columns = new ArrayList<>();
+        }
+
+        @Override
+        public MemoryDumper.Builder withBytesPerLine(int bytes) {
+            bytesPerLine = requirePositive(bytes);
+            return this;
+        }
+
+        @Override
+        public MemoryDumper.Builder withColumnPrefix(String prefix) {
+            columnPrefix = requireNonNull(prefix);
+            return this;
+        }
+
+        @Override
+        public MemoryDumper.Builder withColumnSuffix(String suffix) {
+            columnSuffix = requireNonNull(suffix);
+            return this;
+        }
+
+        @Override
+        public MemoryDumper.Builder withColumnDelimiter(String delimiter) {
+            columnDelimiter = requireNonNull(delimiter);
+            return this;
+        }
+
+        @Override
+        public MemoryDumper.Builder addIndexColumn() {
+            return addIndexColumn(8);
+        }
+
+        @Override
+        public MemoryDumper.Builder addIndexColumn(int bytes) {
+            requireBetweenClosed(1, 8, bytes);
+            return addIndexColumn(bytes, HexFormat.of());
+        }
+
+        @Override
+        public MemoryDumper.Builder addIndexColumn(int bytes, HexFormat formatter) {
+            requireBetweenClosed(1, 8, bytes);
+            requireNonNull(formatter);
+            return addIndexColumn(bytes, ColumnRenderer.of(formatter));
+        }
+
+        @Override
+        public MemoryDumper.Builder addIndexColumn(int bytes, ColumnRenderer renderer) {
+            requireBetweenClosed(1, 8, bytes);
+            requireNonNull(renderer);
+            columns.add(new Column(ColumnType.INDEX, OptionalInt.of(bytes), columnPrefix, renderer, columnSuffix, columnDelimiter));
+            return this;
+        }
+
+        @Override
+        public MemoryDumper.Builder addDataColumn() {
+            return addDataColumn(HexFormat.ofDelimiter(" "));
+        }
+
+        @Override
+        public MemoryDumper.Builder addDataColumn(HexFormat formatter) {
+            requireNonNull(formatter);
+            return addDataColumn(ColumnRenderer.of(formatter));
+        }
+
+        @Override
+        public MemoryDumper.Builder addDataColumn(ColumnRenderer renderer) {
+            requireNonNull(renderer);
+            columns.add(new Column(ColumnType.DATA, OptionalInt.empty(), columnPrefix, renderer, columnSuffix, columnDelimiter));
+            return this;
+        }
+
+        @Override
+        public MemoryDumper build() {
+            return new StandardMemoryDumper(bytesPerLine, columns);
+        }
+
+        enum ColumnType {
+            INDEX, DATA;
+        }
+
+        private record Column(ColumnType type,
+                              OptionalInt indexByteLength,
+                              String prefix,
+                              ColumnRenderer renderer,
+                              String suffix,
+                              String delimiter) {
+        }
+
+        private int requirePositive(int value) {
+            if (value < 1)
+                throw new IllegalArgumentException("Value must be positive:" + value);
+            return value;
+        }
+
+        // We assume from < to
+        private int requireBetweenClosed(int from, int to, int value) {
+            if (value < from || value > to)
+                throw new IllegalArgumentException("Value " + value + " is not in the range [" + from + ", " + to + "]");
+            return value;
+        }
+
+    }
+
+    private static final class StandardMemoryDumper implements MemoryDumper {
+
+        private static final MemoryDumper STANDARD = MemoryDumper.builder()
+                .addIndexColumn()
+                .addDataColumn()
+                .withColumnPrefix("|")
+                .withColumnSuffix("|")
+                .addDataColumn(HexFormat.MemoryDumper.Builder.ColumnRenderer.ofAscii())
+                .build();
+
+
+        private final int bytesPerLine;
+        private final List<StandardMemoryDumperBuilder.Column> columns;
+
+        StandardMemoryDumper(int bytesPerLine,
+                             List<StandardMemoryDumperBuilder.Column> columns) {
+            this.bytesPerLine = bytesPerLine;
+            this.columns = new ArrayList<>(columns);
+        }
+
+        @Override
+        public Stream<String> dump(byte[] bytes) {
+            return dump0(bytes, ba -> ba.length, (ba, index) -> ba[Math.toIntExact(index)]);
+        }
+
+        @Override
+        public Stream<String> dump(byte[] bytes, int fromIndex, int toIndex) {
+            if (fromIndex == 0) {
+                if (toIndex>bytes.length)
+                    throw new IllegalArgumentException("fromIndex " + fromIndex + " is greater than the array length " + bytes.length);
+                return dump0(bytes, ba -> toIndex, (ba, index) -> ba[Math.toIntExact(index)]);
+            }
+            return dump0(MemorySegment.ofArray(bytes).asSlice(fromIndex, toIndex - fromIndex),
+                    MemorySegment::byteSize,
+                    memorySegmentByteExtractor());
+        }
+
+        @Override
+        public Stream<String> dump(MemorySegment segment) {
+            return dump0(segment, MemorySegment::byteSize, memorySegmentByteExtractor());
+        }
+
+        private <M> Stream<String> dump0(M memory,
+                                         ToLongFunction<M> byteSizeExtractor,
+                                         DumpState.ByteExtractor<M> byteExtractor) {
+            requireNonNull(memory);
+
+            final long lastIndex = byteSizeExtractor.applyAsLong(memory);
+            final long lines = (lastIndex + bytesPerLine - 1) / bytesPerLine;
+            final var state = new DumpState<>(memory, lastIndex, byteExtractor, bytesPerLine, columns, lines);
+            return LongStream.range(0, lines)
+                    .mapToObj(state::lineMapper);
+        }
+
+        @Override
+        public String toString() {
+            return "StandardMemoryDumper{" +
+                    "bytesPerLine=" + bytesPerLine +
+                    ", columns=" + columns +
+                    '}';
+        }
+
+        private static DumpState.ByteExtractor<MemorySegment> memorySegmentByteExtractor() {
+            return (memory, index) -> memory.get(JAVA_BYTE, index);
+        }
+
+    }
+
+    private static final class DumpState<M> {
+
+        private final M memory;
+        private final long lastIndex;
+        private final ByteExtractor<M> byteExtractor;
+        private final int bytesPerLine;
+        private final List<StandardMemoryDumperBuilder.Column> columns;
+        private final long lines;
+
+        DumpState(M memory,
+                  long lastIndex,
+                  ByteExtractor<M> byteExtractor,
+                  int bytesPerLine,
+                  List<StandardMemoryDumperBuilder.Column> columns,
+                  long lines) {
+            this.memory = memory;
+            this.lastIndex = lastIndex;
+            this.byteExtractor = byteExtractor;
+            this.bytesPerLine = bytesPerLine;
+            this.columns = columns;
+            this.lines = lines;
+        }
+
+
+        /**
+         * {@return a new complete line (either a full line or the last line) for the provided {@code line} number}.
+         *
+         * @param line the line to render (non-negative)
          * @return a new line or {@code null}
          */
-        String mapIndexToLineOrNull(long index) {
-            if (isEmpty()) {
-                // We are on a new line: Append the index
-                appendIndex(index);
+        String lineMapper(long line) {
+
+            // Todo: Investigate how to handle mapped sparse files
+
+            final StringBuilder sb = new StringBuilder();
+            int columnCount = 0;
+            for (StandardMemoryDumperBuilder.Column c : columns) {
+                if (columnCount > 0) {
+                    sb.append(c.delimiter());
+                }
+                sb.append(c.prefix());
+                if (c.type() == StandardMemoryDumperBuilder.ColumnType.INDEX) {
+                    final int len = c.indexByteLength().orElseThrow();
+                    sb.append(c.renderer().render(len, toByteArray(len, line * bytesPerLine)));
+                }
+                if (c.type() == StandardMemoryDumperBuilder.ColumnType.DATA) {
+                    final int len;
+                    final long overflow = (line + 1L) * bytesPerLine - lastIndex;
+                    if (overflow > 0) {
+                        // We are on the last line and the last line needs trimming
+                        len = Math.toIntExact(bytesPerLine - overflow);
+                    } else {
+                        // We are on a line (last or not) and no trimming needs to be done
+                        len = bytesPerLine;
+                    }
+                    final byte[] bytes = new byte[len];
+                    for (int i = 0; i < len; i++) {
+                        final long index = line * bytesPerLine + i;
+                        bytes[i] = byteExtractor.extract(memory, index);
+                    }
+                    sb.append(c.renderer().render(bytesPerLine, bytes));
+                }
+                sb.append(c.suffix());
+                columnCount++;
             }
-            if (index % (DUMP_BYTES_PER_ROW >>> 1) == 0) {
-                // We are either at the beginning or halfway through: add an extra space for readability
-                appendSpace();
-            }
-            // Append the actual memory value
-            appendValue(segment.get(JAVA_BYTE, index));
-            final long nextCnt = index + 1;
-            if (nextCnt % DUMP_BYTES_PER_ROW == 0 || nextCnt == lastIndex) {
-                // We have a complete line (eiter a full line or the last line)
-                return renderLineToStringAndReset();
-            } else {
-                // For this count, there was no line break so pass null and filter it away later
-                return null;
-            }
-        }
-
-        boolean isEmpty() {
-            return line.isEmpty();
-        }
-
-        void appendIndex(long index) {
-            line.append(hexFormat.toHexDigits(index));
-            appendSpace();
-        }
-
-        void appendValue(byte val) {
-            line.append(hexFormat.toHexDigits(val));
-            chars.append(viewByteAsAscii(val));
-            appendSpace();
-        }
-
-        String renderLineToStringAndReset() {
-            while (line.length() < DUMP_LINE_LENGTH_EXCLUDING_CHARS) {
-                // Pad if necessary
-                appendSpace();
-            }
-            line.append('|').append(chars).append('|');
-
-            final String result = line.toString();
-            line.setLength(0);
-            chars.setLength(0);
-            return result;
-        }
-
-        void appendSpace() {
-            line.append(' ');
+            return sb.toString();
         }
 
         long lastIndex() {
             return lastIndex;
         }
 
-        static char viewByteAsAscii(byte b) {
-            final int value = Byte.toUnsignedInt(b);
-            return (value >= 32 && value < 127)
-                    ? (char) value
-                    : '.';
+        @FunctionalInterface
+        interface ByteExtractor<M> {
+            byte extract(M memory, long index);
+
+            static ByteExtractor<MemorySegment> ofMemorySegment() {
+                return (memory, index) -> memory.get(JAVA_BYTE, index);
+            }
+
+            static ByteExtractor<byte[]> ofByteArray() {
+                return (memory, index) -> memory[Math.toIntExact(index)];
+            }
         }
+    }
+
+    private static byte[] toByteArray(int length, long l) {
+        byte[] result = new byte[length];
+        if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) {
+            for (int i = (length - 1); i >= 0; i--) {
+                result[i] = (byte) (l & 0xFF);
+                l >>= 8;
+            }
+        } else {
+            for (int i = 0; i < length; i++) {
+                result[i] = (byte) (l & 0xFF);
+                l >>= 8;
+            }
+        }
+        return result;
     }
 
 }

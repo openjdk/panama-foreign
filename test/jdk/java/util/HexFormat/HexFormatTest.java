@@ -792,50 +792,215 @@ public class HexFormatTest {
 
     private static final byte[] THE_QUICK_ARRAY = THE_QUICK.getBytes(StandardCharsets.UTF_8);
     private static final String EXPECTED_HEX = platformLineSeparated("""
-            0000000000000000  54 68 65 20 71 75 69 63  6B 20 62 72 6F 77 6E 20  |The quick brown |
-            0000000000000010  66 6F 78 20 6A 75 6D 70  65 64 20 6F 76 65 72 20  |fox jumped over |
-            0000000000000020  74 68 65 20 6C 61 7A 79  20 64 6F 67 0A 53 65 63  |the lazy dog.Sec|
-            0000000000000030  6F 6E 64 20 6C 69 6E 65  09 3A 68 65 72 65 00 00  |ond line.:here..|
-            0000000000000040  00 00 00 00                                       |....|""");
+            0000000000000000 54 68 65 20 71 75 69 63 6b 20 62 72 6f 77 6e 20 |The quick brown |
+            0000000000000010 66 6f 78 20 6a 75 6d 70 65 64 20 6f 76 65 72 20 |fox jumped over |
+            0000000000000020 74 68 65 20 6c 61 7a 79 20 64 6f 67 0a 53 65 63 |the lazy dog.Sec|
+            0000000000000030 6f 6e 64 20 6c 69 6e 65 09 3a 68 65 72 65 00 00 |ond line.:here..|
+            0000000000000040 00 00 00 00                                     |....            |""");
+
+    private static final String EXPECTED_HEX_SPECIAL = platformLineSeparated("""
+            0000000000000000  54 68 65 20 71 75 69 63  6b 20 62 72 6f 77 6e 20  |The quick brown |
+            0000000000000010  66 6f 78 20 6a 75 6d 70  65 64 20 6f 76 65 72 20  |fox jumped over |
+            0000000000000020  74 68 65 20 6c 61 7a 79  20 64 6f 67 0a 53 65 63  |the lazy dog.Sec|
+            0000000000000030  6f 6e 64 20 6c 69 6e 65  09 3a 68 65 72 65 00 00  |ond line.:here..|
+            0000000000000040  00 00 00 00                                       |....            |""");
 
     private static final String EXPECT_ADDRESS = "0x" + "00".repeat((int) ValueLayout.ADDRESS.byteSize());
+
+    @Test
+    public void testDump64BitIndexToConsole() {
+        System.out.println("***");
+        try (var session = MemorySession.openConfined()) {
+            var segment = session.allocateUtf8String(THE_QUICK);
+            HexFormat.MemoryDumper dumper = HexFormat.MemoryDumper.builder()
+                    .addIndexColumn()
+                    .build();
+
+            System.out.println(dumper);
+
+            dumper.dump(segment)
+                    .forEach(System.out::println);
+        }
+    }
+
+    @Test
+    public void testDump64BitIndex() {
+
+        var expect = """
+                0000000000000000
+                0000000000000010
+                0000000000000020
+                0000000000000030
+                0000000000000040""";
+
+        var actual = testWithFreshMemorySegment(HEX_SEGMENT_SIZE, segment -> {
+            segment.setUtf8String(0, THE_QUICK);
+            return HexFormat.MemoryDumper.builder()
+                    .addIndexColumn()
+                    .build()
+                    .dump(segment)
+                    .collect(joining(System.lineSeparator()));
+        });
+        assertEquals(actual, expect);
+    }
+
+    @Test
+    public void testDump32BitIndex() {
+
+        var expect = """
+                00000000
+                00000010
+                00000020
+                00000030
+                00000040""";
+
+        var actual = testWithFreshMemorySegment(HEX_SEGMENT_SIZE, segment -> {
+            segment.setUtf8String(0, THE_QUICK);
+            return HexFormat.MemoryDumper.builder()
+                    .addIndexColumn(Integer.BYTES)
+                    .build()
+                    .dump(segment)
+                    .collect(joining(System.lineSeparator()));
+        });
+        assertEquals(actual, expect);
+    }
+
+    @Test
+    public void testDump8BitIndex() {
+
+        var expect = """
+                00
+                10
+                20
+                30
+                40""";
+
+        var actual = testWithFreshMemorySegment(HEX_SEGMENT_SIZE, segment -> {
+            segment.setUtf8String(0, THE_QUICK);
+            return HexFormat.MemoryDumper.builder()
+                    .addIndexColumn(1)
+                    .build()
+                    .dump(segment)
+                    .collect(joining(System.lineSeparator()));
+        });
+        assertEquals(actual, expect);
+    }
+
+    @Test
+    public void testHexStreamOneByte() {
+
+        var expect = platformLineSeparated("0000000000000000 41 00                                           |A.              |");
+
+        var actual = testWithFreshMemorySegment(2, segment -> {
+            segment.setUtf8String(0, "A");
+            return HexFormat.MemoryDumper.builder()
+                    .addIndexColumn()
+                    .addDataColumn()
+                    .withColumnPrefix("|")
+                    .withColumnSuffix("|")
+                    .addDataColumn(HexFormat.MemoryDumper.Builder.ColumnRenderer.ofAscii())
+                    .build()
+                    .dump(segment)
+                    .collect(joining(System.lineSeparator()));
+        });
+        assertEquals(actual, expect);
+    }
+
+    @Test
+    public void testHexStreamOneByteWithStrangeFormatting() {
+
+        var expect = platformLineSeparated("0x00--,0x00--,0x00--,0x00--,0x00--,0x00--,0x00--,0x00-- 0x41--,0x00--,                                                                                                  |A.              |");
+
+        var actual = testWithFreshMemorySegment(2, segment -> {
+            segment.setUtf8String(0, "A");
+            var formatter = HexFormat.ofDelimiter(",").withPrefix("0x").withSuffix("--");
+            return HexFormat.MemoryDumper.builder()
+                    .addIndexColumn(8, formatter)
+                    .addDataColumn(formatter)
+                    .withColumnPrefix("|")
+                    .withColumnSuffix("|")
+                    .addDataColumn(HexFormat.MemoryDumper.Builder.ColumnRenderer.ofAscii())
+                    .build()
+                    .dump(segment)
+                    .collect(joining(System.lineSeparator()));
+        });
+        assertEquals(actual, expect);
+    }
 
     @Test
     public void testHexStream() {
 
         var actual = testWithFreshMemorySegment(HEX_SEGMENT_SIZE, segment -> {
             segment.setUtf8String(0, THE_QUICK);
-            return HexFormat.dump(segment)
+            return HexFormat.MemoryDumper.builder()
+                    .addIndexColumn()
+                    .addDataColumn()
+                    .withColumnPrefix("|")
+                    .withColumnSuffix("|")
+                    .addDataColumn(HexFormat.MemoryDumper.Builder.ColumnRenderer.ofAscii())
+                    .build()
+                    .dump(segment)
                     .collect(joining(System.lineSeparator()));
         });
         assertEquals(actual, EXPECTED_HEX);
     }
+
+    @Test
+    public void testEmptyMemoryDump() {
+        var actual = testWithFreshMemorySegment(0, segment ->
+                HexFormat.MemoryDumper.builder()
+                        .addIndexColumn()
+                        .build()
+                        .dump(segment)
+                        .collect(joining())
+        );
+        assertEquals(actual, "");
+    }
+
+    @Test
+    public void testEmptyDumper() {
+        var actual = testWithFreshMemorySegment(10, segment ->
+                HexFormat.MemoryDumper.builder()
+                        .build()
+                        .dump(segment)
+                        .collect(joining())
+        );
+        assertEquals(actual, "");
+    }
+
     @Test
     public void test256HexDump() {
         var expect = platformLineSeparated("""
-                0000000000000000  00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F  |................|
-                0000000000000010  10 11 12 13 14 15 16 17  18 19 1A 1B 1C 1D 1E 1F  |................|
-                0000000000000020  20 21 22 23 24 25 26 27  28 29 2A 2B 2C 2D 2E 2F  | !"#$%&'()*+,-./|
-                0000000000000030  30 31 32 33 34 35 36 37  38 39 3A 3B 3C 3D 3E 3F  |0123456789:;<=>?|
-                0000000000000040  40 41 42 43 44 45 46 47  48 49 4A 4B 4C 4D 4E 4F  |@ABCDEFGHIJKLMNO|
-                0000000000000050  50 51 52 53 54 55 56 57  58 59 5A 5B 5C 5D 5E 5F  |PQRSTUVWXYZ[\\]^_|
-                0000000000000060  60 61 62 63 64 65 66 67  68 69 6A 6B 6C 6D 6E 6F  |`abcdefghijklmno|
-                0000000000000070  70 71 72 73 74 75 76 77  78 79 7A 7B 7C 7D 7E 7F  |pqrstuvwxyz{|}~.|
-                0000000000000080  80 81 82 83 84 85 86 87  88 89 8A 8B 8C 8D 8E 8F  |................|
-                0000000000000090  90 91 92 93 94 95 96 97  98 99 9A 9B 9C 9D 9E 9F  |................|
-                00000000000000A0  A0 A1 A2 A3 A4 A5 A6 A7  A8 A9 AA AB AC AD AE AF  |................|
-                00000000000000B0  B0 B1 B2 B3 B4 B5 B6 B7  B8 B9 BA BB BC BD BE BF  |................|
-                00000000000000C0  C0 C1 C2 C3 C4 C5 C6 C7  C8 C9 CA CB CC CD CE CF  |................|
-                00000000000000D0  D0 D1 D2 D3 D4 D5 D6 D7  D8 D9 DA DB DC DD DE DF  |................|
-                00000000000000E0  E0 E1 E2 E3 E4 E5 E6 E7  E8 E9 EA EB EC ED EE EF  |................|
-                00000000000000F0  F0 F1 F2 F3 F4 F5 F6 F7  F8 F9 FA FB FC FD FE FF  |................|""");
+                0000000000000000 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f |................|
+                0000000000000010 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f |................|
+                0000000000000020 20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f | !"#$%&'()*+,-./|
+                0000000000000030 30 31 32 33 34 35 36 37 38 39 3a 3b 3c 3d 3e 3f |0123456789:;<=>?|
+                0000000000000040 40 41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f |@ABCDEFGHIJKLMNO|
+                0000000000000050 50 51 52 53 54 55 56 57 58 59 5a 5b 5c 5d 5e 5f |PQRSTUVWXYZ[\\]^_|
+                0000000000000060 60 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f |`abcdefghijklmno|
+                0000000000000070 70 71 72 73 74 75 76 77 78 79 7a 7b 7c 7d 7e 7f |pqrstuvwxyz{|}~.|
+                0000000000000080 80 81 82 83 84 85 86 87 88 89 8a 8b 8c 8d 8e 8f |................|
+                0000000000000090 90 91 92 93 94 95 96 97 98 99 9a 9b 9c 9d 9e 9f |................|
+                00000000000000a0 a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 aa ab ac ad ae af |................|
+                00000000000000b0 b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 ba bb bc bd be bf |................|
+                00000000000000c0 c0 c1 c2 c3 c4 c5 c6 c7 c8 c9 ca cb cc cd ce cf |................|
+                00000000000000d0 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 da db dc dd de df |................|
+                00000000000000e0 e0 e1 e2 e3 e4 e5 e6 e7 e8 e9 ea eb ec ed ee ef |................|
+                00000000000000f0 f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 fa fb fc fd fe ff |................|""");
 
         try (var session = MemorySession.openConfined()) {
             var segment = session.allocate(256);
             for (int i = 0; i < segment.byteSize(); i++) {
                 segment.set(ValueLayout.JAVA_BYTE, i, (byte) i);
             }
-            var actual = HexFormat.dump(segment)
+            var actual = HexFormat.MemoryDumper.builder()
+                    .addIndexColumn()
+                    .addDataColumn()
+                    .withColumnPrefix("|")
+                    .withColumnSuffix("|")
+                    .addDataColumn(HexFormat.MemoryDumper.Builder.ColumnRenderer.ofAscii())
+                    .build()
+                    .dump(segment)
                     .collect(joining(System.lineSeparator()));
             assertEquals(actual, expect);
         }
@@ -848,8 +1013,112 @@ public class HexFormatTest {
             for (int i = 0; i < segment.byteSize(); i++) {
                 segment.set(ValueLayout.JAVA_BYTE, i, (byte) i);
             }
-            HexFormat.dump(segment)
-                    .forEach(l -> assertEquals(l.length(), "0000000000000000  00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F  |................|".length()));
+            var stat = HexFormat.MemoryDumper.builder()
+                    .addIndexColumn()
+                    .addDataColumn()
+                    .withColumnPrefix("|")
+                    .withColumnSuffix("|")
+                    .addDataColumn(HexFormat.MemoryDumper.Builder.ColumnRenderer.ofAscii())
+                    .build()
+                    .dump(segment)
+                    .mapToInt(String::length)
+                    .summaryStatistics();
+
+            // Every row is of equal length
+            assertEquals(stat.getMax(), stat.getMin());
+
+        }
+    }
+
+    @Test
+    public void testStandardDump() {
+        var actual = testWithFreshMemorySegment(HEX_SEGMENT_SIZE, segment -> {
+            segment.setUtf8String(0, THE_QUICK);
+            return HexFormat.MemoryDumper.standard()
+                    .dump(segment)
+                    .collect(joining(System.lineSeparator()));
+        });
+        assertEquals(actual, EXPECTED_HEX);
+    }
+
+    @Test
+    public void testStandardDumpWithArray() {
+        var expect = """
+                0000000000000000 54 68 65 20 71 75 69 63 6b 20 62 72 6f 77 6e 20 |The quick brown |
+                0000000000000010 66 6f 78 20 6a 75 6d 70 65 64 20 6f 76 65 72 20 |fox jumped over |
+                0000000000000020 74 68 65 20 6c 61 7a 79 20 64 6f 67 0a 53 65 63 |the lazy dog.Sec|
+                0000000000000030 6f 6e 64 20 6c 69 6e 65 09 3a 68 65 72 65       |ond line.:here  |""";
+        var actual = HexFormat.MemoryDumper.standard()
+                    .dump(THE_QUICK_ARRAY)
+                    .collect(joining(System.lineSeparator()));
+
+        assertEquals(actual, expect);
+    }
+
+    @Test
+    public void testStandardDumpWithArrayFromToEndpoints() {
+        var expect = """
+                0000000000000000 54 68 65 20 71 75 69 63 6b 20 62 72 6f 77 6e 20 |The quick brown |
+                0000000000000010 66 6f 78 20 6a 75 6d 70 65 64 20 6f 76 65 72 20 |fox jumped over |
+                0000000000000020 74 68 65 20 6c 61 7a 79 20 64 6f 67 0a 53 65 63 |the lazy dog.Sec|
+                0000000000000030 6f 6e 64 20 6c 69 6e 65 09 3a 68 65 72 65       |ond line.:here  |""";
+        var actual = HexFormat.MemoryDumper.standard()
+                .dump(THE_QUICK_ARRAY, 0, THE_QUICK_ARRAY.length)
+                .collect(joining(System.lineSeparator()));
+
+        assertEquals(actual, expect);
+    }
+
+    @Test
+    public void testStandardDumpWithArrayFrom0To13() {
+        var expect = """
+                0000000000000000 54 68 65 20 71 75 69 63 6b 20 62 72 6f          |The quick bro   |""";
+        var actual = HexFormat.MemoryDumper.standard()
+                .dump(THE_QUICK_ARRAY, 0, 13)
+                .collect(joining(System.lineSeparator()));
+
+        assertEquals(actual, expect);
+    }
+
+    @Test
+    public void testStandardDumpWithArrayFrom2To9() {
+        var expect = """
+                0000000000000000 65 20 71 75 69 63 6b                            |e quick         |""";
+        var actual = HexFormat.MemoryDumper.standard()
+                .dump(THE_QUICK_ARRAY, 2, 9)
+                .collect(joining(System.lineSeparator()));
+
+        assertEquals(actual, expect);
+    }
+
+    public void testSeveralColumns() {
+        try (var session = MemorySession.openConfined()) {
+            var segment = session.allocateUtf8String(THE_QUICK);
+            var expect = """
++0000000000000000+ -00000000- /54 68 65 20 71 75 69 63 6b 20 62 72 6f 77 6e 20/ *54 68 65 20 71 75 69 63 6b 20 62 72 6f 77 6e 20* 0000
++0000000000000010+ -00000010- /66 6f 78 20 6a 75 6d 70 65 64 20 6f 76 65 72 20/ *66 6f 78 20 6a 75 6d 70 65 64 20 6f 76 65 72 20* 0010
++0000000000000020+ -00000020- /74 68 65 20 6c 61 7a 79 20 64 6f 67 0a 53 65 63/ *74 68 65 20 6c 61 7a 79 20 64 6f 67 0a 53 65 63* 0020
++0000000000000030+ -00000030- /6f 6e 64 20 6c 69 6e 65 09 3a 68 65 72 65 00   / *6f 6e 64 20 6c 69 6e 65 09 3a 68 65 72 65 00   * 0030""";
+            var actual = HexFormat.MemoryDumper.builder()
+                    .withColumnPrefix("+")
+                    .withColumnSuffix("+")
+                    .addIndexColumn()
+                    .withColumnPrefix("-")
+                    .withColumnSuffix("-")
+                    .addIndexColumn(4)
+                    .withColumnPrefix("/")
+                    .withColumnSuffix("/")
+                    .addDataColumn()
+                    .withColumnPrefix("*")
+                    .withColumnSuffix("*")
+                    .addDataColumn()
+                    .withColumnPrefix("")
+                    .withColumnSuffix("")
+                    .addIndexColumn(2)
+                    .build()
+                    .dump(segment)
+                    .collect(joining(System.lineSeparator()));
+            assertEquals(actual, expect);
         }
     }
 
