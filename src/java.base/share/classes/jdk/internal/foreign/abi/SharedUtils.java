@@ -28,7 +28,6 @@ import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.CABI;
-import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
@@ -41,6 +40,7 @@ import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
+import java.lang.foreign.PaddingLayout;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.VaList;
@@ -63,14 +63,17 @@ import static java.lang.foreign.ValueLayout.*;
 import static java.lang.invoke.MethodHandles.*;
 import static java.lang.invoke.MethodType.methodType;
 
-public class SharedUtils {
+public final class SharedUtils {
+
+    private SharedUtils() {
+    }
 
     private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
     private static final JavaLangInvokeAccess JLIA = SharedSecrets.getJavaLangInvokeAccess();
 
     private static final MethodHandle MH_ALLOC_BUFFER;
     private static final MethodHandle MH_BUFFER_COPY;
-    private static final MethodHandle MH_REACHBILITY_FENCE;
+    private static final MethodHandle MH_REACHABILITY_FENCE;
 
     static {
         try {
@@ -79,7 +82,7 @@ public class SharedUtils {
                     methodType(MemorySegment.class, MemoryLayout.class));
             MH_BUFFER_COPY = lookup.findStatic(SharedUtils.class, "bufferCopy",
                     methodType(MemorySegment.class, MemorySegment.class, MemorySegment.class));
-            MH_REACHBILITY_FENCE = lookup.findStatic(Reference.class, "reachabilityFence",
+            MH_REACHABILITY_FENCE = lookup.findStatic(Reference.class, "reachabilityFence",
                     methodType(void.class, Object.class));
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
@@ -116,7 +119,7 @@ public class SharedUtils {
             return alignmentOfArray((SequenceLayout) t, isVar);
         } else if (t instanceof GroupLayout) {
             return alignmentOfContainer((GroupLayout) t);
-        } else if (t.isPadding()) {
+        } else if (t instanceof PaddingLayout) {
             return 1;
         } else {
             throw new IllegalArgumentException("Invalid type: " + t);
@@ -227,10 +230,10 @@ public class SharedUtils {
 
     public static Linker getSystemLinker() {
         return switch (CABI.current()) {
-            case Win64 -> Windowsx64Linker.getInstance();
-            case SysV -> SysVx64Linker.getInstance();
-            case LinuxAArch64 -> LinuxAArch64Linker.getInstance();
-            case MacOsAArch64 -> MacOsAArch64Linker.getInstance();
+            case WIN_64 -> Windowsx64Linker.getInstance();
+            case SYS_V -> SysVx64Linker.getInstance();
+            case LINUX_AARCH_64 -> LinuxAArch64Linker.getInstance();
+            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.getInstance();
         };
     }
 
@@ -297,7 +300,7 @@ public class SharedUtils {
     }
 
     private static MethodHandle reachabilityFenceHandle(Class<?> type) {
-        return MH_REACHBILITY_FENCE.asType(MethodType.methodType(void.class, type));
+        return MH_REACHABILITY_FENCE.asType(MethodType.methodType(void.class, type));
     }
 
     static void handleUncaughtException(Throwable t) {
@@ -331,28 +334,28 @@ public class SharedUtils {
 
     public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession session) {
         return switch (CABI.current()) {
-            case Win64 -> Windowsx64Linker.newVaList(actions, session);
-            case SysV -> SysVx64Linker.newVaList(actions, session);
-            case LinuxAArch64 -> LinuxAArch64Linker.newVaList(actions, session);
-            case MacOsAArch64 -> MacOsAArch64Linker.newVaList(actions, session);
+            case WIN_64 -> Windowsx64Linker.newVaList(actions, session);
+            case SYS_V -> SysVx64Linker.newVaList(actions, session);
+            case LINUX_AARCH_64 -> LinuxAArch64Linker.newVaList(actions, session);
+            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.newVaList(actions, session);
         };
     }
 
     public static VaList newVaListOfAddress(long address, MemorySession session) {
         return switch (CABI.current()) {
-            case Win64 -> Windowsx64Linker.newVaListOfAddress(address, session);
-            case SysV -> SysVx64Linker.newVaListOfAddress(address, session);
-            case LinuxAArch64 -> LinuxAArch64Linker.newVaListOfAddress(address, session);
-            case MacOsAArch64 -> MacOsAArch64Linker.newVaListOfAddress(address, session);
+            case WIN_64 -> Windowsx64Linker.newVaListOfAddress(address, session);
+            case SYS_V -> SysVx64Linker.newVaListOfAddress(address, session);
+            case LINUX_AARCH_64 -> LinuxAArch64Linker.newVaListOfAddress(address, session);
+            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.newVaListOfAddress(address, session);
         };
     }
 
     public static VaList emptyVaList() {
         return switch (CABI.current()) {
-            case Win64 -> Windowsx64Linker.emptyVaList();
-            case SysV -> SysVx64Linker.emptyVaList();
-            case LinuxAArch64 -> LinuxAArch64Linker.emptyVaList();
-            case MacOsAArch64 -> MacOsAArch64Linker.emptyVaList();
+            case WIN_64 -> Windowsx64Linker.emptyVaList();
+            case SYS_V -> SysVx64Linker.emptyVaList();
+            case LINUX_AARCH_64 -> LinuxAArch64Linker.emptyVaList();
+            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.emptyVaList();
         };
     }
 
@@ -372,7 +375,7 @@ public class SharedUtils {
         return new NoSuchElementException("No such element: " + layout);
     }
 
-    public static class SimpleVaArg {
+    public static final class SimpleVaArg {
         public final MemoryLayout layout;
         public final Object value;
 
@@ -506,14 +509,6 @@ public class SharedUtils {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
     }
-
-    // unaligned constants
-    public final static ValueLayout.OfShort JAVA_SHORT_UNALIGNED = JAVA_SHORT.withBitAlignment(8);
-    public final static ValueLayout.OfChar JAVA_CHAR_UNALIGNED = JAVA_CHAR.withBitAlignment(8);
-    public final static ValueLayout.OfInt JAVA_INT_UNALIGNED = JAVA_INT.withBitAlignment(8);
-    public final static ValueLayout.OfLong JAVA_LONG_UNALIGNED = JAVA_LONG.withBitAlignment(8);
-    public final static ValueLayout.OfFloat JAVA_FLOAT_UNALIGNED = JAVA_FLOAT.withBitAlignment(8);
-    public final static ValueLayout.OfDouble JAVA_DOUBLE_UNALIGNED = JAVA_DOUBLE.withBitAlignment(8);
 
     public static MethodType inferMethodType(FunctionDescriptor descriptor) {
         MethodType type = MethodType.methodType(descriptor.returnLayout().isPresent() ?

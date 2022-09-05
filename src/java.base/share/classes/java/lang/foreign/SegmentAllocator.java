@@ -287,10 +287,8 @@ public interface SegmentAllocator {
 
     private <Z> MemorySegment copyArrayWithSwapIfNeeded(Z array, ValueLayout elementLayout,
                                                         Function<Z, MemorySegment> heapSegmentFactory) {
-        Objects.requireNonNull(array);
-        Objects.requireNonNull(elementLayout);
-        int size = Array.getLength(array);
-        MemorySegment addr = allocateArray(elementLayout, size);
+        int size = Array.getLength(Objects.requireNonNull(array));
+        MemorySegment addr = allocateArray(Objects.requireNonNull(elementLayout), size);
         if (size > 0) {
             MemorySegment.copy(heapSegmentFactory.apply(array), elementLayout, 0,
                     addr, elementLayout.withOrder(ByteOrder.nativeOrder()), 0, size);
@@ -449,8 +447,7 @@ public interface SegmentAllocator {
      * @return an allocator which recycles an existing segment upon each new allocation request.
      */
     static SegmentAllocator prefixAllocator(MemorySegment segment) {
-        Objects.requireNonNull(segment);
-        return (AbstractMemorySegmentImpl)segment;
+        return (AbstractMemorySegmentImpl)Objects.requireNonNull(segment);
     }
 
     /**
@@ -463,7 +460,7 @@ public interface SegmentAllocator {
      * @return an allocator which allocates native segments in independent {@linkplain MemorySession#openImplicit() implicit memory sessions}.
      */
     static SegmentAllocator implicitAllocator() {
-        class Holder {
+        final class Holder {
             static final SegmentAllocator IMPLICIT_ALLOCATOR = (size, align) ->
                     MemorySegment.allocateNative(size, align, MemorySession.openImplicit());
         }
