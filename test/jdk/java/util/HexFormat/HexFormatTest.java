@@ -31,6 +31,7 @@ import java.io.UncheckedIOException;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
+import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -1086,6 +1087,23 @@ public class HexFormatTest {
                 0000000000000000 65 20 71 75 69 63 6b                            |e quick         |""";
         var actual = HexFormat.MemoryDumper.standard()
                 .dump(THE_QUICK_ARRAY, 2, 9)
+                .collect(joining(System.lineSeparator()));
+
+        assertEquals(actual, expect);
+    }
+
+    @Test
+    public void testStandardDumpByteBuffer() {
+        var expect = """
+                0000000000000000 68 65 20 71 75 69 63 6b 20 62 72 6f 77 6e 20 66 |he quick brown f|
+                0000000000000010 6f 78 20 6a 75 6d 70 65 64 20 6f 76 65 72 20 74 |ox jumped over t|
+                0000000000000020 68 65 20 6c 61 7a 79 20 64 6f 67 0a 53 65 63 6f |he lazy dog.Seco|
+                0000000000000030 6e 64 20 6c 69 6e 65 09 3a 68 65 72 65          |nd line.:here   |""";
+        var buffer = ByteBuffer.wrap(THE_QUICK_ARRAY);
+        // Consume a byte
+        buffer.get();
+        var actual = HexFormat.MemoryDumper.standard()
+                .dump(buffer)
                 .collect(joining(System.lineSeparator()));
 
         assertEquals(actual, expect);

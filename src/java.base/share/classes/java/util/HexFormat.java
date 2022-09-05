@@ -33,6 +33,7 @@ import java.io.UncheckedIOException;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -1156,27 +1157,8 @@ public final class HexFormat {
                 "\", suffix: \"" + suffix + "\"");
     }
 
-
     /**
-     * A
-     *
-     * @param args B
-     */
-    public static void main(String[] args) {
-        final MemoryDumper dumper = MemoryDumper.builder()
-                .addIndexColumn()
-                .addDataColumn()
-                .build();
-
-        try (var session = MemorySession.openConfined()) {
-            dumper.dump(session.allocateUtf8String("navigare necesse est"))
-                    .forEach(System.out::println);
-        }
-
-    }
-
-    /**
-     * A class providing memory abstractions to be dumped into
+     * A class providing various memory abstractions (such as MemorySegments and byte arrays) to be dumped into
      * various formats.
      *
      * @author Per Minborg
@@ -1279,6 +1261,38 @@ public final class HexFormat {
          * @return a Stream of string elements
          */
         Stream<String> dump(MemorySegment segment);
+
+
+        /**
+         * Returns a Stream of string elements with values for the provided {@code buffer}.
+         * <p>
+         * Each element in the stream depends on how this MemoryDumper was configured via its {@linkplain #builder()}.
+         * <p>
+         * As an example, an array created, initialized and used as follows
+         * {@snippet lang = java:
+         * var buffer = ByteBuffer.wrap("The quick brown fox jumped over the lazy dog\nSecond line\t:here".getBytes(StandardCharsets.UTF_8));
+         * MemoryDumper dumper = MemoryDumper.builder()
+         *            .addIndexColumn()
+         *            .addDataColumn()
+         *            .withColumnPrefix("|")
+         *            .withColumnSuffix("|")
+         *            .addDataColumn(Builder.ColumnRenderer.ofAscii())
+         *            .build();
+         * dumper.dump(bytes)
+         *     .forEach(System.out::println);
+         *}
+         * will be printed as:
+         * {@snippet lang = text:
+         * 0000000000000000 54 68 65 20 71 75 69 63 6b 20 62 72 6f 77 6e 20 |The quick brown |
+         * 0000000000000010 66 6f 78 20 6a 75 6d 70 65 64 20 6f 76 65 72 20 |fox jumped over |
+         * 0000000000000020 74 68 65 20 6c 61 7a 79 20 64 6f 67 0a 53 65 63 |the lazy dog.Sec|
+         * 0000000000000030 6f 6e 64 20 6c 69 6e 65 09 3a 68 65 72 65 00    |ond line.:here._|
+         *}
+         *
+         * @param buffer to dump
+         * @return a Stream of string elements
+         */
+        Stream<String> dump(ByteBuffer buffer);
 
         /**
          * {@return a new builder that can be used to configure and create MemoryDumper instances.}
@@ -1672,7 +1686,7 @@ public final class HexFormat {
             if (fromIndex == 0) {
                 if (toIndex>bytes.length)
                     throw new IllegalArgumentException("fromIndex " + fromIndex + " is greater than the array length " + bytes.length);
-                return dump0(bytes, ba -> toIndex, (ba, index) -> ba[Math.toIntExact(index)]);
+                return dump0(bytes, ba -> toIndex, (ba, index) -> ba[(int) index]);
             }
             return dump0(MemorySegment.ofArray(bytes).asSlice(fromIndex, toIndex - fromIndex),
                     MemorySegment::byteSize,
@@ -1682,6 +1696,11 @@ public final class HexFormat {
         @Override
         public Stream<String> dump(MemorySegment segment) {
             return dump0(segment, MemorySegment::byteSize, memorySegmentByteExtractor());
+        }
+
+        @Override
+        public Stream<String> dump(ByteBuffer buffer) {
+            return dump0(buffer, ByteBuffer::remaining, (bb, index) -> bb.get(bb.position() + (int) (index)));
         }
 
         private <M> Stream<String> dump0(M memory,
