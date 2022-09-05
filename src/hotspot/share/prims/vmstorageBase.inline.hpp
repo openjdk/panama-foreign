@@ -52,13 +52,11 @@ public:
   constexpr static VMStorage reg_storage(RegType type, uint16_t segment_mask, uint32_t index) {
     assert(type != stack_type(), "can not be stack type");
     assert(type != INVALID_TYPE, "can not be invalid type");
-    VMStorage result(type, segment_mask, index);
-    return result;
+    return VMStorage(type, segment_mask, index);
   }
 
   constexpr static VMStorage stack_storage(uint16_t size, uint32_t offset) {
-    VMStorage result(stack_type(), size, offset);
-    return result;
+    return VMStorage(stack_type(), size, offset);
   }
 
   static VMStorage stack_storage(VMReg reg) {
