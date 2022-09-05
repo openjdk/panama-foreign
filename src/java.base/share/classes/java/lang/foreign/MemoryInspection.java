@@ -2,16 +2,20 @@ package java.lang.foreign;
 
 import jdk.internal.foreign.MemoryInspectionUtil;
 
+import java.nio.Buffer;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static jdk.internal.foreign.MemoryInspectionUtil.*;
 
 /**
- * Class that supports inspection of various memory abstractions such as memory of type
- * MemorySegment, ByteBuffer and byte arrays.
+ * Class that supports inspection of MemorySegments through MemoryLayouts.
  * <p>
- * The methods in this class are not thread safe.
+ * Memory abstractions such as ByteBuffers and byte arrays can be inspected via wrapping methods
+ * such as {@link MemorySegment#ofArray(byte[])} and {@link MemorySegment#ofBuffer(Buffer)}.
+ *
+ * @author Per Minborg
+ * @since 20
  */
 public final class MemoryInspection {
 
