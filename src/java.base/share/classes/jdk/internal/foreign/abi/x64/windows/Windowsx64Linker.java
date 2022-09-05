@@ -38,13 +38,17 @@ import java.util.function.Consumer;
  * ABI implementation based on Windows ABI AMD64 supplement v.0.99.6
  */
 public final class Windowsx64Linker extends AbstractLinker {
-    private static Windowsx64Linker instance;
 
     public static Windowsx64Linker getInstance() {
-        if (instance == null) {
-            instance = new Windowsx64Linker();
+        final class Holder {
+            private static final Windowsx64Linker INSTANCE = new Windowsx64Linker();
         }
-        return instance;
+
+        return Holder.INSTANCE;
+    }
+
+    private Windowsx64Linker() {
+        // Ensure there is only one instance
     }
 
     @Override

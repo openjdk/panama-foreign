@@ -168,9 +168,7 @@ public class DowncallLinker {
             for (int i = 0; i < args.length; i++) {
                 Object arg = args[i];
                 BindingInterpreter.unbox(arg, callingSequence.argumentBindings(i),
-                        (storage, type, value) -> {
-                            leafArgs[invData.argIndexMap.get(storage)] = value;
-                        }, unboxContext);
+                        (storage, type, value) -> leafArgs[invData.argIndexMap.get(storage)] = value, unboxContext);
             }
 
             // call leaf

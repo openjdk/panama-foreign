@@ -139,6 +139,25 @@ public class TestSegments {
         assertNotEquals(segment, segment2);
     }
 
+    @Test
+    public void testHashCodeOffHeap() {
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(100, session);
+            assertEquals(segment.hashCode(), segment.asReadOnly().hashCode());
+            assertEquals(segment.hashCode(), segment.asSlice(0, 100).hashCode());
+            assertEquals(segment.hashCode(), segment.asSlice(0, 90).hashCode());
+            assertEquals(segment.hashCode(), MemorySegment.ofAddress(segment.address(), 100, MemorySession.global()).hashCode());
+        }
+    }
+
+    @Test
+    public void testHashCodeOnHeap() {
+        MemorySegment segment = MemorySegment.ofArray(new byte[100]);
+        assertEquals(segment.hashCode(), segment.asReadOnly().hashCode());
+        assertEquals(segment.hashCode(), segment.asSlice(0, 100).hashCode());
+        assertEquals(segment.hashCode(), segment.asSlice(0, 90).hashCode());
+    }
+
     @Test(expectedExceptions = IndexOutOfBoundsException.class)
     public void testSmallSegmentMax() {
         long offset = (long)Integer.MAX_VALUE + (long)Integer.MAX_VALUE + 2L + 6L; // overflows to 6 when casted to int

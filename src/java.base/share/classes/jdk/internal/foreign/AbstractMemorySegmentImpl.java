@@ -54,8 +54,6 @@ import jdk.internal.util.ArraysSupport;
 import jdk.internal.util.Preconditions;
 import jdk.internal.vm.annotation.ForceInline;
 
-import static java.lang.foreign.ValueLayout.JAVA_BYTE;
-
 /**
  * This abstract class provides an immutable implementation for the {@code MemorySegment} interface. This class contains information
  * about the segment's spatial and temporal bounds; each memory segment implementation is associated with an owner thread which is set at creation time.
@@ -65,7 +63,9 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * are defined for each memory segment kind, see {@link NativeMemorySegmentImpl}, {@link HeapMemorySegmentImpl} and
  * {@link MappedMemorySegmentImpl}.
  */
-public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegment, SegmentAllocator, Scoped, BiFunction<String, List<Number>, RuntimeException> {
+public abstract sealed class AbstractMemorySegmentImpl
+        implements MemorySegment, SegmentAllocator, Scoped, BiFunction<String, List<Number>, RuntimeException>
+        permits HeapMemorySegmentImpl, NativeMemorySegmentImpl {
 
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
@@ -448,19 +448,15 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
     @Override
     public boolean equals(Object o) {
         return o instanceof AbstractMemorySegmentImpl that &&
-                array().equals(that.array()) &&
-                address() == that.address();
+                unsafeGetBase() == that.unsafeGetBase() &&
+                unsafeGetOffset() == that.unsafeGetOffset();
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
-                isNative(),
                 unsafeGetOffset(),
-                unsafeGetBase(),
-                length,
-                session
-        );
+                unsafeGetBase());
     }
 
     public static AbstractMemorySegmentImpl ofBuffer(Buffer bb) {

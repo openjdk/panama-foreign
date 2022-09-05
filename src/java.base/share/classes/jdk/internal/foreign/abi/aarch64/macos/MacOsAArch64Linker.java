@@ -41,13 +41,17 @@ import java.util.function.Consumer;
  * changes to va_list and passing arguments on the stack.
  */
 public final class MacOsAArch64Linker extends AbstractLinker {
-    private static MacOsAArch64Linker instance;
 
     public static MacOsAArch64Linker getInstance() {
-        if (instance == null) {
-            instance = new MacOsAArch64Linker();
+        final class Holder {
+            private static final MacOsAArch64Linker INSTANCE = new MacOsAArch64Linker();
         }
-        return instance;
+
+        return Holder.INSTANCE;
+    }
+
+    private MacOsAArch64Linker() {
+        // Ensure there is only one instance
     }
 
     @Override

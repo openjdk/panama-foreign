@@ -31,6 +31,7 @@ import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SequenceLayout;
+import java.lang.foreign.StructLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -123,7 +124,7 @@ public class LayoutPath {
                 l.name().get().equals(name)) {
                 elem = l;
                 break;
-            } else if (g.isStruct()) {
+            } else if (g instanceof StructLayout) {
                 offset += l.bitSize();
             }
         }

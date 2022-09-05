@@ -228,17 +228,27 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     }
 
     /**
-     * Creates a closeable confined memory session.
-     * @return a new closeable confined memory session.
+     * Creates a new closeable, thread-confined memory session.
+     * <p>
+     * The returned memory session is confined to the current thread.
+     * <p>
+     * The returned memory session <em>must</em> eventually be {@linkplain #close() closed}
+     * to prevent memory leaks.
+     *
+     * @return a new closeable, thread-confined memory session
      */
     static MemorySession openConfined() {
         return MemorySessionImpl.createConfined(Thread.currentThread(), null);
     }
 
     /**
-     * Creates a closeable confined memory session, managed by the provided cleaner instance.
-     * @param cleaner the cleaner to be associated with the returned memory session.
-     * @return a new closeable confined memory session, managed by {@code cleaner}.
+     * Creates a new closeable, thread-confined memory session, managed by
+     * the provided {@code cleaner}.
+     * <p>
+     * The returned memory session is confined to the current thread.
+     *
+     * @param cleaner the cleaner to be associated with the returned memory session
+     * @return a new closeable thread-confined memory session, managed by the provided {@code cleaner}
      */
     static MemorySession openConfined(Cleaner cleaner) {
         Objects.requireNonNull(cleaner);
@@ -246,17 +256,30 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     }
 
     /**
-     * Creates a closeable shared memory session.
-     * @return a new closeable shared memory session.
+     * Creates a new closeable memory session that can be shared across threads.
+     * <p>
+     * The returned memory session can be used by any thread. Users are responsible for
+     * assuring thread-safety across threads that use objects associated with this memory session.
+     * <p>
+     * The returned memory session <em>must</em> eventually be {@linkplain #close() closed}
+     * to prevent memory leaks.
+     *
+     * @return a new closeable memory session that can be shared across threads
      */
     static MemorySession openShared() {
         return MemorySessionImpl.createShared(null);
     }
 
     /**
-     * Creates a closeable shared memory session, managed by the provided cleaner instance.
-     * @param cleaner the cleaner to be associated with the returned memory session.
-     * @return a new closeable shared memory session, managed by {@code cleaner}.
+     * Creates a new closeable memory session that can be shared across threads,
+     * managed by the provided {@code cleaner}.
+     * <p>
+     * The returned memory session can be used by any thread. Users are responsible for
+     * assuring thread-safety across threads that use objects associated with this memory session.
+     *
+     * @param cleaner the cleaner to be associated with the returned memory session
+     * @return a new closeable memory session that can be shared across threads, managed
+     * by the provided {@code cleaner}
      */
     static MemorySession openShared(Cleaner cleaner) {
         Objects.requireNonNull(cleaner);
@@ -264,20 +287,23 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     }
 
     /**
-     * Creates a non-closeable shared memory session, managed by a private {@link Cleaner} instance.
-     * Equivalent to (but likely more efficient than) the following code:
+     * Creates a new non-closeable memory session that can be shared across threads,
+     * manage by a private {@link Cleaner} instance.
+     * <p>
+     * This is equivalent to (but likely more efficient than) the following code:
      * {@snippet lang=java :
      * openShared(Cleaner.create()).asNonCloseable();
      * }
-     * @return a non-closeable shared memory session, managed by a private {@link Cleaner} instance.
+     *
+     * @return a new closeable memory session that can be shared across threads, managed
+     * by a private {@link Cleaner} instance
      */
     static MemorySession openImplicit() {
         return MemorySessionImpl.createImplicit();
     }
 
     /**
-     * Returns the global memory session.
-     * @return the global memory session.
+     * {@return the global memory session}
      */
     static MemorySession global() {
         return MemorySessionImpl.GLOBAL;

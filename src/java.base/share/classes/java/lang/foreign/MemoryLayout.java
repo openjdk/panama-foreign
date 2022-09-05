@@ -35,11 +35,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jdk.internal.foreign.LayoutPath;
 import jdk.internal.foreign.LayoutPath.PathElementImpl.PathKind;
 import jdk.internal.foreign.Utils;
+import jdk.internal.foreign.layout.*;
 import jdk.internal.javac.PreviewFeature;
 
 /**
@@ -165,7 +165,7 @@ import jdk.internal.javac.PreviewFeature;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, GroupLayout, PaddingLayout, ValueLayout {
+public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, PaddingLayout, ValueLayout {
 
     /**
      * {@return the layout size, in bits}
@@ -185,7 +185,7 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
     Optional<String> name();
 
     /**
-     * Returns a memory layout with the same size and alignment constraints as this layout,
+     * Returns a memory layout of the same type with the same size and alignment constraints as this layout,
      * but with the specified name.
      *
      * @param name the layout name.
@@ -235,7 +235,7 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
     }
 
     /**
-     * Returns a memory layout with the same size and name as this layout,
+     * Returns a memory layout of the same type with the same size and name as this layout,
      * but with the specified alignment constraints (in bits).
      *
      * @param bitAlignment the layout alignment constraint, expressed in bits.
@@ -458,11 +458,6 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
     }
 
     /**
-     * {@return true, if this layout is a padding layout}
-     */
-    boolean isPadding();
-
-    /**
      * An element in a <a href="MemoryLayout.html#layout-paths"><em>layout path</em></a>. There
      * are two kinds of path elements: <em>group path elements</em> and <em>sequence path elements</em>. Group
      * path elements are used to select a named member layout within a {@link GroupLayout}. Sequence
@@ -587,8 +582,8 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
      *     and {@linkplain ValueLayout#carrier() carrier}</li>
      *     <li>two sequence layouts are considered equal if they have the same element count (see {@link SequenceLayout#elementCount()}), and
      *     if their element layouts (see {@link SequenceLayout#elementLayout()}) are also equal</li>
-     *     <li>two group layouts are considered equal if they are of the same kind (see {@link GroupLayout#isStruct()},
-     *     {@link GroupLayout#isUnion()}) and if their member layouts (see {@link GroupLayout#memberLayouts()}) are also equal</li>
+     *     <li>two group layouts are considered equal if they are of the same type (see {@link StructLayout},
+     *     {@link UnionLayout}) and if their member layouts (see {@link GroupLayout#memberLayouts()}) are also equal</li>
      * </ul>
      *
      * @param other the object to be compared for equality with this layout.
@@ -614,9 +609,9 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
      * @return the new selector layout.
      * @throws IllegalArgumentException if {@code size <= 0}.
      */
-    static MemoryLayout paddingLayout(long size) {
-        AbstractLayout.checkSize(size);
-        return new PaddingLayout(size);
+    static PaddingLayout paddingLayout(long size) {
+        MemoryLayoutUtil.checkSize(size);
+        return PaddingLayoutImpl.of(size);
     }
 
     /**
@@ -642,54 +637,58 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
         Objects.requireNonNull(carrier);
         Objects.requireNonNull(order);
         if (carrier == boolean.class) {
-            return new ValueLayout.OfBoolean(order);
+            return ValueLayouts.OfBooleanImpl.of(order);
         } else if (carrier == char.class) {
-            return new ValueLayout.OfChar(order);
+            return ValueLayouts.OfCharImpl.of(order);
         } else if (carrier == byte.class) {
-            return new ValueLayout.OfByte(order);
+            return ValueLayouts.OfByteImpl.of(order);
         } else if (carrier == short.class) {
-            return new ValueLayout.OfShort(order);
+            return ValueLayouts.OfShortImpl.of(order);
         } else if (carrier == int.class) {
-            return new ValueLayout.OfInt(order);
+            return ValueLayouts.OfIntImpl.of(order);
         } else if (carrier == float.class) {
-            return new ValueLayout.OfFloat(order);
+            return ValueLayouts.OfFloatImpl.of(order);
         } else if (carrier == long.class) {
-            return new ValueLayout.OfLong(order);
+            return ValueLayouts.OfLongImpl.of(order);
         } else if (carrier == double.class) {
-            return new ValueLayout.OfDouble(order);
+            return ValueLayouts.OfDoubleImpl.of(order);
         } else if (carrier == MemorySegment.class) {
-            return new ValueLayout.OfAddress(order);
+            return ValueLayouts.OfAddressImpl.of(order);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + carrier.getName());
         }
     }
 
     /**
-     * Creates a sequence layout with the given element layout and element count. If the element count has the
-     * special value {@code -1}, the element count is inferred to be the biggest possible count such that
-     * the sequence layout size does not overflow, using the following formula:
+     * Creates a sequence layout with the given element layout and element count.
      *
-     * <blockquote><pre>{@code
-     * inferredElementCount = Long.MAX_VALUE / elementLayout.bitSize();
-     * }</pre></blockquote>
-     *
-     * @param elementCount the sequence element count; if set to {@code -1}, the sequence element count is inferred.
+     * @param elementCount the sequence element count.
      * @param elementLayout the sequence element layout.
      * @return the new sequence layout with the given element layout and size.
-     * @throws IllegalArgumentException if {@code elementCount < -1}.
-     * @throws IllegalArgumentException if {@code elementCount != -1} and the computation {@code elementCount * elementLayout.bitSize()} overflows.
+     * @throws IllegalArgumentException if {@code elementCount } is negative.
      */
     static SequenceLayout sequenceLayout(long elementCount, MemoryLayout elementLayout) {
-        if (elementCount == -1) {
-            // inferred element count
-            long inferredElementCount = Long.MAX_VALUE / elementLayout.bitSize();
-            return new SequenceLayout(inferredElementCount, elementLayout);
-        } else {
-            // explicit element count
-            AbstractLayout.checkSize(elementCount, true);
-            return wrapOverflow(() ->
-                    new SequenceLayout(elementCount, Objects.requireNonNull(elementLayout)));
-        }
+        MemoryLayoutUtil.checkSize(elementCount, true);
+        Objects.requireNonNull(elementLayout);
+        return wrapOverflow(() ->
+                SequenceLayoutImpl.of(elementCount, elementLayout));
+    }
+
+    /**
+     * Creates a sequence layout with the given element layout and the maximum element
+     * count such that it does not overflow a {@code long}.
+     *
+     * This is equivalent to the following code:
+     * {@snippet lang = java:
+     * sequenceLayout(Long.MAX_VALUE / elementLayout.bitSize(), elementLayout);
+     * }
+     *
+     * @param elementLayout the sequence element layout.
+     * @return a new sequence layout with the given element layout and maximum element count.
+     */
+    static SequenceLayout sequenceLayout(MemoryLayout elementLayout) {
+        Objects.requireNonNull(elementLayout);
+        return sequenceLayout(Long.MAX_VALUE / elementLayout.bitSize(), elementLayout);
     }
 
     /**
@@ -700,13 +699,12 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
      * @throws IllegalArgumentException if the sum of the {@linkplain #bitSize() bit sizes} of the member layouts
      * overflows.
      */
-    static GroupLayout structLayout(MemoryLayout... elements) {
+    static StructLayout structLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
         return wrapOverflow(() ->
-                new GroupLayout(GroupLayout.Kind.STRUCT,
-                        Stream.of(elements)
-                                .map(Objects::requireNonNull)
-                                .collect(Collectors.toList())));
+                StructLayoutImpl.of(Stream.of(elements)
+                        .map(Objects::requireNonNull)
+                        .toList()));
     }
 
     /**
@@ -715,12 +713,11 @@ public sealed interface MemoryLayout permits AbstractLayout, SequenceLayout, Gro
      * @param elements The member layouts of the union layout.
      * @return a union layout with the given member layouts.
      */
-    static GroupLayout unionLayout(MemoryLayout... elements) {
+    static UnionLayout unionLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
-        return new GroupLayout(GroupLayout.Kind.UNION,
-                Stream.of(elements)
-                        .map(Objects::requireNonNull)
-                        .collect(Collectors.toList()));
+        return UnionLayoutImpl.of(Stream.of(elements)
+                .map(Objects::requireNonNull)
+                .toList());
     }
 
     private static <L extends MemoryLayout> L wrapOverflow(Supplier<L> layoutSupplier) {
