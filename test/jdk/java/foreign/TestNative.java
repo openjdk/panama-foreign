@@ -145,7 +145,7 @@ public class TestNative extends NativeTestHelper {
     @Test(dataProvider="nativeAccessOps")
     public void testNativeAccess(Consumer<MemorySegment> checker, Consumer<MemorySegment> initializer, SequenceLayout seq) {
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = MemorySegment.allocateNative(seq, session);
+            MemorySegment segment = session.allocate(seq);
             initializer.accept(segment);
             checker.accept(segment);
         }
@@ -155,7 +155,7 @@ public class TestNative extends NativeTestHelper {
     public void testNativeCapacity(Function<ByteBuffer, Buffer> bufferFunction, int elemSize) {
         int capacity = (int)doubles.byteSize();
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = MemorySegment.allocateNative(doubles, session);
+            MemorySegment segment = session.allocate(doubles);
             ByteBuffer bb = segment.asByteBuffer();
             Buffer buf = bufferFunction.apply(bb);
             int expected = capacity / elemSize;
@@ -198,7 +198,7 @@ public class TestNative extends NativeTestHelper {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadResize() {
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = MemorySegment.allocateNative(4, 1, session);
+            MemorySegment segment = session.allocate(4, 1);
             MemorySegment.ofAddress(segment.address(), -1, MemorySession.global());
         }
     }

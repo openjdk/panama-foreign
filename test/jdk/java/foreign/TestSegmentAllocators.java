@@ -202,7 +202,7 @@ public class TestSegmentAllocators {
         SegmentAllocator allocator = new SegmentAllocator() {
             @Override
             public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-                return MemorySegment.allocateNative(bytesSize, bytesAlignment, MemorySession.openImplicit());
+                return MemorySession.openImplicit().allocate(bytesSize, bytesAlignment);
             }
 
             @Override
@@ -499,7 +499,7 @@ public class TestSegmentAllocators {
         return new Object[][] {
                 { SegmentAllocator.implicitAllocator() },
                 { SegmentAllocator.newNativeArena(MemorySession.global()) },
-                { SegmentAllocator.prefixAllocator(MemorySegment.allocateNative(10, MemorySession.global())) },
+                { SegmentAllocator.prefixAllocator(MemorySession.global().allocate(10)) },
         };
     }
 }

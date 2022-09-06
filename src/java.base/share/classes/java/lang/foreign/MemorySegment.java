@@ -62,7 +62,7 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  *
  * There are many kinds of memory segments:
  * <ul>
- *     <li>{@linkplain MemorySegment#allocateNative(long, long, MemorySession) native memory segments}, backed by off-heap memory;</li>
+ *     <li>{@linkplain MemorySegment#allocateNative(long, long) native memory segments}, backed by off-heap memory;</li>
  *     <li>{@linkplain FileChannel#map(FileChannel.MapMode, long, long, MemorySession) mapped memory segments}, obtained by mapping
  * a file into main memory ({@code mmap}); the contents of a mapped memory segments can be {@linkplain #force() persisted} and
  * {@linkplain #load() loaded} to and from the underlying memory-mapped file;</li>
@@ -358,7 +358,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Returns {@code true} if this segment is a native segment. A native memory segment is
-     * created using the {@link #allocateNative(long, MemorySession)} (and related) factory, or a buffer segment
+     * created using the {@link #allocateNative(long)} (and related) factory, or a buffer segment
      * derived from a {@linkplain ByteBuffer#allocateDirect(int) direct byte buffer} using the {@link #ofBuffer(Buffer)} factory,
      * or if this is a {@linkplain #isMapped() mapped} segment.
      * @return {@code true} if this segment is native segment.
@@ -950,75 +950,82 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Creates a native memory segment with the given layout and memory session.
-     * A client is responsible for ensuring that the memory session associated with the returned segment is closed
-     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
+     * Creates a native memory segment with the given layout.
+     * <p>
+     * The memory segment is automatically freed some unspecified time after it is no longer referenced.
+     * If a memory segment needs to be deterministically freed, use an appropriate memory session from which
+     * {@linkplain MemorySession#allocate(MemoryLayout) allocation} can be made instead.
      * <p>
      * This is equivalent to the following code:
      * {@snippet lang=java :
-     * allocateNative(layout.bytesSize(), layout.bytesAlignment(), session);
+     * MemorySession.openImplicit()
+     *         .allocate(layout.bytesSize(), layout.bytesAlignment());
      * }
      * <p>
      * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      *
      * @param layout the layout of the off-heap memory block backing the native memory segment.
-     * @param session the segment memory session.
      * @return a new native memory segment.
-     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread other than the thread
-     * {@linkplain MemorySession#ownerThread() owning} {@code session}.
+     * @see MemorySession#allocate(MemoryLayout)
      */
-    static MemorySegment allocateNative(MemoryLayout layout, MemorySession session) {
-        Objects.requireNonNull(session);
+    static MemorySegment allocateNative(MemoryLayout layout) {
         Objects.requireNonNull(layout);
-        return allocateNative(layout.byteSize(), layout.byteAlignment(), session);
+        return allocateNative(layout.byteSize(), layout.byteAlignment());
     }
 
     /**
-     * Creates a native memory segment with the given size (in bytes) and memory session.
-     * A client is responsible for ensuring that the memory session associated with the returned segment is closed
-     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
+     * Creates a native memory segment with the given size (in bytes).
+     * <p>
+     * The memory segment is automatically freed some unspecified time after it is no longer referenced.
+     * If a memory segment needs to be deterministically freed, use an appropriate memory session from which
+     * {@linkplain MemorySession#allocate(long) allocation } can be made instead.
      * <p>
      * This is equivalent to the following code:
      * {@snippet lang=java :
-     * allocateNative(bytesSize, 1, session);
+     * MemorySession.openImplicit()
+     *     .allocate(bytesSize, 1)
+     * }
+     * <p>
+     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     * <p>
+     * This method corresponds to the {@link ByteBuffer#allocateDirect(int)} method and has similar behavior.
+     *
+     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
+     * @return a new native memory segment.
+     * @throws IllegalArgumentException if {@code bytesSize < 0}.
+     * @see ByteBuffer#allocateDirect(int)
+     * @see MemorySession#allocate(long) 
+     */
+    static MemorySegment allocateNative(long bytesSize) {
+        return allocateNative(bytesSize, 1L);
+    }
+
+    /**
+     * Creates a native memory segment with the given size (in bytes) and alignment (in bytes).
+     * <p>
+     * The memory segment is automatically freed some unspecified time after it is no longer referenced.
+     * If a memory segment needs to be deterministically freed, use an appropriate memory session from which
+     * {@linkplain MemorySession#allocate(long, long) allocation} can be made instead.
+     * <p>
+     * This is equivalent to the following code:
+     * {@snippet lang=java :
+     * MemorySession.openImplicit()
+     *     .allocate(bytesSize, byteAlignment)
      * }
      * <p>
      * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
-     * @param session the segment temporal bounds.
-     * @return a new native memory segment.
-     * @throws IllegalArgumentException if {@code bytesSize < 0}.
-     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread other than the thread
-     * {@linkplain MemorySession#ownerThread() owning} {@code session}.
-     */
-    static MemorySegment allocateNative(long bytesSize, MemorySession session) {
-        return allocateNative(bytesSize, 1, session);
-    }
-
-    /**
-     * Creates a native memory segment with the given size (in bytes), alignment constraint (in bytes) and memory session.
-     * A client is responsible for ensuring that the memory session associated with the returned segment is closed when the
-     * segment is no longer in use. Failure to do so will result in off-heap memory leaks.
-     * <p>
-     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
-     *
-     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
-     * @param alignmentBytes the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
-     * @param session the segment memory session.
+     * @param byteAlignment the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
      * @return a new native memory segment.
      * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
      * is not a power of 2.
-     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread other than the thread
-     * {@linkplain MemorySession#ownerThread() owning} {@code session}.
+     * @see MemorySession#allocate(long, long) 
      */
-    static MemorySegment allocateNative(long bytesSize, long alignmentBytes, MemorySession session) {
-        Objects.requireNonNull(session);
-        Utils.checkAllocationSizeAndAlign(bytesSize, alignmentBytes);
-        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, alignmentBytes, session);
+    static MemorySegment allocateNative(long bytesSize, long byteAlignment) {
+        Utils.checkAllocationSizeAndAlign(bytesSize, byteAlignment);
+        return MemorySession.openImplicit()
+                .allocate(bytesSize, byteAlignment);
     }
 
     /**

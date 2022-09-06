@@ -66,7 +66,7 @@ public class LoopOverNonConstant extends JavaLayouts {
         for (int i = 0; i < ELEM_SIZE; i++) {
             unsafe.putInt(unsafe_addr + (i * CARRIER_SIZE) , i);
         }
-        segment = MemorySegment.allocateNative(ALLOC_SIZE, MemorySession.openConfined());
+        segment = MemorySession.openConfined().allocate(ALLOC_SIZE);
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_INT.set(segment, (long) i, i);
         }

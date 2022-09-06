@@ -29,6 +29,8 @@ import java.lang.ref.Cleaner;
 import java.util.Objects;
 
 import jdk.internal.foreign.MemorySessionImpl;
+import jdk.internal.foreign.NativeMemorySegmentImpl;
+import jdk.internal.foreign.Utils;
 import jdk.internal.javac.PreviewFeature;
 
 /**
@@ -44,7 +46,7 @@ import jdk.internal.javac.PreviewFeature;
  * can be used to specify the cleanup code that must run when a given resource (or set of resources) is no longer in use.
  * When a memory session is closed, the {@linkplain #addCloseAction(Runnable) close actions}
  * associated with that session are executed (in unspecified order). For instance, closing the memory session associated with
- * one or more {@linkplain MemorySegment#allocateNative(long, long, MemorySession) native memory segments} results in releasing
+ * one or more {@linkplain MemorySession#allocate(long, long) native memory segments} results in releasing
  * the off-heap memory associated with said segments.
  * <p>
  * The {@linkplain #global() global session} is a memory session that cannot be closed.
@@ -76,8 +78,8 @@ import jdk.internal.javac.PreviewFeature;
  *
  * {@snippet lang=java :
  * try (MemorySession session = MemorySession.openConfined()) {
- *    MemorySegment segment1 = MemorySegment.allocateNative(100);
- *    MemorySegment segment1 = MemorySegment.allocateNative(200);
+ *    MemorySegment segment1 = session.allocate(100);
+ *    MemorySegment segment1 = session.allocate(200);
  *    ...
  * } // all memory released here
  * }
@@ -211,20 +213,27 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     @Override
     int hashCode();
 
-    /**
-     * Allocates a native segment, using this session. Equivalent to the following code:
-     * {@snippet lang=java :
-     * MemorySegment.allocateNative(size, align, this);
-     * }
+     /**
+     * Creates a native memory segment with the given size (in bytes), alignment constraint (in bytes) associated with
+      * this memory session.
+     * A client is responsible for ensuring that this memory session is closed when the
+     * segment is no longer in use. Failure to do so will result in off-heap memory leaks.
+     * <p>
+     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      *
-     * @throws IllegalStateException if this memory session is not {@linkplain #isAlive() alive}.
+     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param bytesAlignment the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
+     * @return a new native memory segment.
+     * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
+     * is not a power of 2.
+     * @throws IllegalStateException if this session is not {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread
-     * {@linkplain #ownerThread() owning} this memory session.
-     * @return a new native segment, associated with this session.
+     * {@linkplain MemorySession#ownerThread() owning} this session.
      */
     @Override
     default MemorySegment allocate(long bytesSize, long bytesAlignment) {
-        return MemorySegment.allocateNative(bytesSize, bytesAlignment, this);
+        Utils.checkAllocationSizeAndAlign(bytesSize, bytesAlignment);
+        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, bytesAlignment, this);
     }
 
     /**

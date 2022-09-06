@@ -73,8 +73,8 @@ public class TestVarArgs extends CallGeneratorHelper {
         try (MemorySession session = MemorySession.openConfined()) {
             MethodHandle checker = MethodHandles.insertArguments(MH_CHECK, 2, args);
             MemorySegment writeBack = LINKER.upcallStub(checker, FunctionDescriptor.ofVoid(C_INT, C_POINTER), session);
-            MemorySegment callInfo = MemorySegment.allocateNative(CallInfo.LAYOUT, session);
-            MemorySegment argIDs = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(args.size(), C_INT), session);
+            MemorySegment callInfo = session.allocate(CallInfo.LAYOUT);
+            MemorySegment argIDs = session.allocate(MemoryLayout.sequenceLayout(args.size(), C_INT));
 
             MemorySegment callInfoPtr = callInfo;
 

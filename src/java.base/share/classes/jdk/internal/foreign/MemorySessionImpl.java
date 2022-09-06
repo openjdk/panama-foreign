@@ -134,7 +134,8 @@ public abstract sealed class MemorySessionImpl
 
     @Override
     public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-        return MemorySegment.allocateNative(bytesSize, bytesAlignment, this);
+        Utils.checkAllocationSizeAndAlign(bytesSize, bytesAlignment);
+        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, bytesAlignment, this);
     }
 
     public abstract void release0();
