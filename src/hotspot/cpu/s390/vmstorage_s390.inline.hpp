@@ -21,8 +21,8 @@
  * questions.
  */
 
-#ifndef SHARE_PRIMS_VMSTORAGE_S390
-#define SHARE_PRIMS_VMSTORAGE_S390
+#ifndef CPU_S390_VMSTORAGE_S390_INLINE_HPP
+#define CPU_S390_VMSTORAGE_S390_INLINE_HPP
 
 #include <cstdint>
 
@@ -42,4 +42,4 @@ inline VMStorage as_VMStorage(VMReg reg) {
   return VMStorage::invalid();
 }
 
-#endif // SHARE_PRIMS_VMSTORAGE_S390
+#endif // CPU_S390_VMSTORAGE_S390_INLINE_HPP

@@ -21,8 +21,8 @@
  * questions.
  */
 
-#ifndef SHARE_PRIMS_VMSTORAGE_RISCV
-#define SHARE_PRIMS_VMSTORAGE_RISCV
+#ifndef CPU_RISCV_VMSTORAGE_RISCV_INLINE_HPP
+#define CPU_RISCV_VMSTORAGE_RISCV_INLINE_HPP
 
 #include <cstdint>
 
@@ -42,4 +42,4 @@ inline VMStorage as_VMStorage(VMReg reg) {
   return VMStorage::invalid();
 }
 
-#endif // SHARE_PRIMS_VMSTORAGE_RISCV
+#endif // CPU_RISCV_VMSTORAGE_RISCV_INLINE_HPP

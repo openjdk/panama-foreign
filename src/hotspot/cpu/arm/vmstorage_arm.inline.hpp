@@ -21,8 +21,8 @@
  * questions.
  */
 
-#ifndef SHARE_PRIMS_VMSTORAGE_ARM
-#define SHARE_PRIMS_VMSTORAGE_ARM
+#ifndef CPU_ARM_VMSTORAGE_ARM_INLINE_HPP
+#define CPU_ARM_VMSTORAGE_ARM_INLINE_HPP
 
 #include <cstdint>
 
@@ -42,4 +42,4 @@ inline VMStorage as_VMStorage(VMReg reg) {
   return VMStorage::invalid();
 }
 
-#endif // SHARE_PRIMS_VMSTORAGE_ARM
+#endif // CPU_ARM_VMSTORAGE_ARM_INLINE_HPP

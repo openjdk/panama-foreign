@@ -21,8 +21,8 @@
  * questions.
  */
 
-#ifndef SHARE_PRIMS_VMSTORAGE_AARCH64
-#define SHARE_PRIMS_VMSTORAGE_AARCH64
+#ifndef CPU_AARCH64_VMSTORAGE_AARCH64_INLINE_HPP
+#define CPU_AARCH64_VMSTORAGE_AARCH64_INLINE_HPP
 
 #include <cstdint>
 
@@ -80,4 +80,4 @@ inline VMStorage as_VMStorage(VMReg reg) {
   return VMStorage::invalid();
 }
 
-#endif // SHARE_PRIMS_VMSTORAGE_AARCH64
+#endif // CPU_AARCH64_VMSTORAGE_AARCH64_INLINE_HPP

@@ -21,8 +21,8 @@
  * questions.
  */
 
-#ifndef SHARE_PRIMS_VMSTORAGE_ZERO
-#define SHARE_PRIMS_VMSTORAGE_ZERO
+#ifndef CPU_ZERO_VMSTORAGE_ZERO_INLINE_HPP
+#define CPU_ZERO_VMSTORAGE_ZERO_INLINE_HPP
 
 #include <cstdint>
 
@@ -43,4 +43,4 @@ inline VMStorage as_VMStorage(VMReg reg) {
 }
 
 
-#endif // SHARE_PRIMS_VMSTORAGE_ZERO
+#endif // CPU_ZERO_VMSTORAGE_ZERO_INLINE_HPP

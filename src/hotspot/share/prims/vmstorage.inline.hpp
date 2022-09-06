@@ -21,11 +21,11 @@
  * questions.
  */
 
-#ifndef SHARE_PRIMS_VMSTORAGE
-#define SHARE_PRIMS_VMSTORAGE
+#ifndef SHARE_PRIMS_VMSTORAGE_INLINE_HPP
+#define SHARE_PRIMS_VMSTORAGE_INLINE_HPP
 
 #include "utilities/macros.hpp"
 
 #include CPU_HEADER_INLINE(vmstorage)
 
-#endif // SHARE_PRIMS_VMSTORAGE
+#endif // SHARE_PRIMS_VMSTORAGE_INLINE_HPP

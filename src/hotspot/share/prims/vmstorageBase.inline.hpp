@@ -21,8 +21,8 @@
  * questions.
  */
 
-#ifndef SHARE_PRIMS_VMSTORAGEBASE
-#define SHARE_PRIMS_VMSTORAGEBASE
+#ifndef SHARE_PRIMS_VMSTORAGEBASE_INLINE_HPP
+#define SHARE_PRIMS_VMSTORAGEBASE_INLINE_HPP
 
 // DO NOT INCLUDE THIS FILE. INCLUDE vmstorage.inline.hpp INSTEAD
 
@@ -92,4 +92,4 @@ inline bool operator==(const VMStorage& a, const VMStorage& b) {
     && a._segment_mask_or_size == b._segment_mask_or_size;
 }
 
-#endif // SHARE_PRIMS_VMSTORAGEBASE
+#endif // SHARE_PRIMS_VMSTORAGEBASE_INLINE_HPP
