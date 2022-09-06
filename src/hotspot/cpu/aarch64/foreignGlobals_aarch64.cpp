@@ -97,7 +97,7 @@ void RegSpiller::pd_load_reg(MacroAssembler* masm, int offset, VMStorage reg) {
   }
 }
 
-constexpr int RFP_BIAS = 16; // skip old rfp and lr
+static constexpr int RFP_BIAS = 16; // skip old rfp and lr
 
 static void move_reg64(MacroAssembler* masm, int out_stk_bias,
                        Register from_reg, VMStorage to_reg) {

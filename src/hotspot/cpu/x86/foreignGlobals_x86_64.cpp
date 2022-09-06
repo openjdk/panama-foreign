@@ -96,7 +96,7 @@ void RegSpiller::pd_load_reg(MacroAssembler* masm, int offset, VMStorage reg) {
   }
 }
 
-constexpr int RBP_BIAS = 16; // skip old rbp and return address
+static constexpr int RBP_BIAS = 16; // skip old rbp and return address
 
 static void move_reg64(MacroAssembler* masm, int out_stk_bias,
                        Register from_reg, VMStorage to_reg) {
