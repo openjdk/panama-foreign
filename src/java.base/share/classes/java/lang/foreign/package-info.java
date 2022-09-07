@@ -110,11 +110,11 @@
  * For example, to compute the length of a string using the C standard library function {@code strlen} on a Linux x64 platform,
  * we can use the following code:
  *
- * {@snippet lang=java :
+ * {@snippet lang = java:
  * Linker linker = Linker.nativeLinker();
  * SymbolLookup stdlib = linker.defaultLookup();
  * MethodHandle strlen = linker.downcallHandle(
- *     stdlib.lookup("strlen").get(),
+ *     stdlib.find("strlen").get(),
  *     FunctionDescriptor.of(ValueLayout.JAVA_LONG, ValueLayout.ADDRESS)
  * );
  *
@@ -123,10 +123,10 @@
  *     cString.setUtf8String(0, "Hello");
  *     long len = (long)strlen.invoke(cString); // 5
  * }
- * }
+ *}
  *
  * Here, we obtain a {@linkplain java.lang.foreign.Linker#nativeLinker() native linker} and we use it
- * to {@linkplain java.lang.foreign.SymbolLookup#lookup(java.lang.String) look up} the {@code strlen} symbol in the
+ * to {@linkplain java.lang.foreign.SymbolLookup#find(java.lang.String) look up} the {@code strlen} symbol in the
  * standard C library; a <em>downcall method handle</em> targeting said symbol is subsequently
  * {@linkplain java.lang.foreign.Linker#downcallHandle(java.lang.foreign.FunctionDescriptor) obtained}.
  * To complete the linking successfully, we must provide a {@link java.lang.foreign.FunctionDescriptor} instance,

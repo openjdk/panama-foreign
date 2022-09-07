@@ -32,6 +32,6 @@ public class Lookup {
     }
 
     public static MemorySegment fooSymbol() {
-        return SymbolLookup.loaderLookup().lookup("foo").get();
+        return SymbolLookup.loaderLookup().find("foo").get();
     }
 }

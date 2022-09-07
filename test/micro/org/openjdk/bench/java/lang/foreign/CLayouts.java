@@ -71,10 +71,10 @@ public class CLayouts {
     private static Linker LINKER = Linker.nativeLinker();
 
     private static final MethodHandle FREE = LINKER.downcallHandle(
-            LINKER.defaultLookup().lookup("free").get(), FunctionDescriptor.ofVoid(ValueLayout.ADDRESS));
+            LINKER.defaultLookup().find("free").get(), FunctionDescriptor.ofVoid(ValueLayout.ADDRESS));
 
     private static final MethodHandle MALLOC = LINKER.downcallHandle(
-            LINKER.defaultLookup().lookup("malloc").get(), FunctionDescriptor.of(ValueLayout.ADDRESS.asUnbounded(), ValueLayout.JAVA_LONG));
+            LINKER.defaultLookup().find("malloc").get(), FunctionDescriptor.of(ValueLayout.ADDRESS.asUnbounded(), ValueLayout.JAVA_LONG));
 
     public static void freeMemory(MemorySegment address) {
         try {
