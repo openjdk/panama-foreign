@@ -1158,7 +1158,7 @@ public final class HexFormat {
     }
 
     /**
-     * A class providing various memory abstractions (such as MemorySegments and byte arrays) to be dumped into
+     * A class allowing various memory abstractions (such as MemorySegments and byte arrays) to be dumped into
      * various formats.
      *
      * @author Per Minborg
@@ -1167,21 +1167,23 @@ public final class HexFormat {
     public interface MemoryDumper {
 
         /**
-         * Returns a Stream of string elements with values for the provided {@code memory} byte array.
+         * Returns a Stream of string elements with values for the provided {@code bytes} array.
          * <p>
          * Each element in the stream depends on how this MemoryDumper was configured via its {@linkplain #builder()}.
          * <p>
          * As an example, an array created, initialized and used as follows
          * {@snippet lang = java:
          *   byte[] bytes = "The quick brown fox jumped over the lazy dog\nSecond line\t:here".getBytes(StandardCharsets.UTF_8);
-         *   MemoryDumper.builder()
+         *
+         *   MemoryDumper dumper = MemoryDumper.builder()
          *      .addIndexColumn()
          *      .addDataColumn()
          *      .withColumnPrefix("|")
          *      .withColumnSuffix("|")
          *      .addDataColumn(Builder.ColumnRenderer.ofAscii())
-         *      .build()
-         *      .dump(bytes)
+         *      .build();
+         *
+         *   dumper.dump(bytes)
          *      .forEach(System.out::println);
          *}
          * will be printed as:
@@ -1198,7 +1200,7 @@ public final class HexFormat {
         Stream<String> dump(byte[] bytes);
 
         /**
-         * Returns a Stream of string elements with values for the provided {@code memory} byte array staring
+         * Returns a Stream of string elements with values for the provided {@code bytes} array staring
          * at the provided {@code fromIndex} (inclusive) and ending at the provided {@code toIndex} (exclusive).
          * <p>
          * Each element in the stream depends on how this MemoryDumper was configured via its {@linkplain #builder()}.
@@ -1206,14 +1208,16 @@ public final class HexFormat {
          * As an example, an array created, initialized and used as follows
          * {@snippet lang = java:
          *   byte[] bytes = "The quick brown fox jumped over the lazy dog\nSecond line\t:here".getBytes(StandardCharsets.UTF_8);
-         *   MemoryDumper.builder()
+         *
+         *   MemoryDumper dumper = MemoryDumper.builder()
          *      .addIndexColumn()
          *      .addDataColumn()
          *      .withColumnPrefix("|")
          *      .withColumnSuffix("|")
          *      .addDataColumn(Builder.ColumnRenderer.ofAscii())
-         *      .build()
-         *      .dump(bytes, 0, 16)
+         *      .build();
+         *
+         *   dumper.dump(bytes, 0, 16)
          *      .forEach(System.out::println);
          *}
          * will be printed as:
@@ -1243,11 +1247,11 @@ public final class HexFormat {
          *            .addDataColumn(Builder.ColumnRenderer.ofAscii())
          *            .build();
          *
-         *    try (MemorySession session = MemorySession.openConfined()) {
-         *       MemorySegment segment = session.allocateUtf8String("The quick brown fox jumped over the lazy dog\nSecond line\t:here");
-         *      dumper.dump(bytes)
-         *          .forEach(System.out::println);
-         *    }
+         * try (MemorySession session = MemorySession.openConfined()) {
+         *     MemorySegment segment = session.allocateUtf8String("The quick brown fox jumped over the lazy dog\nSecond line\t:here");
+         *     dumper.dump(bytes)
+         *         .forEach(System.out::println);
+         * }
          *}
          * will be printed as:
          * {@snippet lang = text:
@@ -1261,7 +1265,6 @@ public final class HexFormat {
          * @return a Stream of string elements
          */
         Stream<String> dump(MemorySegment segment);
-
 
         /**
          * Returns a Stream of string elements with values for the provided {@code buffer}.
@@ -1308,11 +1311,11 @@ public final class HexFormat {
          * {@snippet lang = java:
          * MemoryDumper dumper = MemoryDumper.standard();
          *
-         *    try (MemorySession session = MemorySession.openConfined()) {
-         *       MemorySegment segment = session.allocateUtf8String("The quick brown fox jumped over the lazy dog\nSecond line\t:here");
-         *      dumper.dump(bytes)
-         *          .forEach(System.out::println);
-         *    }
+         * try (MemorySession session = MemorySession.openConfined()) {
+         *     MemorySegment segment = session.allocateUtf8String("The quick brown fox jumped over the lazy dog\nSecond line\t:here");
+         *     dumper.dump(bytes)
+         *         .forEach(System.out::println);
+         * }
          *}
          * will be printed as:
          * {@snippet lang = text:
@@ -1334,13 +1337,13 @@ public final class HexFormat {
         interface Builder {
 
             /**
-             * Configures the number of bytes per line in.
+             * Configures the number of bytes per line rendered per element in the output Stream.
              * <p>
              * Unless configured otherwise, the default number of bytes per line is 16.
              *
              * @param bytesPerLine the number of bytes per line (non-negative)
              * @return this Builder
-             * @throws IllegalArgumentException if the provided {@code bytes} are negative
+             * @throws IllegalArgumentException if the provided {@code bytesPerLine} is negative
              */
             Builder withBytesPerLine(int bytesPerLine);
 
@@ -1379,7 +1382,7 @@ public final class HexFormat {
             Builder withColumnDelimiter(String delimiter);
 
             /**
-             * Adds an index column with 8 bytes (64-bit) index with hexadecimal values formatted by
+             * Adds an index column with an 8-byte (64-bit) index with hexadecimal values formatted by
              * the default {@link HexFormat#of()} formatter.
              *
              * @return this Builder
@@ -1387,41 +1390,41 @@ public final class HexFormat {
             Builder addIndexColumn();
 
             /**
-             * Adds an index column with the provided {@code  bytes} index with hexadecimal values formatted by
+             * Adds an index column with the provided {@code indexBytes} index with hexadecimal values formatted by
              * the default {@link HexFormat#of()} formatter.
              *
-             * @param bytes the number of bytes to render in the index (in the range [1, 8])
+             * @param indexBytes the number of bytes to render in the index (in the range [1, 8])
              * @return this Builder
              * @throws IllegalArgumentException if the provided {@code bytes} is outside the range [1, 8]
              */
-            Builder addIndexColumn(int bytes);
+            Builder addIndexColumn(int indexBytes);
 
             /**
-             * Adds an index column with the provided {@code  bytes} index with hexadecimal values formatted by
+             * Adds an index column with the provided {@code indexBytes} index with hexadecimal values formatted by
              * the provided {@code formatter }.
              *
-             * @param bytes     the number of bytes to render in the index (in the range [1, 8])
-             * @param formatter the formatter to use for byte values in the index
+             * @param indexBytes the number of bytes to render in the index (in the range [1, 8])
+             * @param formatter  the formatter to use for byte values in the index
              * @return this Builder
              * @throws IllegalArgumentException if the provided {@code bytes} is outside the range [1, 8]
              * @throws NullPointerException     if the provided {@code formatter} is {@code null}
              */
-            Builder addIndexColumn(int bytes, HexFormat formatter);
+            Builder addIndexColumn(int indexBytes, HexFormat formatter);
 
             /**
-             * Adds an index column with the provided {@code  bytes} index with hexadecimal values formatted by
+             * Adds an index column with the provided {@code indexBytes} index with hexadecimal values formatted by
              * the provided {@code renderer }.
              * <p>
              * Indexes used by the provided {@code renderer} are counted as byte indexes with the index value itself
              * and runs from the provided {@code bytes - 1} to 0.
              *
-             * @param bytes    the number of bytes to render in the index (in the range [1, 8])
-             * @param renderer the renderer to use for byte values in the index
+             * @param indexBytes the number of bytes to render in the index (in the range [1, 8])
+             * @param renderer   the renderer to use for byte values in the index
              * @return this Builder
              * @throws IllegalArgumentException if the provided {@code bytes} is outside the range [1, 8]
              * @throws NullPointerException     if the provided {@code renderer} is {@code null}
              */
-            Builder addIndexColumn(int bytes, ColumnRenderer renderer);
+            Builder addIndexColumn(int indexBytes, ColumnRenderer renderer);
 
             /**
              * Adds a data column with hexadecimal values formatted by
@@ -1457,8 +1460,7 @@ public final class HexFormat {
             MemoryDumper build();
 
             /**
-             * Represents a function that accepts a long index and a byte value and produces a CharSequence such
-             * as a String.
+             * Represents a function that accepts a long index and a byte value and produces a String.
              *
              * @since 20
              */
@@ -1466,7 +1468,7 @@ public final class HexFormat {
             interface ColumnRenderer {
 
                 /**
-                 * {@return a rendering of the provided {@code bytes} with the provided {@code BytesPerLine} }
+                 * {@return a rendering of the provided {@code bytes} with the provided {@code bytesPerLine} }
                  * <p>
                  * Note: On the last line, chars may be padded using the ' ' character.
                  *
@@ -1586,23 +1588,23 @@ public final class HexFormat {
         }
 
         @Override
-        public MemoryDumper.Builder addIndexColumn(int bytes) {
-            requireBetweenClosed(1, 8, bytes);
-            return addIndexColumn(bytes, HexFormat.of());
+        public MemoryDumper.Builder addIndexColumn(int indexBytes) {
+            requireBetweenClosed(1, 8, indexBytes);
+            return addIndexColumn(indexBytes, HexFormat.of());
         }
 
         @Override
-        public MemoryDumper.Builder addIndexColumn(int bytes, HexFormat formatter) {
-            requireBetweenClosed(1, 8, bytes);
+        public MemoryDumper.Builder addIndexColumn(int indexBytes, HexFormat formatter) {
+            requireBetweenClosed(1, 8, indexBytes);
             requireNonNull(formatter);
-            return addIndexColumn(bytes, ColumnRenderer.of(formatter));
+            return addIndexColumn(indexBytes, ColumnRenderer.of(formatter));
         }
 
         @Override
-        public MemoryDumper.Builder addIndexColumn(int bytes, ColumnRenderer renderer) {
-            requireBetweenClosed(1, 8, bytes);
+        public MemoryDumper.Builder addIndexColumn(int indexBytes, ColumnRenderer renderer) {
+            requireBetweenClosed(1, 8, indexBytes);
             requireNonNull(renderer);
-            columns.add(new Column(ColumnType.INDEX, OptionalInt.of(bytes), columnPrefix, renderer, columnSuffix, columnDelimiter));
+            columns.add(new Column(ColumnType.INDEX, OptionalInt.of(indexBytes), columnPrefix, renderer, columnSuffix, columnDelimiter));
             return this;
         }
 
@@ -1666,7 +1668,6 @@ public final class HexFormat {
                 .addDataColumn(HexFormat.MemoryDumper.Builder.ColumnRenderer.ofAscii())
                 .build();
 
-
         private final int bytesPerLine;
         private final List<StandardMemoryDumperBuilder.Column> columns;
 
@@ -1710,7 +1711,7 @@ public final class HexFormat {
 
             final long lastIndex = byteSizeExtractor.applyAsLong(memory);
             final long lines = (lastIndex + bytesPerLine - 1) / bytesPerLine;
-            final var state = new DumpState<>(memory, lastIndex, byteExtractor, bytesPerLine, columns, lines);
+            final var state = new DumpState<>(memory, lastIndex, byteExtractor, bytesPerLine, columns);
             return LongStream.range(0, lines)
                     .mapToObj(state::lineMapper);
         }
@@ -1736,20 +1737,17 @@ public final class HexFormat {
         private final ByteExtractor<M> byteExtractor;
         private final int bytesPerLine;
         private final List<StandardMemoryDumperBuilder.Column> columns;
-        private final long lines;
 
         DumpState(M memory,
                   long lastIndex,
                   ByteExtractor<M> byteExtractor,
                   int bytesPerLine,
-                  List<StandardMemoryDumperBuilder.Column> columns,
-                  long lines) {
+                  List<StandardMemoryDumperBuilder.Column> columns) {
             this.memory = memory;
             this.lastIndex = lastIndex;
             this.byteExtractor = byteExtractor;
             this.bytesPerLine = bytesPerLine;
             this.columns = columns;
-            this.lines = lines;
         }
 
 
@@ -1795,10 +1793,6 @@ public final class HexFormat {
                 columnCount++;
             }
             return sb.toString();
-        }
-
-        long lastIndex() {
-            return lastIndex;
         }
 
         @FunctionalInterface
