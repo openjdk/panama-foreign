@@ -211,7 +211,7 @@
  *
  * As before, we need to create a {@link java.lang.foreign.FunctionDescriptor} instance, this time describing the signature
  * of the function pointer we want to create. The descriptor can be used to
- * {@linkplain java.lang.foreign.Linker#methodType(java.lang.foreign.FunctionDescriptor) derive} a method type
+ * {@linkplain java.lang.foreign.FunctionDescriptor#carrierMethodType() derive} a method type
  * that can be used to look up the method handle for {@code IntComparator.intCompare}.
  * <p>
  * Now that we have a method handle instance, we can turn it into a fresh function pointer,

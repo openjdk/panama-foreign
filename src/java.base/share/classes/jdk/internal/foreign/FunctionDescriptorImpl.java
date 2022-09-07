@@ -25,6 +25,7 @@
 package jdk.internal.foreign;
 
 import java.lang.foreign.*;
+import java.lang.invoke.MethodType;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -134,6 +135,26 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
      */
     public FunctionDescriptorImpl dropReturnLayout() {
         return new FunctionDescriptorImpl(null, argLayouts);
+    }
+
+    private static Class<?> carrierTypeFor(MemoryLayout layout) {
+        if (layout instanceof ValueLayout valueLayout) {
+            return valueLayout.carrier();
+        } else if (layout instanceof GroupLayout) {
+            return MemorySegment.class;
+        } else {
+            throw new IllegalArgumentException("Unsupported layout: " + layout);
+        }
+    }
+
+    @Override
+    public MethodType carrierMethodType() {
+        Class<?> returnValue = resLayout != null ? carrierTypeFor(resLayout) : void.class;
+        Class<?>[] argCarriers = new Class<?>[argLayouts.size()];
+        for (int i = 0; i < argCarriers.length; i++) {
+            argCarriers[i] = carrierTypeFor(argLayouts.get(i));
+        }
+        return MethodType.methodType(returnValue, argCarriers);
     }
 
     /**

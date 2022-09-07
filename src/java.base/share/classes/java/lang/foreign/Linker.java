@@ -67,7 +67,7 @@ import java.lang.invoke.MethodType;
  * when complete, a downcall method handle, that is, a method handle that can be used to invoke the target foreign function.
  * <p>
  * The Java {@linkplain java.lang.invoke.MethodType method type} associated with the returned method handle is
- * {@linkplain #methodType(FunctionDescriptor) derived} from the argument and return layouts in the function descriptor.
+ * {@linkplain FunctionDescriptor#carrierMethodType() derived} from the argument and return layouts in the function descriptor.
  * More specifically, given each layout {@code L} in the function descriptor, a corresponding carrier {@code C} is inferred,
  * as described below:
  * <ul>
@@ -92,7 +92,7 @@ import java.lang.invoke.MethodType;
  * handle and a function descriptor; in this case, the set of memory layouts in the function descriptor
  * specify the signature of the function pointer associated with the upcall stub.
  * <p>
- * The type of the provided method handle has to {@linkplain #methodType(FunctionDescriptor) match} the Java
+ * The type of the provided method handle has to {@linkplain FunctionDescriptor#carrierMethodType() match} the Java
  * {@linkplain java.lang.invoke.MethodType method type} associated with the upcall stub, which is derived from the argument
  * and return layouts in the function descriptor. More specifically, given each layout {@code L} in the function descriptor,
  * a corresponding carrier {@code C} is inferred, as described below:
@@ -283,14 +283,4 @@ public sealed interface Linker permits AbstractLinker {
      * @return a symbol lookup for symbols in a set of commonly used libraries.
      */
     SymbolLookup defaultLookup();
-
-    /**
-     * {@return the linker method handle {@linkplain MethodType type} associated with the given function descriptor}
-     * @param functionDescriptor a function descriptor.
-     * @throws IllegalArgumentException if one or more layouts in the function descriptor are not supported
-     * (e.g. if they are sequence layouts or padding layouts).
-     */
-    static MethodType methodType(FunctionDescriptor functionDescriptor) {
-        return SharedUtils.inferMethodType(functionDescriptor);
-    }
 }
