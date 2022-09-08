@@ -86,10 +86,10 @@ public class NativeTestHelper {
     private static Linker LINKER = Linker.nativeLinker();
 
     private static final MethodHandle FREE = LINKER.downcallHandle(
-            LINKER.defaultLookup().lookup("free").get(), FunctionDescriptor.ofVoid(C_POINTER));
+            LINKER.defaultLookup().find("free").get(), FunctionDescriptor.ofVoid(C_POINTER));
 
     private static final MethodHandle MALLOC = LINKER.downcallHandle(
-            LINKER.defaultLookup().lookup("malloc").get(), FunctionDescriptor.of(C_POINTER, C_LONG_LONG));
+            LINKER.defaultLookup().find("malloc").get(), FunctionDescriptor.of(C_POINTER, C_LONG_LONG));
 
     public static void freeMemory(MemorySegment address) {
         try {
@@ -108,6 +108,6 @@ public class NativeTestHelper {
     }
 
     public static MemorySegment findNativeOrThrow(String name) {
-        return SymbolLookup.loaderLookup().lookup(name).orElseThrow();
+        return SymbolLookup.loaderLookup().find(name).orElseThrow();
     }
 }

@@ -72,7 +72,7 @@ public class LibraryLookupTest {
 
     private static MemorySegment loadLibrary(MemorySession session) {
         SymbolLookup lib = SymbolLookup.libraryLookup(LIB_PATH, session);
-        MemorySegment addr = lib.lookup("inc").get();
+        MemorySegment addr = lib.find("inc").get();
         assertEquals(addr.session(), session);
         return addr;
     }

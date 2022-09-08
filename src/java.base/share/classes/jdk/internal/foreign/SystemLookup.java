@@ -85,14 +85,14 @@ public final class SystemLookup implements SymbolLookup {
                     libLookup(libs -> libs.load(jdkLibraryPath("syslookup")));
 
             int numSymbols = WindowsFallbackSymbols.values().length;
-            MemorySegment funcs = MemorySegment.ofAddress(fallbackLibLookup.lookup("funcs").orElseThrow().address(),
+            MemorySegment funcs = MemorySegment.ofAddress(fallbackLibLookup.find("funcs").orElseThrow().address(),
                 ADDRESS.byteSize() * numSymbols, MemorySession.global());
 
             Function<String, Optional<MemorySegment>> fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.valueOfOrNull(name))
                 .map(symbol -> MemorySegment.ofAddress(funcs.getAtIndex(ADDRESS, symbol.ordinal()).address(), 0L, MemorySession.global()));
 
             final SymbolLookup finalLookup = lookup;
-            lookup = name -> finalLookup.lookup(name).or(() -> fallbackLookup.apply(name));
+            lookup = name -> finalLookup.find(name).or(() -> fallbackLookup.apply(name));
         }
 
         return lookup;
@@ -132,8 +132,8 @@ public final class SystemLookup implements SymbolLookup {
     }
 
     @Override
-    public Optional<MemorySegment> lookup(String name) {
-        return SYSTEM_LOOKUP.lookup(name);
+    public Optional<MemorySegment> find(String name) {
+        return SYSTEM_LOOKUP.find(name);
     }
 
     // fallback symbols missing from ucrtbase.dll

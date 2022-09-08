@@ -93,64 +93,64 @@ public class CallOverheadHelper extends CLayouts {
         System.loadLibrary("CallOverhead");
         SymbolLookup loaderLibs = SymbolLookup.loaderLookup();
         {
-            func_addr = loaderLibs.lookup("func").orElseThrow();
+            func_addr = loaderLibs.find("func").orElseThrow();
             MethodType mt = MethodType.methodType(void.class);
             FunctionDescriptor fd = FunctionDescriptor.ofVoid();
             func_v = abi.downcallHandle(fd);
             func = insertArguments(func_v, 0, func_addr);
         }
         {
-            identity_addr = loaderLibs.lookup("identity").orElseThrow();
+            identity_addr = loaderLibs.find("identity").orElseThrow();
             FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT);
             identity_v = abi.downcallHandle(fd);
             identity = insertArguments(identity_v, 0, identity_addr);
         }
-        identity_struct_addr = loaderLibs.lookup("identity_struct").orElseThrow();
+        identity_struct_addr = loaderLibs.find("identity_struct").orElseThrow();
         identity_struct_v = abi.downcallHandle(
                 FunctionDescriptor.of(POINT_LAYOUT, POINT_LAYOUT));
         identity_struct = insertArguments(identity_struct_v, 0, identity_struct_addr);
 
-        identity_struct_3_addr = loaderLibs.lookup("identity_struct_3").orElseThrow();
+        identity_struct_3_addr = loaderLibs.find("identity_struct_3").orElseThrow();
         identity_struct_3_v = abi.downcallHandle(
                 FunctionDescriptor.of(POINT_LAYOUT, POINT_LAYOUT, POINT_LAYOUT, POINT_LAYOUT));
         identity_struct_3 = insertArguments(identity_struct_3_v, 0, identity_struct_3_addr);
 
-        identity_memory_address_addr = loaderLibs.lookup("identity_memory_address").orElseThrow();
+        identity_memory_address_addr = loaderLibs.find("identity_memory_address").orElseThrow();
         identity_memory_address_v = abi.downcallHandle(
                 FunctionDescriptor.of(C_POINTER, C_POINTER));
         identity_memory_address = insertArguments(identity_memory_address_v, 0, identity_memory_address_addr);
 
-        identity_memory_address_3_addr = loaderLibs.lookup("identity_memory_address_3").orElseThrow();
+        identity_memory_address_3_addr = loaderLibs.find("identity_memory_address_3").orElseThrow();
         identity_memory_address_3_v = abi.downcallHandle(
                 FunctionDescriptor.of(C_POINTER, C_POINTER, C_POINTER, C_POINTER));
         identity_memory_address_3 = insertArguments(identity_memory_address_3_v, 0, identity_memory_address_3_addr);
 
-        args1_addr = loaderLibs.lookup("args1").orElseThrow();
+        args1_addr = loaderLibs.find("args1").orElseThrow();
         args1_v = abi.downcallHandle(
                 FunctionDescriptor.ofVoid(C_LONG_LONG));
         args1 = insertArguments(args1_v, 0, args1_addr);
 
-        args2_addr = loaderLibs.lookup("args2").orElseThrow();
+        args2_addr = loaderLibs.find("args2").orElseThrow();
         args2_v = abi.downcallHandle(
                 FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE));
         args2 = insertArguments(args2_v, 0, args2_addr);
 
-        args3_addr = loaderLibs.lookup("args3").orElseThrow();
+        args3_addr = loaderLibs.find("args3").orElseThrow();
         args3_v = abi.downcallHandle(
                 FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE, C_LONG_LONG));
         args3 = insertArguments(args3_v, 0, args3_addr);
 
-        args4_addr = loaderLibs.lookup("args4").orElseThrow();
+        args4_addr = loaderLibs.find("args4").orElseThrow();
         args4_v = abi.downcallHandle(
                 FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE));
         args4 = insertArguments(args4_v, 0, args4_addr);
 
-        args5_addr = loaderLibs.lookup("args5").orElseThrow();
+        args5_addr = loaderLibs.find("args5").orElseThrow();
         args5_v = abi.downcallHandle(
                 FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE, C_LONG_LONG));
         args5 = insertArguments(args5_v, 0, args5_addr);
 
-        args10_addr = loaderLibs.lookup("args10").orElseThrow();
+        args10_addr = loaderLibs.find("args10").orElseThrow();
         args10_v = abi.downcallHandle(
                 FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE, C_LONG_LONG,
                                           C_DOUBLE, C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE));

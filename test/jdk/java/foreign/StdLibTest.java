@@ -152,35 +152,35 @@ public class StdLibTest extends NativeTestHelper {
 
     static class StdLibHelper {
 
-        final static MethodHandle strcat = abi.downcallHandle(abi.defaultLookup().lookup("strcat").get(),
+        final static MethodHandle strcat = abi.downcallHandle(abi.defaultLookup().find("strcat").get(),
                 FunctionDescriptor.of(C_POINTER, C_POINTER, C_POINTER));
 
-        final static MethodHandle strcmp = abi.downcallHandle(abi.defaultLookup().lookup("strcmp").get(),
+        final static MethodHandle strcmp = abi.downcallHandle(abi.defaultLookup().find("strcmp").get(),
                 FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER));
 
-        final static MethodHandle puts = abi.downcallHandle(abi.defaultLookup().lookup("puts").get(),
+        final static MethodHandle puts = abi.downcallHandle(abi.defaultLookup().find("puts").get(),
                 FunctionDescriptor.of(C_INT, C_POINTER));
 
-        final static MethodHandle strlen = abi.downcallHandle(abi.defaultLookup().lookup("strlen").get(),
+        final static MethodHandle strlen = abi.downcallHandle(abi.defaultLookup().find("strlen").get(),
                 FunctionDescriptor.of(C_INT, C_POINTER));
 
-        final static MethodHandle gmtime = abi.downcallHandle(abi.defaultLookup().lookup("gmtime").get(),
+        final static MethodHandle gmtime = abi.downcallHandle(abi.defaultLookup().find("gmtime").get(),
                 FunctionDescriptor.of(C_POINTER, C_POINTER));
 
-        final static MethodHandle qsort = abi.downcallHandle(abi.defaultLookup().lookup("qsort").get(),
+        final static MethodHandle qsort = abi.downcallHandle(abi.defaultLookup().find("qsort").get(),
                 FunctionDescriptor.ofVoid(C_POINTER, C_LONG_LONG, C_LONG_LONG, C_POINTER));
 
         final static FunctionDescriptor qsortComparFunction = FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER);
 
         final static MethodHandle qsortCompar;
 
-        final static MethodHandle rand = abi.downcallHandle(abi.defaultLookup().lookup("rand").get(),
+        final static MethodHandle rand = abi.downcallHandle(abi.defaultLookup().find("rand").get(),
                 FunctionDescriptor.of(C_INT));
 
-        final static MethodHandle vprintf = abi.downcallHandle(abi.defaultLookup().lookup("vprintf").get(),
+        final static MethodHandle vprintf = abi.downcallHandle(abi.defaultLookup().find("vprintf").get(),
                 FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER));
 
-        final static MemorySegment printfAddr = abi.defaultLookup().lookup("printf").get();
+        final static MemorySegment printfAddr = abi.defaultLookup().find("printf").get();
 
         final static FunctionDescriptor printfBase = FunctionDescriptor.of(C_INT, C_POINTER);
 
