@@ -180,7 +180,7 @@ class TypeClass {
             } else if (type instanceof GroupLayout) {
                 return ofStruct((GroupLayout)type);
             } else {
-                throw new IllegalArgumentException("Unhandled type " + type);
+                throw new IllegalArgumentException("Unsupported layout: " + type);
             }
         } catch (UnsupportedOperationException e) {
             System.err.println("Failed to classify layout: " + type);

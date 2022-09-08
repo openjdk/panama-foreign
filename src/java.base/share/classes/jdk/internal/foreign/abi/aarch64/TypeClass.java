@@ -105,10 +105,8 @@ public enum TypeClass {
             return classifyValueType((ValueLayout) type);
         } else if (type instanceof GroupLayout) {
             return classifyStructType(type);
-        } else if (type instanceof SequenceLayout) {
-            return TypeClass.INTEGER;
         } else {
-            throw new IllegalArgumentException("Unhandled type " + type);
+            throw new IllegalArgumentException("Unsupported layout: " + type);
         }
     }
 }

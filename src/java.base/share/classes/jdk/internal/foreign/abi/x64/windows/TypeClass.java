@@ -85,7 +85,7 @@ enum TypeClass {
         } else if (type instanceof GroupLayout) {
             return classifyStructType(type);
         } else {
-            throw new IllegalArgumentException("Unhandled type " + type);
+            throw new IllegalArgumentException("Unsupported layout: " + type);
         }
     }
 }

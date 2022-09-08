@@ -140,7 +140,7 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
     private static Class<?> carrierTypeFor(MemoryLayout layout) {
         if (layout instanceof ValueLayout valueLayout) {
             return valueLayout.carrier();
-        } else if (layout instanceof GroupLayout) {
+        } else if (layout instanceof GroupLayout || layout instanceof SequenceLayout) {
             return MemorySegment.class;
         } else {
             throw new IllegalArgumentException("Unsupported layout: " + layout);
