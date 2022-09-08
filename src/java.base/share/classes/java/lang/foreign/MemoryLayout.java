@@ -165,7 +165,7 @@ import jdk.internal.javac.PreviewFeature;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, PaddingLayout, ValueLayout {
+public sealed interface MemoryLayout permits GroupLayout, PaddingLayout, ValueLayout {
 
     /**
      * {@return the layout size, in bits}
@@ -460,8 +460,8 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
     /**
      * An element in a <a href="MemoryLayout.html#layout-paths"><em>layout path</em></a>. There
      * are two kinds of path elements: <em>group path elements</em> and <em>sequence path elements</em>. Group
-     * path elements are used to select a named member layout within a {@link GroupLayout}. Sequence
-     * path elements are used to select a sequence element layout within a {@link SequenceLayout}; selection
+     * path elements are used to select a named member layout within a {@link StructLayout} or a {@link UnionLayout}.
+     * Sequence path elements are used to select a sequence element layout within a {@link SequenceLayout}; selection
      * of sequence element layout can be <em>explicit</em> (see {@link PathElement#sequenceElement(long)}) or
      * <em>implicit</em> (see {@link PathElement#sequenceElement()}). When a path uses one or more implicit
      * sequence path elements, it acquires additional <em>free dimensions</em>.
@@ -583,7 +583,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      *     <li>two sequence layouts are considered equal if they have the same element count (see {@link SequenceLayout#elementCount()}), and
      *     if their element layouts (see {@link SequenceLayout#elementLayout()}) are also equal</li>
      *     <li>two group layouts are considered equal if they are of the same type (see {@link StructLayout},
-     *     {@link UnionLayout}) and if their member layouts (see {@link GroupLayout#memberLayouts()}) are also equal</li>
+     *     {@link UnionLayout}) and if their member layouts (see {@link GroupLayout#stream()} ()}) are also equal</li>
      * </ul>
      *
      * @param other the object to be compared for equality with this layout.

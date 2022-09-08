@@ -58,7 +58,7 @@ public class CallGeneratorHelper extends NativeTestHelper {
     public static void assertStructEquals(MemorySegment actual, MemorySegment expected, MemoryLayout layout) {
         assertEquals(actual.byteSize(), expected.byteSize());
         GroupLayout g = (GroupLayout) layout;
-        for (MemoryLayout field : g.memberLayouts()) {
+        for (MemoryLayout field : (Iterable<MemoryLayout>) g.stream()::iterator) {
             if (field instanceof ValueLayout) {
                 VarHandle vh = g.varHandle(MemoryLayout.PathElement.groupElement(field.name().orElseThrow()));
                 assertEquals(vh.get(actual), vh.get(expected));
@@ -416,9 +416,9 @@ public class CallGeneratorHelper extends NativeTestHelper {
     }
 
     static void initStruct(MemorySegment str, GroupLayout g, List<Consumer<Object>> checks, boolean check) throws ReflectiveOperationException {
-        for (MemoryLayout l : g.memberLayouts()) {
+        for (MemoryLayout l : (Iterable<MemoryLayout>) g.stream()::iterator) {
             if (l instanceof PaddingLayout) continue;
-            VarHandle accessor = g.varHandle(MemoryLayout.PathElement.groupElement(l.name().get()));
+            VarHandle accessor = g.varHandle(MemoryLayout.PathElement.groupElement(l.name().orElseThrow()));
             List<Consumer<Object>> fieldsCheck = new ArrayList<>();
             Object value = makeArg(l, fieldsCheck, check);
             //set value

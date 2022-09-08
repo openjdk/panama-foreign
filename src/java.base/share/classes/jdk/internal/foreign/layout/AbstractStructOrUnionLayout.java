@@ -26,11 +26,15 @@
 package jdk.internal.foreign.layout;
 
 import java.lang.foreign.MemoryLayout;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.LongBinaryOperator;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static jdk.internal.foreign.layout.MemoryLayoutUtil.checkGetIndex;
 
 /**
  * A compound layout that aggregates multiple <em>member layouts</em>. There are two ways in which member layouts
@@ -43,39 +47,42 @@ import java.util.stream.Collectors;
  *
  * @since 19
  */
-public sealed abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L> & MemoryLayout>
+public sealed abstract class AbstractStructOrUnionLayout<L extends AbstractStructOrUnionLayout<L> & MemoryLayout>
         extends AbstractLayout<L>
+        implements Iterable<MemoryLayout>
         permits StructLayoutImpl, UnionLayoutImpl {
 
     private final Kind kind;
-    private final List<MemoryLayout> elements;
+    final List<MemoryLayout> elements;
 
-    AbstractGroupLayout(Kind kind, List<MemoryLayout> elements) {
+    AbstractStructOrUnionLayout(Kind kind, List<MemoryLayout> elements) {
         this(kind, elements, kind.alignof(elements), Optional.empty());
     }
 
-    AbstractGroupLayout(Kind kind, List<MemoryLayout> elements, long bitAlignment, Optional<String> name) {
+    AbstractStructOrUnionLayout(Kind kind, List<MemoryLayout> elements, long bitAlignment, Optional<String> name) {
         super(kind.sizeof(elements), bitAlignment, name); // Subclassing creates toctou problems here
         this.kind = kind;
         this.elements = List.copyOf(elements);
     }
 
-    /**
-     * Returns the member layouts associated with this group.
-     *
-     * @apiNote the order in which member layouts are returned is the same order in which member layouts have
-     * been passed to one of the group layout factory methods (see {@link MemoryLayout#structLayout(MemoryLayout...)},
-     * {@link MemoryLayout#unionLayout(MemoryLayout...)}).
-     *
-     * @return the member layouts associated with this group.
-     */
-    public final List<MemoryLayout> memberLayouts() {
-        return elements; // "elements" are already unmodifiable.
+    public long elementCount() {
+        return elements.size();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    public MemoryLayout elementAt(long index) {
+        checkGetIndex(elements.size(), index);
+        return elements.get((int)index);
+    }
+
+    @Override
+    public Iterator<MemoryLayout> iterator() {
+        return elements.iterator();
+    }
+
+    public Stream<MemoryLayout> stream() {
+        return elements.stream();
+    }
+
     @Override
     public final String toString() {
         return decorateLayoutString(elements.stream()
@@ -83,23 +90,6 @@ public sealed abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L
                 .collect(Collectors.joining(kind.delimTag, "[", "]")));
     }
 
-    /**
-     * {@return {@code true}, if this group layout is a struct layout}
-     */
-    public final boolean isStruct() {
-        return kind == Kind.STRUCT;
-    }
-
-    /**
-     * {@return {@code true}, if this group layout is a union layout}
-     */
-    public final boolean isUnion() {
-        return kind == Kind.UNION;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public final boolean equals(Object other) {
         if (this == other) {
@@ -108,14 +98,11 @@ public sealed abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L
         if (!super.equals(other)) {
             return false;
         }
-        return other instanceof AbstractGroupLayout<?> otherGroup &&
+        return other instanceof AbstractStructOrUnionLayout<?> otherGroup &&
                 kind == otherGroup.kind &&
                 elements.equals(otherGroup.elements);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public final int hashCode() {
         return Objects.hash(super.hashCode(), kind, elements);

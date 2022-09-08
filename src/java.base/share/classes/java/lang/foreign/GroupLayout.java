@@ -25,7 +25,9 @@
  */
 package java.lang.foreign;
 
-import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.stream.Stream;
+
 import jdk.internal.javac.PreviewFeature;
 
 /**
@@ -40,18 +42,33 @@ import jdk.internal.javac.PreviewFeature;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface GroupLayout extends MemoryLayout permits StructLayout, UnionLayout {
+public sealed interface GroupLayout extends MemoryLayout, Iterable<MemoryLayout> permits StructLayout, UnionLayout, SequenceLayout {
 
     /**
-     * Returns the member layouts associated with this group.
-     *
-     * @apiNote the order in which member layouts are returned is the same order in which member layouts have
-     * been passed to one of the group layout factory methods (see {@link MemoryLayout#structLayout(MemoryLayout...)},
-     * {@link MemoryLayout#unionLayout(MemoryLayout...)}).
-     *
-     * @return the member layouts associated with this group.
+     * {@return the size of this group layout (i.e. the number of elements in this group).}
      */
-    List<MemoryLayout> memberLayouts();
+    long elementCount();
+
+    /**
+     * {@return the element at the provided {@code index}.}
+     *
+     * @apiNote the order in which member layouts are produced is the same order in which member layouts have
+     * been passed to one of the group layout factory methods (see {@link MemoryLayout#structLayout(MemoryLayout...)},
+     * {@link MemoryLayout#unionLayout(MemoryLayout...)}, {@link MemoryLayout#sequenceLayout(long, MemoryLayout)}).
+     *
+     * @param index the index for the MemoryLayout to retrieve
+     * @throws NoSuchElementException if the provided {@code index} is negative or if greater or equal to {@link #elementCount()}
+     */
+    MemoryLayout elementAt(long index);
+
+    /**
+     * {@return a stream of all elements in this group.}
+     *
+     * @apiNote the order in which element layouts are produced is the same order in which member layouts have
+     * been passed to one of the group layout factory methods (see {@link MemoryLayout#structLayout(MemoryLayout...)},
+     * {@link MemoryLayout#unionLayout(MemoryLayout...)}, {@link MemoryLayout#sequenceLayout(long, MemoryLayout)}).
+     */
+    Stream<MemoryLayout> stream();
 
     @Override
     GroupLayout withName(String name);

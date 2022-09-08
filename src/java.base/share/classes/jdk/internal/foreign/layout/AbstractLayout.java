@@ -34,7 +34,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 abstract sealed class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout>
-        permits AbstractGroupLayout, PaddingLayoutImpl, SequenceLayoutImpl, ValueLayouts.AbstractValueLayout {
+        permits AbstractStructOrUnionLayout, PaddingLayoutImpl, SequenceLayoutImpl, ValueLayouts.AbstractValueLayout {
 
     private final long bitSize;
     private final long bitAlignment;
@@ -108,8 +108,8 @@ abstract sealed class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout>
      *     and {@linkplain ValueLayout#carrier() carrier}</li>
      *     <li>two sequence layouts are considered equal if they have the same element count (see {@link SequenceLayout#elementCount()}), and
      *     if their element layouts (see {@link SequenceLayout#elementLayout()}) are also equal</li>
-     *     <li>two group layouts are considered equal if they are of the same kind (see {@link GroupLayout#isStruct()},
-     *     {@link GroupLayout#isUnion()}) and if their member layouts (see {@link GroupLayout#memberLayouts()}) are also equal</li>
+     *     <li>two group layouts are considered equal if they are of the same type (see {@link StructLayout},
+     *     {@link UnionLayout}, {@link SequenceLayout}) and if their member layouts (see {@link GroupLayout#stream()} ()}) are also equal</li>
      * </ul>
      *
      * @param other the object to be compared for equality with this layout.

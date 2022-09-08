@@ -25,6 +25,8 @@
  */
 package jdk.internal.foreign.layout;
 
+import java.util.NoSuchElementException;
+
 public final class MemoryLayoutUtil {
 
     private MemoryLayoutUtil() {
@@ -37,6 +39,12 @@ public final class MemoryLayoutUtil {
     public static void checkSize(long size, boolean includeZero) {
         if (size < 0 || (!includeZero && size == 0)) {
             throw new IllegalArgumentException("Invalid size for layout: " + size);
+        }
+    }
+
+    public static void checkGetIndex(long toExclusive, long index) {
+        if (index < 0 || index >= toExclusive) {
+            throw new NoSuchElementException("The index must be in range [0, " + toExclusive + ") but was " + index);
         }
     }
 

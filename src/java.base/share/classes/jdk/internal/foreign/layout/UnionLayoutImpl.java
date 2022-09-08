@@ -30,7 +30,7 @@ import java.lang.foreign.UnionLayout;
 import java.util.List;
 import java.util.Optional;
 
-public final class UnionLayoutImpl extends AbstractGroupLayout<UnionLayoutImpl> implements UnionLayout {
+public final class UnionLayoutImpl extends AbstractStructOrUnionLayout<UnionLayoutImpl> implements UnionLayout {
 
     private UnionLayoutImpl(List<MemoryLayout> elements) {
         super(Kind.UNION, elements);
@@ -42,7 +42,7 @@ public final class UnionLayoutImpl extends AbstractGroupLayout<UnionLayoutImpl> 
 
     @Override
     UnionLayoutImpl dup(long bitAlignment, Optional<String> name) {
-        return new UnionLayoutImpl(memberLayouts(), bitAlignment, name);
+        return new UnionLayoutImpl(elements, bitAlignment, name);
     }
 
     public static UnionLayout of(List<MemoryLayout> elements) {

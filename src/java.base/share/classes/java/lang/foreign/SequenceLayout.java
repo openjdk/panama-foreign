@@ -53,18 +53,12 @@ import jdk.internal.javac.PreviewFeature;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface SequenceLayout extends MemoryLayout permits SequenceLayoutImpl {
-
+public sealed interface SequenceLayout extends GroupLayout permits SequenceLayoutImpl {
 
     /**
      * {@return the element layout associated with this sequence layout}
      */
     MemoryLayout elementLayout();
-
-    /**
-     * {@return the element count of this sequence layout}
-     */
-    long elementCount();
 
     /**
      * Returns a sequence layout with the same element layout, alignment constraints and name as this sequence layout,

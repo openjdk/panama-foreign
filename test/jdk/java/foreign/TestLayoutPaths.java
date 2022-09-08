@@ -272,7 +272,7 @@ public class TestLayoutPaths {
 
         for (int i = 1 ; i <= 4 ; i++) {
             MemoryLayout selected = g.select(groupElement(String.valueOf(i)));
-            assertTrue(selected == g.memberLayouts().get(i - 1));
+            assertTrue(selected == g.elementAt(i - 1));
         }
 
         // test offset
@@ -299,7 +299,7 @@ public class TestLayoutPaths {
 
         for (int i = 1 ; i <= 4 ; i++) {
             MemoryLayout selected = g.select(groupElement(String.valueOf(i)));
-            assertTrue(selected == g.memberLayouts().get(i - 1));
+            assertTrue(selected == g.elementAt(i - 1));
         }
 
         // test offset

@@ -193,7 +193,7 @@ class TypeClass {
         int nEightbytes = (int) Utils.alignUp(group.byteSize(), 8) / 8;
         @SuppressWarnings({"unchecked", "rawtypes"})
         List<ArgumentClassImpl>[] groups = new List[nEightbytes];
-        for (MemoryLayout l : group.memberLayouts()) {
+        for (MemoryLayout l : group) {
             groupByEightBytes(l, offset, groups);
             if (group instanceof StructLayout) {
                 offset += l.byteSize();
@@ -204,7 +204,7 @@ class TypeClass {
 
     private static void groupByEightBytes(MemoryLayout l, long offset, List<ArgumentClassImpl>[] groups) {
         if (l instanceof GroupLayout group) {
-            for (MemoryLayout m : group.memberLayouts()) {
+            for (MemoryLayout m : group) {
                 groupByEightBytes(m, offset, groups);
                 if (group instanceof StructLayout) {
                     offset += m.byteSize();
@@ -214,7 +214,7 @@ class TypeClass {
             return;
         } else if (l instanceof SequenceLayout seq) {
             MemoryLayout elem = seq.elementLayout();
-            for (long i = 0 ; i < seq.elementCount() ; i++) {
+            for (long i = 0; i < seq.elementCount() ; i++) {
                 groupByEightBytes(elem, offset, groups);
                 offset += elem.byteSize();
             }

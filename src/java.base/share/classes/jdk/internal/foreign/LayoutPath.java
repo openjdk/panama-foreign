@@ -118,8 +118,8 @@ public class LayoutPath {
         GroupLayout g = (GroupLayout)layout;
         long offset = 0;
         MemoryLayout elem = null;
-        for (int i = 0; i < g.memberLayouts().size(); i++) {
-            MemoryLayout l = g.memberLayouts().get(i);
+        for (int i = 0; i < g.elementCount(); i++) {
+            MemoryLayout l = g.elementAt(i);
             if (l.name().isPresent() &&
                 l.name().get().equals(name)) {
                 elem = l;

@@ -362,15 +362,15 @@ public abstract class CallArranger {
                     assert carrier == MemorySegment.class;
                     GroupLayout group = (GroupLayout)layout;
                     VMStorage[] regs = storageCalculator.regAlloc(
-                        StorageClasses.VECTOR, group.memberLayouts().size());
+                        StorageClasses.VECTOR, Math.toIntExact(group.elementCount()));
                     if (regs != null) {
                         long offset = 0;
-                        for (int i = 0; i < group.memberLayouts().size(); i++) {
+                        for (int i = 0; i < Math.toIntExact(group.elementCount()); i++) {
                             VMStorage storage = regs[i];
-                            final long size = group.memberLayouts().get(i).byteSize();
+                            final long size = group.elementAt(i).byteSize();
                             boolean useFloat = storage.type() == StorageClasses.VECTOR;
                             Class<?> type = SharedUtils.primitiveCarrierForSize(size, useFloat);
-                            if (i + 1 < group.memberLayouts().size()) {
+                            if (i + 1 < Math.toIntExact(group.elementCount())) {
                                 bindings.dup();
                             }
                             bindings.bufferLoad(offset, type)
@@ -462,12 +462,12 @@ public abstract class CallArranger {
                     bindings.allocate(layout);
                     GroupLayout group = (GroupLayout)layout;
                     VMStorage[] regs = storageCalculator.regAlloc(
-                        StorageClasses.VECTOR, group.memberLayouts().size());
+                        StorageClasses.VECTOR, Math.toIntExact(group.elementCount()));
                     if (regs != null) {
                         long offset = 0;
-                        for (int i = 0; i < group.memberLayouts().size(); i++) {
+                        for (int i = 0; i < Math.toIntExact(group.elementCount()); i++) {
                             VMStorage storage = regs[i];
-                            final long size = group.memberLayouts().get(i).byteSize();
+                            final long size = group.elementAt(i).byteSize();
                             boolean useFloat = storage.type() == StorageClasses.VECTOR;
                             Class<?> type = SharedUtils.primitiveCarrierForSize(size, useFloat);
                             bindings.dup()

@@ -298,7 +298,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                     MemorySegment value = allocator.allocate(layout);
                     GroupLayout group = (GroupLayout)layout;
                     long offset = 0;
-                    for (MemoryLayout elem : group.memberLayouts()) {
+                    for (MemoryLayout elem : group) {
                         assert elem.byteSize() <= 8;
                         final long copy = elem.byteSize();
                         MemorySegment.copy(fpRegsArea, currentFPOffset(), value, offset, copy);
@@ -493,7 +493,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                         MemorySegment valueSegment = (MemorySegment) value;
                         GroupLayout group = (GroupLayout)layout;
                         long offset = 0;
-                        for (MemoryLayout elem : group.memberLayouts()) {
+                        for (MemoryLayout elem : group) {
                             assert elem.byteSize() <= 8;
                             final long copy = elem.byteSize();
                             MemorySegment.copy(valueSegment, offset, fpRegs, currentFPOffset, copy);

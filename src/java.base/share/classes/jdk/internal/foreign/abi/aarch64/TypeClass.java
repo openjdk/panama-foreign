@@ -25,11 +25,9 @@
  */
 package jdk.internal.foreign.abi.aarch64;
 
-import java.lang.foreign.GroupLayout;
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SequenceLayout;
-import java.lang.foreign.ValueLayout;
+import jdk.internal.foreign.layout.AbstractStructOrUnionLayout;
+
+import java.lang.foreign.*;
 
 public enum TypeClass {
     STRUCT_REGISTER,
@@ -60,14 +58,14 @@ public enum TypeClass {
     }
 
     static boolean isHomogeneousFloatAggregate(MemoryLayout type) {
-        if (!(type instanceof GroupLayout groupLayout))
+        if (!(type instanceof AbstractStructOrUnionLayout<?> structOrUnionLayout))
             return false;
 
-        final int numElements = groupLayout.memberLayouts().size();
+        final long numElements = structOrUnionLayout.elementCount();
         if (numElements > 4 || numElements == 0)
             return false;
 
-        MemoryLayout baseType = groupLayout.memberLayouts().get(0);
+        MemoryLayout baseType = structOrUnionLayout.elementAt(0);
 
         if (!(baseType instanceof ValueLayout))
             return false;
@@ -76,7 +74,7 @@ public enum TypeClass {
         if (baseArgClass != FLOAT)
            return false;
 
-        for (MemoryLayout elem : groupLayout.memberLayouts()) {
+        for (MemoryLayout elem : structOrUnionLayout) {
             if (!(elem instanceof ValueLayout))
                 return false;
 
@@ -103,10 +101,10 @@ public enum TypeClass {
     public static TypeClass classifyLayout(MemoryLayout type) {
         if (type instanceof ValueLayout) {
             return classifyValueType((ValueLayout) type);
-        } else if (type instanceof GroupLayout) {
-            return classifyStructType(type);
         } else if (type instanceof SequenceLayout) {
             return TypeClass.INTEGER;
+        } else if (type instanceof GroupLayout) {
+            return classifyStructType(type);
         } else {
             throw new IllegalArgumentException("Unhandled type " + type);
         }

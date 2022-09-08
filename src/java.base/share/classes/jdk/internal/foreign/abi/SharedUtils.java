@@ -145,7 +145,7 @@ public final class SharedUtils {
 
     private static long alignmentOfContainer(GroupLayout ct) {
         // Most strict member
-        return ct.memberLayouts().stream().mapToLong(t -> alignment(t, false)).max().orElse(1);
+        return ct.stream().mapToLong(t -> alignment(t, false)).max().orElse(1);
     }
 
     /**
