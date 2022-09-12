@@ -994,7 +994,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @return a new native memory segment.
      * @throws IllegalArgumentException if {@code bytesSize < 0}.
      * @see ByteBuffer#allocateDirect(int)
-     * @see MemorySession#allocate(long) 
+     * @see MemorySession#allocate(long)
      */
     static MemorySegment allocateNative(long bytesSize) {
         return allocateNative(bytesSize, 1L);
@@ -1020,7 +1020,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @return a new native memory segment.
      * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
      * is not a power of 2.
-     * @see MemorySession#allocate(long, long) 
+     * @see MemorySession#allocate(long, long)
      */
     static MemorySegment allocateNative(long bytesSize, long byteAlignment) {
         Utils.checkAllocationSizeAndAlign(bytesSize, byteAlignment);
