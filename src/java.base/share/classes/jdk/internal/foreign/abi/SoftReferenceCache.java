@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-class SoftReferenceCache<K, V> {
+final class SoftReferenceCache<K, V> {
     private final Map<K, Node> cache = new ConcurrentHashMap<>();
 
     public V get(K key, Function<K, V> valueFactory) {

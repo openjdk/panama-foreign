@@ -43,7 +43,7 @@ import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodType.methodType;
 
-public class DowncallLinker {
+public final class DowncallLinker {
     private static final boolean USE_SPEC = Boolean.parseBoolean(
         GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.DowncallLinker.USE_SPEC", "true"));
 

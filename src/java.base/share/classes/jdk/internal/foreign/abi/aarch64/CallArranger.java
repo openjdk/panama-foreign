@@ -121,7 +121,7 @@ public abstract class CallArranger {
 
     protected CallArranger() {}
 
-    public Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
+    public final Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
         CallingSequenceBuilder csb = new CallingSequenceBuilder(C, forUpcall);
 
         BindingCalculator argCalc = forUpcall ? new BoxBindingCalculator(true) : new UnboxBindingCalculator(true);
@@ -149,7 +149,7 @@ public abstract class CallArranger {
         return new Bindings(csb.build(), returnInMemory);
     }
 
-    public MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc) {
+    public final MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc) {
         Bindings bindings = getBindings(mt, cDesc, false);
 
         MethodHandle handle = new DowncallLinker(C, bindings.callingSequence).getBoundMethodHandle();
@@ -161,7 +161,7 @@ public abstract class CallArranger {
         return handle;
     }
 
-    public MemorySegment arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, MemorySession session) {
+    public final MemorySegment arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, MemorySession session) {
         Bindings bindings = getBindings(mt, cDesc, true);
 
         if (bindings.isInMemoryReturn) {
@@ -178,7 +178,7 @@ public abstract class CallArranger {
             .isPresent();
     }
 
-    class StorageCalculator {
+    final class StorageCalculator {
         private final boolean forArguments;
         private boolean forVarArgs = false;
 
@@ -309,7 +309,7 @@ public abstract class CallArranger {
         abstract List<Binding> getIndirectBindings();
     }
 
-    class UnboxBindingCalculator extends BindingCalculator {
+    final class UnboxBindingCalculator extends BindingCalculator {
         UnboxBindingCalculator(boolean forArguments) {
             super(forArguments);
         }
@@ -410,7 +410,7 @@ public abstract class CallArranger {
         }
     }
 
-    class BoxBindingCalculator extends BindingCalculator {
+    final class BoxBindingCalculator extends BindingCalculator {
         BoxBindingCalculator(boolean forArguments) {
             super(forArguments);
         }
@@ -428,11 +428,11 @@ public abstract class CallArranger {
             TypeClass argumentClass = TypeClass.classifyLayout(layout);
             Binding.Builder bindings = Binding.builder();
             switch (argumentClass) {
-                case STRUCT_REGISTER: {
+                case STRUCT_REGISTER -> {
                     assert carrier == MemorySegment.class;
                     bindings.allocate(layout);
                     VMStorage[] regs = storageCalculator.regAlloc(
-                        StorageClasses.INTEGER, layout);
+                            StorageClasses.INTEGER, layout);
                     if (regs != null) {
                         int regIndex = 0;
                         long offset = 0;
@@ -449,22 +449,20 @@ public abstract class CallArranger {
                     } else {
                         spillStructBox(bindings, layout);
                     }
-                    break;
                 }
-                case STRUCT_REFERENCE: {
+                case STRUCT_REFERENCE -> {
                     assert carrier == MemorySegment.class;
                     VMStorage storage = storageCalculator.nextStorage(
-                        StorageClasses.INTEGER, AArch64.C_POINTER);
+                            StorageClasses.INTEGER, AArch64.C_POINTER);
                     bindings.vmLoad(storage, long.class)
                             .boxAddress(layout);
-                    break;
                 }
-                case STRUCT_HFA: {
+                case STRUCT_HFA -> {
                     assert carrier == MemorySegment.class;
                     bindings.allocate(layout);
-                    GroupLayout group = (GroupLayout)layout;
+                    GroupLayout group = (GroupLayout) layout;
                     VMStorage[] regs = storageCalculator.regAlloc(
-                        StorageClasses.VECTOR, group.memberLayouts().size());
+                            StorageClasses.VECTOR, group.memberLayouts().size());
                     if (regs != null) {
                         long offset = 0;
                         for (int i = 0; i < group.memberLayouts().size(); i++) {
@@ -480,29 +478,24 @@ public abstract class CallArranger {
                     } else {
                         spillStructBox(bindings, layout);
                     }
-                    break;
                 }
-                case POINTER: {
+                case POINTER -> {
                     VMStorage storage =
-                        storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
+                            storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
                     bindings.vmLoad(storage, long.class)
                             .boxAddressRaw(Utils.pointeeSize(layout));
-                    break;
                 }
-                case INTEGER: {
+                case INTEGER -> {
                     VMStorage storage =
-                        storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
+                            storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
                     bindings.vmLoad(storage, carrier);
-                    break;
                 }
-                case FLOAT: {
+                case FLOAT -> {
                     VMStorage storage =
-                        storageCalculator.nextStorage(StorageClasses.VECTOR, layout);
+                            storageCalculator.nextStorage(StorageClasses.VECTOR, layout);
                     bindings.vmLoad(storage, carrier);
-                    break;
                 }
-                default:
-                    throw new UnsupportedOperationException("Unhandled class " + argumentClass);
+                default -> throw new UnsupportedOperationException("Unhandled class " + argumentClass);
             }
             return bindings.build();
         }

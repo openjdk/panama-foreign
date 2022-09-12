@@ -28,7 +28,10 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 
-public class BindingInterpreter {
+public final class BindingInterpreter {
+
+    private BindingInterpreter() {
+    }
 
     static void unbox(Object arg, List<Binding> bindings, StoreFunc storeFunc, Binding.Context context) {
         Deque<Object> stack = new ArrayDeque<>();

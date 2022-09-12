@@ -58,7 +58,7 @@ import static jdk.internal.foreign.abi.x64.X86_64Architecture.Regs.*;
  *
  * This includes taking care of synthetic arguments like pointers to return buffers for 'in-memory' returns.
  */
-public class CallArranger {
+public final class CallArranger {
     private static final int STACK_SLOT_SIZE = 8;
     private static final int MAX_INTEGER_ARGUMENT_REGISTERS = 6;
     private static final int MAX_VECTOR_ARGUMENT_REGISTERS = 8;
@@ -152,7 +152,7 @@ public class CallArranger {
                 .isPresent();
     }
 
-    static class StorageCalculator {
+    static final class StorageCalculator {
         private final boolean forArguments;
 
         private int nVectorReg = 0;
@@ -216,26 +216,18 @@ public class CallArranger {
         }
 
         int registerCount(int type) {
-            switch (type) {
-                case StorageClasses.INTEGER:
-                    return nIntegerReg;
-                case StorageClasses.VECTOR:
-                    return nVectorReg;
-                default:
-                    throw new IllegalStateException();
-            }
+            return switch (type) {
+                case StorageClasses.INTEGER -> nIntegerReg;
+                case StorageClasses.VECTOR -> nVectorReg;
+                default -> throw new IllegalStateException();
+            };
         }
 
         void incrementRegisterCount(int type) {
             switch (type) {
-                case StorageClasses.INTEGER:
-                    nIntegerReg++;
-                    break;
-                case StorageClasses.VECTOR:
-                    nVectorReg++;
-                    break;
-                default:
-                    throw new IllegalStateException();
+                case StorageClasses.INTEGER -> nIntegerReg++;
+                case StorageClasses.VECTOR -> nVectorReg++;
+                default -> throw new IllegalStateException();
             }
         }
     }
@@ -250,7 +242,7 @@ public class CallArranger {
         abstract List<Binding> getBindings(Class<?> carrier, MemoryLayout layout);
     }
 
-    static class UnboxBindingCalculator extends BindingCalculator {
+    static final class UnboxBindingCalculator extends BindingCalculator {
 
         UnboxBindingCalculator(boolean forArguments) {
             super(forArguments);
@@ -261,7 +253,7 @@ public class CallArranger {
             TypeClass argumentClass = TypeClass.classifyLayout(layout);
             Binding.Builder bindings = Binding.builder();
             switch (argumentClass.kind()) {
-                case STRUCT: {
+                case STRUCT -> {
                     assert carrier == MemorySegment.class;
                     VMStorage[] regs = storageCalculator.structStorages(argumentClass);
                     int regIndex = 0;
@@ -278,32 +270,27 @@ public class CallArranger {
                                 .vmStore(storage, type);
                         offset += copy;
                     }
-                    break;
                 }
-                case POINTER: {
+                case POINTER -> {
                     bindings.unboxAddress();
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
                     bindings.vmStore(storage, long.class);
-                    break;
-                }
-                case INTEGER: {
+                                    }
+                case INTEGER -> {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
                     bindings.vmStore(storage, carrier);
-                    break;
                 }
-                case FLOAT: {
+                case FLOAT -> {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.VECTOR);
                     bindings.vmStore(storage, carrier);
-                    break;
                 }
-                default:
-                    throw new UnsupportedOperationException("Unhandled class " + argumentClass);
+                default -> throw new UnsupportedOperationException("Unhandled class " + argumentClass);
             }
             return bindings.build();
         }
     }
 
-    static class BoxBindingCalculator extends BindingCalculator {
+    static final class BoxBindingCalculator extends BindingCalculator {
 
         BoxBindingCalculator(boolean forArguments) {
             super(forArguments);
@@ -314,7 +301,7 @@ public class CallArranger {
             TypeClass argumentClass = TypeClass.classifyLayout(layout);
             Binding.Builder bindings = Binding.builder();
             switch (argumentClass.kind()) {
-                case STRUCT: {
+                case STRUCT -> {
                     assert carrier == MemorySegment.class;
                     bindings.allocate(layout);
                     VMStorage[] regs = storageCalculator.structStorages(argumentClass);
@@ -330,26 +317,21 @@ public class CallArranger {
                                 .bufferStore(offset, type);
                         offset += copy;
                     }
-                    break;
                 }
-                case POINTER: {
+                case POINTER -> {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
                     bindings.vmLoad(storage, long.class)
                             .boxAddressRaw(Utils.pointeeSize(layout));
-                    break;
                 }
-                case INTEGER: {
+                case INTEGER -> {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
                     bindings.vmLoad(storage, carrier);
-                    break;
                 }
-                case FLOAT: {
+                case FLOAT -> {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.VECTOR);
                     bindings.vmLoad(storage, carrier);
-                    break;
                 }
-                default:
-                    throw new UnsupportedOperationException("Unhandled class " + argumentClass);
+                default -> throw new UnsupportedOperationException("Unhandled class " + argumentClass);
             }
             return bindings.build();
         }

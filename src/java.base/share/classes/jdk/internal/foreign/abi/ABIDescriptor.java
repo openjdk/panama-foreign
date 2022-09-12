@@ -29,7 +29,7 @@ package jdk.internal.foreign.abi;
  *
  * It is particularly low-level since the VM will be accessing these fields directly
  */
-public class ABIDescriptor {
+public final class ABIDescriptor {
     final Architecture arch;
 
     public final VMStorage[][] inputStorage;

@@ -63,7 +63,7 @@ import java.util.List;
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
-public class BindingSpecializer {
+public final class BindingSpecializer {
     private static final String DUMP_CLASSES_DIR
         = GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.abi.Specializer.DUMP_CLASSES_DIR");
     private static final boolean PERFORM_VERIFICATION

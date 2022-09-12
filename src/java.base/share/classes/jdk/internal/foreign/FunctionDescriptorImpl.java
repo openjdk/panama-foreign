@@ -151,7 +151,9 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
                         .mapToObj(i -> (i == firstVariadicArgumentIndex() ?
                                 "..." : "") + argLayouts.get(i))
                         .collect(Collectors.joining()),
-                returnLayout().map(Object::toString).orElse("v"));
+                returnLayout()
+                        .map(Object::toString)
+                        .orElse("v"));
     }
 
     /**
@@ -203,7 +205,9 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
          */
         VariadicFunctionDescriptor(FunctionDescriptorImpl descriptor, MemoryLayout... argLayouts) {
             super(descriptor.returnLayout().orElse(null),
-                    Stream.concat(descriptor.argumentLayouts().stream(), Arrays.stream(argLayouts).map(Objects::requireNonNull)).toList());
+                    Stream.concat(descriptor.argumentLayouts().stream(), Arrays.stream(argLayouts)
+                            .map(Objects::requireNonNull))
+                            .toList());
             this.firstVariadicIndex = descriptor.argumentLayouts().size();
         }
 

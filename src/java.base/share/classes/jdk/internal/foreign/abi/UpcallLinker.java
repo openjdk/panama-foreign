@@ -43,7 +43,7 @@ import static java.lang.invoke.MethodHandles.lookup;
 import static java.lang.invoke.MethodType.methodType;
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
-public class UpcallLinker {
+public final class UpcallLinker {
     private static final boolean DEBUG =
         privilegedGetProperty("jdk.internal.foreign.UpcallLinker.DEBUG");
     private static final boolean USE_SPEC = Boolean.parseBoolean(
@@ -59,6 +59,9 @@ public class UpcallLinker {
         } catch (ReflectiveOperationException e) {
             throw new InternalError(e);
         }
+    }
+
+    private UpcallLinker() {
     }
 
     public static MemorySegment make(ABIDescriptor abi, MethodHandle target, CallingSequence callingSequence, MemorySession session) {
