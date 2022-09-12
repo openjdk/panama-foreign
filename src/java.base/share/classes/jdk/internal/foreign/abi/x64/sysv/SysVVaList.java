@@ -25,7 +25,13 @@
  */
 package jdk.internal.foreign.abi.x64.sysv;
 
-import java.lang.foreign.*;
+import java.lang.foreign.GroupLayout;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
+import java.lang.foreign.SegmentAllocator;
+import java.lang.foreign.VaList;
+import java.lang.foreign.ValueLayout;
 
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.Utils;

@@ -25,7 +25,9 @@
 package java.lang.foreign;
 
 import java.lang.invoke.MethodHandle;
-import java.util.*;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.List;
 
 import jdk.internal.foreign.FunctionDescriptorImpl;
 import jdk.internal.javac.PreviewFeature;

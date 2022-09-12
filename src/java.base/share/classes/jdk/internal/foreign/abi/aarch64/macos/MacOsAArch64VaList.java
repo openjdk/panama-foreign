@@ -25,7 +25,13 @@
  */
 package jdk.internal.foreign.abi.aarch64.macos;
 
-import java.lang.foreign.*;
+import java.lang.foreign.GroupLayout;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
+import java.lang.foreign.SegmentAllocator;
+import java.lang.foreign.VaList;
+import java.lang.foreign.ValueLayout;
 import jdk.internal.foreign.abi.aarch64.TypeClass;
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.abi.SharedUtils;
@@ -56,7 +62,7 @@ public non-sealed class MacOsAArch64VaList implements VaList {
         this.segment = segment;
     }
 
-    public static final VaList empty() {
+    public static VaList empty() {
         return EMPTY;
     }
 
