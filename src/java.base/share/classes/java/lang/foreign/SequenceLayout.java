@@ -48,12 +48,12 @@ import jdk.internal.javac.PreviewFeature;
  * }
  *
  * @implSpec
- * This class is immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
+ * Implementing classes are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface SequenceLayout extends GroupLayout permits SequenceLayoutImpl {
+public sealed interface SequenceLayout extends CompoundLayout permits SequenceLayoutImpl {
 
     /**
      * {@return the element layout associated with this sequence layout}

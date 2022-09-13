@@ -53,6 +53,7 @@ public class MemoryLayoutPrincipalTotalityTest extends NativeTestHelper {
         var v1 = switch (memoryLayout) {
             case GroupLayout gl -> 0;
             case PaddingLayout pl -> 0; // leaf
+            case SequenceLayout sl -> 0; // leaf
             case ValueLayout vl -> 1;
         };
         assertEquals(v1, 1);
@@ -98,6 +99,7 @@ public class MemoryLayoutPrincipalTotalityTest extends NativeTestHelper {
         var v4 = switch (memoryLayout) {
             case GroupLayout gl -> 0;
             case PaddingLayout pl -> 0; // leaf
+            case SequenceLayout sl -> 0; // leaf
             case OfAddress oa -> 0; // leaf
             case OfBoolean ob -> 0; // leaf
             case OfByte ob -> 0; // leaf

@@ -165,7 +165,7 @@ import jdk.internal.javac.PreviewFeature;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface MemoryLayout permits GroupLayout, PaddingLayout, ValueLayout {
+public sealed interface MemoryLayout permits CompoundLayout, PaddingLayout, ValueLayout {
 
     /**
      * {@return the layout size, in bits}

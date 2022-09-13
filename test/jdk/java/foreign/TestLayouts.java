@@ -138,8 +138,9 @@ public class TestLayouts {
 
     @Test(dataProvider = "basicLayouts")
     public void testSequenceInferredCount(MemoryLayout layout) {
-        assertEquals(MemoryLayout.sequenceLayout(layout),
-                     MemoryLayout.sequenceLayout(Long.MAX_VALUE / layout.bitSize(), layout));
+        // assertEquals() will take too long
+        assertTrue(MemoryLayout.sequenceLayout(layout).equals(
+                     MemoryLayout.sequenceLayout(Long.MAX_VALUE / layout.bitSize(), layout)));
     }
 
     public void testSequenceNegativeElementCount() {
@@ -243,35 +244,35 @@ public class TestLayouts {
 
     @DataProvider(name = "basicLayouts")
     public Object[][] basicLayouts() {
-        return Stream.of(basicLayouts)
+        return Stream.of(BASIC_LAYOUTS)
                 .map(l -> new Object[] { l })
                 .toArray(Object[][]::new);
     }
 
     @DataProvider(name = "layoutsAndAlignments")
     public Object[][] layoutsAndAlignments() {
-        Object[][] layoutsAndAlignments = new Object[basicLayouts.length * 4][];
+        Object[][] layoutsAndAlignments = new Object[BASIC_LAYOUTS.length * 4][];
         int i = 0;
         //add basic layouts
-        for (MemoryLayout l : basicLayouts) {
+        for (MemoryLayout l : BASIC_LAYOUTS) {
             layoutsAndAlignments[i++] = new Object[] { l, l.bitAlignment() };
         }
         //add basic layouts wrapped in a sequence with given size
-        for (MemoryLayout l : basicLayouts) {
+        for (MemoryLayout l : BASIC_LAYOUTS) {
             layoutsAndAlignments[i++] = new Object[] { MemoryLayout.sequenceLayout(4, l), l.bitAlignment() };
         }
         //add basic layouts wrapped in a struct
-        for (MemoryLayout l : basicLayouts) {
+        for (MemoryLayout l : BASIC_LAYOUTS) {
             layoutsAndAlignments[i++] = new Object[] { MemoryLayout.structLayout(l), l.bitAlignment() };
         }
         //add basic layouts wrapped in a union
-        for (MemoryLayout l : basicLayouts) {
+        for (MemoryLayout l : BASIC_LAYOUTS) {
             layoutsAndAlignments[i++] = new Object[] { MemoryLayout.unionLayout(l), l.bitAlignment() };
         }
         return layoutsAndAlignments;
     }
 
-    static MemoryLayout[] basicLayouts = {
+    static final MemoryLayout[] BASIC_LAYOUTS = {
             ValueLayout.JAVA_BYTE,
             ValueLayout.JAVA_CHAR,
             ValueLayout.JAVA_SHORT,

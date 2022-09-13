@@ -25,9 +25,6 @@
  */
 package java.lang.foreign;
 
-import java.util.NoSuchElementException;
-import java.util.stream.Stream;
-
 import jdk.internal.javac.PreviewFeature;
 
 /**
@@ -37,38 +34,12 @@ import jdk.internal.javac.PreviewFeature;
  * the resulting group layout is said to be a <em>union</em> (see {@link MemoryLayout#unionLayout(MemoryLayout...)}).
  *
  * @implSpec
- * This class is immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
+ * Implementing classes are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface GroupLayout extends MemoryLayout, Iterable<MemoryLayout> permits StructLayout, UnionLayout, SequenceLayout {
-
-    /**
-     * {@return the size of this group layout (i.e. the number of elements in this group).}
-     */
-    long elementCount();
-
-    /**
-     * {@return the element at the provided {@code index}.}
-     *
-     * @apiNote the order in which member layouts are produced is the same order in which member layouts have
-     * been passed to one of the group layout factory methods (see {@link MemoryLayout#structLayout(MemoryLayout...)},
-     * {@link MemoryLayout#unionLayout(MemoryLayout...)}, {@link MemoryLayout#sequenceLayout(long, MemoryLayout)}).
-     *
-     * @param index the index for the MemoryLayout to retrieve
-     * @throws NoSuchElementException if the provided {@code index} is negative or if greater or equal to {@link #elementCount()}
-     */
-    MemoryLayout elementAt(long index);
-
-    /**
-     * {@return a stream of all elements in this group.}
-     *
-     * @apiNote the order in which element layouts are produced is the same order in which member layouts have
-     * been passed to one of the group layout factory methods (see {@link MemoryLayout#structLayout(MemoryLayout...)},
-     * {@link MemoryLayout#unionLayout(MemoryLayout...)}, {@link MemoryLayout#sequenceLayout(long, MemoryLayout)}).
-     */
-    Stream<MemoryLayout> stream();
+public sealed interface GroupLayout extends CompoundLayout permits StructLayout, UnionLayout {
 
     @Override
     GroupLayout withName(String name);
