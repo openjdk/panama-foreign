@@ -48,7 +48,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * using sharper types would require use of type-conversions, which in turn would inhibit some C2 optimizations,
  * such as the elimination of store barriers in methods like {@link HeapMemorySegmentImpl#dup(long, long, boolean, MemorySession)}.
  */
-public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
+public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
     private static final int BYTE_ARR_BASE = UNSAFE.arrayBaseOffset(byte[].class);
@@ -92,7 +92,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     // factories
 
-    public static class OfByte extends HeapMemorySegmentImpl {
+    public static final class OfByte extends HeapMemorySegmentImpl {
 
         OfByte(long offset, Object base, long length, boolean readOnly) {
             super(offset, base, length, readOnly);
@@ -125,7 +125,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
     }
 
-    public static class OfChar extends HeapMemorySegmentImpl {
+    public static final class OfChar extends HeapMemorySegmentImpl {
 
         OfChar(long offset, Object base, long length, boolean readOnly) {
             super(offset, base, length, readOnly);
@@ -158,7 +158,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
     }
 
-    public static class OfShort extends HeapMemorySegmentImpl {
+    public static final class OfShort extends HeapMemorySegmentImpl {
 
         OfShort(long offset, Object base, long length, boolean readOnly) {
             super(offset, base, length, readOnly);
@@ -191,7 +191,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
     }
 
-    public static class OfInt extends HeapMemorySegmentImpl {
+    public static final class OfInt extends HeapMemorySegmentImpl {
 
         OfInt(long offset, Object base, long length, boolean readOnly) {
             super(offset, base, length, readOnly);
@@ -224,7 +224,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
     }
 
-    public static class OfLong extends HeapMemorySegmentImpl {
+    public static final class OfLong extends HeapMemorySegmentImpl {
 
         OfLong(long offset, Object base, long length, boolean readOnly) {
             super(offset, base, length, readOnly);
@@ -257,7 +257,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
     }
 
-    public static class OfFloat extends HeapMemorySegmentImpl {
+    public static final class OfFloat extends HeapMemorySegmentImpl {
 
         OfFloat(long offset, Object base, long length, boolean readOnly) {
             super(offset, base, length, readOnly);
@@ -290,7 +290,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
     }
 
-    public static class OfDouble extends HeapMemorySegmentImpl {
+    public static final class OfDouble extends HeapMemorySegmentImpl {
 
         OfDouble(long offset, Object base, long length, boolean readOnly) {
             super(offset, base, length, readOnly);

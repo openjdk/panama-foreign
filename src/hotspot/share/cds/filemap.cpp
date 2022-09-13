@@ -26,6 +26,7 @@
 #include "jvm.h"
 #include "cds/archiveBuilder.hpp"
 #include "cds/archiveUtils.inline.hpp"
+#include "cds/cds_globals.hpp"
 #include "cds/dynamicArchive.hpp"
 #include "cds/filemap.hpp"
 #include "cds/heapShared.inline.hpp"
@@ -255,10 +256,12 @@ void FileMapHeader::populate(FileMapInfo *info, size_t core_region_alignment,
       _heap_begin = CompressedOops::begin();
       _heap_end = CompressedOops::end();
     } else {
+#if INCLUDE_G1GC
       address start = (address)G1CollectedHeap::heap()->reserved().start();
       address end = (address)G1CollectedHeap::heap()->reserved().end();
       _heap_begin = HeapShared::to_requested_address(start);
       _heap_end = HeapShared::to_requested_address(end);
+#endif
     }
   }
   _compressed_oops = UseCompressedOops;
@@ -327,12 +330,12 @@ void FileMapHeader::print(outputStream* st) {
   st->print_cr("- narrow_klass_shift:             %d", _narrow_klass_shift);
   st->print_cr("- compressed_oops:                %d", _compressed_oops);
   st->print_cr("- compressed_class_ptrs:          %d", _compressed_class_ptrs);
-  st->print_cr("- cloned_vtables_offset:          " SIZE_FORMAT_HEX, _cloned_vtables_offset);
-  st->print_cr("- serialized_data_offset:         " SIZE_FORMAT_HEX, _serialized_data_offset);
+  st->print_cr("- cloned_vtables_offset:          " SIZE_FORMAT_X, _cloned_vtables_offset);
+  st->print_cr("- serialized_data_offset:         " SIZE_FORMAT_X, _serialized_data_offset);
   st->print_cr("- heap_begin:                     " INTPTR_FORMAT, p2i(_heap_begin));
   st->print_cr("- heap_end:                       " INTPTR_FORMAT, p2i(_heap_end));
   st->print_cr("- jvm_ident:                      %s", _jvm_ident);
-  st->print_cr("- shared_path_table_offset:       " SIZE_FORMAT_HEX, _shared_path_table_offset);
+  st->print_cr("- shared_path_table_offset:       " SIZE_FORMAT_X, _shared_path_table_offset);
   st->print_cr("- shared_path_table_size:         %d", _shared_path_table_size);
   st->print_cr("- app_class_paths_start_index:    %d", _app_class_paths_start_index);
   st->print_cr("- app_module_paths_start_index:   %d", _app_module_paths_start_index);
@@ -458,8 +461,16 @@ bool SharedClassPathEntry::validate(bool is_class_path) const {
                                  "Timestamp mismatch" :
                                  "File size mismatch");
     } else {
-      FileMapInfo::fail_continue("A jar file is not the one used while building"
-                                 " the shared archive file: %s", name);
+      const char* bad_jar_msg = "A jar file is not the one used while building the shared archive file:";
+      FileMapInfo::fail_continue("%s %s", bad_jar_msg, name);
+      if (!log_is_enabled(Info, cds)) {
+        log_warning(cds)("%s %s", bad_jar_msg, name);
+      }
+      if (_timestamp != st.st_mtime) {
+        log_warning(cds)("%s timestamp has changed.", name);
+      } else {
+        log_warning(cds)("%s size has changed.", name);
+      }
     }
   }
 
@@ -1050,7 +1061,11 @@ bool FileMapInfo::validate_shared_path_table() {
     assert(shared_path(0)->is_modules_image(), "first shared_path must be the modules image");
   } else {
     if (!validate_boot_class_paths() || !validate_app_class_paths(shared_app_paths_len)) {
-      fail_continue("shared class paths mismatch (hint: enable -Xlog:class+path=info to diagnose the failure)");
+      const char* mismatch_msg = "shared class paths mismatch (hint: enable -Xlog:class+path=info to diagnose the failure)";
+      fail_continue("%s", mismatch_msg);
+      if (!log_is_enabled(Info, cds) && !log_is_enabled(Info, class, path)) {
+        log_warning(cds)("%s", mismatch_msg);
+      }
       return false;
     }
   }
@@ -1495,10 +1510,10 @@ void FileMapRegion::print(outputStream* st, int region_index) {
   st->print_cr("- is_heap_region:                 %d", _is_heap_region);
   st->print_cr("- is_bitmap_region:               %d", _is_bitmap_region);
   st->print_cr("- mapped_from_file:               %d", _mapped_from_file);
-  st->print_cr("- file_offset:                    " SIZE_FORMAT_HEX, _file_offset);
-  st->print_cr("- mapping_offset:                 " SIZE_FORMAT_HEX, _mapping_offset);
+  st->print_cr("- file_offset:                    " SIZE_FORMAT_X, _file_offset);
+  st->print_cr("- mapping_offset:                 " SIZE_FORMAT_X, _mapping_offset);
   st->print_cr("- used:                           " SIZE_FORMAT, _used);
-  st->print_cr("- oopmap_offset:                  " SIZE_FORMAT_HEX, _oopmap_offset);
+  st->print_cr("- oopmap_offset:                  " SIZE_FORMAT_X, _oopmap_offset);
   st->print_cr("- oopmap_size_in_bits:            " SIZE_FORMAT, _oopmap_size_in_bits);
   st->print_cr("- mapped_base:                    " INTPTR_FORMAT, p2i(_mapped_base));
 }
@@ -1522,7 +1537,9 @@ void FileMapInfo::write_region(int region, char* base, size_t size,
     if (UseCompressedOops) {
       mapping_offset = (size_t)CompressedOops::encode_not_null(cast_to_oop(base));
     } else {
+#if INCLUDE_G1GC
       mapping_offset = requested_base - (char*)G1CollectedHeap::heap()->reserved().start();
+#endif
     }
     assert(mapping_offset == (size_t)(uint32_t)mapping_offset, "must be 32-bit only");
   } else {
@@ -1536,10 +1553,11 @@ void FileMapInfo::write_region(int region, char* base, size_t size,
   int crc = ClassLoader::crc32(0, base, (jint)size);
   if (size > 0) {
     log_info(cds)("Shared file region (%-3s)  %d: " SIZE_FORMAT_W(8)
-                   " bytes, addr " INTPTR_FORMAT " file offset " SIZE_FORMAT_HEX_W(08)
+                   " bytes, addr " INTPTR_FORMAT " file offset 0x%08" PRIxPTR
                    " crc 0x%08x",
                    region_name(region), region, size, p2i(requested_base), _file_offset, crc);
   }
+
   si->init(region, mapping_offset, size, read_only, allow_exec, crc);
 
   if (base != NULL) {
