@@ -47,7 +47,7 @@ import static jdk.internal.foreign.layout.MemoryLayoutUtil.checkGetIndex;
  *
  * @since 19
  */
-public sealed abstract class AbstractStructOrUnionLayout<L extends AbstractStructOrUnionLayout<L> & MemoryLayout>
+public sealed abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L> & MemoryLayout>
         extends AbstractLayout<L>
         implements Iterable<MemoryLayout>
         permits StructLayoutImpl, UnionLayoutImpl {
@@ -55,11 +55,11 @@ public sealed abstract class AbstractStructOrUnionLayout<L extends AbstractStruc
     private final Kind kind;
     final List<MemoryLayout> elements;
 
-    AbstractStructOrUnionLayout(Kind kind, List<MemoryLayout> elements) {
+    AbstractGroupLayout(Kind kind, List<MemoryLayout> elements) {
         this(kind, elements, kind.alignof(elements), Optional.empty());
     }
 
-    AbstractStructOrUnionLayout(Kind kind, List<MemoryLayout> elements, long bitAlignment, Optional<String> name) {
+    AbstractGroupLayout(Kind kind, List<MemoryLayout> elements, long bitAlignment, Optional<String> name) {
         super(kind.sizeof(elements), bitAlignment, name); // Subclassing creates toctou problems here
         this.kind = kind;
         this.elements = List.copyOf(elements);
@@ -98,7 +98,7 @@ public sealed abstract class AbstractStructOrUnionLayout<L extends AbstractStruc
         if (!super.equals(other)) {
             return false;
         }
-        return other instanceof AbstractStructOrUnionLayout<?> otherGroup &&
+        return other instanceof AbstractGroupLayout<?> otherGroup &&
                 kind == otherGroup.kind &&
                 elements.equals(otherGroup.elements);
     }

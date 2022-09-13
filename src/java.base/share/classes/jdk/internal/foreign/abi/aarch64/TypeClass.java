@@ -25,7 +25,7 @@
  */
 package jdk.internal.foreign.abi.aarch64;
 
-import jdk.internal.foreign.layout.AbstractStructOrUnionLayout;
+import jdk.internal.foreign.layout.AbstractGroupLayout;
 
 import java.lang.foreign.*;
 
@@ -58,14 +58,14 @@ public enum TypeClass {
     }
 
     static boolean isHomogeneousFloatAggregate(MemoryLayout type) {
-        if (!(type instanceof AbstractStructOrUnionLayout<?> structOrUnionLayout))
+        if (!(type instanceof GroupLayout groupLayout))
             return false;
 
-        final long numElements = structOrUnionLayout.elementCount();
+        final long numElements = groupLayout.elementCount();
         if (numElements > 4 || numElements == 0)
             return false;
 
-        MemoryLayout baseType = structOrUnionLayout.elementAt(0);
+        MemoryLayout baseType = groupLayout.elementAt(0);
 
         if (!(baseType instanceof ValueLayout))
             return false;
@@ -74,7 +74,7 @@ public enum TypeClass {
         if (baseArgClass != FLOAT)
            return false;
 
-        for (MemoryLayout elem : structOrUnionLayout) {
+        for (MemoryLayout elem : groupLayout) {
             if (!(elem instanceof ValueLayout))
                 return false;
 

@@ -34,7 +34,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 abstract sealed class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout>
-        permits AbstractStructOrUnionLayout, PaddingLayoutImpl, SequenceLayoutImpl, ValueLayouts.AbstractValueLayout {
+        permits AbstractGroupLayout, PaddingLayoutImpl, SequenceLayoutImpl, ValueLayouts.AbstractValueLayout {
 
     private final long bitSize;
     private final long bitAlignment;

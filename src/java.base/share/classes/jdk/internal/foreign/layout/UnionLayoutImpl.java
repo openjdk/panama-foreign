@@ -30,7 +30,7 @@ import java.lang.foreign.UnionLayout;
 import java.util.List;
 import java.util.Optional;
 
-public final class UnionLayoutImpl extends AbstractStructOrUnionLayout<UnionLayoutImpl> implements UnionLayout {
+public final class UnionLayoutImpl extends AbstractGroupLayout<UnionLayoutImpl> implements UnionLayout {
 
     private UnionLayoutImpl(List<MemoryLayout> elements) {
         super(Kind.UNION, elements);

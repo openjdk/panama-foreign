@@ -27,11 +27,10 @@ package jdk.internal.foreign.layout;
 
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.StructLayout;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
-public final class StructLayoutImpl extends AbstractStructOrUnionLayout<StructLayoutImpl> implements StructLayout {
+public final class StructLayoutImpl extends AbstractGroupLayout<StructLayoutImpl> implements StructLayout {
 
     private StructLayoutImpl(List<MemoryLayout> elements) {
         super(Kind.STRUCT, elements);
