@@ -67,7 +67,7 @@ public class TestLoadBytes {
         }
 
         srcBufferNative = ByteBuffer.allocateDirect(size);
-        srcSegmentImplicit = MemorySession.openImplicit().allocate(size);
+        srcSegmentImplicit = MemorySegment.allocateNative(size);
     }
 
     @Benchmark

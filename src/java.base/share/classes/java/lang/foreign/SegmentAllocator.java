@@ -462,8 +462,7 @@ public interface SegmentAllocator {
      */
     static SegmentAllocator implicitAllocator() {
         final class Holder {
-            static final SegmentAllocator IMPLICIT_ALLOCATOR = (size, align) ->
-                    MemorySession.openImplicit().allocate(size, align);
+            static final SegmentAllocator IMPLICIT_ALLOCATOR = MemorySegment::allocateNative;
         }
         return Holder.IMPLICIT_ALLOCATOR;
     }

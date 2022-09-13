@@ -219,7 +219,7 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
      * A client is responsible for ensuring that this memory session is closed when the
      * segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
-     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     * The off-heap memory associated with the returned native memory segment is initialized to zero.
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @param bytesAlignment the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
@@ -229,6 +229,7 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
      * @throws IllegalStateException if this session is not {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread
      * {@linkplain MemorySession#ownerThread() owning} this session.
+     * @see MemorySegment#allocateNative(long, long)
      */
     @Override
     default MemorySegment allocate(long bytesSize, long bytesAlignment) {

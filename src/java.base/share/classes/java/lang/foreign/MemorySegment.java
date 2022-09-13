@@ -952,9 +952,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Creates a native memory segment with the given layout.
      * <p>
-     * The memory segment is automatically freed some unspecified time after it is no longer referenced.
-     * If a memory segment needs to be deterministically freed, use an appropriate memory session from which
-     * {@linkplain MemorySession#allocate(MemoryLayout) allocation} can be made instead.
+     * The returned memory segment is associated with a new {@linkplain MemorySession#openImplicit implicit}
+     * memory session. As such, the native memory region associated with the returned segment is
+     * freed <em>automatically</em>, some unspecified time after it is no longer referenced.
+     * Native segments featuring deterministic deallocation can be obtained using the {@link MemorySession#allocate} method.
      * <p>
      * This is equivalent to the following code:
      * {@snippet lang=java :
