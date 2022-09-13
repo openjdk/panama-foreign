@@ -86,7 +86,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
         for (int i = 0; i < o.length; i++) {
             if (layouts.get(i) instanceof GroupLayout) {
                 MemorySegment ms = (MemorySegment) o[i];
-                MemorySegment copy = MemorySession.openImplicit().allocate(ms.byteSize());
+                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize());
                 copy.copyFrom(ms);
                 o[i] = copy;
             }

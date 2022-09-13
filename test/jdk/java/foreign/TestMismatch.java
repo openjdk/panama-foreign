@@ -280,7 +280,7 @@ public class TestMismatch {
     }
 
     enum SegmentKind {
-        NATIVE(i -> MemorySession.openImplicit().allocate(i)),
+        NATIVE(i -> MemorySegment.allocateNative(i)),
         ARRAY(i -> MemorySegment.ofArray(new byte[i]));
 
         final IntFunction<MemorySegment> segmentFactory;

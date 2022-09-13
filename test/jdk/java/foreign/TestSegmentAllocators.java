@@ -202,7 +202,7 @@ public class TestSegmentAllocators {
         SegmentAllocator allocator = new SegmentAllocator() {
             @Override
             public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-                return MemorySession.openImplicit().allocate(bytesSize, bytesAlignment);
+                return MemorySegment.allocateNative(bytesSize, bytesAlignment);
             }
 
             @Override
