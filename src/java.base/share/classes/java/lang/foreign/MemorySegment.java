@@ -928,7 +928,6 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
-     *
      * @param address the returned segment's base address.
      * @param bytesSize the desired size.
      * @param session the native segment memory session.
@@ -955,7 +954,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * The returned memory segment is associated with a new {@linkplain MemorySession#openImplicit implicit}
      * memory session. As such, the native memory region associated with the returned segment is
      * freed <em>automatically</em>, some unspecified time after it is no longer referenced.
-     * Native segments featuring deterministic deallocation can be obtained using the {@link MemorySession#allocate} method.
+     * <p>
+     * Native segments featuring deterministic deallocation can be obtained using the
+     * {@link MemorySession#allocate(MemoryLayout)} method.
      * <p>
      * This is equivalent to the following code:
      * {@snippet lang=java :
@@ -977,9 +978,12 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Creates a native memory segment with the given size (in bytes).
      * <p>
-     * The memory segment is automatically freed some unspecified time after it is no longer referenced.
-     * If a memory segment needs to be deterministically freed, use an appropriate memory session from which
-     * {@linkplain MemorySession#allocate(long) allocation } can be made instead.
+     * The returned memory segment is associated with a new {@linkplain MemorySession#openImplicit implicit}
+     * memory session. As such, the native memory region associated with the returned segment is
+     * freed <em>automatically</em>, some unspecified time after it is no longer referenced.
+     * <p>
+     * Native segments featuring deterministic deallocation can be obtained using the
+     * {@link MemorySession#allocate(long)}} method.
      * <p>
      * This is equivalent to the following code:
      * {@snippet lang=java :
@@ -1004,9 +1008,12 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Creates a native memory segment with the given size (in bytes) and alignment (in bytes).
      * <p>
-     * The memory segment is automatically freed some unspecified time after it is no longer referenced.
-     * If a memory segment needs to be deterministically freed, use an appropriate memory session from which
-     * {@linkplain MemorySession#allocate(long, long) allocation} can be made instead.
+     * The returned memory segment is associated with a new {@linkplain MemorySession#openImplicit implicit}
+     * memory session. As such, the native memory region associated with the returned segment is
+     * freed <em>automatically</em>, some unspecified time after it is no longer referenced.
+     * <p>
+     * Native segments featuring deterministic deallocation can be obtained using the
+     * {@link MemorySession#allocate(long, long)} method.
      * <p>
      * This is equivalent to the following code:
      * {@snippet lang=java :
