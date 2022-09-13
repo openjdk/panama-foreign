@@ -101,15 +101,15 @@ public sealed interface FunctionDescriptor permits FunctionDescriptorImpl {
      * The carrier type of a layout is determined as follows:
      * <ul>
      * <li>If the layout is a {@link ValueLayout} the carrier type is determined through {@link ValueLayout#carrier()}.</li>
-     * <li>If the layout is a {@link GroupLayout}, or {@link SequenceLayout} the carrier type is {@link MemorySegment}.</li>
-     * <li>If the layout is a {@link PaddingLayout} an {@link IllegalArgumentException} is thrown.</li>
+     * <li>If the layout is a {@link GroupLayout} the carrier type is {@link MemorySegment}.</li>
+     * <li>If the layout is a {@link PaddingLayout}, or {@link SequenceLayout} an {@link IllegalArgumentException} is thrown.</li>
      * </ul>
      *
      * @return the method type consisting of the carrier types of the layouts in this function descriptor
-     * @throws IllegalArgumentException if one or more layouts in the function descriptor are not supported
-     * (e.g. if they are sequence layouts or padding layouts).
+     * @throws IllegalArgumentException if one or more layouts in the function descriptor can not be mapped to carrier
+     *                                  types (e.g. if they are sequence layouts or padding layouts).
      */
-    MethodType carrierMethodType();
+    MethodType toMethodType();
 
     /**
      * Creates a specialized variadic function descriptor, by appending given variadic layouts to this

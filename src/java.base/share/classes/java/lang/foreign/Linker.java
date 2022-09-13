@@ -32,7 +32,6 @@ import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
 
 /**
  * A linker provides access to foreign functions from Java code, and access to Java code from foreign functions.
@@ -67,7 +66,7 @@ import java.lang.invoke.MethodType;
  * when complete, a downcall method handle, that is, a method handle that can be used to invoke the target foreign function.
  * <p>
  * The Java {@linkplain java.lang.invoke.MethodType method type} associated with the returned method handle is
- * {@linkplain FunctionDescriptor#carrierMethodType() derived} from the argument and return layouts in the function descriptor.
+ * {@linkplain FunctionDescriptor#toMethodType() derived} from the argument and return layouts in the function descriptor.
  * More specifically, given each layout {@code L} in the function descriptor, a corresponding carrier {@code C} is inferred,
  * as described below:
  * <ul>
@@ -92,7 +91,7 @@ import java.lang.invoke.MethodType;
  * handle and a function descriptor; in this case, the set of memory layouts in the function descriptor
  * specify the signature of the function pointer associated with the upcall stub.
  * <p>
- * The type of the provided method handle has to {@linkplain FunctionDescriptor#carrierMethodType() match} the Java
+ * The type of the provided method handle has to {@linkplain FunctionDescriptor#toMethodType() match} the Java
  * {@linkplain java.lang.invoke.MethodType method type} associated with the upcall stub, which is derived from the argument
  * and return layouts in the function descriptor. More specifically, given each layout {@code L} in the function descriptor,
  * a corresponding carrier {@code C} is inferred, as described below:

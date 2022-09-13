@@ -48,7 +48,7 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
         Objects.requireNonNull(function);
 
         return DOWNCALL_CACHE.get(function, fd -> {
-            MethodType type = fd.carrierMethodType();
+            MethodType type = fd.toMethodType();
             MethodHandle handle = arrangeDowncall(type, fd);
             handle = SharedUtils.maybeInsertAllocator(fd, handle);
             return handle;
@@ -63,7 +63,7 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
         Objects.requireNonNull(function);
         SharedUtils.checkExceptions(target);
 
-        MethodType type = function.carrierMethodType();
+        MethodType type = function.toMethodType();
         if (!type.equals(target.type())) {
             throw new IllegalArgumentException("Wrong method handle type: " + target.type());
         }

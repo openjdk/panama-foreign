@@ -140,7 +140,7 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
     private static Class<?> carrierTypeFor(MemoryLayout layout) {
         if (layout instanceof ValueLayout valueLayout) {
             return valueLayout.carrier();
-        } else if (layout instanceof GroupLayout || layout instanceof SequenceLayout) {
+        } else if (layout instanceof GroupLayout) {
             return MemorySegment.class;
         } else {
             throw new IllegalArgumentException("Unsupported layout: " + layout);
@@ -148,7 +148,7 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
     }
 
     @Override
-    public MethodType carrierMethodType() {
+    public MethodType toMethodType() {
         Class<?> returnValue = resLayout != null ? carrierTypeFor(resLayout) : void.class;
         Class<?>[] argCarriers = new Class<?>[argLayouts.size()];
         for (int i = 0; i < argCarriers.length; i++) {

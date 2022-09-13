@@ -111,10 +111,9 @@ public class TestFunctionDescriptor extends NativeTestHelper {
     public void testCarrierMethodType() {
         FunctionDescriptor fd = FunctionDescriptor.of(C_INT,
                 C_INT,
-                MemoryLayout.structLayout(C_INT, C_INT),
-                MemoryLayout.sequenceLayout(3, C_INT));
-        MethodType cmt = fd.carrierMethodType();
-        assertEquals(cmt, MethodType.methodType(int.class, int.class, MemorySegment.class, MemorySegment.class));
+                MemoryLayout.structLayout(C_INT, C_INT));
+        MethodType cmt = fd.toMethodType();
+        assertEquals(cmt, MethodType.methodType(int.class, int.class, MemorySegment.class));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -124,6 +123,6 @@ public class TestFunctionDescriptor extends NativeTestHelper {
                 MemoryLayout.structLayout(C_INT, C_INT),
                 MemoryLayout.sequenceLayout(3, C_INT),
                 MemoryLayout.paddingLayout(32));
-        fd.carrierMethodType(); // should throw
+        fd.toMethodType(); // should throw
     }
 }
