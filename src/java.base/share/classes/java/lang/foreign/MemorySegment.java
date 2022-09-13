@@ -306,15 +306,15 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
-     * Returns the base address of the region of memory associated with this segment.
+     * Returns the base address of the region of memory associated with this memory segment.
      * <p>
      * If this memory segment is a {@linkplain #isNative() native} segment, then the returned base address is the
-     * starting address of the native region of memory associated with this segment.
+     * starting address of the native region of memory associated with the segment.
      * <p>
-     * If this memory segment is a heap segment, its associated region of memory is managed by the garbage collector.
-     * That is, the starting address of the memory region is implementation-specific and can change over time.
-     * In this case, the returned base address is expressed as the byte offset into the {@linkplain #array() heap-allocated object}
-     * associated with this segment.
+     * If this memory segment is a heap segment, its associated region of memory is managed by the garbage collector
+     * of the Java runtime. The returned base address is expressed as the byte offset into the heap where the
+     * object associated with this segment is stored. The starting address of the memory segment is specific to the
+     * implementation of the garbage collector and can change over time.
      *
      * @return the base address of the region of memory associated with this segment.
      */
