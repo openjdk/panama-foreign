@@ -30,7 +30,7 @@ import jdk.internal.foreign.abi.aarch64.CallArranger;
 /**
  * AArch64 CallArranger specialized for macOS ABI.
  */
-public class MacOsAArch64CallArranger extends CallArranger {
+public final class MacOsAArch64CallArranger extends CallArranger {
 
     @Override
     protected boolean varArgsOnStack() {

@@ -70,11 +70,17 @@ public final class ValueLayouts {
         @Stable
         private VarHandle handle;
 
-        AbstractValueLayout(Class<?> carrier, ByteOrder order, long bitSize) {
+        AbstractValueLayout(Class<?> carrier,
+                            ByteOrder order,
+                            long bitSize) {
             this(carrier, order, bitSize, bitSize, Optional.empty());
         }
 
-        AbstractValueLayout(Class<?> carrier, ByteOrder order, long bitSize, long bitAlignment, Optional<String> name) {
+        AbstractValueLayout(Class<?> carrier,
+                            ByteOrder order,
+                            long bitSize,
+                            long bitAlignment,
+                            Optional<String> name) {
             super(bitSize, bitAlignment, name);
             this.carrier = carrier;
             this.order = order;

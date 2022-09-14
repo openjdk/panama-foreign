@@ -45,8 +45,10 @@ public final class NativeEntryPoint {
 
     private static final Cleaner CLEANER = CleanerFactory.cleaner();
     private static final SoftReferenceCache<CacheKey, NativeEntryPoint> NEP_CACHE = new SoftReferenceCache<>();
-    private record CacheKey(MethodType methodType, ABIDescriptor abi,
-                            List<VMStorage> argMoves, List<VMStorage> retMoves,
+    private record CacheKey(MethodType methodType,
+                            ABIDescriptor abi,
+                            List<VMStorage> argMoves,
+                            List<VMStorage> retMoves,
                             boolean needsReturnBuffer) {}
 
     private NativeEntryPoint(MethodType methodType, long downcallStubAddress) {
@@ -55,8 +57,10 @@ public final class NativeEntryPoint {
     }
 
     public static NativeEntryPoint make(ABIDescriptor abi,
-                                        VMStorage[] argMoves, VMStorage[] returnMoves,
-                                        MethodType methodType, boolean needsReturnBuffer) {
+                                        VMStorage[] argMoves,
+                                        VMStorage[] returnMoves,
+                                        MethodType methodType,
+                                        boolean needsReturnBuffer) {
         if (returnMoves.length > 1 != needsReturnBuffer) {
             throw new IllegalArgumentException("Multiple register return, but needsReturnBuffer was false");
         }
@@ -73,8 +77,10 @@ public final class NativeEntryPoint {
         });
     }
 
-    private static native long makeDowncallStub(MethodType methodType, ABIDescriptor abi,
-                                                VMStorage[] encArgMoves, VMStorage[] encRetMoves,
+    private static native long makeDowncallStub(MethodType methodType,
+                                                ABIDescriptor abi,
+                                                VMStorage[] encArgMoves,
+                                                VMStorage[] encRetMoves,
                                                 boolean needsReturnBuffer);
 
     private static native boolean freeDowncallStub0(long downcallStub);

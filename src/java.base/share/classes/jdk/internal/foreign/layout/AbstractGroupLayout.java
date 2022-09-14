@@ -50,11 +50,15 @@ public sealed abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L
     private final Kind kind;
     private final List<MemoryLayout> elements;
 
-    AbstractGroupLayout(Kind kind, List<MemoryLayout> elements) {
+    AbstractGroupLayout(Kind kind,
+                        List<MemoryLayout> elements) {
         this(kind, elements, kind.alignof(elements), Optional.empty());
     }
 
-    AbstractGroupLayout(Kind kind, List<MemoryLayout> elements, long bitAlignment, Optional<String> name) {
+    AbstractGroupLayout(Kind kind,
+                        List<MemoryLayout> elements,
+                        long bitAlignment,
+                        Optional<String> name) {
         super(kind.sizeof(elements), bitAlignment, name); // Subclassing creates toctou problems here
         this.kind = kind;
         this.elements = List.copyOf(elements);

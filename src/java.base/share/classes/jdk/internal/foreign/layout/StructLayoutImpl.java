@@ -36,12 +36,15 @@ public final class StructLayoutImpl extends AbstractGroupLayout<StructLayoutImpl
         super(Kind.STRUCT, elements);
     }
 
-    private StructLayoutImpl(List<MemoryLayout> elements, long bitAlignment, Optional<String> name) {
+    private StructLayoutImpl(List<MemoryLayout> elements,
+                             long bitAlignment,
+                             Optional<String> name) {
         super(Kind.STRUCT, elements, bitAlignment, name);
     }
 
     @Override
-    StructLayoutImpl dup(long bitAlignment, Optional<String> name) {
+    StructLayoutImpl dup(long bitAlignment,
+                         Optional<String> name) {
         return new StructLayoutImpl(memberLayouts(), bitAlignment, name);
     }
 

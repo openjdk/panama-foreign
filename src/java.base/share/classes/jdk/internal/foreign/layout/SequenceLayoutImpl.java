@@ -35,11 +35,15 @@ public final class SequenceLayoutImpl extends AbstractLayout<SequenceLayoutImpl>
     private final long elemCount;
     private final MemoryLayout elementLayout;
 
-    private SequenceLayoutImpl(long elemCount, MemoryLayout elementLayout) {
+    private SequenceLayoutImpl(long elemCount,
+                               MemoryLayout elementLayout) {
         this(elemCount, elementLayout, elementLayout.bitAlignment(), Optional.empty());
     }
 
-    private SequenceLayoutImpl(long elemCount, MemoryLayout elementLayout, long bitAlignment, Optional<String> name) {
+    private SequenceLayoutImpl(long elemCount,
+                               MemoryLayout elementLayout,
+                               long bitAlignment,
+                               Optional<String> name) {
         super(Math.multiplyExact(elemCount, elementLayout.bitSize()), bitAlignment, name);
         this.elemCount = elemCount;
         this.elementLayout = elementLayout;

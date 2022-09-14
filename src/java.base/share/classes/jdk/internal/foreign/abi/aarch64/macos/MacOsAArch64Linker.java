@@ -37,7 +37,7 @@ import java.lang.invoke.MethodType;
 import java.util.function.Consumer;
 
 /**
- * ABI implementation for macOS on Apple silicon. Based on AAPCS with
+ * ABI implementation for macOS on Apple Silicon. Based on AAPCS with
  * changes to va_list and passing arguments on the stack.
  */
 public final class MacOsAArch64Linker extends AbstractLinker {

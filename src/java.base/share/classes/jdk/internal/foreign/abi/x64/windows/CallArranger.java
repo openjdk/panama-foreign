@@ -55,7 +55,7 @@ import static jdk.internal.foreign.abi.x64.X86_64Architecture.Regs.*;
  *
  * This includes taking care of synthetic arguments like pointers to return buffers for 'in-memory' returns.
  */
-public class CallArranger {
+public final class CallArranger {
     public static final int MAX_REGISTER_ARGUMENTS = 4;
     private static final int STACK_SLOT_SIZE = 8;
 
@@ -73,16 +73,8 @@ public class CallArranger {
         r11  // ret buf addr reg
     );
 
-    // record
-    public static class Bindings {
-        public final CallingSequence callingSequence;
-        public final boolean isInMemoryReturn;
-
-        Bindings(CallingSequence callingSequence, boolean isInMemoryReturn) {
-            this.callingSequence = callingSequence;
-            this.isInMemoryReturn = isInMemoryReturn;
-        }
-    }
+    public record Bindings(CallingSequence callingSequence,
+                           boolean isInMemoryReturn) {}
 
     public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
         class CallingSequenceBuilderHelper {
@@ -150,7 +142,7 @@ public class CallArranger {
                 .isPresent();
     }
 
-    static class StorageCalculator {
+    static final class StorageCalculator {
         private final boolean forArguments;
 
         private int nRegs = 0;
@@ -249,7 +241,7 @@ public class CallArranger {
         }
     }
 
-    static class BoxBindingCalculator implements BindingCalculator {
+    static final class BoxBindingCalculator implements BindingCalculator {
         private final StorageCalculator storageCalculator;
 
         BoxBindingCalculator(boolean forArguments) {

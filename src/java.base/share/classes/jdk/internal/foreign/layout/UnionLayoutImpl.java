@@ -36,12 +36,15 @@ public final class UnionLayoutImpl extends AbstractGroupLayout<UnionLayoutImpl> 
         super(Kind.UNION, elements);
     }
 
-    private UnionLayoutImpl(List<MemoryLayout> elements, long bitAlignment, Optional<String> name) {
+    private UnionLayoutImpl(List<MemoryLayout> elements,
+                            long bitAlignment,
+                            Optional<String> name) {
         super(Kind.UNION, elements, bitAlignment, name);
     }
 
     @Override
-    UnionLayoutImpl dup(long bitAlignment, Optional<String> name) {
+    UnionLayoutImpl dup(long bitAlignment,
+                        Optional<String> name) {
         return new UnionLayoutImpl(memberLayouts(), bitAlignment, name);
     }
 

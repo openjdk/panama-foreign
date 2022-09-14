@@ -50,7 +50,7 @@ import static jdk.internal.foreign.abi.SharedUtils.alignUp;
  * parameters are passed on the stack and the type of va_list decays to
  * char* instead of the structure defined in the AAPCS.
  */
-public non-sealed class MacOsAArch64VaList implements VaList {
+public final class MacOsAArch64VaList implements VaList {
     private static final long VA_SLOT_SIZE_BYTES = 8;
     private static final VarHandle VH_address = C_POINTER.varHandle();
 
@@ -176,7 +176,7 @@ public non-sealed class MacOsAArch64VaList implements VaList {
         return segment.asSlice(0, 0);
     }
 
-    public static non-sealed class Builder implements VaList.Builder {
+    public static final class Builder implements VaList.Builder {
 
         private final MemorySession session;
         private final List<SimpleVaArg> args = new ArrayList<>();

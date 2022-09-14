@@ -92,19 +92,12 @@ public abstract class CallArranger {
         r10  // return buffer addr reg
     );
 
-    // record
-    public static class Bindings {
-        public final CallingSequence callingSequence;
-        public final boolean isInMemoryReturn;
-
-        Bindings(CallingSequence callingSequence, boolean isInMemoryReturn) {
-            this.callingSequence = callingSequence;
-            this.isInMemoryReturn = isInMemoryReturn;
-        }
-    }
-
     public static final CallArranger LINUX = new LinuxAArch64CallArranger();
     public static final CallArranger MACOS = new MacOsAArch64CallArranger();
+
+    public record Bindings(
+        CallingSequence callingSequence,
+        boolean isInMemoryReturn) {}
 
     /**
      * Are variadic arguments assigned to registers as in the standard calling

@@ -78,17 +78,10 @@ public final class CallArranger {
     );
 
     // record
-    public static class Bindings {
-        public final CallingSequence callingSequence;
-        public final boolean isInMemoryReturn;
-        public final int nVectorArgs;
-
-        Bindings(CallingSequence callingSequence, boolean isInMemoryReturn, int nVectorArgs) {
-            this.callingSequence = callingSequence;
-            this.isInMemoryReturn = isInMemoryReturn;
-            this.nVectorArgs = nVectorArgs;
-        }
-    }
+    public record Bindings(
+        CallingSequence callingSequence,
+        boolean isInMemoryReturn,
+        int nVectorArgs) {}
 
     public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
         CallingSequenceBuilder csb = new CallingSequenceBuilder(CSysV, forUpcall);
