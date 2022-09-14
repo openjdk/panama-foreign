@@ -617,9 +617,7 @@ public class BindingSpecializer {
         emitInvokeInterface(MemorySegment.class, "set", descriptor);
     }
 
-
     // VM_STORE and VM_LOAD are emulated, which is different for down/upcalls
-
     private void emitVMStore(Binding.VMStore vmStore) {
         Class<?> storeType = vmStore.type();
         popType(storeType);
@@ -646,6 +644,7 @@ public class BindingSpecializer {
             }
         }
     }
+
     private void emitVMLoad(Binding.VMLoad vmLoad) {
         Class<?> loadType = vmLoad.type();
 
