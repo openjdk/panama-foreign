@@ -35,8 +35,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static java.util.Objects.requireNonNull;
-
 /**
  * @implSpec This class and its subclasses are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  */
@@ -127,7 +125,7 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
      * @return the new function descriptor.
      */
     public FunctionDescriptorImpl changeReturnLayout(MemoryLayout newReturn) {
-        requireNonNull(newReturn);
+        Objects.requireNonNull(newReturn);
         return new FunctionDescriptorImpl(newReturn, argLayouts);
     }
 
