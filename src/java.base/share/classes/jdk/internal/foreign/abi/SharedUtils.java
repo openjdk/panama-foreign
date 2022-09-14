@@ -509,23 +509,4 @@ public final class SharedUtils {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
     }
-
-    public static MethodType inferMethodType(FunctionDescriptor descriptor) {
-        MethodType type = MethodType.methodType(descriptor.returnLayout().isPresent() ?
-                carrierFor(descriptor.returnLayout().get()) : void.class);
-        for (MemoryLayout argLayout : descriptor.argumentLayouts()) {
-            type = type.appendParameterTypes(carrierFor(argLayout));
-        }
-        return type;
-    }
-
-    static Class<?> carrierFor(MemoryLayout layout) {
-        if (layout instanceof ValueLayout valueLayout) {
-            return valueLayout.carrier();
-        } else if (layout instanceof GroupLayout) {
-            return MemorySegment.class;
-        } else {
-            throw new IllegalArgumentException("Unsupported layout: " + layout);
-        }
-    }
 }

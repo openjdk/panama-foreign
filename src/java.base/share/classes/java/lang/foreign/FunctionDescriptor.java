@@ -25,6 +25,8 @@
 package java.lang.foreign;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
+
 import java.util.Objects;
 import java.util.Optional;
 import java.util.List;
@@ -95,6 +97,22 @@ public sealed interface FunctionDescriptor permits FunctionDescriptorImpl {
      * @return the new function descriptor.
      */
     FunctionDescriptor dropReturnLayout();
+
+    /**
+     * Returns the method type consisting of the carrier types of the layouts in this function descriptor.
+     * <p>
+     * The carrier type of a layout is determined as follows:
+     * <ul>
+     * <li>If the layout is a {@link ValueLayout} the carrier type is determined through {@link ValueLayout#carrier()}.</li>
+     * <li>If the layout is a {@link GroupLayout} the carrier type is {@link MemorySegment}.</li>
+     * <li>If the layout is a {@link PaddingLayout}, or {@link SequenceLayout} an {@link IllegalArgumentException} is thrown.</li>
+     * </ul>
+     *
+     * @return the method type consisting of the carrier types of the layouts in this function descriptor
+     * @throws IllegalArgumentException if one or more layouts in the function descriptor can not be mapped to carrier
+     *                                  types (e.g. if they are sequence layouts or padding layouts).
+     */
+    MethodType toMethodType();
 
     /**
      * Creates a specialized variadic function descriptor, by appending given variadic layouts to this
