@@ -42,7 +42,7 @@
  * ranging from {@code 0} to {@code 9}, we can use the following code:
  *
  * {@snippet lang=java :
- * MemorySegment segment = MemorySegment.allocateNative(10 * 4, MemorySession.openImplicit());
+ * MemorySegment segment = MemorySegment.allocateNative(10 * 4);
  * for (int i = 0 ; i < 10 ; i++) {
  *     segment.setAtIndex(ValueLayout.JAVA_INT, i, i);
  * }
@@ -74,7 +74,7 @@
  *
  * {@snippet lang=java :
  * try (MemorySession session = MemorySession.openConfined()) {
- *     MemorySegment segment = MemorySegment.allocateNative(10 * 4, session);
+ *     MemorySegment segment = session.allocate(10 * 4);
  *     for (int i = 0 ; i < 10 ; i++) {
  *         segment.setAtIndex(ValueLayout.JAVA_INT, i, i);
  *     }
@@ -119,7 +119,7 @@
  * );
  *
  * try (MemorySession session = MemorySession.openConfined()) {
- *     MemorySegment cString = MemorySegment.allocateNative(5 + 1, session);
+ *     MemorySegment cString = session.allocate(5 + 1);
  *     cString.setUtf8String(0, "Hello");
  *     long len = (long)strlen.invoke(cString); // 5
  * }

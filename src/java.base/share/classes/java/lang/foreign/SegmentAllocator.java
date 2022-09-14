@@ -387,7 +387,7 @@ public interface SegmentAllocator {
      * the given block size {@code B} and the given arena size {@code A}, and the native segments
      * it allocates are associated with the provided memory session.
      * <p>
-     * The allocator arena is first initialized by {@linkplain MemorySegment#allocateNative(long, MemorySession) allocating} a
+     * The allocator arena is first initialized by {@linkplain MemorySession#allocate(long) allocating} a
      * native memory segment {@code S} of size {@code B}. The allocator then responds to allocation requests in one of the following ways:
      * <ul>
      *     <li>if the size of the allocation requests is smaller than the size of {@code S}, and {@code S} has a <em>free</em>
@@ -454,15 +454,15 @@ public interface SegmentAllocator {
      * Returns an allocator which allocates native segments in independent {@linkplain MemorySession#openImplicit() implicit memory sessions}.
      * Equivalent to (but likely more efficient than) the following code:
      * {@snippet lang=java :
-     * SegmentAllocator implicitAllocator = (size, align) -> MemorySegment.allocateNative(size, align, MemorySession.openImplicit());
+     * SegmentAllocator implicitAllocator = (size, align) ->
+     *     MemorySession.openImplicit().allocate(size, align);
      * }
      *
      * @return an allocator which allocates native segments in independent {@linkplain MemorySession#openImplicit() implicit memory sessions}.
      */
     static SegmentAllocator implicitAllocator() {
         final class Holder {
-            static final SegmentAllocator IMPLICIT_ALLOCATOR = (size, align) ->
-                    MemorySegment.allocateNative(size, align, MemorySession.openImplicit());
+            static final SegmentAllocator IMPLICIT_ALLOCATOR = MemorySegment::allocateNative;
         }
         return Holder.IMPLICIT_ALLOCATOR;
     }
