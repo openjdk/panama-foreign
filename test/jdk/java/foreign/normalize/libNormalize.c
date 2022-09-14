@@ -27,11 +27,13 @@
 #define EXPORT
 #endif
 
-// re-use for boolean
-EXPORT char test_char(char (*cb)(char), char x) {
-    return cb(x);
+// we use 'int' here to make sure the native code doesn't touch any of the bits
+// the important part is that our Java code performs argument normalization
+EXPORT int test(void (*cb)(int), int x) {
+    cb(x); // check upcall arg normalization
+    return x; // check return value normalization
 }
 
-EXPORT short test_short(short (*cb)(short), short x) {
-    return cb(x);
+EXPORT int int_identity(int x) {
+    return x;
 }
