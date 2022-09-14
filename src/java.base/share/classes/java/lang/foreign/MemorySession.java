@@ -223,8 +223,8 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
      * @return a new native segment, associated with this session.
      */
     @Override
-    default MemorySegment allocate(long bytesSize, long bytesAlignment) {
-        return MemorySegment.allocateNative(bytesSize, bytesAlignment, this);
+    default MemorySegment allocate(long byteSize, long byteAlignment) {
+        return MemorySegment.allocateNative(byteSize, byteAlignment, this);
     }
 
     /**

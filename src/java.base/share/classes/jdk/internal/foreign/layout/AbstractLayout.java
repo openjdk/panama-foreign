@@ -64,9 +64,9 @@ abstract sealed class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout>
         return name;
     }
 
-    public final L withBitAlignment(long alignmentBits) {
-        checkAlignment(alignmentBits);
-        return dup(alignmentBits, name);
+    public final L withBitAlignment(long bitAlignment) {
+        checkAlignment(bitAlignment);
+        return dup(bitAlignment, name);
     }
 
     public final long bitAlignment() {

@@ -43,5 +43,5 @@ public sealed interface UnionLayout extends GroupLayout permits UnionLayoutImpl 
     UnionLayout withName(String name);
 
     @Override
-    UnionLayout withBitAlignment(long alignmentBits);
+    UnionLayout withBitAlignment(long bitAlignment);
 }
