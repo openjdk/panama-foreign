@@ -65,9 +65,10 @@ import static java.lang.invoke.MethodType.methodType;
 
 public final class SharedUtils {
 
-    private SharedUtils() {
-    }
-
+    // this allocator should be used when no allocation is expected
+    public static final SegmentAllocator THROWING_ALLOCATOR = (size, align) -> {
+        throw new IllegalStateException("Cannot get here");
+    };
     private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
     private static final JavaLangInvokeAccess JLIA = SharedSecrets.getJavaLangInvokeAccess();
 
@@ -89,10 +90,8 @@ public final class SharedUtils {
         }
     }
 
-    // this allocator should be used when no allocation is expected
-    public static final SegmentAllocator THROWING_ALLOCATOR = (size, align) -> {
-        throw new IllegalStateException("Cannot get here");
-    };
+    private SharedUtils() {
+    }
 
     /**
      * Align the specified type from a given address
@@ -126,28 +125,6 @@ public final class SharedUtils {
         }
     }
 
-    private static long alignmentOfScalar(ValueLayout st) {
-        return st.byteSize();
-    }
-
-    private static long alignmentOfArray(SequenceLayout ar, boolean isVar) {
-        if (ar.elementCount() == 0) {
-            // VLA or incomplete
-            return 16;
-        } else if ((ar.byteSize()) >= 16 && isVar) {
-            return 16;
-        } else {
-            // align as element type
-            MemoryLayout elementType = ar.elementLayout();
-            return alignment(elementType, false);
-        }
-    }
-
-    private static long alignmentOfContainer(GroupLayout ct) {
-        // Most strict member
-        return ct.memberLayouts().stream().mapToLong(t -> alignment(t, false)).max().orElse(1);
-    }
-
     /**
      * Takes a MethodHandle that takes an input buffer as a first argument (a MemorySegment), and returns nothing,
      * and adapts it to return a MemorySegment, by allocating a MemorySegment for the input
@@ -177,6 +154,43 @@ public final class SharedUtils {
         return handle;
     }
 
+    static MethodHandle mergeArguments(MethodHandle mh, int sourceIndex, int destIndex) {
+        MethodType oldType = mh.type();
+        Class<?> sourceType = oldType.parameterType(sourceIndex);
+        Class<?> destType = oldType.parameterType(destIndex);
+        if (sourceType != destType) {
+            // TODO meet?
+            throw new IllegalArgumentException("Parameter types differ: " + sourceType + " != " + destType);
+        }
+        MethodType newType = oldType.dropParameterTypes(destIndex, destIndex + 1);
+        int[] reorder = new int[oldType.parameterCount()];
+        if (destIndex < sourceIndex) {
+            sourceIndex--;
+        }
+        for (int i = 0, index = 0; i < reorder.length; i++) {
+            if (i != destIndex) {
+                reorder[i] = index++;
+            } else {
+                reorder[i] = sourceIndex;
+            }
+        }
+        return permuteArguments(mh, newType, reorder);
+    }
+
+    static MethodHandle swapArguments(MethodHandle mh, int firstArg, int secondArg) {
+        MethodType mtype = mh.type();
+        int[] perms = new int[mtype.parameterCount()];
+        MethodType swappedType = MethodType.methodType(mtype.returnType());
+        for (int i = 0 ; i < perms.length ; i++) {
+            int dst = i;
+            if (i == firstArg) dst = secondArg;
+            if (i == secondArg) dst = firstArg;
+            perms[i] = dst;
+            swappedType = swappedType.appendParameterTypes(mtype.parameterType(dst));
+        }
+        return permuteArguments(mh, swappedType, perms);
+    }
+
     /**
      * Takes a MethodHandle that returns a MemorySegment, and adapts it to take an input buffer as a first argument
      * (a MemorySegment), and upon invocation, copies the contents of the returned MemorySegment into the input buffer
@@ -200,10 +214,6 @@ public final class SharedUtils {
         }
 
         return target;
-    }
-
-    private static MemorySegment bufferCopy(MemorySegment dest, MemorySegment buffer) {
-        return dest.copyFrom(buffer);
     }
 
     public static Class<?> primitiveCarrierForSize(long size, boolean useFloat) {
@@ -259,48 +269,6 @@ public final class SharedUtils {
         return IntStream.range(0, moves.length)
                         .boxed()
                         .collect(Collectors.toMap(i -> moves[i].storage(), i -> i));
-    }
-
-    static MethodHandle mergeArguments(MethodHandle mh, int sourceIndex, int destIndex) {
-        MethodType oldType = mh.type();
-        Class<?> sourceType = oldType.parameterType(sourceIndex);
-        Class<?> destType = oldType.parameterType(destIndex);
-        if (sourceType != destType) {
-            // TODO meet?
-            throw new IllegalArgumentException("Parameter types differ: " + sourceType + " != " + destType);
-        }
-        MethodType newType = oldType.dropParameterTypes(destIndex, destIndex + 1);
-        int[] reorder = new int[oldType.parameterCount()];
-        if (destIndex < sourceIndex) {
-            sourceIndex--;
-        }
-        for (int i = 0, index = 0; i < reorder.length; i++) {
-            if (i != destIndex) {
-                reorder[i] = index++;
-            } else {
-                reorder[i] = sourceIndex;
-            }
-        }
-        return permuteArguments(mh, newType, reorder);
-    }
-
-
-    static MethodHandle swapArguments(MethodHandle mh, int firstArg, int secondArg) {
-        MethodType mtype = mh.type();
-        int[] perms = new int[mtype.parameterCount()];
-        MethodType swappedType = MethodType.methodType(mtype.returnType());
-        for (int i = 0 ; i < perms.length ; i++) {
-            int dst = i;
-            if (i == firstArg) dst = secondArg;
-            if (i == secondArg) dst = firstArg;
-            perms[i] = dst;
-            swappedType = swappedType.appendParameterTypes(mtype.parameterType(dst));
-        }
-        return permuteArguments(mh, swappedType, perms);
-    }
-
-    private static MethodHandle reachabilityFenceHandle(Class<?> type) {
-        return MH_REACHABILITY_FENCE.asType(MethodType.methodType(void.class, type));
     }
 
     static void handleUncaughtException(Throwable t) {
@@ -375,73 +343,6 @@ public final class SharedUtils {
         return new NoSuchElementException("No such element: " + layout);
     }
 
-    public static final class SimpleVaArg {
-        public final MemoryLayout layout;
-        public final Object value;
-
-        public SimpleVaArg(MemoryLayout layout, Object value) {
-            this.layout = layout;
-            this.value = value;
-        }
-
-        public VarHandle varHandle() {
-            return layout.varHandle();
-        }
-    }
-
-    public static final class EmptyVaList implements VaList {
-
-        private final MemorySegment address;
-
-        public EmptyVaList(MemorySegment address) {
-            this.address = address;
-        }
-
-        private static UnsupportedOperationException uoe() {
-            return new UnsupportedOperationException("Empty VaList");
-        }
-
-        @Override
-        public int nextVarg(ValueLayout.OfInt layout) {
-            throw uoe();
-        }
-
-        @Override
-        public long nextVarg(ValueLayout.OfLong layout) {
-            throw uoe();
-        }
-
-        @Override
-        public double nextVarg(ValueLayout.OfDouble layout) {
-            throw uoe();
-        }
-
-        @Override
-        public MemorySegment nextVarg(ValueLayout.OfAddress layout) {
-            throw uoe();
-        }
-
-        @Override
-        public MemorySegment nextVarg(GroupLayout layout, SegmentAllocator allocator) {
-            throw uoe();
-        }
-
-        @Override
-        public void skip(MemoryLayout... layouts) {
-            throw uoe();
-        }
-
-        @Override
-        public VaList copy() {
-            return this;
-        }
-
-        @Override
-        public MemorySegment segment() {
-            return address;
-        }
-    }
-
     static void writeOverSized(MemorySegment ptr, Class<?> type, Object o) {
         // use VH_LONG for integers to zero out the whole register in the process
         if (type == long.class) {
@@ -507,6 +408,103 @@ public final class SharedUtils {
             return ptr.get(JAVA_BOOLEAN, 0);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
+        }
+    }
+
+    private static long alignmentOfScalar(ValueLayout st) {
+        return st.byteSize();
+    }
+
+    private static long alignmentOfArray(SequenceLayout ar, boolean isVar) {
+        if (ar.elementCount() == 0) {
+            // VLA or incomplete
+            return 16;
+        } else if ((ar.byteSize()) >= 16 && isVar) {
+            return 16;
+        } else {
+            // align as element type
+            MemoryLayout elementType = ar.elementLayout();
+            return alignment(elementType, false);
+        }
+    }
+
+    private static long alignmentOfContainer(GroupLayout ct) {
+        // Most strict member
+        return ct.memberLayouts().stream().mapToLong(t -> alignment(t, false)).max().orElse(1);
+    }
+
+    private static MemorySegment bufferCopy(MemorySegment dest, MemorySegment buffer) {
+        return dest.copyFrom(buffer);
+    }
+
+    private static MethodHandle reachabilityFenceHandle(Class<?> type) {
+        return MH_REACHABILITY_FENCE.asType(MethodType.methodType(void.class, type));
+    }
+
+    public static final class SimpleVaArg {
+        public final MemoryLayout layout;
+        public final Object value;
+
+        public SimpleVaArg(MemoryLayout layout, Object value) {
+            this.layout = layout;
+            this.value = value;
+        }
+
+        public VarHandle varHandle() {
+            return layout.varHandle();
+        }
+    }
+
+    public static final class EmptyVaList implements VaList {
+
+        private final MemorySegment address;
+
+        public EmptyVaList(MemorySegment address) {
+            this.address = address;
+        }
+
+        @Override
+        public int nextVarg(ValueLayout.OfInt layout) {
+            throw uoe();
+        }
+
+        private static UnsupportedOperationException uoe() {
+            return new UnsupportedOperationException("Empty VaList");
+        }
+
+        @Override
+        public long nextVarg(ValueLayout.OfLong layout) {
+            throw uoe();
+        }
+
+        @Override
+        public double nextVarg(ValueLayout.OfDouble layout) {
+            throw uoe();
+        }
+
+        @Override
+        public MemorySegment nextVarg(ValueLayout.OfAddress layout) {
+            throw uoe();
+        }
+
+        @Override
+        public MemorySegment nextVarg(GroupLayout layout, SegmentAllocator allocator) {
+            throw uoe();
+        }
+
+        @Override
+        public void skip(MemoryLayout... layouts) {
+            throw uoe();
+        }
+
+        @Override
+        public VaList copy() {
+            return this;
+        }
+
+        @Override
+        public MemorySegment segment() {
+            return address;
         }
     }
 }

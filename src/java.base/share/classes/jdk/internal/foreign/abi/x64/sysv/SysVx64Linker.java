@@ -40,17 +40,10 @@ import java.util.function.Consumer;
  */
 public final class SysVx64Linker extends AbstractLinker {
 
-    public static SysVx64Linker getInstance() {
-        final class Holder {
-            private static final SysVx64Linker INSTANCE = new SysVx64Linker();
-        }
-
-        return Holder.INSTANCE;
-    }
-
     private SysVx64Linker() {
         // Ensure there is only one instance
     }
+
     @Override
     protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function) {
         return CallArranger.arrangeDowncall(inferredMethodType, function);
@@ -59,6 +52,14 @@ public final class SysVx64Linker extends AbstractLinker {
     @Override
     protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession scope) {
         return CallArranger.arrangeUpcall(target, targetType, function, scope);
+    }
+
+    public static SysVx64Linker getInstance() {
+        final class Holder {
+            private static final SysVx64Linker INSTANCE = new SysVx64Linker();
+        }
+
+        return Holder.INSTANCE;
     }
 
     public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession scope) {

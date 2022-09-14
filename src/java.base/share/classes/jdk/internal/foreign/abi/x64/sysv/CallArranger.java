@@ -77,11 +77,18 @@ public final class CallArranger {
         r11  // ret buf addr reg
     );
 
-    // record
-    public record Bindings(
-        CallingSequence callingSequence,
-        boolean isInMemoryReturn,
-        int nVectorArgs) {}
+    public static MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc) {
+        Bindings bindings = getBindings(mt, cDesc, false);
+
+        MethodHandle handle = new DowncallLinker(CSysV, bindings.callingSequence).getBoundMethodHandle();
+        handle = MethodHandles.insertArguments(handle, handle.type().parameterCount() - 1, bindings.nVectorArgs);
+
+        if (bindings.isInMemoryReturn) {
+            handle = SharedUtils.adaptDowncallForIMR(handle, cDesc);
+        }
+
+        return handle;
+    }
 
     public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
         CallingSequenceBuilder csb = new CallingSequenceBuilder(CSysV, forUpcall);
@@ -115,17 +122,11 @@ public final class CallArranger {
         return new Bindings(csb.build(), returnInMemory, argCalc.storageCalculator.nVectorReg);
     }
 
-    public static MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc) {
-        Bindings bindings = getBindings(mt, cDesc, false);
-
-        MethodHandle handle = new DowncallLinker(CSysV, bindings.callingSequence).getBoundMethodHandle();
-        handle = MethodHandles.insertArguments(handle, handle.type().parameterCount() - 1, bindings.nVectorArgs);
-
-        if (bindings.isInMemoryReturn) {
-            handle = SharedUtils.adaptDowncallForIMR(handle, cDesc);
-        }
-
-        return handle;
+    private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
+        return returnLayout
+                .filter(GroupLayout.class::isInstance)
+                .filter(g -> TypeClass.classifyLayout(g).inMemory())
+                .isPresent();
     }
 
     public static MemorySegment arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, MemorySession session) {
@@ -138,12 +139,10 @@ public final class CallArranger {
         return UpcallLinker.make(CSysV, target, bindings.callingSequence, session);
     }
 
-    private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
-        return returnLayout
-                .filter(GroupLayout.class::isInstance)
-                .filter(g -> TypeClass.classifyLayout(g).inMemory())
-                .isPresent();
-    }
+    public record Bindings(
+        CallingSequence callingSequence,
+        boolean isInMemoryReturn,
+        int nVectorArgs) {}
 
     static final class StorageCalculator {
         private final boolean forArguments;
@@ -154,31 +153,6 @@ public final class CallArranger {
 
         public StorageCalculator(boolean forArguments) {
             this.forArguments = forArguments;
-        }
-
-        private int maxRegisterArguments(int type) {
-            return type == StorageClasses.INTEGER ?
-                    MAX_INTEGER_ARGUMENT_REGISTERS :
-                    MAX_VECTOR_ARGUMENT_REGISTERS;
-        }
-
-        VMStorage stackAlloc() {
-            assert forArguments : "no stack returns";
-            VMStorage storage = X86_64Architecture.stackStorage((short) STACK_SLOT_SIZE, (int)stackOffset);
-            stackOffset += STACK_SLOT_SIZE;
-            return storage;
-        }
-
-        VMStorage nextStorage(int type) {
-            int registerCount = registerCount(type);
-            if (registerCount < maxRegisterArguments(type)) {
-                VMStorage[] source =
-                    (forArguments ? CSysV.inputStorage : CSysV.outputStorage)[type];
-                incrementRegisterCount(type);
-                return source[registerCount];
-            } else {
-                return stackAlloc();
-            }
         }
 
         VMStorage[] structStorages(TypeClass typeClass) {
@@ -208,12 +182,37 @@ public final class CallArranger {
             return storage;
         }
 
+        VMStorage stackAlloc() {
+            assert forArguments : "no stack returns";
+            VMStorage storage = X86_64Architecture.stackStorage((short) STACK_SLOT_SIZE, (int)stackOffset);
+            stackOffset += STACK_SLOT_SIZE;
+            return storage;
+        }
+
+        VMStorage nextStorage(int type) {
+            int registerCount = registerCount(type);
+            if (registerCount < maxRegisterArguments(type)) {
+                VMStorage[] source =
+                    (forArguments ? CSysV.inputStorage : CSysV.outputStorage)[type];
+                incrementRegisterCount(type);
+                return source[registerCount];
+            } else {
+                return stackAlloc();
+            }
+        }
+
         int registerCount(int type) {
             return switch (type) {
                 case StorageClasses.INTEGER -> nIntegerReg;
                 case StorageClasses.VECTOR -> nVectorReg;
                 default -> throw new IllegalStateException();
             };
+        }
+
+        private int maxRegisterArguments(int type) {
+            return type == StorageClasses.INTEGER ?
+                    MAX_INTEGER_ARGUMENT_REGISTERS :
+                    MAX_VECTOR_ARGUMENT_REGISTERS;
         }
 
         void incrementRegisterCount(int type) {

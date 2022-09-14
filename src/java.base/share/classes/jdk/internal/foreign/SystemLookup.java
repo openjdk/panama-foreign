@@ -42,18 +42,25 @@ import static java.lang.foreign.ValueLayout.ADDRESS;
 
 public final class SystemLookup implements SymbolLookup {
 
-    private SystemLookup() { }
-
     private static final SystemLookup INSTANCE = new SystemLookup();
-
     /* A fallback lookup, used when creation of system lookup fails. */
     private static final SymbolLookup FALLBACK_LOOKUP = name -> Optional.empty();
-
     /*
      * On POSIX systems, dlsym will allow us to lookup symbol in library dependencies; the same trick doesn't work
      * on Windows. For this reason, on Windows we do not generate any side-library, and load msvcrt.dll directly instead.
      */
     private static final SymbolLookup SYSTEM_LOOKUP = makeSystemLookup();
+
+    private SystemLookup() { }
+
+    @Override
+    public Optional<MemorySegment> find(String name) {
+        return SYSTEM_LOOKUP.find(name);
+    }
+
+    public static SystemLookup getInstance() {
+        return INSTANCE;
+    }
 
     private static SymbolLookup makeSystemLookup() {
         try {
@@ -67,35 +74,6 @@ public final class SystemLookup implements SymbolLookup {
             // fail, return a dummy lookup.
             return FALLBACK_LOOKUP;
         }
-    }
-
-    private static SymbolLookup makeWindowsLookup() {
-        Path system32 = Path.of(System.getenv("SystemRoot"), "System32");
-        Path ucrtbase = system32.resolve("ucrtbase.dll");
-        Path msvcrt = system32.resolve("msvcrt.dll");
-
-        boolean useUCRT = Files.exists(ucrtbase);
-        Path stdLib = useUCRT ? ucrtbase : msvcrt;
-        SymbolLookup lookup = libLookup(libs -> libs.load(stdLib));
-
-        if (useUCRT) {
-            // use a fallback lookup to look up inline functions from fallback lib
-
-            SymbolLookup fallbackLibLookup =
-                    libLookup(libs -> libs.load(jdkLibraryPath("syslookup")));
-
-            int numSymbols = WindowsFallbackSymbols.values().length;
-            MemorySegment funcs = MemorySegment.ofAddress(fallbackLibLookup.find("funcs").orElseThrow().address(),
-                ADDRESS.byteSize() * numSymbols, MemorySession.global());
-
-            Function<String, Optional<MemorySegment>> fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.valueOfOrNull(name))
-                .map(symbol -> MemorySegment.ofAddress(funcs.getAtIndex(ADDRESS, symbol.ordinal()).address(), 0L, MemorySession.global()));
-
-            final SymbolLookup finalLookup = lookup;
-            lookup = name -> finalLookup.find(name).or(() -> fallbackLookup.apply(name));
-        }
-
-        return lookup;
     }
 
     private static SymbolLookup libLookup(Function<RawNativeLibraries, NativeLibrary> loader) {
@@ -126,14 +104,33 @@ public final class SystemLookup implements SymbolLookup {
         return javahome.resolve(lib).resolve(libname);
     }
 
+    private static SymbolLookup makeWindowsLookup() {
+        Path system32 = Path.of(System.getenv("SystemRoot"), "System32");
+        Path ucrtbase = system32.resolve("ucrtbase.dll");
+        Path msvcrt = system32.resolve("msvcrt.dll");
 
-    public static SystemLookup getInstance() {
-        return INSTANCE;
-    }
+        boolean useUCRT = Files.exists(ucrtbase);
+        Path stdLib = useUCRT ? ucrtbase : msvcrt;
+        SymbolLookup lookup = libLookup(libs -> libs.load(stdLib));
 
-    @Override
-    public Optional<MemorySegment> find(String name) {
-        return SYSTEM_LOOKUP.find(name);
+        if (useUCRT) {
+            // use a fallback lookup to look up inline functions from fallback lib
+
+            SymbolLookup fallbackLibLookup =
+                    libLookup(libs -> libs.load(jdkLibraryPath("syslookup")));
+
+            int numSymbols = WindowsFallbackSymbols.values().length;
+            MemorySegment funcs = MemorySegment.ofAddress(fallbackLibLookup.find("funcs").orElseThrow().address(),
+                ADDRESS.byteSize() * numSymbols, MemorySession.global());
+
+            Function<String, Optional<MemorySegment>> fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.valueOfOrNull(name))
+                .map(symbol -> MemorySegment.ofAddress(funcs.getAtIndex(ADDRESS, symbol.ordinal()).address(), 0L, MemorySession.global()));
+
+            final SymbolLookup finalLookup = lookup;
+            lookup = name -> finalLookup.find(name).or(() -> fallbackLookup.apply(name));
+        }
+
+        return lookup;
     }
 
     // fallback symbols missing from ucrtbase.dll

@@ -62,11 +62,12 @@ import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.Regs.*;
  * public constants CallArranger.LINUX and CallArranger.MACOS.
  */
 public abstract class CallArranger {
-    private static final int STACK_SLOT_SIZE = 8;
     public static final int MAX_REGISTER_ARGUMENTS = 8;
 
+    public static final CallArranger LINUX = new LinuxAArch64CallArranger();
+    public static final CallArranger MACOS = new MacOsAArch64CallArranger();
+    private static final int STACK_SLOT_SIZE = 8;
     private static final VMStorage INDIRECT_RESULT = r8;
-
     // This is derived from the AAPCS64 spec, restricted to what's
     // possible when calling to/from C code.
     //
@@ -92,27 +93,24 @@ public abstract class CallArranger {
         r10  // return buffer addr reg
     );
 
-    public static final CallArranger LINUX = new LinuxAArch64CallArranger();
-    public static final CallArranger MACOS = new MacOsAArch64CallArranger();
-
-    public record Bindings(
-        CallingSequence callingSequence,
-        boolean isInMemoryReturn) {}
-
-    /**
-     * Are variadic arguments assigned to registers as in the standard calling
-     * convention, or always passed on the stack?
-     *
-     * @return true if variadic arguments should be spilled to the stack.
-      */
-     protected abstract boolean varArgsOnStack();
+    protected CallArranger() {}
 
     /**
      * {@return true if this ABI requires sub-slot (smaller than STACK_SLOT_SIZE) packing of arguments on the stack.}
      */
     protected abstract boolean requiresSubSlotStackPacking();
 
-    protected CallArranger() {}
+    public final MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc) {
+        Bindings bindings = getBindings(mt, cDesc, false);
+
+        MethodHandle handle = new DowncallLinker(C, bindings.callingSequence).getBoundMethodHandle();
+
+        if (bindings.isInMemoryReturn) {
+            handle = SharedUtils.adaptDowncallForIMR(handle, cDesc);
+        }
+
+        return handle;
+    }
 
     public final Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
         CallingSequenceBuilder csb = new CallingSequenceBuilder(C, forUpcall);
@@ -142,17 +140,20 @@ public abstract class CallArranger {
         return new Bindings(csb.build(), returnInMemory);
     }
 
-    public final MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc) {
-        Bindings bindings = getBindings(mt, cDesc, false);
-
-        MethodHandle handle = new DowncallLinker(C, bindings.callingSequence).getBoundMethodHandle();
-
-        if (bindings.isInMemoryReturn) {
-            handle = SharedUtils.adaptDowncallForIMR(handle, cDesc);
-        }
-
-        return handle;
+    private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
+        return returnLayout
+            .filter(GroupLayout.class::isInstance)
+            .filter(g -> TypeClass.classifyLayout(g) == TypeClass.STRUCT_REFERENCE)
+            .isPresent();
     }
+
+    /**
+     * Are variadic arguments assigned to registers as in the standard calling
+     * convention, or always passed on the stack?
+     *
+     * @return true if variadic arguments should be spilled to the stack.
+      */
+     protected abstract boolean varArgsOnStack();
 
     public final MemorySegment arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, MemorySession session) {
         Bindings bindings = getBindings(mt, cDesc, true);
@@ -164,22 +165,48 @@ public abstract class CallArranger {
         return UpcallLinker.make(C, target, bindings.callingSequence, session);
     }
 
-    private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
-        return returnLayout
-            .filter(GroupLayout.class::isInstance)
-            .filter(g -> TypeClass.classifyLayout(g) == TypeClass.STRUCT_REFERENCE)
-            .isPresent();
-    }
-
     final class StorageCalculator {
         private final boolean forArguments;
-        private boolean forVarArgs = false;
-
         private final int[] nRegs = new int[] { 0, 0 };
+        private boolean forVarArgs = false;
         private long stackOffset = 0;
 
         public StorageCalculator(boolean forArguments) {
             this.forArguments = forArguments;
+        }
+
+        VMStorage[] regAlloc(int type, MemoryLayout layout) {
+            return regAlloc(type, (int)Utils.alignUp(layout.byteSize(), 8) / 8);
+        }
+
+        VMStorage[] regAlloc(int type, int count) {
+            if (nRegs[type] + count <= MAX_REGISTER_ARGUMENTS) {
+                VMStorage[] source =
+                    (forArguments ? C.inputStorage : C.outputStorage)[type];
+                VMStorage[] result = new VMStorage[count];
+                for (int i = 0; i < count; i++) {
+                    result[i] = source[nRegs[type]++];
+                }
+                return result;
+            } else {
+                // Any further allocations for this register type must
+                // be from the stack.
+                nRegs[type] = MAX_REGISTER_ARGUMENTS;
+                return null;
+            }
+        }
+
+        VMStorage nextStorage(int type, MemoryLayout layout) {
+            VMStorage[] storage = regAlloc(type, 1);
+            if (storage == null) {
+                return stackAlloc(layout);
+            }
+
+            return storage[0];
+        }
+
+        VMStorage stackAlloc(MemoryLayout layout) {
+            return stackAlloc(layout.byteSize(), SharedUtils.alignment(layout, true));
         }
 
         VMStorage stackAlloc(long size, long alignment) {
@@ -205,40 +232,6 @@ public abstract class CallArranger {
                 AArch64Architecture.stackStorage(encodedSize, (int)alignedStackOffset);
             stackOffset = alignedStackOffset + size;
             return storage;
-        }
-
-        VMStorage stackAlloc(MemoryLayout layout) {
-            return stackAlloc(layout.byteSize(), SharedUtils.alignment(layout, true));
-        }
-
-        VMStorage[] regAlloc(int type, int count) {
-            if (nRegs[type] + count <= MAX_REGISTER_ARGUMENTS) {
-                VMStorage[] source =
-                    (forArguments ? C.inputStorage : C.outputStorage)[type];
-                VMStorage[] result = new VMStorage[count];
-                for (int i = 0; i < count; i++) {
-                    result[i] = source[nRegs[type]++];
-                }
-                return result;
-            } else {
-                // Any further allocations for this register type must
-                // be from the stack.
-                nRegs[type] = MAX_REGISTER_ARGUMENTS;
-                return null;
-            }
-        }
-
-        VMStorage[] regAlloc(int type, MemoryLayout layout) {
-            return regAlloc(type, (int)Utils.alignUp(layout.byteSize(), 8) / 8);
-        }
-
-        VMStorage nextStorage(int type, MemoryLayout layout) {
-            VMStorage[] storage = regAlloc(type, 1);
-            if (storage == null) {
-                return stackAlloc(layout);
-            }
-
-            return storage[0];
         }
 
         void adjustForVarArgs() {
@@ -305,14 +298,6 @@ public abstract class CallArranger {
     final class UnboxBindingCalculator extends BindingCalculator {
         UnboxBindingCalculator(boolean forArguments) {
             super(forArguments);
-        }
-
-        @Override
-        List<Binding> getIndirectBindings() {
-            return Binding.builder()
-                .unboxAddress()
-                .vmStore(INDIRECT_RESULT, long.class)
-                .build();
         }
 
         @Override
@@ -401,19 +386,19 @@ public abstract class CallArranger {
             }
             return bindings.build();
         }
+
+        @Override
+        List<Binding> getIndirectBindings() {
+            return Binding.builder()
+                .unboxAddress()
+                .vmStore(INDIRECT_RESULT, long.class)
+                .build();
+        }
     }
 
     final class BoxBindingCalculator extends BindingCalculator {
         BoxBindingCalculator(boolean forArguments) {
             super(forArguments);
-        }
-
-        @Override
-        List<Binding> getIndirectBindings() {
-            return Binding.builder()
-                .vmLoad(INDIRECT_RESULT, long.class)
-                .boxAddressRaw(Long.MAX_VALUE)
-                .build();
         }
 
         @Override
@@ -492,5 +477,17 @@ public abstract class CallArranger {
             }
             return bindings.build();
         }
+
+        @Override
+        List<Binding> getIndirectBindings() {
+            return Binding.builder()
+                .vmLoad(INDIRECT_RESULT, long.class)
+                .boxAddressRaw(Long.MAX_VALUE)
+                .build();
+        }
     }
+
+    public record Bindings(
+        CallingSequence callingSequence,
+        boolean isInMemoryReturn) {}
 }

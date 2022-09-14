@@ -246,6 +246,11 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
+     * A zero-length native memory segment modelling the {@code NULL} address.
+     */
+    MemorySegment NULL = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(0L, 0);
+
+    /**
      * Returns the base address of the memory region associated with this segment. If this memory segment is
      * a {@linkplain #isNative() native} memory segment, then the returned address is the off-heap address
      * at which the native memory region associated with this segment starts. If this memory segment is an array
@@ -304,43 +309,6 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@return the memory session associated with this memory segment}
      */
     MemorySession session();
-
-    /**
-     * {@return the size (in bytes) of this memory segment}
-     */
-    long byteSize();
-
-    /**
-     * Returns a slice of this memory segment, at the given offset. The returned segment's base address is the base address
-     * of this segment plus the given offset; its size is specified by the given argument.
-     *
-     * @see #asSlice(long)
-     *
-     * @param offset The new segment base offset (relative to the current segment base address), specified in bytes.
-     * @param newSize The new segment size, specified in bytes.
-     * @return a slice of this memory segment.
-     * @throws IndexOutOfBoundsException if {@code offset < 0}, {@code offset > byteSize()}, {@code newSize < 0}, or {@code newSize > byteSize() - offset}
-     */
-    MemorySegment asSlice(long offset, long newSize);
-
-    /**
-     * Returns a slice of this memory segment, at the given offset. The returned segment's base address is the base address
-     * of this segment plus the given offset; its size is computed by subtracting the specified offset from this segment size.
-     * <p>
-     * Equivalent to the following code:
-     * {@snippet lang=java :
-     * asSlice(offset, byteSize() - offset);
-     * }
-     *
-     * @see #asSlice(long, long)
-     *
-     * @param offset The new segment base offset (relative to the current segment base address), specified in bytes.
-     * @return a slice of this memory segment.
-     * @throws IndexOutOfBoundsException if {@code offset < 0}, or {@code offset > byteSize()}.
-     */
-    default MemorySegment asSlice(long offset) {
-        return asSlice(offset, byteSize() - offset);
-    }
 
     /**
      * {@return {@code true}, if this segment is read-only}
@@ -466,6 +434,128 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default MemorySegment copyFrom(MemorySegment src) {
         MemorySegment.copy(src, 0, this, 0, src.byteSize());
         return this;
+    }
+
+    /**
+     * Performs a bulk copy from source segment to destination segment. More specifically, the bytes at offset
+     * {@code srcOffset} through {@code srcOffset + bytes - 1} in the source segment are copied into the destination
+     * segment at offset {@code dstOffset} through {@code dstOffset + bytes - 1}.
+     * <p>
+     * If the source segment overlaps with this segment, then the copying is performed as if the bytes at
+     * offset {@code srcOffset} through {@code srcOffset + bytes - 1} in the source segment were first copied into a
+     * temporary segment with size {@code bytes}, and then the contents of the temporary segment were copied into
+     * the destination segment at offset {@code dstOffset} through {@code dstOffset + bytes - 1}.
+     * <p>
+     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and the destination segment
+     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
+     * For example, this may occur if the same file is {@linkplain FileChannel#map mapped} to two segments.
+     * <p>
+     * Calling this method is equivalent to the following code:
+     * {@snippet lang=java :
+     * MemorySegment.copy(srcSegment, ValueLayout.JAVA_BYTE, srcOffset, dstSegment, ValueLayout.JAVA_BYTE, dstOffset, bytes);
+     * }
+     * @param srcSegment the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
+     * @param dstSegment the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param bytes the number of bytes to be copied.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code srcSegment} is not
+     * {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread owning
+     * the {@linkplain #session() session} associated with {@code srcSegment}.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code dstSegment} is not
+     * {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread owning
+     * the {@linkplain #session() session} associated with {@code dstSegment}.
+     * @throws IndexOutOfBoundsException if {@code srcOffset + bytes > srcSegment.byteSize()} or if
+     * {@code dstOffset + bytes > dstSegment.byteSize()}, or if either {@code srcOffset}, {@code dstOffset}
+     * or {@code bytes} are {@code < 0}.
+     * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
+     */
+    @ForceInline
+    static void copy(MemorySegment srcSegment, long srcOffset, MemorySegment dstSegment, long dstOffset, long bytes) {
+        copy(srcSegment, ValueLayout.JAVA_BYTE, srcOffset, dstSegment, ValueLayout.JAVA_BYTE, dstOffset, bytes);
+    }
+
+    /**
+     * {@return the size (in bytes) of this memory segment}
+     */
+    long byteSize();
+
+    /**
+     * Performs a bulk copy from source segment to destination segment. More specifically, if {@code S} is the byte size
+     * of the element layouts, the bytes at offset {@code srcOffset} through {@code srcOffset + (elementCount * S) - 1}
+     * in the source segment are copied into the destination segment at offset {@code dstOffset} through {@code dstOffset + (elementCount * S) - 1}.
+     * <p>
+     * The copy occurs in an element-wise fashion: the bytes in the source segment are interpreted as a sequence of elements
+     * whose layout is {@code srcElementLayout}, whereas the bytes in the destination segment are interpreted as a sequence of
+     * elements whose layout is {@code dstElementLayout}. Both element layouts must have same size {@code S}.
+     * If the byte order of the two element layouts differ, the bytes corresponding to each element to be copied
+     * are swapped accordingly during the copy operation.
+     * <p>
+     * If the source segment overlaps with this segment, then the copying is performed as if the bytes at
+     * offset {@code srcOffset} through {@code srcOffset + (elementCount * S) - 1} in the source segment were first copied into a
+     * temporary segment with size {@code bytes}, and then the contents of the temporary segment were copied into
+     * the destination segment at offset {@code dstOffset} through {@code dstOffset + (elementCount * S) - 1}.
+     * <p>
+     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and the destination segment
+     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
+     * For example, this may occur if the same file is {@linkplain FileChannel#map mapped} to two segments.
+     * @param srcSegment the source segment.
+     * @param srcElementLayout the element layout associated with the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
+     * @param dstSegment the destination segment.
+     * @param dstElementLayout the element layout associated with the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param elementCount the number of elements to be copied.
+     * @throws IllegalArgumentException if the element layouts have different sizes, if the source (resp. destination) segment/offset are
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the source
+     * (resp. destination) element layout, or if the source (resp. destination) element layout alignment is greater than its size.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code srcSegment} is not
+     * {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread owning
+     * the {@linkplain #session() session} associated with this {@code srcSegment}.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code dstSegment} is not
+     * {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread owning
+     * the {@linkplain #session() session} associated with {@code dstSegment}.
+     * @throws IndexOutOfBoundsException if {@code srcOffset + (elementCount * S) > srcSegment.byteSize()} or if
+     * {@code dstOffset + (elementCount * S) > dstSegment.byteSize()}, where {@code S} is the byte size
+     * of the element layouts, or if either {@code srcOffset}, {@code dstOffset} or {@code elementCount} are {@code < 0}.
+     * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
+     */
+    @ForceInline
+    static void copy(MemorySegment srcSegment, ValueLayout srcElementLayout, long srcOffset, MemorySegment dstSegment,
+                     ValueLayout dstElementLayout, long dstOffset, long elementCount) {
+        Objects.requireNonNull(srcSegment);
+        Objects.requireNonNull(srcElementLayout);
+        Objects.requireNonNull(dstSegment);
+        Objects.requireNonNull(dstElementLayout);
+        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
+        AbstractMemorySegmentImpl dstImpl = (AbstractMemorySegmentImpl)dstSegment;
+        if (srcElementLayout.byteSize() != dstElementLayout.byteSize()) {
+            throw new IllegalArgumentException("Source and destination layouts must have same size");
+        }
+        Utils.checkElementAlignment(srcElementLayout, "Source layout alignment greater than its size");
+        Utils.checkElementAlignment(dstElementLayout, "Destination layout alignment greater than its size");
+        if (!srcImpl.isAlignedForElement(srcOffset, srcElementLayout)) {
+            throw new IllegalArgumentException("Source segment incompatible with alignment constraints");
+        }
+        if (!dstImpl.isAlignedForElement(dstOffset, dstElementLayout)) {
+            throw new IllegalArgumentException("Destination segment incompatible with alignment constraints");
+        }
+        long size = elementCount * srcElementLayout.byteSize();
+        srcImpl.checkAccess(srcOffset, size, true);
+        dstImpl.checkAccess(dstOffset, size, false);
+        if (srcElementLayout.byteSize() == 1 || srcElementLayout.order() == dstElementLayout.order()) {
+            ScopedMemoryAccess.getScopedMemoryAccess().copyMemory(srcImpl.sessionImpl(), dstImpl.sessionImpl(),
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size);
+        } else {
+            ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(srcImpl.sessionImpl(), dstImpl.sessionImpl(),
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size, srcElementLayout.byteSize());
+        }
     }
 
     /**
@@ -767,375 +857,37 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
         Utils.toCString(str.getBytes(StandardCharsets.UTF_8), SegmentAllocator.prefixAllocator(asSlice(offset)));
     }
 
-
     /**
-     * Creates a buffer memory segment that models the memory associated with the given {@link Buffer} instance.
-     * The segment starts relative to the buffer's position (inclusive) and ends relative to the buffer's limit (exclusive).
+     * Returns a slice of this memory segment, at the given offset. The returned segment's base address is the base address
+     * of this segment plus the given offset; its size is computed by subtracting the specified offset from this segment size.
      * <p>
-     * If the buffer is {@linkplain ByteBuffer#isReadOnly() read-only}, the resulting segment will also be
-     * {@linkplain ByteBuffer#isReadOnly() read-only}. The memory session associated with this segment can either be the
-     * {@linkplain MemorySession#global() global} memory session, in case the buffer has been created independently,
-     * or some other memory session, in case the buffer has been obtained using {@link #asByteBuffer()}.
-     * <p>
-     * The resulting memory segment keeps a reference to the backing buffer, keeping it <em>reachable</em>.
-     *
-     * @param buffer the buffer instance backing the buffer memory segment.
-     * @return a buffer memory segment.
-     */
-    static MemorySegment ofBuffer(Buffer buffer) {
-        return AbstractMemorySegmentImpl.ofBuffer(buffer);
-    }
-
-    /**
-     * Creates an array memory segment that models the memory associated with the given heap-allocated byte array.
-     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
-     *
-     * @param byteArray the primitive array backing the array memory segment.
-     * @return an array memory segment.
-     */
-    static MemorySegment ofArray(byte[] byteArray) {
-        return HeapMemorySegmentImpl.OfByte.fromArray(byteArray);
-    }
-
-    /**
-     * Creates an array memory segment that models the memory associated with the given heap-allocated char array.
-     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
-     *
-     * @param charArray the primitive array backing the array memory segment.
-     * @return an array memory segment.
-     */
-    static MemorySegment ofArray(char[] charArray) {
-        return HeapMemorySegmentImpl.OfChar.fromArray(charArray);
-    }
-
-    /**
-     * Creates an array memory segment that models the memory associated with the given heap-allocated short array.
-     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
-     *
-     * @param shortArray the primitive array backing the array memory segment.
-     * @return an array memory segment.
-     */
-    static MemorySegment ofArray(short[] shortArray) {
-        return HeapMemorySegmentImpl.OfShort.fromArray(shortArray);
-    }
-
-    /**
-     * Creates an array memory segment that models the memory associated with the given heap-allocated int array.
-     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
-     *
-     * @param intArray the primitive array backing the array memory segment.
-     * @return an array memory segment.
-     */
-    static MemorySegment ofArray(int[] intArray) {
-        return HeapMemorySegmentImpl.OfInt.fromArray(intArray);
-    }
-
-    /**
-     * Creates an array memory segment that models the memory associated with the given heap-allocated float array.
-     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
-     *
-     * @param floatArray the primitive array backing the array memory segment.
-     * @return an array memory segment.
-     */
-    static MemorySegment ofArray(float[] floatArray) {
-        return HeapMemorySegmentImpl.OfFloat.fromArray(floatArray);
-    }
-
-    /**
-     * Creates an array memory segment that models the memory associated with the given heap-allocated long array.
-     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
-     *
-     * @param longArray the primitive array backing the array memory segment.
-     * @return an array memory segment.
-     */
-    static MemorySegment ofArray(long[] longArray) {
-        return HeapMemorySegmentImpl.OfLong.fromArray(longArray);
-    }
-
-    /**
-     * Creates an array memory segment that models the memory associated with the given heap-allocated double array.
-     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
-     *
-     * @param doubleArray the primitive array backing the array memory segment.
-     * @return an array memory segment.
-     */
-    static MemorySegment ofArray(double[] doubleArray) {
-        return HeapMemorySegmentImpl.OfDouble.fromArray(doubleArray);
-    }
-
-    /**
-     * A zero-length native memory segment modelling the {@code NULL} address.
-     */
-    MemorySegment NULL = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(0L, 0);
-
-    /**
-     * Creates a zero-length native memory segment from the given {@linkplain #address() address value}.
-     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
-     * <p>
-     * This is equivalent to the following code:
-     * {@snippet lang = java:
-     * ofAddress(address, 0);
-     *}
-     * @param address the address of the returned native segment.
-     * @return a zero-length native memory segment with the given address.
-     */
-    static MemorySegment ofAddress(long address) {
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, 0);
-    }
-
-    /**
-     * Creates a native memory segment with the given size and {@linkplain #address() address value}.
-     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
-     * <p>
-     * This is equivalent to the following code:
-     * {@snippet lang = java:
-     * ofAddress(address, byteSize, MemorySession.global());
-     *}
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
-     * @param address the address of the returned native segment.
-     * @param byteSize the size (in bytes) of the returned native segment.
-     * @return a zero-length native memory segment with the given address and size.
-     * @throws IllegalArgumentException if {@code byteSize < 0}.
-     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
-     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
-     */
-    @CallerSensitive
-    static MemorySegment ofAddress(long address, long byteSize) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddress");
-        return MemorySegment.ofAddress(address, byteSize, MemorySession.global());
-    }
-
-    /**
-     * Creates a native memory segment with the given size, base address, and memory session.
-     * This method can be useful when interacting with custom memory sources (e.g. custom allocators),
-     * where an address to some underlying memory region is typically obtained from foreign code
-     * (often as a plain {@code long} value).
-     * <p>
-     * The returned segment is not read-only (see {@link MemorySegment#isReadOnly()}), and is associated with the
-     * provided memory session.
-     * <p>
-     * Clients should ensure that the address and bounds refer to a valid region of memory that is accessible for reading and,
-     * if appropriate, writing; an attempt to access an invalid memory location from Java code will either return an arbitrary value,
-     * have no visible effect, or cause an unspecified exception to be thrown.
-     * <p>
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
-     *
-     *
-     * @param address the returned segment's base address.
-     * @param byteSize the desired size.
-     * @param session the native segment memory session.
-     * @return a native memory segment with the given base address, size and memory session.
-     * @throws IllegalArgumentException if {@code byteSize < 0}.
-     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread other than the thread
-     * {@linkplain MemorySession#ownerThread() owning} {@code session}.
-     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
-     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
-     */
-    @CallerSensitive
-    static MemorySegment ofAddress(long address, long byteSize, MemorySession session) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddress");
-        Objects.requireNonNull(session);
-        Utils.checkAllocationSizeAndAlign(byteSize, 1);
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, byteSize, session);
-    }
-
-    /**
-     * Creates a native memory segment with the given layout and memory session.
-     * A client is responsible for ensuring that the memory session associated with the returned segment is closed
-     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
-     * <p>
-     * This is equivalent to the following code:
+     * Equivalent to the following code:
      * {@snippet lang=java :
-     * allocateNative(layout.byteSize(), layout.bytesAlignment(), session);
+     * asSlice(offset, byteSize() - offset);
      * }
-     * <p>
-     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      *
-     * @param layout the layout of the off-heap memory block backing the native memory segment.
-     * @param session the segment memory session.
-     * @return a new native memory segment.
-     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread other than the thread
-     * {@linkplain MemorySession#ownerThread() owning} {@code session}.
-     */
-    static MemorySegment allocateNative(MemoryLayout layout, MemorySession session) {
-        Objects.requireNonNull(session);
-        Objects.requireNonNull(layout);
-        return allocateNative(layout.byteSize(), layout.byteAlignment(), session);
-    }
-
-    /**
-     * Creates a native memory segment with the given size (in bytes) and memory session.
-     * A client is responsible for ensuring that the memory session associated with the returned segment is closed
-     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
-     * <p>
-     * This is equivalent to the following code:
-     * {@snippet lang=java :
-     * allocateNative(byteSize, 1, session);
-     * }
-     * <p>
-     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     * @see #asSlice(long, long)
      *
-     * @param byteSize the size (in bytes) of the off-heap memory block backing the native memory segment.
-     * @param session the segment temporal bounds.
-     * @return a new native memory segment.
-     * @throws IllegalArgumentException if {@code byteSize < 0}.
-     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread other than the thread
-     * {@linkplain MemorySession#ownerThread() owning} {@code session}.
+     * @param offset The new segment base offset (relative to the current segment base address), specified in bytes.
+     * @return a slice of this memory segment.
+     * @throws IndexOutOfBoundsException if {@code offset < 0}, or {@code offset > byteSize()}.
      */
-    static MemorySegment allocateNative(long byteSize, MemorySession session) {
-        return allocateNative(byteSize, 1, session);
+    default MemorySegment asSlice(long offset) {
+        return asSlice(offset, byteSize() - offset);
     }
 
     /**
-     * Creates a native memory segment with the given size (in bytes), alignment constraint (in bytes) and memory session.
-     * A client is responsible for ensuring that the memory session associated with the returned segment is closed when the
-     * segment is no longer in use. Failure to do so will result in off-heap memory leaks.
-     * <p>
-     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     * Returns a slice of this memory segment, at the given offset. The returned segment's base address is the base address
+     * of this segment plus the given offset; its size is specified by the given argument.
      *
-     * @param byteSize the size (in bytes) of the off-heap memory block backing the native memory segment.
-     * @param byteAlignment the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
-     * @param session the segment memory session.
-     * @return a new native memory segment.
-     * @throws IllegalArgumentException if {@code byteSize < 0}, {@code byteAlignment <= 0}, or if {@code byteAlignment}
-     * is not a power of 2.
-     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread other than the thread
-     * {@linkplain MemorySession#ownerThread() owning} {@code session}.
+     * @see #asSlice(long)
+     *
+     * @param offset The new segment base offset (relative to the current segment base address), specified in bytes.
+     * @param newSize The new segment size, specified in bytes.
+     * @return a slice of this memory segment.
+     * @throws IndexOutOfBoundsException if {@code offset < 0}, {@code offset > byteSize()}, {@code newSize < 0}, or {@code newSize > byteSize() - offset}
      */
-    static MemorySegment allocateNative(long byteSize, long byteAlignment, MemorySession session) {
-        Objects.requireNonNull(session);
-        Utils.checkAllocationSizeAndAlign(byteSize, byteAlignment);
-        return NativeMemorySegmentImpl.makeNativeSegment(byteSize, byteAlignment, session);
-    }
-
-    /**
-     * Performs a bulk copy from source segment to destination segment. More specifically, the bytes at offset
-     * {@code srcOffset} through {@code srcOffset + bytes - 1} in the source segment are copied into the destination
-     * segment at offset {@code dstOffset} through {@code dstOffset + bytes - 1}.
-     * <p>
-     * If the source segment overlaps with this segment, then the copying is performed as if the bytes at
-     * offset {@code srcOffset} through {@code srcOffset + bytes - 1} in the source segment were first copied into a
-     * temporary segment with size {@code bytes}, and then the contents of the temporary segment were copied into
-     * the destination segment at offset {@code dstOffset} through {@code dstOffset + bytes - 1}.
-     * <p>
-     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and the destination segment
-     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
-     * For example, this may occur if the same file is {@linkplain FileChannel#map mapped} to two segments.
-     * <p>
-     * Calling this method is equivalent to the following code:
-     * {@snippet lang=java :
-     * MemorySegment.copy(srcSegment, ValueLayout.JAVA_BYTE, srcOffset, dstSegment, ValueLayout.JAVA_BYTE, dstOffset, bytes);
-     * }
-     * @param srcSegment the source segment.
-     * @param srcOffset the starting offset, in bytes, of the source segment.
-     * @param dstSegment the destination segment.
-     * @param dstOffset the starting offset, in bytes, of the destination segment.
-     * @param bytes the number of bytes to be copied.
-     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code srcSegment} is not
-     * {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread other than the thread owning
-     * the {@linkplain #session() session} associated with {@code srcSegment}.
-     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code dstSegment} is not
-     * {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread other than the thread owning
-     * the {@linkplain #session() session} associated with {@code dstSegment}.
-     * @throws IndexOutOfBoundsException if {@code srcOffset + bytes > srcSegment.byteSize()} or if
-     * {@code dstOffset + bytes > dstSegment.byteSize()}, or if either {@code srcOffset}, {@code dstOffset}
-     * or {@code bytes} are {@code < 0}.
-     * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
-     */
-    @ForceInline
-    static void copy(MemorySegment srcSegment, long srcOffset, MemorySegment dstSegment, long dstOffset, long bytes) {
-        copy(srcSegment, ValueLayout.JAVA_BYTE, srcOffset, dstSegment, ValueLayout.JAVA_BYTE, dstOffset, bytes);
-    }
-
-    /**
-     * Performs a bulk copy from source segment to destination segment. More specifically, if {@code S} is the byte size
-     * of the element layouts, the bytes at offset {@code srcOffset} through {@code srcOffset + (elementCount * S) - 1}
-     * in the source segment are copied into the destination segment at offset {@code dstOffset} through {@code dstOffset + (elementCount * S) - 1}.
-     * <p>
-     * The copy occurs in an element-wise fashion: the bytes in the source segment are interpreted as a sequence of elements
-     * whose layout is {@code srcElementLayout}, whereas the bytes in the destination segment are interpreted as a sequence of
-     * elements whose layout is {@code dstElementLayout}. Both element layouts must have same size {@code S}.
-     * If the byte order of the two element layouts differ, the bytes corresponding to each element to be copied
-     * are swapped accordingly during the copy operation.
-     * <p>
-     * If the source segment overlaps with this segment, then the copying is performed as if the bytes at
-     * offset {@code srcOffset} through {@code srcOffset + (elementCount * S) - 1} in the source segment were first copied into a
-     * temporary segment with size {@code bytes}, and then the contents of the temporary segment were copied into
-     * the destination segment at offset {@code dstOffset} through {@code dstOffset + (elementCount * S) - 1}.
-     * <p>
-     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and the destination segment
-     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
-     * For example, this may occur if the same file is {@linkplain FileChannel#map mapped} to two segments.
-     * @param srcSegment the source segment.
-     * @param srcElementLayout the element layout associated with the source segment.
-     * @param srcOffset the starting offset, in bytes, of the source segment.
-     * @param dstSegment the destination segment.
-     * @param dstElementLayout the element layout associated with the destination segment.
-     * @param dstOffset the starting offset, in bytes, of the destination segment.
-     * @param elementCount the number of elements to be copied.
-     * @throws IllegalArgumentException if the element layouts have different sizes, if the source (resp. destination) segment/offset are
-     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the source
-     * (resp. destination) element layout, or if the source (resp. destination) element layout alignment is greater than its size.
-     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code srcSegment} is not
-     * {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread other than the thread owning
-     * the {@linkplain #session() session} associated with this {@code srcSegment}.
-     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code dstSegment} is not
-     * {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread other than the thread owning
-     * the {@linkplain #session() session} associated with {@code dstSegment}.
-     * @throws IndexOutOfBoundsException if {@code srcOffset + (elementCount * S) > srcSegment.byteSize()} or if
-     * {@code dstOffset + (elementCount * S) > dstSegment.byteSize()}, where {@code S} is the byte size
-     * of the element layouts, or if either {@code srcOffset}, {@code dstOffset} or {@code elementCount} are {@code < 0}.
-     * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
-     */
-    @ForceInline
-    static void copy(MemorySegment srcSegment, ValueLayout srcElementLayout, long srcOffset, MemorySegment dstSegment,
-                     ValueLayout dstElementLayout, long dstOffset, long elementCount) {
-        Objects.requireNonNull(srcSegment);
-        Objects.requireNonNull(srcElementLayout);
-        Objects.requireNonNull(dstSegment);
-        Objects.requireNonNull(dstElementLayout);
-        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        AbstractMemorySegmentImpl dstImpl = (AbstractMemorySegmentImpl)dstSegment;
-        if (srcElementLayout.byteSize() != dstElementLayout.byteSize()) {
-            throw new IllegalArgumentException("Source and destination layouts must have same size");
-        }
-        Utils.checkElementAlignment(srcElementLayout, "Source layout alignment greater than its size");
-        Utils.checkElementAlignment(dstElementLayout, "Destination layout alignment greater than its size");
-        if (!srcImpl.isAlignedForElement(srcOffset, srcElementLayout)) {
-            throw new IllegalArgumentException("Source segment incompatible with alignment constraints");
-        }
-        if (!dstImpl.isAlignedForElement(dstOffset, dstElementLayout)) {
-            throw new IllegalArgumentException("Destination segment incompatible with alignment constraints");
-        }
-        long size = elementCount * srcElementLayout.byteSize();
-        srcImpl.checkAccess(srcOffset, size, true);
-        dstImpl.checkAccess(dstOffset, size, false);
-        if (srcElementLayout.byteSize() == 1 || srcElementLayout.order() == dstElementLayout.order()) {
-            ScopedMemoryAccess.getScopedMemoryAccess().copyMemory(srcImpl.sessionImpl(), dstImpl.sessionImpl(),
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
-                    dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size);
-        } else {
-            ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(srcImpl.sessionImpl(), dstImpl.sessionImpl(),
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
-                    dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size, srcElementLayout.byteSize());
-        }
-    }
+    MemorySegment asSlice(long offset, long newSize);
 
     /**
      * Reads a byte from this segment at the given offset, with the given layout.
@@ -1875,6 +1627,12 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
+     * {@return the hash code value for this memory segment}
+     */
+    @Override
+    int hashCode();
+
+    /**
      * Compares the specified object with this memory segment for equality. Returns {@code true} if and only if the specified
      * object is also a memory segment, and if that segment refers to the same memory location as this segment. More specifically,
      * for two segments {@code s1} and {@code s2} to be considered equals, all the following must be true:
@@ -1899,11 +1657,251 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     boolean equals(Object that);
 
     /**
-     * {@return the hash code value for this memory segment}
+     * Creates a buffer memory segment that models the memory associated with the given {@link Buffer} instance.
+     * The segment starts relative to the buffer's position (inclusive) and ends relative to the buffer's limit (exclusive).
+     * <p>
+     * If the buffer is {@linkplain ByteBuffer#isReadOnly() read-only}, the resulting segment will also be
+     * {@linkplain ByteBuffer#isReadOnly() read-only}. The memory session associated with this segment can either be the
+     * {@linkplain MemorySession#global() global} memory session, in case the buffer has been created independently,
+     * or some other memory session, in case the buffer has been obtained using {@link #asByteBuffer()}.
+     * <p>
+     * The resulting memory segment keeps a reference to the backing buffer, keeping it <em>reachable</em>.
+     *
+     * @param buffer the buffer instance backing the buffer memory segment.
+     * @return a buffer memory segment.
      */
-    @Override
-    int hashCode();
+    static MemorySegment ofBuffer(Buffer buffer) {
+        return AbstractMemorySegmentImpl.ofBuffer(buffer);
+    }
 
+    /**
+     * Creates an array memory segment that models the memory associated with the given heap-allocated byte array.
+     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
+     *
+     * @param byteArray the primitive array backing the array memory segment.
+     * @return an array memory segment.
+     */
+    static MemorySegment ofArray(byte[] byteArray) {
+        return HeapMemorySegmentImpl.OfByte.fromArray(byteArray);
+    }
+
+    /**
+     * Creates an array memory segment that models the memory associated with the given heap-allocated char array.
+     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
+     *
+     * @param charArray the primitive array backing the array memory segment.
+     * @return an array memory segment.
+     */
+    static MemorySegment ofArray(char[] charArray) {
+        return HeapMemorySegmentImpl.OfChar.fromArray(charArray);
+    }
+
+    /**
+     * Creates an array memory segment that models the memory associated with the given heap-allocated short array.
+     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
+     *
+     * @param shortArray the primitive array backing the array memory segment.
+     * @return an array memory segment.
+     */
+    static MemorySegment ofArray(short[] shortArray) {
+        return HeapMemorySegmentImpl.OfShort.fromArray(shortArray);
+    }
+
+    /**
+     * Creates an array memory segment that models the memory associated with the given heap-allocated int array.
+     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
+     *
+     * @param intArray the primitive array backing the array memory segment.
+     * @return an array memory segment.
+     */
+    static MemorySegment ofArray(int[] intArray) {
+        return HeapMemorySegmentImpl.OfInt.fromArray(intArray);
+    }
+
+    /**
+     * Creates an array memory segment that models the memory associated with the given heap-allocated float array.
+     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
+     *
+     * @param floatArray the primitive array backing the array memory segment.
+     * @return an array memory segment.
+     */
+    static MemorySegment ofArray(float[] floatArray) {
+        return HeapMemorySegmentImpl.OfFloat.fromArray(floatArray);
+    }
+
+    /**
+     * Creates an array memory segment that models the memory associated with the given heap-allocated long array.
+     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
+     *
+     * @param longArray the primitive array backing the array memory segment.
+     * @return an array memory segment.
+     */
+    static MemorySegment ofArray(long[] longArray) {
+        return HeapMemorySegmentImpl.OfLong.fromArray(longArray);
+    }
+
+    /**
+     * Creates an array memory segment that models the memory associated with the given heap-allocated double array.
+     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
+     *
+     * @param doubleArray the primitive array backing the array memory segment.
+     * @return an array memory segment.
+     */
+    static MemorySegment ofArray(double[] doubleArray) {
+        return HeapMemorySegmentImpl.OfDouble.fromArray(doubleArray);
+    }
+
+    /**
+     * Creates a zero-length native memory segment from the given {@linkplain #address() address value}.
+     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
+     * <p>
+     * This is equivalent to the following code:
+     * {@snippet lang = java:
+     * ofAddress(address, 0);
+     *}
+     * @param address the address of the returned native segment.
+     * @return a zero-length native memory segment with the given address.
+     */
+    static MemorySegment ofAddress(long address) {
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, 0);
+    }
+
+    /**
+     * Creates a native memory segment with the given size and {@linkplain #address() address value}.
+     * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
+     * <p>
+     * This is equivalent to the following code:
+     * {@snippet lang = java:
+     * ofAddress(address, byteSize, MemorySession.global());
+     *}
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     * @param address the address of the returned native segment.
+     * @param byteSize the size (in bytes) of the returned native segment.
+     * @return a zero-length native memory segment with the given address and size.
+     * @throws IllegalArgumentException if {@code byteSize < 0}.
+     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
+     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
+     */
+    @CallerSensitive
+    static MemorySegment ofAddress(long address, long byteSize) {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddress");
+        return MemorySegment.ofAddress(address, byteSize, MemorySession.global());
+    }
+
+    /**
+     * Creates a native memory segment with the given size, base address, and memory session.
+     * This method can be useful when interacting with custom memory sources (e.g. custom allocators),
+     * where an address to some underlying memory region is typically obtained from foreign code
+     * (often as a plain {@code long} value).
+     * <p>
+     * The returned segment is not read-only (see {@link MemorySegment#isReadOnly()}), and is associated with the
+     * provided memory session.
+     * <p>
+     * Clients should ensure that the address and bounds refer to a valid region of memory that is accessible for reading and,
+     * if appropriate, writing; an attempt to access an invalid memory location from Java code will either return an arbitrary value,
+     * have no visible effect, or cause an unspecified exception to be thrown.
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     *
+     *
+     * @param address the returned segment's base address.
+     * @param byteSize the desired size.
+     * @param session the native segment memory session.
+     * @return a native memory segment with the given base address, size and memory session.
+     * @throws IllegalArgumentException if {@code byteSize < 0}.
+     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread
+     * {@linkplain MemorySession#ownerThread() owning} {@code session}.
+     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
+     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
+     */
+    @CallerSensitive
+    static MemorySegment ofAddress(long address, long byteSize, MemorySession session) {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddress");
+        Objects.requireNonNull(session);
+        Utils.checkAllocationSizeAndAlign(byteSize, 1);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, byteSize, session);
+    }
+
+    /**
+     * Creates a native memory segment with the given layout and memory session.
+     * A client is responsible for ensuring that the memory session associated with the returned segment is closed
+     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
+     * <p>
+     * This is equivalent to the following code:
+     * {@snippet lang=java :
+     * allocateNative(layout.byteSize(), layout.bytesAlignment(), session);
+     * }
+     * <p>
+     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     *
+     * @param layout the layout of the off-heap memory block backing the native memory segment.
+     * @param session the segment memory session.
+     * @return a new native memory segment.
+     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread
+     * {@linkplain MemorySession#ownerThread() owning} {@code session}.
+     */
+    static MemorySegment allocateNative(MemoryLayout layout, MemorySession session) {
+        Objects.requireNonNull(session);
+        Objects.requireNonNull(layout);
+        return allocateNative(layout.byteSize(), layout.byteAlignment(), session);
+    }
+
+    /**
+     * Creates a native memory segment with the given size (in bytes), alignment constraint (in bytes) and memory session.
+     * A client is responsible for ensuring that the memory session associated with the returned segment is closed when the
+     * segment is no longer in use. Failure to do so will result in off-heap memory leaks.
+     * <p>
+     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     *
+     * @param byteSize the size (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param byteAlignment the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param session the segment memory session.
+     * @return a new native memory segment.
+     * @throws IllegalArgumentException if {@code byteSize < 0}, {@code byteAlignment <= 0}, or if {@code byteAlignment}
+     * is not a power of 2.
+     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread
+     * {@linkplain MemorySession#ownerThread() owning} {@code session}.
+     */
+    static MemorySegment allocateNative(long byteSize, long byteAlignment, MemorySession session) {
+        Objects.requireNonNull(session);
+        Utils.checkAllocationSizeAndAlign(byteSize, byteAlignment);
+        return NativeMemorySegmentImpl.makeNativeSegment(byteSize, byteAlignment, session);
+    }
+
+    /**
+     * Creates a native memory segment with the given size (in bytes) and memory session.
+     * A client is responsible for ensuring that the memory session associated with the returned segment is closed
+     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
+     * <p>
+     * This is equivalent to the following code:
+     * {@snippet lang=java :
+     * allocateNative(byteSize, 1, session);
+     * }
+     * <p>
+     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     *
+     * @param byteSize the size (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param session the segment temporal bounds.
+     * @return a new native memory segment.
+     * @throws IllegalArgumentException if {@code byteSize < 0}.
+     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread
+     * {@linkplain MemorySession#ownerThread() owning} {@code session}.
+     */
+    static MemorySegment allocateNative(long byteSize, MemorySession session) {
+        return allocateNative(byteSize, 1, session);
+    }
 
     /**
      * Copies a number of elements from a source memory segment to a destination array. The elements, whose size and alignment
@@ -1957,6 +1955,26 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
         }
     }
 
+    private static long getBaseAndScale(Class<?> arrayType) {
+        if (arrayType.equals(byte[].class)) {
+            return (long)Unsafe.ARRAY_BYTE_BASE_OFFSET | ((long)Unsafe.ARRAY_BYTE_INDEX_SCALE << 32);
+        } else if (arrayType.equals(char[].class)) {
+            return (long)Unsafe.ARRAY_CHAR_BASE_OFFSET | ((long)Unsafe.ARRAY_CHAR_INDEX_SCALE << 32);
+        } else if (arrayType.equals(short[].class)) {
+            return (long)Unsafe.ARRAY_SHORT_BASE_OFFSET | ((long)Unsafe.ARRAY_SHORT_INDEX_SCALE << 32);
+        } else if (arrayType.equals(int[].class)) {
+            return (long)Unsafe.ARRAY_INT_BASE_OFFSET | ((long) Unsafe.ARRAY_INT_INDEX_SCALE << 32);
+        } else if (arrayType.equals(float[].class)) {
+            return (long)Unsafe.ARRAY_FLOAT_BASE_OFFSET | ((long)Unsafe.ARRAY_FLOAT_INDEX_SCALE << 32);
+        } else if (arrayType.equals(long[].class)) {
+            return (long)Unsafe.ARRAY_LONG_BASE_OFFSET | ((long)Unsafe.ARRAY_LONG_INDEX_SCALE << 32);
+        } else if (arrayType.equals(double[].class)) {
+            return (long)Unsafe.ARRAY_DOUBLE_BASE_OFFSET | ((long)Unsafe.ARRAY_DOUBLE_INDEX_SCALE << 32);
+        } else {
+            throw new IllegalArgumentException("Not a supported array class: " + arrayType.getSimpleName());
+        }
+    }
+
     /**
      * Copies a number of elements from a source array to a destination memory segment. The elements, whose size and alignment
      * constraints are specified by the given layout, are read from the source array, starting at the given index,
@@ -2006,26 +2024,6 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
             ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(null, destImpl.sessionImpl(),
                     srcArray, srcBase + (srcIndex * srcWidth),
                     destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount * srcWidth, srcWidth);
-        }
-    }
-
-    private static long getBaseAndScale(Class<?> arrayType) {
-        if (arrayType.equals(byte[].class)) {
-            return (long)Unsafe.ARRAY_BYTE_BASE_OFFSET | ((long)Unsafe.ARRAY_BYTE_INDEX_SCALE << 32);
-        } else if (arrayType.equals(char[].class)) {
-            return (long)Unsafe.ARRAY_CHAR_BASE_OFFSET | ((long)Unsafe.ARRAY_CHAR_INDEX_SCALE << 32);
-        } else if (arrayType.equals(short[].class)) {
-            return (long)Unsafe.ARRAY_SHORT_BASE_OFFSET | ((long)Unsafe.ARRAY_SHORT_INDEX_SCALE << 32);
-        } else if (arrayType.equals(int[].class)) {
-            return (long)Unsafe.ARRAY_INT_BASE_OFFSET | ((long) Unsafe.ARRAY_INT_INDEX_SCALE << 32);
-        } else if (arrayType.equals(float[].class)) {
-            return (long)Unsafe.ARRAY_FLOAT_BASE_OFFSET | ((long)Unsafe.ARRAY_FLOAT_INDEX_SCALE << 32);
-        } else if (arrayType.equals(long[].class)) {
-            return (long)Unsafe.ARRAY_LONG_BASE_OFFSET | ((long)Unsafe.ARRAY_LONG_INDEX_SCALE << 32);
-        } else if (arrayType.equals(double[].class)) {
-            return (long)Unsafe.ARRAY_DOUBLE_BASE_OFFSET | ((long)Unsafe.ARRAY_DOUBLE_INDEX_SCALE << 32);
-        } else {
-            throw new IllegalArgumentException("Not a supported array class: " + arrayType.getSimpleName());
         }
     }
 
@@ -2102,4 +2100,5 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
         }
         return srcBytes != dstBytes ? bytes : -1;
     }
+
 }

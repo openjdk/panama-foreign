@@ -42,14 +42,6 @@ import java.util.function.Consumer;
  */
 public final class MacOsAArch64Linker extends AbstractLinker {
 
-    public static MacOsAArch64Linker getInstance() {
-        final class Holder {
-            private static final MacOsAArch64Linker INSTANCE = new MacOsAArch64Linker();
-        }
-
-        return Holder.INSTANCE;
-    }
-
     private MacOsAArch64Linker() {
         // Ensure there is only one instance
     }
@@ -62,6 +54,14 @@ public final class MacOsAArch64Linker extends AbstractLinker {
     @Override
     protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession scope) {
         return CallArranger.MACOS.arrangeUpcall(target, targetType, function, scope);
+    }
+
+    public static MacOsAArch64Linker getInstance() {
+        final class Holder {
+            private static final MacOsAArch64Linker INSTANCE = new MacOsAArch64Linker();
+        }
+
+        return Holder.INSTANCE;
     }
 
     public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession session) {

@@ -77,14 +77,17 @@ public sealed abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L
         return elements; // "elements" are already unmodifiable.
     }
 
+    @Override
+    public final boolean hasNaturalAlignment() {
+        return bitAlignment() == kind.alignof(elements);
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public final String toString() {
-        return decorateLayoutString(elements.stream()
-                .map(Object::toString)
-                .collect(Collectors.joining(kind.delimTag, "[", "]")));
+    public final int hashCode() {
+        return Objects.hash(super.hashCode(), kind, elements);
     }
 
     /**
@@ -107,13 +110,10 @@ public sealed abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L
      * {@inheritDoc}
      */
     @Override
-    public final int hashCode() {
-        return Objects.hash(super.hashCode(), kind, elements);
-    }
-
-    @Override
-    public final boolean hasNaturalAlignment() {
-        return bitAlignment() == kind.alignof(elements);
+    public final String toString() {
+        return decorateLayoutString(elements.stream()
+                .map(Object::toString)
+                .collect(Collectors.joining(kind.delimTag, "[", "]")));
     }
 
     /**

@@ -39,14 +39,6 @@ import java.util.function.Consumer;
  */
 public final class Windowsx64Linker extends AbstractLinker {
 
-    public static Windowsx64Linker getInstance() {
-        final class Holder {
-            private static final Windowsx64Linker INSTANCE = new Windowsx64Linker();
-        }
-
-        return Holder.INSTANCE;
-    }
-
     private Windowsx64Linker() {
         // Ensure there is only one instance
     }
@@ -59,6 +51,14 @@ public final class Windowsx64Linker extends AbstractLinker {
     @Override
     protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession scope) {
         return CallArranger.arrangeUpcall(target, targetType, function, scope);
+    }
+
+    public static Windowsx64Linker getInstance() {
+        final class Holder {
+            private static final Windowsx64Linker INSTANCE = new Windowsx64Linker();
+        }
+
+        return Holder.INSTANCE;
     }
 
     public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession scope) {

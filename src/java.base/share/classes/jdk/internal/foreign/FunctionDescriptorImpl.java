@@ -65,21 +65,6 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
     }
 
     /**
-     * Creates a specialized variadic function descriptor, by appending given variadic layouts to this
-     * function descriptor argument layouts. The resulting function descriptor can report the position
-     * of the {@linkplain #firstVariadicArgumentIndex() first variadic argument}, and cannot be altered
-     * in any way: for instance, calling {@link #changeReturnLayout(MemoryLayout)} on the resulting descriptor
-     * will throw an {@link UnsupportedOperationException}.
-     *
-     * @param variadicLayouts the variadic argument layouts to be appended to this descriptor argument layouts.
-     * @return a variadic function descriptor, or this descriptor if {@code variadicLayouts.length == 0}.
-     */
-    public final FunctionDescriptorImpl asVariadic(MemoryLayout... variadicLayouts) {
-        // Null checks are implicit in the constructor of VariadicFunction
-        return variadicLayouts.length == 0 ? this : new VariadicFunctionDescriptor(this, variadicLayouts);
-    }
-
-    /**
      * The index of the first variadic argument layout (where defined).
      *
      * @return The index of the first variadic argument layout, or {@code -1} if this is not a
@@ -141,16 +126,6 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
         return new FunctionDescriptorImpl(null, argLayouts);
     }
 
-    private static Class<?> carrierTypeFor(MemoryLayout layout) {
-        if (layout instanceof ValueLayout valueLayout) {
-            return valueLayout.carrier();
-        } else if (layout instanceof GroupLayout) {
-            return MemorySegment.class;
-        } else {
-            throw new IllegalArgumentException("Unsupported layout: " + layout);
-        }
-    }
-
     @Override
     public MethodType toMethodType() {
         Class<?> returnValue = resLayout != null ? carrierTypeFor(resLayout) : void.class;
@@ -162,18 +137,26 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
     }
 
     /**
-     * {@return the string representation of this function descriptor}
+     * Creates a specialized variadic function descriptor, by appending given variadic layouts to this
+     * function descriptor argument layouts. The resulting function descriptor can report the position
+     * of the {@linkplain #firstVariadicArgumentIndex() first variadic argument}, and cannot be altered
+     * in any way: for instance, calling {@link #changeReturnLayout(MemoryLayout)} on the resulting descriptor
+     * will throw an {@link UnsupportedOperationException}.
+     *
+     * @param variadicLayouts the variadic argument layouts to be appended to this descriptor argument layouts.
+     * @return a variadic function descriptor, or this descriptor if {@code variadicLayouts.length == 0}.
+     */
+    public final FunctionDescriptorImpl asVariadic(MemoryLayout... variadicLayouts) {
+        // Null checks are implicit in the constructor of VariadicFunction
+        return variadicLayouts.length == 0 ? this : new VariadicFunctionDescriptor(this, variadicLayouts);
+    }
+
+    /**
+     * {@return the hash code value for this function descriptor}
      */
     @Override
-    public final String toString() {
-        return String.format("(%s)%s",
-                IntStream.range(0, argLayouts.size())
-                        .mapToObj(i -> (i == firstVariadicArgumentIndex() ?
-                                "..." : "") + argLayouts.get(i))
-                        .collect(Collectors.joining()),
-                returnLayout()
-                        .map(Object::toString)
-                        .orElse("v"));
+    public final int hashCode() {
+        return Objects.hash(argLayouts, resLayout, firstVariadicArgumentIndex());
     }
 
     /**
@@ -197,11 +180,28 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
     }
 
     /**
-     * {@return the hash code value for this function descriptor}
+     * {@return the string representation of this function descriptor}
      */
     @Override
-    public final int hashCode() {
-        return Objects.hash(argLayouts, resLayout, firstVariadicArgumentIndex());
+    public final String toString() {
+        return String.format("(%s)%s",
+                IntStream.range(0, argLayouts.size())
+                        .mapToObj(i -> (i == firstVariadicArgumentIndex() ?
+                                "..." : "") + argLayouts.get(i))
+                        .collect(Collectors.joining()),
+                returnLayout()
+                        .map(Object::toString)
+                        .orElse("v"));
+    }
+
+    private static Class<?> carrierTypeFor(MemoryLayout layout) {
+        if (layout instanceof ValueLayout valueLayout) {
+            return valueLayout.carrier();
+        } else if (layout instanceof GroupLayout) {
+            return MemorySegment.class;
+        } else {
+            throw new IllegalArgumentException("Unsupported layout: " + layout);
+        }
     }
 
     public static FunctionDescriptor of(MemoryLayout resLayout, List<MemoryLayout> argLayouts) {

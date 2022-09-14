@@ -60,13 +60,18 @@ abstract sealed class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout>
         return dup(bitAlignment, Optional.of(name));
     }
 
-    public final Optional<String> name() {
-        return name;
-    }
+    abstract L dup(long alignment, Optional<String> name);
 
     public final L withBitAlignment(long bitAlignment) {
         checkAlignment(bitAlignment);
         return dup(bitAlignment, name);
+    }
+
+    private static void checkAlignment(long alignmentBitCount) {
+        if (((alignmentBitCount & (alignmentBitCount - 1)) != 0L) || //alignment must be a power of two
+                (alignmentBitCount < 8)) { //alignment must be greater than 8
+            throw new IllegalArgumentException("Invalid alignment: " + alignmentBitCount);
+        }
     }
 
     public final long bitAlignment() {
@@ -84,10 +89,6 @@ abstract sealed class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout>
 
     public final long bitSize() {
         return bitSize;
-    }
-
-    public boolean hasNaturalAlignment() {
-        return bitSize == bitAlignment;
     }
 
     // the following methods have to copy the same Javadoc as in MemoryLayout, or subclasses will just show
@@ -135,7 +136,13 @@ abstract sealed class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout>
      */
     public abstract String toString();
 
-    abstract L dup(long alignment, Optional<String> name);
+    public final Optional<String> name() {
+        return name;
+    }
+
+    public boolean hasNaturalAlignment() {
+        return bitSize == bitAlignment;
+    }
 
     String decorateLayoutString(String s) {
         if (name().isPresent()) {
@@ -146,13 +153,5 @@ abstract sealed class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout>
         }
         return s;
     }
-
-    private static void checkAlignment(long alignmentBitCount) {
-        if (((alignmentBitCount & (alignmentBitCount - 1)) != 0L) || //alignment must be a power of two
-                (alignmentBitCount < 8)) { //alignment must be greater than 8
-            throw new IllegalArgumentException("Invalid alignment: " + alignmentBitCount);
-        }
-    }
-
 
 }

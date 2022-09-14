@@ -39,19 +39,43 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 final class TypeClass {
-    enum Kind {
-        STRUCT,
-        POINTER,
-        INTEGER,
-        FLOAT
-    }
 
-    private final Kind kind;
+    static final List<ArgumentClassImpl> COMPLEX_X87_CLASSES = List.of(
+         ArgumentClassImpl.X87,
+         ArgumentClassImpl.X87UP,
+         ArgumentClassImpl.X87,
+         ArgumentClassImpl.X87UP
+    );
+
+    // The AVX 512 enlightened ABI says "eight eightbytes"
+    // Although AMD64 0.99.6 states 4 eightbytes
+    private static final int MAX_AGGREGATE_REGS_SIZE = 8;
     final List<ArgumentClassImpl> classes;
+    private final Kind kind;
 
     private TypeClass(Kind kind, List<ArgumentClassImpl> classes) {
         this.kind = kind;
         this.classes = classes;
+    }
+
+    boolean inMemory() {
+        return classes.stream().anyMatch(c -> c == ArgumentClassImpl.MEMORY);
+    }
+
+    public long nIntegerRegs() {
+        return numClasses(ArgumentClassImpl.INTEGER) + numClasses(ArgumentClassImpl.POINTER);
+    }
+
+    private long numClasses(ArgumentClassImpl clazz) {
+        return classes.stream().filter(c -> c == clazz).count();
+    }
+
+    public long nVectorRegs() {
+        return numClasses(ArgumentClassImpl.SSE);
+    }
+
+    public Kind kind() {
+        return kind;
     }
 
     public static TypeClass ofValue(ValueLayout layout) {
@@ -66,41 +90,26 @@ final class TypeClass {
         return new TypeClass(kind, List.of(argClass));
     }
 
+    // layout classification
+
     public static TypeClass ofStruct(GroupLayout layout) {
         return new TypeClass(Kind.STRUCT, classifyStructType(layout));
     }
 
-    boolean inMemory() {
-        return classes.stream().anyMatch(c -> c == ArgumentClassImpl.MEMORY);
+    static TypeClass classifyLayout(MemoryLayout type) {
+        try {
+            if (type instanceof ValueLayout) {
+                return ofValue((ValueLayout)type);
+            } else if (type instanceof GroupLayout) {
+                return ofStruct((GroupLayout)type);
+            } else {
+                throw new IllegalArgumentException("Unsupported layout: " + type);
+            }
+        } catch (UnsupportedOperationException e) {
+            System.err.println("Failed to classify layout: " + type);
+            throw e;
+        }
     }
-
-    private long numClasses(ArgumentClassImpl clazz) {
-        return classes.stream().filter(c -> c == clazz).count();
-    }
-
-    public long nIntegerRegs() {
-        return numClasses(ArgumentClassImpl.INTEGER) + numClasses(ArgumentClassImpl.POINTER);
-    }
-
-    public long nVectorRegs() {
-        return numClasses(ArgumentClassImpl.SSE);
-    }
-
-    public Kind kind() {
-        return kind;
-    }
-
-    // layout classification
-
-    // The AVX 512 enlightened ABI says "eight eightbytes"
-    // Although AMD64 0.99.6 states 4 eightbytes
-    private static final int MAX_AGGREGATE_REGS_SIZE = 8;
-    static final List<ArgumentClassImpl> COMPLEX_X87_CLASSES = List.of(
-         ArgumentClassImpl.X87,
-         ArgumentClassImpl.X87UP,
-         ArgumentClassImpl.X87,
-         ArgumentClassImpl.X87UP
-    );
 
     private static List<ArgumentClassImpl> createMemoryClassArray(long size) {
         return IntStream.range(0, (int)size)
@@ -173,21 +182,6 @@ final class TypeClass {
         return classes;
     }
 
-    static TypeClass classifyLayout(MemoryLayout type) {
-        try {
-            if (type instanceof ValueLayout) {
-                return ofValue((ValueLayout)type);
-            } else if (type instanceof GroupLayout) {
-                return ofStruct((GroupLayout)type);
-            } else {
-                throw new IllegalArgumentException("Unsupported layout: " + type);
-            }
-        } catch (UnsupportedOperationException e) {
-            System.err.println("Failed to classify layout: " + type);
-            throw e;
-        }
-    }
-
     private static List<ArgumentClassImpl>[] groupByEightBytes(GroupLayout group) {
         long offset = 0L;
         int nEightbytes = (int) Utils.alignUp(group.byteSize(), 8) / 8;
@@ -232,5 +226,12 @@ final class TypeClass {
         } else {
             throw new IllegalStateException("Unexpected layout: " + l);
         }
+    }
+
+    enum Kind {
+        STRUCT,
+        POINTER,
+        INTEGER,
+        FLOAT
     }
 }

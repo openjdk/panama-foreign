@@ -30,6 +30,7 @@ import jdk.internal.foreign.abi.Architecture;
 import jdk.internal.foreign.abi.VMStorage;
 
 public final class AArch64Architecture implements Architecture {
+
     public static final Architecture INSTANCE = new AArch64Architecture();
 
     private static final short REG64_MASK = 0b0000_0000_0000_0001;
@@ -52,6 +53,46 @@ public final class AArch64Architecture implements Architecture {
         }
 
         throw new IllegalArgumentException("Invalid Storage Class: " + cls);
+    }
+
+    public static VMStorage stackStorage(short size, int byteOffset) {
+        return VMStorage.stackStorage(StorageClasses.STACK, size, byteOffset);
+    }
+
+    public static ABIDescriptor abiFor(VMStorage[] inputIntRegs,
+                                       VMStorage[] inputVectorRegs,
+                                       VMStorage[] outputIntRegs,
+                                       VMStorage[] outputVectorRegs,
+                                       VMStorage[] volatileIntRegs,
+                                       VMStorage[] volatileVectorRegs,
+                                       int stackAlignment,
+                                       int shadowSpace,
+                                       VMStorage targetAddrStorage, VMStorage retBufAddrStorage) {
+        return new ABIDescriptor(
+            INSTANCE,
+            new VMStorage[][] {
+                inputIntRegs,
+                inputVectorRegs,
+            },
+            new VMStorage[][] {
+                outputIntRegs,
+                outputVectorRegs,
+            },
+            new VMStorage[][] {
+                volatileIntRegs,
+                volatileVectorRegs,
+            },
+            stackAlignment,
+            shadowSpace,
+            targetAddrStorage, retBufAddrStorage);
+    }
+
+    private static VMStorage integerRegister(int index) {
+        return VMStorage.regStorage(StorageClasses.INTEGER, REG64_MASK, index, "r" + index);
+    }
+
+    private static VMStorage vectorRegister(int index) {
+        return VMStorage.regStorage(StorageClasses.VECTOR, V128_MASK, index, "v" + index);
     }
 
     public interface StorageClasses {
@@ -126,46 +167,6 @@ public final class AArch64Architecture implements Architecture {
         public static final VMStorage v29 = vectorRegister(29);
         public static final VMStorage v30 = vectorRegister(30);
         public static final VMStorage v31 = vectorRegister(31);
-    }
-
-    private static VMStorage integerRegister(int index) {
-        return VMStorage.regStorage(StorageClasses.INTEGER, REG64_MASK, index, "r" + index);
-    }
-
-    private static VMStorage vectorRegister(int index) {
-        return VMStorage.regStorage(StorageClasses.VECTOR, V128_MASK, index, "v" + index);
-    }
-
-    public static VMStorage stackStorage(short size, int byteOffset) {
-        return VMStorage.stackStorage(StorageClasses.STACK, size, byteOffset);
-    }
-
-    public static ABIDescriptor abiFor(VMStorage[] inputIntRegs,
-                                       VMStorage[] inputVectorRegs,
-                                       VMStorage[] outputIntRegs,
-                                       VMStorage[] outputVectorRegs,
-                                       VMStorage[] volatileIntRegs,
-                                       VMStorage[] volatileVectorRegs,
-                                       int stackAlignment,
-                                       int shadowSpace,
-                                       VMStorage targetAddrStorage, VMStorage retBufAddrStorage) {
-        return new ABIDescriptor(
-            INSTANCE,
-            new VMStorage[][] {
-                inputIntRegs,
-                inputVectorRegs,
-            },
-            new VMStorage[][] {
-                outputIntRegs,
-                outputVectorRegs,
-            },
-            new VMStorage[][] {
-                volatileIntRegs,
-                volatileVectorRegs,
-            },
-            stackAlignment,
-            shadowSpace,
-            targetAddrStorage, retBufAddrStorage);
     }
 
 }

@@ -39,8 +39,6 @@ import jdk.internal.vm.annotation.ForceInline;
  */
 final class ConfinedSession extends MemorySessionImpl {
 
-    private int asyncReleaseCount = 0;
-
     static final VarHandle ASYNC_RELEASE_COUNT;
 
     static {
@@ -51,18 +49,11 @@ final class ConfinedSession extends MemorySessionImpl {
         }
     }
 
+    // Accessed via the VarHandle ASYNC_RELEASE_COUNT
+    private int asyncReleaseCount = 0;
+
     public ConfinedSession(Thread owner, Cleaner cleaner) {
         super(owner, new ConfinedResourceList(), cleaner);
-    }
-
-    @Override
-    @ForceInline
-    public void acquire0() {
-        checkValidState();
-        if (state == MAX_FORKS) {
-            throw tooManyAcquires();
-        }
-        state++;
     }
 
     @Override
@@ -77,6 +68,16 @@ final class ConfinedSession extends MemorySessionImpl {
             // thread.
             ASYNC_RELEASE_COUNT.getAndAdd(this, 1);
         }
+    }
+
+    @Override
+    @ForceInline
+    public void acquire0() {
+        checkValidState();
+        if (state == MAX_FORKS) {
+            throw tooManyAcquires();
+        }
+        state++;
     }
 
     void justClose() {

@@ -73,8 +73,17 @@ public final class CallArranger {
         r11  // ret buf addr reg
     );
 
-    public record Bindings(CallingSequence callingSequence,
-                           boolean isInMemoryReturn) {}
+    public static MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc) {
+        Bindings bindings = getBindings(mt, cDesc, false);
+
+        MethodHandle handle = new DowncallLinker(CWindows, bindings.callingSequence).getBoundMethodHandle();
+
+        if (bindings.isInMemoryReturn) {
+            handle = SharedUtils.adaptDowncallForIMR(handle, cDesc);
+        }
+
+        return handle;
+    }
 
     public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
         class CallingSequenceBuilderHelper {
@@ -113,16 +122,11 @@ public final class CallArranger {
         return new Bindings(csb.csb.build(), returnInMemory);
     }
 
-    public static MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc) {
-        Bindings bindings = getBindings(mt, cDesc, false);
-
-        MethodHandle handle = new DowncallLinker(CWindows, bindings.callingSequence).getBoundMethodHandle();
-
-        if (bindings.isInMemoryReturn) {
-            handle = SharedUtils.adaptDowncallForIMR(handle, cDesc);
-        }
-
-        return handle;
+    private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
+        return returnLayout
+                .filter(GroupLayout.class::isInstance)
+                .filter(g -> !TypeClass.isRegisterAggregate(g))
+                .isPresent();
     }
 
     public static MemorySegment arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, MemorySession session) {
@@ -135,12 +139,12 @@ public final class CallArranger {
         return UpcallLinker.make(CWindows, target, bindings.callingSequence, session);
     }
 
-    private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
-        return returnLayout
-                .filter(GroupLayout.class::isInstance)
-                .filter(g -> !TypeClass.isRegisterAggregate(g))
-                .isPresent();
+    private interface BindingCalculator {
+        List<Binding> getBindings(Class<?> carrier, MemoryLayout layout, boolean isVararg);
     }
+
+    public record Bindings(CallingSequence callingSequence,
+                           boolean isInMemoryReturn) {}
 
     static final class StorageCalculator {
         private final boolean forArguments;
@@ -173,10 +177,6 @@ public final class CallArranger {
             assert forArguments;
             return CWindows.inputStorage[StorageClasses.INTEGER][nRegs - 1];
         }
-    }
-
-    private interface BindingCalculator {
-        List<Binding> getBindings(Class<?> carrier, MemoryLayout layout, boolean isVararg);
     }
 
     static class UnboxBindingCalculator implements BindingCalculator {

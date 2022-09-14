@@ -36,24 +36,22 @@ import java.util.List;
  * This class describes a 'native entry point', which is used as an appendix argument to linkToNative calls.
  */
 public final class NativeEntryPoint {
+    private static final Cleaner CLEANER = CleanerFactory.cleaner();
+    private static final SoftReferenceCache<CacheKey, NativeEntryPoint> NEP_CACHE = new SoftReferenceCache<>();
+
     static {
         registerNatives();
     }
 
     private final MethodType methodType;
     private final long downcallStubAddress; // read by VM
-
-    private static final Cleaner CLEANER = CleanerFactory.cleaner();
-    private static final SoftReferenceCache<CacheKey, NativeEntryPoint> NEP_CACHE = new SoftReferenceCache<>();
-    private record CacheKey(MethodType methodType,
-                            ABIDescriptor abi,
-                            List<VMStorage> argMoves,
-                            List<VMStorage> retMoves,
-                            boolean needsReturnBuffer) {}
-
     private NativeEntryPoint(MethodType methodType, long downcallStubAddress) {
         this.methodType = methodType;
         this.downcallStubAddress = downcallStubAddress;
+    }
+
+    public MethodType type() {
+        return methodType;
     }
 
     public static NativeEntryPoint make(ABIDescriptor abi,
@@ -83,16 +81,19 @@ public final class NativeEntryPoint {
                                                 VMStorage[] encRetMoves,
                                                 boolean needsReturnBuffer);
 
-    private static native boolean freeDowncallStub0(long downcallStub);
     private static void freeDowncallStub(long downcallStub) {
         if (!freeDowncallStub0(downcallStub)) {
             throw new InternalError("Could not free downcall stub");
         }
     }
 
-    public MethodType type() {
-        return methodType;
-    }
+    private static native boolean freeDowncallStub0(long downcallStub);
 
     private static native void registerNatives();
+
+    private record CacheKey(MethodType methodType,
+                            ABIDescriptor abi,
+                            List<VMStorage> argMoves,
+                            List<VMStorage> retMoves,
+                            boolean needsReturnBuffer) {}
 }

@@ -42,14 +42,6 @@ import java.util.function.Consumer;
  */
 public final class LinuxAArch64Linker extends AbstractLinker {
 
-    public static LinuxAArch64Linker getInstance() {
-        final class Holder {
-            private static final LinuxAArch64Linker INSTANCE = new LinuxAArch64Linker();
-        }
-
-        return Holder.INSTANCE;
-    }
-
     private LinuxAArch64Linker() {
         // Ensure there is only one instance
     }
@@ -62,6 +54,14 @@ public final class LinuxAArch64Linker extends AbstractLinker {
     @Override
     protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession scope) {
         return CallArranger.LINUX.arrangeUpcall(target, targetType, function, scope);
+    }
+
+    public static LinuxAArch64Linker getInstance() {
+        final class Holder {
+            private static final LinuxAArch64Linker INSTANCE = new LinuxAArch64Linker();
+        }
+
+        return Holder.INSTANCE;
     }
 
     public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession session) {

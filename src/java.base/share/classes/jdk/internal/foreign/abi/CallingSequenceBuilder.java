@@ -45,13 +45,32 @@ import static jdk.internal.foreign.abi.Binding.Tag.*;
 public final class CallingSequenceBuilder {
     private static final boolean VERIFY_BINDINGS = Boolean.parseBoolean(
             GetPropertyAction.privilegedGetProperty("java.lang.foreign.VERIFY_BINDINGS", "true"));
-
+    private static final Set<Binding.Tag> UNBOX_TAGS = EnumSet.of(
+        VM_STORE,
+        //VM_LOAD,
+        //BUFFER_STORE,
+        BUFFER_LOAD,
+        COPY_BUFFER,
+        //ALLOC_BUFFER,
+        //BOX_ADDRESS,
+        UNBOX_ADDRESS,
+        DUP
+    );
+    private static final Set<Binding.Tag> BOX_TAGS = EnumSet.of(
+        //VM_STORE,
+        VM_LOAD,
+        BUFFER_STORE,
+        //BUFFER_LOAD,
+        COPY_BUFFER,
+        ALLOC_BUFFER,
+        BOX_ADDRESS,
+        //UNBOX_ADDRESS,
+        DUP
+    );
     private final ABIDescriptor abi;
-
     private final boolean forUpcall;
     private final List<List<Binding>> inputBindings = new ArrayList<>();
     private List<Binding> outputBindings = List.of();
-
     private MethodType mt = MethodType.methodType(void.class);
     private FunctionDescriptor desc = FunctionDescriptor.ofVoid();
 
@@ -77,6 +96,48 @@ public final class CallingSequenceBuilder {
         desc = desc.insertArgumentLayouts(index, layout);
     }
 
+    private void verifyBindings(boolean forArguments, Class<?> carrier, List<Binding> bindings) {
+        if (VERIFY_BINDINGS) {
+            if (forUpcall == forArguments) {
+                verifyBoxBindings(carrier, bindings);
+            } else {
+                verifyUnboxBindings(carrier, bindings);
+            }
+        }
+    }
+
+    private static void verifyBoxBindings(Class<?> expectedOutType, List<Binding> bindings) {
+        Deque<Class<?>> stack = new ArrayDeque<>();
+
+        for (Binding b : bindings) {
+            if (!BOX_TAGS.contains(b.tag()))
+                throw new IllegalArgumentException("Unexpected operator: " + b);
+            b.verify(stack);
+        }
+
+        if (stack.size() != 1) {
+            throw new IllegalArgumentException("Stack must contain exactly 1 value");
+        }
+
+        Class<?> actualOutType = stack.pop();
+        SharedUtils.checkType(actualOutType, expectedOutType);
+    }
+
+    private static void verifyUnboxBindings(Class<?> inType, List<Binding> bindings) {
+        Deque<Class<?>> stack = new ArrayDeque<>();
+        stack.push(inType);
+
+        for (Binding b : bindings) {
+            if (!UNBOX_TAGS.contains(b.tag()))
+                throw new IllegalArgumentException("Unexpected operator: " + b);
+            b.verify(stack);
+        }
+
+        if (!stack.isEmpty()) {
+            throw new IllegalArgumentException("Stack must be empty after recipe");
+        }
+    }
+
     public CallingSequenceBuilder setReturnBindings(Class<?> carrier,
                                                     MemoryLayout layout,
                                                     List<Binding> bindings) {
@@ -85,12 +146,6 @@ public final class CallingSequenceBuilder {
         mt = mt.changeReturnType(carrier);
         desc = desc.changeReturnLayout(layout);
         return this;
-    }
-
-    private boolean needsReturnBuffer() {
-        return outputBindings.stream()
-            .filter(Binding.Move.class::isInstance)
-            .count() > 1;
     }
 
     public CallingSequence build() {
@@ -125,30 +180,20 @@ public final class CallingSequenceBuilder {
                 returnBufferSize, allocationSize, inputBindings, outputBindings);
     }
 
-    private MethodType computeCallerTypeForUpcall() {
-        return computeTypeHelper(Binding.VMLoad.class, Binding.VMStore.class);
+    private boolean needsReturnBuffer() {
+        return outputBindings.stream()
+            .filter(Binding.Move.class::isInstance)
+            .count() > 1;
     }
 
-    private MethodType computeCalleeTypeForDowncall() {
-        return computeTypeHelper(Binding.VMStore.class, Binding.VMLoad.class);
-    }
-
-    private MethodType computeTypeHelper(Class<? extends Binding.Move> inputVMClass,
-                                         Class<? extends Binding.Move> outputVMClass) {
-        Class<?>[] paramTypes = inputBindings.stream()
-                .flatMap(List::stream)
-                .filter(inputVMClass::isInstance)
-                .map(inputVMClass::cast)
-                .map(Binding.Move::type)
-                .toArray(Class<?>[]::new);
-
-        Binding.Move[] retMoves = outputBindings.stream()
-                .filter(outputVMClass::isInstance)
-                .map(outputVMClass::cast)
-                .toArray(Binding.Move[]::new);
-        Class<?> returnType = retMoves.length == 1 ? retMoves[0].type() : void.class;
-
-        return methodType(returnType, paramTypes);
+    private long computeReturnBuferSize() {
+        return outputBindings.stream()
+                .filter(Binding.Move.class::isInstance)
+                .map(Binding.Move.class::cast)
+                .map(Binding.Move::storage)
+                .map(VMStorage::type)
+                .mapToLong(abi.arch::typeSize)
+                .sum();
     }
 
     private long computeAllocationSize() {
@@ -169,79 +214,29 @@ public final class CallingSequenceBuilder {
         return size;
     }
 
-    private long computeReturnBuferSize() {
-        return outputBindings.stream()
-                .filter(Binding.Move.class::isInstance)
-                .map(Binding.Move.class::cast)
-                .map(Binding.Move::storage)
-                .map(VMStorage::type)
-                .mapToLong(abi.arch::typeSize)
-                .sum();
+    private MethodType computeCalleeTypeForDowncall() {
+        return computeTypeHelper(Binding.VMStore.class, Binding.VMLoad.class);
     }
 
-    private void verifyBindings(boolean forArguments, Class<?> carrier, List<Binding> bindings) {
-        if (VERIFY_BINDINGS) {
-            if (forUpcall == forArguments) {
-                verifyBoxBindings(carrier, bindings);
-            } else {
-                verifyUnboxBindings(carrier, bindings);
-            }
-        }
+    private MethodType computeCallerTypeForUpcall() {
+        return computeTypeHelper(Binding.VMLoad.class, Binding.VMStore.class);
     }
 
-    private static final Set<Binding.Tag> UNBOX_TAGS = EnumSet.of(
-        VM_STORE,
-        //VM_LOAD,
-        //BUFFER_STORE,
-        BUFFER_LOAD,
-        COPY_BUFFER,
-        //ALLOC_BUFFER,
-        //BOX_ADDRESS,
-        UNBOX_ADDRESS,
-        DUP
-    );
+    private MethodType computeTypeHelper(Class<? extends Binding.Move> inputVMClass,
+                                         Class<? extends Binding.Move> outputVMClass) {
+        Class<?>[] paramTypes = inputBindings.stream()
+                .flatMap(List::stream)
+                .filter(inputVMClass::isInstance)
+                .map(inputVMClass::cast)
+                .map(Binding.Move::type)
+                .toArray(Class<?>[]::new);
 
-    private static void verifyUnboxBindings(Class<?> inType, List<Binding> bindings) {
-        Deque<Class<?>> stack = new ArrayDeque<>();
-        stack.push(inType);
+        Binding.Move[] retMoves = outputBindings.stream()
+                .filter(outputVMClass::isInstance)
+                .map(outputVMClass::cast)
+                .toArray(Binding.Move[]::new);
+        Class<?> returnType = retMoves.length == 1 ? retMoves[0].type() : void.class;
 
-        for (Binding b : bindings) {
-            if (!UNBOX_TAGS.contains(b.tag()))
-                throw new IllegalArgumentException("Unexpected operator: " + b);
-            b.verify(stack);
-        }
-
-        if (!stack.isEmpty()) {
-            throw new IllegalArgumentException("Stack must be empty after recipe");
-        }
-    }
-
-    private static final Set<Binding.Tag> BOX_TAGS = EnumSet.of(
-        //VM_STORE,
-        VM_LOAD,
-        BUFFER_STORE,
-        //BUFFER_LOAD,
-        COPY_BUFFER,
-        ALLOC_BUFFER,
-        BOX_ADDRESS,
-        //UNBOX_ADDRESS,
-        DUP
-    );
-
-    private static void verifyBoxBindings(Class<?> expectedOutType, List<Binding> bindings) {
-        Deque<Class<?>> stack = new ArrayDeque<>();
-
-        for (Binding b : bindings) {
-            if (!BOX_TAGS.contains(b.tag()))
-                throw new IllegalArgumentException("Unexpected operator: " + b);
-            b.verify(stack);
-        }
-
-        if (stack.size() != 1) {
-            throw new IllegalArgumentException("Stack must contain exactly 1 value");
-        }
-
-        Class<?> actualOutType = stack.pop();
-        SharedUtils.checkType(actualOutType, expectedOutType);
+        return methodType(returnType, paramTypes);
     }
 }

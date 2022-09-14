@@ -194,6 +194,12 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
     MemorySession asNonCloseable();
 
     /**
+     * {@return the hash code value for this memory session}
+     */
+    @Override
+    int hashCode();
+
+    /**
      * Compares the specified object with this memory session for equality. Returns {@code true} if and only if the specified
      * object is also a memory session, and it refers to the same memory session as this memory session.
      * {@linkplain #asNonCloseable() A non-closeable view} {@code V} of a memory session {@code S} is considered
@@ -204,12 +210,6 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
      */
     @Override
     boolean equals(Object that);
-
-    /**
-     * {@return the hash code value for this memory session}
-     */
-    @Override
-    int hashCode();
 
     /**
      * Allocates a native segment, using this session. Equivalent to the following code:

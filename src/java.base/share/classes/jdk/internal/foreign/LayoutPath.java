@@ -93,6 +93,34 @@ public final class LayoutPath {
         return LayoutPath.nestedPath(elem, offset, addStride(elem.bitSize()), addBound(seq.elementCount()), this);
     }
 
+    private void check(Class<?> layoutClass, String msg) {
+        if (!layoutClass.isAssignableFrom(layout.getClass())) {
+            throw badLayoutPath(msg);
+        }
+    }
+
+    private static LayoutPath nestedPath(MemoryLayout layout, long offset, long[] strides, long[] bounds, LayoutPath encl) {
+        return new LayoutPath(layout, offset, strides, bounds, encl);
+    }
+
+    private long[] addStride(long stride) {
+        long[] newStrides = Arrays.copyOf(strides, strides.length + 1);
+        newStrides[strides.length] = stride;
+        return newStrides;
+    }
+
+    // Layout path projections
+
+    private long[] addBound(long maxIndex) {
+        long[] newBounds = Arrays.copyOf(bounds, bounds.length + 1);
+        newBounds[bounds.length] = maxIndex;
+        return newBounds;
+    }
+
+    private static IllegalArgumentException badLayoutPath(String cause) {
+        return new IllegalArgumentException("Bad layout path: " + cause);
+    }
+
     public LayoutPath sequenceElement(long start, long step) {
         check(SequenceLayout.class, "attempting to select a sequence element from a non-sequence layout");
         SequenceLayout seq = (SequenceLayout)layout;
@@ -105,6 +133,12 @@ public final class LayoutPath {
         long maxIndex = Math.ceilDiv(nelems, Math.abs(step));
         return LayoutPath.nestedPath(elem, offset + (start * elemSize),
                                      addStride(elemSize * step), addBound(maxIndex), this);
+    }
+
+    private void checkSequenceBounds(SequenceLayout seq, long index) {
+        if (index >= seq.elementCount()) {
+            throw badLayoutPath(String.format("Sequence index out of bound; found: %d, size: %d", index, seq.elementCount()));
+        }
     }
 
     public LayoutPath sequenceElement(long index) {
@@ -137,7 +171,7 @@ public final class LayoutPath {
         return LayoutPath.nestedPath(elem, this.offset + offset, strides, bounds, this);
     }
 
-    // Layout path projections
+    // Layout path construction
 
     public long offset() {
         return offset;
@@ -163,23 +197,7 @@ public final class LayoutPath {
         return handle;
     }
 
-    @ForceInline
-    private static long addScaledOffset(long base, long index, long stride, long bound) {
-        Objects.checkIndex(index, bound);
-        return base + (stride * index);
-    }
-
-    public MethodHandle offsetHandle() {
-        MethodHandle mh = MethodHandles.identity(long.class);
-        for (int i = strides.length - 1; i >=0; i--) {
-            MethodHandle collector = MethodHandles.insertArguments(MH_ADD_SCALED_OFFSET, 2, strides[i], bounds[i]);
-            // (J, ...) -> J to (J, J, ...) -> J
-            // i.e. new coord is prefixed. Last coord will correspond to innermost layout
-            mh = MethodHandles.collectArguments(mh, 0, collector);
-        }
-        mh = MethodHandles.insertArguments(mh, 0, offset);
-        return mh;
-    }
+    // Helper methods
 
     public MethodHandle sliceHandle() {
         if (strides.length == 0) {
@@ -197,36 +215,30 @@ public final class LayoutPath {
         return sliceHandle;
     }
 
+    public MethodHandle offsetHandle() {
+        MethodHandle mh = MethodHandles.identity(long.class);
+        for (int i = strides.length - 1; i >=0; i--) {
+            MethodHandle collector = MethodHandles.insertArguments(MH_ADD_SCALED_OFFSET, 2, strides[i], bounds[i]);
+            // (J, ...) -> J to (J, J, ...) -> J
+            // i.e. new coord is prefixed. Last coord will correspond to innermost layout
+            mh = MethodHandles.collectArguments(mh, 0, collector);
+        }
+        mh = MethodHandles.insertArguments(mh, 0, offset);
+        return mh;
+    }
+
     public MemoryLayout layout() {
         return layout;
     }
-
-    // Layout path construction
 
     public static LayoutPath rootPath(MemoryLayout layout) {
         return new LayoutPath(layout, 0L, EMPTY_STRIDES, EMPTY_BOUNDS, null);
     }
 
-    private static LayoutPath nestedPath(MemoryLayout layout, long offset, long[] strides, long[] bounds, LayoutPath encl) {
-        return new LayoutPath(layout, offset, strides, bounds, encl);
-    }
-
-    // Helper methods
-
-    private void check(Class<?> layoutClass, String msg) {
-        if (!layoutClass.isAssignableFrom(layout.getClass())) {
-            throw badLayoutPath(msg);
-        }
-    }
-
-    private void checkSequenceBounds(SequenceLayout seq, long index) {
-        if (index >= seq.elementCount()) {
-            throw badLayoutPath(String.format("Sequence index out of bound; found: %d, size: %d", index, seq.elementCount()));
-        }
-    }
-
-    private static IllegalArgumentException badLayoutPath(String cause) {
-        return new IllegalArgumentException("Bad layout path: " + cause);
+    @ForceInline
+    private static long addScaledOffset(long base, long index, long stride, long bound) {
+        Objects.checkIndex(index, bound);
+        return base + (stride * index);
     }
 
     private static void checkAlignment(LayoutPath path) {
@@ -249,23 +261,27 @@ public final class LayoutPath {
         }
     }
 
-    private long[] addStride(long stride) {
-        long[] newStrides = Arrays.copyOf(strides, strides.length + 1);
-        newStrides[strides.length] = stride;
-        return newStrides;
-    }
-
-    private long[] addBound(long maxIndex) {
-        long[] newBounds = Arrays.copyOf(bounds, bounds.length + 1);
-        newBounds[bounds.length] = maxIndex;
-        return newBounds;
-    }
-
     /**
      * This class provides an immutable implementation for the {@code PathElement} interface. A path element implementation
      * is simply a pointer to one of the selector methods provided by the {@code LayoutPath} class.
      */
     public static final class PathElementImpl implements MemoryLayout.PathElement, UnaryOperator<LayoutPath> {
+
+        final PathKind kind;
+        final UnaryOperator<LayoutPath> pathOp;
+        public PathElementImpl(PathKind kind, UnaryOperator<LayoutPath> pathOp) {
+            this.kind = kind;
+            this.pathOp = pathOp;
+        }
+
+        @Override
+        public LayoutPath apply(LayoutPath layoutPath) {
+            return pathOp.apply(layoutPath);
+        }
+
+        public PathKind kind() {
+            return kind;
+        }
 
         public enum PathKind {
             SEQUENCE_ELEMENT("unbound sequence element"),
@@ -282,23 +298,6 @@ public final class LayoutPath {
             public String description() {
                 return description;
             }
-        }
-
-        final PathKind kind;
-        final UnaryOperator<LayoutPath> pathOp;
-
-        public PathElementImpl(PathKind kind, UnaryOperator<LayoutPath> pathOp) {
-            this.kind = kind;
-            this.pathOp = pathOp;
-        }
-
-        @Override
-        public LayoutPath apply(LayoutPath layoutPath) {
-            return pathOp.apply(layoutPath);
-        }
-
-        public PathKind kind() {
-            return kind;
         }
     }
 }

@@ -55,7 +55,13 @@ import static jdk.internal.foreign.abi.aarch64.CallArranger.MAX_REGISTER_ARGUMEN
  * Linux. Variadic parameters may be passed in registers or on the stack.
  */
 public final class LinuxAArch64VaList implements VaList {
-    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
+    static final GroupLayout LAYOUT = MemoryLayout.structLayout(
+        AArch64.C_POINTER.withName("__stack"),
+        AArch64.C_POINTER.withName("__gr_top"),
+        AArch64.C_POINTER.withName("__vr_top"),
+        AArch64.C_INT.withName("__gr_offs"),
+        AArch64.C_INT.withName("__vr_offs")
+    ).withName("__va_list");
 
     // See AAPCS Appendix B "Variable Argument Lists" for definition of
     // va_list on AArch64.
@@ -67,15 +73,7 @@ public final class LinuxAArch64VaList implements VaList {
     //     int __gr_offs;   // offset from __gr_top to next GP register arg
     //     int __vr_offs;   // offset from __vr_top to next FP/SIMD register arg
     // } va_list;
-
-    static final GroupLayout LAYOUT = MemoryLayout.structLayout(
-        AArch64.C_POINTER.withName("__stack"),
-        AArch64.C_POINTER.withName("__gr_top"),
-        AArch64.C_POINTER.withName("__vr_top"),
-        AArch64.C_INT.withName("__gr_offs"),
-        AArch64.C_INT.withName("__vr_offs")
-    ).withName("__va_list");
-
+    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
     private static final long STACK_SLOT_SIZE = 8;
 
     private static final MemoryLayout GP_REG
@@ -85,15 +83,12 @@ public final class LinuxAArch64VaList implements VaList {
 
     private static final MemoryLayout LAYOUT_GP_REGS
         = MemoryLayout.sequenceLayout(MAX_REGISTER_ARGUMENTS, GP_REG);
+    private static final int MAX_GP_OFFSET = (int) LAYOUT_GP_REGS.byteSize();
     private static final MemoryLayout LAYOUT_FP_REGS
         = MemoryLayout.sequenceLayout(MAX_REGISTER_ARGUMENTS, FP_REG);
-
+    private static final int MAX_FP_OFFSET = (int) LAYOUT_FP_REGS.byteSize();
     private static final int GP_SLOT_SIZE = (int) GP_REG.byteSize();
     private static final int FP_SLOT_SIZE = (int) FP_REG.byteSize();
-
-    private static final int MAX_GP_OFFSET = (int) LAYOUT_GP_REGS.byteSize();
-    private static final int MAX_FP_OFFSET = (int) LAYOUT_FP_REGS.byteSize();
-
     private static final VarHandle VH_stack = LAYOUT.varHandle(groupElement("__stack"));
     private static final VarHandle VH_gr_top = LAYOUT.varHandle(groupElement("__gr_top"));
     private static final VarHandle VH_vr_top = LAYOUT.varHandle(groupElement("__vr_top"));
@@ -106,11 +101,11 @@ public final class LinuxAArch64VaList implements VaList {
         = new SharedUtils.EmptyVaList(emptyListAddress());
 
     private final MemorySegment segment;
-    private MemorySegment stack;
     private final MemorySegment gpRegsArea;
     private final long gpLimit;
     private final MemorySegment fpRegsArea;
     private final long fpLimit;
+    private MemorySegment stack;
 
     private LinuxAArch64VaList(MemorySegment segment, MemorySegment stack,
                                MemorySegment gpRegsArea, long gpLimit, MemorySegment fpRegsArea, long fpLimit) {
@@ -120,114 +115,6 @@ public final class LinuxAArch64VaList implements VaList {
         this.gpLimit = gpLimit;
         this.fpRegsArea = fpRegsArea;
         this.fpLimit = fpLimit;
-    }
-
-    private static LinuxAArch64VaList readFromAddress(long address, MemorySession session) {
-        MemorySegment segment = MemorySegment.ofAddress(address, LAYOUT.byteSize(), session);
-        MemorySegment stack = stackPtr(segment); // size unknown
-        MemorySegment gpRegsArea = MemorySegment.ofAddress(grTop(segment).address() - MAX_GP_OFFSET, MAX_GP_OFFSET, session);
-        MemorySegment fpRegsArea = MemorySegment.ofAddress(vrTop(segment).address() - MAX_FP_OFFSET, MAX_FP_OFFSET, session);
-        return new LinuxAArch64VaList(segment, stack, gpRegsArea, MAX_GP_OFFSET, fpRegsArea, MAX_FP_OFFSET);
-    }
-
-    private static MemorySegment emptyListAddress() {
-        long ptr = UNSAFE.allocateMemory(LAYOUT.byteSize());
-        MemorySegment ms = MemorySegment.ofAddress(ptr, LAYOUT.byteSize(), MemorySession.openImplicit());
-        ms.session().addCloseAction(() -> UNSAFE.freeMemory(ptr));
-        VH_stack.set(ms, MemorySegment.NULL);
-        VH_gr_top.set(ms, MemorySegment.NULL);
-        VH_vr_top.set(ms, MemorySegment.NULL);
-        VH_gr_offs.set(ms, 0);
-        VH_vr_offs.set(ms, 0);
-        return ms;
-    }
-
-    public static VaList empty() {
-        return EMPTY;
-    }
-
-    private MemorySegment grTop() {
-        return grTop(segment);
-    }
-
-    private static MemorySegment grTop(MemorySegment segment) {
-        return (MemorySegment) VH_gr_top.get(segment);
-    }
-
-    private MemorySegment vrTop() {
-        return vrTop(segment);
-    }
-
-    private static MemorySegment vrTop(MemorySegment segment) {
-        return (MemorySegment) VH_vr_top.get(segment);
-    }
-
-    private int grOffs() {
-        final int offs = (int) VH_gr_offs.get(segment);
-        assert offs <= 0;
-        return offs;
-    }
-
-    private int vrOffs() {
-        final int offs = (int) VH_vr_offs.get(segment);
-        assert offs <= 0;
-        return offs;
-    }
-
-    private static MemorySegment stackPtr(MemorySegment segment) {
-        return (MemorySegment) VH_stack.get(segment);
-    }
-
-    private MemorySegment stackPtr() {
-        return stackPtr(segment);
-    }
-
-    private void setStack(MemorySegment newStack) {
-        stack = newStack;
-        VH_stack.set(segment, stack);
-    }
-
-    private void consumeGPSlots(int num) {
-        final int old = (int) VH_gr_offs.get(segment);
-        VH_gr_offs.set(segment, old + num * GP_SLOT_SIZE);
-    }
-
-    private void consumeFPSlots(int num) {
-        final int old = (int) VH_vr_offs.get(segment);
-        VH_vr_offs.set(segment, old + num * FP_SLOT_SIZE);
-    }
-
-    private long currentGPOffset() {
-        // Offset from start of GP register segment. __gr_top points to the top
-        // (highest address) of the GP registers area. __gr_offs is the negative
-        // offset of next saved register from the top.
-
-        return gpRegsArea.byteSize() + grOffs();
-    }
-
-    private long currentFPOffset() {
-        // Offset from start of FP register segment. __vr_top points to the top
-        // (highest address) of the FP registers area. __vr_offs is the negative
-        // offset of next saved register from the top.
-
-        return fpRegsArea.byteSize() + vrOffs();
-    }
-
-    private long preAlignOffset(MemoryLayout layout) {
-        long alignmentOffset = 0;
-        if (layout.byteAlignment() > STACK_SLOT_SIZE) {
-            long addr = stack.address();
-            alignmentOffset = Utils.alignUp(addr, 16) - addr;
-        }
-        return alignmentOffset;
-    }
-
-    private void preAlignStack(MemoryLayout layout) {
-        setStack(stack.asSlice(preAlignOffset(layout)));
-    }
-
-    private void postAlignStack(MemoryLayout layout) {
-        setStack(stack.asSlice(Utils.alignUp(layout.byteSize(), STACK_SLOT_SIZE)));
     }
 
     @Override
@@ -254,6 +141,44 @@ public final class LinuxAArch64VaList implements VaList {
     public MemorySegment nextVarg(GroupLayout layout, SegmentAllocator allocator) {
         Objects.requireNonNull(allocator);
         return (MemorySegment) read( layout, allocator);
+    }
+
+    @Override
+    public void skip(MemoryLayout... layouts) {
+        Objects.requireNonNull(layouts);
+        MemorySessionImpl.toSessionImpl(segment.session()).checkValidState();
+        for (MemoryLayout layout : layouts) {
+            Objects.requireNonNull(layout);
+            TypeClass typeClass = TypeClass.classifyLayout(layout);
+            if (isRegOverflow(currentGPOffset(), currentFPOffset(), typeClass, layout)) {
+                checkStackElement(layout);
+                preAlignStack(layout);
+                postAlignStack(layout);
+            } else if (typeClass == TypeClass.FLOAT || typeClass == TypeClass.STRUCT_HFA) {
+                long slots = numSlots(layout);
+                checkFPElement(layout, slots);
+                consumeFPSlots((int) slots);
+            } else if (typeClass == TypeClass.STRUCT_REFERENCE) {
+                checkGPElement(layout, 1);
+                consumeGPSlots(1);
+            } else {
+                long slots = numSlots(layout);
+                checkGPElement(layout, slots);
+                consumeGPSlots((int) slots);
+            }
+        }
+    }
+
+    @Override
+    public VaList copy() {
+        MemorySegment copy = segment.session().allocate(LAYOUT);
+        copy.copyFrom(segment);
+        return new LinuxAArch64VaList(copy, stack, gpRegsArea, gpLimit, fpRegsArea, fpLimit);
+    }
+
+    @Override
+    public MemorySegment segment() {
+        return segment.asSlice(0, 0);
     }
 
     private Object read(MemoryLayout layout) {
@@ -344,74 +269,6 @@ public final class LinuxAArch64VaList implements VaList {
         }
     }
 
-    private void checkGPElement(MemoryLayout layout, long slots) {
-        if ((grOffs() + MAX_GP_OFFSET) + (slots * GP_SLOT_SIZE) > gpLimit) {
-            throw SharedUtils.newVaListNSEE(layout);
-        }
-    }
-
-    private void checkFPElement(MemoryLayout layout, long slots) {
-        if ((vrOffs() + MAX_FP_OFFSET) + (slots * FP_SLOT_SIZE) > fpLimit) {
-            throw SharedUtils.newVaListNSEE(layout);
-        }
-    }
-
-    private void checkStackElement(MemoryLayout layout) {
-        if (preAlignOffset(layout) + layout.byteSize() > stack.byteSize()) {
-            throw SharedUtils.newVaListNSEE(layout);
-        }
-    }
-
-    @Override
-    public void skip(MemoryLayout... layouts) {
-        Objects.requireNonNull(layouts);
-        MemorySessionImpl.toSessionImpl(segment.session()).checkValidState();
-        for (MemoryLayout layout : layouts) {
-            Objects.requireNonNull(layout);
-            TypeClass typeClass = TypeClass.classifyLayout(layout);
-            if (isRegOverflow(currentGPOffset(), currentFPOffset(), typeClass, layout)) {
-                checkStackElement(layout);
-                preAlignStack(layout);
-                postAlignStack(layout);
-            } else if (typeClass == TypeClass.FLOAT || typeClass == TypeClass.STRUCT_HFA) {
-                long slots = numSlots(layout);
-                checkFPElement(layout, slots);
-                consumeFPSlots((int) slots);
-            } else if (typeClass == TypeClass.STRUCT_REFERENCE) {
-                checkGPElement(layout, 1);
-                consumeGPSlots(1);
-            } else {
-                long slots = numSlots(layout);
-                checkGPElement(layout, slots);
-                consumeGPSlots((int) slots);
-            }
-        }
-    }
-
-    static LinuxAArch64VaList.Builder builder(MemorySession session) {
-        return new LinuxAArch64VaList.Builder(session);
-    }
-
-    public static VaList ofAddress(long address, MemorySession session) {
-        return readFromAddress(address, session);
-    }
-
-    @Override
-    public VaList copy() {
-        MemorySegment copy = segment.session().allocate(LAYOUT);
-        copy.copyFrom(segment);
-        return new LinuxAArch64VaList(copy, stack, gpRegsArea, gpLimit, fpRegsArea, fpLimit);
-    }
-
-    @Override
-    public MemorySegment segment() {
-        return segment.asSlice(0, 0);
-    }
-
-    private static long numSlots(MemoryLayout layout) {
-        return Utils.alignUp(layout.byteSize(), STACK_SLOT_SIZE) / STACK_SLOT_SIZE;
-    }
-
     private static boolean isRegOverflow(long currentGPOffset, long currentFPOffset,
                                          TypeClass typeClass, MemoryLayout layout) {
         if (typeClass == TypeClass.FLOAT || typeClass == TypeClass.STRUCT_HFA) {
@@ -421,6 +278,88 @@ public final class LinuxAArch64VaList implements VaList {
         } else {
             return currentGPOffset > MAX_GP_OFFSET - numSlots(layout) * GP_SLOT_SIZE;
         }
+    }
+
+    private long currentGPOffset() {
+        // Offset from start of GP register segment. __gr_top points to the top
+        // (highest address) of the GP registers area. __gr_offs is the negative
+        // offset of next saved register from the top.
+
+        return gpRegsArea.byteSize() + grOffs();
+    }
+
+    private long currentFPOffset() {
+        // Offset from start of FP register segment. __vr_top points to the top
+        // (highest address) of the FP registers area. __vr_offs is the negative
+        // offset of next saved register from the top.
+
+        return fpRegsArea.byteSize() + vrOffs();
+    }
+
+    private void checkStackElement(MemoryLayout layout) {
+        if (preAlignOffset(layout) + layout.byteSize() > stack.byteSize()) {
+            throw SharedUtils.newVaListNSEE(layout);
+        }
+    }
+
+    private void preAlignStack(MemoryLayout layout) {
+        setStack(stack.asSlice(preAlignOffset(layout)));
+    }
+
+    private void postAlignStack(MemoryLayout layout) {
+        setStack(stack.asSlice(Utils.alignUp(layout.byteSize(), STACK_SLOT_SIZE)));
+    }
+
+    private void checkGPElement(MemoryLayout layout, long slots) {
+        if ((grOffs() + MAX_GP_OFFSET) + (slots * GP_SLOT_SIZE) > gpLimit) {
+            throw SharedUtils.newVaListNSEE(layout);
+        }
+    }
+
+    private static long numSlots(MemoryLayout layout) {
+        return Utils.alignUp(layout.byteSize(), STACK_SLOT_SIZE) / STACK_SLOT_SIZE;
+    }
+
+    private void consumeGPSlots(int num) {
+        final int old = (int) VH_gr_offs.get(segment);
+        VH_gr_offs.set(segment, old + num * GP_SLOT_SIZE);
+    }
+
+    private void checkFPElement(MemoryLayout layout, long slots) {
+        if ((vrOffs() + MAX_FP_OFFSET) + (slots * FP_SLOT_SIZE) > fpLimit) {
+            throw SharedUtils.newVaListNSEE(layout);
+        }
+    }
+
+    private void consumeFPSlots(int num) {
+        final int old = (int) VH_vr_offs.get(segment);
+        VH_vr_offs.set(segment, old + num * FP_SLOT_SIZE);
+    }
+
+    private int grOffs() {
+        final int offs = (int) VH_gr_offs.get(segment);
+        assert offs <= 0;
+        return offs;
+    }
+
+    private int vrOffs() {
+        final int offs = (int) VH_vr_offs.get(segment);
+        assert offs <= 0;
+        return offs;
+    }
+
+    private long preAlignOffset(MemoryLayout layout) {
+        long alignmentOffset = 0;
+        if (layout.byteAlignment() > STACK_SLOT_SIZE) {
+            long addr = stack.address();
+            alignmentOffset = Utils.alignUp(addr, 16) - addr;
+        }
+        return alignmentOffset;
+    }
+
+    private void setStack(MemorySegment newStack) {
+        stack = newStack;
+        VH_stack.set(segment, stack);
     }
 
     @Override
@@ -434,14 +373,69 @@ public final class LinuxAArch64VaList implements VaList {
             + '}';
     }
 
+    private MemorySegment stackPtr() {
+        return stackPtr(segment);
+    }
+
+    private MemorySegment grTop() {
+        return grTop(segment);
+    }
+
+    private MemorySegment vrTop() {
+        return vrTop(segment);
+    }
+
+    private static MemorySegment stackPtr(MemorySegment segment) {
+        return (MemorySegment) VH_stack.get(segment);
+    }
+
+    private static MemorySegment grTop(MemorySegment segment) {
+        return (MemorySegment) VH_gr_top.get(segment);
+    }
+
+    private static MemorySegment vrTop(MemorySegment segment) {
+        return (MemorySegment) VH_vr_top.get(segment);
+    }
+
+    public static VaList empty() {
+        return EMPTY;
+    }
+
+    static LinuxAArch64VaList.Builder builder(MemorySession session) {
+        return new LinuxAArch64VaList.Builder(session);
+    }
+
+    public static VaList ofAddress(long address, MemorySession session) {
+        return readFromAddress(address, session);
+    }
+
+    private static LinuxAArch64VaList readFromAddress(long address, MemorySession session) {
+        MemorySegment segment = MemorySegment.ofAddress(address, LAYOUT.byteSize(), session);
+        MemorySegment stack = stackPtr(segment); // size unknown
+        MemorySegment gpRegsArea = MemorySegment.ofAddress(grTop(segment).address() - MAX_GP_OFFSET, MAX_GP_OFFSET, session);
+        MemorySegment fpRegsArea = MemorySegment.ofAddress(vrTop(segment).address() - MAX_FP_OFFSET, MAX_FP_OFFSET, session);
+        return new LinuxAArch64VaList(segment, stack, gpRegsArea, MAX_GP_OFFSET, fpRegsArea, MAX_FP_OFFSET);
+    }
+
+    private static MemorySegment emptyListAddress() {
+        long ptr = UNSAFE.allocateMemory(LAYOUT.byteSize());
+        MemorySegment ms = MemorySegment.ofAddress(ptr, LAYOUT.byteSize(), MemorySession.openImplicit());
+        ms.session().addCloseAction(() -> UNSAFE.freeMemory(ptr));
+        VH_stack.set(ms, MemorySegment.NULL);
+        VH_gr_top.set(ms, MemorySegment.NULL);
+        VH_vr_top.set(ms, MemorySegment.NULL);
+        VH_gr_offs.set(ms, 0);
+        VH_vr_offs.set(ms, 0);
+        return ms;
+    }
+
     public static final class Builder implements VaList.Builder {
         private final MemorySession session;
         private final MemorySegment gpRegs;
         private final MemorySegment fpRegs;
-
+        private final List<SimpleVaArg> stackArgs = new ArrayList<>();
         private long currentGPOffset = 0;
         private long currentFPOffset = 0;
-        private final List<SimpleVaArg> stackArgs = new ArrayList<>();
 
         Builder(MemorySession session) {
             this.session = session;
@@ -530,10 +524,6 @@ public final class LinuxAArch64VaList implements VaList {
             return this;
         }
 
-        private boolean isEmpty() {
-            return currentGPOffset == 0 && currentFPOffset == 0 && stackArgs.isEmpty();
-        }
-
         public VaList build() {
             if (isEmpty()) {
                 return EMPTY;
@@ -566,6 +556,10 @@ public final class LinuxAArch64VaList implements VaList {
             assert gpRegs.session().ownerThread() == vaListSegment.session().ownerThread();
             assert fpRegs.session().ownerThread() == vaListSegment.session().ownerThread();
             return new LinuxAArch64VaList(vaListSegment, stackArgsSegment, gpRegs, currentGPOffset, fpRegs, currentFPOffset);
+        }
+
+        private boolean isEmpty() {
+            return currentGPOffset == 0 && currentFPOffset == 0 && stackArgs.isEmpty();
         }
     }
 }

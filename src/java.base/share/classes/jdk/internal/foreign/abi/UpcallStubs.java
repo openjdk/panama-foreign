@@ -31,24 +31,14 @@ import jdk.internal.foreign.MemorySessionImpl;
 
 public final class UpcallStubs {
 
-    private UpcallStubs() {
-    }
-
-    private static void freeUpcallStub(long stubAddress) {
-        if (!freeUpcallStub0(stubAddress)) {
-            throw new IllegalStateException("Not a stub address: " + stubAddress);
-        }
-    }
-
-    // natives
-
-    // returns true if the stub was found (and freed)
-    private static native boolean freeUpcallStub0(long addr);
-
-    private static native void registerNatives();
     static {
         registerNatives();
     }
+
+    private UpcallStubs() {
+    }
+
+    // natives
 
     static MemorySegment makeUpcall(long entry, MemorySession session) {
         MemorySessionImpl.toSessionImpl(session).addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
@@ -59,4 +49,15 @@ public final class UpcallStubs {
         });
         return MemorySegment.ofAddress(entry, 0, session);
     }
+
+    private static void freeUpcallStub(long stubAddress) {
+        if (!freeUpcallStub0(stubAddress)) {
+            throw new IllegalStateException("Not a stub address: " + stubAddress);
+        }
+    }
+
+    // returns true if the stub was found (and freed)
+    private static native boolean freeUpcallStub0(long addr);
+
+    private static native void registerNatives();
 }

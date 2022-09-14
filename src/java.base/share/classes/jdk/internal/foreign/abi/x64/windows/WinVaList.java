@@ -72,10 +72,6 @@ public final class WinVaList implements VaList {
         this.segment = segment;
     }
 
-    public static VaList empty() {
-        return EMPTY;
-    }
-
     @Override
     public int nextVarg(ValueLayout.OfInt layout) {
         return (int) read(layout);
@@ -100,6 +96,28 @@ public final class WinVaList implements VaList {
     public MemorySegment nextVarg(GroupLayout layout, SegmentAllocator allocator) {
         Objects.requireNonNull(allocator);
         return (MemorySegment) read(layout, allocator);
+    }
+
+    @Override
+    public void skip(MemoryLayout... layouts) {
+        Objects.requireNonNull(layouts);
+        MemorySessionImpl.toSessionImpl(segment.session()).checkValidState();
+        for (MemoryLayout layout : layouts) {
+            Objects.requireNonNull(layout);
+            checkElement(layout);
+            segment = segment.asSlice(VA_SLOT_SIZE_BYTES);
+        }
+    }
+
+    @Override
+    public VaList copy() {
+        MemorySessionImpl.toSessionImpl(segment.session()).checkValidState();
+        return new WinVaList(segment);
+    }
+
+    @Override
+    public MemorySegment segment() {
+        return segment.asSlice(0, 0);
     }
 
     private Object read(MemoryLayout layout) {
@@ -138,15 +156,8 @@ public final class WinVaList implements VaList {
         }
     }
 
-    @Override
-    public void skip(MemoryLayout... layouts) {
-        Objects.requireNonNull(layouts);
-        MemorySessionImpl.toSessionImpl(segment.session()).checkValidState();
-        for (MemoryLayout layout : layouts) {
-            Objects.requireNonNull(layout);
-            checkElement(layout);
-            segment = segment.asSlice(VA_SLOT_SIZE_BYTES);
-        }
+    public static VaList empty() {
+        return EMPTY;
     }
 
     static WinVaList ofAddress(long address, MemorySession session) {
@@ -155,17 +166,6 @@ public final class WinVaList implements VaList {
 
     static Builder builder(MemorySession session) {
         return new Builder(session);
-    }
-
-    @Override
-    public VaList copy() {
-        MemorySessionImpl.toSessionImpl(segment.session()).checkValidState();
-        return new WinVaList(segment);
-    }
-
-    @Override
-    public MemorySegment segment() {
-        return segment.asSlice(0, 0);
     }
 
     public static final class Builder implements VaList.Builder {
@@ -178,16 +178,16 @@ public final class WinVaList implements VaList {
             this.session = session;
         }
 
+        @Override
+        public Builder addVarg(ValueLayout.OfInt layout, int value) {
+            return arg(layout, value);
+        }
+
         private Builder arg(MemoryLayout layout, Object value) {
             Objects.requireNonNull(layout);
             Objects.requireNonNull(value);
             args.add(new SimpleVaArg(layout, value));
             return this;
-        }
-
-        @Override
-        public Builder addVarg(ValueLayout.OfInt layout, int value) {
-            return arg(layout, value);
         }
 
         @Override

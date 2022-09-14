@@ -103,6 +103,27 @@ public interface SegmentAllocator {
     }
 
     /**
+     * Allocates a memory segment with the given layout.
+     * @implSpec the default implementation for this method calls {@code this.allocate(layout.byteSize(), layout.byteAlignment())}.
+     * @param layout the layout of the block of memory to be allocated.
+     * @return a segment for the newly allocated memory block.
+     */
+    default MemorySegment allocate(MemoryLayout layout) {
+        Objects.requireNonNull(layout);
+        return allocate(layout.byteSize(), layout.byteAlignment());
+    }
+
+    /**
+     * Allocates a memory segment with the given size and alignment constraints.
+     * @param byteSize the size (in bytes) of the block of memory to be allocated.
+     * @param byteAlignment the alignment (in bytes) of the block of memory to be allocated.
+     * @return a segment for the newly allocated memory block.
+     * @throws IllegalArgumentException if {@code byteSize < 0}, {@code byteAlignment <= 0},
+     * or if {@code alignmentBytes} is not a power of 2.
+     */
+    MemorySegment allocate(long byteSize, long byteAlignment);
+
+    /**
      * Allocates a memory segment with the given layout and initializes it with the given char value.
      * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
      * @param layout the layout of the block of memory to be allocated.
@@ -219,6 +240,33 @@ public interface SegmentAllocator {
         return copyArrayWithSwapIfNeeded(elements, elementLayout, MemorySegment::ofArray);
     }
 
+    private <Z> MemorySegment copyArrayWithSwapIfNeeded(Z array, ValueLayout elementLayout,
+                                                        Function<Z, MemorySegment> heapSegmentFactory) {
+        int size = Array.getLength(Objects.requireNonNull(array));
+        MemorySegment addr = allocateArray(Objects.requireNonNull(elementLayout), size);
+        if (size > 0) {
+            MemorySegment.copy(heapSegmentFactory.apply(array), elementLayout, 0,
+                    addr, elementLayout.withOrder(ByteOrder.nativeOrder()), 0, size);
+        }
+        return addr;
+    }
+
+    /**
+     * Allocates a memory segment with the given element layout and size.
+     * @implSpec the default implementation for this method calls {@code this.allocate(MemoryLayout.sequenceLayout(count, elementLayout))}.
+     * @param elementLayout the array element layout.
+     * @param count the array element count.
+     * @return a segment for the newly allocated memory block.
+     * @throws IllegalArgumentException if {@code count < 0}.
+     */
+    default MemorySegment allocateArray(MemoryLayout elementLayout, long count) {
+        Objects.requireNonNull(elementLayout);
+        if (count < 0) {
+            throw new IllegalArgumentException("Negative array size");
+        }
+        return allocate(MemoryLayout.sequenceLayout(count, elementLayout));
+    }
+
     /**
      * Allocates a memory segment with the given layout and initializes it with the given short elements.
      * @implSpec the default implementation for this method calls {@code this.allocateArray(layout, array.length)}.
@@ -285,44 +333,6 @@ public interface SegmentAllocator {
         return copyArrayWithSwapIfNeeded(elements, elementLayout, MemorySegment::ofArray);
     }
 
-    private <Z> MemorySegment copyArrayWithSwapIfNeeded(Z array, ValueLayout elementLayout,
-                                                        Function<Z, MemorySegment> heapSegmentFactory) {
-        int size = Array.getLength(Objects.requireNonNull(array));
-        MemorySegment addr = allocateArray(Objects.requireNonNull(elementLayout), size);
-        if (size > 0) {
-            MemorySegment.copy(heapSegmentFactory.apply(array), elementLayout, 0,
-                    addr, elementLayout.withOrder(ByteOrder.nativeOrder()), 0, size);
-        }
-        return addr;
-    }
-
-    /**
-     * Allocates a memory segment with the given layout.
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout.byteSize(), layout.byteAlignment())}.
-     * @param layout the layout of the block of memory to be allocated.
-     * @return a segment for the newly allocated memory block.
-     */
-    default MemorySegment allocate(MemoryLayout layout) {
-        Objects.requireNonNull(layout);
-        return allocate(layout.byteSize(), layout.byteAlignment());
-    }
-
-    /**
-     * Allocates a memory segment with the given element layout and size.
-     * @implSpec the default implementation for this method calls {@code this.allocate(MemoryLayout.sequenceLayout(count, elementLayout))}.
-     * @param elementLayout the array element layout.
-     * @param count the array element count.
-     * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code count < 0}.
-     */
-    default MemorySegment allocateArray(MemoryLayout elementLayout, long count) {
-        Objects.requireNonNull(elementLayout);
-        if (count < 0) {
-            throw new IllegalArgumentException("Negative array size");
-        }
-        return allocate(MemoryLayout.sequenceLayout(count, elementLayout));
-    }
-
     /**
      * Allocates a memory segment with the given size.
      * @implSpec the default implementation for this method calls {@code this.allocate(byteSize, 1)}.
@@ -333,16 +343,6 @@ public interface SegmentAllocator {
     default MemorySegment allocate(long byteSize) {
         return allocate(byteSize, 1);
     }
-
-    /**
-     * Allocates a memory segment with the given size and alignment constraints.
-     * @param byteSize the size (in bytes) of the block of memory to be allocated.
-     * @param byteAlignment the alignment (in bytes) of the block of memory to be allocated.
-     * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code byteSize < 0}, {@code byteAlignment <= 0},
-     * or if {@code alignmentBytes} is not a power of 2.
-     */
-    MemorySegment allocate(long byteSize, long byteAlignment);
 
     /**
      * Creates an unbounded arena-based allocator used to allocate native memory segments.
@@ -360,26 +360,6 @@ public interface SegmentAllocator {
      */
     static SegmentAllocator newNativeArena(MemorySession session) {
         return newNativeArena(Long.MAX_VALUE, ArenaAllocator.DEFAULT_BLOCK_SIZE, session);
-    }
-
-    /**
-     * Creates an arena-based allocator used to allocate native memory segments.
-     * The returned allocator features a block size set to the specified arena size, and the native segments
-     * it allocates are associated with the provided memory session. Equivalent to the following code:
-     * {@snippet lang=java :
-     * SegmentAllocator.newNativeArena(arenaSize, arenaSize, session);
-     * }
-     *
-     * @param arenaSize the size (in bytes) of the allocation arena.
-     * @param session the memory session associated with the segments allocated by the arena-based allocator.
-     * @return a new unbounded arena-based allocator
-     * @throws IllegalArgumentException if {@code arenaSize <= 0}.
-     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread other than the thread
-     * {@linkplain MemorySession#ownerThread() owning} {@code session}.
-     */
-    static SegmentAllocator newNativeArena(long arenaSize, MemorySession session) {
-        return newNativeArena(arenaSize, arenaSize, session);
     }
 
     /**
@@ -424,6 +404,26 @@ public interface SegmentAllocator {
             throw new IllegalArgumentException("Invalid arena size: " + arenaSize);
         }
         return new ArenaAllocator(blockSize, arenaSize, session);
+    }
+
+    /**
+     * Creates an arena-based allocator used to allocate native memory segments.
+     * The returned allocator features a block size set to the specified arena size, and the native segments
+     * it allocates are associated with the provided memory session. Equivalent to the following code:
+     * {@snippet lang=java :
+     * SegmentAllocator.newNativeArena(arenaSize, arenaSize, session);
+     * }
+     *
+     * @param arenaSize the size (in bytes) of the allocation arena.
+     * @param session the memory session associated with the segments allocated by the arena-based allocator.
+     * @return a new unbounded arena-based allocator
+     * @throws IllegalArgumentException if {@code arenaSize <= 0}.
+     * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread
+     * {@linkplain MemorySession#ownerThread() owning} {@code session}.
+     */
+    static SegmentAllocator newNativeArena(long arenaSize, MemorySession session) {
+        return newNativeArena(arenaSize, arenaSize, session);
     }
 
     /**

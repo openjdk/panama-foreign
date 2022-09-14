@@ -48,6 +48,20 @@ sealed class SharedSession extends MemorySessionImpl permits MemorySessionImpl.I
         super(null, new SharedResourceList(), cleaner);
     }
 
+    void justClose() {
+        int prevState = (int) STATE.compareAndExchange(this, OPEN, CLOSING);
+        if (prevState < 0) {
+            throw alreadyClosed();
+        } else if (prevState != OPEN) {
+            throw alreadyAcquired(prevState);
+        }
+        boolean success = SCOPED_MEMORY_ACCESS.closeScope(this);
+        STATE.setVolatile(this, success ? CLOSED : OPEN);
+        if (!success) {
+            throw alreadyAcquired(1);
+        }
+    }
+
     @Override
     @ForceInline
     public void acquire0() {
@@ -75,20 +89,6 @@ sealed class SharedSession extends MemorySessionImpl permits MemorySessionImpl.I
                 throw alreadyClosed();
             }
         } while (!STATE.compareAndSet(this, value, value - 1));
-    }
-
-    void justClose() {
-        int prevState = (int) STATE.compareAndExchange(this, OPEN, CLOSING);
-        if (prevState < 0) {
-            throw alreadyClosed();
-        } else if (prevState != OPEN) {
-            throw alreadyAcquired(prevState);
-        }
-        boolean success = SCOPED_MEMORY_ACCESS.closeScope(this);
-        STATE.setVolatile(this, success ? CLOSED : OPEN);
-        if (!success) {
-            throw alreadyAcquired(1);
-        }
     }
 
     /**

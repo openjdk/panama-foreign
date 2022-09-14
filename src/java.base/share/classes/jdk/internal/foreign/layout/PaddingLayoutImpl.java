@@ -40,8 +40,13 @@ public final class PaddingLayoutImpl extends AbstractLayout<PaddingLayoutImpl> i
     }
 
     @Override
-    public String toString() {
-        return decorateLayoutString("x" + bitSize());
+    PaddingLayoutImpl dup(long bitAlignment, Optional<String> name) {
+        return new PaddingLayoutImpl(bitSize(), bitAlignment, name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), bitSize());
     }
 
     @Override
@@ -59,13 +64,8 @@ public final class PaddingLayoutImpl extends AbstractLayout<PaddingLayoutImpl> i
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), bitSize());
-    }
-
-    @Override
-    PaddingLayoutImpl dup(long bitAlignment, Optional<String> name) {
-        return new PaddingLayoutImpl(bitSize(), bitAlignment, name);
+    public String toString() {
+        return decorateLayoutString("x" + bitSize());
     }
 
     @Override

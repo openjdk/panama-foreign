@@ -37,6 +37,16 @@ enum TypeClass {
     FLOAT,
     VARARG_FLOAT;
 
+    static TypeClass typeClassFor(MemoryLayout type, boolean isVararg) {
+        if (type instanceof ValueLayout) {
+            return classifyValueType((ValueLayout) type, isVararg);
+        } else if (type instanceof GroupLayout) {
+            return classifyStructType(type);
+        } else {
+            throw new IllegalArgumentException("Unsupported layout: " + type);
+        }
+    }
+
     private static TypeClass classifyValueType(ValueLayout type, boolean isVararg) {
         // No 128-bit integers in the Windows C ABI. There are __m128(i|d) intrinsic types but they act just
         // like a struct when passing as an argument (passed by pointer).
@@ -64,14 +74,6 @@ enum TypeClass {
         }
     }
 
-    static boolean isRegisterAggregate(MemoryLayout type) {
-        long size = type.byteSize();
-        return size == 1
-            || size == 2
-            || size == 4
-            || size == 8;
-    }
-
     private static TypeClass classifyStructType(MemoryLayout layout) {
         if (isRegisterAggregate(layout)) {
             return STRUCT_REGISTER;
@@ -79,13 +81,11 @@ enum TypeClass {
         return STRUCT_REFERENCE;
     }
 
-    static TypeClass typeClassFor(MemoryLayout type, boolean isVararg) {
-        if (type instanceof ValueLayout) {
-            return classifyValueType((ValueLayout) type, isVararg);
-        } else if (type instanceof GroupLayout) {
-            return classifyStructType(type);
-        } else {
-            throw new IllegalArgumentException("Unsupported layout: " + type);
-        }
+    static boolean isRegisterAggregate(MemoryLayout type) {
+        long size = type.byteSize();
+        return size == 1
+            || size == 2
+            || size == 4
+            || size == 8;
     }
 }

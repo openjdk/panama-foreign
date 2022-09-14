@@ -55,22 +55,15 @@ import sun.nio.ch.DirectBuffer;
 public abstract sealed class MemorySessionImpl
         implements MemorySession, SegmentAllocator
         permits ConfinedSession, MemorySessionImpl.GlobalSessionImpl, SharedSession {
+
+    public static final MemorySessionImpl GLOBAL = new GlobalSessionImpl(null);
     static final int OPEN = 0;
     static final int CLOSING = -1;
     static final int CLOSED = -2;
-
     static final VarHandle STATE;
     static final int MAX_FORKS = Integer.MAX_VALUE;
-
-    public static final MemorySessionImpl GLOBAL = new GlobalSessionImpl(null);
-
     static final ScopedMemoryAccess.ScopedAccessError ALREADY_CLOSED = new ScopedMemoryAccess.ScopedAccessError(MemorySessionImpl::alreadyClosed);
     static final ScopedMemoryAccess.ScopedAccessError WRONG_THREAD = new ScopedMemoryAccess.ScopedAccessError(MemorySessionImpl::wrongThread);
-
-    final ResourceList resourceList;
-    final Cleaner.Cleanable cleanable;
-    final Thread owner;
-    int state = OPEN;
 
     static {
         try {
@@ -80,10 +73,16 @@ public abstract sealed class MemorySessionImpl
         }
     }
 
-    @Override
-    public void addCloseAction(Runnable runnable) {
-        Objects.requireNonNull(runnable);
-        addInternal(ResourceList.ResourceCleanup.ofRunnable(runnable));
+    final ResourceList resourceList;
+    final Cleaner.Cleanable cleanable;
+    final Thread owner;
+    int state = OPEN;
+
+    protected MemorySessionImpl(Thread owner, ResourceList resourceList, Cleaner cleaner) {
+        this.owner = owner;
+        this.resourceList = resourceList;
+        cleanable = (cleaner != null) ?
+            cleaner.register(this, resourceList) : null;
     }
 
     /**
@@ -105,44 +104,10 @@ public abstract sealed class MemorySessionImpl
         }
     }
 
-    void addInternal(ResourceList.ResourceCleanup resource) {
-        checkValidState();
-        // Note: from here on we no longer check the session state. Two cases are possible: either the resource cleanup
-        // is added to the list when the session is still open, in which case everything works ok; or the resource
-        // cleanup is added while the session is being closed. In this latter case, what matters is whether we have already
-        // called `ResourceList::cleanup` to run all the cleanup actions. If not, we can still add this resource
-        // to the list (and, in case of an add vs. close race, it might happen that the cleanup action will be
-        // called immediately after).
-        resourceList.add(resource);
-    }
-
-    protected MemorySessionImpl(Thread owner, ResourceList resourceList, Cleaner cleaner) {
-        this.owner = owner;
-        this.resourceList = resourceList;
-        cleanable = (cleaner != null) ?
-            cleaner.register(this, resourceList) : null;
-    }
-
-    public static MemorySession createConfined(Thread thread, Cleaner cleaner) {
-        return new ConfinedSession(thread, cleaner);
-    }
-
-    public static MemorySession createShared(Cleaner cleaner) {
-        return new SharedSession(cleaner);
-    }
-
-    public static MemorySessionImpl createImplicit() {
-        return new ImplicitSession();
-    }
-
     @Override
-    public MemorySegment allocate(long byteSize, long byteAlignment) {
-        return MemorySegment.allocateNative(byteSize, byteAlignment, this);
+    public final int hashCode() {
+        return super.hashCode();
     }
-
-    public abstract void release0();
-
-    public abstract void acquire0();
 
     @Override
     public final boolean equals(Object o) {
@@ -150,9 +115,36 @@ public abstract sealed class MemorySessionImpl
             toSessionImpl(other) == this;
     }
 
+    @ForceInline
+    public static MemorySessionImpl toSessionImpl(MemorySession session) {
+        return session instanceof MemorySessionImpl sessionImpl ?
+                sessionImpl : ((NonCloseableView)session).session;
+    }
+
     @Override
-    public final int hashCode() {
-        return super.hashCode();
+    protected Object clone() throws CloneNotSupportedException {
+        throw new CloneNotSupportedException();
+    }
+
+    /**
+     * Returns true, if this session is still open. This method may be called in any thread.
+     * @return {@code true} if this session is not closed yet.
+     */
+    public boolean isAlive() {
+        return state >= OPEN;
+    }
+
+    @Override
+    public boolean isCloseable() {
+        return true;
+    }
+
+    /**
+     * Returns "owner" thread of this session.
+     * @return owner thread (or null for a shared session)
+     */
+    public final Thread ownerThread() {
+        return owner;
     }
 
     @Override
@@ -166,32 +158,34 @@ public abstract sealed class MemorySessionImpl
         }
     }
 
-    /**
-     * Returns "owner" thread of this session.
-     * @return owner thread (or null for a shared session)
-     */
-    public final Thread ownerThread() {
-        return owner;
-    }
-
-    /**
-     * Returns true, if this session is still open. This method may be called in any thread.
-     * @return {@code true} if this session is not closed yet.
-     */
-    public boolean isAlive() {
-        return state >= OPEN;
-    }
-
     @Override
-    public MemorySession asNonCloseable() {
-        return isCloseable() ?
-                new NonCloseableView(this) : this;
+    public void addCloseAction(Runnable runnable) {
+        Objects.requireNonNull(runnable);
+        addInternal(ResourceList.ResourceCleanup.ofRunnable(runnable));
     }
 
-    @ForceInline
-    public static MemorySessionImpl toSessionImpl(MemorySession session) {
-        return session instanceof MemorySessionImpl sessionImpl ?
-                sessionImpl : ((NonCloseableView)session).session;
+    void addInternal(ResourceList.ResourceCleanup resource) {
+        checkValidState();
+        // Note: from here on we no longer check the session state. Two cases are possible: either the resource cleanup
+        // is added to the list when the session is still open, in which case everything works ok; or the resource
+        // cleanup is added while the session is being closed. In this latter case, what matters is whether we have already
+        // called `ResourceList::cleanup` to run all the cleanup actions. If not, we can still add this resource
+        // to the list (and, in case of an add vs. close race, it might happen that the cleanup action will be
+        // called immediately after).
+        resourceList.add(resource);
+    }
+
+    /**
+     * Checks that this session is still alive (see {@link #isAlive()}).
+     * @throws IllegalStateException if this session is already closed or if this is
+     * a confined session and this method is called outside of the owner thread.
+     */
+    public void checkValidState() {
+        try {
+            checkValidStateRaw();
+        } catch (ScopedMemoryAccess.ScopedAccessError error) {
+            throw error.newRuntimeException();
+        }
     }
 
     /**
@@ -213,29 +207,6 @@ public abstract sealed class MemorySessionImpl
     }
 
     /**
-     * Checks that this session is still alive (see {@link #isAlive()}).
-     * @throws IllegalStateException if this session is already closed or if this is
-     * a confined session and this method is called outside of the owner thread.
-     */
-    public void checkValidState() {
-        try {
-            checkValidStateRaw();
-        } catch (ScopedMemoryAccess.ScopedAccessError error) {
-            throw error.newRuntimeException();
-        }
-    }
-
-    @Override
-    protected Object clone() throws CloneNotSupportedException {
-        throw new CloneNotSupportedException();
-    }
-
-    @Override
-    public boolean isCloseable() {
-        return true;
-    }
-
-    /**
      * Closes this session, executing any cleanup action (where provided).
      * @throws IllegalStateException if this session is already closed or if this is
      * a confined session and this method is called outside of the owner thread.
@@ -254,7 +225,60 @@ public abstract sealed class MemorySessionImpl
         }
     }
 
+    @Override
+    public MemorySession asNonCloseable() {
+        return isCloseable() ?
+                new NonCloseableView(this) : this;
+    }
+
+    @Override
+    public MemorySegment allocate(long byteSize, long byteAlignment) {
+        return MemorySegment.allocateNative(byteSize, byteAlignment, this);
+    }
+
     abstract void justClose();
+
+    public abstract void acquire0();
+
+    public abstract void release0();
+
+    public static MemorySession createConfined(Thread thread, Cleaner cleaner) {
+        return new ConfinedSession(thread, cleaner);
+    }
+
+    public static MemorySession createShared(Cleaner cleaner) {
+        return new SharedSession(cleaner);
+    }
+
+    public static MemorySessionImpl createImplicit() {
+        return new ImplicitSession();
+    }
+
+    public static MemorySessionImpl heapSession(Object ref) {
+        return new GlobalSessionImpl(ref);
+    }
+
+    static IllegalStateException tooManyAcquires() {
+        return new IllegalStateException("Session acquire limit exceeded");
+    }
+
+    static IllegalStateException alreadyAcquired(int acquires) {
+        return new IllegalStateException(String.format("Session is acquired by %d clients", acquires));
+    }
+
+    static IllegalStateException alreadyClosed() {
+        return new IllegalStateException("Already closed");
+    }
+
+    static WrongThreadException wrongThread() {
+        return new WrongThreadException("Attempted access outside owning thread");
+    }
+
+    // helper functions to centralize error handling
+
+    static UnsupportedOperationException nonCloseable() {
+        return new UnsupportedOperationException("Attempted to close a non-closeable session");
+    }
 
     /**
      * The global, non-closeable, shared session. Similar to a shared session, but its {@link #close()} method throws unconditionally.
@@ -271,14 +295,14 @@ public abstract sealed class MemorySessionImpl
         }
 
         @Override
-        @ForceInline
-        public void release0() {
+        void addInternal(ResourceList.ResourceCleanup resource) {
             // do nothing
         }
 
         @Override
-        public boolean isCloseable() {
-            return false;
+        @ForceInline
+        public void release0() {
+            // do nothing
         }
 
         @Override
@@ -288,18 +312,14 @@ public abstract sealed class MemorySessionImpl
         }
 
         @Override
-        void addInternal(ResourceList.ResourceCleanup resource) {
-            // do nothing
+        public boolean isCloseable() {
+            return false;
         }
 
         @Override
         public void justClose() {
             throw nonCloseable();
         }
-    }
-
-    public static MemorySessionImpl heapSession(Object ref) {
-        return new GlobalSessionImpl(ref);
     }
 
     /**
@@ -317,23 +337,23 @@ public abstract sealed class MemorySessionImpl
         }
 
         @Override
-        public void release0() {
-            Reference.reachabilityFence(this);
-        }
-
-        @Override
         public void acquire0() {
             // do nothing
         }
 
         @Override
-        public boolean isCloseable() {
-            return false;
+        public void release0() {
+            Reference.reachabilityFence(this);
         }
 
         @Override
         public void justClose() {
             throw nonCloseable();
+        }
+
+        @Override
+        public boolean isCloseable() {
+            return false;
         }
     }
 
@@ -367,23 +387,8 @@ public abstract sealed class MemorySessionImpl
         }
 
         @Override
-        public boolean equals(Object o) {
-            return session.equals(o);
-        }
-
-        @Override
-        public int hashCode() {
-            return session.hashCode();
-        }
-
-        @Override
         public void whileAlive(Runnable action) {
             session.whileAlive(action);
-        }
-
-        @Override
-        public MemorySession asNonCloseable() {
-            return this;
         }
 
         @Override
@@ -394,6 +399,21 @@ public abstract sealed class MemorySessionImpl
         @Override
         public void close() {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public MemorySession asNonCloseable() {
+            return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return session.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return session.equals(o);
         }
     }
 
@@ -408,11 +428,11 @@ public abstract sealed class MemorySessionImpl
 
         abstract void add(ResourceCleanup cleanup);
 
-        abstract void cleanup();
-
         public final void run() {
             cleanup(); // cleaner interop
         }
+
+        abstract void cleanup();
 
         static void cleanup(ResourceCleanup first) {
             ResourceCleanup current = first;
@@ -423,16 +443,15 @@ public abstract sealed class MemorySessionImpl
         }
 
         public abstract static class ResourceCleanup {
-            ResourceCleanup next;
-
-            public abstract void cleanup();
-
             static final ResourceCleanup CLOSED_LIST = new ResourceCleanup() {
                 @Override
                 public void cleanup() {
                     throw new IllegalStateException("This resource list has already been closed!");
                 }
             };
+            ResourceCleanup next;
+
+            public abstract void cleanup();
 
             static ResourceCleanup ofRunnable(Runnable cleanupAction) {
                 return new ResourceCleanup() {
@@ -443,28 +462,6 @@ public abstract sealed class MemorySessionImpl
                 };
             }
         }
-    }
-
-    // helper functions to centralize error handling
-
-    static IllegalStateException tooManyAcquires() {
-        return new IllegalStateException("Session acquire limit exceeded");
-    }
-
-    static IllegalStateException alreadyAcquired(int acquires) {
-        return new IllegalStateException(String.format("Session is acquired by %d clients", acquires));
-    }
-
-    static IllegalStateException alreadyClosed() {
-        return new IllegalStateException("Already closed");
-    }
-
-    static WrongThreadException wrongThread() {
-        return new WrongThreadException("Attempted access outside owning thread");
-    }
-
-    static UnsupportedOperationException nonCloseable() {
-        return new UnsupportedOperationException("Attempted to close a non-closeable session");
     }
 
 }

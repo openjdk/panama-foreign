@@ -41,6 +41,16 @@ public enum TypeClass {
 
     private static final int MAX_AGGREGATE_REGS_SIZE = 2;
 
+    public static TypeClass classifyLayout(MemoryLayout type) {
+        if (type instanceof ValueLayout) {
+            return classifyValueType((ValueLayout) type);
+        } else if (type instanceof GroupLayout) {
+            return classifyStructType(type);
+        } else {
+            throw new IllegalArgumentException("Unsupported layout: " + type);
+        }
+    }
+
     private static TypeClass classifyValueType(ValueLayout type) {
         Class<?> carrier = type.carrier();
         if (carrier == boolean.class || carrier == byte.class || carrier == char.class ||
@@ -55,8 +65,13 @@ public enum TypeClass {
         }
     }
 
-    static boolean isRegisterAggregate(MemoryLayout type) {
-        return type.bitSize() <= MAX_AGGREGATE_REGS_SIZE * 64;
+    private static TypeClass classifyStructType(MemoryLayout layout) {
+        if (isHomogeneousFloatAggregate(layout)) {
+            return TypeClass.STRUCT_HFA;
+        } else if (isRegisterAggregate(layout)) {
+            return TypeClass.STRUCT_REGISTER;
+        }
+        return TypeClass.STRUCT_REFERENCE;
     }
 
     static boolean isHomogeneousFloatAggregate(MemoryLayout type) {
@@ -91,22 +106,7 @@ public enum TypeClass {
         return true;
     }
 
-    private static TypeClass classifyStructType(MemoryLayout layout) {
-        if (isHomogeneousFloatAggregate(layout)) {
-            return TypeClass.STRUCT_HFA;
-        } else if (isRegisterAggregate(layout)) {
-            return TypeClass.STRUCT_REGISTER;
-        }
-        return TypeClass.STRUCT_REFERENCE;
-    }
-
-    public static TypeClass classifyLayout(MemoryLayout type) {
-        if (type instanceof ValueLayout) {
-            return classifyValueType((ValueLayout) type);
-        } else if (type instanceof GroupLayout) {
-            return classifyStructType(type);
-        } else {
-            throw new IllegalArgumentException("Unsupported layout: " + type);
-        }
+    static boolean isRegisterAggregate(MemoryLayout type) {
+        return type.bitSize() <= MAX_AGGREGATE_REGS_SIZE * 64;
     }
 }

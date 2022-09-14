@@ -61,11 +61,6 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
     final long offset;
     final Object base;
 
-    @Override
-    public Optional<Object> array() {
-        return Optional.of(base);
-    }
-
     @ForceInline
     HeapMemorySegmentImpl(long offset, Object base, long length, boolean readOnly) {
         super(length, readOnly, MemorySession.global());
@@ -74,8 +69,8 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
     }
 
     @Override
-    public long unsafeGetOffset() {
-        return offset;
+    public Optional<Object> array() {
+        return Optional.of(base);
     }
 
     @Override
@@ -88,6 +83,11 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
         }
         JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
         return nioAccess.newHeapByteBuffer((byte[])base, (int)offset - BYTE_ARR_BASE, (int) byteSize(), null);
+    }
+
+    @Override
+    public long unsafeGetOffset() {
+        return offset;
     }
 
     // factories
@@ -108,12 +108,6 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             return (byte[])Objects.requireNonNull(base);
         }
 
-        public static MemorySegment fromArray(byte[] arr) {
-            Objects.requireNonNull(arr);
-            long byteSize = (long)arr.length * Unsafe.ARRAY_BYTE_INDEX_SCALE;
-            return new OfByte(Unsafe.ARRAY_BYTE_BASE_OFFSET, arr, byteSize, false);
-        }
-
         @Override
         public long maxAlignMask() {
             return MAX_ALIGN_1;
@@ -122,6 +116,12 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
         @Override
         public long address() {
             return offset - Unsafe.ARRAY_BYTE_BASE_OFFSET;
+        }
+
+        public static MemorySegment fromArray(byte[] arr) {
+            Objects.requireNonNull(arr);
+            long byteSize = (long)arr.length * Unsafe.ARRAY_BYTE_INDEX_SCALE;
+            return new OfByte(Unsafe.ARRAY_BYTE_BASE_OFFSET, arr, byteSize, false);
         }
     }
 
@@ -141,12 +141,6 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             return (char[])Objects.requireNonNull(base);
         }
 
-        public static MemorySegment fromArray(char[] arr) {
-            Objects.requireNonNull(arr);
-            long byteSize = (long)arr.length * Unsafe.ARRAY_CHAR_INDEX_SCALE;
-            return new OfChar(Unsafe.ARRAY_CHAR_BASE_OFFSET, arr, byteSize, false);
-        }
-
         @Override
         public long maxAlignMask() {
             return MAX_ALIGN_2;
@@ -155,6 +149,12 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
         @Override
         public long address() {
             return offset - Unsafe.ARRAY_CHAR_BASE_OFFSET;
+        }
+
+        public static MemorySegment fromArray(char[] arr) {
+            Objects.requireNonNull(arr);
+            long byteSize = (long)arr.length * Unsafe.ARRAY_CHAR_INDEX_SCALE;
+            return new OfChar(Unsafe.ARRAY_CHAR_BASE_OFFSET, arr, byteSize, false);
         }
     }
 
@@ -174,12 +174,6 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             return (short[])Objects.requireNonNull(base);
         }
 
-        public static MemorySegment fromArray(short[] arr) {
-            Objects.requireNonNull(arr);
-            long byteSize = (long)arr.length * Unsafe.ARRAY_SHORT_INDEX_SCALE;
-            return new OfShort(Unsafe.ARRAY_SHORT_BASE_OFFSET, arr, byteSize, false);
-        }
-
         @Override
         public long maxAlignMask() {
             return MAX_ALIGN_2;
@@ -188,6 +182,12 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
         @Override
         public long address() {
             return offset - Unsafe.ARRAY_SHORT_BASE_OFFSET;
+        }
+
+        public static MemorySegment fromArray(short[] arr) {
+            Objects.requireNonNull(arr);
+            long byteSize = (long)arr.length * Unsafe.ARRAY_SHORT_INDEX_SCALE;
+            return new OfShort(Unsafe.ARRAY_SHORT_BASE_OFFSET, arr, byteSize, false);
         }
     }
 
@@ -207,12 +207,6 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             return (int[])Objects.requireNonNull(base);
         }
 
-        public static MemorySegment fromArray(int[] arr) {
-            Objects.requireNonNull(arr);
-            long byteSize = (long)arr.length * Unsafe.ARRAY_INT_INDEX_SCALE;
-            return new OfInt(Unsafe.ARRAY_INT_BASE_OFFSET, arr, byteSize, false);
-        }
-
         @Override
         public long maxAlignMask() {
             return MAX_ALIGN_4;
@@ -221,6 +215,12 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
         @Override
         public long address() {
             return offset - Unsafe.ARRAY_INT_BASE_OFFSET;
+        }
+
+        public static MemorySegment fromArray(int[] arr) {
+            Objects.requireNonNull(arr);
+            long byteSize = (long)arr.length * Unsafe.ARRAY_INT_INDEX_SCALE;
+            return new OfInt(Unsafe.ARRAY_INT_BASE_OFFSET, arr, byteSize, false);
         }
     }
 
@@ -240,12 +240,6 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             return (long[])Objects.requireNonNull(base);
         }
 
-        public static MemorySegment fromArray(long[] arr) {
-            Objects.requireNonNull(arr);
-            long byteSize = (long)arr.length * Unsafe.ARRAY_LONG_INDEX_SCALE;
-            return new OfLong(Unsafe.ARRAY_LONG_BASE_OFFSET, arr, byteSize, false);
-        }
-
         @Override
         public long maxAlignMask() {
             return MAX_ALIGN_8;
@@ -254,6 +248,12 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
         @Override
         public long address() {
             return offset - Unsafe.ARRAY_LONG_BASE_OFFSET;
+        }
+
+        public static MemorySegment fromArray(long[] arr) {
+            Objects.requireNonNull(arr);
+            long byteSize = (long)arr.length * Unsafe.ARRAY_LONG_INDEX_SCALE;
+            return new OfLong(Unsafe.ARRAY_LONG_BASE_OFFSET, arr, byteSize, false);
         }
     }
 
@@ -273,12 +273,6 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             return (float[])Objects.requireNonNull(base);
         }
 
-        public static MemorySegment fromArray(float[] arr) {
-            Objects.requireNonNull(arr);
-            long byteSize = (long)arr.length * Unsafe.ARRAY_FLOAT_INDEX_SCALE;
-            return new OfFloat(Unsafe.ARRAY_FLOAT_BASE_OFFSET, arr, byteSize, false);
-        }
-
         @Override
         public long maxAlignMask() {
             return MAX_ALIGN_4;
@@ -287,6 +281,12 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
         @Override
         public long address() {
             return offset - Unsafe.ARRAY_FLOAT_BASE_OFFSET;
+        }
+
+        public static MemorySegment fromArray(float[] arr) {
+            Objects.requireNonNull(arr);
+            long byteSize = (long)arr.length * Unsafe.ARRAY_FLOAT_INDEX_SCALE;
+            return new OfFloat(Unsafe.ARRAY_FLOAT_BASE_OFFSET, arr, byteSize, false);
         }
     }
 
@@ -306,12 +306,6 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             return (double[])Objects.requireNonNull(base);
         }
 
-        public static MemorySegment fromArray(double[] arr) {
-            Objects.requireNonNull(arr);
-            long byteSize = (long)arr.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE;
-            return new OfDouble(Unsafe.ARRAY_DOUBLE_BASE_OFFSET, arr, byteSize, false);
-        }
-
         @Override
         public long maxAlignMask() {
             return MAX_ALIGN_8;
@@ -320,6 +314,12 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
         @Override
         public long address() {
             return offset - Unsafe.ARRAY_DOUBLE_BASE_OFFSET;
+        }
+
+        public static MemorySegment fromArray(double[] arr) {
+            Objects.requireNonNull(arr);
+            long byteSize = (long)arr.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE;
+            return new OfDouble(Unsafe.ARRAY_DOUBLE_BASE_OFFSET, arr, byteSize, false);
         }
     }
 

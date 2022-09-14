@@ -64,6 +64,48 @@ public final class X86_64Architecture implements Architecture {
         throw new IllegalArgumentException("Invalid Storage Class: " +cls);
     }
 
+    public static VMStorage stackStorage(short size, int byteOffset) {
+        return VMStorage.stackStorage(StorageClasses.STACK, size, byteOffset);
+    }
+
+    public static ABIDescriptor abiFor(VMStorage[] inputIntRegs, VMStorage[] inputVectorRegs, VMStorage[] outputIntRegs,
+                                       VMStorage[] outputVectorRegs, int numX87Outputs, VMStorage[] volatileIntRegs,
+                                       VMStorage[] volatileVectorRegs, int stackAlignment, int shadowSpace,
+                                       VMStorage targetAddrStorage, VMStorage retBufAddrStorage) {
+        return new ABIDescriptor(
+            INSTANCE,
+            new VMStorage[][] {
+                inputIntRegs,
+                inputVectorRegs,
+            },
+            new VMStorage[][] {
+                outputIntRegs,
+                outputVectorRegs,
+                IntStream.range(0, numX87Outputs)
+                        .mapToObj(X86_64Architecture::x87Storage)
+                        .toArray(VMStorage[]::new)
+            },
+            new VMStorage[][] {
+                volatileIntRegs,
+                volatileVectorRegs,
+            },
+            stackAlignment,
+            shadowSpace,
+            targetAddrStorage, retBufAddrStorage);
+    }
+
+    public static VMStorage x87Storage(int index) {
+        return VMStorage.regStorage(StorageClasses.X87, STP_MASK, index, "X87(" + index + ")");
+    }
+
+    private static VMStorage integerRegister(int index, String debugName) {
+        return VMStorage.regStorage(StorageClasses.INTEGER, REG64_MASK, index, debugName);
+    }
+
+    private static VMStorage vectorRegister(int index, String debugName) {
+        return VMStorage.regStorage(StorageClasses.VECTOR, XMM_MASK, index, debugName);
+    }
+
     public interface StorageClasses {
         byte INTEGER = 0;
         byte VECTOR = 1;
@@ -121,48 +163,6 @@ public final class X86_64Architecture implements Architecture {
         public static final VMStorage xmm29 = vectorRegister(29, "xmm29");
         public static final VMStorage xmm30 = vectorRegister(30, "xmm30");
         public static final VMStorage xmm31 = vectorRegister(31, "xmm31");
-    }
-
-    private static VMStorage integerRegister(int index, String debugName) {
-        return VMStorage.regStorage(StorageClasses.INTEGER, REG64_MASK, index, debugName);
-    }
-
-    private static VMStorage vectorRegister(int index, String debugName) {
-        return VMStorage.regStorage(StorageClasses.VECTOR, XMM_MASK, index, debugName);
-    }
-
-    public static VMStorage stackStorage(short size, int byteOffset) {
-        return VMStorage.stackStorage(StorageClasses.STACK, size, byteOffset);
-    }
-
-    public static VMStorage x87Storage(int index) {
-        return VMStorage.regStorage(StorageClasses.X87, STP_MASK, index, "X87(" + index + ")");
-    }
-
-    public static ABIDescriptor abiFor(VMStorage[] inputIntRegs, VMStorage[] inputVectorRegs, VMStorage[] outputIntRegs,
-                                       VMStorage[] outputVectorRegs, int numX87Outputs, VMStorage[] volatileIntRegs,
-                                       VMStorage[] volatileVectorRegs, int stackAlignment, int shadowSpace,
-                                       VMStorage targetAddrStorage, VMStorage retBufAddrStorage) {
-        return new ABIDescriptor(
-            INSTANCE,
-            new VMStorage[][] {
-                inputIntRegs,
-                inputVectorRegs,
-            },
-            new VMStorage[][] {
-                outputIntRegs,
-                outputVectorRegs,
-                IntStream.range(0, numX87Outputs)
-                        .mapToObj(X86_64Architecture::x87Storage)
-                        .toArray(VMStorage[]::new)
-            },
-            new VMStorage[][] {
-                volatileIntRegs,
-                volatileVectorRegs,
-            },
-            stackAlignment,
-            shadowSpace,
-            targetAddrStorage, retBufAddrStorage);
     }
 
 }

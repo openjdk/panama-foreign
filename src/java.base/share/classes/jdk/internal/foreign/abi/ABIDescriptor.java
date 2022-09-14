@@ -26,15 +26,13 @@ package jdk.internal.foreign.abi;
 
 /**
  * Carrier class used to communicate with the VM
- *
+ * <p>
  * It is particularly low-level since the VM will be accessing these fields directly
  */
 public final class ABIDescriptor {
-    final Architecture arch;
-
     public final VMStorage[][] inputStorage;
     public final VMStorage[][] outputStorage;
-
+    final Architecture arch;
     final VMStorage[][] volatileStorage;
 
     final int stackAlignment;

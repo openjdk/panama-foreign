@@ -173,11 +173,6 @@ import jdk.internal.javac.PreviewFeature;
 public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, PaddingLayout, ValueLayout {
 
     /**
-     * {@return the layout size, in bits}
-     */
-    long bitSize();
-
-    /**
      * {@return the layout size, in bytes}
      * @throws UnsupportedOperationException if {@code bitSize()} is not a multiple of 8.
      */
@@ -198,24 +193,6 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * @see MemoryLayout#name()
      */
     MemoryLayout withName(String name);
-
-    /**
-     * Returns the alignment constraint associated with this layout, expressed in bits. Layout alignment defines a power
-     * of two {@code A} which is the bit-wise alignment of the layout. If {@code A <= 8} then {@code A/8} is the number of
-     * bytes that must be aligned for any pointer that correctly points to this layout. Thus:
-     *
-     * <ul>
-     * <li>{@code A=8} means unaligned (in the usual sense), which is common in packets.</li>
-     * <li>{@code A=64} means word aligned (on LP64), {@code A=32} int aligned, {@code A=16} short aligned, etc.</li>
-     * <li>{@code A=512} is the most strict alignment required by the x86/SV ABI (for AVX-512 data).</li>
-     * </ul>
-     *
-     * If no explicit alignment constraint was set on this layout (see {@link #withBitAlignment(long)}),
-     * then this method returns the <a href="#layout-align">natural alignment</a> constraint (in bits) associated with this layout.
-     *
-     * @return the layout alignment constraint, in bits.
-     */
-    long bitAlignment();
 
     /**
      * Returns the alignment constraint associated with this layout, expressed in bytes. Layout alignment defines a power
@@ -240,6 +217,24 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
     }
 
     /**
+     * Returns the alignment constraint associated with this layout, expressed in bits. Layout alignment defines a power
+     * of two {@code A} which is the bit-wise alignment of the layout. If {@code A <= 8} then {@code A/8} is the number of
+     * bytes that must be aligned for any pointer that correctly points to this layout. Thus:
+     *
+     * <ul>
+     * <li>{@code A=8} means unaligned (in the usual sense), which is common in packets.</li>
+     * <li>{@code A=64} means word aligned (on LP64), {@code A=32} int aligned, {@code A=16} short aligned, etc.</li>
+     * <li>{@code A=512} is the most strict alignment required by the x86/SV ABI (for AVX-512 data).</li>
+     * </ul>
+     *
+     * If no explicit alignment constraint was set on this layout (see {@link #withBitAlignment(long)}),
+     * then this method returns the <a href="#layout-align">natural alignment</a> constraint (in bits) associated with this layout.
+     *
+     * @return the layout alignment constraint, in bits.
+     */
+    long bitAlignment();
+
+    /**
      * Returns a memory layout of the same type with the same size and name as this layout,
      * but with the specified alignment constraints (in bits).
      *
@@ -248,6 +243,23 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * @throws IllegalArgumentException if {@code bitAlignment} is not a power of two, or if it's less than 8.
      */
     MemoryLayout withBitAlignment(long bitAlignment);
+
+    /**
+     * Computes the offset, in bytes, of the layout selected by the given layout path, where the path is considered rooted in this
+     * layout.
+     *
+     * @param elements the layout path elements.
+     * @return The offset, in bytes, of the layout selected by the layout path in {@code elements}.
+     * @throws IllegalArgumentException if the layout path does not select any layout nested in this layout, or if the
+     * layout path contains one or more path elements that select multiple sequence element indices
+     * (see {@link PathElement#sequenceElement()} and {@link PathElement#sequenceElement(long, long)}).
+     * @throws UnsupportedOperationException if {@code bitOffset(elements)} is not a multiple of 8.
+     * @throws NullPointerException if either {@code elements == null}, or if any of the elements
+     * in {@code elements} is {@code null}.
+     */
+    default long byteOffset(PathElement... elements) {
+        return Utils.bitsToBytesOrThrow(bitOffset(elements), Utils.bitsToBytesThrowOffset);
+    }
 
     /**
      * Computes the offset, in bits, of the layout selected by the given layout path, where the path is considered rooted in this
@@ -266,53 +278,17 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
                 EnumSet.of(PathKind.SEQUENCE_ELEMENT, PathKind.SEQUENCE_RANGE), elements);
     }
 
-    /**
-     * Creates a method handle that can be used to compute the offset, in bits, of the layout selected
-     * by the given layout path, where the path is considered rooted in this layout.
-     *
-     * <p>The returned method handle has a return type of {@code long}, and features as many {@code long}
-     * parameter types as there are free dimensions in the provided layout path (see {@link PathElement#sequenceElement()}),
-     * where the order of the parameters corresponds to the order of the path elements.
-     * The returned method handle can be used to compute a layout offset similar to {@link #bitOffset(PathElement...)},
-     * but where some sequence indices are specified only when invoking the method handle.
-     *
-     * <p>The final offset returned by the method handle is computed as follows:
-     *
-     * <blockquote><pre>{@code
-     * offset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
-     * }</pre></blockquote>
-     *
-     * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
-     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
-     * and {@code s_0}, {@code s_1}, ... {@code s_n} are <em>static</em> stride constants which are derived from
-     * the layout path.
-     *
-     * @param elements the layout path elements.
-     * @return a method handle that can be used to compute the bit offset of the layout element
-     * specified by the given layout path elements, when supplied with the missing sequence element indices.
-     * @throws IllegalArgumentException if the layout path contains one or more path elements that select
-     * multiple sequence element indices (see {@link PathElement#sequenceElement(long, long)}).
-     */
-    default MethodHandle bitOffsetHandle(PathElement... elements) {
-        return computePathOp(LayoutPath.rootPath(this), LayoutPath::offsetHandle,
-                EnumSet.of(PathKind.SEQUENCE_RANGE), elements);
-    }
-
-    /**
-     * Computes the offset, in bytes, of the layout selected by the given layout path, where the path is considered rooted in this
-     * layout.
-     *
-     * @param elements the layout path elements.
-     * @return The offset, in bytes, of the layout selected by the layout path in {@code elements}.
-     * @throws IllegalArgumentException if the layout path does not select any layout nested in this layout, or if the
-     * layout path contains one or more path elements that select multiple sequence element indices
-     * (see {@link PathElement#sequenceElement()} and {@link PathElement#sequenceElement(long, long)}).
-     * @throws UnsupportedOperationException if {@code bitOffset(elements)} is not a multiple of 8.
-     * @throws NullPointerException if either {@code elements == null}, or if any of the elements
-     * in {@code elements} is {@code null}.
-     */
-    default long byteOffset(PathElement... elements) {
-        return Utils.bitsToBytesOrThrow(bitOffset(elements), Utils.bitsToBytesThrowOffset);
+    private static <Z> Z computePathOp(LayoutPath path, Function<LayoutPath, Z> finalizer,
+                                       Set<PathKind> badKinds, PathElement... elements) {
+        Objects.requireNonNull(elements);
+        for (PathElement e : elements) {
+            LayoutPath.PathElementImpl pathElem = (LayoutPath.PathElementImpl)Objects.requireNonNull(e);
+            if (badKinds.contains(pathElem.kind())) {
+                throw new IllegalArgumentException(String.format("Invalid %s selection in layout path", pathElem.kind().description()));
+            }
+            path = pathElem.apply(path);
+        }
+        return finalizer.apply(path);
     }
 
     /**
@@ -350,6 +326,38 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
         MethodHandle mh = bitOffsetHandle(elements);
         mh = MethodHandles.filterReturnValue(mh, Utils.MH_bitsToBytesOrThrowForOffset);
         return mh;
+    }
+
+    /**
+     * Creates a method handle that can be used to compute the offset, in bits, of the layout selected
+     * by the given layout path, where the path is considered rooted in this layout.
+     *
+     * <p>The returned method handle has a return type of {@code long}, and features as many {@code long}
+     * parameter types as there are free dimensions in the provided layout path (see {@link PathElement#sequenceElement()}),
+     * where the order of the parameters corresponds to the order of the path elements.
+     * The returned method handle can be used to compute a layout offset similar to {@link #bitOffset(PathElement...)},
+     * but where some sequence indices are specified only when invoking the method handle.
+     *
+     * <p>The final offset returned by the method handle is computed as follows:
+     *
+     * <blockquote><pre>{@code
+     * offset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
+     * }</pre></blockquote>
+     *
+     * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
+     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
+     * and {@code s_0}, {@code s_1}, ... {@code s_n} are <em>static</em> stride constants which are derived from
+     * the layout path.
+     *
+     * @param elements the layout path elements.
+     * @return a method handle that can be used to compute the bit offset of the layout element
+     * specified by the given layout path elements, when supplied with the missing sequence element indices.
+     * @throws IllegalArgumentException if the layout path contains one or more path elements that select
+     * multiple sequence element indices (see {@link PathElement#sequenceElement(long, long)}).
+     */
+    default MethodHandle bitOffsetHandle(PathElement... elements) {
+        return computePathOp(LayoutPath.rootPath(this), LayoutPath::offsetHandle,
+                EnumSet.of(PathKind.SEQUENCE_RANGE), elements);
     }
 
     /**
@@ -449,17 +457,165 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
                 EnumSet.of(PathKind.SEQUENCE_ELEMENT_INDEX, PathKind.SEQUENCE_RANGE), elements);
     }
 
-    private static <Z> Z computePathOp(LayoutPath path, Function<LayoutPath, Z> finalizer,
-                                       Set<PathKind> badKinds, PathElement... elements) {
-        Objects.requireNonNull(elements);
-        for (PathElement e : elements) {
-            LayoutPath.PathElementImpl pathElem = (LayoutPath.PathElementImpl)Objects.requireNonNull(e);
-            if (badKinds.contains(pathElem.kind())) {
-                throw new IllegalArgumentException(String.format("Invalid %s selection in layout path", pathElem.kind().description()));
-            }
-            path = pathElem.apply(path);
+    /**
+     * {@return the hash code value for this layout}
+     */
+    int hashCode();
+
+    /**
+     * Compares the specified object with this layout for equality. Returns {@code true} if and only if the specified
+     * object is also a layout, and it is equal to this layout. Two layouts are considered equal if they are of
+     * the same kind, have the same size, name and alignment constraints. Furthermore, depending on the layout kind, additional
+     * conditions must be satisfied:
+     * <ul>
+     *     <li>two value layouts are considered equal if they have the same {@linkplain ValueLayout#order() order},
+     *     and {@linkplain ValueLayout#carrier() carrier}</li>
+     *     <li>two sequence layouts are considered equal if they have the same element count (see {@link SequenceLayout#elementCount()}), and
+     *     if their element layouts (see {@link SequenceLayout#elementLayout()}) are also equal</li>
+     *     <li>two group layouts are considered equal if they are of the same type (see {@link StructLayout},
+     *     {@link UnionLayout}) and if their member layouts (see {@link GroupLayout#memberLayouts()}) are also equal</li>
+     * </ul>
+     *
+     * @param other the object to be compared for equality with this layout.
+     * @return {@code true} if the specified object is equal to this layout.
+     */
+    boolean equals(Object other);
+
+    /**
+     * {@return the string representation of this layout}
+     */
+    @Override
+    String toString();
+
+    /**
+     * Creates a padding layout with the given size.
+     *
+     * @param size the padding size in bits.
+     * @return the new selector layout.
+     * @throws IllegalArgumentException if {@code size <= 0}.
+     */
+    static PaddingLayout paddingLayout(long size) {
+        MemoryLayoutUtil.checkSize(size);
+        return PaddingLayoutImpl.of(size);
+    }
+
+    /**
+     * Creates a value layout of given Java carrier and byte order. The type of resulting value layout is determined
+     * by the carrier provided:
+     * <ul>
+     *     <li>{@link ValueLayout.OfBoolean}, for {@code boolean.class}</li>
+     *     <li>{@link ValueLayout.OfByte}, for {@code byte.class}</li>
+     *     <li>{@link ValueLayout.OfShort}, for {@code short.class}</li>
+     *     <li>{@link ValueLayout.OfChar}, for {@code char.class}</li>
+     *     <li>{@link ValueLayout.OfInt}, for {@code int.class}</li>
+     *     <li>{@link ValueLayout.OfFloat}, for {@code float.class}</li>
+     *     <li>{@link ValueLayout.OfLong}, for {@code long.class}</li>
+     *     <li>{@link ValueLayout.OfDouble}, for {@code double.class}</li>
+     *     <li>{@link ValueLayout.OfAddress}, for {@code MemorySegment.class}</li>
+     * </ul>
+     * @param carrier the value layout carrier.
+     * @param order the value layout's byte order.
+     * @return a value layout with the given Java carrier and byte-order.
+     * @throws IllegalArgumentException if the carrier type is not supported.
+     */
+    static ValueLayout valueLayout(Class<?> carrier, ByteOrder order) {
+        Objects.requireNonNull(carrier);
+        Objects.requireNonNull(order);
+        if (carrier == boolean.class) {
+            return ValueLayouts.OfBooleanImpl.of(order);
+        } else if (carrier == char.class) {
+            return ValueLayouts.OfCharImpl.of(order);
+        } else if (carrier == byte.class) {
+            return ValueLayouts.OfByteImpl.of(order);
+        } else if (carrier == short.class) {
+            return ValueLayouts.OfShortImpl.of(order);
+        } else if (carrier == int.class) {
+            return ValueLayouts.OfIntImpl.of(order);
+        } else if (carrier == float.class) {
+            return ValueLayouts.OfFloatImpl.of(order);
+        } else if (carrier == long.class) {
+            return ValueLayouts.OfLongImpl.of(order);
+        } else if (carrier == double.class) {
+            return ValueLayouts.OfDoubleImpl.of(order);
+        } else if (carrier == MemorySegment.class) {
+            return ValueLayouts.OfAddressImpl.of(order);
+        } else {
+            throw new IllegalArgumentException("Unsupported carrier: " + carrier.getName());
         }
-        return finalizer.apply(path);
+    }
+
+    /**
+     * Creates a sequence layout with the given element layout and the maximum element
+     * count such that it does not overflow a {@code long}.
+     *
+     * This is equivalent to the following code:
+     * {@snippet lang = java:
+     * sequenceLayout(Long.MAX_VALUE / elementLayout.bitSize(), elementLayout);
+     * }
+     *
+     * @param elementLayout the sequence element layout.
+     * @return a new sequence layout with the given element layout and maximum element count.
+     */
+    static SequenceLayout sequenceLayout(MemoryLayout elementLayout) {
+        Objects.requireNonNull(elementLayout);
+        return sequenceLayout(Long.MAX_VALUE / elementLayout.bitSize(), elementLayout);
+    }
+
+    /**
+     * Creates a sequence layout with the given element layout and element count.
+     *
+     * @param elementCount the sequence element count.
+     * @param elementLayout the sequence element layout.
+     * @return the new sequence layout with the given element layout and size.
+     * @throws IllegalArgumentException if {@code elementCount } is negative.
+     */
+    static SequenceLayout sequenceLayout(long elementCount, MemoryLayout elementLayout) {
+        MemoryLayoutUtil.checkSize(elementCount, true);
+        Objects.requireNonNull(elementLayout);
+        return wrapOverflow(() ->
+                SequenceLayoutImpl.of(elementCount, elementLayout));
+    }
+
+    /**
+     * {@return the layout size, in bits}
+     */
+    long bitSize();
+
+    private static <L extends MemoryLayout> L wrapOverflow(Supplier<L> layoutSupplier) {
+        try {
+            return layoutSupplier.get();
+        } catch (ArithmeticException ex) {
+            throw new IllegalArgumentException("Layout size exceeds Long.MAX_VALUE");
+        }
+    }
+
+    /**
+     * Creates a struct layout with the given member layouts.
+     *
+     * @param elements The member layouts of the struct layout.
+     * @return a struct layout with the given member layouts.
+     * @throws IllegalArgumentException if the sum of the {@linkplain #bitSize() bit sizes} of the member layouts
+     * overflows.
+     */
+    static StructLayout structLayout(MemoryLayout... elements) {
+        Objects.requireNonNull(elements);
+        return wrapOverflow(() ->
+                StructLayoutImpl.of(Stream.of(elements)
+                        .map(Objects::requireNonNull)
+                        .toList()));
+    }
+
+    /**
+     * Creates a union layout with the given member layouts.
+     *
+     * @param elements The member layouts of the union layout.
+     * @return a union layout with the given member layouts.
+     */
+    static UnionLayout unionLayout(MemoryLayout... elements) {
+        Objects.requireNonNull(elements);
+        return UnionLayoutImpl.of(Stream.of(elements)
+                .map(Objects::requireNonNull)
+                .toList());
     }
 
     /**
@@ -574,162 +730,6 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
         static PathElement sequenceElement() {
             return new LayoutPath.PathElementImpl(PathKind.SEQUENCE_ELEMENT,
                                                   LayoutPath::sequenceElement);
-        }
-    }
-
-    /**
-     * Compares the specified object with this layout for equality. Returns {@code true} if and only if the specified
-     * object is also a layout, and it is equal to this layout. Two layouts are considered equal if they are of
-     * the same kind, have the same size, name and alignment constraints. Furthermore, depending on the layout kind, additional
-     * conditions must be satisfied:
-     * <ul>
-     *     <li>two value layouts are considered equal if they have the same {@linkplain ValueLayout#order() order},
-     *     and {@linkplain ValueLayout#carrier() carrier}</li>
-     *     <li>two sequence layouts are considered equal if they have the same element count (see {@link SequenceLayout#elementCount()}), and
-     *     if their element layouts (see {@link SequenceLayout#elementLayout()}) are also equal</li>
-     *     <li>two group layouts are considered equal if they are of the same type (see {@link StructLayout},
-     *     {@link UnionLayout}) and if their member layouts (see {@link GroupLayout#memberLayouts()}) are also equal</li>
-     * </ul>
-     *
-     * @param other the object to be compared for equality with this layout.
-     * @return {@code true} if the specified object is equal to this layout.
-     */
-    boolean equals(Object other);
-
-    /**
-     * {@return the hash code value for this layout}
-     */
-    int hashCode();
-
-    /**
-     * {@return the string representation of this layout}
-     */
-    @Override
-    String toString();
-
-    /**
-     * Creates a padding layout with the given size.
-     *
-     * @param size the padding size in bits.
-     * @return the new selector layout.
-     * @throws IllegalArgumentException if {@code size <= 0}.
-     */
-    static PaddingLayout paddingLayout(long size) {
-        MemoryLayoutUtil.checkSize(size);
-        return PaddingLayoutImpl.of(size);
-    }
-
-    /**
-     * Creates a value layout of given Java carrier and byte order. The type of resulting value layout is determined
-     * by the carrier provided:
-     * <ul>
-     *     <li>{@link ValueLayout.OfBoolean}, for {@code boolean.class}</li>
-     *     <li>{@link ValueLayout.OfByte}, for {@code byte.class}</li>
-     *     <li>{@link ValueLayout.OfShort}, for {@code short.class}</li>
-     *     <li>{@link ValueLayout.OfChar}, for {@code char.class}</li>
-     *     <li>{@link ValueLayout.OfInt}, for {@code int.class}</li>
-     *     <li>{@link ValueLayout.OfFloat}, for {@code float.class}</li>
-     *     <li>{@link ValueLayout.OfLong}, for {@code long.class}</li>
-     *     <li>{@link ValueLayout.OfDouble}, for {@code double.class}</li>
-     *     <li>{@link ValueLayout.OfAddress}, for {@code MemorySegment.class}</li>
-     * </ul>
-     * @param carrier the value layout carrier.
-     * @param order the value layout's byte order.
-     * @return a value layout with the given Java carrier and byte-order.
-     * @throws IllegalArgumentException if the carrier type is not supported.
-     */
-    static ValueLayout valueLayout(Class<?> carrier, ByteOrder order) {
-        Objects.requireNonNull(carrier);
-        Objects.requireNonNull(order);
-        if (carrier == boolean.class) {
-            return ValueLayouts.OfBooleanImpl.of(order);
-        } else if (carrier == char.class) {
-            return ValueLayouts.OfCharImpl.of(order);
-        } else if (carrier == byte.class) {
-            return ValueLayouts.OfByteImpl.of(order);
-        } else if (carrier == short.class) {
-            return ValueLayouts.OfShortImpl.of(order);
-        } else if (carrier == int.class) {
-            return ValueLayouts.OfIntImpl.of(order);
-        } else if (carrier == float.class) {
-            return ValueLayouts.OfFloatImpl.of(order);
-        } else if (carrier == long.class) {
-            return ValueLayouts.OfLongImpl.of(order);
-        } else if (carrier == double.class) {
-            return ValueLayouts.OfDoubleImpl.of(order);
-        } else if (carrier == MemorySegment.class) {
-            return ValueLayouts.OfAddressImpl.of(order);
-        } else {
-            throw new IllegalArgumentException("Unsupported carrier: " + carrier.getName());
-        }
-    }
-
-    /**
-     * Creates a sequence layout with the given element layout and element count.
-     *
-     * @param elementCount the sequence element count.
-     * @param elementLayout the sequence element layout.
-     * @return the new sequence layout with the given element layout and size.
-     * @throws IllegalArgumentException if {@code elementCount } is negative.
-     */
-    static SequenceLayout sequenceLayout(long elementCount, MemoryLayout elementLayout) {
-        MemoryLayoutUtil.checkSize(elementCount, true);
-        Objects.requireNonNull(elementLayout);
-        return wrapOverflow(() ->
-                SequenceLayoutImpl.of(elementCount, elementLayout));
-    }
-
-    /**
-     * Creates a sequence layout with the given element layout and the maximum element
-     * count such that it does not overflow a {@code long}.
-     *
-     * This is equivalent to the following code:
-     * {@snippet lang = java:
-     * sequenceLayout(Long.MAX_VALUE / elementLayout.bitSize(), elementLayout);
-     * }
-     *
-     * @param elementLayout the sequence element layout.
-     * @return a new sequence layout with the given element layout and maximum element count.
-     */
-    static SequenceLayout sequenceLayout(MemoryLayout elementLayout) {
-        Objects.requireNonNull(elementLayout);
-        return sequenceLayout(Long.MAX_VALUE / elementLayout.bitSize(), elementLayout);
-    }
-
-    /**
-     * Creates a struct layout with the given member layouts.
-     *
-     * @param elements The member layouts of the struct layout.
-     * @return a struct layout with the given member layouts.
-     * @throws IllegalArgumentException if the sum of the {@linkplain #bitSize() bit sizes} of the member layouts
-     * overflows.
-     */
-    static StructLayout structLayout(MemoryLayout... elements) {
-        Objects.requireNonNull(elements);
-        return wrapOverflow(() ->
-                StructLayoutImpl.of(Stream.of(elements)
-                        .map(Objects::requireNonNull)
-                        .toList()));
-    }
-
-    /**
-     * Creates a union layout with the given member layouts.
-     *
-     * @param elements The member layouts of the union layout.
-     * @return a union layout with the given member layouts.
-     */
-    static UnionLayout unionLayout(MemoryLayout... elements) {
-        Objects.requireNonNull(elements);
-        return UnionLayoutImpl.of(Stream.of(elements)
-                .map(Objects::requireNonNull)
-                .toList());
-    }
-
-    private static <L extends MemoryLayout> L wrapOverflow(Supplier<L> layoutSupplier) {
-        try {
-            return layoutSupplier.get();
-        } catch (ArithmeticException ex) {
-            throw new IllegalArgumentException("Layout size exceeds Long.MAX_VALUE");
         }
     }
 }

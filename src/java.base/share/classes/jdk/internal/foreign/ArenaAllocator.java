@@ -32,32 +32,18 @@ import java.lang.foreign.SegmentAllocator;
 public final class ArenaAllocator implements SegmentAllocator {
 
     public static final long DEFAULT_BLOCK_SIZE = 4 * 1024;
-
-    private MemorySegment segment;
-
-    private long sp = 0L;
-    private long size = 0;
     private final long blockSize;
     private final long arenaSize;
     private final MemorySession session;
+    private MemorySegment segment;
+    private long sp = 0L;
+    private long size = 0;
 
     public ArenaAllocator(long blockSize, long arenaSize, MemorySession session) {
         this.blockSize = blockSize;
         this.arenaSize = arenaSize;
         this.session = session;
         this.segment = newSegment(blockSize, 1);
-    }
-
-    MemorySegment trySlice(long byteSize, long byteAlignment) {
-        long min = segment.address();
-        long start = Utils.alignUp(min + sp, byteAlignment) - min;
-        if (segment.byteSize() - start < byteSize) {
-            return null;
-        } else {
-            MemorySegment slice = segment.asSlice(start, byteSize);
-            sp = start + byteSize;
-            return slice;
-        }
     }
 
     private MemorySegment newSegment(long byteSize, long byteAlignment) {
@@ -91,6 +77,18 @@ public final class ArenaAllocator implements SegmentAllocator {
                 slice = trySlice(byteSize, byteAlignment);
                 return slice;
             }
+        }
+    }
+
+    MemorySegment trySlice(long byteSize, long byteAlignment) {
+        long min = segment.address();
+        long start = Utils.alignUp(min + sp, byteAlignment) - min;
+        if (segment.byteSize() - start < byteSize) {
+            return null;
+        } else {
+            MemorySegment slice = segment.asSlice(start, byteSize);
+            sp = start + byteSize;
+            return slice;
         }
     }
 }

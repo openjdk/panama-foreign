@@ -148,57 +148,6 @@ import java.lang.invoke.MethodHandle;
 public sealed interface Linker permits AbstractLinker {
 
     /**
-     * Returns a linker for the ABI associated with the underlying native platform. The underlying native platform
-     * is the combination of OS and processor where the Java runtime is currently executing.
-     * <p>
-     * When interacting with the returned linker, clients must describe the signature of a foreign function using a
-     * {@link FunctionDescriptor function descriptor} whose argument and return layouts are specified as follows:
-     * <ul>
-     *     <li>Scalar types are modelled by a {@linkplain ValueLayout value layout} instance of a suitable carrier. Example
-     *     of scalar types in C are {@code int}, {@code long}, {@code size_t}, etc. The mapping between a scalar type
-     *     and its corresponding layout is dependent on the ABI of the returned linker;
-     *     <li>Composite types are modelled by a {@linkplain GroupLayout group layout}. Depending on the ABI of the
-     *     returned linker, additional {@linkplain MemoryLayout#paddingLayout(long) padding} member layouts might be required to conform
-     *     to the size and alignment constraints of a composite type definition in C (e.g. using {@code struct} or {@code union}); and</li>
-     *     <li>Pointer types are modelled by a {@linkplain ValueLayout value layout} instance with carrier {@link MemorySegment}.
-     *     Examples of pointer types in C are {@code int**} and {@code int(*)(size_t*, size_t*)};</li>
-     * </ul>
-     * <p>
-     * Any layout not listed above is <em>unsupported</em>; function descriptors containing unsupported layouts
-     * will cause an {@link IllegalArgumentException} to be thrown, when used to create a
-     * {@link #downcallHandle(MemorySegment, FunctionDescriptor) downcall method handle} or an
-     * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, MemorySession) upcall stub}.
-     * <p>
-     * Variadic functions (e.g. a C function declared with a trailing ellipses {@code ...} at the end of the formal parameter
-     * list or with an empty formal parameter list) are not supported directly. However, it is possible to link a
-     * variadic function by using a {@linkplain FunctionDescriptor#asVariadic(MemoryLayout...) <em>variadic</em>}
-     * function descriptor, in which the specialized signature of a given variable arity callsite is described in full.
-     * Alternatively, where the foreign library allows it, clients might be able to interact with variadic functions by
-     * passing a trailing parameter of type {@link VaList} (e.g. as in {@code vsprintf}).
-     * <p>
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
-     *
-     * @apiNote It is not currently possible to obtain a linker for a different combination of OS and processor.
-     * @implNote The libraries exposed by the {@linkplain #defaultLookup() default lookup} associated with the returned
-     * linker are the native libraries loaded in the process where the Java runtime is currently executing. For example,
-     * on Linux, these libraries typically include {@code libc}, {@code libm} and {@code libdl}.
-     *
-     * @return a linker for the ABI associated with the OS and processor where the Java runtime is currently executing.
-     * @throws UnsupportedOperationException if the underlying native platform is not supported.
-     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
-     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
-     */
-    @CallerSensitive
-    static Linker nativeLinker() {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass(), Linker.class, "nativeLinker");
-        return SharedUtils.getSystemLinker();
-    }
-
-    /**
      * Creates a method handle which can be used to call a target foreign function with the given signature and address.
      * <p>
      * If the provided method type's return type is {@code MemorySegment}, then the resulting method handle features
@@ -282,4 +231,55 @@ public sealed interface Linker permits AbstractLinker {
      * @return a symbol lookup for symbols in a set of commonly used libraries.
      */
     SymbolLookup defaultLookup();
+
+    /**
+     * Returns a linker for the ABI associated with the underlying native platform. The underlying native platform
+     * is the combination of OS and processor where the Java runtime is currently executing.
+     * <p>
+     * When interacting with the returned linker, clients must describe the signature of a foreign function using a
+     * {@link FunctionDescriptor function descriptor} whose argument and return layouts are specified as follows:
+     * <ul>
+     *     <li>Scalar types are modelled by a {@linkplain ValueLayout value layout} instance of a suitable carrier. Example
+     *     of scalar types in C are {@code int}, {@code long}, {@code size_t}, etc. The mapping between a scalar type
+     *     and its corresponding layout is dependent on the ABI of the returned linker;
+     *     <li>Composite types are modelled by a {@linkplain GroupLayout group layout}. Depending on the ABI of the
+     *     returned linker, additional {@linkplain MemoryLayout#paddingLayout(long) padding} member layouts might be required to conform
+     *     to the size and alignment constraints of a composite type definition in C (e.g. using {@code struct} or {@code union}); and</li>
+     *     <li>Pointer types are modelled by a {@linkplain ValueLayout value layout} instance with carrier {@link MemorySegment}.
+     *     Examples of pointer types in C are {@code int**} and {@code int(*)(size_t*, size_t*)};</li>
+     * </ul>
+     * <p>
+     * Any layout not listed above is <em>unsupported</em>; function descriptors containing unsupported layouts
+     * will cause an {@link IllegalArgumentException} to be thrown, when used to create a
+     * {@link #downcallHandle(MemorySegment, FunctionDescriptor) downcall method handle} or an
+     * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, MemorySession) upcall stub}.
+     * <p>
+     * Variadic functions (e.g. a C function declared with a trailing ellipses {@code ...} at the end of the formal parameter
+     * list or with an empty formal parameter list) are not supported directly. However, it is possible to link a
+     * variadic function by using a {@linkplain FunctionDescriptor#asVariadic(MemoryLayout...) <em>variadic</em>}
+     * function descriptor, in which the specialized signature of a given variable arity callsite is described in full.
+     * Alternatively, where the foreign library allows it, clients might be able to interact with variadic functions by
+     * passing a trailing parameter of type {@link VaList} (e.g. as in {@code vsprintf}).
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     *
+     * @apiNote It is not currently possible to obtain a linker for a different combination of OS and processor.
+     * @implNote The libraries exposed by the {@linkplain #defaultLookup() default lookup} associated with the returned
+     * linker are the native libraries loaded in the process where the Java runtime is currently executing. For example,
+     * on Linux, these libraries typically include {@code libc}, {@code libm} and {@code libdl}.
+     *
+     * @return a linker for the ABI associated with the OS and processor where the Java runtime is currently executing.
+     * @throws UnsupportedOperationException if the underlying native platform is not supported.
+     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
+     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
+     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
+     */
+    @CallerSensitive
+    static Linker nativeLinker() {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), Linker.class, "nativeLinker");
+        return SharedUtils.getSystemLinker();
+    }
 }

@@ -62,10 +62,6 @@ public final class MacOsAArch64VaList implements VaList {
         this.segment = segment;
     }
 
-    public static VaList empty() {
-        return EMPTY;
-    }
-
     @Override
     public int nextVarg(ValueLayout.OfInt layout) {
         return (int) read(layout);
@@ -90,6 +86,37 @@ public final class MacOsAArch64VaList implements VaList {
     public MemorySegment nextVarg(GroupLayout layout, SegmentAllocator allocator) {
         Objects.requireNonNull(allocator);
         return (MemorySegment) read(layout, allocator);
+    }
+
+    @Override
+    public void skip(MemoryLayout... layouts) {
+        Objects.requireNonNull(layouts);
+        MemorySessionImpl.toSessionImpl(segment.session()).checkValidState();
+
+        for (MemoryLayout layout : layouts) {
+            Objects.requireNonNull(layout);
+            long size = sizeOf(layout);
+            checkElement(layout, size);
+            segment = segment.asSlice(size);
+        }
+    }
+
+    private static long sizeOf(MemoryLayout layout) {
+        return switch (TypeClass.classifyLayout(layout)) {
+            case STRUCT_REGISTER, STRUCT_HFA -> alignUp(layout.byteSize(), VA_SLOT_SIZE_BYTES);
+            default -> VA_SLOT_SIZE_BYTES;
+        };
+    }
+
+    @Override
+    public VaList copy() {
+        MemorySessionImpl.toSessionImpl(segment.session()).checkValidState();
+        return new MacOsAArch64VaList(segment);
+    }
+
+    @Override
+    public MemorySegment segment() {
+        return segment.asSlice(0, 0);
     }
 
     private Object read(MemoryLayout layout) {
@@ -130,30 +157,14 @@ public final class MacOsAArch64VaList implements VaList {
         return res;
     }
 
-    private static long sizeOf(MemoryLayout layout) {
-        return switch (TypeClass.classifyLayout(layout)) {
-            case STRUCT_REGISTER, STRUCT_HFA -> alignUp(layout.byteSize(), VA_SLOT_SIZE_BYTES);
-            default -> VA_SLOT_SIZE_BYTES;
-        };
-    }
-
-    @Override
-    public void skip(MemoryLayout... layouts) {
-        Objects.requireNonNull(layouts);
-        MemorySessionImpl.toSessionImpl(segment.session()).checkValidState();
-
-        for (MemoryLayout layout : layouts) {
-            Objects.requireNonNull(layout);
-            long size = sizeOf(layout);
-            checkElement(layout, size);
-            segment = segment.asSlice(size);
-        }
-    }
-
     private void checkElement(MemoryLayout layout, long size) {
         if (segment.byteSize() < size) {
             throw SharedUtils.newVaListNSEE(layout);
         }
+    }
+
+    public static VaList empty() {
+        return EMPTY;
     }
 
     static MacOsAArch64VaList ofAddress(long address, MemorySession session) {
@@ -163,17 +174,6 @@ public final class MacOsAArch64VaList implements VaList {
 
     static Builder builder(MemorySession session) {
         return new Builder(session);
-    }
-
-    @Override
-    public VaList copy() {
-        MemorySessionImpl.toSessionImpl(segment.session()).checkValidState();
-        return new MacOsAArch64VaList(segment);
-    }
-
-    @Override
-    public MemorySegment segment() {
-        return segment.asSlice(0, 0);
     }
 
     public static final class Builder implements VaList.Builder {
@@ -186,16 +186,16 @@ public final class MacOsAArch64VaList implements VaList {
             this.session = session;
         }
 
+        @Override
+        public Builder addVarg(ValueLayout.OfInt layout, int value) {
+            return arg(layout, value);
+        }
+
         private Builder arg(MemoryLayout layout, Object value) {
             Objects.requireNonNull(layout);
             Objects.requireNonNull(value);
             args.add(new SimpleVaArg(layout, value));
             return this;
-        }
-
-        @Override
-        public Builder addVarg(ValueLayout.OfInt layout, int value) {
-            return arg(layout, value);
         }
 
         @Override

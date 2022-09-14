@@ -39,9 +39,8 @@ import jdk.internal.misc.ScopedMemoryAccess;
  */
 public sealed class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
-    private final UnmapperProxy unmapper;
-
     static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
+    private final UnmapperProxy unmapper;
 
     public MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, boolean readOnly, MemorySession session) {
         super(min, length, readOnly, session);
@@ -49,14 +48,14 @@ public sealed class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     }
 
     @Override
-    ByteBuffer makeByteBuffer() {
-        return NIO_ACCESS.newMappedByteBuffer(unmapper, min, (int)length, null,
-                session == MemorySessionImpl.GLOBAL ? null : this);
+    MappedMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySession session) {
+        return new MappedMemorySegmentImpl(min + offset, unmapper, size, readOnly, session);
     }
 
     @Override
-    MappedMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySession session) {
-        return new MappedMemorySegmentImpl(min + offset, unmapper, size, readOnly, session);
+    ByteBuffer makeByteBuffer() {
+        return NIO_ACCESS.newMappedByteBuffer(unmapper, min, (int)length, null,
+                session == MemorySessionImpl.GLOBAL ? null : this);
     }
 
     // mapped segment methods
@@ -73,10 +72,6 @@ public sealed class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     // support for mapped segments
 
-    public MemorySegment segment() {
-        return MappedMemorySegmentImpl.this;
-    }
-
     public void load() {
         SCOPED_MEMORY_ACCESS.load(sessionImpl(), min, unmapper.isSync(), length);
     }
@@ -91,6 +86,10 @@ public sealed class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     public void force() {
         SCOPED_MEMORY_ACCESS.force(sessionImpl(), unmapper.fileDescriptor(), min, unmapper.isSync(), 0, length);
+    }
+
+    public MemorySegment segment() {
+        return MappedMemorySegmentImpl.this;
     }
 
     public static final class EmptyMappedMemorySegmentImpl extends MappedMemorySegmentImpl {

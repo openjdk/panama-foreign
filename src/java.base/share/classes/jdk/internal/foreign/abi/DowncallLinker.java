@@ -117,15 +117,6 @@ public final class DowncallLinker {
         return handle;
     }
 
-    // Funnel from type to Object[]
-    private static MethodHandle makeCollectorHandle(MethodType type) {
-        return type.parameterCount() == 0
-            ? EMPTY_OBJECT_ARRAY_HANDLE
-            : identity(Object[].class)
-                .asCollector(Object[].class, type.parameterCount())
-                .asType(type.changeReturnType(Object[].class));
-    }
-
     private Stream<Binding.VMStore> argMoveBindingsStream(CallingSequence callingSequence) {
         return callingSequence.argumentBindings()
                 .filter(Binding.VMStore.class::isInstance)
@@ -136,17 +127,24 @@ public final class DowncallLinker {
         return retMoveBindingsStream(callingSequence).toArray(Binding.VMLoad[]::new);
     }
 
+    private VMStorage[] toStorageArray(Binding.Move[] moves) {
+        return Arrays.stream(moves).map(Binding.Move::storage).toArray(VMStorage[]::new);
+    }
+
+    // Funnel from type to Object[]
+    private static MethodHandle makeCollectorHandle(MethodType type) {
+        return type.parameterCount() == 0
+            ? EMPTY_OBJECT_ARRAY_HANDLE
+            : identity(Object[].class)
+                .asCollector(Object[].class, type.parameterCount())
+                .asType(type.changeReturnType(Object[].class));
+    }
+
     private Stream<Binding.VMLoad> retMoveBindingsStream(CallingSequence callingSequence) {
         return callingSequence.returnBindings().stream()
                 .filter(Binding.VMLoad.class::isInstance)
                 .map(Binding.VMLoad.class::cast);
     }
-
-    private VMStorage[] toStorageArray(Binding.Move[] moves) {
-        return Arrays.stream(moves).map(Binding.Move::storage).toArray(VMStorage[]::new);
-    }
-
-    private record InvocationData(MethodHandle leaf, Map<VMStorage, Integer> argIndexMap, Map<VMStorage, Integer> retIndexMap) {}
 
     Object invokeInterpBindings(SegmentAllocator allocator, Object[] args, InvocationData invData) throws Throwable {
         Binding.Context unboxContext = callingSequence.allocationSize() != 0
@@ -196,5 +194,7 @@ public final class DowncallLinker {
             }
         }
     }
+
+    private record InvocationData(MethodHandle leaf, Map<VMStorage, Integer> argIndexMap, Map<VMStorage, Integer> retIndexMap) {}
 }
 

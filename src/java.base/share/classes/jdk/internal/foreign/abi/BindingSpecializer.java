@@ -147,104 +147,6 @@ public final class BindingSpecializer {
         this.leafType = leafType;
     }
 
-    static MethodHandle specialize(MethodHandle leafHandle, CallingSequence callingSequence, ABIDescriptor abi) {
-        if (callingSequence.forUpcall()) {
-            MethodHandle wrapper = UPCALL_WRAPPER_CACHE.get(callingSequence.functionDesc(), fd -> specializeUpcall(leafHandle, callingSequence, abi));
-            return MethodHandles.insertArguments(wrapper, 0, leafHandle); // lazily customized for leaf handle instances
-        } else {
-            return specializeDowncall(leafHandle, callingSequence, abi);
-        }
-    }
-
-    private static MethodHandle specializeDowncall(MethodHandle leafHandle, CallingSequence callingSequence, ABIDescriptor abi) {
-        MethodType callerMethodType = callingSequence.callerMethodType();
-        if (callingSequence.needsReturnBuffer()) {
-            callerMethodType = callerMethodType.dropParameterTypes(0, 1); // Return buffer does not appear in the parameter list
-        }
-        callerMethodType = callerMethodType.insertParameterTypes(0, SegmentAllocator.class);
-
-        byte[] bytes = specializeHelper(leafHandle.type(), callerMethodType, callingSequence, abi);
-
-        try {
-            MethodHandles.Lookup definedClassLookup = MethodHandles.lookup().defineHiddenClassWithClassData(bytes, leafHandle, false);
-            return definedClassLookup.findStatic(definedClassLookup.lookupClass(), METHOD_NAME, callerMethodType);
-        } catch (IllegalAccessException | NoSuchMethodException e) {
-            throw new InternalError("Should not happen", e);
-        }
-    }
-
-    private static MethodHandle specializeUpcall(MethodHandle leafHandle, CallingSequence callingSequence, ABIDescriptor abi) {
-        MethodType callerMethodType = callingSequence.callerMethodType();
-        callerMethodType = callerMethodType.insertParameterTypes(0, MethodHandle.class); // target
-
-        byte[] bytes = specializeHelper(leafHandle.type(), callerMethodType, callingSequence, abi);
-
-        try {
-            // For upcalls, we must initialize the class since the upcall stubs don't have a clinit barrier,
-            // and the slow path in the c2i adapter we end up calling can not handle the particular code shape
-            // where the caller is an upcall stub.
-            MethodHandles.Lookup defineClassLookup = MethodHandles.lookup().defineHiddenClass(bytes, true);
-            return defineClassLookup.findStatic(defineClassLookup.lookupClass(), METHOD_NAME, callerMethodType);
-        } catch (IllegalAccessException | NoSuchMethodException e) {
-            throw new InternalError("Should not happen", e);
-        }
-    }
-
-    private static byte[] specializeHelper(MethodType leafType,
-                                           MethodType callerMethodType,
-                                           CallingSequence callingSequence,
-                                           ABIDescriptor abi) {
-        String className = callingSequence.forDowncall() ? CLASS_NAME_DOWNCALL : CLASS_NAME_UPCALL;
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS + ClassWriter.COMPUTE_FRAMES);
-        cw.visit(CLASSFILE_VERSION, ACC_PUBLIC + ACC_FINAL + ACC_SUPER, className, null, SUPER_NAME, null);
-
-        String descriptor = callerMethodType.descriptorString();
-        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, METHOD_NAME, descriptor, null, null);
-
-        new BindingSpecializer(mv, callerMethodType, callingSequence, abi, leafType).specialize();
-
-        mv.visitMaxs(0, 0);
-        mv.visitEnd();
-
-        cw.visitEnd();
-
-        byte[] bytes = cw.toByteArray();
-        if (DUMP_CLASSES_DIR != null) {
-            String fileName = className + escapeForFileName(callingSequence.functionDesc().toString()) + ".class";
-            Path dumpPath = Path.of(DUMP_CLASSES_DIR).resolve(fileName);
-            try {
-                Files.createDirectories(dumpPath.getParent());
-                Files.write(dumpPath, bytes);
-            } catch (IOException e) {
-                throw new InternalError(e);
-            }
-        }
-
-        if (PERFORM_VERIFICATION) {
-            boolean printResults = false; // only print in case of exception
-            CheckClassAdapter.verify(new ClassReader(bytes), null, printResults, new PrintWriter(System.err));
-        }
-
-        return bytes;
-    }
-
-    private static String escapeForFileName(String str) {
-        StringBuilder sb = new StringBuilder(str.length());
-        for (int i = 0; i < str.length(); i++) {
-            char c = str.charAt(i);
-            sb.append(switch (c) {
-                case ' ' -> '_';
-                case '[', '<' -> '{';
-                case ']', '>' -> '}';
-                case '/', '\\', ':', '*', '?', '"', '|' -> '!'; // illegal in Windows file names.
-                default -> c;
-            });
-        }
-        return sb.toString();
-    }
-
-    // binding operand stack manipulation
-
     private void pushType(Class<?> type) {
         typeStack.push(type);
     }
@@ -258,8 +160,6 @@ public final class BindingSpecializer {
         }
         return found;
     }
-
-    // specialization
 
     private void specialize() {
         // map of parameter indexes to local var table slots
@@ -460,6 +360,8 @@ public final class BindingSpecializer {
         return paramLayout instanceof ValueLayout.OfAddress;
     }
 
+    // binding operand stack manipulation
+
     private void emitCleanup() {
         emitCloseContext();
         if (callingSequence.forDowncall()) {
@@ -482,6 +384,8 @@ public final class BindingSpecializer {
             }
         }
     }
+
+    // specialization
 
     private void emitSetOutput(Class<?> storeType) {
         emitStore(storeType, leafArgSlots[leafArgTypes.size()]);
@@ -622,7 +526,6 @@ public final class BindingSpecializer {
         emitInvokeInterface(MemorySegment.class, "set", descriptor);
     }
 
-
     // VM_STORE and VM_LOAD are emulated, which is different for down/upcalls
     private void emitVMStore(Binding.VMStore vmStore) {
         Class<?> storeType = vmStore.type();
@@ -673,6 +576,7 @@ public final class BindingSpecializer {
             emitGetInput();
         }
     }
+
     private void emitDupBinding() {
         Class<?> dupType = typeStack.peek();
         emitDup(dupType);
@@ -736,54 +640,6 @@ public final class BindingSpecializer {
         return valueLayoutType;
     }
 
-    private static String valueLayoutConstantFor(Class<?> type) {
-        if (type == boolean.class) {
-            return "JAVA_BOOLEAN";
-        } else if (type == byte.class) {
-            return "JAVA_BYTE";
-        } else if (type == short.class) {
-            return "JAVA_SHORT_UNALIGNED";
-        } else if (type == char.class) {
-            return "JAVA_CHAR_UNALIGNED";
-        } else if (type == int.class) {
-            return "JAVA_INT_UNALIGNED";
-        } else if (type == long.class) {
-            return "JAVA_LONG_UNALIGNED";
-        } else if (type == float.class) {
-            return "JAVA_FLOAT_UNALIGNED";
-        } else if (type == double.class) {
-            return "JAVA_DOUBLE_UNALIGNED";
-        } else if (type == MemorySegment.class) {
-            return "ADDRESS_UNALIGNED";
-        } else {
-            throw new IllegalStateException("Unknown type: " + type);
-        }
-    }
-
-    private static Class<?> valueLayoutTypeFor(Class<?> type) {
-        if (type == boolean.class) {
-            return ValueLayout.OfBoolean.class;
-        } else if (type == byte.class) {
-            return ValueLayout.OfByte.class;
-        } else if (type == short.class) {
-            return ValueLayout.OfShort.class;
-        } else if (type == char.class) {
-            return ValueLayout.OfChar.class;
-        } else if (type == int.class) {
-            return ValueLayout.OfInt.class;
-        } else if (type == long.class) {
-            return ValueLayout.OfLong.class;
-        } else if (type == float.class) {
-            return ValueLayout.OfFloat.class;
-        } else if (type == double.class) {
-            return ValueLayout.OfDouble.class;
-        } else if (type == MemorySegment.class) {
-            return ValueLayout.OfAddress.class;
-        } else {
-            throw new IllegalStateException("Unknown type: " + type);
-        }
-    }
-
     private void emitInvokeStatic(Class<?> owner, String methodName, String descriptor) {
         mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(owner), methodName, descriptor, owner.isInterface());
     }
@@ -811,10 +667,6 @@ public final class BindingSpecializer {
             mv.visitInsn(Opcodes.DUP);
         }
     }
-
-    /*
-     * Low-level emit helpers.
-     */
 
     private void emitConstZero(Class<?> type) {
         emitConst(switch (Type.getType(type).getSort()) {
@@ -920,6 +772,154 @@ public final class BindingSpecializer {
     private void emitReturn(Class<?> type) {
         int opcode = Type.getType(type).getOpcode(IRETURN);
         mv.visitInsn(opcode);
+    }
+
+    static MethodHandle specialize(MethodHandle leafHandle, CallingSequence callingSequence, ABIDescriptor abi) {
+        if (callingSequence.forUpcall()) {
+            MethodHandle wrapper = UPCALL_WRAPPER_CACHE.get(callingSequence.functionDesc(), fd -> specializeUpcall(leafHandle, callingSequence, abi));
+            return MethodHandles.insertArguments(wrapper, 0, leafHandle); // lazily customized for leaf handle instances
+        } else {
+            return specializeDowncall(leafHandle, callingSequence, abi);
+        }
+    }
+
+    /*
+     * Low-level emit helpers.
+     */
+
+    private static MethodHandle specializeDowncall(MethodHandle leafHandle, CallingSequence callingSequence, ABIDescriptor abi) {
+        MethodType callerMethodType = callingSequence.callerMethodType();
+        if (callingSequence.needsReturnBuffer()) {
+            callerMethodType = callerMethodType.dropParameterTypes(0, 1); // Return buffer does not appear in the parameter list
+        }
+        callerMethodType = callerMethodType.insertParameterTypes(0, SegmentAllocator.class);
+
+        byte[] bytes = specializeHelper(leafHandle.type(), callerMethodType, callingSequence, abi);
+
+        try {
+            MethodHandles.Lookup definedClassLookup = MethodHandles.lookup().defineHiddenClassWithClassData(bytes, leafHandle, false);
+            return definedClassLookup.findStatic(definedClassLookup.lookupClass(), METHOD_NAME, callerMethodType);
+        } catch (IllegalAccessException | NoSuchMethodException e) {
+            throw new InternalError("Should not happen", e);
+        }
+    }
+
+    private static MethodHandle specializeUpcall(MethodHandle leafHandle, CallingSequence callingSequence, ABIDescriptor abi) {
+        MethodType callerMethodType = callingSequence.callerMethodType();
+        callerMethodType = callerMethodType.insertParameterTypes(0, MethodHandle.class); // target
+
+        byte[] bytes = specializeHelper(leafHandle.type(), callerMethodType, callingSequence, abi);
+
+        try {
+            // For upcalls, we must initialize the class since the upcall stubs don't have a clinit barrier,
+            // and the slow path in the c2i adapter we end up calling can not handle the particular code shape
+            // where the caller is an upcall stub.
+            MethodHandles.Lookup defineClassLookup = MethodHandles.lookup().defineHiddenClass(bytes, true);
+            return defineClassLookup.findStatic(defineClassLookup.lookupClass(), METHOD_NAME, callerMethodType);
+        } catch (IllegalAccessException | NoSuchMethodException e) {
+            throw new InternalError("Should not happen", e);
+        }
+    }
+
+    private static byte[] specializeHelper(MethodType leafType,
+                                           MethodType callerMethodType,
+                                           CallingSequence callingSequence,
+                                           ABIDescriptor abi) {
+        String className = callingSequence.forDowncall() ? CLASS_NAME_DOWNCALL : CLASS_NAME_UPCALL;
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS + ClassWriter.COMPUTE_FRAMES);
+        cw.visit(CLASSFILE_VERSION, ACC_PUBLIC + ACC_FINAL + ACC_SUPER, className, null, SUPER_NAME, null);
+
+        String descriptor = callerMethodType.descriptorString();
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, METHOD_NAME, descriptor, null, null);
+
+        new BindingSpecializer(mv, callerMethodType, callingSequence, abi, leafType).specialize();
+
+        mv.visitMaxs(0, 0);
+        mv.visitEnd();
+
+        cw.visitEnd();
+
+        byte[] bytes = cw.toByteArray();
+        if (DUMP_CLASSES_DIR != null) {
+            String fileName = className + escapeForFileName(callingSequence.functionDesc().toString()) + ".class";
+            Path dumpPath = Path.of(DUMP_CLASSES_DIR).resolve(fileName);
+            try {
+                Files.createDirectories(dumpPath.getParent());
+                Files.write(dumpPath, bytes);
+            } catch (IOException e) {
+                throw new InternalError(e);
+            }
+        }
+
+        if (PERFORM_VERIFICATION) {
+            boolean printResults = false; // only print in case of exception
+            CheckClassAdapter.verify(new ClassReader(bytes), null, printResults, new PrintWriter(System.err));
+        }
+
+        return bytes;
+    }
+
+    private static String escapeForFileName(String str) {
+        StringBuilder sb = new StringBuilder(str.length());
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            sb.append(switch (c) {
+                case ' ' -> '_';
+                case '[', '<' -> '{';
+                case ']', '>' -> '}';
+                case '/', '\\', ':', '*', '?', '"', '|' -> '!'; // illegal in Windows file names.
+                default -> c;
+            });
+        }
+        return sb.toString();
+    }
+
+    private static String valueLayoutConstantFor(Class<?> type) {
+        if (type == boolean.class) {
+            return "JAVA_BOOLEAN";
+        } else if (type == byte.class) {
+            return "JAVA_BYTE";
+        } else if (type == short.class) {
+            return "JAVA_SHORT_UNALIGNED";
+        } else if (type == char.class) {
+            return "JAVA_CHAR_UNALIGNED";
+        } else if (type == int.class) {
+            return "JAVA_INT_UNALIGNED";
+        } else if (type == long.class) {
+            return "JAVA_LONG_UNALIGNED";
+        } else if (type == float.class) {
+            return "JAVA_FLOAT_UNALIGNED";
+        } else if (type == double.class) {
+            return "JAVA_DOUBLE_UNALIGNED";
+        } else if (type == MemorySegment.class) {
+            return "ADDRESS_UNALIGNED";
+        } else {
+            throw new IllegalStateException("Unknown type: " + type);
+        }
+    }
+
+    private static Class<?> valueLayoutTypeFor(Class<?> type) {
+        if (type == boolean.class) {
+            return ValueLayout.OfBoolean.class;
+        } else if (type == byte.class) {
+            return ValueLayout.OfByte.class;
+        } else if (type == short.class) {
+            return ValueLayout.OfShort.class;
+        } else if (type == char.class) {
+            return ValueLayout.OfChar.class;
+        } else if (type == int.class) {
+            return ValueLayout.OfInt.class;
+        } else if (type == long.class) {
+            return ValueLayout.OfLong.class;
+        } else if (type == float.class) {
+            return ValueLayout.OfFloat.class;
+        } else if (type == double.class) {
+            return ValueLayout.OfDouble.class;
+        } else if (type == MemorySegment.class) {
+            return ValueLayout.OfAddress.class;
+        } else {
+            throw new IllegalStateException("Unknown type: " + type);
+        }
     }
 
 }

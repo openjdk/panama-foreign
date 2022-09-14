@@ -58,12 +58,12 @@ import java.util.function.BiFunction;
  * </ul>
  *
  * <h2 id="obtaining">Obtaining a symbol lookup</h2>
- *
+ * <p>
  * The factory methods {@link #libraryLookup(String, MemorySession)} and {@link #libraryLookup(Path, MemorySession)}
  * create a symbol lookup for a library known to the operating system. The library is specified by either its name or a path.
  * The library is loaded if not already loaded. The symbol lookup, which is known as a <em>library lookup</em>, is associated
  * with a {@linkplain  MemorySession memory session}; when the session is {@linkplain MemorySession#close() closed}, the library is unloaded:
- *
+ * <p>
  * {@snippet lang = java:
  * try (MemorySession session = MemorySession.openConfined()) {
  *     SymbolLookup libGL = SymbolLookup.libraryLookup("libGL.so"); // libGL.so loaded here
@@ -75,14 +75,14 @@ import java.util.function.BiFunction;
  * If a library was previously loaded through JNI, i.e., by {@link System#load(String)}
  * or {@link System#loadLibrary(String)}, then the library was also associated with a particular class loader. The factory
  * method {@link #loaderLookup()} creates a symbol lookup for all the libraries associated with the caller's class loader:
- *
- * {@snippet lang=java :
+ * <p>
+ * {@snippet lang = java:
  * System.loadLibrary("GL"); // libGL.so loaded here
  * ...
  * SymbolLookup libGL = SymbolLookup.loaderLookup();
  * MemorySegment glGetString = libGL.find("glGetString").orElseThrow();
- * }
- *
+ *}
+ * <p>
  * This symbol lookup, which is known as a <em>loader lookup</em>, is dynamic with respect to the libraries associated
  * with the class loader. If other libraries are subsequently loaded through JNI and associated with the class loader,
  * then the loader lookup will expose their symbols automatically.
@@ -90,15 +90,15 @@ import java.util.function.BiFunction;
  * Note that a loader lookup only exposes symbols in libraries that were previously loaded through JNI, i.e.,
  * by {@link System#load(String)} or {@link System#loadLibrary(String)}. A loader lookup does not expose symbols in libraries
  * that were loaded in the course of creating a library lookup:
- *
+ * <p>
  * {@snippet lang = java:
  * libraryLookup("libGL.so", session).find("glGetString").isPresent(); // true
  * loaderLookup().find("glGetString").isPresent(); // false
  *}
- *
+ * <p>
  * Note also that a library lookup for library {@code L} exposes symbols in {@code L} even if {@code L} was previously loaded
  * through JNI (the association with a class loader is immaterial to the library lookup):
- *
+ * <p>
  * {@snippet lang = java:
  * System.loadLibrary("GL"); // libGL.so loaded here
  * libraryLookup("libGL.so", session).find("glGetString").isPresent(); // true
@@ -109,19 +109,20 @@ import java.util.function.BiFunction;
  * combination supported by that {@link Linker}. This symbol lookup, which is known as a <em>default lookup</em>,
  * helps clients to quickly find addresses of well-known symbols. For example, a {@link Linker} for Linux/x64 might choose to
  * expose symbols in {@code libc} through the default lookup:
- *
+ * <p>
  * {@snippet lang = java:
  * Linker nativeLinker = Linker.nativeLinker();
  * SymbolLookup stdlib = nativeLinker.defaultLookup();
  * MemorySegment malloc = stdlib.find("malloc").orElseThrow();
  *}
  */
-@PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
+@PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
 @FunctionalInterface
 public interface SymbolLookup {
 
     /**
      * Returns the address of the symbol with the given name.
+     *
      * @param name the symbol name.
      * @return a zero-length memory segment whose base address indicates the address of the symbol, if found.
      */
@@ -176,6 +177,14 @@ public interface SymbolLookup {
      * Loads a library with the given name (if not already loaded) and creates a symbol lookup for symbols in that library.
      * The library will be unloaded when the provided memory session is {@linkplain MemorySession#close() closed},
      * if no other library lookup is still using it.
+     *
+     * @param name    the name of the library in which symbols should be looked up.
+     * @param session the memory session which controls the library lifecycle.
+     * @return a new symbol lookup suitable to find symbols in a library with the given name.
+     * @throws IllegalArgumentException if {@code name} does not identify a valid library.
+     * @throws IllegalCallerException   if access to this method occurs from a module {@code M} and the command line option
+     *                                  {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     *                                  {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      * @implNote The process of resolving a library name is OS-specific. For instance, in a POSIX-compliant OS,
      * the library name is resolved according to the specification of the {@code dlopen} function for that OS.
      * In Windows, the library name is resolved according to the specification of the {@code LoadLibrary} function.
@@ -184,14 +193,6 @@ public interface SymbolLookup {
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
-     *
-     * @param name the name of the library in which symbols should be looked up.
-     * @param session the memory session which controls the library lifecycle.
-     * @return a new symbol lookup suitable to find symbols in a library with the given name.
-     * @throws IllegalArgumentException if {@code name} does not identify a valid library.
-     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
-     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
     static SymbolLookup libraryLookup(String name, MemorySession session) {
@@ -209,15 +210,15 @@ public interface SymbolLookup {
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
-     * @implNote On Linux, the functionalities provided by this factory method and the returned symbol lookup are
-     * implemented using the {@code dlopen}, {@code dlsym} and {@code dlclose} functions.
-     * @param path the path of the library in which symbols should be looked up.
+     * @param path    the path of the library in which symbols should be looked up.
      * @param session the memory session which controls the library lifecycle.
      * @return a new symbol lookup suitable to find symbols in a library with the given path.
      * @throws IllegalArgumentException if {@code path} does not point to a valid library.
-     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
-     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
+     * @throws IllegalCallerException   if access to this method occurs from a module {@code M} and the command line option
+     *                                  {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     *                                  {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
+     * @implNote On Linux, the functionalities provided by this factory method and the returned symbol lookup are
+     * implemented using the {@code dlopen}, {@code dlsym} and {@code dlclose} functions.
      */
     @CallerSensitive
     static SymbolLookup libraryLookup(Path path, MemorySession session) {

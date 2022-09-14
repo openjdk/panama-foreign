@@ -49,21 +49,38 @@ public final class SequenceLayoutImpl extends AbstractLayout<SequenceLayoutImpl>
         this.elementLayout = elementLayout;
     }
 
-    /**
+    @Override
+    SequenceLayoutImpl dup(long bitAlignment, Optional<String> name) {
+        return new SequenceLayoutImpl(elementCount(), elementLayout, bitAlignment, name);
+    }    /**
      * {@return the element layout associated with this sequence layout}
      */
     public MemoryLayout elementLayout() {
         return elementLayout;
     }
 
-    /**
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), elemCount, elementLayout);
+    }    /**
      * {@return the element count of this sequence layout}
      */
     public long elementCount() {
         return elemCount;
     }
 
-    /**
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!super.equals(other)) {
+            return false;
+        }
+        return other instanceof SequenceLayoutImpl otherSeq &&
+                elemCount == otherSeq.elemCount &&
+                elementLayout.equals(otherSeq.elementLayout);
+    }    /**
      * Returns a sequence layout with the same element layout, alignment constraints and name as this sequence layout,
      * but with the specified element count.
      *
@@ -76,7 +93,11 @@ public final class SequenceLayoutImpl extends AbstractLayout<SequenceLayoutImpl>
         return new SequenceLayoutImpl(elementCount, elementLayout, bitAlignment(), name());
     }
 
-    /**
+    @Override
+    public String toString() {
+        return decorateLayoutString(String.format("[%s:%s]",
+                elemCount, elementLayout));
+    }    /**
      * Re-arrange the elements in this sequence layout into a multi-dimensional sequence layout.
      * The resulting layout is a sequence layout where element layouts in the flattened projection of this
      * sequence layout (see {@link #flatten()}) are re-arranged into one or more nested sequence layouts
@@ -152,7 +173,10 @@ public final class SequenceLayoutImpl extends AbstractLayout<SequenceLayoutImpl>
         return (SequenceLayoutImpl) res;
     }
 
-    /**
+    @Override
+    public boolean hasNaturalAlignment() {
+        return bitAlignment() == elementLayout.bitAlignment();
+    }    /**
      * Returns a flattened sequence layout. The element layout of the returned sequence layout
      * is the first non-sequence element layout found by recursively traversing the element layouts of this sequence layout.
      * This transformation preserves the layout size; nested sequence layout in this sequence layout will
@@ -177,40 +201,6 @@ public final class SequenceLayoutImpl extends AbstractLayout<SequenceLayoutImpl>
             elemLayout = elemSeq.elementLayout();
         }
         return MemoryLayout.sequenceLayout(count, elemLayout);
-    }
-
-    @Override
-    public String toString() {
-        return decorateLayoutString(String.format("[%s:%s]",
-                elemCount, elementLayout));
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!super.equals(other)) {
-            return false;
-        }
-        return other instanceof SequenceLayoutImpl otherSeq &&
-                elemCount == otherSeq.elemCount &&
-                elementLayout.equals(otherSeq.elementLayout);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), elemCount, elementLayout);
-    }
-
-    @Override
-    SequenceLayoutImpl dup(long bitAlignment, Optional<String> name) {
-        return new SequenceLayoutImpl(elementCount(), elementLayout, bitAlignment, name);
-    }
-
-    @Override
-    public boolean hasNaturalAlignment() {
-        return bitAlignment() == elementLayout.bitAlignment();
     }
 
     public static SequenceLayout of(long elementCount, MemoryLayout elementLayout) {

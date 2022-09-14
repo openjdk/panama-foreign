@@ -189,101 +189,6 @@ import java.util.List;
  */
 public interface Binding {
 
-    /**
-     * A binding context is used as an helper to carry out evaluation of certain bindings; for instance,
-     * it helps {@link Allocate} bindings, by providing the {@link SegmentAllocator} that should be used for
-     * the allocation operation, or {@link BoxAddress} bindings, by providing the {@link MemorySession} that
-     * should be used to create an unsafe struct from a memory address.
-     */
-    class Context implements AutoCloseable {
-        private final SegmentAllocator allocator;
-        private final MemorySession session;
-
-        private Context(SegmentAllocator allocator, MemorySession session) {
-            this.allocator = allocator;
-            this.session = session;
-        }
-
-        public SegmentAllocator allocator() {
-            return allocator;
-        }
-
-        public MemorySession session() {
-            return session;
-        }
-
-        @Override
-        public void close() {
-            session().close();
-        }
-
-        /**
-         * Create a binding context from given native scope.
-         */
-        public static Context ofBoundedAllocator(long size) {
-            MemorySession scope = MemorySession.openConfined();
-            return new Context(SegmentAllocator.newNativeArena(size, scope), scope);
-        }
-
-        /**
-         * Create a binding context from given segment allocator. The resulting context will throw when
-         * the context's scope is accessed.
-         */
-        public static Context ofAllocator(SegmentAllocator allocator) {
-            return new Context(allocator, null) {
-                @Override
-                public MemorySession session() {
-                    throw new UnsupportedOperationException();
-                }
-            };
-        }
-
-        /**
-         * Create a binding context from given scope. The resulting context will throw when
-         * the context's allocator is accessed.
-         */
-        public static Context ofSession() {
-            MemorySession scope = MemorySession.openConfined();
-            return new Context(null, scope) {
-                @Override
-                public SegmentAllocator allocator() { throw new UnsupportedOperationException(); }
-            };
-        }
-
-        /**
-         * Dummy binding context. Throws exceptions when attempting to access scope, return a throwing allocator, and has
-         * an idempotent {@link #close()}.
-         */
-        public static final Context DUMMY = new Context(null, null) {
-            @Override
-            public SegmentAllocator allocator() {
-                return SharedUtils.THROWING_ALLOCATOR;
-            }
-
-            @Override
-            public MemorySession session() {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public void close() {
-                // do nothing
-            }
-        };
-    }
-
-    enum Tag {
-        VM_STORE,
-        VM_LOAD,
-        BUFFER_STORE,
-        BUFFER_LOAD,
-        COPY_BUFFER,
-        ALLOC_BUFFER,
-        BOX_ADDRESS,
-        UNBOX_ADDRESS,
-        DUP
-    }
-
     Tag tag();
 
     void verify(Deque<Class<?>> stack);
@@ -291,19 +196,14 @@ public interface Binding {
     void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
                    BindingInterpreter.LoadFunc loadFunc, Context context);
 
-    private static void checkType(Class<?> type) {
-        if (!type.isPrimitive() || type == void.class)
-            throw new IllegalArgumentException("Illegal type: " + type);
-    }
-
-    private static void checkOffset(long offset) {
-        if (offset < 0)
-            throw new IllegalArgumentException("Negative offset: " + offset);
-    }
-
     static VMStore vmStore(VMStorage storage, Class<?> type) {
         checkType(type);
         return new VMStore(storage, type);
+    }
+
+    private static void checkType(Class<?> type) {
+        if (!type.isPrimitive() || type == void.class)
+            throw new IllegalArgumentException("Illegal type: " + type);
     }
 
     static VMLoad vmLoad(VMStorage storage, Class<?> type) {
@@ -315,6 +215,11 @@ public interface Binding {
         checkType(type);
         checkOffset(offset);
         return new BufferStore(offset, type);
+    }
+
+    private static void checkOffset(long offset) {
+        if (offset < 0)
+            throw new IllegalArgumentException("Negative offset: " + offset);
     }
 
     static BufferLoad bufferLoad(long offset, Class<?> type) {
@@ -351,9 +256,113 @@ public interface Binding {
         return Dup.INSTANCE;
     }
 
-
     static Binding.Builder builder() {
         return new Binding.Builder();
+    }
+
+    enum Tag {
+        VM_STORE,
+        VM_LOAD,
+        BUFFER_STORE,
+        BUFFER_LOAD,
+        COPY_BUFFER,
+        ALLOC_BUFFER,
+        BOX_ADDRESS,
+        UNBOX_ADDRESS,
+        DUP
+    }
+
+
+    interface Move extends Binding {
+        VMStorage storage();
+        Class<?> type();
+    }
+
+    interface Dereference extends Binding {
+        long offset();
+        Class<?> type();
+    }
+
+    /**
+     * A binding context is used as an helper to carry out evaluation of certain bindings; for instance,
+     * it helps {@link Allocate} bindings, by providing the {@link SegmentAllocator} that should be used for
+     * the allocation operation, or {@link BoxAddress} bindings, by providing the {@link MemorySession} that
+     * should be used to create an unsafe struct from a memory address.
+     */
+    class Context implements AutoCloseable {
+        /**
+         * Dummy binding context. Throws exceptions when attempting to access scope, return a throwing allocator, and has
+         * an idempotent {@link #close()}.
+         */
+        public static final Context DUMMY = new Context(null, null) {
+            @Override
+            public SegmentAllocator allocator() {
+                return SharedUtils.THROWING_ALLOCATOR;
+            }
+
+            @Override
+            public void close() {
+                // do nothing
+            }
+
+            @Override
+            public MemorySession session() {
+                throw new UnsupportedOperationException();
+            }
+        };
+        private final SegmentAllocator allocator;
+        private final MemorySession session;
+
+        private Context(SegmentAllocator allocator, MemorySession session) {
+            this.allocator = allocator;
+            this.session = session;
+        }
+
+        public SegmentAllocator allocator() {
+            return allocator;
+        }
+
+        @Override
+        public void close() {
+            session().close();
+        }
+
+        public MemorySession session() {
+            return session;
+        }
+
+        /**
+         * Create a binding context from given native scope.
+         */
+        public static Context ofBoundedAllocator(long size) {
+            MemorySession scope = MemorySession.openConfined();
+            return new Context(SegmentAllocator.newNativeArena(size, scope), scope);
+        }
+
+        /**
+         * Create a binding context from given segment allocator. The resulting context will throw when
+         * the context's scope is accessed.
+         */
+        public static Context ofAllocator(SegmentAllocator allocator) {
+            return new Context(allocator, null) {
+                @Override
+                public MemorySession session() {
+                    throw new UnsupportedOperationException();
+                }
+            };
+        }
+
+        /**
+         * Create a binding context from given scope. The resulting context will throw when
+         * the context's allocator is accessed.
+         */
+        public static Context ofSession() {
+            MemorySession scope = MemorySession.openConfined();
+            return new Context(null, scope) {
+                @Override
+                public SegmentAllocator allocator() { throw new UnsupportedOperationException(); }
+            };
+        }
     }
 
     /**
@@ -417,11 +426,6 @@ public interface Binding {
         }
     }
 
-    interface Move extends Binding {
-        VMStorage storage();
-        Class<?> type();
-    }
-
     /**
      * VM_STORE([storage location], [type])
      * Pops a [type] from the operand stack, and moves it to [storage location]
@@ -468,11 +472,6 @@ public interface Binding {
                               BindingInterpreter.LoadFunc loadFunc, Context context) {
             stack.push(loadFunc.load(storage(), type()));
         }
-    }
-
-    interface Dereference extends Binding {
-        long offset();
-        Class<?> type();
     }
 
     /**
@@ -541,11 +540,6 @@ public interface Binding {
      *     and pushes the new buffer onto the operand stack
      */
     record Copy(long size, long alignment) implements Binding {
-        private static MemorySegment copyBuffer(MemorySegment operand, long size, long alignment, Context context) {
-            return context.allocator().allocate(size, alignment)
-                            .copyFrom(operand.asSlice(0, size));
-        }
-
         @Override
         public Tag tag() {
             return Tag.COPY_BUFFER;
@@ -565,6 +559,11 @@ public interface Binding {
             MemorySegment copy = copyBuffer(operand, size, alignment, context);
             stack.push(copy);
         }
+
+        private static MemorySegment copyBuffer(MemorySegment operand, long size, long alignment, Context context) {
+            return context.allocator().allocate(size, alignment)
+                            .copyFrom(operand.asSlice(0, size));
+        }
     }
 
     /**
@@ -572,10 +571,6 @@ public interface Binding {
      *   Creates a new MemorySegment with the give [size] and [alignment], and pushes it onto the operand stack.
      */
     record Allocate(long size, long alignment) implements Binding {
-        private static MemorySegment allocateBuffer(long size, long alignment, Context context) {
-            return context.allocator().allocate(size, alignment);
-        }
-
         @Override
         public Tag tag() {
             return Tag.ALLOC_BUFFER;
@@ -590,6 +585,10 @@ public interface Binding {
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
                               BindingInterpreter.LoadFunc loadFunc, Context context) {
             stack.push(allocateBuffer(size, alignment, context));
+        }
+
+        private static MemorySegment allocateBuffer(long size, long alignment, Context context) {
+            return context.allocator().allocate(size, alignment);
         }
     }
 

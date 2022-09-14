@@ -62,24 +62,6 @@ public final class CallingSequence {
         this.argumentBindings = argumentBindings;
     }
 
-    /**
-     * An important distinction is that downcalls have 1 recipe per caller parameter and
-     * each callee parameter corresponds to a VM_STORE. Upcalls have 1 recipe per callee parameter and
-     * each caller parameter corresponds to a VM_LOAD.
-     *
-     * The VM_STOREs are then implemented by the leaf handle for downcalls, and vice versa, the wrapper
-     * stub that wraps an upcall handle implements the VM_LOADS. In both cases the register values are
-     * communicated through Java primitives.
-     *
-     * The 'argumentBindingsCount' below corresponds to the number of recipes, so it is the
-     * caller parameter count for downcalls, and the callee parameter count for upcalls.
-     *
-     * @return the number of binding recipes in this calling sequence
-     */
-    public int argumentBindingsCount() {
-        return argumentBindings.size();
-    }
-
     public List<Binding> argumentBindings(int i) {
         return argumentBindings.get(i);
     }
@@ -204,5 +186,23 @@ public final class CallingSequence {
         sb.append("}\n");
 
         return sb.toString();
+    }
+
+    /**
+     * An important distinction is that downcalls have 1 recipe per caller parameter and
+     * each callee parameter corresponds to a VM_STORE. Upcalls have 1 recipe per callee parameter and
+     * each caller parameter corresponds to a VM_LOAD.
+     *
+     * The VM_STOREs are then implemented by the leaf handle for downcalls, and vice versa, the wrapper
+     * stub that wraps an upcall handle implements the VM_LOADS. In both cases the register values are
+     * communicated through Java primitives.
+     *
+     * The 'argumentBindingsCount' below corresponds to the number of recipes, so it is the
+     * caller parameter count for downcalls, and the callee parameter count for upcalls.
+     *
+     * @return the number of binding recipes in this calling sequence
+     */
+    public int argumentBindingsCount() {
+        return argumentBindings.size();
     }
 }
