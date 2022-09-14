@@ -60,7 +60,6 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 
-import static java.lang.foreign.ValueLayout.*;
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
@@ -474,6 +473,7 @@ public class BindingSpecializer {
                 case BOX_ADDRESS -> emitBoxAddress((Binding.BoxAddress) binding);
                 case UNBOX_ADDRESS -> emitUnboxAddress();
                 case DUP -> emitDupBinding();
+                case CAST -> emitCast((Binding.Cast) binding);
             }
         }
     }
@@ -619,6 +619,7 @@ public class BindingSpecializer {
 
 
     // VM_STORE and VM_LOAD are emulated, which is different for down/upcalls
+
     private void emitVMStore(Binding.VMStore vmStore) {
         Class<?> storeType = vmStore.type();
         popType(storeType);
@@ -645,7 +646,6 @@ public class BindingSpecializer {
             }
         }
     }
-
     private void emitVMLoad(Binding.VMLoad vmLoad) {
         Class<?> loadType = vmLoad.type();
 
@@ -668,10 +668,45 @@ public class BindingSpecializer {
             emitGetInput();
         }
     }
+
     private void emitDupBinding() {
         Class<?> dupType = typeStack.peek();
         emitDup(dupType);
         pushType(dupType);
+    }
+
+    private void emitCast(Binding.Cast cast) {
+        Class<?> fromType = cast.fromType();
+        Class<?> toType = cast.toType();
+
+        if (fromType == int.class) {
+            popType(int.class);
+
+            if (toType == boolean.class) {
+                emitConst(0b1);
+                mv.visitInsn(IAND);
+            } else if (toType == byte.class) {
+                mv.visitInsn(I2B);
+            } else if (toType == short.class) {
+                mv.visitInsn(I2S);
+            } else {
+                assert toType == char.class;
+                mv.visitInsn(I2C);
+            }
+
+            pushType(toType);
+        } else {
+            popType(fromType);
+
+            assert fromType == boolean.class
+                    || fromType == byte.class
+                    || fromType == short.class
+                    || fromType == char.class;
+            // no-op in bytecode
+
+            assert toType == int.class;
+            pushType(int.class);
+        }
     }
 
     private void emitUnboxAddress() {
