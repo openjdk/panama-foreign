@@ -60,15 +60,8 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * <p>
  * There are two kinds of memory segments:
  * <ul>
- *     <li>{@linkplain MemorySegment#allocateNative(long, long) native memory segments}, backed by off-heap memory;</li>
- *     <li>{@linkplain FileChannel#map(FileChannel.MapMode, long, long, MemorySession) mapped memory segments}, obtained by mapping
- * a file into main memory ({@code mmap}); the contents of a mapped memory segments can be {@linkplain #force() persisted} and
- * {@linkplain #load() loaded} to and from the underlying memory-mapped file;</li>
- *     <li>{@linkplain MemorySegment#ofArray(int[]) array segments}, wrapping an existing, heap-allocated Java array; and</li>
- *     <li>{@linkplain MemorySegment#ofBuffer(Buffer) buffer segments}, wrapping an existing {@link Buffer} instance;
- * buffer memory segments might be backed by either off-heap memory or on-heap memory, depending on the characteristics of the
- * wrapped buffer instance. For instance, a buffer memory segment obtained from a byte buffer created with the
- * {@link ByteBuffer#allocateDirect(int)} method will be backed by off-heap memory.</li>
+ *     <li>A <em>heap segment</em> is backed by, and provides access to, a region of memory inside the Java heap (an "on-heap" region).</li>
+ *     <li>A <em>native segment</em> is backed by, and provides access to, a region of memory outside the Java heap (an "off-heap" region).</li>
  * </ul>
  * Heap segments can be obtained by calling one of the {@link MemorySegment#ofArray(int[])} factory methods.
  * These methods return a memory segment backed by the on-heap memory region that holds the specified Java array.
@@ -810,8 +803,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * sequences with this charset's default replacement string.  The {@link
      * java.nio.charset.CharsetDecoder} class should be used when more control
      * over the decoding process is required.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @return a Java string constructed from the bytes read from the given starting address up to (but not including)
      * the first {@code '\0'} terminator character (assuming one is found).
      * @throws IllegalArgumentException if the size of the UTF-8 string is greater than the largest string supported by the platform.
@@ -838,8 +830,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * copied as well. This means that, depending on the method used to read
      * the string, such as {@link MemorySegment#getUtf8String(long)}, the string
      * will appear truncated when read again.
-     *
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param str the Java string to be written into this segment.
      * @throws IndexOutOfBoundsException if {@code str.getBytes().length() + offset >= byteSize()}.
@@ -1052,7 +1043,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Creates a native segment with the given layout.
      * <p>
-     * The {@link #address()} of the returned memory segment is the starting address of
+     * The {@linkplain #address() address} of the returned memory segment is the starting address of
      * the newly allocated off-heap memory region backing the segment.
      * The returned memory segment is associated with a new {@linkplain MemorySession#openImplicit implicit}
      * memory session. As such, the off-heap memory region which backs the returned segment is
@@ -1081,7 +1072,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Creates a native segment with the given size (in bytes).
      * <p>
-     * The {@link #address()} of the returned memory segment is the starting address of
+     * The {@linkplain #address() address} of the returned memory segment is the starting address of
      * the newly allocated off-heap memory region backing the segment.
      * The returned memory segment is associated with a new {@linkplain MemorySession#openImplicit implicit}
      * memory session. As such, the off-heap memory region which backs the returned segment is
@@ -1113,7 +1104,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Creates a native segment with the given size (in bytes) and alignment (in bytes).
      * <p>
-     * The {@link #address()} of the returned memory segment is the starting address of
+     * The {@linkplain #address() address} of the returned memory segment is the starting address of
      * the newly allocated off-heap memory region backing the segment.
      * The returned memory segment is associated with a new {@linkplain MemorySession#openImplicit implicit}
      * memory session. As such, the off-heap memory region which backs the returned segment is
@@ -1264,8 +1255,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Reads a byte from this segment at the given offset, with the given layout.
      *
      * @param layout the layout of the region of memory to be read.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @return a byte value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1285,8 +1275,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Writes a byte into this segment at the given offset, with the given layout.
      *
      * @param layout the layout of the region of memory to be written.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @param value the byte value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1307,8 +1296,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Reads a boolean from this segment at the given offset, with the given layout.
      *
      * @param layout the layout of the region of memory to be read.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @return a boolean value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1328,8 +1316,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Writes a boolean into this segment at the given offset, with the given layout.
      *
      * @param layout the layout of the region of memory to be written.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @param value the boolean value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1350,8 +1337,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Reads a char from this segment at the given offset, with the given layout.
      *
      * @param layout the layout of the region of memory to be read.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @return a char value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1371,8 +1357,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Writes a char into this segment at the given offset, with the given layout.
      *
      * @param layout the layout of the region of memory to be written.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @param value the char value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1393,8 +1378,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Reads a short from this segment at the given offset, with the given layout.
      *
      * @param layout the layout of the region of memory to be read.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @return a short value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1414,8 +1398,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Writes a short into this segment at the given offset, with the given layout.
      *
      * @param layout the layout of the region of memory to be written.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @param value the short value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1436,8 +1419,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Reads an int from this segment at the given offset, with the given layout.
      *
      * @param layout the layout of the region of memory to be read.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @return an int value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1457,8 +1439,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Writes an int into this segment at the given offset, with the given layout.
      *
      * @param layout the layout of the region of memory to be written.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @param value the int value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1479,8 +1460,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Reads a float from this segment at the given offset, with the given layout.
      *
      * @param layout the layout of the region of memory to be read.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @return a float value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1500,8 +1480,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Writes a float into this segment at the given offset, with the given layout.
      *
      * @param layout the layout of the region of memory to be written.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @param value the float value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1522,8 +1501,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Reads a long from this segment at the given offset, with the given layout.
      *
      * @param layout the layout of the region of memory to be read.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @return a long value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1543,8 +1521,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Writes a long into this segment at the given offset, with the given layout.
      *
      * @param layout the layout of the region of memory to be written.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @param value the long value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1565,8 +1542,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Reads a double from this segment at the given offset, with the given layout.
      *
      * @param layout the layout of the region of memory to be read.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @return a double value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1586,8 +1562,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Writes a double into this segment at the given offset, with the given layout.
      *
      * @param layout the layout of the region of memory to be written.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @param value the double value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1611,8 +1586,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout, then the size of the returned
      * segment is {@code Long.MAX_VALUE}.
      * @param layout the layout of the region of memory to be read.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @return a native segment wrapping an address read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1632,8 +1606,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Writes an address into this segment at the given offset, with the given layout.
      *
      * @param layout the layout of the region of memory to be written.
-     * @param offset offset in bytes (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address() + offset}.
+     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @param value the address value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1654,8 +1627,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Reads a char from this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the region of memory to be read.
-     * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
      * @return a char value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1678,8 +1651,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Writes a char into this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the region of memory to be written.
-     * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
      * @param value the char value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1703,8 +1676,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Reads a short from this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the region of memory to be read.
-     * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
      * @return a short value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1727,8 +1700,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Writes a short into this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the region of memory to be written.
-     * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
      * @param value the short value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1752,8 +1725,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Reads an int from this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the region of memory to be read.
-     * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
      * @return an int value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1776,8 +1749,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Writes an int into this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the region of memory to be written.
-     * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
      * @param value the int value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1801,8 +1774,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Reads a float from this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the region of memory to be read.
-     * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
      * @return a float value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1825,8 +1798,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Writes a float into this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the region of memory to be written.
-     * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
      * @param value the float value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1850,8 +1823,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Reads a long from this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the region of memory to be read.
-     * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
      * @return a long value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1874,8 +1847,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Writes a long into this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the region of memory to be written.
-     * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
      * @param value the long value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1899,8 +1872,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Reads a double from this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the region of memory to be read.
-     * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
      * @return a double value read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1923,8 +1896,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Writes a double into this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the region of memory to be written.
-     * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
      * @param value the double value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1952,8 +1925,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * segment is {@code Long.MAX_VALUE}.
      *
      * @param layout the layout of the region of memory to be read.
-     * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this read operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
      * @return a native segment wrapping an address read from this segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -1976,8 +1949,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Writes an address into this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the region of memory to be written.
-     * @param index index (relative to this segment). For instance, if this segment is a {@linkplain #isNative() native} segment,
-     *               the final address of this write operation can be expressed as {@code address() + (index * layout.byteSize())}.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
      * @param value the address value to be written.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
