@@ -27,6 +27,7 @@ package jdk.internal.foreign.abi;
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Scoped;
+import jdk.internal.foreign.Utils;
 import jdk.internal.misc.VM;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -683,20 +684,13 @@ public class BindingSpecializer {
 
             if (toType == boolean.class) {
                 // implement least significant byte non-zero test
-                Label falseLabel = new Label();
-                Label endLabel = new Label();
 
                 // select first byte
                 emitConst(0xFF);
                 mv.visitInsn(IAND);
 
-                // check non-zero
-                mv.visitJumpInsn(IFEQ, falseLabel);
-                emitConst(1);
-                mv.visitJumpInsn(GOTO, endLabel);
-                mv.visitLabel(falseLabel);
-                emitConst(0);
-                mv.visitLabel(endLabel);
+                // convert to boolean
+                emitInvokeStatic(Utils.class, "byteToBoolean", "(B)Z");
             } else if (toType == byte.class) {
                 mv.visitInsn(I2B);
             } else if (toType == short.class) {

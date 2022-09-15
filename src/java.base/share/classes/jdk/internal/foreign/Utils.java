@@ -128,7 +128,7 @@ public final class Utils {
         return VarHandleCache.put(layout, handle);
     }
 
-    private static boolean byteToBoolean(byte b) {
+    public static boolean byteToBoolean(byte b) {
         return b != 0;
     }
 
