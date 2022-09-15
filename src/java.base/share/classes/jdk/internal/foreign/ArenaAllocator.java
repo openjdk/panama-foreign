@@ -54,7 +54,7 @@ public final class ArenaAllocator implements SegmentAllocator {
             throw new OutOfMemoryError();
         }
         size += allocatedSize;
-        return MemorySegment.allocateNative(byteSize, byteAlignment, session);
+        return session.allocate(byteSize, byteAlignment);
     }
 
     @Override

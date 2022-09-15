@@ -111,7 +111,7 @@ public class TestScopedOperations {
         // session operations
         ScopedOperation.ofScope(session -> session.addCloseAction(() -> {
         }), "MemorySession::addCloseAction");
-        ScopedOperation.ofScope(session -> MemorySegment.allocateNative(100, session), "MemorySegment::allocateNative");
+        ScopedOperation.ofScope(session -> session.allocate(100), "MemorySession::allocate");
         ScopedOperation.ofScope(session -> {
             try (FileChannel fileChannel = FileChannel.open(tempPath, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                 fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, 10L, session);
@@ -217,7 +217,7 @@ public class TestScopedOperations {
 
         enum SegmentFactory {
 
-            NATIVE(session -> MemorySegment.allocateNative(10, session)),
+            NATIVE(session -> session.allocate(10)),
             MAPPED(session -> {
                 try (FileChannel fileChannel = FileChannel.open(Path.of("foo.txt"), StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                     return fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, 10L, session);
