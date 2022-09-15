@@ -26,6 +26,7 @@
  * @test
  * @enablePreview
  * @modules java.base/jdk.internal.foreign
+ *          java.base/jdk.internal.foreign.layout
  * @run testng TestLayoutEquality
  */
 
@@ -45,7 +46,7 @@ public class TestLayoutEquality {
 
     @Test(dataProvider = "layoutConstants")
     public void testReconstructedEquality(ValueLayout layout) {
-        ValueLayout newLayout = MemoryLayout.valueLayout(layout.carrier(), layout.order());
+        ValueLayout newLayout = ValueLayoutUtil.valueLayout(layout.carrier(), layout.order());
         newLayout = newLayout.withBitAlignment(layout.bitAlignment());
         if (layout instanceof ValueLayout.OfAddress addressLayout && addressLayout.isUnbounded()) {
             newLayout = ((ValueLayout.OfAddress)newLayout).asUnbounded();

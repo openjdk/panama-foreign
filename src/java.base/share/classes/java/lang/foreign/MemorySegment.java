@@ -27,7 +27,6 @@
 package java.lang.foreign;
 
 import java.io.UncheckedIOException;
-import java.lang.reflect.Array;
 import java.lang.invoke.MethodHandles;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -46,13 +45,9 @@ import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.layout.ValueLayouts;
 import jdk.internal.javac.PreviewFeature;
-import jdk.internal.misc.ScopedMemoryAccess;
-import jdk.internal.misc.Unsafe;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.vm.annotation.ForceInline;
-
-import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 
 /**
  * A memory segment models a contiguous region of memory. A memory segment is associated with both spatial
@@ -438,137 +433,11 @@ public sealed interface MemorySegment
     }
 
     /**
-     * Performs a bulk copy from source segment to destination segment. More specifically, the bytes at offset
-     * {@code srcOffset} through {@code srcOffset + bytes - 1} in the source segment are copied into the destination
-     * segment at offset {@code dstOffset} through {@code dstOffset + bytes - 1}.
-     * <p>
-     * If the source segment overlaps with this segment, then the copying is performed as if the bytes at
-     * offset {@code srcOffset} through {@code srcOffset + bytes - 1} in the source segment were first copied into a
-     * temporary segment with size {@code bytes}, and then the contents of the temporary segment were copied into
-     * the destination segment at offset {@code dstOffset} through {@code dstOffset + bytes - 1}.
-     * <p>
-     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and the destination segment
-     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
-     * For example, this may occur if the same file is {@linkplain FileChannel#map mapped} to two segments.
-     * <p>
-     * Calling this method is equivalent to the following code:
-     * {@snippet lang=java :
-     * MemorySegment.copy(srcSegment, ValueLayout.JAVA_BYTE, srcOffset, dstSegment, ValueLayout.JAVA_BYTE, dstOffset, bytes);
-     * }
-     * @param srcSegment the source segment.
-     * @param srcOffset the starting offset, in bytes, of the source segment.
-     * @param dstSegment the destination segment.
-     * @param dstOffset the starting offset, in bytes, of the destination segment.
-     * @param bytes the number of bytes to be copied.
-     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code srcSegment} is not
-     * {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread other than the thread owning
-     * the {@linkplain #session() session} associated with {@code srcSegment}.
-     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code dstSegment} is not
-     * {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread other than the thread owning
-     * the {@linkplain #session() session} associated with {@code dstSegment}.
-     * @throws IndexOutOfBoundsException if {@code srcOffset + bytes > srcSegment.byteSize()} or if
-     * {@code dstOffset + bytes > dstSegment.byteSize()}, or if either {@code srcOffset}, {@code dstOffset}
-     * or {@code bytes} are {@code < 0}.
-     * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
-     */
-    @ForceInline
-    static void copy(MemorySegment srcSegment,
-                     long srcOffset,
-                     MemorySegment dstSegment,
-                     long dstOffset,
-                     long bytes) {
-
-        copy(srcSegment, ValueLayout.JAVA_BYTE, srcOffset, dstSegment, ValueLayout.JAVA_BYTE, dstOffset, bytes);
-    }
-
-    /**
      * {@return the size (in bytes) of this memory segment}
      */
     long byteSize();
 
-    /**
-     * Performs a bulk copy from source segment to destination segment. More specifically, if {@code S} is the byte size
-     * of the element layouts, the bytes at offset {@code srcOffset} through {@code srcOffset + (elementCount * S) - 1}
-     * in the source segment are copied into the destination segment at offset {@code dstOffset} through {@code dstOffset + (elementCount * S) - 1}.
-     * <p>
-     * The copy occurs in an element-wise fashion: the bytes in the source segment are interpreted as a sequence of elements
-     * whose layout is {@code srcElementLayout}, whereas the bytes in the destination segment are interpreted as a sequence of
-     * elements whose layout is {@code dstElementLayout}. Both element layouts must have same size {@code S}.
-     * If the byte order of the two element layouts differ, the bytes corresponding to each element to be copied
-     * are swapped accordingly during the copy operation.
-     * <p>
-     * If the source segment overlaps with this segment, then the copying is performed as if the bytes at
-     * offset {@code srcOffset} through {@code srcOffset + (elementCount * S) - 1} in the source segment were first copied into a
-     * temporary segment with size {@code bytes}, and then the contents of the temporary segment were copied into
-     * the destination segment at offset {@code dstOffset} through {@code dstOffset + (elementCount * S) - 1}.
-     * <p>
-     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and the destination segment
-     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
-     * For example, this may occur if the same file is {@linkplain FileChannel#map mapped} to two segments.
-     * @param srcSegment the source segment.
-     * @param srcElementLayout the element layout associated with the source segment.
-     * @param srcOffset the starting offset, in bytes, of the source segment.
-     * @param dstSegment the destination segment.
-     * @param dstElementLayout the element layout associated with the destination segment.
-     * @param dstOffset the starting offset, in bytes, of the destination segment.
-     * @param elementCount the number of elements to be copied.
-     * @throws IllegalArgumentException if the element layouts have different sizes, if the source (resp. destination) segment/offset are
-     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the source
-     * (resp. destination) element layout, or if the source (resp. destination) element layout alignment is greater than its size.
-     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code srcSegment} is not
-     * {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread other than the thread owning
-     * the {@linkplain #session() session} associated with this {@code srcSegment}.
-     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code dstSegment} is not
-     * {@linkplain MemorySession#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread other than the thread owning
-     * the {@linkplain #session() session} associated with {@code dstSegment}.
-     * @throws IndexOutOfBoundsException if {@code srcOffset + (elementCount * S) > srcSegment.byteSize()} or if
-     * {@code dstOffset + (elementCount * S) > dstSegment.byteSize()}, where {@code S} is the byte size
-     * of the element layouts, or if either {@code srcOffset}, {@code dstOffset} or {@code elementCount} are {@code < 0}.
-     * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
-     */
-    @ForceInline
-    static void copy(MemorySegment srcSegment,
-                     ValueLayout srcElementLayout,
-                     long srcOffset,
-                     MemorySegment dstSegment,
-                     ValueLayout dstElementLayout,
-                     long dstOffset,
-                     long elementCount) {
 
-        Objects.requireNonNull(srcSegment);
-        Objects.requireNonNull(srcElementLayout);
-        Objects.requireNonNull(dstSegment);
-        Objects.requireNonNull(dstElementLayout);
-        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        AbstractMemorySegmentImpl dstImpl = (AbstractMemorySegmentImpl)dstSegment;
-        if (srcElementLayout.byteSize() != dstElementLayout.byteSize()) {
-            throw new IllegalArgumentException("Source and destination layouts must have same size");
-        }
-        Utils.checkElementAlignment(srcElementLayout, "Source layout alignment greater than its size");
-        Utils.checkElementAlignment(dstElementLayout, "Destination layout alignment greater than its size");
-        if (!srcImpl.isAlignedForElement(srcOffset, srcElementLayout)) {
-            throw new IllegalArgumentException("Source segment incompatible with alignment constraints");
-        }
-        if (!dstImpl.isAlignedForElement(dstOffset, dstElementLayout)) {
-            throw new IllegalArgumentException("Destination segment incompatible with alignment constraints");
-        }
-        long size = elementCount * srcElementLayout.byteSize();
-        srcImpl.checkAccess(srcOffset, size, true);
-        dstImpl.checkAccess(dstOffset, size, false);
-        if (srcElementLayout.byteSize() == 1 || srcElementLayout.order() == dstElementLayout.order()) {
-            ScopedMemoryAccess.getScopedMemoryAccess().copyMemory(srcImpl.sessionImpl(), dstImpl.sessionImpl(),
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
-                    dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size);
-        } else {
-            ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(srcImpl.sessionImpl(), dstImpl.sessionImpl(),
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
-                    dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size, srcElementLayout.byteSize());
-        }
-    }
 
     /**
      * Finds and returns the offset, in bytes, of the first mismatch between
@@ -1921,6 +1790,111 @@ public sealed interface MemorySegment
     }
 
     /**
+     * Performs a bulk copy from source segment to destination segment. More specifically, the bytes at offset
+     * {@code srcOffset} through {@code srcOffset + bytes - 1} in the source segment are copied into the destination
+     * segment at offset {@code dstOffset} through {@code dstOffset + bytes - 1}.
+     * <p>
+     * If the source segment overlaps with this segment, then the copying is performed as if the bytes at
+     * offset {@code srcOffset} through {@code srcOffset + bytes - 1} in the source segment were first copied into a
+     * temporary segment with size {@code bytes}, and then the contents of the temporary segment were copied into
+     * the destination segment at offset {@code dstOffset} through {@code dstOffset + bytes - 1}.
+     * <p>
+     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and the destination segment
+     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
+     * For example, this may occur if the same file is {@linkplain FileChannel#map mapped} to two segments.
+     * <p>
+     * Calling this method is equivalent to the following code:
+     * {@snippet lang=java :
+     * MemorySegment.copy(srcSegment, ValueLayout.JAVA_BYTE, srcOffset, dstSegment, ValueLayout.JAVA_BYTE, dstOffset, bytes);
+     * }
+     * @param srcSegment the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
+     * @param dstSegment the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param bytes the number of bytes to be copied.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code srcSegment} is not
+     * {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread owning
+     * the {@linkplain #session() session} associated with {@code srcSegment}.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code dstSegment} is not
+     * {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread owning
+     * the {@linkplain #session() session} associated with {@code dstSegment}.
+     * @throws IndexOutOfBoundsException if {@code srcOffset + bytes > srcSegment.byteSize()} or if
+     * {@code dstOffset + bytes > dstSegment.byteSize()}, or if either {@code srcOffset}, {@code dstOffset}
+     * or {@code bytes} are {@code < 0}.
+     * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
+     */
+    @ForceInline
+    static void copy(MemorySegment srcSegment,
+                     long srcOffset,
+                     MemorySegment dstSegment,
+                     long dstOffset,
+                     long bytes) {
+        copy(srcSegment, ValueLayout.JAVA_BYTE, srcOffset, dstSegment, ValueLayout.JAVA_BYTE, dstOffset, bytes);
+    }
+
+    /**
+     * Performs a bulk copy from source segment to destination segment. More specifically, if {@code S} is the byte size
+     * of the element layouts, the bytes at offset {@code srcOffset} through {@code srcOffset + (elementCount * S) - 1}
+     * in the source segment are copied into the destination segment at offset {@code dstOffset} through {@code dstOffset + (elementCount * S) - 1}.
+     * <p>
+     * The copy occurs in an element-wise fashion: the bytes in the source segment are interpreted as a sequence of elements
+     * whose layout is {@code srcElementLayout}, whereas the bytes in the destination segment are interpreted as a sequence of
+     * elements whose layout is {@code dstElementLayout}. Both element layouts must have same size {@code S}.
+     * If the byte order of the two element layouts differ, the bytes corresponding to each element to be copied
+     * are swapped accordingly during the copy operation.
+     * <p>
+     * If the source segment overlaps with this segment, then the copying is performed as if the bytes at
+     * offset {@code srcOffset} through {@code srcOffset + (elementCount * S) - 1} in the source segment were first copied into a
+     * temporary segment with size {@code bytes}, and then the contents of the temporary segment were copied into
+     * the destination segment at offset {@code dstOffset} through {@code dstOffset + (elementCount * S) - 1}.
+     * <p>
+     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and the destination segment
+     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
+     * For example, this may occur if the same file is {@linkplain FileChannel#map mapped} to two segments.
+     * @param srcSegment the source segment.
+     * @param srcElementLayout the element layout associated with the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
+     * @param dstSegment the destination segment.
+     * @param dstElementLayout the element layout associated with the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param elementCount the number of elements to be copied.
+     * @throws IllegalArgumentException if the element layouts have different sizes, if the source (resp. destination) segment/offset are
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraints</a> in the source
+     * (resp. destination) element layout, or if the source (resp. destination) element layout alignment is greater than its size.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code srcSegment} is not
+     * {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread owning
+     * the {@linkplain #session() session} associated with this {@code srcSegment}.
+     * @throws IllegalStateException if the {@linkplain #session() session} associated with {@code dstSegment} is not
+     * {@linkplain MemorySession#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread other than the thread owning
+     * the {@linkplain #session() session} associated with {@code dstSegment}.
+     * @throws IndexOutOfBoundsException if {@code srcOffset + (elementCount * S) > srcSegment.byteSize()} or if
+     * {@code dstOffset + (elementCount * S) > dstSegment.byteSize()}, where {@code S} is the byte size
+     * of the element layouts, or if either {@code srcOffset}, {@code dstOffset} or {@code elementCount} are {@code < 0}.
+     * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
+     */
+    @ForceInline
+    static void copy(MemorySegment srcSegment,
+                     ValueLayout srcElementLayout,
+                     long srcOffset,
+                     MemorySegment dstSegment,
+                     ValueLayout dstElementLayout,
+                     long dstOffset,
+                     long elementCount) {
+
+        // Check the trivial invariants here
+        Objects.requireNonNull(srcSegment);
+        Objects.requireNonNull(srcElementLayout);
+        Objects.requireNonNull(dstSegment);
+        Objects.requireNonNull(dstElementLayout);
+
+        Utils.copy(srcSegment, srcElementLayout, srcOffset, dstSegment, dstElementLayout, dstOffset, elementCount);
+    }
+
+    /**
      * Copies a number of elements from a source memory segment to a destination array. The elements, whose size and alignment
      * constraints are specified by the given layout, are read from the source segment, starting at the given offset
      * (expressed in bytes), and are copied into the destination array, at the given index.
@@ -1948,52 +1922,12 @@ public sealed interface MemorySegment
                      Object dstArray,
                      int dstIndex,
                      int elementCount) {
-
+        // Check the trivial invariants here
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         Objects.requireNonNull(srcLayout);
-        long baseAndScale = getBaseAndScale(dstArray.getClass());
-        if (dstArray.getClass().componentType() != srcLayout.carrier()) {
-            throw new IllegalArgumentException("Incompatible value layout: " + srcLayout);
-        }
-        int dstBase = (int)baseAndScale;
-        long dstWidth = (int)(baseAndScale >> 32); // Use long arithmetics below
-        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        Utils.checkElementAlignment(srcLayout, "Source layout alignment greater than its size");
-        if (!srcImpl.isAlignedForElement(srcOffset, srcLayout)) {
-            throw new IllegalArgumentException("Source segment incompatible with alignment constraints");
-        }
-        srcImpl.checkAccess(srcOffset, elementCount * dstWidth, true);
-        Objects.checkFromIndexSize(dstIndex, elementCount, Array.getLength(dstArray));
-        if (dstWidth == 1 || srcLayout.order() == ByteOrder.nativeOrder()) {
-            ScopedMemoryAccess.getScopedMemoryAccess().copyMemory(srcImpl.sessionImpl(), null,
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
-                    dstArray, dstBase + (dstIndex * dstWidth), elementCount * dstWidth);
-        } else {
-            ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(srcImpl.sessionImpl(), null,
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
-                    dstArray, dstBase + (dstIndex * dstWidth), elementCount * dstWidth, dstWidth);
-        }
-    }
 
-    private static long getBaseAndScale(Class<?> arrayType) {
-        if (arrayType.equals(byte[].class)) {
-            return (long)Unsafe.ARRAY_BYTE_BASE_OFFSET | ((long)Unsafe.ARRAY_BYTE_INDEX_SCALE << 32);
-        } else if (arrayType.equals(char[].class)) {
-            return (long)Unsafe.ARRAY_CHAR_BASE_OFFSET | ((long)Unsafe.ARRAY_CHAR_INDEX_SCALE << 32);
-        } else if (arrayType.equals(short[].class)) {
-            return (long)Unsafe.ARRAY_SHORT_BASE_OFFSET | ((long)Unsafe.ARRAY_SHORT_INDEX_SCALE << 32);
-        } else if (arrayType.equals(int[].class)) {
-            return (long)Unsafe.ARRAY_INT_BASE_OFFSET | ((long) Unsafe.ARRAY_INT_INDEX_SCALE << 32);
-        } else if (arrayType.equals(float[].class)) {
-            return (long)Unsafe.ARRAY_FLOAT_BASE_OFFSET | ((long)Unsafe.ARRAY_FLOAT_INDEX_SCALE << 32);
-        } else if (arrayType.equals(long[].class)) {
-            return (long)Unsafe.ARRAY_LONG_BASE_OFFSET | ((long)Unsafe.ARRAY_LONG_INDEX_SCALE << 32);
-        } else if (arrayType.equals(double[].class)) {
-            return (long)Unsafe.ARRAY_DOUBLE_BASE_OFFSET | ((long)Unsafe.ARRAY_DOUBLE_INDEX_SCALE << 32);
-        } else {
-            throw new IllegalArgumentException("Not a supported array class: " + arrayType.getSimpleName());
-        }
+        Utils.copy(srcSegment, srcLayout, srcOffset, dstArray, dstIndex, elementCount);
     }
 
     /**
@@ -2024,32 +1958,12 @@ public sealed interface MemorySegment
                      ValueLayout dstLayout,
                      long dstOffset,
                      int elementCount) {
-
+        // Check the trivial invariants here
         Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
         Objects.requireNonNull(dstLayout);
-        long baseAndScale = getBaseAndScale(srcArray.getClass());
-        if (srcArray.getClass().componentType() != dstLayout.carrier()) {
-            throw new IllegalArgumentException("Incompatible value layout: " + dstLayout);
-        }
-        int srcBase = (int)baseAndScale;
-        long srcWidth = (int)(baseAndScale >> 32); // Use long arithmetics below
-        Objects.checkFromIndexSize(srcIndex, elementCount, Array.getLength(srcArray));
-        AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
-        Utils.checkElementAlignment(dstLayout, "Destination layout alignment greater than its size");
-        if (!destImpl.isAlignedForElement(dstOffset, dstLayout)) {
-            throw new IllegalArgumentException("Destination segment incompatible with alignment constraints");
-        }
-        destImpl.checkAccess(dstOffset, elementCount * srcWidth, false);
-        if (srcWidth == 1 || dstLayout.order() == ByteOrder.nativeOrder()) {
-            ScopedMemoryAccess.getScopedMemoryAccess().copyMemory(null, destImpl.sessionImpl(),
-                    srcArray, srcBase + (srcIndex * srcWidth),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount * srcWidth);
-        } else {
-            ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(null, destImpl.sessionImpl(),
-                    srcArray, srcBase + (srcIndex * srcWidth),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount * srcWidth, srcWidth);
-        }
+
+        Utils.copy(srcArray, srcIndex, dstSegment, dstLayout, dstOffset, elementCount);
     }
 
     /**
@@ -2095,40 +2009,11 @@ public sealed interface MemorySegment
                          long dstFromOffset,
                          long dstToOffset) {
 
-        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)Objects.requireNonNull(srcSegment);
-        AbstractMemorySegmentImpl dstImpl = (AbstractMemorySegmentImpl)Objects.requireNonNull(dstSegment);
-        long srcBytes = srcToOffset - srcFromOffset;
-        long dstBytes = dstToOffset - dstFromOffset;
-        srcImpl.checkAccess(srcFromOffset, srcBytes, true);
-        dstImpl.checkAccess(dstFromOffset, dstBytes, true);
-        if (dstImpl == srcImpl) {
-            srcImpl.checkValidState();
-            return -1;
-        }
+        // Check the trivial invariants here
+        Objects.requireNonNull(srcSegment);
+        Objects.requireNonNull(dstSegment);
 
-        long bytes = Math.min(srcBytes, dstBytes);
-        long i = 0;
-        if (bytes > 7) {
-            if (srcImpl.get(JAVA_BYTE, srcFromOffset) != dstImpl.get(JAVA_BYTE, dstFromOffset)) {
-                return 0;
-            }
-            i = AbstractMemorySegmentImpl.vectorizedMismatchLargeForBytes(srcImpl.sessionImpl(), dstImpl.sessionImpl(),
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcFromOffset,
-                    dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstFromOffset,
-                    bytes);
-            if (i >= 0) {
-                return i;
-            }
-            long remaining = ~i;
-            assert remaining < 8 : "remaining greater than 7: " + remaining;
-            i = bytes - remaining;
-        }
-        for (; i < bytes; i++) {
-            if (srcImpl.get(JAVA_BYTE, srcFromOffset + i) != dstImpl.get(JAVA_BYTE, dstFromOffset + i)) {
-                return i;
-            }
-        }
-        return srcBytes != dstBytes ? bytes : -1;
+        return Utils.mismatch(srcSegment,srcFromOffset,srcToOffset, dstSegment, dstFromOffset, dstToOffset);
     }
 
 }

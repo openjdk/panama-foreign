@@ -169,7 +169,7 @@ public class VarHandleTestExact {
 
     @Test(dataProvider = "dataSetMemorySegment")
     public void testExactSegmentSet(Class<?> carrier, Object testValue, SetSegmentX setter) {
-        VarHandle vh = MethodHandles.memorySegmentViewVarHandle(MemoryLayout.valueLayout(carrier, ByteOrder.nativeOrder()));
+        VarHandle vh = MethodHandles.memorySegmentViewVarHandle(ValueLayoutUtil.valueLayout(carrier, ByteOrder.nativeOrder()));
         try (MemorySession session = MemorySession.openConfined()) {
             MemorySegment seg = MemorySegment.allocateNative(8, session);
             doTest(vh,
