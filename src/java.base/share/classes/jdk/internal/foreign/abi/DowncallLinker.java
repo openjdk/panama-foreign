@@ -146,7 +146,9 @@ public final class DowncallLinker {
                 .map(Binding.VMLoad.class::cast);
     }
 
-    Object invokeInterpBindings(SegmentAllocator allocator, Object[] args, InvocationData invData) throws Throwable {
+    Object invokeInterpBindings(SegmentAllocator allocator,
+                                Object[] args,
+                                InvocationData invData) throws Throwable {
         Binding.Context unboxContext = callingSequence.allocationSize() != 0
                 ? Binding.Context.ofBoundedAllocator(callingSequence.allocationSize())
                 : Binding.Context.DUMMY;

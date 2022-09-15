@@ -76,7 +76,11 @@ public final class LayoutPath {
 
     private final long[] bounds;
 
-    private LayoutPath(MemoryLayout layout, long offset, long[] strides, long[] bounds, LayoutPath enclosing) {
+    private LayoutPath(MemoryLayout layout,
+                       long offset,
+                       long[] strides,
+                       long[] bounds,
+                       LayoutPath enclosing) {
         this.layout = layout;
         this.offset = offset;
         this.strides = strides;
@@ -99,7 +103,11 @@ public final class LayoutPath {
         }
     }
 
-    private static LayoutPath nestedPath(MemoryLayout layout, long offset, long[] strides, long[] bounds, LayoutPath encl) {
+    private static LayoutPath nestedPath(MemoryLayout layout,
+                                         long offset,
+                                         long[] strides,
+                                         long[] bounds,
+                                         LayoutPath encl) {
         return new LayoutPath(layout, offset, strides, bounds, encl);
     }
 

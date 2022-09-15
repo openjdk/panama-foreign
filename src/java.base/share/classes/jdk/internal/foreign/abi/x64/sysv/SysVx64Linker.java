@@ -50,7 +50,10 @@ public final class SysVx64Linker extends AbstractLinker {
     }
 
     @Override
-    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession scope) {
+    protected MemorySegment arrangeUpcall(MethodHandle target,
+                                          MethodType targetType,
+                                          FunctionDescriptor function,
+                                          MemorySession scope) {
         return CallArranger.arrangeUpcall(target, targetType, function, scope);
     }
 

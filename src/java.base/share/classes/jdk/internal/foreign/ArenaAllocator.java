@@ -39,7 +39,9 @@ public final class ArenaAllocator implements SegmentAllocator {
     private long sp = 0L;
     private long size = 0;
 
-    public ArenaAllocator(long blockSize, long arenaSize, MemorySession session) {
+    public ArenaAllocator(long blockSize,
+                          long arenaSize,
+                          MemorySession session) {
         this.blockSize = blockSize;
         this.arenaSize = arenaSize;
         this.session = session;

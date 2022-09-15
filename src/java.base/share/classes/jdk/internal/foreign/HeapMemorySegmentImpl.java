@@ -62,7 +62,10 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
     final Object base;
 
     @ForceInline
-    HeapMemorySegmentImpl(long offset, Object base, long length, boolean readOnly) {
+    HeapMemorySegmentImpl(long offset,
+                          Object base,
+                          long length,
+                          boolean readOnly) {
         super(length, readOnly, MemorySession.global());
         this.offset = offset;
         this.base = base;
@@ -74,7 +77,10 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
     }
 
     @Override
-    abstract HeapMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySession session);
+    abstract HeapMemorySegmentImpl dup(long offset,
+                                       long size,
+                                       boolean readOnly,
+                                       MemorySession session);
 
     @Override
     ByteBuffer makeByteBuffer() {

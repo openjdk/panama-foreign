@@ -52,7 +52,10 @@ public final class MacOsAArch64Linker extends AbstractLinker {
     }
 
     @Override
-    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession scope) {
+    protected MemorySegment arrangeUpcall(MethodHandle target,
+                                          MethodType targetType,
+                                          FunctionDescriptor function,
+                                          MemorySession scope) {
         return CallArranger.MACOS.arrangeUpcall(target, targetType, function, scope);
     }
 

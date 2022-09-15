@@ -196,7 +196,9 @@ final class TypeClass {
         return groups;
     }
 
-    private static void groupByEightBytes(MemoryLayout l, long offset, List<ArgumentClassImpl>[] groups) {
+    private static void groupByEightBytes(MemoryLayout l,
+                                          long offset,
+                                          List<ArgumentClassImpl>[] groups) {
         if (l instanceof GroupLayout group) {
             for (MemoryLayout m : group.memberLayouts()) {
                 groupByEightBytes(m, offset, groups);

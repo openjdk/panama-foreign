@@ -78,7 +78,9 @@ public abstract sealed class MemorySessionImpl
     final Thread owner;
     int state = OPEN;
 
-    protected MemorySessionImpl(Thread owner, ResourceList resourceList, Cleaner cleaner) {
+    protected MemorySessionImpl(Thread owner,
+                                ResourceList resourceList,
+                                Cleaner cleaner) {
         this.owner = owner;
         this.resourceList = resourceList;
         cleanable = (cleaner != null) ?

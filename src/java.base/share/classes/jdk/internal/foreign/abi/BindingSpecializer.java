@@ -640,19 +640,27 @@ public final class BindingSpecializer {
         return valueLayoutType;
     }
 
-    private void emitInvokeStatic(Class<?> owner, String methodName, String descriptor) {
+    private void emitInvokeStatic(Class<?> owner,
+                                  String methodName,
+                                  String descriptor) {
         mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(owner), methodName, descriptor, owner.isInterface());
     }
 
-    private void emitInvokeInterface(Class<?> owner, String methodName, String descriptor) {
+    private void emitInvokeInterface(Class<?> owner,
+                                     String methodName,
+                                     String descriptor) {
         mv.visitMethodInsn(INVOKEINTERFACE, Type.getInternalName(owner), methodName, descriptor, true);
     }
 
-    private void emitInvokeVirtual(Class<?> owner, String methodName, String descriptor) {
+    private void emitInvokeVirtual(Class<?> owner,
+                                   String methodName,
+                                   String descriptor) {
         mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(owner), methodName, descriptor, false);
     }
 
-    private void emitGetStatic(Class<?> owner, String fieldName, String descriptor) {
+    private void emitGetStatic(Class<?> owner,
+                               String fieldName,
+                               String descriptor) {
         mv.visitFieldInsn(GETSTATIC, Type.getInternalName(owner), fieldName, descriptor);
     }
 
@@ -774,7 +782,9 @@ public final class BindingSpecializer {
         mv.visitInsn(opcode);
     }
 
-    static MethodHandle specialize(MethodHandle leafHandle, CallingSequence callingSequence, ABIDescriptor abi) {
+    static MethodHandle specialize(MethodHandle leafHandle,
+                                   CallingSequence callingSequence,
+                                   ABIDescriptor abi) {
         if (callingSequence.forUpcall()) {
             MethodHandle wrapper = UPCALL_WRAPPER_CACHE.get(callingSequence.functionDesc(), fd -> specializeUpcall(leafHandle, callingSequence, abi));
             return MethodHandles.insertArguments(wrapper, 0, leafHandle); // lazily customized for leaf handle instances
@@ -787,7 +797,9 @@ public final class BindingSpecializer {
      * Low-level emit helpers.
      */
 
-    private static MethodHandle specializeDowncall(MethodHandle leafHandle, CallingSequence callingSequence, ABIDescriptor abi) {
+    private static MethodHandle specializeDowncall(MethodHandle leafHandle,
+                                                   CallingSequence callingSequence,
+                                                   ABIDescriptor abi) {
         MethodType callerMethodType = callingSequence.callerMethodType();
         if (callingSequence.needsReturnBuffer()) {
             callerMethodType = callerMethodType.dropParameterTypes(0, 1); // Return buffer does not appear in the parameter list
@@ -804,7 +816,9 @@ public final class BindingSpecializer {
         }
     }
 
-    private static MethodHandle specializeUpcall(MethodHandle leafHandle, CallingSequence callingSequence, ABIDescriptor abi) {
+    private static MethodHandle specializeUpcall(MethodHandle leafHandle,
+                                                 CallingSequence callingSequence,
+                                                 ABIDescriptor abi) {
         MethodType callerMethodType = callingSequence.callerMethodType();
         callerMethodType = callerMethodType.insertParameterTypes(0, MethodHandle.class); // target
 

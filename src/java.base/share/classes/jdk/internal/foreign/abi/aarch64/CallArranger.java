@@ -112,7 +112,9 @@ public abstract class CallArranger {
         return handle;
     }
 
-    public final Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
+    public final Bindings getBindings(MethodType mt,
+                                      FunctionDescriptor cDesc,
+                                      boolean forUpcall) {
         CallingSequenceBuilder csb = new CallingSequenceBuilder(C, forUpcall);
 
         BindingCalculator argCalc = forUpcall ? new BoxBindingCalculator(true) : new UnboxBindingCalculator(true);
@@ -155,7 +157,10 @@ public abstract class CallArranger {
       */
      protected abstract boolean varArgsOnStack();
 
-    public final MemorySegment arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, MemorySession session) {
+    public final MemorySegment arrangeUpcall(MethodHandle target,
+                                             MethodType mt,
+                                             FunctionDescriptor cDesc,
+                                             MemorySession session) {
         Bindings bindings = getBindings(mt, cDesc, true);
 
         if (bindings.isInMemoryReturn) {

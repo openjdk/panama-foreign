@@ -90,7 +90,9 @@ public final class CallArranger {
         return handle;
     }
 
-    public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
+    public static Bindings getBindings(MethodType mt,
+                                       FunctionDescriptor cDesc,
+                                       boolean forUpcall) {
         CallingSequenceBuilder csb = new CallingSequenceBuilder(CSysV, forUpcall);
 
         BindingCalculator argCalc = forUpcall ? new BoxBindingCalculator(true) : new UnboxBindingCalculator(true);
@@ -129,7 +131,10 @@ public final class CallArranger {
                 .isPresent();
     }
 
-    public static MemorySegment arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, MemorySession session) {
+    public static MemorySegment arrangeUpcall(MethodHandle target,
+                                              MethodType mt,
+                                              FunctionDescriptor cDesc,
+                                              MemorySession session) {
         Bindings bindings = getBindings(mt, cDesc, true);
 
         if (bindings.isInMemoryReturn) {

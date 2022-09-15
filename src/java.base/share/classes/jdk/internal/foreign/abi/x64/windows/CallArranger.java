@@ -85,7 +85,9 @@ public final class CallArranger {
         return handle;
     }
 
-    public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
+    public static Bindings getBindings(MethodType mt,
+                                       FunctionDescriptor cDesc,
+                                       boolean forUpcall) {
         class CallingSequenceBuilderHelper {
             final CallingSequenceBuilder csb = new CallingSequenceBuilder(CWindows, forUpcall);
             final BindingCalculator argCalc =
@@ -129,7 +131,10 @@ public final class CallArranger {
                 .isPresent();
     }
 
-    public static MemorySegment arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, MemorySession session) {
+    public static MemorySegment arrangeUpcall(MethodHandle target,
+                                              MethodType mt,
+                                              FunctionDescriptor cDesc,
+                                              MemorySession session) {
         Bindings bindings = getBindings(mt, cDesc, true);
 
         if (bindings.isInMemoryReturn) {
@@ -187,7 +192,9 @@ public final class CallArranger {
         }
 
         @Override
-        public List<Binding> getBindings(Class<?> carrier, MemoryLayout layout, boolean isVararg) {
+        public List<Binding> getBindings(Class<?> carrier,
+                                         MemoryLayout layout,
+                                         boolean isVararg) {
             TypeClass argumentClass = TypeClass.typeClassFor(layout, isVararg);
             Binding.Builder bindings = Binding.builder();
             switch (argumentClass) {
@@ -249,7 +256,9 @@ public final class CallArranger {
         }
 
         @Override
-        public List<Binding> getBindings(Class<?> carrier, MemoryLayout layout, boolean isVararg) {
+        public List<Binding> getBindings(Class<?> carrier,
+                                         MemoryLayout layout,
+                                         boolean isVararg) {
             TypeClass argumentClass = TypeClass.typeClassFor(layout, isVararg);
             Binding.Builder bindings = Binding.builder();
             switch (argumentClass) {

@@ -52,7 +52,10 @@ public final class LinuxAArch64Linker extends AbstractLinker {
     }
 
     @Override
-    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession scope) {
+    protected MemorySegment arrangeUpcall(MethodHandle target,
+                                          MethodType targetType,
+                                          FunctionDescriptor function,
+                                          MemorySession scope) {
         return CallArranger.LINUX.arrangeUpcall(target, targetType, function, scope);
     }
 

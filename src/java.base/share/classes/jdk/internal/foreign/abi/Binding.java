@@ -193,8 +193,10 @@ public interface Binding {
 
     void verify(Deque<Class<?>> stack);
 
-    void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                   BindingInterpreter.LoadFunc loadFunc, Context context);
+    void interpret(Deque<Object> stack,
+                   BindingInterpreter.StoreFunc storeFunc,
+                   BindingInterpreter.LoadFunc loadFunc,
+                   Context context);
 
     static VMStore vmStore(VMStorage storage, Class<?> type) {
         checkType(type);
@@ -368,7 +370,7 @@ public interface Binding {
     /**
      * A builder helper class for generating lists of Bindings
      */
-    class Builder {
+    final class Builder {
         private final List<Binding> bindings = new ArrayList<>();
 
         public Binding.Builder vmStore(VMStorage storage, Class<?> type) {
@@ -495,8 +497,10 @@ public interface Binding {
         }
 
         @Override
-        public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                              BindingInterpreter.LoadFunc loadFunc, Context context) {
+        public void interpret(Deque<Object> stack,
+                              BindingInterpreter.StoreFunc storeFunc,
+                              BindingInterpreter.LoadFunc loadFunc,
+                              Context context) {
             Object value = stack.pop();
             MemorySegment operand = (MemorySegment) stack.pop();
             MemorySegment writeAddress = operand.asSlice(offset());
@@ -525,8 +529,10 @@ public interface Binding {
         }
 
         @Override
-        public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                              BindingInterpreter.LoadFunc loadFunc, Context context) {
+        public void interpret(Deque<Object> stack,
+                              BindingInterpreter.StoreFunc storeFunc,
+                              BindingInterpreter.LoadFunc loadFunc,
+                              Context context) {
             MemorySegment operand = (MemorySegment) stack.pop();
             MemorySegment readAddress = operand.asSlice(offset());
             stack.push(SharedUtils.read(readAddress, type()));

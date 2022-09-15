@@ -57,7 +57,9 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
     protected abstract MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function);
 
     @Override
-    public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, MemorySession scope) {
+    public MemorySegment upcallStub(MethodHandle target,
+                                    FunctionDescriptor function,
+                                    MemorySession scope) {
         Objects.requireNonNull(scope);
         Objects.requireNonNull(target);
         Objects.requireNonNull(function);
@@ -70,8 +72,10 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
         return arrangeUpcall(target, target.type(), function, scope);
     }
 
-    protected abstract MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType,
-                                                   FunctionDescriptor function, MemorySession scope);
+    protected abstract MemorySegment arrangeUpcall(MethodHandle target,
+                                                   MethodType targetType,
+                                                   FunctionDescriptor function,
+                                                   MemorySession scope);
 
     @Override
     public SystemLookup defaultLookup() {

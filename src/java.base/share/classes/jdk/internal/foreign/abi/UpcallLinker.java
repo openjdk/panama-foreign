@@ -64,7 +64,10 @@ public final class UpcallLinker {
     private UpcallLinker() {
     }
 
-    public static MemorySegment make(ABIDescriptor abi, MethodHandle target, CallingSequence callingSequence, MemorySession session) {
+    public static MemorySegment make(ABIDescriptor abi,
+                                     MethodHandle target,
+                                     CallingSequence callingSequence,
+                                     MemorySession session) {
         assert callingSequence.forUpcall();
         Binding.VMLoad[] argMoves = argMoveBindings(callingSequence);
         Binding.VMStore[] retMoves = retMoveBindings(callingSequence);
@@ -201,8 +204,11 @@ public final class UpcallLinker {
     // used for transporting data into native code
     private static record CallRegs(VMStorage[] argRegs, VMStorage[] retRegs) {}
 
-    static native long makeUpcallStub(MethodHandle mh, ABIDescriptor abi, CallRegs conv,
-                                      boolean needsReturnBuffer, long returnBufferSize);
+    static native long makeUpcallStub(MethodHandle mh,
+                                      ABIDescriptor abi,
+                                      CallRegs conv,
+                                      boolean needsReturnBuffer,
+                                      long returnBufferSize);
 
     private static native void registerNatives();
     static {

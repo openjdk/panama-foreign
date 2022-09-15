@@ -52,7 +52,10 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
     final long min;
 
     @ForceInline
-    NativeMemorySegmentImpl(long min, long length, boolean readOnly, MemorySession session) {
+    NativeMemorySegmentImpl(long min,
+                            long length,
+                            boolean readOnly,
+                            MemorySession session) {
         super(length, readOnly, session);
         this.min = min;
     }
@@ -101,7 +104,9 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
 
     // factories
 
-    public static MemorySegment makeNativeSegment(long byteSize, long byteAlignment, MemorySession session) {
+    public static MemorySegment makeNativeSegment(long byteSize,
+                                                  long byteAlignment,
+                                                  MemorySession session) {
         MemorySessionImpl sessionImpl = MemorySessionImpl.toSessionImpl(session);
         sessionImpl.checkValidState();
         if (VM.isDirectMemoryPageAligned()) {
@@ -138,7 +143,9 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
     // associated with MemorySegment::ofAddress.
 
     @ForceInline
-    public static MemorySegment makeNativeSegmentUnchecked(long min, long byteSize, MemorySession session) {
+    public static MemorySegment makeNativeSegmentUnchecked(long min,
+                                                           long byteSize,
+                                                           MemorySession session) {
         MemorySessionImpl sessionImpl = MemorySessionImpl.toSessionImpl(session);
         sessionImpl.checkValidState();
         return new NativeMemorySegmentImpl(min, byteSize, false, session);

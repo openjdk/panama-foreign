@@ -42,13 +42,20 @@ public sealed class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
     private final UnmapperProxy unmapper;
 
-    public MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, boolean readOnly, MemorySession session) {
+    public MappedMemorySegmentImpl(long min,
+                                   UnmapperProxy unmapper,
+                                   long length,
+                                   boolean readOnly,
+                                   MemorySession session) {
         super(min, length, readOnly, session);
         this.unmapper = unmapper;
     }
 
     @Override
-    MappedMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySession session) {
+    MappedMemorySegmentImpl dup(long offset,
+                                long size,
+                                boolean readOnly,
+                                MemorySession session) {
         return new MappedMemorySegmentImpl(min + offset, unmapper, size, readOnly, session);
     }
 

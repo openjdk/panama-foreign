@@ -107,8 +107,12 @@ public final class LinuxAArch64VaList implements VaList {
     private final long fpLimit;
     private MemorySegment stack;
 
-    private LinuxAArch64VaList(MemorySegment segment, MemorySegment stack,
-                               MemorySegment gpRegsArea, long gpLimit, MemorySegment fpRegsArea, long fpLimit) {
+    private LinuxAArch64VaList(MemorySegment segment,
+                               MemorySegment stack,
+                               MemorySegment gpRegsArea,
+                               long gpLimit,
+                               MemorySegment fpRegsArea,
+                               long fpLimit) {
         this.segment = segment;
         this.stack = stack;
         this.gpRegsArea = gpRegsArea;
@@ -269,8 +273,10 @@ public final class LinuxAArch64VaList implements VaList {
         }
     }
 
-    private static boolean isRegOverflow(long currentGPOffset, long currentFPOffset,
-                                         TypeClass typeClass, MemoryLayout layout) {
+    private static boolean isRegOverflow(long currentGPOffset,
+                                         long currentFPOffset,
+                                         TypeClass typeClass,
+                                         MemoryLayout layout) {
         if (typeClass == TypeClass.FLOAT || typeClass == TypeClass.STRUCT_HFA) {
             return currentFPOffset > MAX_FP_OFFSET - numSlots(layout) * FP_SLOT_SIZE;
         } else if (typeClass == TypeClass.STRUCT_REFERENCE) {
@@ -282,7 +288,7 @@ public final class LinuxAArch64VaList implements VaList {
 
     private long currentGPOffset() {
         // Offset from start of GP register segment. __gr_top points to the top
-        // (highest address) of the GP registers area. __gr_offs is the negative
+        // (the highest address) of the GP registers area. __gr_offs is the negative
         // offset of next saved register from the top.
 
         return gpRegsArea.byteSize() + grOffs();
@@ -290,7 +296,7 @@ public final class LinuxAArch64VaList implements VaList {
 
     private long currentFPOffset() {
         // Offset from start of FP register segment. __vr_top points to the top
-        // (highest address) of the FP registers area. __vr_offs is the negative
+        // (the highest address) of the FP registers area. __vr_offs is the negative
         // offset of next saved register from the top.
 
         return fpRegsArea.byteSize() + vrOffs();

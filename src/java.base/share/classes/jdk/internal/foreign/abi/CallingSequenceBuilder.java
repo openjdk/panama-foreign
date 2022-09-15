@@ -96,7 +96,9 @@ public final class CallingSequenceBuilder {
         desc = desc.insertArgumentLayouts(index, layout);
     }
 
-    private void verifyBindings(boolean forArguments, Class<?> carrier, List<Binding> bindings) {
+    private void verifyBindings(boolean forArguments,
+                                Class<?> carrier,
+                                List<Binding> bindings) {
         if (VERIFY_BINDINGS) {
             if (forUpcall == forArguments) {
                 verifyBoxBindings(carrier, bindings);

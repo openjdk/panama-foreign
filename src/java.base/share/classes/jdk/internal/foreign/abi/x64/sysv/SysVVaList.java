@@ -119,7 +119,9 @@ public final class SysVVaList implements VaList {
 
     private SysVVaList(MemorySegment segment,
                        MemorySegment overflowArgArea,
-                       MemorySegment regSaveArea, long gpLimit, long fpLimit) {
+                       MemorySegment regSaveArea,
+                       long gpLimit,
+                       long fpLimit) {
         this.segment = segment;
         this.overflowArgArea = overflowArgArea;
         this.regSaveArea = regSaveArea;
@@ -248,7 +250,9 @@ public final class SysVVaList implements VaList {
         }
     }
 
-    private static boolean isRegOverflow(long currentGPOffset, long currentFPOffset, TypeClass typeClass) {
+    private static boolean isRegOverflow(long currentGPOffset,
+                                         long currentFPOffset,
+                                         TypeClass typeClass) {
         return currentGPOffset > MAX_GP_OFFSET - typeClass.nIntegerRegs() * GP_SLOT_SIZE
                 || currentFPOffset > MAX_FP_OFFSET - typeClass.nVectorRegs() * FP_SLOT_SIZE;
     }

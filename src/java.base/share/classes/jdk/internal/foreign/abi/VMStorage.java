@@ -44,11 +44,16 @@ public record VMStorage(byte type,
         Objects.requireNonNull(debugName);
     }
 
-    public static VMStorage stackStorage(byte type, short size, int byteOffset) {
+    public static VMStorage stackStorage(byte type,
+                                         short size,
+                                         int byteOffset) {
         return new VMStorage(type, size, byteOffset, "Stack@" + byteOffset);
     }
 
-    public static VMStorage regStorage(byte type, short segmentMask, int index, String debugName) {
+    public static VMStorage regStorage(byte type,
+                                       short segmentMask,
+                                       int index,
+                                       String debugName) {
         return new VMStorage(type, segmentMask, index, debugName);
     }
 

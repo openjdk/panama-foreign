@@ -97,7 +97,9 @@ public final class SharedUtils {
      * Align the specified type from a given address
      * @return The address the data should be at based on alignment requirement
      */
-    public static long align(MemoryLayout t, boolean isVar, long addr) {
+    public static long align(MemoryLayout t,
+                             boolean isVar,
+                             long addr) {
         return alignUp(addr, alignment(t, isVar));
     }
 
@@ -154,7 +156,9 @@ public final class SharedUtils {
         return handle;
     }
 
-    static MethodHandle mergeArguments(MethodHandle mh, int sourceIndex, int destIndex) {
+    static MethodHandle mergeArguments(MethodHandle mh,
+                                       int sourceIndex,
+                                       int destIndex) {
         MethodType oldType = mh.type();
         Class<?> sourceType = oldType.parameterType(sourceIndex);
         Class<?> destType = oldType.parameterType(destIndex);
@@ -177,7 +181,9 @@ public final class SharedUtils {
         return permuteArguments(mh, newType, reorder);
     }
 
-    static MethodHandle swapArguments(MethodHandle mh, int firstArg, int secondArg) {
+    static MethodHandle swapArguments(MethodHandle mh,
+                                      int firstArg,
+                                      int secondArg) {
         MethodType mtype = mh.type();
         int[] perms = new int[mtype.parameterCount()];
         MethodType swappedType = MethodType.methodType(mtype.returnType());
@@ -343,7 +349,9 @@ public final class SharedUtils {
         return new NoSuchElementException("No such element: " + layout);
     }
 
-    static void writeOverSized(MemorySegment ptr, Class<?> type, Object o) {
+    static void writeOverSized(MemorySegment ptr,
+                               Class<?> type,
+                               Object o) {
         // use VH_LONG for integers to zero out the whole register in the process
         if (type == long.class) {
             ptr.set(JAVA_LONG_UNALIGNED, 0, (long) o);
@@ -367,7 +375,9 @@ public final class SharedUtils {
         }
     }
 
-    static void write(MemorySegment ptr, Class<?> type, Object o) {
+    static void write(MemorySegment ptr,
+                      Class<?> type,
+                      Object o) {
         if (type == long.class) {
             ptr.set(JAVA_LONG_UNALIGNED, 0, (long) o);
         } else if (type == int.class) {

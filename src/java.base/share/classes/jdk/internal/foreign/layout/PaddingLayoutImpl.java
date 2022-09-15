@@ -35,7 +35,9 @@ public final class PaddingLayoutImpl extends AbstractLayout<PaddingLayoutImpl> i
         this(bitSize, 1, Optional.empty());
     }
 
-    private PaddingLayoutImpl(long bitSize, long bitAlignment, Optional<String> name) {
+    private PaddingLayoutImpl(long bitSize,
+                              long bitAlignment,
+                              Optional<String> name) {
         super(bitSize, bitAlignment, name);
     }
 

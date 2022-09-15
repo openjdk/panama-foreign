@@ -33,7 +33,10 @@ public final class BindingInterpreter {
     private BindingInterpreter() {
     }
 
-    static void unbox(Object arg, List<Binding> bindings, StoreFunc storeFunc, Binding.Context context) {
+    static void unbox(Object arg,
+                      List<Binding> bindings,
+                      StoreFunc storeFunc,
+                      Binding.Context context) {
         Deque<Object> stack = new ArrayDeque<>();
 
         stack.push(arg);
@@ -42,7 +45,9 @@ public final class BindingInterpreter {
         }
     }
 
-    static Object box(List<Binding> bindings, LoadFunc loadFunc, Binding.Context context) {
+    static Object box(List<Binding> bindings,
+                      LoadFunc loadFunc,
+                      Binding.Context context) {
         Deque<Object> stack = new ArrayDeque<>();
         for (Binding b : bindings) {
             b.interpret(stack, null, loadFunc, context);

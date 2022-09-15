@@ -74,7 +74,9 @@ public abstract sealed class AbstractMemorySegmentImpl
     final MemorySession session;
 
     @ForceInline
-    AbstractMemorySegmentImpl(long length, boolean readOnly, MemorySession session) {
+    AbstractMemorySegmentImpl(long length,
+                              boolean readOnly,
+                              MemorySession session) {
         this.length = length;
         this.readOnly = readOnly;
         this.session = session;
@@ -133,10 +135,13 @@ public abstract sealed class AbstractMemorySegmentImpl
     /**
      * Mismatch over long lengths.
      */
-    public static long vectorizedMismatchLargeForBytes(MemorySessionImpl aSession, MemorySessionImpl bSession,
-                                                        Object a, long aOffset,
-                                                        Object b, long bOffset,
-                                                        long length) {
+    public static long vectorizedMismatchLargeForBytes(MemorySessionImpl aSession,
+                                                       MemorySessionImpl bSession,
+                                                       Object a,
+                                                       long aOffset,
+                                                       Object b,
+                                                       long bOffset,
+                                                       long length) {
         long off = 0;
         long remaining = length;
         int i, size;
@@ -253,7 +258,9 @@ public abstract sealed class AbstractMemorySegmentImpl
         long elemCount;
         long currentIndex;
 
-        SegmentSplitter(long elementSize, long elemCount, AbstractMemorySegmentImpl segment) {
+        SegmentSplitter(long elementSize,
+                        long elemCount,
+                        AbstractMemorySegmentImpl segment) {
             this.segment = segment;
             this.elementSize = elementSize;
             this.elemCount = elemCount;
@@ -464,13 +471,9 @@ public abstract sealed class AbstractMemorySegmentImpl
         checkBounds(offset, length);
     }
 
-
-
     public abstract long unsafeGetOffset();
 
     public abstract Object unsafeGetBase();
-
-    // Helper methods
 
     public abstract long maxAlignMask();
 
@@ -500,8 +503,6 @@ public abstract sealed class AbstractMemorySegmentImpl
         }
     }
 
-
-
     @Override
     public MemorySession session() {
         return session;
@@ -511,18 +512,5 @@ public abstract sealed class AbstractMemorySegmentImpl
         return new IndexOutOfBoundsException(String.format("Out of bound access on segment %s; new offset = %d; new length = %d",
                         this, offset, length));
     }
-
-
-
-    // Object methods
-
-
-
-
-
-
-
-
-
 
 }

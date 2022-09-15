@@ -68,10 +68,17 @@ public final class X86_64Architecture implements Architecture {
         return VMStorage.stackStorage(StorageClasses.STACK, size, byteOffset);
     }
 
-    public static ABIDescriptor abiFor(VMStorage[] inputIntRegs, VMStorage[] inputVectorRegs, VMStorage[] outputIntRegs,
-                                       VMStorage[] outputVectorRegs, int numX87Outputs, VMStorage[] volatileIntRegs,
-                                       VMStorage[] volatileVectorRegs, int stackAlignment, int shadowSpace,
-                                       VMStorage targetAddrStorage, VMStorage retBufAddrStorage) {
+    public static ABIDescriptor abiFor(VMStorage[] inputIntRegs,
+                                       VMStorage[] inputVectorRegs,
+                                       VMStorage[] outputIntRegs,
+                                       VMStorage[] outputVectorRegs,
+                                       int numX87Outputs,
+                                       VMStorage[] volatileIntRegs,
+                                       VMStorage[] volatileVectorRegs,
+                                       int stackAlignment,
+                                       int shadowSpace,
+                                       VMStorage targetAddrStorage,
+                                       VMStorage retBufAddrStorage) {
         return new ABIDescriptor(
             INSTANCE,
             new VMStorage[][] {
