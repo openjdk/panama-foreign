@@ -243,7 +243,8 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
+public sealed interface MemorySegment
+        permits AbstractMemorySegmentImpl {
 
     /**
      * A zero-length native memory segment modelling the {@code NULL} address.

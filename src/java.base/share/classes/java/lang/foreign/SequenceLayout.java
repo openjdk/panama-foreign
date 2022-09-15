@@ -53,7 +53,9 @@ import jdk.internal.javac.PreviewFeature;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface SequenceLayout extends MemoryLayout permits SequenceLayoutImpl {
+public sealed interface SequenceLayout
+        extends MemoryLayout
+        permits SequenceLayoutImpl {
 
 
     /**

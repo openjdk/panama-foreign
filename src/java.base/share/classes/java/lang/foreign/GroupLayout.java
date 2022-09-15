@@ -40,7 +40,9 @@ import jdk.internal.javac.PreviewFeature;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface GroupLayout extends MemoryLayout permits StructLayout, UnionLayout {
+public sealed interface GroupLayout
+        extends MemoryLayout
+        permits StructLayout, UnionLayout {
 
     /**
      * Returns the member layouts associated with this group.

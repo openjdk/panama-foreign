@@ -145,7 +145,8 @@ import java.lang.invoke.MethodHandle;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface Linker permits AbstractLinker {
+public sealed interface Linker
+        permits AbstractLinker {
 
     /**
      * Creates a method handle which can be used to call a target foreign function with the given signature and address.

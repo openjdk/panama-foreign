@@ -47,7 +47,8 @@ import jdk.internal.javac.PreviewFeature;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface FunctionDescriptor permits FunctionDescriptorImpl {
+public sealed interface FunctionDescriptor
+        permits FunctionDescriptorImpl {
 
     /**
      * {@return the return layout (if any) associated with this function descriptor}

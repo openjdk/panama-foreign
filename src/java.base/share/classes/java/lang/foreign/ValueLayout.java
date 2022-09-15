@@ -49,7 +49,8 @@ import jdk.internal.reflect.CallerSensitive;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface ValueLayout extends MemoryLayout {
+public sealed interface ValueLayout
+        extends MemoryLayout {
 
     /**
      * A value layout constant whose size is the same as that of a machine address ({@code size_t}),
