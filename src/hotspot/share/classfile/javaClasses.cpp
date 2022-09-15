@@ -25,7 +25,8 @@
 #include "precompiled.hpp"
 #include "jvm.h"
 #include "cds/archiveBuilder.hpp"
-#include "cds/heapShared.inline.hpp"
+#include "cds/archiveHeapLoader.hpp"
+#include "cds/heapShared.hpp"
 #include "cds/metaspaceShared.hpp"
 #include "classfile/altHashing.hpp"
 #include "classfile/classLoaderData.inline.hpp"
@@ -55,6 +56,7 @@
 #include "oops/klass.hpp"
 #include "oops/klass.inline.hpp"
 #include "oops/method.inline.hpp"
+#include "oops/objArrayKlass.hpp"
 #include "oops/objArrayOop.inline.hpp"
 #include "oops/oopCast.inline.hpp"
 #include "oops/oop.inline.hpp"
@@ -894,7 +896,7 @@ void java_lang_Class::fixup_mirror(Klass* k, TRAPS) {
   }
 
   if (k->is_shared() && k->has_archived_mirror_index()) {
-    if (HeapShared::are_archived_mirrors_available()) {
+    if (ArchiveHeapLoader::are_archived_mirrors_available()) {
       bool present = restore_archived_mirror(k, Handle(), Handle(), Handle(), CHECK);
       assert(present, "Missing archived mirror for %s", k->external_name());
       return;
@@ -1321,7 +1323,7 @@ bool java_lang_Class::restore_archived_mirror(Klass *k,
 
   // mirror is archived, restore
   log_debug(cds, mirror)("Archived mirror is: " PTR_FORMAT, p2i(m));
-  if (HeapShared::is_mapped()) {
+  if (ArchiveHeapLoader::is_mapped()) {
     assert(Universe::heap()->is_archived_object(m), "must be archived mirror object");
   }
   assert(as_Klass(m) == k, "must be");
@@ -4289,13 +4291,15 @@ oop jdk_internal_foreign_abi_ABIDescriptor::retBufAddrStorage(oop entry) {
 }
 
 int jdk_internal_foreign_abi_VMStorage::_type_offset;
-int jdk_internal_foreign_abi_VMStorage::_index_offset;
+int jdk_internal_foreign_abi_VMStorage::_indexOrOffset_offset;
+int jdk_internal_foreign_abi_VMStorage::_segmentMaskOrSize_offset;
 int jdk_internal_foreign_abi_VMStorage::_debugName_offset;
 
 #define VMStorage_FIELDS_DO(macro) \
-  macro(_type_offset,      k, "type",      int_signature, false); \
-  macro(_index_offset,     k, "index",     int_signature, false); \
-  macro(_debugName_offset, k, "debugName", string_signature, false); \
+  macro(_type_offset,              k, "type",              byte_signature, false); \
+  macro(_indexOrOffset_offset,     k, "indexOrOffset",     int_signature, false); \
+  macro(_segmentMaskOrSize_offset, k, "segmentMaskOrSize", short_signature, false); \
+  macro(_debugName_offset,         k, "debugName",         string_signature, false); \
 
 bool jdk_internal_foreign_abi_VMStorage::is_instance(oop obj) {
   return obj != NULL && is_subclass(obj->klass());
@@ -4312,12 +4316,16 @@ void jdk_internal_foreign_abi_VMStorage::serialize_offsets(SerializeClosure* f) 
 }
 #endif
 
-jint jdk_internal_foreign_abi_VMStorage::type(oop entry) {
-  return entry->int_field(_type_offset);
+jbyte jdk_internal_foreign_abi_VMStorage::type(oop entry) {
+  return entry->byte_field(_type_offset);
 }
 
-jint jdk_internal_foreign_abi_VMStorage::index(oop entry) {
-  return entry->int_field(_index_offset);
+jint jdk_internal_foreign_abi_VMStorage::index_or_offset(oop entry) {
+  return entry->int_field(_indexOrOffset_offset);
+}
+
+jshort jdk_internal_foreign_abi_VMStorage::segment_mask_or_size(oop entry) {
+  return entry->short_field(_segmentMaskOrSize_offset);
 }
 
 oop jdk_internal_foreign_abi_VMStorage::debugName(oop entry) {

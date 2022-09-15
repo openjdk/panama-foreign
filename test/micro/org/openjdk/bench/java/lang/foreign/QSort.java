@@ -61,10 +61,10 @@ public class QSort extends CLayouts {
     static final int[] INPUT = { 5, 3, 2, 7, 8, 12, 1, 7 };
     static final MemorySegment INPUT_SEGMENT;
 
-    static MemorySegment qsort_addr = abi.defaultLookup().lookup("qsort").get();
+    static MemorySegment qsort_addr = abi.defaultLookup().find("qsort").get();
 
     static {
-        INPUT_SEGMENT = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(INPUT.length, JAVA_INT), MemorySession.global());
+        INPUT_SEGMENT = MemorySession.global().allocate(MemoryLayout.sequenceLayout(INPUT.length, JAVA_INT));
         INPUT_SEGMENT.copyFrom(MemorySegment.ofArray(INPUT));
 
         System.loadLibrary("QSortJNI");
@@ -76,7 +76,7 @@ public class QSort extends CLayouts {
                     FunctionDescriptor.ofVoid(C_POINTER, C_LONG_LONG, C_LONG_LONG, C_POINTER)
             );
             System.loadLibrary("QSort");
-            native_compar = SymbolLookup.loaderLookup().lookup("compar").orElseThrow();
+            native_compar = SymbolLookup.loaderLookup().find("compar").orElseThrow();
             panama_upcall_compar = abi.upcallStub(
                     lookup().findStatic(QSort.class,
                             "panama_upcall_compar",

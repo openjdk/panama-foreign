@@ -56,7 +56,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     public void testClosedStruct() throws Throwable {
         MemorySegment segment;
         try (MemorySession session = MemorySession.openConfined()) {
-            segment = MemorySegment.allocateNative(POINT, session);
+            segment = session.allocate(POINT);
         }
         assertFalse(segment.session().isAlive());
         MethodHandle handle = Linker.nativeLinker().downcallHandle(
@@ -73,12 +73,12 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
         for (int i = 0 ; i < 6 ; i++) {
             MemorySegment[] segments = new MemorySegment[]{
-                    MemorySegment.allocateNative(POINT, MemorySession.openShared()),
-                    MemorySegment.allocateNative(POINT, MemorySession.openShared()),
-                    MemorySegment.allocateNative(POINT, MemorySession.openShared()),
-                    MemorySegment.allocateNative(POINT, MemorySession.openShared()),
-                    MemorySegment.allocateNative(POINT, MemorySession.openShared()),
-                    MemorySegment.allocateNative(POINT, MemorySession.openShared())
+                    MemorySession.openShared().allocate(POINT),
+                    MemorySession.openShared().allocate(POINT),
+                    MemorySession.openShared().allocate(POINT),
+                    MemorySession.openShared().allocate(POINT),
+                    MemorySession.openShared().allocate(POINT),
+                    MemorySession.openShared().allocate(POINT)
             };
             // check liveness
             segments[i].session().close();
@@ -153,7 +153,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
 
         try (MemorySession session = MemorySession.openConfined()) {
-            MemorySegment segment = MemorySegment.allocateNative(POINT, session);
+            MemorySegment segment = session.allocate(POINT);
             handle.invokeExact(segment, sessionChecker(session));
         }
     }

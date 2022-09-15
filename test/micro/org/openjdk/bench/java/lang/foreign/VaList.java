@@ -57,9 +57,9 @@ public class VaList extends CLayouts {
 
     static {
         SymbolLookup loaderLibs = SymbolLookup.loaderLookup();
-        MH_ellipsis = linker.downcallHandle(loaderLibs.lookup("ellipsis").get(),
+        MH_ellipsis = linker.downcallHandle(loaderLibs.find("ellipsis").get(),
                 FunctionDescriptor.ofVoid(C_INT).asVariadic(C_INT, C_DOUBLE, C_LONG_LONG));
-        MH_vaList = linker.downcallHandle(loaderLibs.lookup("vaList").get(),
+        MH_vaList = linker.downcallHandle(loaderLibs.find("vaList").get(),
                 FunctionDescriptor.ofVoid(C_INT, C_POINTER));
     }
 

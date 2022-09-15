@@ -30,6 +30,9 @@ import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
@@ -281,7 +284,8 @@ public interface Binding {
         ALLOC_BUFFER,
         BOX_ADDRESS,
         UNBOX_ADDRESS,
-        DUP
+        DUP,
+        CAST
     }
 
     Tag tag();
@@ -351,6 +355,10 @@ public interface Binding {
         return Dup.INSTANCE;
     }
 
+    static Binding cast(Class<?> fromType, Class<?> toType) {
+        return new Cast(fromType, toType);
+    }
+
 
     static Binding.Builder builder() {
         return new Binding.Builder();
@@ -362,13 +370,28 @@ public interface Binding {
     class Builder {
         private final List<Binding> bindings = new ArrayList<>();
 
+        private static boolean isSubIntType(Class<?> type) {
+            return type == boolean.class || type == byte.class || type == short.class || type == char.class;
+        }
+
         public Binding.Builder vmStore(VMStorage storage, Class<?> type) {
+            if (isSubIntType(type)) {
+                bindings.add(Binding.cast(type, int.class));
+                type = int.class;
+            }
             bindings.add(Binding.vmStore(storage, type));
             return this;
         }
 
         public Binding.Builder vmLoad(VMStorage storage, Class<?> type) {
-            bindings.add(Binding.vmLoad(storage, type));
+            Class<?> loadType = type;
+            if (isSubIntType(type)) {
+                loadType = int.class;
+            }
+            bindings.add(Binding.vmLoad(storage, loadType));
+            if (isSubIntType(type)) {
+                bindings.add(Binding.cast(int.class, type));
+            }
             return this;
         }
 
@@ -670,6 +693,41 @@ public interface Binding {
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
                               BindingInterpreter.LoadFunc loadFunc, Context context) {
             stack.push(stack.peekLast());
+        }
+    }
+
+    /**
+     * CAST([fromType], [toType])
+     *   Pop a [fromType] from the stack, convert it to [toType], and push the resulting
+     *   value onto the stack.
+     *
+     */
+    record Cast(Class<?> fromType, Class<?> toType) implements Binding {
+
+        @Override
+        public Tag tag() {
+            return Tag.CAST;
+        }
+
+        @Override
+        public void verify(Deque<Class<?>> stack) {
+            Class<?> actualType = stack.pop();
+            SharedUtils.checkType(actualType, fromType);
+            stack.push(toType);
+        }
+
+        @Override
+        public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
+                              BindingInterpreter.LoadFunc loadFunc, Context context) {
+            Object arg = stack.pop();
+            MethodHandle converter = MethodHandles.explicitCastArguments(MethodHandles.identity(toType),
+                    MethodType.methodType(toType, fromType));
+            try {
+                Object result = converter.invoke(arg);
+                stack.push(result);
+            } catch (Throwable e) {
+                throw new InternalError(e);
+            }
         }
     }
 }

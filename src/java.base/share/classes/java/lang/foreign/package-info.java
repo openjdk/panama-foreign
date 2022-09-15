@@ -42,7 +42,7 @@
  * and fill it with values ranging from {@code 0} to {@code 9}, we can use the following code:
  *
  * {@snippet lang=java :
- * MemorySegment segment = MemorySegment.allocateNative(10 * 4, MemorySession.openImplicit());
+ * MemorySegment segment = MemorySegment.allocateNative(10 * 4);
  * for (int i = 0 ; i < 10 ; i++) {
  *     segment.setAtIndex(ValueLayout.JAVA_INT, i, i);
  * }
@@ -74,7 +74,7 @@
  *
  * {@snippet lang=java :
  * try (MemorySession session = MemorySession.openConfined()) {
- *     MemorySegment segment = MemorySegment.allocateNative(10 * 4, session);
+ *     MemorySegment segment = session.allocate(10 * 4);
  *     for (int i = 0 ; i < 10 ; i++) {
  *         segment.setAtIndex(ValueLayout.JAVA_INT, i, i);
  *     }
@@ -110,23 +110,23 @@
  * For example, to compute the length of a string using the C standard library function {@code strlen} on a Linux x64 platform,
  * we can use the following code:
  *
- * {@snippet lang=java :
+ * {@snippet lang = java:
  * Linker linker = Linker.nativeLinker();
  * SymbolLookup stdlib = linker.defaultLookup();
  * MethodHandle strlen = linker.downcallHandle(
- *     stdlib.lookup("strlen").get(),
+ *     stdlib.find("strlen").get(),
  *     FunctionDescriptor.of(ValueLayout.JAVA_LONG, ValueLayout.ADDRESS)
  * );
  *
  * try (MemorySession session = MemorySession.openConfined()) {
- *     MemorySegment cString = MemorySegment.allocateNative(5 + 1, session);
+ *     MemorySegment cString = session.allocate(5 + 1);
  *     cString.setUtf8String(0, "Hello");
  *     long len = (long)strlen.invoke(cString); // 5
  * }
- * }
+ *}
  *
  * Here, we obtain a {@linkplain java.lang.foreign.Linker#nativeLinker() native linker} and we use it
- * to {@linkplain java.lang.foreign.SymbolLookup#lookup(java.lang.String) look up} the {@code strlen} symbol in the
+ * to {@linkplain java.lang.foreign.SymbolLookup#find(java.lang.String) look up} the {@code strlen} symbol in the
  * standard C library; a <em>downcall method handle</em> targeting said symbol is subsequently
  * {@linkplain java.lang.foreign.Linker#downcallHandle(java.lang.foreign.FunctionDescriptor) obtained}.
  * To complete the linking successfully, we must provide a {@link java.lang.foreign.FunctionDescriptor} instance,
@@ -169,7 +169,7 @@
  *
  * As before, we need to create a {@link java.lang.foreign.FunctionDescriptor} instance, this time describing the signature
  * of the function pointer we want to create. The descriptor can be used to
- * {@linkplain java.lang.foreign.Linker#methodType(java.lang.foreign.FunctionDescriptor) derive} a method type
+ * {@linkplain java.lang.foreign.FunctionDescriptor#toMethodType() derive} a method type
  * that can be used to look up the method handle for {@code IntComparator.intCompare}.
  * <p>
  * Now that we have a method handle instance, we can turn it into a fresh function pointer,

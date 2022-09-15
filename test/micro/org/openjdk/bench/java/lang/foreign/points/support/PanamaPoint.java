@@ -52,11 +52,11 @@ public class PanamaPoint extends CLayouts implements AutoCloseable {
         System.loadLibrary("Point");
         SymbolLookup loaderLibs = SymbolLookup.loaderLookup();
         MH_distance = abi.downcallHandle(
-                loaderLibs.lookup("distance").get(),
+                loaderLibs.find("distance").get(),
                 FunctionDescriptor.of(C_DOUBLE, LAYOUT, LAYOUT)
         );
         MH_distance_ptrs = abi.downcallHandle(
-                loaderLibs.lookup("distance_ptrs").get(),
+                loaderLibs.find("distance_ptrs").get(),
                 FunctionDescriptor.of(C_DOUBLE, C_POINTER, C_POINTER)
         );
     }
@@ -64,7 +64,7 @@ public class PanamaPoint extends CLayouts implements AutoCloseable {
     private final MemorySegment segment;
 
     public PanamaPoint(int x, int y) {
-        this.segment = MemorySegment.allocateNative(LAYOUT, MemorySession.openConfined());
+        this.segment = MemorySession.openConfined().allocate(LAYOUT);
         setX(x);
         setY(y);
     }

@@ -84,8 +84,8 @@ public class TestLoadStoreBytes {
     srcSegmentHeap = MemorySegment.ofArray(new byte[size]);
     dstSegmentHeap = MemorySegment.ofArray(new byte[size]);
 
-    srcSegment = MemorySegment.allocateNative(size, SPECIES.vectorByteSize(), MemorySession.openImplicit());
-    dstSegment = MemorySegment.allocateNative(size, SPECIES.vectorByteSize(), MemorySession.openImplicit());
+    srcSegment = MemorySegment.allocateNative(size, SPECIES.vectorByteSize());
+    dstSegment = MemorySegment.allocateNative(size, SPECIES.vectorByteSize());
 
     a = new byte[size];
     b = new byte[size];

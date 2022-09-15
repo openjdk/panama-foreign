@@ -193,7 +193,8 @@ public class CallingSequenceBuilder {
         //ALLOC_BUFFER,
         //BOX_ADDRESS,
         UNBOX_ADDRESS,
-        DUP
+        DUP,
+        CAST
     );
 
     private static void verifyUnboxBindings(Class<?> inType, List<Binding> bindings) {
@@ -220,7 +221,8 @@ public class CallingSequenceBuilder {
         ALLOC_BUFFER,
         BOX_ADDRESS,
         //UNBOX_ADDRESS,
-        DUP
+        DUP,
+        CAST
     );
 
     private static void verifyBoxBindings(Class<?> expectedOutType, List<Binding> bindings) {
