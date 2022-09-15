@@ -57,10 +57,10 @@ import static org.testng.Assert.assertEquals;
 public class TestNormalize extends NativeTestHelper {
 
     private static final Linker LINKER = Linker.nativeLinker();
-    private static final MethodHandle SAVE_BOOLEAN;
-    private static final MethodHandle SAVE_BYTE;
-    private static final MethodHandle SAVE_SHORT;
-    private static final MethodHandle SAVE_CHAR;
+    private static final MethodHandle SAVE_BOOLEAN_AS_INT;
+    private static final MethodHandle SAVE_BYTE_AS_INT;
+    private static final MethodHandle SAVE_SHORT_AS_INT;
+    private static final MethodHandle SAVE_CHAR_AS_INT;
 
     private static final MethodHandle BOOLEAN_TO_INT;
     private static final MethodHandle BYTE_TO_INT;
@@ -74,15 +74,17 @@ public class TestNormalize extends NativeTestHelper {
     private static final int SHORT_HOB_MASK   = ~0xFFFF;
     private static final int CHAR_HOB_MASK    = ~0xFFFF;
 
+    private static final MethodHandle SAVE_BOOLEAN;
+
     static {
         System.loadLibrary("Normalize");
 
         try {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
-            SAVE_BOOLEAN = lookup.findStatic(TestNormalize.class, "saveBoolean", MethodType.methodType(void.class, boolean.class, int[].class));
-            SAVE_BYTE = lookup.findStatic(TestNormalize.class, "saveByte", MethodType.methodType(void.class, byte.class, int[].class));
-            SAVE_SHORT = lookup.findStatic(TestNormalize.class, "saveShort", MethodType.methodType(void.class, short.class, int[].class));
-            SAVE_CHAR = lookup.findStatic(TestNormalize.class, "saveChar", MethodType.methodType(void.class, char.class, int[].class));
+            SAVE_BOOLEAN_AS_INT = lookup.findStatic(TestNormalize.class, "saveBooleanAsInt", MethodType.methodType(void.class, boolean.class, int[].class));
+            SAVE_BYTE_AS_INT = lookup.findStatic(TestNormalize.class, "saveByteAsInt", MethodType.methodType(void.class, byte.class, int[].class));
+            SAVE_SHORT_AS_INT = lookup.findStatic(TestNormalize.class, "saveShortAsInt", MethodType.methodType(void.class, short.class, int[].class));
+            SAVE_CHAR_AS_INT = lookup.findStatic(TestNormalize.class, "saveCharAsInt", MethodType.methodType(void.class, char.class, int[].class));
 
             BOOLEAN_TO_INT = lookup.findStatic(TestNormalize.class, "booleanToInt", MethodType.methodType(int.class, boolean.class));
             BYTE_TO_INT = lookup.findStatic(TestNormalize.class, "byteToInt", MethodType.methodType(int.class, byte.class));
@@ -90,6 +92,8 @@ public class TestNormalize extends NativeTestHelper {
             CHAR_TO_INT = lookup.findStatic(TestNormalize.class, "charToInt", MethodType.methodType(int.class, char.class));
 
             NATIVE_BOOLEAN_TO_INT = LINKER.downcallHandle(findNativeOrThrow("int_identity"), FunctionDescriptor.of(JAVA_INT, JAVA_BOOLEAN));
+
+            SAVE_BOOLEAN = lookup.findStatic(TestNormalize.class, "saveBoolean", MethodType.methodType(void.class, boolean.class, boolean[].class));
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -131,16 +135,16 @@ public class TestNormalize extends NativeTestHelper {
         assertEquals(result & hobMask, 0); // check normalized downcall return value
     }
 
-    public static void saveBoolean(boolean b, int[] box) {
+    public static void saveBooleanAsInt(boolean b, int[] box) {
         box[0] = booleanToInt(b);
     }
-    public static void saveByte(byte b, int[] box) {
+    public static void saveByteAsInt(byte b, int[] box) {
         box[0] = byteToInt(b);
     }
-    public static void saveShort(short s, int[] box) {
+    public static void saveShortAsInt(short s, int[] box) {
         box[0] = shortToInt(s);
     }
-    public static void saveChar(char c, int[] box) {
+    public static void saveCharAsInt(char c, int[] box) {
         box[0] = charToInt(c);
     }
 
@@ -164,10 +168,40 @@ public class TestNormalize extends NativeTestHelper {
     @DataProvider
     public static Object[][] cases() {
         return new Object[][] {
-            { JAVA_BOOLEAN, booleanToInt(true),     BOOLEAN_HOB_MASK, BOOLEAN_TO_INT, SAVE_BOOLEAN },
-            { JAVA_BYTE,    byteToInt((byte) 42),   BYTE_HOB_MASK,    BYTE_TO_INT,    SAVE_BYTE    },
-            { JAVA_SHORT,   shortToInt((short) 42), SHORT_HOB_MASK,   SHORT_TO_INT,   SAVE_SHORT   },
-            { JAVA_CHAR,    charToInt('a'),         CHAR_HOB_MASK,    CHAR_TO_INT,    SAVE_CHAR    }
+            { JAVA_BOOLEAN, booleanToInt(true),     BOOLEAN_HOB_MASK, BOOLEAN_TO_INT, SAVE_BOOLEAN_AS_INT },
+            { JAVA_BYTE,    byteToInt((byte) 42),   BYTE_HOB_MASK,    BYTE_TO_INT,    SAVE_BYTE_AS_INT    },
+            { JAVA_SHORT,   shortToInt((short) 42), SHORT_HOB_MASK,   SHORT_TO_INT,   SAVE_SHORT_AS_INT   },
+            { JAVA_CHAR,    charToInt('a'),         CHAR_HOB_MASK,    CHAR_TO_INT,    SAVE_CHAR_AS_INT    }
+        };
+    }
+
+    // test which int values are considered true and false
+    // we currently convert any int with a non-zero first byte to true, otherwise false.
+    @Test(dataProvider = "bools")
+    public void testBool(int testValue, boolean expected) throws Throwable {
+        MemorySegment addr = findNativeOrThrow("test");
+        MethodHandle target = LINKER.downcallHandle(addr, FunctionDescriptor.of(JAVA_BOOLEAN, ADDRESS, JAVA_INT));
+
+        boolean[] box = new boolean[1];
+        MethodHandle upcallTarget = MethodHandles.insertArguments(SAVE_BOOLEAN, 1, box);
+
+        try (MemorySession session = MemorySession.openConfined()) {
+            MemorySegment callback = LINKER.upcallStub(upcallTarget, FunctionDescriptor.ofVoid(JAVA_BOOLEAN), session);
+            boolean result = (boolean) target.invokeExact(callback, testValue);
+            assertEquals(box[0], expected);
+            assertEquals(result, expected);
+        }
+    }
+
+    private static void saveBoolean(boolean b, boolean[] box) {
+        box[0] = b;
+    }
+
+    @DataProvider
+    public static Object[][] bools() {
+        return new Object[][]{
+            { 0b01,          true  }, // zero least significant bit, but non-zero first byte
+            { 0b1_0000_0000, false }  // zero first byte
         };
     }
 }

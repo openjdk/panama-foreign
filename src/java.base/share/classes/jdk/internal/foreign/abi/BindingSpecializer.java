@@ -682,8 +682,21 @@ public class BindingSpecializer {
             popType(int.class);
 
             if (toType == boolean.class) {
-                emitConst(0b1);
+                // implement least significant byte non-zero test
+                Label falseLabel = new Label();
+                Label endLabel = new Label();
+
+                // select first byte
+                emitConst(0xFF);
                 mv.visitInsn(IAND);
+
+                // check non-zero
+                mv.visitJumpInsn(IFEQ, falseLabel);
+                emitConst(1);
+                mv.visitJumpInsn(GOTO, endLabel);
+                mv.visitLabel(falseLabel);
+                emitConst(0);
+                mv.visitLabel(endLabel);
             } else if (toType == byte.class) {
                 mv.visitInsn(I2B);
             } else if (toType == short.class) {
