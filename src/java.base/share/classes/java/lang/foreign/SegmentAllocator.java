@@ -395,7 +395,10 @@ public interface SegmentAllocator {
      * @throws WrongThreadException if this method is called from a thread other than the thread
      * {@linkplain MemorySession#ownerThread() owning} {@code session}.
      */
-    static SegmentAllocator newNativeArena(long arenaSize, long blockSize, MemorySession session) {
+    static SegmentAllocator newNativeArena(long arenaSize,
+                                           long blockSize,
+                                           MemorySession session) {
+
         Objects.requireNonNull(session);
         if (blockSize <= 0) {
             throw new IllegalArgumentException("Invalid block size: " + blockSize);

@@ -226,7 +226,9 @@ public interface SymbolLookup {
         return libraryLookup(path, RawNativeLibraries::load, session);
     }
 
-    private static <Z> SymbolLookup libraryLookup(Z libDesc, BiFunction<RawNativeLibraries, Z, NativeLibrary> loadLibraryFunc, MemorySession session) {
+    private static <Z> SymbolLookup libraryLookup(Z libDesc,
+                                                  BiFunction<RawNativeLibraries, Z, NativeLibrary> loadLibraryFunc,
+                                                  MemorySession session) {
         Objects.requireNonNull(libDesc);
         Objects.requireNonNull(session);
         // attempt to load native library from path or name

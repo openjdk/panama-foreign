@@ -464,7 +464,7 @@ public final class SharedUtils {
         }
 
         @Override
-        public int nextVarg(ValueLayout.OfInt layout) {
+        public int nextVarg(ValueLayout.OfInt intLayout) {
             throw uoe();
         }
 
@@ -473,17 +473,17 @@ public final class SharedUtils {
         }
 
         @Override
-        public long nextVarg(ValueLayout.OfLong layout) {
+        public long nextVarg(ValueLayout.OfLong longLayout) {
             throw uoe();
         }
 
         @Override
-        public double nextVarg(ValueLayout.OfDouble layout) {
+        public double nextVarg(ValueLayout.OfDouble doubleLayout) {
             throw uoe();
         }
 
         @Override
-        public MemorySegment nextVarg(ValueLayout.OfAddress layout) {
+        public MemorySegment nextVarg(ValueLayout.OfAddress addressLayout) {
             throw uoe();
         }
 

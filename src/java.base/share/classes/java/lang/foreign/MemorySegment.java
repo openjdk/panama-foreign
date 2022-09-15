@@ -473,7 +473,12 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
      */
     @ForceInline
-    static void copy(MemorySegment srcSegment, long srcOffset, MemorySegment dstSegment, long dstOffset, long bytes) {
+    static void copy(MemorySegment srcSegment,
+                     long srcOffset,
+                     MemorySegment dstSegment,
+                     long dstOffset,
+                     long bytes) {
+
         copy(srcSegment, ValueLayout.JAVA_BYTE, srcOffset, dstSegment, ValueLayout.JAVA_BYTE, dstOffset, bytes);
     }
 
@@ -525,8 +530,14 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
      */
     @ForceInline
-    static void copy(MemorySegment srcSegment, ValueLayout srcElementLayout, long srcOffset, MemorySegment dstSegment,
-                     ValueLayout dstElementLayout, long dstOffset, long elementCount) {
+    static void copy(MemorySegment srcSegment,
+                     ValueLayout srcElementLayout,
+                     long srcOffset,
+                     MemorySegment dstSegment,
+                     ValueLayout dstElementLayout,
+                     long dstOffset,
+                     long elementCount) {
+
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(srcElementLayout);
         Objects.requireNonNull(dstSegment);
@@ -1824,7 +1835,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
-    static MemorySegment ofAddress(long address, long byteSize, MemorySession session) {
+    static MemorySegment ofAddress(long address,
+                                   long byteSize,
+                                   MemorySession session) {
+
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddress");
         Objects.requireNonNull(session);
         Utils.checkAllocationSizeAndAlign(byteSize, 1);
@@ -1873,7 +1887,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws WrongThreadException if this method is called from a thread other than the thread
      * {@linkplain MemorySession#ownerThread() owning} {@code session}.
      */
-    static MemorySegment allocateNative(long byteSize, long byteAlignment, MemorySession session) {
+    static MemorySegment allocateNative(long byteSize,
+                                        long byteAlignment,
+                                        MemorySession session) {
         Objects.requireNonNull(session);
         Utils.checkAllocationSizeAndAlign(byteSize, byteAlignment);
         return NativeMemorySegmentImpl.makeNativeSegment(byteSize, byteAlignment, session);
@@ -1925,9 +1941,13 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * or if the destination element layout alignment is greater than its size.
      */
     @ForceInline
-    static void copy(
-            MemorySegment srcSegment, ValueLayout srcLayout, long srcOffset,
-            Object dstArray, int dstIndex, int elementCount) {
+    static void copy(MemorySegment srcSegment,
+                     ValueLayout srcLayout,
+                     long srcOffset,
+                     Object dstArray,
+                     int dstIndex,
+                     int elementCount) {
+
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         Objects.requireNonNull(srcLayout);
@@ -1997,9 +2017,13 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * or if the destination element layout alignment is greater than its size.
      */
     @ForceInline
-    static void copy(
-            Object srcArray, int srcIndex,
-            MemorySegment dstSegment, ValueLayout dstLayout, long dstOffset, int elementCount) {
+    static void copy(Object srcArray,
+                     int srcIndex,
+                     MemorySegment dstSegment,
+                     ValueLayout dstLayout,
+                     long dstOffset,
+                     int elementCount) {
+
         Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
         Objects.requireNonNull(dstLayout);
@@ -2063,8 +2087,13 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @see MemorySegment#mismatch(MemorySegment)
      * @see Arrays#mismatch(Object[], int, int, Object[], int, int)
      */
-    static long mismatch(MemorySegment srcSegment, long srcFromOffset, long srcToOffset,
-                         MemorySegment dstSegment, long dstFromOffset, long dstToOffset) {
+    static long mismatch(MemorySegment srcSegment,
+                         long srcFromOffset,
+                         long srcToOffset,
+                         MemorySegment dstSegment,
+                         long dstFromOffset,
+                         long dstToOffset) {
+
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)Objects.requireNonNull(srcSegment);
         AbstractMemorySegmentImpl dstImpl = (AbstractMemorySegmentImpl)Objects.requireNonNull(dstSegment);
         long srcBytes = srcToOffset - srcFromOffset;

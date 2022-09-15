@@ -103,7 +103,7 @@ public sealed interface VaList permits WinVaList, SysVVaList, LinuxAArch64VaList
      * Reads the next value as an {@code int} and advances this variable argument list's position. The behavior of this
      * method is equivalent to the C {@code va_arg} function.
      *
-     * @param layout the layout of the value to be read.
+     * @param intLayout the intLayout of the value to be read.
      * @return the {@code int} value read from this variable argument list.
      * @throws IllegalStateException if the session associated with this variable argument list is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -111,13 +111,13 @@ public sealed interface VaList permits WinVaList, SysVVaList, LinuxAArch64VaList
      * the session associated with this variable argument list.
      * @throws NoSuchElementException if an <a href=VaList.html#safety>out-of-bounds</a> read is detected.
      */
-    int nextVarg(ValueLayout.OfInt layout);
+    int nextVarg(ValueLayout.OfInt intLayout);
 
     /**
      * Reads the next value as a {@code long} and advances this variable argument list's position. The behavior of this
      * method is equivalent to the C {@code va_arg} function.
      *
-     * @param layout the layout of the value to be read.
+     * @param longLayout the longLayout of the value to be read.
      * @return the {@code long} value read from this variable argument list.
      * @throws IllegalStateException if the session associated with this variable argument list is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -125,13 +125,13 @@ public sealed interface VaList permits WinVaList, SysVVaList, LinuxAArch64VaList
      * the session associated with this variable argument list.
      * @throws NoSuchElementException if an <a href=VaList.html#safety>out-of-bounds</a> read is detected.
      */
-    long nextVarg(ValueLayout.OfLong layout);
+    long nextVarg(ValueLayout.OfLong longLayout);
 
     /**
      * Reads the next value as a {@code double} and advances this variable argument list's position. The behavior of this
      * method is equivalent to the C {@code va_arg} function.
      *
-     * @param layout the layout of the value
+     * @param doubleLayout the doubleLayout of the value
      * @return the {@code double} value read from this variable argument list.
      * @throws IllegalStateException if the session associated with this variable argument list is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -139,17 +139,17 @@ public sealed interface VaList permits WinVaList, SysVVaList, LinuxAArch64VaList
      * the session associated with this variable argument list.
      * @throws NoSuchElementException if an <a href=VaList.html#safety>out-of-bounds</a> read is detected.
      */
-    double nextVarg(ValueLayout.OfDouble layout);
+    double nextVarg(ValueLayout.OfDouble doubleLayout);
 
     /**
      * Reads the next address value, wraps it into a native memory segment, and advances this variable argument list's position.
      * The behavior of this method is equivalent to the C {@code va_arg} function. The returned segment's base
      * {@linkplain MemorySegment#address()} is set to the value read from the variable argument list, and the segment
      * is associated with the {@linkplain MemorySession#global() global} memory session. Under normal conditions, the size of the returned
-     * segment is {@code 0}. However, if the provided layout is an {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded}
-     * address layout, then the size of the returned segment is {@code Long.MAX_VALUE}.
+     * segment is {@code 0}. However, if the provided addressLayout is an {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded}
+     * address addressLayout, then the size of the returned segment is {@code Long.MAX_VALUE}.
      *
-     * @param layout the layout of the value to be read.
+     * @param addressLayout the addressLayout of the value to be read.
      * @return a native memory segment whose {@linkplain MemorySegment#address() address} is the value read from
      * this variable argument list.
      * @throws IllegalStateException if the session associated with this variable argument list is not
@@ -158,7 +158,7 @@ public sealed interface VaList permits WinVaList, SysVVaList, LinuxAArch64VaList
      * the session associated with this variable argument list.
      * @throws NoSuchElementException if an <a href=VaList.html#safety>out-of-bounds</a> read is detected.
      */
-    MemorySegment nextVarg(ValueLayout.OfAddress layout);
+    MemorySegment nextVarg(ValueLayout.OfAddress addressLayout);
 
     /**
      * Reads the next composite value into a new {@code MemorySegment}, allocated with the provided allocator,

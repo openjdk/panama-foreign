@@ -278,8 +278,10 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
                 EnumSet.of(PathKind.SEQUENCE_ELEMENT, PathKind.SEQUENCE_RANGE), elements);
     }
 
-    private static <Z> Z computePathOp(LayoutPath path, Function<LayoutPath, Z> finalizer,
-                                       Set<PathKind> badKinds, PathElement... elements) {
+    private static <Z> Z computePathOp(LayoutPath path,
+                                       Function<LayoutPath, Z> finalizer,
+                                       Set<PathKind> badKinds,
+                                       PathElement... elements) {
         Objects.requireNonNull(elements);
         for (PathElement e : elements) {
             LayoutPath.PathElementImpl pathElem = (LayoutPath.PathElementImpl)Objects.requireNonNull(e);

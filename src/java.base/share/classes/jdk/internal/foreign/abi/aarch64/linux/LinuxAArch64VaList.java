@@ -118,23 +118,23 @@ public final class LinuxAArch64VaList implements VaList {
     }
 
     @Override
-    public int nextVarg(ValueLayout.OfInt layout) {
-        return (int) read(layout);
+    public int nextVarg(ValueLayout.OfInt intLayout) {
+        return (int) read(intLayout);
     }
 
     @Override
-    public long nextVarg(ValueLayout.OfLong layout) {
-        return (long) read(layout);
+    public long nextVarg(ValueLayout.OfLong longLayout) {
+        return (long) read(longLayout);
     }
 
     @Override
-    public double nextVarg(ValueLayout.OfDouble layout) {
-        return (double) read(layout);
+    public double nextVarg(ValueLayout.OfDouble doubleLayout) {
+        return (double) read(doubleLayout);
     }
 
     @Override
-    public MemorySegment nextVarg(ValueLayout.OfAddress layout) {
-        return (MemorySegment) read(layout);
+    public MemorySegment nextVarg(ValueLayout.OfAddress addressLayout) {
+        return (MemorySegment) read(addressLayout);
     }
 
     @Override

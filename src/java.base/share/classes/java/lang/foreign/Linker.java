@@ -215,7 +215,9 @@ public sealed interface Linker permits AbstractLinker {
      * @throws WrongThreadException if this method is called from a thread other than the thread
      * {@linkplain MemorySession#ownerThread() owning} {@code session}.
      */
-    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, MemorySession session);
+    MemorySegment upcallStub(MethodHandle target,
+                             FunctionDescriptor function,
+                             MemorySession session);
 
     /**
      * Returns a symbol lookup for symbols in a set of commonly used libraries.
