@@ -52,6 +52,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jdk.internal.javac.PreviewFeature;
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.ClassLoaders;
@@ -259,6 +260,18 @@ public final class Module implements AnnotatedElement {
     Module implAddEnableNativeAccess() {
         enableNativeAccess = true;
         return this;
+    }
+
+    /**
+     * Returns {@code true} if this module can access
+     * <a href="foreign/package-summary.html#restricted"><em>restricted</em></a> methods.
+     *
+     * @return {@code true} if this module can access <em>restricted</em> methods.
+     */
+    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
+    public boolean isNativeAccessEnabled() {
+        return enableNativeAccess ||
+                (!isNamed() && ALL_UNNAMED_MODULE.enableNativeAccess);
     }
 
     /**
