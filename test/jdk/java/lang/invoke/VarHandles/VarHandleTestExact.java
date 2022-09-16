@@ -25,6 +25,7 @@
  * @test
  * @enablePreview
  * @modules java.base/jdk.internal.access.foreign
+ *          java.base/jdk.internal.foreign.layout
  *
  * @run testng/othervm -Xverify:all
  *   -Djdk.internal.foreign.SHOULD_ADAPT_HANDLES=false
@@ -46,13 +47,15 @@
  *   VarHandleTestExact
  */
 
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
+
+import jdk.internal.foreign.layout.ValueLayouts;
 import org.testng.SkipException;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.lang.invoke.WrongMethodTypeException;
@@ -61,6 +64,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import static org.testng.Assert.*;
@@ -169,7 +173,7 @@ public class VarHandleTestExact {
 
     @Test(dataProvider = "dataSetMemorySegment")
     public void testExactSegmentSet(Class<?> carrier, Object testValue, SetSegmentX setter) {
-        VarHandle vh = MethodHandles.memorySegmentViewVarHandle(ValueLayoutUtil.valueLayout(carrier, ByteOrder.nativeOrder()));
+        VarHandle vh = MethodHandles.memorySegmentViewVarHandle(valueLayout(carrier, ByteOrder.nativeOrder()));
         try (MemorySession session = MemorySession.openConfined()) {
             MemorySegment seg = session.allocate(8);
             doTest(vh,
@@ -384,6 +388,32 @@ public class VarHandleTestExact {
         testCaseSegmentSet(cases, double.class, 1234F,      (vh, seg, off, tv) -> vh.set((MemorySegment) seg, off, (float) tv));
 
         return cases.toArray(Object[][]::new);
+    }
+
+    static ValueLayout valueLayout(Class<?> carrier, ByteOrder order) {
+        Objects.requireNonNull(carrier);
+        Objects.requireNonNull(order);
+        if (carrier == boolean.class) {
+            return ValueLayouts.OfBooleanImpl.of(order);
+        } else if (carrier == char.class) {
+            return ValueLayouts.OfCharImpl.of(order);
+        } else if (carrier == byte.class) {
+            return ValueLayouts.OfByteImpl.of(order);
+        } else if (carrier == short.class) {
+            return ValueLayouts.OfShortImpl.of(order);
+        } else if (carrier == int.class) {
+            return ValueLayouts.OfIntImpl.of(order);
+        } else if (carrier == float.class) {
+            return ValueLayouts.OfFloatImpl.of(order);
+        } else if (carrier == long.class) {
+            return ValueLayouts.OfLongImpl.of(order);
+        } else if (carrier == double.class) {
+            return ValueLayouts.OfDoubleImpl.of(order);
+        } else if (carrier == MemorySegment.class) {
+            return ValueLayouts.OfAddressImpl.of(order);
+        } else {
+            throw new IllegalArgumentException("Unsupported carrier: " + carrier.getName());
+        }
     }
 
 }
