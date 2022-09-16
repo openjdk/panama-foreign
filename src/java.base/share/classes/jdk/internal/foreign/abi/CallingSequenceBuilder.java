@@ -46,27 +46,30 @@ public final class CallingSequenceBuilder {
     private static final boolean VERIFY_BINDINGS = Boolean.parseBoolean(
             GetPropertyAction.privilegedGetProperty("java.lang.foreign.VERIFY_BINDINGS", "true"));
     private static final Set<Binding.Tag> UNBOX_TAGS = EnumSet.of(
-        VM_STORE,
-        //VM_LOAD,
-        //BUFFER_STORE,
-        BUFFER_LOAD,
-        COPY_BUFFER,
-        //ALLOC_BUFFER,
-        //BOX_ADDRESS,
-        UNBOX_ADDRESS,
-        DUP
+            VM_STORE,
+            //VM_LOAD,
+            //BUFFER_STORE,
+            BUFFER_LOAD,
+            COPY_BUFFER,
+            //ALLOC_BUFFER,
+            //BOX_ADDRESS,
+            UNBOX_ADDRESS,
+            DUP,
+            CAST
     );
     private static final Set<Binding.Tag> BOX_TAGS = EnumSet.of(
-        //VM_STORE,
-        VM_LOAD,
-        BUFFER_STORE,
-        //BUFFER_LOAD,
-        COPY_BUFFER,
-        ALLOC_BUFFER,
-        BOX_ADDRESS,
-        //UNBOX_ADDRESS,
-        DUP
+            //VM_STORE,
+            VM_LOAD,
+            BUFFER_STORE,
+            //BUFFER_LOAD,
+            COPY_BUFFER,
+            ALLOC_BUFFER,
+            BOX_ADDRESS,
+            //UNBOX_ADDRESS,
+            DUP,
+            CAST
     );
+
     private final ABIDescriptor abi;
     private final boolean forUpcall;
     private final List<List<Binding>> inputBindings = new ArrayList<>();
@@ -116,13 +119,6 @@ public final class CallingSequenceBuilder {
                 throw new IllegalArgumentException("Unexpected operator: " + b);
             b.verify(stack);
         }
-
-        if (stack.size() != 1) {
-            throw new IllegalArgumentException("Stack must contain exactly 1 value");
-        }
-
-        Class<?> actualOutType = stack.pop();
-        SharedUtils.checkType(actualOutType, expectedOutType);
     }
 
     private static void verifyUnboxBindings(Class<?> inType, List<Binding> bindings) {

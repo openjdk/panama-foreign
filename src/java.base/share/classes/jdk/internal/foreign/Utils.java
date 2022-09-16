@@ -183,7 +183,8 @@ public final class Utils {
         }
     }
 
-    private static boolean byteToBoolean(byte b) {
+    public static boolean byteToBoolean(byte b) {
+
         return b != 0;
     }
 

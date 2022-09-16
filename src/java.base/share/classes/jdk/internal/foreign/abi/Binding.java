@@ -30,161 +30,164 @@ import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
 /**
  * The binding operators defined in the Binding class can be combined into argument and return value processing 'recipes'.
- *
+ * <p>
  * The binding operators are interpreted using a stack-base interpreter. Operators can either consume operands from the
  * stack, or push them onto the stack.
- *
+ * <p>
  * In the description of each binding we talk about 'boxing' and 'unboxing'.
- *  - Unboxing is the process of taking a Java value and decomposing it, and storing components into machine
- *    storage locations. As such, the binding interpreter stack starts with the Java value on it, and should end empty.
- *  - Boxing is the process of re-composing a Java value by pulling components from machine storage locations.
- *    If a MemorySegment is needed to store the result, one should be allocated using the ALLOCATE_BUFFER operator.
- *    The binding interpreter stack starts off empty, and ends with the value to be returned as the only value on it.
+ * - Unboxing is the process of taking a Java value and decomposing it, and storing components into machine
+ * storage locations. As such, the binding interpreter stack starts with the Java value on it, and should end empty.
+ * - Boxing is the process of re-composing a Java value by pulling components from machine storage locations.
+ * If a MemorySegment is needed to store the result, one should be allocated using the ALLOCATE_BUFFER operator.
+ * The binding interpreter stack starts off empty, and ends with the value to be returned as the only value on it.
  * A binding operator can be interpreted differently based on whether we are boxing or unboxing a value. For example,
  * the CONVERT_ADDRESS operator 'unboxes' a MemoryAddress to a long, but 'boxes' a long to a MemoryAddress.
- *
+ * <p>
  * Here are some examples of binding recipes derived from C declarations, and according to the Windows ABI (recipes are
  * ABI-specific). Note that each argument has it's own recipe, which is indicated by '[number]:' (though, the only
  * example that has multiple arguments is the one using varargs).
- *
+ * <p>
  * --------------------
- *
+ * <p>
  * void f(int i);
- *
+ * <p>
  * Argument bindings:
  * 0: VM_STORE(rcx, int.class) // move an 'int' into the RCX register
- *
+ * <p>
  * Return bindings:
  * none
- *
+ * <p>
  * --------------------
- *
+ * <p>
  * void f(int* i);
- *
+ * <p>
  * Argument bindings:
  * 0: UNBOX_ADDRESS // the 'MemoryAddress' is converted into a 'long'
- *    VM_STORE(rcx, long.class) // the 'long' is moved into the RCX register
- *
+ * VM_STORE(rcx, long.class) // the 'long' is moved into the RCX register
+ * <p>
  * Return bindings:
  * none
- *
+ * <p>
  * --------------------
- *
+ * <p>
  * int* f();
- *
+ * <p>
  * Argument bindings:
  * none
- *
+ * <p>
  * Return bindings:
  * 0: VM_LOAD(rax, long) // load a 'long' from the RAX register
- *    BOX_ADDRESS // convert the 'long' into a 'MemoryAddress'
- *
+ * BOX_ADDRESS // convert the 'long' into a 'MemoryAddress'
+ * <p>
  * --------------------
- *
+ * <p>
  * typedef struct { // fits into single register
- *   int x;
- *   int y;
+ * int x;
+ * int y;
  * } MyStruct;
- *
+ * <p>
  * void f(MyStruct ms);
- *
+ * <p>
  * Argument bindings:
  * 0: BUFFER_LOAD(0, long.class) // From the struct's memory region, load a 'long' from offset '0'
- *    VM_STORE(rcx, long.class) // and copy that into the RCX register
- *
+ * VM_STORE(rcx, long.class) // and copy that into the RCX register
+ * <p>
  * Return bindings:
  * none
- *
+ * <p>
  * --------------------
- *
+ * <p>
  * typedef struct { // does not fit into single register
- *   long long x;
- *   long long y;
+ * long long x;
+ * long long y;
  * } MyStruct;
- *
+ * <p>
  * void f(MyStruct ms);
- *
+ * <p>
  * For the Windows ABI:
- *
+ * <p>
  * Argument bindings:
  * 0: COPY(16, 8) // copy the memory region containing the struct
- *    BASE_ADDRESS // take the base address of the copy
- *    UNBOX_ADDRESS // converts the base address to a 'long'
- *    VM_STORE(rcx, long.class) // moves the 'long' into the RCX register
- *
+ * BASE_ADDRESS // take the base address of the copy
+ * UNBOX_ADDRESS // converts the base address to a 'long'
+ * VM_STORE(rcx, long.class) // moves the 'long' into the RCX register
+ * <p>
  * Return bindings:
  * none
- *
+ * <p>
  * For the SysV ABI:
- *
+ * <p>
  * Argument bindings:
  * 0: DUP // duplicates the MemoryRegion operand
- *    BUFFER_LOAD(0, long.class) // loads a 'long' from offset '0'
- *    VM_STORE(rdx, long.class) // moves the long into the RDX register
- *    BUFFER_LOAD(8, long.class) // loads a 'long' from offset '8'
- *    VM_STORE(rcx, long.class) // moves the long into the RCX register
- *
+ * BUFFER_LOAD(0, long.class) // loads a 'long' from offset '0'
+ * VM_STORE(rdx, long.class) // moves the long into the RDX register
+ * BUFFER_LOAD(8, long.class) // loads a 'long' from offset '8'
+ * VM_STORE(rcx, long.class) // moves the long into the RCX register
+ * <p>
  * Return bindings:
  * none
- *
+ * <p>
  * --------------------
- *
+ * <p>
  * typedef struct { // fits into single register
- *   int x;
- *   int y;
+ * int x;
+ * int y;
  * } MyStruct;
- *
+ * <p>
  * MyStruct f();
- *
+ * <p>
  * Argument bindings:
  * none
- *
+ * <p>
  * Return bindings:
  * 0: ALLOCATE(GroupLayout(C_INT, C_INT)) // allocate a buffer with the memory layout of the struct
- *    DUP // duplicate the allocated buffer
- *    VM_LOAD(rax, long.class) // loads a 'long' from rax
- *    BUFFER_STORE(0, long.class) // stores a 'long' at offset 0
- *
+ * DUP // duplicate the allocated buffer
+ * VM_LOAD(rax, long.class) // loads a 'long' from rax
+ * BUFFER_STORE(0, long.class) // stores a 'long' at offset 0
+ * <p>
  * --------------------
- *
+ * <p>
  * typedef struct { // does not fit into single register
- *   long long x;
- *   long long y;
+ * long long x;
+ * long long y;
  * } MyStruct;
- *
+ * <p>
  * MyStruct f();
- *
+ * <p>
  * !! uses synthetic argument, which is a pointer to a pre-allocated buffer
- *
+ * <p>
  * Argument bindings:
  * 0: UNBOX_ADDRESS // unbox the MemoryAddress synthetic argument
- *    VM_STORE(rcx, long.class) // moves the 'long' into the RCX register
- *
+ * VM_STORE(rcx, long.class) // moves the 'long' into the RCX register
+ * <p>
  * Return bindings:
  * none
- *
+ * <p>
  * --------------------
- *
+ * <p>
  * void f(int dummy, ...); // varargs
- *
+ * <p>
  * f(0, 10f); // passing a float
- *
+ * <p>
  * Argument bindings:
  * 0: VM_STORE(rcx, int.class) // moves the 'int dummy' into the RCX register
- *
+ * <p>
  * 1: DUP // duplicates the '10f' argument
- *    VM_STORE(rdx, float.class) // move one copy into the RDX register
- *    VM_STORE(xmm1, float.class) // moves the other copy into the xmm2 register
- *
+ * VM_STORE(rdx, float.class) // move one copy into the RDX register
+ * VM_STORE(xmm1, float.class) // moves the other copy into the xmm2 register
+ * <p>
  * Return bindings:
  * none
- *
+ * <p>
  * --------------------
  */
 public interface Binding {
@@ -258,6 +261,10 @@ public interface Binding {
         return Dup.INSTANCE;
     }
 
+    static Binding cast(Class<?> fromType, Class<?> toType) {
+        return new Cast(fromType, toType);
+    }
+
     static Binding.Builder builder() {
         return new Binding.Builder();
     }
@@ -271,17 +278,20 @@ public interface Binding {
         ALLOC_BUFFER,
         BOX_ADDRESS,
         UNBOX_ADDRESS,
-        DUP
+        DUP,
+        CAST
     }
 
 
     interface Move extends Binding {
         VMStorage storage();
+
         Class<?> type();
     }
 
     interface Dereference extends Binding {
         long offset();
+
         Class<?> type();
     }
 
@@ -303,13 +313,13 @@ public interface Binding {
             }
 
             @Override
-            public void close() {
-                // do nothing
+            public MemorySession session() {
+                throw new UnsupportedOperationException();
             }
 
             @Override
-            public MemorySession session() {
-                throw new UnsupportedOperationException();
+            public void close() {
+                // do nothing
             }
         };
         private final SegmentAllocator allocator;
@@ -362,7 +372,9 @@ public interface Binding {
             MemorySession scope = MemorySession.openConfined();
             return new Context(null, scope) {
                 @Override
-                public SegmentAllocator allocator() { throw new UnsupportedOperationException(); }
+                public SegmentAllocator allocator() {
+                    throw new UnsupportedOperationException();
+                }
             };
         }
     }
@@ -374,12 +386,27 @@ public interface Binding {
         private final List<Binding> bindings = new ArrayList<>();
 
         public Binding.Builder vmStore(VMStorage storage, Class<?> type) {
+            if (isSubIntType(type)) {
+                bindings.add(Binding.cast(type, int.class));
+                type = int.class;
+            }
             bindings.add(Binding.vmStore(storage, type));
             return this;
         }
 
+        private static boolean isSubIntType(Class<?> type) {
+            return type == boolean.class || type == byte.class || type == short.class || type == char.class;
+        }
+
         public Binding.Builder vmLoad(VMStorage storage, Class<?> type) {
-            bindings.add(Binding.vmLoad(storage, type));
+            Class<?> loadType = type;
+            if (isSubIntType(type)) {
+                loadType = int.class;
+            }
+            bindings.add(Binding.vmLoad(storage, loadType));
+            if (isSubIntType(type)) {
+                bindings.add(Binding.cast(int.class, type));
+            }
             return this;
         }
 
@@ -541,9 +568,9 @@ public interface Binding {
 
     /**
      * COPY([size], [alignment])
-     *   Creates a new MemorySegment with the given [size] and [alignment],
-     *     and copies contents from a MemorySegment popped from the top of the operand stack into this new buffer,
-     *     and pushes the new buffer onto the operand stack
+     * Creates a new MemorySegment with the given [size] and [alignment],
+     * and copies contents from a MemorySegment popped from the top of the operand stack into this new buffer,
+     * and pushes the new buffer onto the operand stack
      */
     record Copy(long size, long alignment) implements Binding {
         @Override
@@ -566,15 +593,18 @@ public interface Binding {
             stack.push(copy);
         }
 
-        private static MemorySegment copyBuffer(MemorySegment operand, long size, long alignment, Context context) {
+        private static MemorySegment copyBuffer(MemorySegment operand,
+                                                long size,
+                                                long alignment,
+                                                Context context) {
             return context.allocator().allocate(size, alignment)
-                            .copyFrom(operand.asSlice(0, size));
+                    .copyFrom(operand.asSlice(0, size));
         }
     }
 
     /**
      * ALLOCATE([size], [alignment])
-     *   Creates a new MemorySegment with the give [size] and [alignment], and pushes it onto the operand stack.
+     * Creates a new MemorySegment with the give [size] and [alignment], and pushes it onto the operand stack.
      */
     record Allocate(long size, long alignment) implements Binding {
         @Override
@@ -619,9 +649,11 @@ public interface Binding {
         }
 
         @Override
-        public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                              BindingInterpreter.LoadFunc loadFunc, Context context) {
-            stack.push(((MemorySegment)stack.pop()).address());
+        public void interpret(Deque<Object> stack,
+                              BindingInterpreter.StoreFunc storeFunc,
+                              BindingInterpreter.LoadFunc loadFunc,
+                              Context context) {
+            stack.push(((MemorySegment) stack.pop()).address());
         }
     }
 
@@ -645,18 +677,21 @@ public interface Binding {
         }
 
         @Override
-        public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                              BindingInterpreter.LoadFunc loadFunc, Context context) {
-            MemorySession session = needsSession ?
-                    context.session() : MemorySession.global();
+        public void interpret(Deque<Object> stack,
+                              BindingInterpreter.StoreFunc storeFunc,
+                              BindingInterpreter.LoadFunc loadFunc,
+                              Context context) {
+            MemorySession session = needsSession
+                    ? context.session()
+                    : MemorySession.global();
             stack.push(NativeMemorySegmentImpl.makeNativeSegmentUnchecked((long) stack.pop(), size, session));
         }
     }
 
     /**
      * DUP()
-     *   Duplicates the value on the top of the operand stack (without popping it!),
-     *   and pushes the duplicate onto the operand stack
+     * Duplicates the value on the top of the operand stack (without popping it!),
+     * and pushes the duplicate onto the operand stack
      */
     record Dup() implements Binding {
         static final Dup INSTANCE = new Dup();
@@ -672,9 +707,47 @@ public interface Binding {
         }
 
         @Override
-        public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                              BindingInterpreter.LoadFunc loadFunc, Context context) {
+        public void interpret(Deque<Object> stack,
+                              BindingInterpreter.StoreFunc storeFunc,
+                              BindingInterpreter.LoadFunc loadFunc,
+                              Context context) {
             stack.push(stack.peekLast());
+        }
+    }
+
+    /**
+     * CAST([fromType], [toType])
+     * Pop a [fromType] from the stack, convert it to [toType], and push the resulting
+     * value onto the stack.
+     */
+    record Cast(Class<?> fromType, Class<?> toType) implements Binding {
+
+        @Override
+        public Tag tag() {
+            return Tag.CAST;
+        }
+
+        @Override
+        public void verify(Deque<Class<?>> stack) {
+            Class<?> actualType = stack.pop();
+            SharedUtils.checkType(actualType, fromType);
+            stack.push(toType);
+        }
+
+        @Override
+        public void interpret(Deque<Object> stack,
+                              BindingInterpreter.StoreFunc storeFunc,
+                              BindingInterpreter.LoadFunc loadFunc,
+                              Context context) {
+            Object arg = stack.pop();
+            MethodHandle converter = MethodHandles.explicitCastArguments(MethodHandles.identity(toType),
+                    MethodType.methodType(toType, fromType));
+            try {
+                Object result = converter.invoke(arg);
+                stack.push(result);
+            } catch (Throwable e) {
+                throw new InternalError(e);
+            }
         }
     }
 }
