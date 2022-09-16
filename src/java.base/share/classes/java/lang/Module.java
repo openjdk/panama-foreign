@@ -257,7 +257,7 @@ public final class Module implements AnnotatedElement {
     /**
      * Update this module to allow access to restricted methods.
      */
-    Module implAddEnableNativeAccess() {
+    synchronized Module implAddEnableNativeAccess() {
         enableNativeAccess = true;
         return this;
     }
