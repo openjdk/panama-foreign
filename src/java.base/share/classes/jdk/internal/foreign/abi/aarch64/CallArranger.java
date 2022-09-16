@@ -262,7 +262,7 @@ public abstract class CallArranger {
             while (offset < layout.byteSize()) {
                 long copy = Math.min(layout.byteSize() - offset, STACK_SLOT_SIZE);
                 VMStorage storage =
-                    storageCalculator.stackAlloc(copy, STACK_SLOT_SIZE);
+                    storageCalculator.stackAlloc(copy, layout.byteAlignment());
                 if (offset + STACK_SLOT_SIZE < layout.byteSize()) {
                     bindings.dup();
                 }
@@ -283,7 +283,7 @@ public abstract class CallArranger {
             while (offset < layout.byteSize()) {
                 long copy = Math.min(layout.byteSize() - offset, STACK_SLOT_SIZE);
                 VMStorage storage =
-                    storageCalculator.stackAlloc(copy, STACK_SLOT_SIZE);
+                    storageCalculator.stackAlloc(copy, layout.byteAlignment());
                 Class<?> type = SharedUtils.primitiveCarrierForSize(copy, false);
                 bindings.dup()
                         .vmLoad(storage, type)
