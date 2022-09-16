@@ -110,7 +110,7 @@ static void move_reg64(MacroAssembler* masm, int out_stk_bias,
     case StorageType::STACK:
       out_bias = out_stk_bias;
     case StorageType::FRAME_DATA: {
-      Address dest(sp, to_reg.index() + out_bias);
+      Address dest(sp, to_reg.offset() + out_bias);
       switch (to_reg.stack_size()) {
         case 8: masm->str (from_reg, dest); break;
         case 4: masm->strw(from_reg, dest); break;
@@ -182,17 +182,14 @@ static void move_v128(MacroAssembler* masm, int out_stk_bias,
       assert(to_reg.segment_mask() == V128_MASK, "only moves to v128 registers supported");
       masm->fmovd(as_FloatRegister(to_reg), from_reg);
       break;
-    case StorageType::STACK:
-      switch(to_reg.stack_size()) {
-        case 8:
-          masm->strd(from_reg, Address(sp, to_reg.offset() + out_stk_bias));
-        break;
-        case 4:
-          masm->strs(from_reg, Address(sp, to_reg.offset() + out_stk_bias));
-        break;
+    case StorageType::STACK: {
+      Address dest(sp, to_reg.offset() + out_stk_bias);
+      switch (to_reg.stack_size()) {
+        case 8: masm->strd(from_reg, dest); break;
+        case 4: masm->strs(from_reg, dest); break;
         default: ShouldNotReachHere();
       }
-      break;
+    } break;
     default: ShouldNotReachHere();
   }
 }
