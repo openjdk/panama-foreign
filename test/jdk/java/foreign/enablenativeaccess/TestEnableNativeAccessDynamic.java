@@ -159,7 +159,7 @@ public class TestEnableNativeAccessDynamic {
         if (panamaModuleInBootLayer) {
             list.addAll(List.of("-p", MODULE_PATH));
             list.add("--add-modules=panama_module");
-            list.add("--enable-native-access=ALL-UNNAMED,panama_module");
+            list.add("--enable-native-access=panama_module");
         } else {
             list.add("--enable-native-access=ALL-UNNAMED");
         }
