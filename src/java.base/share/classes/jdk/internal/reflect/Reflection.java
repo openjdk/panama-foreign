@@ -115,10 +115,10 @@ public class Reflection {
         Module module = currentClass != null ?
                 currentClass.getModule() :
                 ClassLoader.getSystemClassLoader().getUnnamedModule();
-        boolean isNativeAccessEnabled = module.isNativeAccessEnabled();
+        boolean isNativeAccessEnabled = SharedSecrets.getJavaLangAccess().isEnableNativeAccess(module);
         if (!isNativeAccessEnabled) {
             synchronized(module) {
-                isNativeAccessEnabled = module.isNativeAccessEnabled();
+                isNativeAccessEnabled = SharedSecrets.getJavaLangAccess().isEnableNativeAccess(module);
                 if (isNativeAccessEnabled) {
                     // some other thread got to it, do nothing
                 } else if (ModuleBootstrap.hasEnableNativeAccessFlag()) {

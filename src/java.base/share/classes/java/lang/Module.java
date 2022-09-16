@@ -269,9 +269,8 @@ public final class Module implements AnnotatedElement {
      * @return {@code true} if this module can access <em>restricted</em> methods.
      */
     @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-    public boolean isNativeAccessEnabled() {
-        return enableNativeAccess ||
-                (!isNamed() && ALL_UNNAMED_MODULE.enableNativeAccess);
+    public synchronized boolean isNativeAccessEnabled() {
+        return implIsEnableNativeAccess();
     }
 
     /**
