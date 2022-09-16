@@ -64,7 +64,7 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  *     <li>A <em>native segment</em> is backed by, and provides access to, a region of memory outside the Java heap (an "off-heap" region).</li>
  * </ul>
  * Heap segments can be obtained by calling one of the {@link MemorySegment#ofArray(int[])} factory methods.
- * These methods return a memory segment backed by the on-heap memory region that holds the specified Java array.
+ * These methods return a memory segment backed by the on-heap region that holds the specified Java array.
  * <p>
  * Native segments can be obtained by calling one of the {@link MemorySegment#allocateNative(MemoryLayout)}
  * factory methods, which return a memory segment backed by a newly allocated off-heap region with given size
@@ -79,16 +79,21 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  *
  * <h2 id="segment-characteristics">Characteristics of memory segments</h2>
  *
- * Every memory segment has an {@linkplain #address() address}. The address of a native segment indicates a
- * physical address within the off-heap region which backs the segment. For a newly allocated native segment,
- * the address of the segment is the starting address of the region which backs the memory segment.
- * A heap segment is backed by a region managed by the garbage collector. A garbage collector does not reveal the
- * starting address of the region it manages, as the contents of this region might be relocated multiple times
- * as garbage collection takes place. As such, the address of a heap segment is said to be <em>virtualized</em>. For
- * a newly obtained heap segment, the address of the segment is simply zero.
+ * Every memory segment has an {@linkplain #address() address}, expressed as a {@code long} value.
+ * The nature of a segment's address depends on the kind of the segment:
+ * <ul>
+ * <li>The address of a heap segment is not a physical address, but rather an offset within the region of memory
+ * which backs the segment. The region is inside the Java heap, so garbage collection might cause the region to be
+ * relocated in physical memory over time, but this is not exposed to clients of the {@code MemorySegment} API who
+ * see a stable <em>virtualized</em> address for a heap segment backed by the region.
+ * A heap segment obtained from one of the {@link #ofArray(int[])} factory methods has an address of zero.</li>
+ * <li>The address of a native segment (including mapped segments) denotes the physical address of the region of
+ * memory which backs the segment.</li>
+ * </ul>
  * <p>
  * Every memory segment has a {@linkplain #byteSize() size}. The size of a heap segment is derived from the Java array
- * from which it is obtained. The size of a native segment is either passed explicitly
+ * from which it is obtained. This size is predictable across Java runtimes.
+ * The size of a native segment is either passed explicitly
  * (as in {@link MemorySegment#allocateNative(long)}) or derived from a {@link MemoryLayout}
  * (as in {@link MemorySegment#allocateNative(MemoryLayout)}). The size of a memory segment is typically
  * a positive number but may be <a href="#wrapping-addresses">zero</a>, but never negative.
@@ -111,7 +116,8 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  *
  * A memory segment can be read or written using various access operations provided in this class (e.g. {@link #get(ValueLayout.OfInt, long)}).
  * Each access operation takes a {@linkplain ValueLayout value layout}, which specifies the size,
- * alignment constraints, byte order as well as the Java type associated with the access operation, and an offset.
+ * alignment constraints, byte order as well as the Java type associated with the access operation, and an offset
+ * (expressed in bytes).
  * For instance, to read an int from a segment, using {@linkplain ByteOrder#nativeOrder() default endianness}, the following code can be used:
  * {@snippet lang=java :
  * MemorySegment segment = ...
@@ -168,7 +174,8 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * slice.get(ValueLayout.JAVA_INT, 0); // Already closed!
  * }
  * The above code creates a native segment that is 100 bytes long; then, it creates a slice that starts at offset 50
- * of {@code segment}, and is 10 bytes long. As a result, attempting to read an int value at offset 20 of the
+ * of {@code segment}, and is 10 bytes long. That is, the address of the {@code slice} is {@code segment.address() + 50},
+ * and its size is 10. As a result, attempting to read an int value at offset 20 of the
  * {@code slice} segment will result in an exception. The {@linkplain MemorySession temporal bounds} of the original segment
  * are inherited by its slices; that is, when the memory session associated with {@code segment} is closed, {@code slice}
  * will also be become inaccessible.
@@ -330,7 +337,7 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
-     * {@return returns the address of this memory segment}
+     * {@return the address of this memory segment}
      */
     long address();
 
@@ -1044,9 +1051,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Creates a native segment with the given layout.
      * <p>
      * The {@linkplain #address() address} of the returned memory segment is the starting address of
-     * the newly allocated off-heap memory region backing the segment.
+     * the newly allocated off-heap region backing the segment.
      * The returned memory segment is associated with a new {@linkplain MemorySession#openImplicit implicit}
-     * memory session. As such, the off-heap memory region which backs the returned segment is
+     * memory session. As such, the off-heap region which backs the returned segment is
      * freed <em>automatically</em>, some unspecified time after it is no longer referenced.
      * <p>
      * Native segments featuring deterministic deallocation can be obtained using the
@@ -1073,9 +1080,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Creates a native segment with the given size (in bytes).
      * <p>
      * The {@linkplain #address() address} of the returned memory segment is the starting address of
-     * the newly allocated off-heap memory region backing the segment.
+     * the newly allocated off-heap region backing the segment.
      * The returned memory segment is associated with a new {@linkplain MemorySession#openImplicit implicit}
-     * memory session. As such, the off-heap memory region which backs the returned segment is
+     * memory session. As such, the off-heap region which backs the returned segment is
      * freed <em>automatically</em>, some unspecified time after it is no longer referenced.
      * <p>
      * Native segments featuring deterministic deallocation can be obtained using the
@@ -1105,9 +1112,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Creates a native segment with the given size (in bytes) and alignment (in bytes).
      * <p>
      * The {@linkplain #address() address} of the returned memory segment is the starting address of
-     * the newly allocated off-heap memory region backing the segment.
+     * the newly allocated off-heap region backing the segment.
      * The returned memory segment is associated with a new {@linkplain MemorySession#openImplicit implicit}
-     * memory session. As such, the off-heap memory region which backs the returned segment is
+     * memory session. As such, the off-heap region which backs the returned segment is
      * freed <em>automatically</em>, some unspecified time after it is no longer referenced.
      * <p>
      * Native segments featuring deterministic deallocation can be obtained using the

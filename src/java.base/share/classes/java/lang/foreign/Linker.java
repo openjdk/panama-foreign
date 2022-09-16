@@ -135,7 +135,7 @@ import java.lang.invoke.MethodHandle;
  * For instance, memory segments passed by-value can be decomposed, on some ABIs, into their component fields,
  * which are then stored in registers and/or stack slots <em>before</em> the foreign function call takes place.
  * Conversely, memory segments passed by-reference can be passed more efficiently, on some ABIs, by only passing the
- * {@linkplain MemorySegment#address() base address} of the region of memory associated with the memory segment.
+ * {@linkplain MemorySegment#address() address} of the region of memory associated with the memory segment.
  *
  * <h3 id="obtaining-downcall-method-handles">Obtaining a downcall method handle</h3>
  *
@@ -325,7 +325,7 @@ public sealed interface Linker permits AbstractLinker {
      * memory session. Calling such a function pointer from foreign code will result in the execution of the provided
      * method handle.
      * <p>
-     * The returned memory segment's base address points to the newly allocated upcall stub, and is associated with
+     * The returned memory segment's address points to the newly allocated upcall stub, and is associated with
      * the provided memory session. When such session is closed, the corresponding upcall stub will be deallocated.
      * <p>
      * The target method handle should not throw any exceptions. If the target method handle does throw an exception,
@@ -337,7 +337,7 @@ public sealed interface Linker permits AbstractLinker {
      * @param target the target method handle.
      * @param function the upcall stub function descriptor.
      * @param session the upcall stub memory session.
-     * @return a zero-length segment whose base address is the address of the upcall stub.
+     * @return a zero-length segment whose address is the address of the upcall stub.
      * @throws IllegalArgumentException if the provided function descriptor is not supported by this linker.
      * @throws IllegalArgumentException if it is determined that the target method handle can throw an exception, or if the target method handle
      * has a type that does not match the upcall stub <a href="Linker.html#upcall-stubs"><em>inferred type</em></a>.
