@@ -44,7 +44,7 @@ import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.abi.SharedUtils.THROWING_ALLOCATOR;
 
 // See https://software.intel.com/sites/default/files/article/402129/mpx-linux64-abi.pdf "3.5.7 Variable Argument Lists"
-public non-sealed class SysVVaList implements VaList {
+public final class SysVVaList implements VaList {
     private static final Unsafe U = Unsafe.getUnsafe();
 
 //    struct typedef __va_list_tag __va_list_tag {
@@ -355,7 +355,7 @@ public non-sealed class SysVVaList implements VaList {
                + '}';
     }
 
-    public static non-sealed class Builder implements VaList.Builder {
+    public static final class Builder implements VaList.Builder {
         private final MemorySession session;
         private final MemorySegment reg_save_area;
         private long currentGPOffset = 0;

@@ -153,7 +153,9 @@ public class X86_64Architecture implements Architecture {
             new VMStorage[][] {
                 outputIntRegs,
                 outputVectorRegs,
-                IntStream.range(0, numX87Outputs).mapToObj(X86_64Architecture::x87Storage).toArray(VMStorage[]::new)
+                IntStream.range(0, numX87Outputs)
+                        .mapToObj(X86_64Architecture::x87Storage)
+                        .toArray(VMStorage[]::new)
             },
             new VMStorage[][] {
                 volatileIntRegs,

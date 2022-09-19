@@ -42,7 +42,7 @@ import java.util.Set;
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.internal.foreign.abi.Binding.Tag.*;
 
-public class CallingSequenceBuilder {
+public final class CallingSequenceBuilder {
     private static final boolean VERIFY_BINDINGS = Boolean.parseBoolean(
             GetPropertyAction.privilegedGetProperty("java.lang.foreign.VERIFY_BINDINGS", "true"));
 
@@ -60,7 +60,7 @@ public class CallingSequenceBuilder {
         this.forUpcall = forUpcall;
     }
 
-    public final CallingSequenceBuilder addArgumentBindings(Class<?> carrier, MemoryLayout layout,
+    public CallingSequenceBuilder addArgumentBindings(Class<?> carrier, MemoryLayout layout,
                                                             List<Binding> bindings) {
         addArgumentBinding(inputBindings.size(), carrier, layout, bindings);
         return this;
