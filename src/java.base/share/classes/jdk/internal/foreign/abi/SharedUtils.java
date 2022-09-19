@@ -317,8 +317,8 @@ public final class SharedUtils {
     }
 
     public static boolean isVarargsIndex(FunctionDescriptor descriptor, int argIndex) {
-        int firstPos = descriptor.firstVariadicArgumentIndex();
-        return firstPos != -1 && argIndex >= firstPos;
+        LinkerOptions.FirstVariadicArg firstVariadicArg = descriptor.getOption(LinkerOptions.FirstVariadicArg.class);
+        return firstVariadicArg != null && argIndex >= firstVariadicArg.index();
     }
 
     public static NoSuchElementException newVaListNSEE(MemoryLayout layout) {

@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.List;
 
 import jdk.internal.foreign.FunctionDescriptorImpl;
+import jdk.internal.foreign.abi.LinkerOptions;
 import jdk.internal.javac.PreviewFeature;
 
 /**
@@ -59,11 +60,14 @@ public sealed interface FunctionDescriptor permits FunctionDescriptorImpl {
     List<MemoryLayout> argumentLayouts();
 
     /**
-     * The index of the first variadic argument layout (where defined).
-     * @return The index of the first variadic argument layout, or {@code -1} if this is not a
-     * {@linkplain #asVariadic(MemoryLayout...) variadic} layout.
+     * {@return linker options}
      */
-    int firstVariadicArgumentIndex();
+    List<Linker.Option> options();
+
+    /**
+     * {@return the option with the given type, or {@code null}}
+     */
+    <T extends Linker.Option> T getOption(Class<T> optionType);
 
     /**
      * Returns a function descriptor with the given argument layouts appended to the argument layout array
@@ -116,13 +120,18 @@ public sealed interface FunctionDescriptor permits FunctionDescriptorImpl {
     /**
      * Creates a specialized variadic function descriptor, by appending given variadic layouts to this
      * function descriptor argument layouts. The resulting function descriptor can report the position
-     * of the {@linkplain #firstVariadicArgumentIndex() first variadic argument}, and cannot be altered
-     * in any way: for instance, calling {@link #changeReturnLayout(MemoryLayout)} on the resulting descriptor
-     * will throw an {@link UnsupportedOperationException}.
+     * of the {@linkplain #options() first variadic argument}.
      * @param variadicLayouts the variadic argument layouts to be appended to this descriptor argument layouts.
      * @return a variadic function descriptor, or this descriptor if {@code variadicLayouts.length == 0}.
      */
     FunctionDescriptor asVariadic(MemoryLayout... variadicLayouts);
+
+    /**
+     * Add linker options
+     * @param options the options to add
+     * @return new descriptor with added options
+     */
+    FunctionDescriptorImpl addOptions(Linker.Option... options);
 
     /**
      * Creates a function descriptor with the given return and argument layouts.
@@ -145,5 +154,4 @@ public sealed interface FunctionDescriptor permits FunctionDescriptorImpl {
         // Null checks are implicit in List.of(argLayouts)
         return FunctionDescriptorImpl.ofVoid(List.of(argLayouts));
     }
-
 }

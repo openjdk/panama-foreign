@@ -26,12 +26,16 @@
 package java.lang.foreign;
 
 import jdk.internal.foreign.abi.AbstractLinker;
+import jdk.internal.foreign.abi.LinkerOptions;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.javac.PreviewFeature;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
 import java.lang.invoke.MethodHandle;
+import java.util.List;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * A linker provides access to foreign functions from Java code, and access to Java code from foreign functions.
@@ -282,4 +286,41 @@ public sealed interface Linker permits AbstractLinker {
      * @return a symbol lookup for symbols in a set of commonly used libraries.
      */
     SymbolLookup defaultLookup();
+
+    /**
+     * Linker options used to steer linking
+     */
+    sealed interface Option
+            permits LinkerOptions.ElideCopy,
+                    LinkerOptions.FirstVariadicArg,
+                    LinkerOptions.KeepAlive,
+                    LinkerOptions.OmitStateTransition,
+                    LinkerOptions.PinnedHeapAddress,
+                    LinkerOptions.SaveThreadLocal {
+
+        /**
+         * {@return A linker characteristic used to denote the index of the first variadic argument layout in a
+         * foreign function call}
+         * @param index the index of the first variadic argument in a downcall handle linkage request.
+         */
+        static Option firstVariadicArg(int index) {
+            return new LinkerOptions.FirstVariadicArg(index);
+        }
+
+        static Option keepAlive(int... indexes) {
+            return new LinkerOptions.KeepAlive(IntStream.of(indexes).distinct().toArray());
+        }
+
+        static Option pinnedHeapAddress(int... indexes) {
+            return new LinkerOptions.PinnedHeapAddress(IntStream.of(indexes).distinct().toArray());
+        }
+
+        static Option elideCopy(int... indexes) {
+            return new LinkerOptions.ElideCopy(IntStream.of(indexes).distinct().toArray());
+        }
+
+        static Option saveThreadLocal(String... names) {
+            return new LinkerOptions.SaveThreadLocal(Stream.of(names).distinct().toList());
+        }
+    }
 }
