@@ -66,14 +66,18 @@ public class CallingSequenceBuilder {
         return this;
     }
 
-    private void addArgumentBinding(int index, Class<?> carrier, MemoryLayout layout, List<Binding> bindings) {
+    private void addArgumentBinding(int index,
+                                    Class<?> carrier,
+                                    MemoryLayout layout,
+                                    List<Binding> bindings) {
         verifyBindings(true, carrier, bindings);
         inputBindings.add(index, bindings);
         mt = mt.insertParameterTypes(index, carrier);
         desc = desc.insertArgumentLayouts(index, layout);
     }
 
-    public CallingSequenceBuilder setReturnBindings(Class<?> carrier, MemoryLayout layout,
+    public CallingSequenceBuilder setReturnBindings(Class<?> carrier,
+                                                    MemoryLayout layout,
                                                     List<Binding> bindings) {
         verifyBindings(false, carrier, bindings);
         this.outputBindings = bindings;

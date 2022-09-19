@@ -31,7 +31,7 @@ import jdk.internal.foreign.abi.aarch64.AArch64Architecture;
 
 import java.util.stream.IntStream;
 
-public class X86_64Architecture implements Architecture {
+public final class X86_64Architecture implements Architecture {
     public static final Architecture INSTANCE = new X86_64Architecture();
 
     private static final short REG8_H_MASK = 0b0000_0000_0000_0010;
@@ -72,7 +72,7 @@ public class X86_64Architecture implements Architecture {
         byte STACK = 3;
     }
 
-    public static class Regs { // break circular dependency
+    public static final class Regs { // break circular dependency
         public static final VMStorage rax = integerRegister(0, "rax");
         public static final VMStorage rcx = integerRegister(1, "rcx");
         public static final VMStorage rdx = integerRegister(2, "rdx");

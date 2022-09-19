@@ -136,7 +136,11 @@ public class BindingSpecializer {
     private int paramIndex;
     private long retBufOffset; // for needsReturnBuffer
 
-    private BindingSpecializer(MethodVisitor mv, MethodType callerMethodType, CallingSequence callingSequence, ABIDescriptor abi, MethodType leafType) {
+    private BindingSpecializer(MethodVisitor mv,
+                               MethodType callerMethodType,
+                               CallingSequence callingSequence,
+                               ABIDescriptor abi,
+                               MethodType leafType) {
         this.mv = mv;
         this.callerMethodType = callerMethodType;
         this.callingSequence = callingSequence;
@@ -187,8 +191,10 @@ public class BindingSpecializer {
         }
     }
 
-    private static byte[] specializeHelper(MethodType leafType, MethodType callerMethodType,
-                                           CallingSequence callingSequence, ABIDescriptor abi) {
+    private static byte[] specializeHelper(MethodType leafType,
+                                           MethodType callerMethodType,
+                                           CallingSequence callingSequence,
+                                           ABIDescriptor abi) {
         String className = callingSequence.forDowncall() ? CLASS_NAME_DOWNCALL : CLASS_NAME_UPCALL;
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS + ClassWriter.COMPUTE_FRAMES);
         cw.visit(CLASSFILE_VERSION, ACC_PUBLIC + ACC_FINAL + ACC_SUPER, className, null, SUPER_NAME, null);

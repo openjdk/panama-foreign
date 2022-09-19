@@ -42,9 +42,15 @@ public class CallingSequence {
     private final List<Binding> returnBindings;
     private final List<List<Binding>> argumentBindings;
 
-    public CallingSequence(boolean forUpcall, MethodType callerMethodType, MethodType calleeMethodType, FunctionDescriptor desc,
-                           boolean needsReturnBuffer, long returnBufferSize, long allocationSize,
-                           List<List<Binding>> argumentBindings, List<Binding> returnBindings) {
+    public CallingSequence(boolean forUpcall,
+                           MethodType callerMethodType,
+                           MethodType calleeMethodType,
+                           FunctionDescriptor desc,
+                           boolean needsReturnBuffer,
+                           long returnBufferSize,
+                           long allocationSize,
+                           List<List<Binding>> argumentBindings,
+                           List<Binding> returnBindings) {
         this.forUpcall = forUpcall;
         this.callerMethodType = callerMethodType;
         this.calleeMethodType = calleeMethodType;

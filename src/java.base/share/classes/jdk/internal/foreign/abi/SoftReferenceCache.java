@@ -41,7 +41,7 @@ class SoftReferenceCache<K, V> {
     private final class Node {
         private volatile SoftReference<V> ref;
 
-        public Node() {
+        private Node() {
         }
 
         public V get(K key, Function<K, V> valueFactory) {

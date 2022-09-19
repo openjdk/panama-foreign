@@ -43,9 +43,14 @@ public class ABIDescriptor {
     final VMStorage targetAddrStorage;
     final VMStorage retBufAddrStorage;
 
-    public ABIDescriptor(Architecture arch, VMStorage[][] inputStorage, VMStorage[][] outputStorage,
-                         VMStorage[][] volatileStorage, int stackAlignment, int shadowSpace,
-                         VMStorage targetAddrStorage, VMStorage retBufAddrStorage) {
+    public ABIDescriptor(Architecture arch,
+                         VMStorage[][] inputStorage,
+                         VMStorage[][] outputStorage,
+                         VMStorage[][] volatileStorage,
+                         int stackAlignment,
+                         int shadowSpace,
+                         VMStorage targetAddrStorage,
+                         VMStorage retBufAddrStorage) {
         this.arch = arch;
         this.inputStorage = inputStorage;
         this.outputStorage = outputStorage;
