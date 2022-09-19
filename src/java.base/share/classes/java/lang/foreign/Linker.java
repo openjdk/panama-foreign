@@ -218,7 +218,8 @@ public sealed interface Linker permits AbstractLinker {
      */
     default MethodHandle downcallHandle(MemorySegment symbol, FunctionDescriptor function) {
         SharedUtils.checkSymbol(symbol);
-        return downcallHandle(function).bindTo(symbol);
+        return downcallHandle(function)
+                .bindTo(symbol);
     }
 
     /**

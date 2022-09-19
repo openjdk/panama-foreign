@@ -307,7 +307,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * in {@code elements} is {@code null}.
      */
     default long byteOffset(PathElement... elements) {
-        return Utils.bitsToBytesOrThrow(bitOffset(elements), Utils.bitsToBytesThrowOffset);
+        return Utils.bitsToBytesOrThrow(bitOffset(elements), Utils.BITS_TO_BYTES_THROW_OFFSET);
     }
 
     /**
@@ -343,7 +343,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      */
     default MethodHandle byteOffsetHandle(PathElement... elements) {
         MethodHandle mh = bitOffsetHandle(elements);
-        mh = MethodHandles.filterReturnValue(mh, Utils.MH_bitsToBytesOrThrowForOffset);
+        mh = MethodHandles.filterReturnValue(mh, Utils.MH_BITS_TO_BYTES_OR_THROW_FOR_OFFSET);
         return mh;
     }
 
@@ -590,17 +590,6 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * @return {@code true} if the specified object is equal to this layout.
      */
     boolean equals(Object other);
-
-    /**
-     * {@return the hash code value for this layout}
-     */
-    int hashCode();
-
-    /**
-     * {@return the string representation of this layout}
-     */
-    @Override
-    String toString();
 
     /**
      * Creates a padding layout with the given size.

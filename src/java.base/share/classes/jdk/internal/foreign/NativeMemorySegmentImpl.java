@@ -76,7 +76,7 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
 
     @Override
     ByteBuffer makeByteBuffer() {
-        return nioAccess.newDirectByteBuffer(min, (int) this.length, null,
+        return JAVA_NIO_ACCESS.newDirectByteBuffer(min, (int) this.length, null,
                 session == MemorySessionImpl.GLOBAL ? null : this);
     }
 
@@ -106,13 +106,13 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
         MemorySessionImpl sessionImpl = MemorySessionImpl.toSessionImpl(session);
         sessionImpl.checkValidState();
         if (VM.isDirectMemoryPageAligned()) {
-            alignmentBytes = Math.max(alignmentBytes, nioAccess.pageSize());
+            alignmentBytes = Math.max(alignmentBytes, JAVA_NIO_ACCESS.pageSize());
         }
         long alignedSize = Math.max(1L, alignmentBytes > MAX_MALLOC_ALIGN ?
                 bytesSize + (alignmentBytes - 1) :
                 bytesSize);
 
-        nioAccess.reserveMemory(alignedSize, bytesSize);
+        JAVA_NIO_ACCESS.reserveMemory(alignedSize, bytesSize);
 
         long buf = unsafe.allocateMemory(alignedSize);
         if (!SKIP_ZERO_MEMORY) {
@@ -125,7 +125,7 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
             @Override
             public void cleanup() {
                 unsafe.freeMemory(buf);
-                nioAccess.unreserveMemory(alignedSize, bytesSize);
+                JAVA_NIO_ACCESS.unreserveMemory(alignedSize, bytesSize);
             }
         });
         if (alignedSize != bytesSize) {
