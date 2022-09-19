@@ -354,11 +354,13 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * The final address accessed by the returned var handle can be computed as follows:
      *
      * <blockquote><pre>{@code
-     * address = base + offset
+     * address = base(segment) + offset
      * }</pre></blockquote>
      *
-     * where {@code base} denotes the base address associated with the {@link MemorySegment} access coordinate
-     * (see {@link MemorySegment#address()} and {@code offset} can be expressed in the following form:
+     * Where {@code base(segment)} denotes a function that returns the physical base address of the accessed
+     * memory segment. For native segments, this function just returns the native segment's
+     * {@linkplain MemorySegment#address() address}. For heap segments, this function is more complex, as the address
+     * of heap segments is virtualized. The {@code offset} coordinate can be expressed in the following form:
      *
      * <blockquote><pre>{@code
      * offset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)

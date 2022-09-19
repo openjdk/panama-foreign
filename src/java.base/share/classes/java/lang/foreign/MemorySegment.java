@@ -201,8 +201,9 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * but also by the alignment constraints of the layout specified to the operation. An access operation can access only
  * those offsets in the segment that are <em>aligned</em> according to the layout.
  * <p>
- * If the segment being accessed is a native segment, then it has a concrete {@linkplain #address() address}, which can
- * be used to perform the alignment check. The pseudo-function below demonstrates this:
+ * If the segment being accessed is a native segment, then its {@linkplain #address() address} in physical memory can be
+ * combined with the offset to obtain the <em>target address</em>. The following pseudo-function determines if the target
+ * address is aligned according to the layout:
  *
  * {@snippet lang=java :
  * boolean isAligned(MemorySegment segment, long offset, MemoryLayout layout) {
@@ -210,20 +211,59 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * }
  * }
  *
- * If the segment being accessed is a heap segment, the above function will not work: the region of memory which backs
- * a heap segment is managed (and moved around) by the garbage collector. The address of a heap segment
- * is implementation-specific, and is not exposed by the {@link #address()} method. For this reason, the layout specified
- * to an access operation involving a heap segment cannot feature alignment constraints that are greater than the
- * alignment constraints of the region of memory associated with the heap segment. If a heap segment has been
- * obtained from a Java array, the <em>maximum</em> supported alignment constraints of the region of memory backing
- * the heap segment are derived from the array element size, as shown in the following table:
+ * For example:
+ * <ul>
+ * <li>A native segment at address 1000 can be accessed at offsets 0, 8, 16, 24, etc under an 8-byte alignment constraint,
+ * because the target addresses (1000, 1008, 1016, 1024) are 8-byte aligned.
+ * Access at offsets 1-7 or 9-15 or 17-23 is disallowed because the target addresses would not be 8-byte aligned.</li>
+ * <li>A native segment at address 1000 can be accessed at offsets 0, 4, 8, 12, etc under a 4-byte alignment constraint,
+ * because the target addresses (1000, 1004, 1008, 1012) are 4-byte aligned.
+ * Access at offsets 1-3 or 5-7 or 9-11 is disallowed because the target addresses would not be 4-byte aligned.</li>
+ * <li>A native segment at address 1000 can be accessed at offsets 0, 2, 4, 6, etc under a 2-byte alignment constraint,
+ * because the target addresses (1000, 1002, 1004, 1006) are 2-byte aligned.
+ * Access at offsets 1 or 3 or 5 is disallowed because the target addresses would not be 2-byte aligned.</li>
+ * <li>A native segment at address 1004 can be accessed at offsets 0, 4, 8, 12, etc under a 4-byte alignment constraint,
+ * and at offsets 0, 2, 4, 6, etc under a 2-byte alignment constraint.
+ * Under an 8-byte alignment constraint, it can be accessed at offsets 4, 12, 20, 28, etc.</li>
+ * <li>A native segment at address 1006 can be accessed at offsets 0, 2, 4, 6, etc under a 2-byte alignment constraint.
+ * Under a 4-byte alignment constraint, it can be accessed at offsets 2, 6, 10, 14, etc.
+ * Under an 8-byte alignment constraint, it can be accessed at offsets 2, 10, 18, 26, etc.
+ * </ul>
+ * Under a 1-byte alignment constraint, any target address in a native segment can be accessed.
+ * In effect, every target address is at least 1-byte aligned.
+ * <p>
+ * If the segment being accessed is a heap segment, then determining whether access is aligned is more complex.
+ * The region of memory which backs a heap segment is managed by the Java runtime in a non-transparent manner:
+ * neither the physical address of the region is exposed, nor the relocation (during garbage collection) of the
+ * heap segment from one region to another. This means that, in principle, address 0 in the heap segment
+ * (the start of the segment) could correspond to a physical address such as 1000
+ * (which is 8-byte, 4-byte, and 2-byte aligned), or 1004 (which is 4-byte and 2-byte aligned), or 1006
+ * (which is only 2-byte aligned), or even 1007 (unaligned). Since the alignment of address 0 is unknown,
+ * the alignment of any offset in the heap segment is also unknown.
+ * <p>
+ * In practice, the Java runtime ensures that
+ * Java arrays are laid out in such a way that their elements are stored at appropriately aligned physical addresses.
+ * For example, the starting address of a {@code long[]} array will be 8-byte aligned (e.g. 1000), not 4-byte aligned
+ * (e.g. 1004) or 2-byte aligned (e.g. 1006), so that successive elements occur at 8-byte aligned addresses
+ * (1008, 1016, 1024, etc).
+ * <p>
+ * Using an alignment constraint that is smaller than the alignment of the heap segment results in unaligned access,
+ * which may be slow.
+ * <p>
+ * In contrast, the starting address of a short[] array will be 2-byte aligned (e.g. 1002), so that successive elements
+ * occur at 2-byte aligned addresses (1004, 1006, 1008, etc). A heap segment backed by such an array can be accessed at
+ * offsets 0, 2, 4, 6, etc under a 2-byte alignment constraint; it cannot be accessed under a 4-byte alignment constraint
+ * or 8-byte alignment constraint, as there is no guarantee that 4-byte aligned addressed (1004, 1008, etc.) or 8-byte
+ * aligned addresses would correspond to 4-byte or 8-byte aligned physical addresses.
+ * In other words, heap segments feature a <em>maximum</em> alignment which is derived from the size of the elements of
+ * the Java array backing the segment, as shown in the following table:
  *
  * <blockquote><table class="plain">
- * <caption style="display:none">Array type of an array backing a segment and its address alignment</caption>
+ * <caption style="display:none">Maximum alignment of heap segments</caption>
  * <thead>
  * <tr>
- *     <th scope="col">Array type</th>
- *     <th scope="col">Maximum supported alignment constraints (in bytes)</th>
+ *     <th scope="col">Array type (of backing region)</th>
+ *     <th scope="col">Maximum supported alignment (in bytes)</th>
  * </tr>
  * </thead>
  * <tbody>
@@ -246,10 +286,9 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * </tbody>
  * </table></blockquote>
  *
- * Note that the above definition is conservative: it might be possible, for instance, for a heap segment
- * obtained from a {@code byte[]} to have a subset of offsets which happen to correspond to 8-byte aligned
- * addresses. But, since the heap segment can support up to 1-byte alignment constraints (as per above table),
- * any attempt to access the segment using a layout featuring stricter alignment constraints will fail,
+ * Heap segment can only be accessed using a layout whose alignment is smaller or equal to the
+ * maximum alignment associated with the heap segment. Attempting to access a heap segment using a layout
+ * whose alignment is greater than the maximum alignment associated with the heap segment will fail,
  * as demonstrated in the following example:
  *
  * {@snippet lang=java :
@@ -258,14 +297,14 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * }
  *
  * In such circumstances, clients have two options. They can use a heap segment backed by a different array
- * type (e.g. {@code long[]}), capable of supporting stricter maximum alignment constraints:
+ * type (e.g. {@code long[]}), capable of supporting greater maximum alignment:
  *
  * {@snippet lang=java :
  * MemorySegment longSegment = MemorySegment.ofArray(new long[10]);
  * longSegment.get(ValueLayout.JAVA_INT, 0); // ok: layout alignment is 4, segment max alignment is 8
  * }
  *
- * Alternatively, they can invoke the access operation with a layout with weaker alignment constraints:
+ * Alternatively, they can invoke the access operation with a layout whose alignment is smaller:
  *
  * {@snippet lang=java :
  * MemorySegment byteSegment = MemorySegment.ofArray(new byte[10]);
