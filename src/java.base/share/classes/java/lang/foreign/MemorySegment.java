@@ -623,8 +623,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Copy the contents of this memory segment into a new byte array.
-     * @param elementLayout the source element layout. If the byte order associated with the layout is
-     * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
+     * @param byteLayout the source element layout.
      * @return a new byte array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -633,11 +632,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalStateException if this segment's contents cannot be copied into a {@code byte[]} instance,
      * e.g. its size is greater than {@link Integer#MAX_VALUE}.
      */
-    byte[] toArray(ValueLayout.OfByte elementLayout);
+    byte[] toArray(ValueLayout.OfByte byteLayout);
 
     /**
      * Copy the contents of this memory segment into a new short array.
-     * @param elementLayout the source element layout. If the byte order associated with the layout is
+     * @param shortLayout the source element layout. If the byte order associated with the layout is
      * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
      * @return a new short array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
@@ -647,11 +646,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalStateException if this segment's contents cannot be copied into a {@code short[]} instance,
      * e.g. because {@code byteSize() % 2 != 0}, or {@code byteSize() / 2 > Integer#MAX_VALUE}
      */
-    short[] toArray(ValueLayout.OfShort elementLayout);
+    short[] toArray(ValueLayout.OfShort shortLayout);
 
     /**
      * Copy the contents of this memory segment into a new char array.
-     * @param elementLayout the source element layout. If the byte order associated with the layout is
+     * @param charLayout the source element layout. If the byte order associated with the layout is
      * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
      * @return a new char array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
@@ -661,11 +660,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalStateException if this segment's contents cannot be copied into a {@code char[]} instance,
      * e.g. because {@code byteSize() % 2 != 0}, or {@code byteSize() / 2 > Integer#MAX_VALUE}.
      */
-    char[] toArray(ValueLayout.OfChar elementLayout);
+    char[] toArray(ValueLayout.OfChar charLayout);
 
     /**
      * Copy the contents of this memory segment into a new int array.
-     * @param elementLayout the source element layout. If the byte order associated with the layout is
+     * @param intLayout the source element layout. If the byte order associated with the layout is
      * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
      * @return a new int array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
@@ -675,11 +674,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalStateException if this segment's contents cannot be copied into a {@code int[]} instance,
      * e.g. because {@code byteSize() % 4 != 0}, or {@code byteSize() / 4 > Integer#MAX_VALUE}.
      */
-    int[] toArray(ValueLayout.OfInt elementLayout);
+    int[] toArray(ValueLayout.OfInt intLayout);
 
     /**
      * Copy the contents of this memory segment into a new float array.
-     * @param elementLayout the source element layout. If the byte order associated with the layout is
+     * @param floatLayout the source element layout. If the byte order associated with the layout is
      * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
      * @return a new float array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
@@ -689,11 +688,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalStateException if this segment's contents cannot be copied into a {@code float[]} instance,
      * e.g. because {@code byteSize() % 4 != 0}, or {@code byteSize() / 4 > Integer#MAX_VALUE}.
      */
-    float[] toArray(ValueLayout.OfFloat elementLayout);
+    float[] toArray(ValueLayout.OfFloat floatLayout);
 
     /**
      * Copy the contents of this memory segment into a new long array.
-     * @param elementLayout the source element layout. If the byte order associated with the layout is
+     * @param longLayout the source element layout. If the byte order associated with the layout is
      * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
      * @return a new long array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
@@ -703,11 +702,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalStateException if this segment's contents cannot be copied into a {@code long[]} instance,
      * e.g. because {@code byteSize() % 8 != 0}, or {@code byteSize() / 8 > Integer#MAX_VALUE}.
      */
-    long[] toArray(ValueLayout.OfLong elementLayout);
+    long[] toArray(ValueLayout.OfLong longLayout);
 
     /**
      * Copy the contents of this memory segment into a new double array.
-     * @param elementLayout the source element layout. If the byte order associated with the layout is
+     * @param doubleLayout the source element layout. If the byte order associated with the layout is
      * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
      * @return a new double array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
@@ -717,7 +716,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalStateException if this segment's contents cannot be copied into a {@code double[]} instance,
      * e.g. because {@code byteSize() % 8 != 0}, or {@code byteSize() / 8 > Integer#MAX_VALUE}.
      */
-    double[] toArray(ValueLayout.OfDouble elementLayout);
+    double[] toArray(ValueLayout.OfDouble doubleLayout);
 
     /**
      * Reads a UTF-8 encoded, null-terminated string from this segment at the given offset.
@@ -791,77 +790,77 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Creates an array memory segment that models the memory associated with the given heap-allocated byte array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
-     * @param arr the primitive array backing the array memory segment.
+     * @param byteArray the primitive array backing the array memory segment.
      * @return an array memory segment.
      */
-    static MemorySegment ofArray(byte[] arr) {
-        return HeapMemorySegmentImpl.OfByte.fromArray(arr);
+    static MemorySegment ofArray(byte[] byteArray) {
+        return HeapMemorySegmentImpl.OfByte.fromArray(byteArray);
     }
 
     /**
      * Creates an array memory segment that models the memory associated with the given heap-allocated char array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
-     * @param arr the primitive array backing the array memory segment.
+     * @param charArray the primitive array backing the array memory segment.
      * @return an array memory segment.
      */
-    static MemorySegment ofArray(char[] arr) {
-        return HeapMemorySegmentImpl.OfChar.fromArray(arr);
+    static MemorySegment ofArray(char[] charArray) {
+        return HeapMemorySegmentImpl.OfChar.fromArray(charArray);
     }
 
     /**
      * Creates an array memory segment that models the memory associated with the given heap-allocated short array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
-     * @param arr the primitive array backing the array memory segment.
+     * @param shortArray the primitive array backing the array memory segment.
      * @return an array memory segment.
      */
-    static MemorySegment ofArray(short[] arr) {
-        return HeapMemorySegmentImpl.OfShort.fromArray(arr);
+    static MemorySegment ofArray(short[] shortArray) {
+        return HeapMemorySegmentImpl.OfShort.fromArray(shortArray);
     }
 
     /**
      * Creates an array memory segment that models the memory associated with the given heap-allocated int array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
-     * @param arr the primitive array backing the array memory segment.
+     * @param intArray the primitive array backing the array memory segment.
      * @return an array memory segment.
      */
-    static MemorySegment ofArray(int[] arr) {
-        return HeapMemorySegmentImpl.OfInt.fromArray(arr);
+    static MemorySegment ofArray(int[] intArray) {
+        return HeapMemorySegmentImpl.OfInt.fromArray(intArray);
     }
 
     /**
      * Creates an array memory segment that models the memory associated with the given heap-allocated float array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
-     * @param arr the primitive array backing the array memory segment.
+     * @param floatArray the primitive array backing the array memory segment.
      * @return an array memory segment.
      */
-    static MemorySegment ofArray(float[] arr) {
-        return HeapMemorySegmentImpl.OfFloat.fromArray(arr);
+    static MemorySegment ofArray(float[] floatArray) {
+        return HeapMemorySegmentImpl.OfFloat.fromArray(floatArray);
     }
 
     /**
      * Creates an array memory segment that models the memory associated with the given heap-allocated long array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
-     * @param arr the primitive array backing the array memory segment.
+     * @param longArray the primitive array backing the array memory segment.
      * @return an array memory segment.
      */
-    static MemorySegment ofArray(long[] arr) {
-        return HeapMemorySegmentImpl.OfLong.fromArray(arr);
+    static MemorySegment ofArray(long[] longArray) {
+        return HeapMemorySegmentImpl.OfLong.fromArray(longArray);
     }
 
     /**
      * Creates an array memory segment that models the memory associated with the given heap-allocated double array.
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session.
      *
-     * @param arr the primitive array backing the array memory segment.
+     * @param doubleArray the primitive array backing the array memory segment.
      * @return an array memory segment.
      */
-    static MemorySegment ofArray(double[] arr) {
-        return HeapMemorySegmentImpl.OfDouble.fromArray(arr);
+    static MemorySegment ofArray(double[] doubleArray) {
+        return HeapMemorySegmentImpl.OfDouble.fromArray(doubleArray);
     }
 
     /**
@@ -890,24 +889,24 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * <p>
      * This is equivalent to the following code:
      * {@snippet lang = java:
-     * ofAddress(address, bytesSize, MemorySession.global());
+     * ofAddress(address, byteSize, MemorySession.global());
      *}
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      * @param address the address of the returned native segment.
-     * @param bytesSize the size (in bytes) of the returned native segment.
+     * @param byteSize the size (in bytes) of the returned native segment.
      * @return a zero-length native memory segment with the given address and size.
-     * @throws IllegalArgumentException if {@code bytesSize < 0}.
+     * @throws IllegalArgumentException if {@code byteSize < 0}.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
      * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
-    static MemorySegment ofAddress(long address, long bytesSize) {
+    static MemorySegment ofAddress(long address, long byteSize) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddress");
-        return MemorySegment.ofAddress(address, bytesSize, MemorySession.global());
+        return MemorySegment.ofAddress(address, byteSize, MemorySession.global());
     }
 
     /**
@@ -929,10 +928,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param address the returned segment's base address.
-     * @param bytesSize the desired size.
+     * @param byteSize the desired size.
      * @param session the native segment memory session.
      * @return a native memory segment with the given base address, size and memory session.
-     * @throws IllegalArgumentException if {@code bytesSize < 0}.
+     * @throws IllegalArgumentException if {@code byteSize < 0}.
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread
      * {@linkplain MemorySession#ownerThread() owning} {@code session}.
@@ -941,11 +940,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
-    static MemorySegment ofAddress(long address, long bytesSize, MemorySession session) {
+    static MemorySegment ofAddress(long address, long byteSize, MemorySession session) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddress");
         Objects.requireNonNull(session);
-        Utils.checkAllocationSizeAndAlign(bytesSize, 1);
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, bytesSize, session);
+        Utils.checkAllocationSizeAndAlign(byteSize, 1);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, byteSize, session);
     }
 
     /**
@@ -988,21 +987,21 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * This is equivalent to the following code:
      * {@snippet lang=java :
      * MemorySession.openImplicit()
-     *     .allocate(bytesSize, 1)
+     *     .allocate(byteSize, 1)
      * }
      * <p>
      * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      * <p>
      * This method corresponds to the {@link ByteBuffer#allocateDirect(int)} method and has similar behavior.
      *
-     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param byteSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @return a new native memory segment.
-     * @throws IllegalArgumentException if {@code bytesSize < 0}.
+     * @throws IllegalArgumentException if {@code byteSize < 0}.
      * @see ByteBuffer#allocateDirect(int)
      * @see MemorySession#allocate(long)
      */
-    static MemorySegment allocateNative(long bytesSize) {
-        return allocateNative(bytesSize, 1L);
+    static MemorySegment allocateNative(long byteSize) {
+        return allocateNative(byteSize, 1L);
     }
 
     /**
@@ -1018,22 +1017,22 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * This is equivalent to the following code:
      * {@snippet lang=java :
      * MemorySession.openImplicit()
-     *     .allocate(bytesSize, byteAlignment)
+     *     .allocate(byteSize, byteAlignment)
      * }
      * <p>
      * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      *
-     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param byteSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @param byteAlignment the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
      * @return a new native memory segment.
-     * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
+     * @throws IllegalArgumentException if {@code byteSize < 0}, {@code byteAlignment <= 0}, or if {@code byteAlignment}
      * is not a power of 2.
      * @see MemorySession#allocate(long, long)
      */
-    static MemorySegment allocateNative(long bytesSize, long byteAlignment) {
-        Utils.checkAllocationSizeAndAlign(bytesSize, byteAlignment);
+    static MemorySegment allocateNative(long byteSize, long byteAlignment) {
+        Utils.checkAllocationSizeAndAlign(byteSize, byteAlignment);
         return MemorySession.openImplicit()
-                .allocate(bytesSize, byteAlignment);
+                .allocate(byteSize, byteAlignment);
     }
 
     /**

@@ -142,9 +142,9 @@ public abstract sealed class AbstractMemorySegmentImpl
     }
 
     @Override
-    public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-        Utils.checkAllocationSizeAndAlign(bytesSize, bytesAlignment);
-        return asSlice(0, bytesSize);
+    public MemorySegment allocate(long byteSize, long byteAlignment) {
+        Utils.checkAllocationSizeAndAlign(byteSize, byteAlignment);
+        return asSlice(0, byteSize);
     }
 
     @Override
@@ -259,38 +259,38 @@ public abstract sealed class AbstractMemorySegmentImpl
     }
 
     @Override
-    public final byte[] toArray(ValueLayout.OfByte elementLayout) {
-        return toArray(byte[].class, elementLayout, byte[]::new, MemorySegment::ofArray);
+    public final byte[] toArray(ValueLayout.OfByte byteLayout) {
+        return toArray(byte[].class, byteLayout, byte[]::new, MemorySegment::ofArray);
     }
 
     @Override
-    public final short[] toArray(ValueLayout.OfShort elementLayout) {
-        return toArray(short[].class, elementLayout, short[]::new, MemorySegment::ofArray);
+    public final short[] toArray(ValueLayout.OfShort shortLayout) {
+        return toArray(short[].class, shortLayout, short[]::new, MemorySegment::ofArray);
     }
 
     @Override
-    public final char[] toArray(ValueLayout.OfChar elementLayout) {
-        return toArray(char[].class, elementLayout, char[]::new, MemorySegment::ofArray);
+    public final char[] toArray(ValueLayout.OfChar charLayout) {
+        return toArray(char[].class, charLayout, char[]::new, MemorySegment::ofArray);
     }
 
     @Override
-    public final int[] toArray(ValueLayout.OfInt elementLayout) {
-        return toArray(int[].class, elementLayout, int[]::new, MemorySegment::ofArray);
+    public final int[] toArray(ValueLayout.OfInt intLayout) {
+        return toArray(int[].class, intLayout, int[]::new, MemorySegment::ofArray);
     }
 
     @Override
-    public final float[] toArray(ValueLayout.OfFloat elementLayout) {
-        return toArray(float[].class, elementLayout, float[]::new, MemorySegment::ofArray);
+    public final float[] toArray(ValueLayout.OfFloat floatLayout) {
+        return toArray(float[].class, floatLayout, float[]::new, MemorySegment::ofArray);
     }
 
     @Override
-    public final long[] toArray(ValueLayout.OfLong elementLayout) {
-        return toArray(long[].class, elementLayout, long[]::new, MemorySegment::ofArray);
+    public final long[] toArray(ValueLayout.OfLong longLayout) {
+        return toArray(long[].class, longLayout, long[]::new, MemorySegment::ofArray);
     }
 
     @Override
-    public final double[] toArray(ValueLayout.OfDouble elementLayout) {
-        return toArray(double[].class, elementLayout, double[]::new, MemorySegment::ofArray);
+    public final double[] toArray(ValueLayout.OfDouble doubleLayout) {
+        return toArray(double[].class, doubleLayout, double[]::new, MemorySegment::ofArray);
     }
 
     private <Z> Z toArray(Class<Z> arrayClass, ValueLayout elemLayout, IntFunction<Z> arrayFactory, Function<Z, MemorySegment> segmentFactory) {
