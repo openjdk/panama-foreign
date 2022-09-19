@@ -29,6 +29,8 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+
+import jdk.internal.foreign.PlatformLayouts.AArch64;
 import jdk.internal.foreign.abi.ABIDescriptor;
 import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.CallingSequence;
@@ -47,7 +49,6 @@ import java.lang.invoke.MethodType;
 import java.util.List;
 import java.util.Optional;
 
-import static jdk.internal.foreign.PlatformLayouts.*;
 import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.*;
 import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.Regs.*;
 
@@ -215,7 +216,7 @@ public abstract class CallArranger {
         }
 
         VMStorage stackAlloc(MemoryLayout layout) {
-            return stackAlloc(layout.byteSize(), SharedUtils.alignment(layout, true));
+            return stackAlloc(layout.byteSize(), layout.byteAlignment());
         }
 
         VMStorage[] regAlloc(int type, int count) {
@@ -271,10 +272,11 @@ public abstract class CallArranger {
             // between registers and stack.
 
             long offset = 0;
+            long align = layout.byteAlignment();
             while (offset < layout.byteSize()) {
                 long copy = Math.min(layout.byteSize() - offset, STACK_SLOT_SIZE);
-                VMStorage storage =
-                    storageCalculator.stackAlloc(copy, STACK_SLOT_SIZE);
+                VMStorage storage = storageCalculator.stackAlloc(copy, align);
+                align = 1; // only first copy needs aligning
                 if (offset + STACK_SLOT_SIZE < layout.byteSize()) {
                     bindings.dup();
                 }
@@ -292,10 +294,11 @@ public abstract class CallArranger {
             // between registers and stack.
 
             long offset = 0;
+            long align = layout.byteAlignment();
             while (offset < layout.byteSize()) {
                 long copy = Math.min(layout.byteSize() - offset, STACK_SLOT_SIZE);
-                VMStorage storage =
-                    storageCalculator.stackAlloc(copy, STACK_SLOT_SIZE);
+                VMStorage storage = storageCalculator.stackAlloc(copy, align);
+                align = 1; // only first copy needs aligning
                 Class<?> type = SharedUtils.primitiveCarrierForSize(copy, false);
                 bindings.dup()
                         .vmLoad(storage, type)

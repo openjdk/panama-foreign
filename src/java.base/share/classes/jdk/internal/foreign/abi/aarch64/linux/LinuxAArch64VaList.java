@@ -26,6 +26,8 @@
 package jdk.internal.foreign.abi.aarch64.linux;
 
 import java.lang.foreign.*;
+
+import jdk.internal.foreign.PlatformLayouts.AArch64;
 import jdk.internal.foreign.abi.aarch64.TypeClass;
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.Utils;
@@ -36,8 +38,6 @@ import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
-import static jdk.internal.foreign.PlatformLayouts.AArch64;
 
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;

@@ -31,10 +31,16 @@ import java.lang.foreign.PaddingLayout;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.StructLayout;
 import java.lang.foreign.ValueLayout;
-import jdk.internal.foreign.Utils;
 
+import jdk.internal.foreign.PlatformLayouts;
+import jdk.internal.foreign.PlatformLayouts.SysV;
+import jdk.internal.foreign.Utils;
+import jdk.internal.foreign.abi.SharedUtils;
+
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -45,6 +51,18 @@ class TypeClass {
         INTEGER,
         FLOAT
     }
+
+    private static final Map<Class<?>, ValueLayout> STANDARD_LAYOUTS = Map.of(
+        boolean.class,       SysV.C_BOOL,
+        byte.class,          SysV.C_CHAR,
+        char.class,          MemoryLayout.valueLayout(char.class, ByteOrder.nativeOrder()).withBitAlignment(16),
+        short.class,         SysV.C_SHORT,
+        int.class,           SysV.C_INT,
+        long.class,          SysV.C_LONG_LONG, // or C_LONG, but they are the same layout
+        float.class,         SysV.C_FLOAT,
+        double.class,        SysV.C_DOUBLE,
+        MemorySegment.class, SysV.C_POINTER
+    );
 
     private final Kind kind;
     final List<ArgumentClassImpl> classes;
@@ -108,8 +126,9 @@ class TypeClass {
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    private static ArgumentClassImpl argumentClassFor(MemoryLayout layout) {
-        Class<?> carrier = ((ValueLayout)layout).carrier();
+    private static ArgumentClassImpl argumentClassFor(ValueLayout layout) {
+        Class<?> carrier = layout.carrier();
+        SharedUtils.checkStandardLayout(STANDARD_LAYOUTS, layout);
         if (carrier == boolean.class || carrier == byte.class || carrier == char.class ||
                 carrier == short.class || carrier == int.class || carrier == long.class) {
             return ArgumentClassImpl.INTEGER;
@@ -218,15 +237,15 @@ class TypeClass {
                 groupByEightBytes(elem, offset, groups);
                 offset += elem.byteSize();
             }
-        } else if (l instanceof ValueLayout) {
+        } else if (l instanceof ValueLayout vl) {
             List<ArgumentClassImpl> layouts = groups[(int)offset / 8];
             if (layouts == null) {
                 layouts = new ArrayList<>();
                 groups[(int)offset / 8] = layouts;
             }
             // if the aggregate contains unaligned fields, it has class MEMORY
-            ArgumentClassImpl argumentClass = (offset % l.byteAlignment()) == 0 ?
-                    argumentClassFor(l) :
+            ArgumentClassImpl argumentClass = (offset % vl.byteAlignment()) == 0 ?
+                    argumentClassFor(vl) :
                     ArgumentClassImpl.MEMORY;
             layouts.add(argumentClass);
         } else {

@@ -24,10 +24,15 @@
  */
 package jdk.internal.foreign.abi.x64.windows;
 
+import jdk.internal.foreign.PlatformLayouts.Win64;
+import jdk.internal.foreign.abi.SharedUtils;
+
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.nio.ByteOrder;
+import java.util.Map;
 
 enum TypeClass {
     STRUCT_REGISTER,
@@ -36,6 +41,18 @@ enum TypeClass {
     INTEGER,
     FLOAT,
     VARARG_FLOAT;
+
+    private static final Map<Class<?>, ValueLayout> STANDARD_LAYOUTS = Map.of(
+        boolean.class,       Win64.C_BOOL,
+        byte.class,          Win64.C_CHAR,
+        char.class,          MemoryLayout.valueLayout(char.class, ByteOrder.nativeOrder()).withBitAlignment(16),
+        short.class,         Win64.C_SHORT,
+        int.class,           Win64.C_INT, // or C_LONG, but they are the same layout
+        long.class,          Win64.C_LONG_LONG,
+        float.class,         Win64.C_FLOAT,
+        double.class,        Win64.C_DOUBLE,
+        MemorySegment.class, Win64.C_POINTER
+    );
 
     private static TypeClass classifyValueType(ValueLayout type, boolean isVararg) {
         // No 128 bit integers in the Windows C ABI. There are __m128(i|d) intrinsic types but they act just
@@ -48,6 +65,7 @@ enum TypeClass {
         // https://docs.microsoft.com/en-us/cpp/build/x64-calling-convention?view=vs-2019
 
         Class<?> carrier = type.carrier();
+        SharedUtils.checkStandardLayout(STANDARD_LAYOUTS, type);
         if (carrier == boolean.class || carrier == byte.class || carrier == char.class ||
                 carrier == short.class || carrier == int.class || carrier == long.class) {
             return INTEGER;
