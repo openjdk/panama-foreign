@@ -623,7 +623,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Copy the contents of this memory segment into a new byte array.
-     * @param byteLayout the source element layout.
+     * @param elementLayout the source element elementLayout.
      * @return a new byte array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -632,11 +632,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalStateException if this segment's contents cannot be copied into a {@code byte[]} instance,
      * e.g. its size is greater than {@link Integer#MAX_VALUE}.
      */
-    byte[] toArray(ValueLayout.OfByte byteLayout);
+    byte[] toArray(ValueLayout.OfByte elementLayout);
 
     /**
      * Copy the contents of this memory segment into a new short array.
-     * @param shortLayout the source element layout. If the byte order associated with the layout is
+     * @param elementLayout the source element elementLayout. If the byte order associated with the elementLayout is
      * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
      * @return a new short array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
@@ -646,11 +646,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalStateException if this segment's contents cannot be copied into a {@code short[]} instance,
      * e.g. because {@code byteSize() % 2 != 0}, or {@code byteSize() / 2 > Integer#MAX_VALUE}
      */
-    short[] toArray(ValueLayout.OfShort shortLayout);
+    short[] toArray(ValueLayout.OfShort elementLayout);
 
     /**
      * Copy the contents of this memory segment into a new char array.
-     * @param charLayout the source element layout. If the byte order associated with the layout is
+     * @param elementLayout the source element elementLayout. If the byte order associated with the elementLayout is
      * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
      * @return a new char array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
@@ -660,11 +660,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalStateException if this segment's contents cannot be copied into a {@code char[]} instance,
      * e.g. because {@code byteSize() % 2 != 0}, or {@code byteSize() / 2 > Integer#MAX_VALUE}.
      */
-    char[] toArray(ValueLayout.OfChar charLayout);
+    char[] toArray(ValueLayout.OfChar elementLayout);
 
     /**
      * Copy the contents of this memory segment into a new int array.
-     * @param intLayout the source element layout. If the byte order associated with the layout is
+     * @param elementLayout the source element elementLayout. If the byte order associated with the elementLayout is
      * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
      * @return a new int array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
@@ -674,11 +674,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalStateException if this segment's contents cannot be copied into a {@code int[]} instance,
      * e.g. because {@code byteSize() % 4 != 0}, or {@code byteSize() / 4 > Integer#MAX_VALUE}.
      */
-    int[] toArray(ValueLayout.OfInt intLayout);
+    int[] toArray(ValueLayout.OfInt elementLayout);
 
     /**
      * Copy the contents of this memory segment into a new float array.
-     * @param floatLayout the source element layout. If the byte order associated with the layout is
+     * @param elementLayout the source element elementLayout. If the byte order associated with the elementLayout is
      * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
      * @return a new float array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
@@ -688,11 +688,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalStateException if this segment's contents cannot be copied into a {@code float[]} instance,
      * e.g. because {@code byteSize() % 4 != 0}, or {@code byteSize() / 4 > Integer#MAX_VALUE}.
      */
-    float[] toArray(ValueLayout.OfFloat floatLayout);
+    float[] toArray(ValueLayout.OfFloat elementLayout);
 
     /**
      * Copy the contents of this memory segment into a new long array.
-     * @param longLayout the source element layout. If the byte order associated with the layout is
+     * @param elementLayout the source element elementLayout. If the byte order associated with the elementLayout is
      * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
      * @return a new long array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
@@ -702,11 +702,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalStateException if this segment's contents cannot be copied into a {@code long[]} instance,
      * e.g. because {@code byteSize() % 8 != 0}, or {@code byteSize() / 8 > Integer#MAX_VALUE}.
      */
-    long[] toArray(ValueLayout.OfLong longLayout);
+    long[] toArray(ValueLayout.OfLong elementLayout);
 
     /**
      * Copy the contents of this memory segment into a new double array.
-     * @param doubleLayout the source element layout. If the byte order associated with the layout is
+     * @param elementLayout the source element elementLayout. If the byte order associated with the elementLayout is
      * different from the {@linkplain ByteOrder#nativeOrder native order}, a byte swap operation will be performed on each array element.
      * @return a new double array whose contents are copied from this memory segment.
      * @throws IllegalStateException if the {@linkplain #session() session} associated with this segment is not
@@ -716,7 +716,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalStateException if this segment's contents cannot be copied into a {@code double[]} instance,
      * e.g. because {@code byteSize() % 8 != 0}, or {@code byteSize() / 8 > Integer#MAX_VALUE}.
      */
-    double[] toArray(ValueLayout.OfDouble doubleLayout);
+    double[] toArray(ValueLayout.OfDouble elementLayout);
 
     /**
      * Reads a UTF-8 encoded, null-terminated string from this segment at the given offset.
