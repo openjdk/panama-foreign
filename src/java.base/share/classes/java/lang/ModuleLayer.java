@@ -303,11 +303,12 @@ public final class ModuleLayer {
         /***
          * Enables <a href="foreign/package-summary.html#restricted">native access</a>
          * for a module in the layer if the caller module already has native access.
-         * <p>
-         * This method is <a href="foreign/package-summary.html#restricted"><em>restricted</em></a>.
+         *
+         * <p> This method is <a href="foreign/package-summary.html#restricted"><em>restricted</em></a>.
          * Restricted methods are unsafe, and, if used incorrectly, their use might crash
-         * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-         * restricted methods, and use safe and supported functionalities, where possible.
+         * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain
+         * from depending on restricted methods, and use safe and supported functionalities,
+         * where possible.
          *
          * @param target the module that's given native access
          *

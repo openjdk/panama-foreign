@@ -268,14 +268,15 @@ public interface JavaLangAccess {
     Module addEnableNativeAccess(Module m);
 
     /**
-     * Returns true if module m can access restricted methods.
-     */
-    boolean isEnableNativeAccess(Module m);
-
-    /**
      * Updates all unnamed modules to allow access to restricted methods.
      */
     void addEnableNativeAccessAllUnnamed();
+
+    /**
+     * Ensure that the given module has native access. If not, warn
+     * and set native access depending on the configuration.
+     */
+    void ensureNativeAccess(Module m, Class<?> owner, String methodName);
 
     /**
      * Returns the ServicesCatalog for the given Layer.

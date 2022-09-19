@@ -57,6 +57,7 @@ import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.ClassLoaders;
 import jdk.internal.misc.CDS;
+import jdk.internal.module.ModuleBootstrap;
 import jdk.internal.module.ModuleLoaderMap;
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.module.Resources;
@@ -269,24 +270,60 @@ public final class Module implements AnnotatedElement {
      * @return {@code true} if this module can access <em>restricted</em> methods.
      */
     @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-    public synchronized boolean isNativeAccessEnabled() {
-        return implIsEnableNativeAccess();
+    public boolean isNativeAccessEnabled() {
+        boolean enabled = isNamed()? enableNativeAccess :
+            ALL_UNNAMED_MODULE.enableNativeAccess;
+        if (enabled) {
+            return enabled;
+        }
+        // slow path
+        if (isNamed()) {
+            synchronized(this) {
+                return enableNativeAccess;
+            }
+        } else {
+            synchronized(ALL_UNNAMED_MODULE) {
+                return ALL_UNNAMED_MODULE.enableNativeAccess;
+            }
+        }
     }
+
+    // This is invoked from Reflection.ensureNativeAccess
+    void ensureNativeAccess(Class<?> owner, String methodName) {
+        boolean isNativeAccessEnabled = isNativeAccessEnabled();
+        if (!isNativeAccessEnabled) {
+            if (ModuleBootstrap.hasEnableNativeAccessFlag()) {
+                throw new IllegalCallerException("Illegal native access from: " + this);
+            } else {
+                synchronized (this) {
+                    // warn and set flag, so that only one warning is reported per module
+                    String cls = owner.getName();
+                    String mtd = cls + "::" + methodName;
+                    String mod = isNamed() ? "module " + getName() : "the unnamed module";
+                    String modflag = isNamed() ? getName() : "ALL-UNNAMED";
+                    System.err.printf("""
+                        WARNING: A restricted method in %s has been called
+                        WARNING: %s has been called by %s
+                        WARNING: Use --enable-native-access=%s to avoid a warning for this module
+                        %n""", cls, mtd, mod, modflag);
+                    if (isNamed()) {
+                        implAddEnableNativeAccess();
+                    } else {
+                        implAddEnableNativeAccessAllUnnamed();
+                    }
+                }
+            }
+        }
+    }
+
 
     /**
      * Update all unnamed modules to allow access to restricted methods.
      */
     static void implAddEnableNativeAccessAllUnnamed() {
-        ALL_UNNAMED_MODULE.enableNativeAccess = true;
-    }
-
-    /**
-     * Returns true if module m can access restricted methods.
-     */
-    boolean implIsEnableNativeAccess() {
-        return isNamed() ?
-                enableNativeAccess :
-                ALL_UNNAMED_MODULE.enableNativeAccess;
+        synchronized (ALL_UNNAMED_MODULE) {
+            ALL_UNNAMED_MODULE.enableNativeAccess = true;
+        }
     }
 
     // --
