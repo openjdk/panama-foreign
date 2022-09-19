@@ -27,7 +27,6 @@ package jdk.internal.foreign.abi.x64;
 import jdk.internal.foreign.abi.ABIDescriptor;
 import jdk.internal.foreign.abi.Architecture;
 import jdk.internal.foreign.abi.VMStorage;
-import jdk.internal.foreign.abi.aarch64.AArch64Architecture;
 
 import java.util.stream.IntStream;
 

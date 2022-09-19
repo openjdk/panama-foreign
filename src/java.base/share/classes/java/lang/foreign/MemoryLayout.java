@@ -39,7 +39,12 @@ import java.util.stream.Stream;
 import jdk.internal.foreign.LayoutPath;
 import jdk.internal.foreign.LayoutPath.PathElementImpl.PathKind;
 import jdk.internal.foreign.Utils;
-import jdk.internal.foreign.layout.*;
+import jdk.internal.foreign.layout.MemoryLayoutUtil;
+import jdk.internal.foreign.layout.PaddingLayoutImpl;
+import jdk.internal.foreign.layout.SequenceLayoutImpl;
+import jdk.internal.foreign.layout.StructLayoutImpl;
+import jdk.internal.foreign.layout.UnionLayoutImpl;
+import jdk.internal.foreign.layout.ValueLayouts;
 import jdk.internal.javac.PreviewFeature;
 
 /**
