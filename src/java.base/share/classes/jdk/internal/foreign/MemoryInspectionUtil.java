@@ -43,7 +43,7 @@ import static java.util.Objects.requireNonNull;
  */
 final class MemoryInspectionUtil {
 
-    static final MemoryInspection.ValueLayoutRenderer STANDARD_VALUE_LAYOUT_RENDERER = new StandardValueLayoutRenderer();
+    static final BiFunction<ValueLayout, Object, String> STANDARD_VALUE_LAYOUT_RENDERER = new StandardValueLayoutRenderer();
 
     // Suppresses default constructor, ensuring non-instantiability.
     private MemoryInspectionUtil() {
@@ -51,7 +51,7 @@ final class MemoryInspectionUtil {
 
     static Stream<String> inspect(MemorySegment segment,
                                   MemoryLayout layout,
-                                  MemoryInspection.ValueLayoutRenderer renderer) {
+                                  BiFunction<ValueLayout, Object, String> renderer) {
         requireNonNull(segment);
         requireNonNull(layout);
         requireNonNull(renderer);
@@ -63,7 +63,7 @@ final class MemoryInspectionUtil {
 
     private static void toString0(MemorySegment segment,
                                   MemoryLayout layout,
-                                  MemoryInspection.ValueLayoutRenderer renderer,
+                                  BiFunction<ValueLayout, Object, String> renderer,
                                   Consumer<String> action,
                                   ViewState state,
                                   String suffix) {
@@ -71,39 +71,39 @@ final class MemoryInspectionUtil {
         // TODO: Replace with "patterns in switch statement" once this becomes available.
 
         if (layout instanceof ValueLayout.OfBoolean ofBoolean) {
-            action.accept(renderValueLayout(state, ofBoolean, renderer.render(ofBoolean, segment.get(ofBoolean, state.indexAndAdd(ofBoolean))), suffix));
+            action.accept(renderValueLayout(state, ofBoolean, renderer.apply(ofBoolean, segment.get(ofBoolean, state.indexAndAdd(ofBoolean))), suffix));
             return;
         }
         if (layout instanceof ValueLayout.OfByte ofByte) {
-            action.accept(renderValueLayout(state, ofByte, renderer.render(ofByte, segment.get(ofByte, state.indexAndAdd(ofByte))), suffix));
+            action.accept(renderValueLayout(state, ofByte, renderer.apply(ofByte, segment.get(ofByte, state.indexAndAdd(ofByte))), suffix));
             return;
         }
         if (layout instanceof ValueLayout.OfShort ofShort) {
-            action.accept(renderValueLayout(state, ofShort, renderer.render(ofShort, segment.get(ofShort, state.indexAndAdd(ofShort))), suffix));
+            action.accept(renderValueLayout(state, ofShort, renderer.apply(ofShort, segment.get(ofShort, state.indexAndAdd(ofShort))), suffix));
             return;
         }
         if (layout instanceof ValueLayout.OfInt ofInt) {
-            action.accept(renderValueLayout(state, ofInt, renderer.render(ofInt, segment.get(ofInt, state.indexAndAdd(ofInt))), suffix));
+            action.accept(renderValueLayout(state, ofInt, renderer.apply(ofInt, segment.get(ofInt, state.indexAndAdd(ofInt))), suffix));
             return;
         }
         if (layout instanceof ValueLayout.OfLong ofLong) {
-            action.accept(renderValueLayout(state, ofLong, renderer.render(ofLong, segment.get(ofLong, state.indexAndAdd(ofLong))), suffix));
+            action.accept(renderValueLayout(state, ofLong, renderer.apply(ofLong, segment.get(ofLong, state.indexAndAdd(ofLong))), suffix));
             return;
         }
         if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            action.accept(renderValueLayout(state, ofFloat, renderer.render(ofFloat, segment.get(ofFloat, state.indexAndAdd(ofFloat))), suffix));
+            action.accept(renderValueLayout(state, ofFloat, renderer.apply(ofFloat, segment.get(ofFloat, state.indexAndAdd(ofFloat))), suffix));
             return;
         }
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
-            action.accept(renderValueLayout(state, ofDouble, renderer.render(ofDouble, segment.get(ofDouble, state.indexAndAdd(ofDouble))), suffix));
+            action.accept(renderValueLayout(state, ofDouble, renderer.apply(ofDouble, segment.get(ofDouble, state.indexAndAdd(ofDouble))), suffix));
             return;
         }
         if (layout instanceof ValueLayout.OfChar ofChar) {
-            action.accept(renderValueLayout(state, ofChar, renderer.render(ofChar, segment.get(ofChar, state.indexAndAdd(ofChar))), suffix));
+            action.accept(renderValueLayout(state, ofChar, renderer.apply(ofChar, segment.get(ofChar, state.indexAndAdd(ofChar))), suffix));
             return;
         }
         if (layout instanceof ValueLayout.OfAddress ofAddress) {
-            action.accept(renderValueLayout(state, ofAddress, renderer.render(ofAddress, segment.get(ofAddress, state.indexAndAdd(ofAddress))), suffix));
+            action.accept(renderValueLayout(state, ofAddress, renderer.apply(ofAddress, segment.get(ofAddress, state.indexAndAdd(ofAddress))), suffix));
             return;
         }
         if (layout instanceof PaddingLayout paddingLayout) {
@@ -218,7 +218,45 @@ final class MemoryInspectionUtil {
         }
     }
 
-    private static final class StandardValueLayoutRenderer implements MemoryInspection.ValueLayoutRenderer {
+    private static final class StandardValueLayoutRenderer implements BiFunction<ValueLayout, Object, String> {
+
+        @Override
+        public String apply(ValueLayout layout, Object o) {
+            requireNonNull(layout);
+            requireNonNull(o);
+
+            // TODO: Replace with "patterns in switch statement" once this becomes available.
+
+            if (layout instanceof ValueLayout.OfBoolean ofBoolean && o instanceof Boolean b) {
+                return Boolean.toString(b);
+            }
+            if (layout instanceof ValueLayout.OfByte ofByte && o instanceof Byte b) {
+                return Byte.toString(b);
+            }
+            if (layout instanceof ValueLayout.OfShort ofShort && o instanceof Short s) {
+                return Short.toString(s);
+            }
+            if (layout instanceof ValueLayout.OfInt ofInt && o instanceof Integer i) {
+                return Integer.toString(i);
+            }
+            if (layout instanceof ValueLayout.OfLong ofLong && o instanceof Long l) {
+                return Long.toString(l);
+            }
+            if (layout instanceof ValueLayout.OfFloat ofFloat && o instanceof Float f) {
+                return Float.toString(f);
+            }
+            if (layout instanceof ValueLayout.OfDouble ofDouble && o instanceof Double d) {
+                return Double.toString(d);
+            }
+            if (layout instanceof ValueLayout.OfChar ofChar && o instanceof Character c) {
+                return Character.toString(c);
+            }
+            if (layout instanceof ValueLayout.OfAddress ofAddress && o instanceof MemorySegment m) {
+                return String.format("0x%0" + (ValueLayout.ADDRESS.byteSize() * 2) + "X", m.address());
+            }
+            throw new UnsupportedOperationException("layout " + layout + " for " + o.getClass().getName() + " not supported");
+        }
+
         @Override
         public String toString() {
             return singletonToString(StandardValueLayoutRenderer.class);
@@ -227,67 +265,6 @@ final class MemoryInspectionUtil {
 
     private static String singletonToString(Class<?> implementingClass) {
         return "The " + implementingClass.getName() + " singleton";
-    }
-
-    static final class SingleFunctionValueLayoutRenderer implements MemoryInspection.ValueLayoutRenderer {
-
-        private final BiFunction<ValueLayout, Object, String> renderer;
-
-        public SingleFunctionValueLayoutRenderer(BiFunction<ValueLayout, Object, String> renderer) {
-            this.renderer = renderer;
-        }
-
-        @Override
-        public String render(ValueLayout.OfBoolean booleanLayout, boolean value) {
-            return renderer.apply(booleanLayout, value);
-        }
-
-        @Override
-        public String render(ValueLayout.OfByte byteLayout, byte value) {
-            return renderer.apply(byteLayout, value);
-        }
-
-        @Override
-        public String render(ValueLayout.OfChar charLayout, char value) {
-            return renderer.apply(charLayout, value);
-        }
-
-        @Override
-        public String render(ValueLayout.OfShort shortLayout, short value) {
-            return renderer.apply(shortLayout, value);
-        }
-
-        @Override
-        public String render(ValueLayout.OfInt intLayout, int value) {
-            return renderer.apply(intLayout, value);
-        }
-
-        @Override
-        public String render(ValueLayout.OfLong longLayout, long value) {
-            return renderer.apply(longLayout, value);
-        }
-
-        @Override
-        public String render(ValueLayout.OfFloat floatLayout, float value) {
-            return renderer.apply(floatLayout, value);
-        }
-
-        @Override
-        public String render(ValueLayout.OfDouble doubleLayout, double value) {
-            return renderer.apply(doubleLayout, value);
-        }
-
-        @Override
-        public String render(ValueLayout.OfAddress addressLayout, MemorySegment value) {
-            return renderer.apply(addressLayout, value);
-        }
-
-        @Override
-        public String toString() {
-            return "SingleFunctionValueLayoutRenderer{" +
-                    "renderer=" + renderer +
-                    '}';
-        }
     }
 
 }

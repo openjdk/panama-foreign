@@ -30,8 +30,11 @@
  */
 
 import java.lang.foreign.*;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -66,7 +69,7 @@ public class TestMemoryInspection {
                 new TestInput(ValueLayout.ADDRESS, EXPECT_ADDRESS)
         ).forEach(ti -> {
             var expect = ti.layout() + "=" + ti.stringValue();
-            var actual = testWithFreshMemorySegment(ti.layout().byteSize(), s -> jdk.internal.foreign.MemoryInspection.inspect(s, ti.layout(), jdk.internal.foreign.MemoryInspection.ValueLayoutRenderer.standard()))
+            var actual = testWithFreshMemorySegment(ti.layout().byteSize(), s -> jdk.internal.foreign.MemoryInspection.inspect(s, ti.layout(), jdk.internal.foreign.MemoryInspection.standardRenderer()))
                     .collect(joining(System.lineSeparator()));
             assertEquals(actual, expect);
         });
@@ -85,7 +88,7 @@ public class TestMemoryInspection {
             final Point point = new Point(segment);
             point.x(1);
             point.y(2);
-            return jdk.internal.foreign.MemoryInspection.inspect(segment, Point.LAYOUT, jdk.internal.foreign.MemoryInspection.ValueLayoutRenderer.standard())
+            return jdk.internal.foreign.MemoryInspection.inspect(segment, Point.LAYOUT, jdk.internal.foreign.MemoryInspection.standardRenderer())
                     .collect(joining(System.lineSeparator()));
         });
 
@@ -105,10 +108,11 @@ public class TestMemoryInspection {
             final Point point = new Point(segment);
             point.x(1);
             point.y(2);
-            return MemoryInspection.inspect(segment, Point.LAYOUT, new jdk.internal.foreign.MemoryInspection.ValueLayoutRenderer() {
+            return MemoryInspection.inspect(segment, Point.LAYOUT, new BiFunction<ValueLayout, Object, String>() {
+
                         @Override
-                        public String render(ValueLayout.OfInt intLayout, int value) {
-                            return String.format("0x%04x", value);
+                        public String apply(ValueLayout layout, Object o) {
+                            return String.format("0x%04x", (int)o);
                         }
                     })
                     .collect(joining(System.lineSeparator()));
@@ -154,7 +158,7 @@ public class TestMemoryInspection {
 
 
         var actual = testWithFreshMemorySegment(layout.byteSize(), segment ->
-                jdk.internal.foreign.MemoryInspection.inspect(segment, layout, jdk.internal.foreign.MemoryInspection.ValueLayoutRenderer.standard()))
+                jdk.internal.foreign.MemoryInspection.inspect(segment, layout, jdk.internal.foreign.MemoryInspection.standardRenderer()))
                 .collect(joining(System.lineSeparator()));
 
         assertEquals(actual, expect);
@@ -171,29 +175,37 @@ public class TestMemoryInspection {
                 ).withName("Point")
         ).withName("PointArrayOfElements");
 
+        var xh = sequenceLayout.varHandle(PathElement.sequenceElement(), PathElement.groupElement("x"));
+        var yh = sequenceLayout.varHandle(PathElement.sequenceElement(), PathElement.groupElement("y"));
+
         var expect = platformLineSeparated("""
                 PointArrayOfElements [
                     Point {
-                        x=0,
+                        x=1,
                         y=0
                     },
                     Point {
-                        x=0,
-                        y=0
+                        x=1,
+                        y=1
                     },
                     Point {
-                        x=0,
-                        y=0
+                        x=1,
+                        y=2
                     },
                     Point {
-                        x=0,
-                        y=0
+                        x=1,
+                        y=3
                     }
                 ]""");
-        var actual = testWithFreshMemorySegment(Integer.BYTES * 2 * arraySize, segment ->
-                jdk.internal.foreign.MemoryInspection.inspect(segment, sequenceLayout, jdk.internal.foreign.MemoryInspection.ValueLayoutRenderer.standard()))
-                .collect(joining(System.lineSeparator()));
+        var actual = testWithFreshMemorySegment(Integer.BYTES * 2 * arraySize, segment -> {
+            for (long i = 0; i < sequenceLayout.elementCount(); i++) {
+                xh.set(segment, i, 1);
+                yh.set(segment, i, (int) i);
+            }
 
+            return jdk.internal.foreign.MemoryInspection.inspect(segment, sequenceLayout, jdk.internal.foreign.MemoryInspection.standardRenderer())
+                .collect(joining(System.lineSeparator()));}
+        );
         assertEquals(actual, expect);
     }
 
@@ -217,19 +229,23 @@ public class TestMemoryInspection {
         var expect = platformLineSeparated("""
                 Union {
                     Point {
-                        x=0,
-                        y=0,
+                        x=1,
+                        y=2,
                         32 padding bits
                     }|
                     3D-Point {
-                        x=0,
-                        y=0,
-                        z=0
+                        x=1,
+                        y=2,
+                        z=3
                     }
                 }""");
-        var actual = testWithFreshMemorySegment(Integer.BYTES * 3, segment ->
-                MemoryInspection.inspect(segment, union, MemoryInspection.ValueLayoutRenderer.standard()))
-                .collect(joining(System.lineSeparator()));
+        var actual = testWithFreshMemorySegment(Integer.BYTES * 3, segment -> {
+            u0.varHandle(PathElement.groupElement("x")).set(segment, 1);
+            u1.varHandle(PathElement.groupElement("y")).set(segment, 2);
+            u1.varHandle(PathElement.groupElement("z")).set(segment, 3);
+            return jdk.internal.foreign.MemoryInspection.inspect(segment, union, jdk.internal.foreign.MemoryInspection.standardRenderer())
+                    .collect(joining(System.lineSeparator()));
+        });
 
         assertEquals(actual, expect);
     }

@@ -50,7 +50,7 @@ public final class MemoryInspection {
 
     /**
      * Returns a human-readable view of the provided {@linkplain MemorySegment memory} viewed
-     * through the provided {@linkplain MemoryLayout layout} using the provided {@linkplain ValueLayoutRenderer renderer}.
+     * through the provided {@linkplain MemoryLayout layout} using the provided {@code renderer}.
      * <p>
      * The exact format of the returned view is unspecified and should not
      * be acted upon programmatically.
@@ -83,7 +83,7 @@ public final class MemoryInspection {
      */
     public static Stream<String> inspect(MemorySegment segment,
                                          MemoryLayout layout,
-                                         ValueLayoutRenderer renderer) {
+                                         BiFunction<ValueLayout, Object, String> renderer) {
         requireNonNull(segment);
         requireNonNull(layout);
         requireNonNull(renderer);
@@ -91,153 +91,20 @@ public final class MemoryInspection {
     }
 
     /**
-     * An interface that can be used to specify custom rendering of value
-     * layouts via the {@link MemoryInspection#inspect(MemorySegment, MemoryLayout, ValueLayoutRenderer)} method.
+     * {@return a standard value layout renderer that will render numeric values into decimal form and where
+     * other value types are rendered to a reasonable "natural" form}
      * <p>
-     * The render methods take two parameters:
+     * More specifically, values types are rendered as follows:
      * <ul>
-     *     <li>layout: This can be used to select different formatting for different paths</li>
-     *     <li>value: The actual value</li>
+     *     <li>Numeric values are rendered in decimal form (e.g 1 or 1.2).</li>
+     *     <li>Boolean values are rendered as {@code true} or {@code false}.</li>
+     *     <li>Character values are rendered as {@code char}.</li>
+     *     <li>Address values are rendered in hexadecimal form e.g. {@code 0x0000000000000000} (on 64-bit platforms) or
+     *     {@code 0x00000000} (on 32-bit platforms)</li>
      * </ul>
-     * <p>
-     * The {@linkplain ValueLayoutRenderer#standard() standard() } value layout renderer is path
-     * agnostic and will thus render all layouts of the same type the same way.
-     *
-     * @see MemoryInspection#inspect(MemorySegment, MemoryLayout, ValueLayoutRenderer)
      */
-    public interface ValueLayoutRenderer {
-        /**
-         * Renders the provided {@code booleanLayout} and {@code value} to a String.
-         *
-         * @param booleanLayout the layout to render
-         * @param value         the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfBoolean booleanLayout, boolean value) {
-            requireNonNull(booleanLayout);
-            return Boolean.toString(value);
-        }
-
-        /**
-         * Renders the provided {@code byteLayout} and {@code value} to a String.
-         *
-         * @param byteLayout the layout to render
-         * @param value         the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfByte byteLayout, byte value) {
-            requireNonNull(byteLayout);
-            return Byte.toString(value);
-        }
-
-        /**
-         * Renders the provided {@code charLayout} and {@code value} to a String.
-         *
-         * @param charLayout the layout to render
-         * @param value      the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfChar charLayout, char value) {
-            requireNonNull(charLayout);
-            return Character.toString(value);
-        }
-
-        /**
-         * Renders the provided {@code shortLayout} and {@code value} to a String.
-         *
-         * @param shortLayout the layout to render
-         * @param value       the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfShort shortLayout, short value) {
-            requireNonNull(shortLayout);
-            return Short.toString(value);
-        }
-
-        /**
-         * Renders the provided {@code intLayout} and {@code value} to a String.
-         *
-         * @param intLayout the layout to render
-         * @param value     the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfInt intLayout, int value) {
-            requireNonNull(intLayout);
-            return Integer.toString(value);
-        }
-
-        /**
-         * Renders the provided {@code longLayout} and {@code value} to a String.
-         *
-         * @param longLayout the layout to render
-         * @param value      the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfLong longLayout, long value) {
-            requireNonNull(longLayout);
-            return Long.toString(value);
-        }
-
-        /**
-         * Renders the provided {@code floatLayout} and {@code value} to a String.
-         *
-         * @param floatLayout the layout to render
-         * @param value       the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfFloat floatLayout, float value) {
-            requireNonNull(floatLayout);
-            return Float.toString(value);
-        }
-
-        /**
-         * Renders the provided {@code doubleLayout} and {@code value} to a String.
-         *
-         * @param doubleLayout the layout to render
-         * @param value        the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfDouble doubleLayout, double value) {
-            requireNonNull(doubleLayout);
-            return Double.toString(value);
-        }
-
-        /**
-         * Renders the provided {@code addressLayout} and {@code value} to a String.
-         *
-         * @param addressLayout the layout to render
-         * @param value         the value to render
-         * @return rendered String
-         */
-        default String render(ValueLayout.OfAddress addressLayout, MemorySegment value) {
-            requireNonNull(addressLayout);
-            return String.format("0x%0" + (ValueLayout.ADDRESS.byteSize() * 2) + "X", value.address());
-        }
-
-        /**
-         * {@return a standard value layout renderer that will render numeric values into decimal form and where
-         * other value types are rendered to a reasonable "natural" form}
-         * <p>
-         * More specifically, values types are rendered as follows:
-         * <ul>
-         *     <li>Numeric values are rendered in decimal form (e.g 1 or 1.2).</li>
-         *     <li>Boolean values are rendered as {@code true} or {@code false}.</li>
-         *     <li>Character values are rendered as {@code char}.</li>
-         *     <li>Address values are rendered in hexadecimal form e.g. {@code 0x0000000000000000} (on 64-bit platforms) or
-         *     {@code 0x00000000} (on 32-bit platforms)</li>
-         * </ul>
-         */
-        static ValueLayoutRenderer standard() {
-            return STANDARD_VALUE_LAYOUT_RENDERER;
-        }
-
-        /**
-         * {@return a value layout renderer that will render all value layout types via the provided {@code renderer}}
-         */
-        static ValueLayoutRenderer of(BiFunction<ValueLayout, Object, String> renderer) {
-            requireNonNull(renderer);
-            return new SingleFunctionValueLayoutRenderer(renderer);
-        }
-
+    public static BiFunction<ValueLayout, Object, String> standardRenderer() {
+        return STANDARD_VALUE_LAYOUT_RENDERER;
     }
+
 }
