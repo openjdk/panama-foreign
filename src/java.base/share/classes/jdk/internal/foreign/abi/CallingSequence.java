@@ -30,7 +30,7 @@ import java.lang.invoke.MethodType;
 import java.util.List;
 import java.util.stream.Stream;
 
-public final class CallingSequence {
+public class CallingSequence {
     private final boolean forUpcall;
     private final MethodType callerMethodType;
     private final MethodType calleeMethodType;
