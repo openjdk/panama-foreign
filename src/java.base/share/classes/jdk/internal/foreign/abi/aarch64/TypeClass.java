@@ -25,15 +25,12 @@
  */
 package jdk.internal.foreign.abi.aarch64;
 
-import jdk.internal.foreign.PlatformLayouts.AArch64;
 import jdk.internal.foreign.abi.SharedUtils;
 
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
-import java.nio.ByteOrder;
-import java.util.Map;
 
 public enum TypeClass {
     STRUCT_REGISTER,
