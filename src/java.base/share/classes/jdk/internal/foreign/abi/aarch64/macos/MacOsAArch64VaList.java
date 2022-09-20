@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static jdk.internal.foreign.PlatformLayouts.AArch64;
+import static jdk.internal.foreign.PlatformLayouts.AArch64.C_POINTER;
 import static jdk.internal.foreign.abi.SharedUtils.alignUp;
 
 /**
@@ -46,7 +46,7 @@ import static jdk.internal.foreign.abi.SharedUtils.alignUp;
  */
 public non-sealed class MacOsAArch64VaList implements VaList {
     private static final long VA_SLOT_SIZE_BYTES = 8;
-    private static final VarHandle VH_address = AArch64.C_POINTER.varHandle();
+    private static final VarHandle VH_address = C_POINTER.varHandle();
 
     private static final VaList EMPTY = new SharedUtils.EmptyVaList(MemorySegment.NULL);
 
