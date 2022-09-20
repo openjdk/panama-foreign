@@ -25,8 +25,6 @@
  */
 package jdk.internal.foreign.abi.aarch64;
 
-import jdk.internal.foreign.abi.SharedUtils;
-
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
@@ -102,7 +100,6 @@ public enum TypeClass {
     }
 
     public static TypeClass classifyLayout(MemoryLayout type) {
-        SharedUtils.checkHasNaturalAlignment(type);
         if (type instanceof ValueLayout) {
             return classifyValueType((ValueLayout) type);
         } else if (type instanceof GroupLayout) {

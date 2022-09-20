@@ -33,7 +33,7 @@ import java.lang.foreign.*;
 import java.util.Objects;
 import java.util.Optional;
 
-abstract sealed class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout>
+public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout>
         permits AbstractGroupLayout, PaddingLayoutImpl, SequenceLayoutImpl, ValueLayouts.AbstractValueLayout {
 
     private final long bitSize;

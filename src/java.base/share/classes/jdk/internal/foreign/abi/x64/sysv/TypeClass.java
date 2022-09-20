@@ -31,9 +31,7 @@ import java.lang.foreign.PaddingLayout;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.StructLayout;
 import java.lang.foreign.ValueLayout;
-
 import jdk.internal.foreign.Utils;
-import jdk.internal.foreign.abi.SharedUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -176,7 +174,6 @@ class TypeClass {
     }
 
     static TypeClass classifyLayout(MemoryLayout type) {
-        SharedUtils.checkHasNaturalAlignment(type);
         try {
             if (type instanceof ValueLayout) {
                 return ofValue((ValueLayout)type);
