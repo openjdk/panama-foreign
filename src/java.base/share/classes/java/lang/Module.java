@@ -271,31 +271,34 @@ public final class Module implements AnnotatedElement {
      */
     @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
     public boolean isNativeAccessEnabled() {
-        boolean enabled = isNamed()? enableNativeAccess :
-            ALL_UNNAMED_MODULE.enableNativeAccess;
-        if (enabled) {
-            return enabled;
+        Module target = enableNativeAccessHolder();
+        synchronized(target) {
+            return target.enableNativeAccess;
         }
-        // slow path
-        if (isNamed()) {
-            synchronized(this) {
-                return enableNativeAccess;
-            }
-        } else {
-            synchronized(ALL_UNNAMED_MODULE) {
-                return ALL_UNNAMED_MODULE.enableNativeAccess;
-            }
-        }
+    }
+
+    // Returns the Module object holds the enableNativeAccess
+    // flag for this module.
+    private Module enableNativeAccessHolder() {
+        return isNamed()? this : ALL_UNNAMED_MODULE;
     }
 
     // This is invoked from Reflection.ensureNativeAccess
     void ensureNativeAccess(Class<?> owner, String methodName) {
-        boolean isNativeAccessEnabled = isNativeAccessEnabled();
+        // The target module whose enableNativeAccess flag is ensured
+        Module target = enableNativeAccessHolder();
+        // racy read of the enable native access flag
+        boolean isNativeAccessEnabled = target.enableNativeAccess;
         if (!isNativeAccessEnabled) {
-            if (ModuleBootstrap.hasEnableNativeAccessFlag()) {
-                throw new IllegalCallerException("Illegal native access from: " + this);
-            } else {
-                synchronized (this) {
+            synchronized(target) {
+                // safe read of the enableNativeAccess of the target module
+                isNativeAccessEnabled = target.enableNativeAccess;
+                // check again with the safely read flag
+                if (isNativeAccessEnabled) {
+                   return;
+                } else if (ModuleBootstrap.hasEnableNativeAccessFlag()) {
+                   throw new IllegalCallerException("Illegal native access from: " + this);
+                } else {
                     // warn and set flag, so that only one warning is reported per module
                     String cls = owner.getName();
                     String mtd = cls + "::" + methodName;
@@ -306,11 +309,9 @@ public final class Module implements AnnotatedElement {
                         WARNING: %s has been called by %s
                         WARNING: Use --enable-native-access=%s to avoid a warning for this module
                         %n""", cls, mtd, mod, modflag);
-                    if (isNamed()) {
-                        implAddEnableNativeAccess();
-                    } else {
-                        implAddEnableNativeAccessAllUnnamed();
-                    }
+
+                    // set the flag
+                    target.enableNativeAccess = true;
                 }
             }
         }
