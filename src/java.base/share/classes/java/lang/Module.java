@@ -280,7 +280,7 @@ public final class Module implements AnnotatedElement {
     // Returns the Module object holds the enableNativeAccess
     // flag for this module.
     private Module enableNativeAccessHolder() {
-        return isNamed()? this : ALL_UNNAMED_MODULE;
+        return isNamed() ? this : ALL_UNNAMED_MODULE;
     }
 
     // This is invoked from Reflection.ensureNativeAccess
@@ -295,6 +295,7 @@ public final class Module implements AnnotatedElement {
                 isNativeAccessEnabled = target.enableNativeAccess;
                 // check again with the safely read flag
                 if (isNativeAccessEnabled) {
+                   // another thread beat us to it - nothing to do
                    return;
                 } else if (ModuleBootstrap.hasEnableNativeAccessFlag()) {
                    throw new IllegalCallerException("Illegal native access from: " + this);

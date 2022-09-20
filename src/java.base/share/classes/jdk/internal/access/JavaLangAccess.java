@@ -273,8 +273,8 @@ public interface JavaLangAccess {
     void addEnableNativeAccessAllUnnamed();
 
     /**
-     * Ensure that the given module has native access. If not, warn
-     * and set native access depending on the configuration.
+     * Ensure that the given module has native access. If not, warn or
+     * throw exception depending on the configuration.
      */
     void ensureNativeAccess(Module m, Class<?> owner, String methodName);
 

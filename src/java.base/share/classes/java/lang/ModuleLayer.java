@@ -301,8 +301,8 @@ public final class ModuleLayer {
         }
 
         /***
-         * Enables <a href="foreign/package-summary.html#restricted">native access</a>
-         * for a module in the layer if the caller module already has native access.
+         * Enables native access for a module in the layer if the caller's module
+         * already has native access.
          *
          * <p> This method is <a href="foreign/package-summary.html#restricted"><em>restricted</em></a>.
          * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -314,7 +314,10 @@ public final class ModuleLayer {
          *
          * @return This controller
          *
-         * @throws IllegalCallerException If the caller module doesn't have native access.
+         * @throws IllegalCallerException if access to this method occurs from a module {@code M}
+         * and the command line option {@code --enable-native-access} is specified, but does not
+         * mention the module name {@code M}, or {@code ALL-UNNAMED} in case {@code M} is an
+         * unnamed module.
          */
          @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
          @CallerSensitive
