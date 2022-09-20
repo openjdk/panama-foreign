@@ -216,14 +216,16 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
      /**
      * Creates a native memory segment with the given size (in bytes), alignment constraint (in bytes) associated with
      * this memory session. The {@link MemorySegment#address()} of the returned memory segment is the starting address of
-     * the newly allocated off-heap memory region backing the segment.
+     * the newly allocated off-heap memory region backing the segment. Moreover, the {@linkplain MemorySegment#address() address}
+     * of the returned segment will be aligned according the provided alignment constraint.
+     * <p>
      * A client is responsible for ensuring that this memory session is closed when the
      * segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
-     * The off-heap memory associated with the returned native memory segment is initialized to zero.
+     * The off-heap region of memory associated with the returned native memory segment is initialized to zero.
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
-     * @param bytesAlignment the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param bytesAlignment the alignment constraint (in bytes) of the off-heap region of memory backing the native memory segment.
      * @return a new native memory segment.
      * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
      * is not a power of 2.

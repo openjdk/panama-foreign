@@ -197,31 +197,29 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * <h2 id="segment-alignment">Alignment</h2>
  *
  * Access operations on a memory segment are constrained not only by the spatial and temporal bounds of the segment,
- * but also by the alignment constraints of the layout specified to the operation. An access operation can access only
- * those offsets in the segment that are aligned in physical memory according to the layout. It is convenient to access
- * a given data structure under the same alignment constraint regardless of whether the data lies in a native segment or
- * a heap segment.
- *
- * An access operation can access only those offsets in the segment that denote addresses in physical memory which are
- * <em>aligned</em> according to the layout. An address in physical memory is aligned according to the layout if it is
- * a multiple of the layout's alignment constraints. The following pseudo-function determines if a physical
- * address is aligned according to the layout:
+ * but also by the <em>alignment constraint</em> of the value layout specified to the operation. An access operation can
+ * access only those offsets in the segment that denote addresses in physical memory which are <em>aligned</em> according
+ * to the layout. An address in physical memory is <em>aligned</em> according to a layout if the address is an integer
+ * multiple of the layout's alignment constraint. For example, the address 1000 is aligned according to an 8-byte alignment
+ * constraint (because 1000 is an integer multiple of 8), and to a 4-byte alignment constraint, and to a 2-byte alignment
+ * constraint; in contrast, the address 1004 is aligned according to a 4-byte alignment constraint, and to a 2-byte alignment
+ * constraint, but not to an 8-byte alignment constraint.
+ * Access operations are required to respect alignment because it can impact the performance of access operations, and
+ * can also determine which access operations are available at a given physical address. For instance,
+ * {@linkplain java.lang.invoke.VarHandle#compareAndSet(Object...) atomic access operations} operations using
+ * {@link java.lang.invoke.VarHandle} are only permitted at aligned addresses. In addition, alignment
+ * applies to an access operation whether the segment being accessed is a native segment or a heap segment.
+ * <p>
+ * If the segment being accessed is a native segment, then its {@linkplain #address() address} in physical memory can be
+ * combined with the offset to obtain the <em>target address</em> in physical memory. The pseudo-function below demonstrates this:
  *
  * {@snippet lang = java:
  * boolean isAligned(MemorySegment segment, long offset, MemoryLayout layout) {
  *   return ((segment.address() + offset) % layout.byteAlignment()) == 0;
  * }
  * }
- * <p>
- * Alignment can impact the performance of access operations, and, when using {@link java.lang.invoke.VarHandle} (see below),
- * can also determine <em>which</em> access operations are available at a given physical address.
- * For instance, {@linkplain java.lang.invoke.VarHandle#compareAndSet(Object...) atomic access operations}
- * are only permitted at physical addresses that are aligned according to the layout. As such, it is crucial
- * that alignment of access operations is well-defined and predictable, regardless of whether the accessed segment
- * is a heap segment or a native segment (PROBABLY NEEDS TO BE REPHRASED).
- * <p>
- * If the segment being accessed is a native segment, then its {@linkplain #address() address} in physical memory can be
- * combined with the offset to obtain the <em>target address</em> in physical memory. For example:
+ *
+ * For example:
  * <ul>
  * <li>A native segment at address 1000 can be accessed at offsets 0, 8, 16, 24, etc under an 8-byte alignment constraint,
  * because the target addresses (1000, 1008, 1016, 1024) are 8-byte aligned.
@@ -246,8 +244,12 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * <!-- Under a 1-byte alignment constraint, any offset address in a native segment can be accessed. -->
  * <!-- In effect, every target address is at least 1-byte aligned. -->
  * <p>
- * Usually, it is not necessary to stress about aligned access to a native segment, because {@link MemorySegment#allocateNative(long)}
- * sets you up for success.
+ * The alignment constraint used to access a segment is typically dictated by the shape of the data structure stored
+ * in the segment. For example, if the programmer wishes to store a sequence of 8-byte values in a native segment, then
+ * the segment should be allocated by specifying a 8-byte alignment constraint, either via {@link #allocateNative(long, long)}
+ * or {@link #allocateNative(MemoryLayout)}. These factories ensure that the off-heap region of memory associated with
+ * the returned segment has a starting address that is 8-byte aligned. Subsequently, the programmer can access the
+ * segment at the offsets of interest -- 0, 8, 16, 24, etc -- in the knowledge that every such access is aligned.
  * <p>
  * If the segment being accessed is a heap segment, then determining whether access is aligned is more complex.
  * The address of the segment in physical memory is not known, and is not even fixed (it may change when the segment
@@ -1117,7 +1119,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Creates a native segment with the given layout.
      * <p>
      * The {@linkplain #address() address} of the returned memory segment is the starting address of
-     * the newly allocated off-heap region backing the segment.
+     * the newly allocated off-heap region backing the segment. Moreover, the {@linkplain #address() address}
+     * of the returned segment will be aligned according to the alignment constraint of the provided layout.
+     * <p>
      * The returned memory segment is associated with a new {@linkplain MemorySession#openImplicit implicit}
      * memory session. As such, the off-heap region which backs the returned segment is
      * freed <em>automatically</em>, some unspecified time after it is no longer referenced.
@@ -1131,9 +1135,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      *         .allocate(layout.bytesSize(), layout.bytesAlignment());
      * }
      * <p>
-     * The block of off-heap memory associated with the returned native segment is initialized to zero.
+     * The region of off-heap region of memory associated with the returned native segment is initialized to zero.
      *
-     * @param layout the layout of the off-heap memory block backing the native segment.
+     * @param layout the layout of the off-heap memory region backing the native segment.
      * @return a new native segment.
      * @see MemorySession#allocate(MemoryLayout)
      */
@@ -1146,7 +1150,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Creates a native segment with the given size (in bytes).
      * <p>
      * The {@linkplain #address() address} of the returned memory segment is the starting address of
-     * the newly allocated off-heap region backing the segment.
+     * the newly allocated off-heap region backing the segment. Moreover, the {@linkplain #address() address}
+     * of the returned segment is guaranteed to be at least 1-byte aligned.
+     * <p>
      * The returned memory segment is associated with a new {@linkplain MemorySession#openImplicit implicit}
      * memory session. As such, the off-heap region which backs the returned segment is
      * freed <em>automatically</em>, some unspecified time after it is no longer referenced.
@@ -1160,11 +1166,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      *     .allocate(bytesSize, 1)
      * }
      * <p>
-     * The block of off-heap memory associated with the returned native segment is initialized to zero.
+     * The off-heap region of memory associated with the returned native segment is initialized to zero.
      * <p>
      * This method corresponds to the {@link ByteBuffer#allocateDirect(int)} method and has similar behavior.
      *
-     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native segment.
+     * @param bytesSize the size (in bytes) of the off-heap region of memory backing the native segment.
      * @return a new native segment.
      * @throws IllegalArgumentException if {@code bytesSize < 0}.
      * @see ByteBuffer#allocateDirect(int)
@@ -1178,7 +1184,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Creates a native segment with the given size (in bytes) and alignment (in bytes).
      * <p>
      * The {@linkplain #address() address} of the returned memory segment is the starting address of
-     * the newly allocated off-heap region backing the segment.
+     * the newly allocated off-heap region backing the segment. Moreover, the {@linkplain #address() address}
+     * of the returned segment will be aligned according to the provided alignment constraint.
+     * <p>
      * The returned memory segment is associated with a new {@linkplain MemorySession#openImplicit implicit}
      * memory session. As such, the off-heap region which backs the returned segment is
      * freed <em>automatically</em>, some unspecified time after it is no longer referenced.
@@ -1192,10 +1200,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      *     .allocate(bytesSize, byteAlignment)
      * }
      * <p>
-     * The block of off-heap memory associated with the returned native segment is initialized to zero.
+     * The off-heap region of memory associated with the returned native segment is initialized to zero.
      *
-     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native segment.
-     * @param byteAlignment the alignment constraint (in bytes) of the off-heap memory block backing the native segment.
+     * @param bytesSize the size (in bytes) of the off-heap region of memory backing the native segment.
+     * @param byteAlignment the alignment constraint (in bytes) of the off-heap region of memory backing the native segment.
      * @return a new native segment.
      * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
      * is not a power of 2.
