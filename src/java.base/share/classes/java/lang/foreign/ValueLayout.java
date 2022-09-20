@@ -150,7 +150,7 @@ public sealed interface ValueLayout extends MemoryLayout {
         OfBoolean withName(String name);
 
         @Override
-        OfBoolean withBitAlignment(long alignmentBits);
+        OfBoolean withBitAlignment(long bitAlignment);
 
         @Override
         OfBoolean withOrder(ByteOrder order);
@@ -171,7 +171,7 @@ public sealed interface ValueLayout extends MemoryLayout {
         OfByte withName(String name);
 
         @Override
-        OfByte withBitAlignment(long alignmentBits);
+        OfByte withBitAlignment(long bitAlignment);
 
         @Override
         OfByte withOrder(ByteOrder order);
@@ -192,7 +192,7 @@ public sealed interface ValueLayout extends MemoryLayout {
         OfChar withName(String name);
 
         @Override
-        OfChar withBitAlignment(long alignmentBits);
+        OfChar withBitAlignment(long bitAlignment);
 
         @Override
         OfChar withOrder(ByteOrder order);
@@ -213,7 +213,7 @@ public sealed interface ValueLayout extends MemoryLayout {
         OfShort withName(String name);
 
         @Override
-        OfShort withBitAlignment(long alignmentBits);
+        OfShort withBitAlignment(long bitAlignment);
 
         @Override
         OfShort withOrder(ByteOrder order);
@@ -234,7 +234,7 @@ public sealed interface ValueLayout extends MemoryLayout {
         OfInt withName(String name);
 
         @Override
-        OfInt withBitAlignment(long alignmentBits);
+        OfInt withBitAlignment(long bitAlignment);
 
         @Override
         OfInt withOrder(ByteOrder order);
@@ -255,7 +255,7 @@ public sealed interface ValueLayout extends MemoryLayout {
         OfFloat withName(String name);
 
         @Override
-        OfFloat withBitAlignment(long alignmentBits);
+        OfFloat withBitAlignment(long bitAlignment);
 
         @Override
         OfFloat withOrder(ByteOrder order);
@@ -276,7 +276,7 @@ public sealed interface ValueLayout extends MemoryLayout {
         OfLong withName(String name);
 
         @Override
-        OfLong withBitAlignment(long alignmentBits);
+        OfLong withBitAlignment(long bitAlignment);
 
         @Override
         OfLong withOrder(ByteOrder order);
@@ -297,7 +297,7 @@ public sealed interface ValueLayout extends MemoryLayout {
         OfDouble withName(String name);
 
         @Override
-        OfDouble withBitAlignment(long alignmentBits);
+        OfDouble withBitAlignment(long bitAlignment);
 
         @Override
         OfDouble withOrder(ByteOrder order);
@@ -318,7 +318,7 @@ public sealed interface ValueLayout extends MemoryLayout {
         OfAddress withName(String name);
 
         @Override
-        OfAddress withBitAlignment(long alignmentBits);
+        OfAddress withBitAlignment(long bitAlignment);
 
         @Override
         OfAddress withOrder(ByteOrder order);

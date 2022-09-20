@@ -325,24 +325,24 @@ public interface SegmentAllocator {
 
     /**
      * Allocates a memory segment with the given size.
-     * @implSpec the default implementation for this method calls {@code this.allocate(bytesSize, 1)}.
-     * @param bytesSize the size (in bytes) of the block of memory to be allocated.
+     * @implSpec the default implementation for this method calls {@code this.allocate(byteSize, 1)}.
+     * @param byteSize the size (in bytes) of the block of memory to be allocated.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code bytesSize < 0}
+     * @throws IllegalArgumentException if {@code byteSize < 0}
      */
-    default MemorySegment allocate(long bytesSize) {
-        return allocate(bytesSize, 1);
+    default MemorySegment allocate(long byteSize) {
+        return allocate(byteSize, 1);
     }
 
     /**
      * Allocates a memory segment with the given size and alignment constraints.
-     * @param bytesSize the size (in bytes) of the block of memory to be allocated.
-     * @param bytesAlignment the alignment (in bytes) of the block of memory to be allocated.
+     * @param byteSize the size (in bytes) of the block of memory to be allocated.
+     * @param byteAlignment the alignment (in bytes) of the block of memory to be allocated.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes <= 0},
+     * @throws IllegalArgumentException if {@code byteSize < 0}, {@code byteAlignment <= 0},
      * or if {@code alignmentBytes} is not a power of 2.
      */
-    MemorySegment allocate(long bytesSize, long bytesAlignment);
+    MemorySegment allocate(long byteSize, long byteAlignment);
 
     /**
      * Creates an unbounded arena-based allocator used to allocate native memory segments.
