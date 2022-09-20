@@ -26,8 +26,6 @@
 package jdk.internal.foreign.abi.aarch64.macos;
 
 import java.lang.foreign.*;
-
-import jdk.internal.foreign.PlatformLayouts.AArch64;
 import jdk.internal.foreign.abi.aarch64.TypeClass;
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.abi.SharedUtils;
@@ -37,6 +35,8 @@ import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import static jdk.internal.foreign.PlatformLayouts.AArch64;
 import static jdk.internal.foreign.abi.SharedUtils.alignUp;
 
 /**

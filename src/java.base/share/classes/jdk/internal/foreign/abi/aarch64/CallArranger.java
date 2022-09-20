@@ -30,7 +30,6 @@ import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 
-import jdk.internal.foreign.PlatformLayouts.AArch64;
 import jdk.internal.foreign.abi.ABIDescriptor;
 import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.CallingSequence;
@@ -49,6 +48,7 @@ import java.lang.invoke.MethodType;
 import java.util.List;
 import java.util.Optional;
 
+import static jdk.internal.foreign.PlatformLayouts.*;
 import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.*;
 import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.Regs.*;
 
@@ -196,7 +196,7 @@ public abstract class CallArranger {
             // There is currently no way to address stack offsets that are not multiples of 8 bytes
             // The VM can only address multiple-of-4-bytes offsets, which is also not good enough for some ABIs
             // see JDK-8283462 and related issues
-            long stackSlotAlignment = Math.max(alignment, STACK_SLOT_SIZE);
+            long stackSlotAlignment = Utils.alignUp(alignment, STACK_SLOT_SIZE);
             long alignedStackOffset = Utils.alignUp(stackOffset, stackSlotAlignment);
             // macos-aarch64 ABI potentially requires addressing stack offsets that are not multiples of 8 bytes
             // Reject such call types here, to prevent undefined behavior down the line
@@ -209,8 +209,7 @@ public abstract class CallArranger {
             short encodedSize = (short) size;
             assert (encodedSize & 0xFFFF) == size;
 
-            VMStorage storage =
-                AArch64Architecture.stackStorage(encodedSize, (int)alignedStackOffset);
+            VMStorage storage = AArch64Architecture.stackStorage(encodedSize, (int)alignedStackOffset);
             stackOffset = alignedStackOffset + size;
             return storage;
         }
@@ -265,6 +264,8 @@ public abstract class CallArranger {
             this.storageCalculator = new StorageCalculator(forArguments);
         }
 
+        private static final int COPY_CHUNK_SIZE = 8;
+
         protected void spillStructUnbox(Binding.Builder bindings, MemoryLayout layout) {
             // If a struct has been assigned register or HFA class but
             // there are not enough free registers to hold the entire
@@ -274,16 +275,16 @@ public abstract class CallArranger {
             long offset = 0;
             long align = layout.byteAlignment();
             while (offset < layout.byteSize()) {
-                long copy = Math.min(layout.byteSize() - offset, STACK_SLOT_SIZE);
+                long copy = Math.min(layout.byteSize() - offset, COPY_CHUNK_SIZE);
                 VMStorage storage = storageCalculator.stackAlloc(copy, align);
                 align = 1; // only first copy needs aligning
-                if (offset + STACK_SLOT_SIZE < layout.byteSize()) {
+                if (offset + COPY_CHUNK_SIZE < layout.byteSize()) {
                     bindings.dup();
                 }
                 Class<?> type = SharedUtils.primitiveCarrierForSize(copy, false);
                 bindings.bufferLoad(offset, type)
                         .vmStore(storage, type);
-                offset += STACK_SLOT_SIZE;
+                offset += COPY_CHUNK_SIZE;
             }
         }
 
@@ -296,14 +297,14 @@ public abstract class CallArranger {
             long offset = 0;
             long align = layout.byteAlignment();
             while (offset < layout.byteSize()) {
-                long copy = Math.min(layout.byteSize() - offset, STACK_SLOT_SIZE);
+                long copy = Math.min(layout.byteSize() - offset, COPY_CHUNK_SIZE);
                 VMStorage storage = storageCalculator.stackAlloc(copy, align);
                 align = 1; // only first copy needs aligning
                 Class<?> type = SharedUtils.primitiveCarrierForSize(copy, false);
                 bindings.dup()
                         .vmLoad(storage, type)
                         .bufferStore(offset, type);
-                offset += STACK_SLOT_SIZE;
+                offset += COPY_CHUNK_SIZE;
             }
         }
 

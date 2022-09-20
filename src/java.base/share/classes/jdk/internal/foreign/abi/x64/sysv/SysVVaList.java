@@ -28,7 +28,6 @@ package jdk.internal.foreign.abi.x64.sysv;
 import java.lang.foreign.*;
 
 import jdk.internal.foreign.MemorySessionImpl;
-import jdk.internal.foreign.PlatformLayouts.SysV;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.misc.Unsafe;
@@ -37,6 +36,8 @@ import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import static jdk.internal.foreign.PlatformLayouts.SysV;
 
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;

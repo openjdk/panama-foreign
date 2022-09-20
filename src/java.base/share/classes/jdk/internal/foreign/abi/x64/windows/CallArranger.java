@@ -24,7 +24,6 @@
  */
 package jdk.internal.foreign.abi.x64.windows;
 
-import jdk.internal.foreign.PlatformLayouts.Win64;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.ABIDescriptor;
 import jdk.internal.foreign.abi.Binding;
@@ -46,6 +45,7 @@ import java.lang.invoke.MethodType;
 import java.util.List;
 import java.util.Optional;
 
+import static jdk.internal.foreign.PlatformLayouts.Win64;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.Regs.*;
 

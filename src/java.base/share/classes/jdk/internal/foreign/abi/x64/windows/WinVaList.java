@@ -28,7 +28,6 @@ package jdk.internal.foreign.abi.x64.windows;
 import java.lang.foreign.*;
 
 import jdk.internal.foreign.MemorySessionImpl;
-import jdk.internal.foreign.PlatformLayouts.Win64;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 
@@ -36,6 +35,8 @@ import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import static jdk.internal.foreign.PlatformLayouts.Win64.C_POINTER;
 
 // see vadefs.h (VC header)
 //
@@ -55,7 +56,7 @@ import java.util.Objects;
 //
 public non-sealed class WinVaList implements VaList {
     private static final long VA_SLOT_SIZE_BYTES = 8;
-    private static final VarHandle VH_address = Win64.C_POINTER.varHandle();
+    private static final VarHandle VH_address = C_POINTER.varHandle();
 
     private static final VaList EMPTY = new SharedUtils.EmptyVaList(MemorySegment.NULL);
 
