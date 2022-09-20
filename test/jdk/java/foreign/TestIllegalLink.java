@@ -78,15 +78,23 @@ public class TestIllegalLink extends NativeTestHelper {
             },
             {
                     FunctionDescriptor.ofVoid(C_INT.withBitAlignment(16)),
-                    "Layout bit alignment does not correspond to C primitive"
+                    "Layout bit alignment must be natural alignment"
             },
             {
                     FunctionDescriptor.ofVoid(C_POINTER.withBitAlignment(16)),
-                    "Layout bit alignment does not correspond to C primitive"
+                    "Layout bit alignment must be natural alignment"
             },
             {
                     FunctionDescriptor.ofVoid(MemoryLayout.valueLayout(char.class, ByteOrder.nativeOrder()).withBitAlignment(32)),
-                    "Layout bit alignment does not correspond to C primitive"
+                    "Layout bit alignment must be natural alignment"
+            },
+            {
+                    FunctionDescriptor.ofVoid(MemoryLayout.structLayout(
+                            C_CHAR.withName("x").withBitAlignment(8),
+                            C_SHORT.withName("y").withBitAlignment(8),
+                            C_INT.withName("z").withBitAlignment(8)
+                            ).withBitAlignment(8)),
+                    "Layout bit alignment must be natural alignment"
             },
         };
     }

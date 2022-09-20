@@ -51,18 +51,6 @@ class TypeClass {
         FLOAT
     }
 
-    private static final Map<Class<?>, ValueLayout> STANDARD_LAYOUTS = Map.of(
-        boolean.class,       SysV.C_BOOL,
-        byte.class,          SysV.C_CHAR,
-        char.class,          MemoryLayout.valueLayout(char.class, ByteOrder.nativeOrder()).withBitAlignment(16),
-        short.class,         SysV.C_SHORT,
-        int.class,           SysV.C_INT,
-        long.class,          SysV.C_LONG_LONG, // or C_LONG, but they are the same layout
-        float.class,         SysV.C_FLOAT,
-        double.class,        SysV.C_DOUBLE,
-        MemorySegment.class, SysV.C_POINTER
-    );
-
     private final Kind kind;
     final List<ArgumentClassImpl> classes;
 
@@ -127,7 +115,6 @@ class TypeClass {
 
     private static ArgumentClassImpl argumentClassFor(ValueLayout layout) {
         Class<?> carrier = layout.carrier();
-        SharedUtils.checkStandardLayout(STANDARD_LAYOUTS, layout);
         if (carrier == boolean.class || carrier == byte.class || carrier == char.class ||
                 carrier == short.class || carrier == int.class || carrier == long.class) {
             return ArgumentClassImpl.INTEGER;
@@ -192,6 +179,7 @@ class TypeClass {
     }
 
     static TypeClass classifyLayout(MemoryLayout type) {
+        SharedUtils.checkHasNaturalAlignment(type);
         try {
             if (type instanceof ValueLayout) {
                 return ofValue((ValueLayout)type);

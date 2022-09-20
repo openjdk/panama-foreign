@@ -45,21 +45,8 @@ public enum TypeClass {
 
     private static final int MAX_AGGREGATE_REGS_SIZE = 2;
 
-    private static final Map<Class<?>, ValueLayout> STANDARD_LAYOUTS = Map.of(
-        boolean.class,       AArch64.C_BOOL,
-        byte.class,          AArch64.C_CHAR,
-        char.class,          MemoryLayout.valueLayout(char.class, ByteOrder.nativeOrder()).withBitAlignment(16),
-        short.class,         AArch64.C_SHORT,
-        int.class,           AArch64.C_INT,
-        long.class,          AArch64.C_LONG_LONG, // or C_LONG, but they are the same layout
-        float.class,         AArch64.C_FLOAT,
-        double.class,        AArch64.C_DOUBLE,
-        MemorySegment.class, AArch64.C_POINTER
-    );
-
     private static TypeClass classifyValueType(ValueLayout type) {
         Class<?> carrier = type.carrier();
-        SharedUtils.checkStandardLayout(STANDARD_LAYOUTS, type);
         if (carrier == boolean.class || carrier == byte.class || carrier == char.class ||
                 carrier == short.class || carrier == int.class || carrier == long.class) {
             return INTEGER;
@@ -118,6 +105,7 @@ public enum TypeClass {
     }
 
     public static TypeClass classifyLayout(MemoryLayout type) {
+        SharedUtils.checkHasNaturalAlignment(type);
         if (type instanceof ValueLayout) {
             return classifyValueType((ValueLayout) type);
         } else if (type instanceof GroupLayout) {

@@ -40,7 +40,9 @@ import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
+import java.lang.foreign.PaddingLayout;
 import java.lang.foreign.SegmentAllocator;
+import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.VaList;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
@@ -94,6 +96,48 @@ public final class SharedUtils {
 
     public static long alignUp(long addr, long alignment) {
         return ((addr - 1) | (alignment - 1)) + 1;
+    }
+
+    /**
+     * The alignment requirement for a given type
+     * @param isVar indicate if the type is a standalone variable. This change how
+     * array is aligned. for example.
+     */
+    public static long alignment(MemoryLayout t, boolean isVar) {
+        if (t instanceof ValueLayout) {
+            return alignmentOfScalar((ValueLayout) t);
+        } else if (t instanceof SequenceLayout) {
+            // when array is used alone
+            return alignmentOfArray((SequenceLayout) t, isVar);
+        } else if (t instanceof GroupLayout) {
+            return alignmentOfContainer((GroupLayout) t);
+        } else if (t instanceof PaddingLayout) {
+            return 1;
+        } else {
+            throw new IllegalArgumentException("Invalid type: " + t);
+        }
+    }
+
+    private static long alignmentOfScalar(ValueLayout st) {
+        return st.byteSize();
+    }
+
+    private static long alignmentOfArray(SequenceLayout ar, boolean isVar) {
+        if (ar.elementCount() == 0) {
+            // VLA or incomplete
+            return 16;
+        } else if ((ar.byteSize()) >= 16 && isVar) {
+            return 16;
+        } else {
+            // align as element type
+            MemoryLayout elementType = ar.elementLayout();
+            return alignment(elementType, false);
+        }
+    }
+
+    private static long alignmentOfContainer(GroupLayout ct) {
+        // Most strict member
+        return ct.memberLayouts().stream().mapToLong(t -> alignment(t, false)).max().orElse(1);
     }
 
     /**
@@ -323,13 +367,19 @@ public final class SharedUtils {
         return new NoSuchElementException("No such element: " + layout);
     }
 
-    public static void checkStandardLayout(Map<Class<?>, ValueLayout> standardLayouts, ValueLayout layout) {
-        ValueLayout standardLayout = standardLayouts.get(layout.carrier());
-        // We only need to check the alignment at this time
-        if (standardLayout.bitAlignment() != layout.bitAlignment()) {
-            throw new IllegalArgumentException("Layout bit alignment does not correspond to C primitive: "
-                    + layout + " != " + standardLayout.bitAlignment());
+    // Current limitation of the implementation:
+    // We don't support packed structs on some platforms,
+    // so reject them here explicitly
+    public static void checkHasNaturalAlignment(MemoryLayout layout) {
+        long naturalByteAlignmnet = naturalByteAlignment(layout);
+        if (naturalByteAlignmnet != layout.byteAlignment()) {
+            throw new IllegalArgumentException("Layout bit alignment must be natural alignment: "
+                    + layout.byteAlignment() + " != " + naturalByteAlignmnet);
         }
+    }
+
+    private static long naturalByteAlignment(MemoryLayout layout) {
+        return alignment(layout, true);
     }
 
     public static final class SimpleVaArg {
