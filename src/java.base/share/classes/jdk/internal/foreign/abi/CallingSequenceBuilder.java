@@ -42,7 +42,7 @@ import java.util.Set;
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.internal.foreign.abi.Binding.Tag.*;
 
-public final class CallingSequenceBuilder {
+public class CallingSequenceBuilder {
     private static final boolean VERIFY_BINDINGS = Boolean.parseBoolean(
             GetPropertyAction.privilegedGetProperty("java.lang.foreign.VERIFY_BINDINGS", "true"));
 

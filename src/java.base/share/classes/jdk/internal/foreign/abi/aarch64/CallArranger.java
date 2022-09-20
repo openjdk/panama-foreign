@@ -178,7 +178,7 @@ public abstract class CallArranger {
             .isPresent();
     }
 
-    final class StorageCalculator {
+    class StorageCalculator {
         private final boolean forArguments;
         private boolean forVarArgs = false;
 
@@ -309,7 +309,7 @@ public abstract class CallArranger {
         abstract List<Binding> getIndirectBindings();
     }
 
-    final class UnboxBindingCalculator extends BindingCalculator {
+    class UnboxBindingCalculator extends BindingCalculator {
         UnboxBindingCalculator(boolean forArguments) {
             super(forArguments);
         }

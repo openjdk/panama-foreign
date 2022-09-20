@@ -35,7 +35,7 @@ import java.util.List;
 /**
  * This class describes a 'native entry point', which is used as an appendix argument to linkToNative calls.
  */
-public final class NativeEntryPoint {
+public class NativeEntryPoint {
     static {
         registerNatives();
     }

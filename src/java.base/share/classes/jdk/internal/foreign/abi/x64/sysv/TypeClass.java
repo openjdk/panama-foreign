@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-final class TypeClass {
+class TypeClass {
     enum Kind {
         STRUCT,
         POINTER,

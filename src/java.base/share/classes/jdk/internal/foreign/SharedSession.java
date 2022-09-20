@@ -94,7 +94,7 @@ sealed class SharedSession extends MemorySessionImpl permits MemorySessionImpl.I
     /**
      * A shared resource list; this implementation has to handle add vs. add races, as well as add vs. cleanup races.
      */
-    static final class SharedResourceList extends ResourceList {
+    static class SharedResourceList extends ResourceList {
 
         static final VarHandle FST;
 

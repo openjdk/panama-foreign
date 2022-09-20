@@ -368,7 +368,7 @@ public abstract sealed class AbstractMemorySegmentImpl
                         this, offset, length));
     }
 
-    static final class SegmentSplitter implements Spliterator<MemorySegment> {
+    static class SegmentSplitter implements Spliterator<MemorySegment> {
         AbstractMemorySegmentImpl segment;
         long elemCount;
         final long elementSize;

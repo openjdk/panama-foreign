@@ -58,7 +58,7 @@ import static jdk.internal.foreign.abi.x64.X86_64Architecture.Regs.*;
  *
  * This includes taking care of synthetic arguments like pointers to return buffers for 'in-memory' returns.
  */
-public final class CallArranger {
+public class CallArranger {
     private static final int STACK_SLOT_SIZE = 8;
     private static final int MAX_INTEGER_ARGUMENT_REGISTERS = 6;
     private static final int MAX_VECTOR_ARGUMENT_REGISTERS = 8;
@@ -242,7 +242,7 @@ public final class CallArranger {
         abstract List<Binding> getBindings(Class<?> carrier, MemoryLayout layout);
     }
 
-    static final class UnboxBindingCalculator extends BindingCalculator {
+    static class UnboxBindingCalculator extends BindingCalculator {
 
         UnboxBindingCalculator(boolean forArguments) {
             super(forArguments);
@@ -290,7 +290,7 @@ public final class CallArranger {
         }
     }
 
-    static final class BoxBindingCalculator extends BindingCalculator {
+    static class BoxBindingCalculator extends BindingCalculator {
 
         BoxBindingCalculator(boolean forArguments) {
             super(forArguments);

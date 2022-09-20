@@ -38,7 +38,7 @@ final class SoftReferenceCache<K, V> {
                 .get(key, valueFactory); // long lock, but just for the particular key
     }
 
-    private final class Node {
+    private class Node {
         private volatile SoftReference<V> ref;
 
         public Node() {

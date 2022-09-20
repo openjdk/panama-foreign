@@ -26,7 +26,7 @@ package jdk.internal.foreign.abi;
 
 import java.util.Objects;
 
-public final class VMStorage {
+public class VMStorage {
     /**
      * Type of storage. e.g. stack, or which register type (GP, FP, vector)
      */
