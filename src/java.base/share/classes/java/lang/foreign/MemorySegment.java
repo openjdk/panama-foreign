@@ -115,9 +115,8 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * <h2 id="segment-deref">Accessing memory segments</h2>
  *
  * A memory segment can be read or written using various access operations provided in this class (e.g. {@link #get(ValueLayout.OfInt, long)}).
- * Each access operation takes a {@linkplain ValueLayout value layout}, which specifies the size,
- * alignment constraints, byte order as well as the Java type associated with the access operation, and an offset
- * (expressed in bytes).
+ * Each access operation takes a {@linkplain ValueLayout value layout}, which specifies the size and shape of the value,
+ * and an offset, expressed in bytes.
  * For instance, to read an int from a segment, using {@linkplain ByteOrder#nativeOrder() default endianness}, the following code can be used:
  * {@snippet lang=java :
  * MemorySegment segment = ...
@@ -199,19 +198,30 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  *
  * Access operations on a memory segment are constrained not only by the spatial and temporal bounds of the segment,
  * but also by the alignment constraints of the layout specified to the operation. An access operation can access only
- * those offsets in the segment that are <em>aligned</em> according to the layout.
- * <p>
- * If the segment being accessed is a native segment, then its {@linkplain #address() address} in physical memory can be
- * combined with the offset to obtain the <em>target address</em>. The following pseudo-function determines if the target
+ * those offsets in the segment that are aligned in physical memory according to the layout. It is convenient to access
+ * a given data structure under the same alignment constraint regardless of whether the data lies in a native segment or
+ * a heap segment.
+ *
+ * An access operation can access only those offsets in the segment that denote addresses in physical memory which are
+ * <em>aligned</em> according to the layout. An address in physical memory is aligned according to the layout if it is
+ * a multiple of the layout's alignment constraints. The following pseudo-function determines if a physical
  * address is aligned according to the layout:
  *
- * {@snippet lang=java :
+ * {@snippet lang = java:
  * boolean isAligned(MemorySegment segment, long offset, MemoryLayout layout) {
  *   return ((segment.address() + offset) % layout.byteAlignment()) == 0;
  * }
  * }
- *
- * For example:
+ * <p>
+ * Alignment can impact the performance of access operations, and, when using {@link java.lang.invoke.VarHandle} (see below),
+ * can also determine <em>which</em> access operations are available at a given physical address.
+ * For instance, {@linkplain java.lang.invoke.VarHandle#compareAndSet(Object...) atomic access operations}
+ * are only permitted at physical addresses that are aligned according to the layout. As such, it is crucial
+ * that alignment of access operations is well-defined and predictable, regardless of whether the accessed segment
+ * is a heap segment or a native segment (PROBABLY NEEDS TO BE REPHRASED).
+ * <p>
+ * If the segment being accessed is a native segment, then its {@linkplain #address() address} in physical memory can be
+ * combined with the offset to obtain the <em>target address</em> in physical memory. For example:
  * <ul>
  * <li>A native segment at address 1000 can be accessed at offsets 0, 8, 16, 24, etc under an 8-byte alignment constraint,
  * because the target addresses (1000, 1008, 1016, 1024) are 8-byte aligned.
@@ -228,33 +238,50 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * <li>A native segment at address 1006 can be accessed at offsets 0, 2, 4, 6, etc under a 2-byte alignment constraint.
  * Under a 4-byte alignment constraint, it can be accessed at offsets 2, 6, 10, 14, etc.
  * Under an 8-byte alignment constraint, it can be accessed at offsets 2, 10, 18, 26, etc.
+ * <li>A native segment at address 1007 can be accessed at offsets 0, 1, 2, 3, etc under a 1-byte alignment constraint.
+ * Under a 2-byte alignment constraint, it can be accessed at offsets 1, 3, 5, 7, etc.
+ * Under a 4-byte alignment constraint, it can be accessed at offsets 1, 5, 9, 13, etc.
+ * Under an 8-byte alignment constraint, it can be accessed at offsets 1, 9, 17, 25, etc.</li>
  * </ul>
- * Under a 1-byte alignment constraint, any target address in a native segment can be accessed.
- * In effect, every target address is at least 1-byte aligned.
+ * <!-- Under a 1-byte alignment constraint, any offset address in a native segment can be accessed. -->
+ * <!-- In effect, every target address is at least 1-byte aligned. -->
+ * <p>
+ * Usually, it is not necessary to stress about aligned access to a native segment, because {@link MemorySegment#allocateNative(long)}
+ * sets you up for success.
  * <p>
  * If the segment being accessed is a heap segment, then determining whether access is aligned is more complex.
- * The region of memory which backs a heap segment is managed by the Java runtime in a non-transparent manner:
- * neither the physical address of the region is exposed, nor the relocation (during garbage collection) of the
- * heap segment from one region to another. This means that, in principle, address 0 in the heap segment
- * (the start of the segment) could correspond to a physical address such as 1000
- * (which is 8-byte, 4-byte, and 2-byte aligned), or 1004 (which is 4-byte and 2-byte aligned), or 1006
- * (which is only 2-byte aligned), or even 1007 (unaligned). Since the alignment of address 0 is unknown,
- * the alignment of any offset in the heap segment is also unknown.
+ * The address of the segment in physical memory is not known, and is not even fixed (it may change when the segment
+ * is relocated during garbage collection). This means that the address cannot be combined with the specified offset to
+ * determine a target address in physical memory. Since alignment constraints <em>always</em> refer to alignment of
+ * addresses in physical memory, it is not possible in principle to determine if any offset in a heap segment is aligned.
+ * For example, suppose the programmer chooses a 8-byte alignment constraint and tries
+ * to access offset 16 in a heap segment. If the heap segment's address 0 corresponds to physical address 1000,
+ * then the target address (1016) would be aligned, but if address 0 corresponds to physical address 1004,
+ * then the target address (1020) would not be aligned. It is undesirable to allow access to target addresses that are
+ * aligned according to the programmer's chosen alignment constraint, but might not be predictably aligned in physical memory
+ * (e.g. because of platform considerations and/or garbage collection behavior).
  * <p>
- * In practice, the Java runtime ensures that
- * Java arrays are laid out in such a way that their elements are stored at appropriately aligned physical addresses.
- * For example, the starting address of a {@code long[]} array will be 8-byte aligned (e.g. 1000), not 4-byte aligned
- * (e.g. 1004) or 2-byte aligned (e.g. 1006), so that successive elements occur at 8-byte aligned addresses
- * (1008, 1016, 1024, etc).
+ * In practice, the Java runtime lays out arrays in memory so that each n-byte element occurs at an n-byte
+ * aligned physical address. The runtime preserves this invariant even if the array is relocated during garbage
+ * collection. Access operations rely on this invariant to determine if the specified offset in a heap segment refers
+ * to an aligned address in physical memory. For example:
+ * <ul>
+ * <li>The starting physical address of a {@code long[]} array will be 8-byte aligned (e.g. 1000), so that successive long elements
+ * occur at 8-byte aligned addresses (e.g., 1000, 1008, 1016, 1024, etc.) A heap segment backed by a {@code long[]} array
+ * can be accessed at offsets 0, 8, 16, 24, etc under an 8-byte alignment constraint. In addition, the segment can be
+ * accessed at offsets 0, 4, 8, 12, etc under a 4-byte alignment constraint, because the target addresses
+ * (1000, 1004, 1008, 1012) are 4-byte aligned. And, the segment can be accessed at offsets 0, 2, 4, 6, etc under a
+ * 2-byte alignment constraint, because the target addresses (e.g. 1000, 1002, 1004, 1006) are 2-byte aligned.</li>
+ * <li>The starting physical address of a {@code short[]} array will be 2-byte aligned (e.g. 1006) so that successive
+ * short elements occur at 2-byte aligned addresses (e.g. 1006, 1008, 1010, 1012, etc). A heap segment backed by a
+ * {@code short[]} array can be accessed at offsets 0, 2, 4, 6, etc under a 2-byte alignment constraint. The segment cannot
+ * be accessed at <em>any</em> offset under a 4-byte alignment constraint, because there is no guarantee that the target
+ * address would be 4-byte aligned, e.g., offset 0 would correspond to physical address 1006 while offset 1 would correspond
+ * to physical address 1007. Similarly, the segment cannot be accessed at any offset under an 8-byte alignment constraint,
+ * because because there is no guarantee that the target address would be 8-byte aligned, e.g., offset 2 would correspond
+ * to physical address 1008 but offset 4 would correspond to physical address 1010.</li>
+ * </ul>
  * <p>
- * Using an alignment constraint that is smaller than the alignment of the heap segment results in unaligned access,
- * which may be slow.
- * <p>
- * In contrast, the starting address of a short[] array will be 2-byte aligned (e.g. 1002), so that successive elements
- * occur at 2-byte aligned addresses (1004, 1006, 1008, etc). A heap segment backed by such an array can be accessed at
- * offsets 0, 2, 4, 6, etc under a 2-byte alignment constraint; it cannot be accessed under a 4-byte alignment constraint
- * or 8-byte alignment constraint, as there is no guarantee that 4-byte aligned addressed (1004, 1008, etc.) or 8-byte
- * aligned addresses would correspond to 4-byte or 8-byte aligned physical addresses.
  * In other words, heap segments feature a <em>maximum</em> alignment which is derived from the size of the elements of
  * the Java array backing the segment, as shown in the following table:
  *
