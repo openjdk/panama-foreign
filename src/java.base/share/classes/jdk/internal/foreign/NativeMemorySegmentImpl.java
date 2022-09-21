@@ -42,7 +42,20 @@ import sun.security.action.GetBooleanAction;
  */
 public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl permits MappedMemorySegmentImpl {
 
-    private static final Unsafe unsafe = Unsafe.getUnsafe();
+    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
+
+    // The maximum alignment supported by malloc - typically 16 on
+    // 64-bit platforms and 8 on 32-bit platforms.
+    private static final long MAX_MALLOC_ALIGN = Unsafe.ADDRESS_SIZE == 4 ? 8 : 16;
+    private static final boolean SKIP_ZERO_MEMORY = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.skipZeroMemory");
+
+    final long min;
+
+    @ForceInline
+    NativeMemorySegmentImpl(long min, long length, boolean readOnly, MemorySession session) {
+        super(length, readOnly, session);
+        this.min = min;
+    }
 
     @Override
     public long address() {
@@ -54,20 +67,6 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
         return Optional.empty();
     }
 
-    // The maximum alignment supported by malloc - typically 16 on
-    // 64-bit platforms and 8 on 32-bit platforms.
-    private static final long MAX_MALLOC_ALIGN = Unsafe.ADDRESS_SIZE == 4 ? 8 : 16;
-
-    private static final boolean SKIP_ZERO_MEMORY = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.skipZeroMemory");
-
-    final long min;
-
-    @ForceInline
-    NativeMemorySegmentImpl(long min, long length, boolean readOnly, MemorySession session) {
-        super(length, readOnly, session);
-        this.min = min;
-    }
-
     @ForceInline
     @Override
     NativeMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySession session) {
@@ -76,7 +75,7 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
 
     @Override
     ByteBuffer makeByteBuffer() {
-        return nioAccess.newDirectByteBuffer(min, (int) this.length, null,
+        return NIO_ACCESS.newDirectByteBuffer(min, (int) this.length, null,
                 session == MemorySessionImpl.GLOBAL ? null : this);
     }
 
@@ -106,16 +105,17 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
         MemorySessionImpl sessionImpl = MemorySessionImpl.toSessionImpl(session);
         sessionImpl.checkValidState();
         if (VM.isDirectMemoryPageAligned()) {
-            byteAlignment = Math.max(byteAlignment, nioAccess.pageSize());
+            byteAlignment = Math.max(byteAlignment, NIO_ACCESS.pageSize());
         }
         long alignedSize = Math.max(1L, byteAlignment > MAX_MALLOC_ALIGN ?
                 byteSize + (byteAlignment - 1) :
                 byteSize);
 
-        nioAccess.reserveMemory(alignedSize, byteSize);
-        long buf = unsafe.allocateMemory(alignedSize);
+        NIO_ACCESS.reserveMemory(alignedSize, byteSize);
+
+        long buf = UNSAFE.allocateMemory(alignedSize);
         if (!SKIP_ZERO_MEMORY) {
-            unsafe.setMemory(buf, alignedSize, (byte)0);
+            UNSAFE.setMemory(buf, alignedSize, (byte)0);
         }
         long alignedBuf = Utils.alignUp(buf, byteAlignment);
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(buf, alignedSize,
@@ -123,8 +123,8 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
         sessionImpl.addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
             @Override
             public void cleanup() {
-                unsafe.freeMemory(buf);
-                nioAccess.unreserveMemory(alignedSize, byteSize);
+                UNSAFE.freeMemory(buf);
+                NIO_ACCESS.unreserveMemory(alignedSize, byteSize);
             }
         });
         if (alignedSize != byteSize) {
