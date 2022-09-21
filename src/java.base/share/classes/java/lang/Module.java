@@ -271,34 +271,35 @@ public final class Module implements AnnotatedElement {
      */
     @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
     public boolean isNativeAccessEnabled() {
-        Module target = enableNativeAccessHolder();
+        Module target = moduleForNativeAccess();
         synchronized(target) {
             return target.enableNativeAccess;
         }
     }
 
-    // Returns the Module object holds the enableNativeAccess
+    // Returns the Module object that holds the enableNativeAccess
     // flag for this module.
-    private Module enableNativeAccessHolder() {
+    private Module moduleForNativeAccess() {
         return isNamed() ? this : ALL_UNNAMED_MODULE;
     }
 
     // This is invoked from Reflection.ensureNativeAccess
     void ensureNativeAccess(Class<?> owner, String methodName) {
         // The target module whose enableNativeAccess flag is ensured
-        Module target = enableNativeAccessHolder();
+        Module target = moduleForNativeAccess();
         // racy read of the enable native access flag
         boolean isNativeAccessEnabled = target.enableNativeAccess;
         if (!isNativeAccessEnabled) {
-            synchronized(target) {
+            synchronized (target) {
                 // safe read of the enableNativeAccess of the target module
                 isNativeAccessEnabled = target.enableNativeAccess;
+
                 // check again with the safely read flag
                 if (isNativeAccessEnabled) {
-                   // another thread beat us to it - nothing to do
-                   return;
+                    // another thread beat us to it - nothing to do
+                    return;
                 } else if (ModuleBootstrap.hasEnableNativeAccessFlag()) {
-                   throw new IllegalCallerException("Illegal native access from: " + this);
+                    throw new IllegalCallerException("Illegal native access from: " + this);
                 } else {
                     // warn and set flag, so that only one warning is reported per module
                     String cls = owner.getName();
@@ -322,7 +323,7 @@ public final class Module implements AnnotatedElement {
     /**
      * Update all unnamed modules to allow access to restricted methods.
      */
-    static void implAddEnableNativeAccessAllUnnamed() {
+    static void implAddEnableNativeAccessToAllUnnamed() {
         synchronized (ALL_UNNAMED_MODULE) {
             ALL_UNNAMED_MODULE.enableNativeAccess = true;
         }

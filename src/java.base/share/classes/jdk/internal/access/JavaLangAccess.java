@@ -270,7 +270,7 @@ public interface JavaLangAccess {
     /**
      * Updates all unnamed modules to allow access to restricted methods.
      */
-    void addEnableNativeAccessAllUnnamed();
+    void addEnableNativeAccessToAllUnnamed();
 
     /**
      * Ensure that the given module has native access. If not, warn or
