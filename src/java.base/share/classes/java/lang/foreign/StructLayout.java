@@ -43,5 +43,5 @@ public sealed interface StructLayout extends GroupLayout permits StructLayoutImp
     StructLayout withName(String name);
 
     @Override
-    StructLayout withBitAlignment(long alignmentBits);
+    StructLayout withBitAlignment(long bitAlignment);
 }

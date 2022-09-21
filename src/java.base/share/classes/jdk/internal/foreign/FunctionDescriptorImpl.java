@@ -24,9 +24,18 @@
  */
 package jdk.internal.foreign;
 
-import java.lang.foreign.*;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.GroupLayout;
+import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodType;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;

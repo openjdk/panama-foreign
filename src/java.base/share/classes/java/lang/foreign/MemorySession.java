@@ -221,8 +221,8 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
      * <p>
      * The off-heap memory associated with the returned native memory segment is initialized to zero.
      *
-     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
-     * @param bytesAlignment the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param byteSize the size (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param byteAlignment the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
      * @return a new native memory segment.
      * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
      * is not a power of 2.
@@ -232,9 +232,9 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
      * @see MemorySegment#allocateNative(long, long)
      */
     @Override
-    default MemorySegment allocate(long bytesSize, long bytesAlignment) {
-        Utils.checkAllocationSizeAndAlign(bytesSize, bytesAlignment);
-        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, bytesAlignment, this);
+    default MemorySegment allocate(long byteSize, long byteAlignment) {
+        Utils.checkAllocationSizeAndAlign(byteSize, byteAlignment);
+        return NativeMemorySegmentImpl.makeNativeSegment(byteSize, byteAlignment, this);
     }
 
     /**

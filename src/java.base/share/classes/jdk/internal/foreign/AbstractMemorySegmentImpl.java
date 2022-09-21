@@ -142,9 +142,9 @@ public abstract sealed class AbstractMemorySegmentImpl
     }
 
     @Override
-    public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-        Utils.checkAllocationSizeAndAlign(bytesSize, bytesAlignment);
-        return asSlice(0, bytesSize);
+    public MemorySegment allocate(long byteSize, long byteAlignment) {
+        Utils.checkAllocationSizeAndAlign(byteSize, byteAlignment);
+        return asSlice(0, byteSize);
     }
 
     @Override

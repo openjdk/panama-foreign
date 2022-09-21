@@ -101,35 +101,35 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
 
     // factories
 
-    public static MemorySegment makeNativeSegment(long bytesSize, long alignmentBytes, MemorySession session) {
+    public static MemorySegment makeNativeSegment(long byteSize, long byteAlignment, MemorySession session) {
         MemorySessionImpl sessionImpl = MemorySessionImpl.toSessionImpl(session);
         sessionImpl.checkValidState();
         if (VM.isDirectMemoryPageAligned()) {
-            alignmentBytes = Math.max(alignmentBytes, NIO_ACCESS.pageSize());
+            byteAlignment = Math.max(byteAlignment, NIO_ACCESS.pageSize());
         }
-        long alignedSize = Math.max(1L, alignmentBytes > MAX_MALLOC_ALIGN ?
-                bytesSize + (alignmentBytes - 1) :
-                bytesSize);
+        long alignedSize = Math.max(1L, byteAlignment > MAX_MALLOC_ALIGN ?
+                byteSize + (byteAlignment - 1) :
+                byteSize);
 
-        NIO_ACCESS.reserveMemory(alignedSize, bytesSize);
+        NIO_ACCESS.reserveMemory(alignedSize, byteSize);
 
         long buf = UNSAFE.allocateMemory(alignedSize);
         if (!SKIP_ZERO_MEMORY) {
             UNSAFE.setMemory(buf, alignedSize, (byte)0);
         }
-        long alignedBuf = Utils.alignUp(buf, alignmentBytes);
+        long alignedBuf = Utils.alignUp(buf, byteAlignment);
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(buf, alignedSize,
                 false, session);
         sessionImpl.addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
             @Override
             public void cleanup() {
                 UNSAFE.freeMemory(buf);
-                NIO_ACCESS.unreserveMemory(alignedSize, bytesSize);
+                NIO_ACCESS.unreserveMemory(alignedSize, byteSize);
             }
         });
-        if (alignedSize != bytesSize) {
+        if (alignedSize != byteSize) {
             long delta = alignedBuf - buf;
-            segment = segment.asSlice(delta, bytesSize);
+            segment = segment.asSlice(delta, byteSize);
         }
         return segment;
     }
@@ -138,14 +138,14 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
     // associated with MemorySegment::ofAddress.
 
     @ForceInline
-    public static MemorySegment makeNativeSegmentUnchecked(long min, long bytesSize, MemorySession session) {
+    public static MemorySegment makeNativeSegmentUnchecked(long min, long byteSize, MemorySession session) {
         MemorySessionImpl sessionImpl = MemorySessionImpl.toSessionImpl(session);
         sessionImpl.checkValidState();
-        return new NativeMemorySegmentImpl(min, bytesSize, false, session);
+        return new NativeMemorySegmentImpl(min, byteSize, false, session);
     }
 
     @ForceInline
-    public static MemorySegment makeNativeSegmentUnchecked(long min, long bytesSize) {
-        return new NativeMemorySegmentImpl(min, bytesSize, false, MemorySession.global());
+    public static MemorySegment makeNativeSegmentUnchecked(long min, long byteSize) {
+        return new NativeMemorySegmentImpl(min, byteSize, false, MemorySession.global());
     }
 }
