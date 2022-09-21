@@ -60,7 +60,7 @@ public class CallingSequenceBuilder {
         this.forUpcall = forUpcall;
     }
 
-    public CallingSequenceBuilder addArgumentBindings(Class<?> carrier, MemoryLayout layout,
+    public final CallingSequenceBuilder addArgumentBindings(Class<?> carrier, MemoryLayout layout,
                                                             List<Binding> bindings) {
         addArgumentBinding(inputBindings.size(), carrier, layout, bindings);
         return this;
