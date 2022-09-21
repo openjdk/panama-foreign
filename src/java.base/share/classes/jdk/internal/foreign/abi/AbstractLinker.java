@@ -98,10 +98,10 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
         checkHasNaturalAlignment(layout);
         if (layout instanceof GroupLayout gl) {
             for (MemoryLayout member : gl.memberLayouts()) {
-                checkHasNaturalAlignment(member);
+                checkHasNaturalAlignmentRecursive(member);
             }
         } else if (layout instanceof SequenceLayout sl) {
-            checkHasNaturalAlignment(sl.elementLayout());
+            checkHasNaturalAlignmentRecursive(sl.elementLayout());
         }
     }
 

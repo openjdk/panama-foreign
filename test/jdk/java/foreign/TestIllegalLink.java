@@ -96,6 +96,22 @@ public class TestIllegalLink extends NativeTestHelper {
                             ).withBitAlignment(8)),
                     "Layout bit alignment must be natural alignment"
             },
+            {
+                    FunctionDescriptor.ofVoid(MemoryLayout.structLayout(
+                            MemoryLayout.structLayout(
+                                C_CHAR.withName("x").withBitAlignment(8),
+                                C_SHORT.withName("y").withBitAlignment(8),
+                                C_INT.withName("z").withBitAlignment(8)
+                            ))),
+                    "Layout bit alignment must be natural alignment"
+            },
+            {
+                    FunctionDescriptor.ofVoid(MemoryLayout.structLayout(
+                            MemoryLayout.sequenceLayout(
+                                C_INT.withBitAlignment(8)
+                            ))),
+                    "Layout bit alignment must be natural alignment"
+            },
         };
     }
 
