@@ -108,8 +108,8 @@ class TypeClass {
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    private static ArgumentClassImpl argumentClassFor(MemoryLayout layout) {
-        Class<?> carrier = ((ValueLayout)layout).carrier();
+    private static ArgumentClassImpl argumentClassFor(ValueLayout layout) {
+        Class<?> carrier = layout.carrier();
         if (carrier == boolean.class || carrier == byte.class || carrier == char.class ||
                 carrier == short.class || carrier == int.class || carrier == long.class) {
             return ArgumentClassImpl.INTEGER;
@@ -218,15 +218,15 @@ class TypeClass {
                 groupByEightBytes(elem, offset, groups);
                 offset += elem.byteSize();
             }
-        } else if (l instanceof ValueLayout) {
+        } else if (l instanceof ValueLayout vl) {
             List<ArgumentClassImpl> layouts = groups[(int)offset / 8];
             if (layouts == null) {
                 layouts = new ArrayList<>();
                 groups[(int)offset / 8] = layouts;
             }
             // if the aggregate contains unaligned fields, it has class MEMORY
-            ArgumentClassImpl argumentClass = (offset % l.byteAlignment()) == 0 ?
-                    argumentClassFor(l) :
+            ArgumentClassImpl argumentClass = (offset % vl.byteAlignment()) == 0 ?
+                    argumentClassFor(vl) :
                     ArgumentClassImpl.MEMORY;
             layouts.add(argumentClass);
         } else {

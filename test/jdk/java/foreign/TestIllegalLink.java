@@ -33,6 +33,8 @@ import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemoryLayout;
+import java.nio.ByteOrder;
+
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -50,7 +52,8 @@ public class TestIllegalLink extends NativeTestHelper {
             ABI.downcallHandle(DUMMY_TARGET, desc);
             fail("Expected IllegalArgumentException was not thrown");
         } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage().contains(expectedExceptionMessage));
+            assertTrue(e.getMessage().contains(expectedExceptionMessage),
+                    e.getMessage() + " != " + expectedExceptionMessage);
         }
     }
 
@@ -72,6 +75,42 @@ public class TestIllegalLink extends NativeTestHelper {
             {
                     FunctionDescriptor.ofVoid(MemoryLayout.sequenceLayout(2, C_INT)),
                     "Unsupported layout: [2:i32]"
+            },
+            {
+                    FunctionDescriptor.ofVoid(C_INT.withBitAlignment(16)),
+                    "Layout bit alignment must be natural alignment"
+            },
+            {
+                    FunctionDescriptor.ofVoid(C_POINTER.withBitAlignment(16)),
+                    "Layout bit alignment must be natural alignment"
+            },
+            {
+                    FunctionDescriptor.ofVoid(MemoryLayout.valueLayout(char.class, ByteOrder.nativeOrder()).withBitAlignment(32)),
+                    "Layout bit alignment must be natural alignment"
+            },
+            {
+                    FunctionDescriptor.ofVoid(MemoryLayout.structLayout(
+                            C_CHAR.withName("x").withBitAlignment(8),
+                            C_SHORT.withName("y").withBitAlignment(8),
+                            C_INT.withName("z").withBitAlignment(8)
+                            ).withBitAlignment(8)),
+                    "Layout bit alignment must be natural alignment"
+            },
+            {
+                    FunctionDescriptor.ofVoid(MemoryLayout.structLayout(
+                            MemoryLayout.structLayout(
+                                C_CHAR.withName("x").withBitAlignment(8),
+                                C_SHORT.withName("y").withBitAlignment(8),
+                                C_INT.withName("z").withBitAlignment(8)
+                            ))),
+                    "Layout bit alignment must be natural alignment"
+            },
+            {
+                    FunctionDescriptor.ofVoid(MemoryLayout.structLayout(
+                            MemoryLayout.sequenceLayout(
+                                C_INT.withBitAlignment(8)
+                            ))),
+                    "Layout bit alignment must be natural alignment"
             },
         };
     }

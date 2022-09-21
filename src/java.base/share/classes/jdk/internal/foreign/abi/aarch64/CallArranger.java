@@ -215,7 +215,7 @@ public abstract class CallArranger {
         }
 
         VMStorage stackAlloc(MemoryLayout layout) {
-            return stackAlloc(layout.byteSize(), SharedUtils.alignment(layout, true));
+            return stackAlloc(layout.byteSize(), layout.byteAlignment());
         }
 
         VMStorage[] regAlloc(int type, int count) {

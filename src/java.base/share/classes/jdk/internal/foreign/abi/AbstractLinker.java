@@ -29,11 +29,17 @@ import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
+import jdk.internal.foreign.layout.AbstractLayout;
 
+import java.lang.foreign.GroupLayout;
+import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.PaddingLayout;
+import java.lang.foreign.SequenceLayout;
+import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.Objects;
@@ -46,6 +52,7 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
     @Override
     public MethodHandle downcallHandle(FunctionDescriptor function) {
         Objects.requireNonNull(function);
+        checkHasNaturalAlignment(function);
 
         return DOWNCALL_CACHE.get(function, fd -> {
             MethodType type = fd.toMethodType();
@@ -61,6 +68,7 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
         Objects.requireNonNull(scope);
         Objects.requireNonNull(target);
         Objects.requireNonNull(function);
+        checkHasNaturalAlignment(function);
         SharedUtils.checkExceptions(target);
 
         MethodType type = function.toMethodType();
@@ -76,5 +84,30 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
     @Override
     public SystemLookup defaultLookup() {
         return SystemLookup.getInstance();
+    }
+
+    // Current limitation of the implementation:
+    // We don't support packed structs on some platforms,
+    // so reject them here explicitly
+    private static void checkHasNaturalAlignment(FunctionDescriptor descriptor) {
+        descriptor.returnLayout().ifPresent(AbstractLinker::checkHasNaturalAlignmentRecursive);
+        descriptor.argumentLayouts().forEach(AbstractLinker::checkHasNaturalAlignmentRecursive);
+    }
+
+    private static void checkHasNaturalAlignmentRecursive(MemoryLayout layout) {
+        checkHasNaturalAlignment(layout);
+        if (layout instanceof GroupLayout gl) {
+            for (MemoryLayout member : gl.memberLayouts()) {
+                checkHasNaturalAlignmentRecursive(member);
+            }
+        } else if (layout instanceof SequenceLayout sl) {
+            checkHasNaturalAlignmentRecursive(sl.elementLayout());
+        }
+    }
+
+    private static void checkHasNaturalAlignment(MemoryLayout layout) {
+        if (!((AbstractLayout<?>) layout).hasNaturalAlignment()) {
+            throw new IllegalArgumentException("Layout bit alignment must be natural alignment: " + layout);
+        }
     }
 }
