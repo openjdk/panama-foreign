@@ -43,7 +43,7 @@ import static java.lang.invoke.MethodHandles.lookup;
 import static java.lang.invoke.MethodType.methodType;
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
-public final class UpcallLinker {
+public class UpcallLinker {
     private static final boolean DEBUG =
         privilegedGetProperty("jdk.internal.foreign.UpcallLinker.DEBUG");
     private static final boolean USE_SPEC = Boolean.parseBoolean(
@@ -199,7 +199,7 @@ public final class UpcallLinker {
     }
 
     // used for transporting data into native code
-    private static record CallRegs(VMStorage[] argRegs, VMStorage[] retRegs) {}
+    private record CallRegs(VMStorage[] argRegs, VMStorage[] retRegs) {}
 
     static native long makeUpcallStub(MethodHandle mh, ABIDescriptor abi, CallRegs conv,
                                       boolean needsReturnBuffer, long returnBufferSize);

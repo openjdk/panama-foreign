@@ -240,25 +240,25 @@ public abstract sealed class AbstractMemorySegmentImpl
 
     @Override
     public void load() {
-        throw newUnsupportedOperationExceptionNotAMappedSegment();
+        throw notAMappedSegment();
     }
 
     @Override
     public void unload() {
-        throw newUnsupportedOperationExceptionNotAMappedSegment();
+        throw notAMappedSegment();
     }
 
     @Override
     public boolean isLoaded() {
-        throw newUnsupportedOperationExceptionNotAMappedSegment();
+        throw notAMappedSegment();
     }
 
     @Override
     public void force() {
-        throw newUnsupportedOperationExceptionNotAMappedSegment();
+        throw notAMappedSegment();
     }
 
-    private static UnsupportedOperationException newUnsupportedOperationExceptionNotAMappedSegment() {
+    private static UnsupportedOperationException notAMappedSegment() {
         throw new UnsupportedOperationException("Not a mapped segment");
     }
 
