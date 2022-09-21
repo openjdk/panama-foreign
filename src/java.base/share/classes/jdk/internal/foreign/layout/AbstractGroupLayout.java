@@ -84,20 +84,6 @@ public sealed abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L
     }
 
     /**
-     * {@return {@code true}, if this group layout is a struct layout}
-     */
-    public final boolean isStruct() {
-        return kind == Kind.STRUCT;
-    }
-
-    /**
-     * {@return {@code true}, if this group layout is a union layout}
-     */
-    public final boolean isUnion() {
-        return kind == Kind.UNION;
-    }
-
-    /**
      * {@inheritDoc}
      */
     @Override

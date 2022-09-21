@@ -55,17 +55,22 @@ import sun.nio.ch.DirectBuffer;
 public abstract sealed class MemorySessionImpl
         implements MemorySession, SegmentAllocator
         permits ConfinedSession, MemorySessionImpl.GlobalSessionImpl, SharedSession {
-    final ResourceList resourceList;
-    final Cleaner.Cleanable cleanable;
-    final Thread owner;
-
     static final int OPEN = 0;
     static final int CLOSING = -1;
     static final int CLOSED = -2;
 
-    int state = OPEN;
-
     static final VarHandle STATE;
+    static final int MAX_FORKS = Integer.MAX_VALUE;
+
+    public static final MemorySessionImpl GLOBAL = new GlobalSessionImpl(null);
+
+    static final ScopedMemoryAccess.ScopedAccessError ALREADY_CLOSED = new ScopedMemoryAccess.ScopedAccessError(MemorySessionImpl::alreadyClosed);
+    static final ScopedMemoryAccess.ScopedAccessError WRONG_THREAD = new ScopedMemoryAccess.ScopedAccessError(MemorySessionImpl::wrongThread);
+
+    final ResourceList resourceList;
+    final Cleaner.Cleanable cleanable;
+    final Thread owner;
+    int state = OPEN;
 
     static {
         try {
@@ -74,8 +79,6 @@ public abstract sealed class MemorySessionImpl
             throw new ExceptionInInitializerError(ex);
         }
     }
-
-    static final int MAX_FORKS = Integer.MAX_VALUE;
 
     @Override
     public void addCloseAction(Runnable runnable) {
@@ -133,9 +136,9 @@ public abstract sealed class MemorySessionImpl
     }
 
     @Override
-    public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-        Utils.checkAllocationSizeAndAlign(bytesSize, bytesAlignment);
-        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, bytesAlignment, this);
+    public MemorySegment allocate(long byteSize, long byteAlignment) {
+        Utils.checkAllocationSizeAndAlign(byteSize, byteAlignment);
+        return NativeMemorySegmentImpl.makeNativeSegment(byteSize, byteAlignment, this);
     }
 
     public abstract void release0();
@@ -295,8 +298,6 @@ public abstract sealed class MemorySessionImpl
             throw nonCloseable();
         }
     }
-
-    public static final MemorySessionImpl GLOBAL = new GlobalSessionImpl(null);
 
     public static MemorySessionImpl heapSession(Object ref) {
         return new GlobalSessionImpl(ref);
@@ -467,7 +468,4 @@ public abstract sealed class MemorySessionImpl
         return new UnsupportedOperationException("Attempted to close a non-closeable session");
     }
 
-    static final ScopedMemoryAccess.ScopedAccessError ALREADY_CLOSED = new ScopedMemoryAccess.ScopedAccessError(MemorySessionImpl::alreadyClosed);
-
-    static final ScopedMemoryAccess.ScopedAccessError WRONG_THREAD = new ScopedMemoryAccess.ScopedAccessError(MemorySessionImpl::wrongThread);
 }

@@ -27,7 +27,6 @@ package jdk.internal.foreign.abi.x64;
 import jdk.internal.foreign.abi.ABIDescriptor;
 import jdk.internal.foreign.abi.Architecture;
 import jdk.internal.foreign.abi.VMStorage;
-import jdk.internal.foreign.abi.aarch64.AArch64Architecture;
 
 import java.util.stream.IntStream;
 
@@ -153,7 +152,9 @@ public class X86_64Architecture implements Architecture {
             new VMStorage[][] {
                 outputIntRegs,
                 outputVectorRegs,
-                IntStream.range(0, numX87Outputs).mapToObj(X86_64Architecture::x87Storage).toArray(VMStorage[]::new)
+                IntStream.range(0, numX87Outputs)
+                        .mapToObj(X86_64Architecture::x87Storage)
+                        .toArray(VMStorage[]::new)
             },
             new VMStorage[][] {
                 volatileIntRegs,

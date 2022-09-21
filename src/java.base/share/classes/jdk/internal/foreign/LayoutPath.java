@@ -51,6 +51,9 @@ import java.util.function.UnaryOperator;
  */
 public class LayoutPath {
 
+    private static final long[] EMPTY_STRIDES = new long[0];
+    private static final long[] EMPTY_BOUNDS = new long[0];
+
     private static final MethodHandle MH_ADD_SCALED_OFFSET;
     private static final MethodHandle MH_SLICE;
 
@@ -257,9 +260,6 @@ public class LayoutPath {
         newBounds[bounds.length] = maxIndex;
         return newBounds;
     }
-
-    private static final long[] EMPTY_STRIDES = new long[0];
-    private static final long[] EMPTY_BOUNDS = new long[0];
 
     /**
      * This class provides an immutable implementation for the {@code PathElement} interface. A path element implementation

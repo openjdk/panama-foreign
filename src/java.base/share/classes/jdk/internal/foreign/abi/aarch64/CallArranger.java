@@ -428,11 +428,11 @@ public abstract class CallArranger {
             TypeClass argumentClass = TypeClass.classifyLayout(layout);
             Binding.Builder bindings = Binding.builder();
             switch (argumentClass) {
-                case STRUCT_REGISTER: {
+                case STRUCT_REGISTER -> {
                     assert carrier == MemorySegment.class;
                     bindings.allocate(layout);
                     VMStorage[] regs = storageCalculator.regAlloc(
-                        StorageClasses.INTEGER, layout);
+                            StorageClasses.INTEGER, layout);
                     if (regs != null) {
                         int regIndex = 0;
                         long offset = 0;
@@ -449,22 +449,20 @@ public abstract class CallArranger {
                     } else {
                         spillStructBox(bindings, layout);
                     }
-                    break;
                 }
-                case STRUCT_REFERENCE: {
+                case STRUCT_REFERENCE -> {
                     assert carrier == MemorySegment.class;
                     VMStorage storage = storageCalculator.nextStorage(
-                        StorageClasses.INTEGER, AArch64.C_POINTER);
+                            StorageClasses.INTEGER, AArch64.C_POINTER);
                     bindings.vmLoad(storage, long.class)
                             .boxAddress(layout);
-                    break;
                 }
-                case STRUCT_HFA: {
+                case STRUCT_HFA -> {
                     assert carrier == MemorySegment.class;
                     bindings.allocate(layout);
-                    GroupLayout group = (GroupLayout)layout;
+                    GroupLayout group = (GroupLayout) layout;
                     VMStorage[] regs = storageCalculator.regAlloc(
-                        StorageClasses.VECTOR, group.memberLayouts().size());
+                            StorageClasses.VECTOR, group.memberLayouts().size());
                     if (regs != null) {
                         long offset = 0;
                         for (int i = 0; i < group.memberLayouts().size(); i++) {
@@ -480,29 +478,24 @@ public abstract class CallArranger {
                     } else {
                         spillStructBox(bindings, layout);
                     }
-                    break;
                 }
-                case POINTER: {
+                case POINTER -> {
                     VMStorage storage =
-                        storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
+                            storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
                     bindings.vmLoad(storage, long.class)
                             .boxAddressRaw(Utils.pointeeSize(layout));
-                    break;
                 }
-                case INTEGER: {
+                case INTEGER -> {
                     VMStorage storage =
-                        storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
+                            storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
                     bindings.vmLoad(storage, carrier);
-                    break;
                 }
-                case FLOAT: {
+                case FLOAT -> {
                     VMStorage storage =
-                        storageCalculator.nextStorage(StorageClasses.VECTOR, layout);
+                            storageCalculator.nextStorage(StorageClasses.VECTOR, layout);
                     bindings.vmLoad(storage, carrier);
-                    break;
                 }
-                default:
-                    throw new UnsupportedOperationException("Unhandled class " + argumentClass);
+                default -> throw new UnsupportedOperationException("Unhandled class " + argumentClass);
             }
             return bindings.build();
         }

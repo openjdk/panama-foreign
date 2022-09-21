@@ -69,7 +69,7 @@ public abstract sealed class AbstractMemorySegmentImpl
 
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-    static final JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
+    static final JavaNioAccess NIO_ACCESS = SharedSecrets.getJavaNioAccess();
 
     final long length;
     final boolean readOnly;
@@ -142,9 +142,9 @@ public abstract sealed class AbstractMemorySegmentImpl
     }
 
     @Override
-    public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-        Utils.checkAllocationSizeAndAlign(bytesSize, bytesAlignment);
-        return asSlice(0, bytesSize);
+    public MemorySegment allocate(long byteSize, long byteAlignment) {
+        Utils.checkAllocationSizeAndAlign(byteSize, byteAlignment);
+        return asSlice(0, byteSize);
     }
 
     @Override
@@ -240,21 +240,25 @@ public abstract sealed class AbstractMemorySegmentImpl
 
     @Override
     public void load() {
-        throw new UnsupportedOperationException("Not a mapped segment");
+        throw notAMappedSegment();
     }
 
     @Override
     public void unload() {
-        throw new UnsupportedOperationException("Not a mapped segment");
+        throw notAMappedSegment();
     }
 
     @Override
     public boolean isLoaded() {
-        throw new UnsupportedOperationException("Not a mapped segment");
+        throw notAMappedSegment();
     }
 
     @Override
     public void force() {
+        throw notAMappedSegment();
+    }
+
+    private static UnsupportedOperationException notAMappedSegment() {
         throw new UnsupportedOperationException("Not a mapped segment");
     }
 
@@ -461,15 +465,15 @@ public abstract sealed class AbstractMemorySegmentImpl
 
     public static AbstractMemorySegmentImpl ofBuffer(Buffer bb) {
         Objects.requireNonNull(bb);
-        long bbAddress = nioAccess.getBufferAddress(bb);
-        Object base = nioAccess.getBufferBase(bb);
-        UnmapperProxy unmapper = nioAccess.unmapper(bb);
+        long bbAddress = NIO_ACCESS.getBufferAddress(bb);
+        Object base = NIO_ACCESS.getBufferBase(bb);
+        UnmapperProxy unmapper = NIO_ACCESS.unmapper(bb);
 
         int pos = bb.position();
         int limit = bb.limit();
         int size = limit - pos;
 
-        AbstractMemorySegmentImpl bufferSegment = (AbstractMemorySegmentImpl)nioAccess.bufferSegment(bb);
+        AbstractMemorySegmentImpl bufferSegment = (AbstractMemorySegmentImpl) NIO_ACCESS.bufferSegment(bb);
         final MemorySession bufferSession;
         if (bufferSegment != null) {
             bufferSession = bufferSegment.session;

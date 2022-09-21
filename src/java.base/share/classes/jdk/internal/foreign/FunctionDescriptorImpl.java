@@ -24,9 +24,18 @@
  */
 package jdk.internal.foreign;
 
-import java.lang.foreign.*;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.GroupLayout;
+import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodType;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -167,7 +176,9 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
                         .mapToObj(i -> (i == firstVariadicArgumentIndex() ?
                                 "..." : "") + argLayouts.get(i))
                         .collect(Collectors.joining()),
-                returnLayout().map(Object::toString).orElse("v"));
+                returnLayout()
+                        .map(Object::toString)
+                        .orElse("v"));
     }
 
     /**
@@ -219,7 +230,9 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
          */
         VariadicFunctionDescriptor(FunctionDescriptorImpl descriptor, MemoryLayout... argLayouts) {
             super(descriptor.returnLayout().orElse(null),
-                    Stream.concat(descriptor.argumentLayouts().stream(), Arrays.stream(argLayouts).map(Objects::requireNonNull)).toList());
+                    Stream.concat(descriptor.argumentLayouts().stream(), Arrays.stream(argLayouts)
+                            .map(Objects::requireNonNull))
+                            .toList());
             this.firstVariadicIndex = descriptor.argumentLayouts().size();
         }
 

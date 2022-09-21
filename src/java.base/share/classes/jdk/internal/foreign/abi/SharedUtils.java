@@ -389,7 +389,7 @@ public final class SharedUtils {
         }
     }
 
-    public static non-sealed class EmptyVaList implements VaList {
+    public static final class EmptyVaList implements VaList {
 
         private final MemorySegment address;
 

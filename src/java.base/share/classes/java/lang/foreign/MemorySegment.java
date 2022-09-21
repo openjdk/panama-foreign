@@ -951,11 +951,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session, and
      * its {@link #address()} is set to zero.
      *
-     * @param arr the primitive array backing the array memory segment.
-     * @return an array memory segment.
+     * @param byteArray the primitive array backing the heap memory segment.
+     * @return a heap memory segment backed by a byte array.
      */
-    static MemorySegment ofArray(byte[] arr) {
-        return HeapMemorySegmentImpl.OfByte.fromArray(arr);
+    static MemorySegment ofArray(byte[] byteArray) {
+        return HeapMemorySegmentImpl.OfByte.fromArray(byteArray);
     }
 
     /**
@@ -963,11 +963,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session, and
      * its {@link #address()} is set to zero.
      *
-     * @param arr the primitive array backing the array memory segment.
-     * @return an array memory segment.
+     * @param charArray the primitive array backing the heap segment.
+     * @return a heap memory segment backed by a char array.
      */
-    static MemorySegment ofArray(char[] arr) {
-        return HeapMemorySegmentImpl.OfChar.fromArray(arr);
+    static MemorySegment ofArray(char[] charArray) {
+        return HeapMemorySegmentImpl.OfChar.fromArray(charArray);
     }
 
     /**
@@ -975,11 +975,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session, and
      * its {@link #address()} is set to zero.
      *
-     * @param arr the primitive array backing the array memory segment.
-     * @return an array memory segment.
+     * @param shortArray the primitive array backing the heap segment.
+     * @return a heap memory segment backed by a short array.
      */
-    static MemorySegment ofArray(short[] arr) {
-        return HeapMemorySegmentImpl.OfShort.fromArray(arr);
+    static MemorySegment ofArray(short[] shortArray) {
+        return HeapMemorySegmentImpl.OfShort.fromArray(shortArray);
     }
 
     /**
@@ -987,11 +987,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session, and
      * its {@link #address()} is set to zero.
      *
-     * @param arr the primitive array backing the array memory segment.
-     * @return an array memory segment.
+     * @param intArray the primitive array backing the heap segment.
+     * @return a heap memory segment backed by a int array.
      */
-    static MemorySegment ofArray(int[] arr) {
-        return HeapMemorySegmentImpl.OfInt.fromArray(arr);
+    static MemorySegment ofArray(int[] intArray) {
+        return HeapMemorySegmentImpl.OfInt.fromArray(intArray);
     }
 
     /**
@@ -999,11 +999,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session, and
      * its {@link #address()} is set to zero.
      *
-     * @param arr the primitive array backing the array memory segment.
-     * @return an array memory segment.
+     * @param floatArray the primitive array backing the heap segment.
+     * @return a heap memory segment backed by a float array.
      */
-    static MemorySegment ofArray(float[] arr) {
-        return HeapMemorySegmentImpl.OfFloat.fromArray(arr);
+    static MemorySegment ofArray(float[] floatArray) {
+        return HeapMemorySegmentImpl.OfFloat.fromArray(floatArray);
     }
 
     /**
@@ -1011,11 +1011,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session, and
      * its {@link #address()} is set to zero.
      *
-     * @param arr the primitive array backing the array memory segment.
-     * @return an array memory segment.
+     * @param longArray the primitive array backing the heap segment.
+     * @return a heap memory segment backed by a long array.
      */
-    static MemorySegment ofArray(long[] arr) {
-        return HeapMemorySegmentImpl.OfLong.fromArray(arr);
+    static MemorySegment ofArray(long[] longArray) {
+        return HeapMemorySegmentImpl.OfLong.fromArray(longArray);
     }
 
     /**
@@ -1023,11 +1023,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * The returned segment is associated with the {@linkplain MemorySession#global() global} memory session, and
      * its {@link #address()} is set to zero.
      *
-     * @param arr the primitive array backing the array memory segment.
-     * @return an array memory segment.
+     * @param doubleArray the primitive array backing the heap segment.
+     * @return a heap memory segment backed by a double array.
      */
-    static MemorySegment ofArray(double[] arr) {
-        return HeapMemorySegmentImpl.OfDouble.fromArray(arr);
+    static MemorySegment ofArray(double[] doubleArray) {
+        return HeapMemorySegmentImpl.OfDouble.fromArray(doubleArray);
     }
 
     /**
@@ -1056,24 +1056,24 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * <p>
      * This is equivalent to the following code:
      * {@snippet lang = java:
-     * ofAddress(address, bytesSize, MemorySession.global());
+     * ofAddress(address, byteSize, MemorySession.global());
      *}
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      * @param address the address of the returned native segment.
-     * @param bytesSize the size (in bytes) of the returned native segment.
+     * @param byteSize the size (in bytes) of the returned native segment.
      * @return a zero-length native segment with the given address and size.
-     * @throws IllegalArgumentException if {@code bytesSize < 0}.
+     * @throws IllegalArgumentException if {@code byteSize < 0}.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
      * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
-    static MemorySegment ofAddress(long address, long bytesSize) {
+    static MemorySegment ofAddress(long address, long byteSize) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddress");
-        return MemorySegment.ofAddress(address, bytesSize, MemorySession.global());
+        return MemorySegment.ofAddress(address, byteSize, MemorySession.global());
     }
 
     /**
@@ -1096,10 +1096,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      *
      *
      * @param address the returned segment's address.
-     * @param bytesSize the desired size.
+     * @param byteSize the desired size.
      * @param session the native segment memory session.
      * @return a native segment with the given address, size and memory session.
-     * @throws IllegalArgumentException if {@code bytesSize < 0}.
+     * @throws IllegalArgumentException if {@code byteSize < 0}.
      * @throws IllegalStateException if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread
      * {@linkplain MemorySession#ownerThread() owning} {@code session}.
@@ -1108,11 +1108,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
-    static MemorySegment ofAddress(long address, long bytesSize, MemorySession session) {
+    static MemorySegment ofAddress(long address, long byteSize, MemorySession session) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddress");
         Objects.requireNonNull(session);
-        Utils.checkAllocationSizeAndAlign(bytesSize, 1);
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, bytesSize, session);
+        Utils.checkAllocationSizeAndAlign(byteSize, 1);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, byteSize, session);
     }
 
     /**
@@ -1163,21 +1163,21 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * This is equivalent to the following code:
      * {@snippet lang=java :
      * MemorySession.openImplicit()
-     *     .allocate(bytesSize, 1)
+     *     .allocate(byteSize, 1)
      * }
      * <p>
      * The off-heap region of memory associated with the returned native segment is initialized to zero.
      * <p>
      * This method corresponds to the {@link ByteBuffer#allocateDirect(int)} method and has similar behavior.
      *
-     * @param bytesSize the size (in bytes) of the off-heap region of memory backing the native segment.
-     * @return a new native segment.
-     * @throws IllegalArgumentException if {@code bytesSize < 0}.
+     * @param byteSize the size (in bytes) of the off-heap memory block backing the native memory segment.
+     * @return a new native memory segment.
+     * @throws IllegalArgumentException if {@code byteSize < 0}.
      * @see ByteBuffer#allocateDirect(int)
      * @see MemorySession#allocate(long)
      */
-    static MemorySegment allocateNative(long bytesSize) {
-        return allocateNative(bytesSize, 1L);
+    static MemorySegment allocateNative(long byteSize) {
+        return allocateNative(byteSize, 1L);
     }
 
     /**
@@ -1197,22 +1197,22 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * This is equivalent to the following code:
      * {@snippet lang=java :
      * MemorySession.openImplicit()
-     *     .allocate(bytesSize, byteAlignment)
+     *     .allocate(byteSize, byteAlignment)
      * }
      * <p>
      * The off-heap region of memory associated with the returned native segment is initialized to zero.
      *
-     * @param bytesSize the size (in bytes) of the off-heap region of memory backing the native segment.
-     * @param byteAlignment the alignment constraint (in bytes) of the off-heap region of memory backing the native segment.
-     * @return a new native segment.
-     * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
+     * @param byteSize the size (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param byteAlignment the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
+     * @return a new native memory segment.
+     * @throws IllegalArgumentException if {@code byteSize < 0}, {@code byteAlignment <= 0}, or if {@code byteAlignment}
      * is not a power of 2.
      * @see MemorySession#allocate(long, long)
      */
-    static MemorySegment allocateNative(long bytesSize, long byteAlignment) {
-        Utils.checkAllocationSizeAndAlign(bytesSize, byteAlignment);
+    static MemorySegment allocateNative(long byteSize, long byteAlignment) {
+        Utils.checkAllocationSizeAndAlign(byteSize, byteAlignment);
         return MemorySession.openImplicit()
-                .allocate(bytesSize, byteAlignment);
+                .allocate(byteSize, byteAlignment);
     }
 
     /**

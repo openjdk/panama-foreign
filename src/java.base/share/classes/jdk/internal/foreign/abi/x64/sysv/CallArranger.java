@@ -216,26 +216,18 @@ public class CallArranger {
         }
 
         int registerCount(int type) {
-            switch (type) {
-                case StorageClasses.INTEGER:
-                    return nIntegerReg;
-                case StorageClasses.VECTOR:
-                    return nVectorReg;
-                default:
-                    throw new IllegalStateException();
-            }
+            return switch (type) {
+                case StorageClasses.INTEGER -> nIntegerReg;
+                case StorageClasses.VECTOR -> nVectorReg;
+                default -> throw new IllegalStateException();
+            };
         }
 
         void incrementRegisterCount(int type) {
             switch (type) {
-                case StorageClasses.INTEGER:
-                    nIntegerReg++;
-                    break;
-                case StorageClasses.VECTOR:
-                    nVectorReg++;
-                    break;
-                default:
-                    throw new IllegalStateException();
+                case StorageClasses.INTEGER -> nIntegerReg++;
+                case StorageClasses.VECTOR -> nVectorReg++;
+                default -> throw new IllegalStateException();
             }
         }
     }
@@ -261,7 +253,7 @@ public class CallArranger {
             TypeClass argumentClass = TypeClass.classifyLayout(layout);
             Binding.Builder bindings = Binding.builder();
             switch (argumentClass.kind()) {
-                case STRUCT: {
+                case STRUCT -> {
                     assert carrier == MemorySegment.class;
                     VMStorage[] regs = storageCalculator.structStorages(argumentClass);
                     int regIndex = 0;
@@ -278,26 +270,21 @@ public class CallArranger {
                                 .vmStore(storage, type);
                         offset += copy;
                     }
-                    break;
                 }
-                case POINTER: {
+                case POINTER -> {
                     bindings.unboxAddress();
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
                     bindings.vmStore(storage, long.class);
-                    break;
-                }
-                case INTEGER: {
+                                    }
+                case INTEGER -> {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
                     bindings.vmStore(storage, carrier);
-                    break;
                 }
-                case FLOAT: {
+                case FLOAT -> {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.VECTOR);
                     bindings.vmStore(storage, carrier);
-                    break;
                 }
-                default:
-                    throw new UnsupportedOperationException("Unhandled class " + argumentClass);
+                default -> throw new UnsupportedOperationException("Unhandled class " + argumentClass);
             }
             return bindings.build();
         }
@@ -314,7 +301,7 @@ public class CallArranger {
             TypeClass argumentClass = TypeClass.classifyLayout(layout);
             Binding.Builder bindings = Binding.builder();
             switch (argumentClass.kind()) {
-                case STRUCT: {
+                case STRUCT -> {
                     assert carrier == MemorySegment.class;
                     bindings.allocate(layout);
                     VMStorage[] regs = storageCalculator.structStorages(argumentClass);
@@ -330,26 +317,21 @@ public class CallArranger {
                                 .bufferStore(offset, type);
                         offset += copy;
                     }
-                    break;
                 }
-                case POINTER: {
+                case POINTER -> {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
                     bindings.vmLoad(storage, long.class)
                             .boxAddressRaw(Utils.pointeeSize(layout));
-                    break;
                 }
-                case INTEGER: {
+                case INTEGER -> {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
                     bindings.vmLoad(storage, carrier);
-                    break;
                 }
-                case FLOAT: {
+                case FLOAT -> {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.VECTOR);
                     bindings.vmLoad(storage, carrier);
-                    break;
                 }
-                default:
-                    throw new UnsupportedOperationException("Unhandled class " + argumentClass);
+                default -> throw new UnsupportedOperationException("Unhandled class " + argumentClass);
             }
             return bindings.build();
         }

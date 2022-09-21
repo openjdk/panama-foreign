@@ -176,7 +176,7 @@ public class TestSegmentAllocators {
         AtomicInteger calls = new AtomicInteger();
         SegmentAllocator allocator = new SegmentAllocator() {
             @Override
-            public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+            public MemorySegment allocate(long bytesSize, long byteAlignment) {
                 return null;
             }
 
@@ -201,8 +201,9 @@ public class TestSegmentAllocators {
         AtomicInteger calls = new AtomicInteger();
         SegmentAllocator allocator = new SegmentAllocator() {
             @Override
-            public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-                return MemorySegment.allocateNative(bytesSize, bytesAlignment);
+
+            public MemorySegment allocate(long byteSize, long byteAlignment) {
+                return MemorySegment.allocateNative(byteSize, byteAlignment);
             }
 
             @Override

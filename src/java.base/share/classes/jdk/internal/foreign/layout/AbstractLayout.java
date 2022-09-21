@@ -29,7 +29,12 @@ import jdk.internal.foreign.Utils;
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.Stable;
 
-import java.lang.foreign.*;
+import java.lang.foreign.GroupLayout;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.SequenceLayout;
+import java.lang.foreign.StructLayout;
+import java.lang.foreign.UnionLayout;
+import java.lang.foreign.ValueLayout;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -57,9 +62,9 @@ abstract sealed class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout>
         return name;
     }
 
-    public final L withBitAlignment(long alignmentBits) {
-        checkAlignment(alignmentBits);
-        return dup(alignmentBits, name);
+    public final L withBitAlignment(long bitAlignment) {
+        checkAlignment(bitAlignment);
+        return dup(bitAlignment, name);
     }
 
     public final long bitAlignment() {
@@ -108,8 +113,8 @@ abstract sealed class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout>
      *     and {@linkplain ValueLayout#carrier() carrier}</li>
      *     <li>two sequence layouts are considered equal if they have the same element count (see {@link SequenceLayout#elementCount()}), and
      *     if their element layouts (see {@link SequenceLayout#elementLayout()}) are also equal</li>
-     *     <li>two group layouts are considered equal if they are of the same kind (see {@link GroupLayout#isStruct()},
-     *     {@link GroupLayout#isUnion()}) and if their member layouts (see {@link GroupLayout#memberLayouts()}) are also equal</li>
+     *     <li>two group layouts are considered equal if they are of the same type (see {@link StructLayout},
+     *     {@link UnionLayout}) and if their member layouts (see {@link GroupLayout#memberLayouts()}) are also equal</li>
      * </ul>
      *
      * @param other the object to be compared for equality with this layout.
