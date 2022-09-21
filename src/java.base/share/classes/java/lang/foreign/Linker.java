@@ -159,7 +159,7 @@ public sealed interface Linker permits AbstractLinker {
      *     and its corresponding layout is dependent on the ABI of the returned linker;
      *     <li>Composite types are modelled by a {@linkplain GroupLayout group layout}. Depending on the ABI of the
      *     returned linker, additional {@linkplain MemoryLayout#paddingLayout(long) padding} member layouts might be required to conform
-     *     to the size and alignment constraints of a composite type definition in C (e.g. using {@code struct} or {@code union}); and</li>
+     *     to the size and alignment constraint of a composite type definition in C (e.g. using {@code struct} or {@code union}); and</li>
      *     <li>Pointer types are modelled by a {@linkplain ValueLayout value layout} instance with carrier {@link MemorySegment}.
      *     Examples of pointer types in C are {@code int**} and {@code int(*)(size_t*, size_t*)};</li>
      * </ul>

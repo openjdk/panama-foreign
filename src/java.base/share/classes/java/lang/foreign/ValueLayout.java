@@ -57,7 +57,7 @@ public sealed interface ValueLayout extends MemoryLayout {
     ByteOrder order();
 
     /**
-     * Returns a value layout with the same carrier, alignment constraints and name as this value layout,
+     * Returns a value layout with the same carrier, alignment constraint and name as this value layout,
      * but with the specified byte order.
      *
      * @param order the desired byte order.
@@ -325,7 +325,7 @@ public sealed interface ValueLayout extends MemoryLayout {
         OfAddress withOrder(ByteOrder order);
 
         /**
-         * Returns an <em>unbounded</em> address layout with the same carrier, alignment constraints, name and order as this address layout,
+         * Returns an <em>unbounded</em> address layout with the same carrier, alignment constraint, name and order as this address layout,
          * but with the specified pointee layout. An unbounded address layouts allow raw addresses to be accessed
          * as {@linkplain MemorySegment memory segments} whose size is set to {@link Long#MAX_VALUE}. As such,
          * these segments can be used in subsequent access operations.

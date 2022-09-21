@@ -335,7 +335,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocates a memory segment with the given size and alignment constraints.
+     * Allocates a memory segment with the given size and alignment constraint.
      * @param byteSize the size (in bytes) of the block of memory to be allocated.
      * @param byteAlignment the alignment (in bytes) of the block of memory to be allocated.
      * @return a segment for the newly allocated memory block.

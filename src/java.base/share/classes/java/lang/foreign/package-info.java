@@ -57,7 +57,7 @@
  * <p>
  * Inside a loop, we then initialize the contents of the memory segment; note how the
  * {@linkplain java.lang.foreign.MemorySegment#setAtIndex(ValueLayout.OfInt, long, int) access method}
- * accepts a {@linkplain java.lang.foreign.ValueLayout value layout}, which specifies the size, alignment constraints,
+ * accepts a {@linkplain java.lang.foreign.ValueLayout value layout}, which specifies the size, alignment constraint,
  * byte order as well as the Java type ({@code int}, in this case) associated with the access operation. More specifically,
  * if we view the memory segment as a set of 10 adjacent slots, {@code s[i]}, where {@code 0 <= i < 10},
  * where the size of each slot is exactly 4 bytes, the initialization logic above will set each slot
