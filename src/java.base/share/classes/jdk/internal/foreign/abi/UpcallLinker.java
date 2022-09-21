@@ -61,9 +61,6 @@ public class UpcallLinker {
         }
     }
 
-    private UpcallLinker() {
-    }
-
     public static MemorySegment make(ABIDescriptor abi, MethodHandle target, CallingSequence callingSequence, MemorySession session) {
         assert callingSequence.forUpcall();
         Binding.VMLoad[] argMoves = argMoveBindings(callingSequence);

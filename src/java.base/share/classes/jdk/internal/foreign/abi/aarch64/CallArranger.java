@@ -149,7 +149,7 @@ public abstract class CallArranger {
         return new Bindings(csb.build(), returnInMemory);
     }
 
-    public final MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc) {
+    public MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc) {
         Bindings bindings = getBindings(mt, cDesc, false);
 
         MethodHandle handle = new DowncallLinker(C, bindings.callingSequence).getBoundMethodHandle();
@@ -161,7 +161,7 @@ public abstract class CallArranger {
         return handle;
     }
 
-    public final MemorySegment arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, MemorySession session) {
+    public MemorySegment arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, MemorySession session) {
         Bindings bindings = getBindings(mt, cDesc, true);
 
         if (bindings.isInMemoryReturn) {
@@ -178,7 +178,7 @@ public abstract class CallArranger {
             .isPresent();
     }
 
-    class StorageCalculator {
+    static class StorageCalculator {
         private final boolean forArguments;
         private boolean forVarArgs = false;
 
@@ -410,7 +410,7 @@ public abstract class CallArranger {
         }
     }
 
-    final class BoxBindingCalculator extends BindingCalculator {
+    class BoxBindingCalculator extends BindingCalculator {
         BoxBindingCalculator(boolean forArguments) {
             super(forArguments);
         }

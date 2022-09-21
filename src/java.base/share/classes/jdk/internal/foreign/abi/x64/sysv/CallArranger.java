@@ -152,7 +152,7 @@ public class CallArranger {
                 .isPresent();
     }
 
-    static final class StorageCalculator {
+    static class StorageCalculator {
         private final boolean forArguments;
 
         private int nVectorReg = 0;

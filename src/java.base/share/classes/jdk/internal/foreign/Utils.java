@@ -77,9 +77,6 @@ public final class Utils {
         }
     }
 
-    private Utils() {
-    }
-
     public static long alignUp(long n, long alignment) {
         return (n + alignment - 1) & -alignment;
     }
