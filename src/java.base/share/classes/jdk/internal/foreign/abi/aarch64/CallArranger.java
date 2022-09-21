@@ -178,7 +178,7 @@ public abstract class CallArranger {
             .isPresent();
     }
 
-    static class StorageCalculator {
+    class StorageCalculator {
         private final boolean forArguments;
         private boolean forVarArgs = false;
 
