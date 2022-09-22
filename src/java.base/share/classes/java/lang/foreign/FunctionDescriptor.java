@@ -31,13 +31,12 @@ import java.util.Optional;
 import java.util.List;
 
 import jdk.internal.foreign.FunctionDescriptorImpl;
-import jdk.internal.foreign.abi.LinkerOptions;
 import jdk.internal.javac.PreviewFeature;
 
 /**
  * A function descriptor is made up of zero or more argument layouts and zero or one return layout. A function descriptor
  * is used to model the signature of foreign functions when creating
- * {@linkplain Linker#downcallHandle(MemorySegment, FunctionDescriptor) downcall method handles} or
+ * {@linkplain Linker#downcallHandle(MemorySegment, FunctionDescriptor, Linker.Option...) downcall method handles} or
  * {@linkplain Linker#upcallStub(MethodHandle, FunctionDescriptor, MemorySession) upcall stubs}.
  *
  * @implSpec
@@ -58,16 +57,6 @@ public sealed interface FunctionDescriptor permits FunctionDescriptorImpl {
      * {@return the argument layouts associated with this function descriptor (as an immutable list)}.
      */
     List<MemoryLayout> argumentLayouts();
-
-    /**
-     * {@return linker options}
-     */
-    List<Linker.Option> options();
-
-    /**
-     * {@return the option with the given type, or {@code null}}
-     */
-    <T extends Linker.Option> T getOption(Class<T> optionType);
 
     /**
      * Returns a function descriptor with the given argument layouts appended to the argument layout array
@@ -116,22 +105,6 @@ public sealed interface FunctionDescriptor permits FunctionDescriptorImpl {
      *                                  types (e.g. if they are sequence layouts or padding layouts).
      */
     MethodType toMethodType();
-
-    /**
-     * Creates a specialized variadic function descriptor, by appending given variadic layouts to this
-     * function descriptor argument layouts. The resulting function descriptor can report the position
-     * of the {@linkplain #options() first variadic argument}.
-     * @param variadicLayouts the variadic argument layouts to be appended to this descriptor argument layouts.
-     * @return a variadic function descriptor, or this descriptor if {@code variadicLayouts.length == 0}.
-     */
-    FunctionDescriptor asVariadic(MemoryLayout... variadicLayouts);
-
-    /**
-     * Add linker options
-     * @param options the options to add
-     * @return new descriptor with added options
-     */
-    FunctionDescriptorImpl addOptions(Linker.Option... options);
 
     /**
      * Creates a function descriptor with the given return and argument layouts.

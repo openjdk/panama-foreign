@@ -25,13 +25,43 @@
 package jdk.internal.foreign.abi;
 
 import java.lang.foreign.Linker;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class LinkerOptions {
+
+    private static final LinkerOptions EMPTY = LinkerOptions.of();
+    private final Map<Class<?>, Linker.Option> optionsMap;
+
+    private LinkerOptions(Map<Class<?>, Linker.Option> optionsMap) {
+        this.optionsMap = optionsMap;
+    }
+
+    public static LinkerOptions of(Linker.Option... options) {
+        Map<Class<?>, Linker.Option> optionMap = new HashMap<>();
+
+        for (Linker.Option option : options) {
+            if (optionMap.containsKey(option.getClass())) {
+                throw new IllegalArgumentException("Duplicate option: " + option);
+            }
+            optionMap.put(option.getClass(), option);
+        }
+
+        return new LinkerOptions(optionMap);
+    }
+
+    public static LinkerOptions empty() {
+        return EMPTY;
+    }
+
+    public <T extends Linker.Option> T getOption(Class<T> type) {
+        return type.cast(optionsMap.get(type));
+    }
+
+    public int firstVarargIndex() {
+        FirstVariadicArg fva = getOption(FirstVariadicArg.class);
+        return fva == null ? -1 : fva.index();
+    }
+
     public record FirstVariadicArg(int index) implements Linker.Option { }
-    public record KeepAlive(int... indexes) implements Linker.Option {}
-    public record PinnedHeapAddress(int... indexes) implements Linker.Option {}
-    public record OmitStateTransition() implements Linker.Option {}
-    public record ElideCopy(int... indexes) implements Linker.Option {}
-    public record SaveThreadLocal(List<String> names) implements Linker.Option {}
 }

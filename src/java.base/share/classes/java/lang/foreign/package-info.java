@@ -128,7 +128,7 @@
  * Here, we obtain a {@linkplain java.lang.foreign.Linker#nativeLinker() native linker} and we use it
  * to {@linkplain java.lang.foreign.SymbolLookup#find(java.lang.String) look up} the {@code strlen} symbol in the
  * standard C library; a <em>downcall method handle</em> targeting said symbol is subsequently
- * {@linkplain java.lang.foreign.Linker#downcallHandle(java.lang.foreign.FunctionDescriptor) obtained}.
+ * {@linkplain java.lang.foreign.Linker#downcallHandle(FunctionDescriptor, Linker.Option...) obtained}.
  * To complete the linking successfully, we must provide a {@link java.lang.foreign.FunctionDescriptor} instance,
  * describing the signature of the {@code strlen} function.
  * From this information, the linker will uniquely determine the sequence of steps which will turn
@@ -225,7 +225,7 @@
  *}
  *
  * The {@link java.lang.foreign.FunctionDescriptor} instance created in the previous step is then used to
- * {@linkplain java.lang.foreign.Linker#upcallStub(java.lang.invoke.MethodHandle, java.lang.foreign.FunctionDescriptor, java.lang.foreign.MemorySession) create}
+ * {@linkplain java.lang.foreign.Linker#upcallStub(java.lang.invoke.MethodHandle, FunctionDescriptor, MemorySession) create}
  * a new upcall stub; the layouts in the function descriptors allow the linker to determine the sequence of steps which
  * allow foreign code to call the stub for {@code intCompareHandle} according to the rules specified by the ABI of the
  * underlying platform.

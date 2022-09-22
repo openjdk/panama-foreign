@@ -37,9 +37,7 @@ import java.lang.foreign.MemorySession;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.PaddingLayout;
 import java.lang.foreign.SequenceLayout;
-import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.Objects;
@@ -50,18 +48,20 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
     private final SoftReferenceCache<FunctionDescriptor, MethodHandle> DOWNCALL_CACHE = new SoftReferenceCache<>();
 
     @Override
-    public MethodHandle downcallHandle(FunctionDescriptor function) {
+    public MethodHandle downcallHandle(FunctionDescriptor function, Option... options) {
         Objects.requireNonNull(function);
+        Objects.requireNonNull(options);
         checkHasNaturalAlignment(function);
+        LinkerOptions optionSet = LinkerOptions.of(options);
 
         return DOWNCALL_CACHE.get(function, fd -> {
             MethodType type = fd.toMethodType();
-            MethodHandle handle = arrangeDowncall(type, fd);
+            MethodHandle handle = arrangeDowncall(type, fd, optionSet);
             handle = SharedUtils.maybeInsertAllocator(fd, handle);
             return handle;
         });
     }
-    protected abstract MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function);
+    protected abstract MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function, LinkerOptions options);
 
     @Override
     public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, MemorySession scope) {

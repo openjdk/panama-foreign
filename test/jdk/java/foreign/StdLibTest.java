@@ -322,8 +322,10 @@ public class StdLibTest extends NativeTestHelper {
                 mt = mt.appendParameterTypes(arg.carrier);
                 variadicLayouts.add(arg.layout);
             }
+            Linker.Option varargIndex = Linker.Option.firstVariadicArg(fd.argumentLayouts().size());
             MethodHandle mh = abi.downcallHandle(printfAddr,
-                    fd.asVariadic(variadicLayouts.toArray(new MemoryLayout[args.size()])));
+                    fd.appendArgumentLayouts(variadicLayouts.toArray(new MemoryLayout[args.size()])),
+                    varargIndex);
             return mh.asSpreader(1, Object[].class, args.size());
         }
     }

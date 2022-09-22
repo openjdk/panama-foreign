@@ -50,17 +50,14 @@ import static java.util.Objects.requireNonNull;
 /**
  * @implSpec This class and its subclasses are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  */
-public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
+public final class FunctionDescriptorImpl implements FunctionDescriptor {
 
     private final MemoryLayout resLayout; // Nullable
     private final List<MemoryLayout> argLayouts;
-    private final Map<Class<?>, Linker.Option> options;
 
-    private FunctionDescriptorImpl(MemoryLayout resLayout, List<MemoryLayout> argLayouts,
-                                   Map<Class<?>, Linker.Option> options) {
+    private FunctionDescriptorImpl(MemoryLayout resLayout, List<MemoryLayout> argLayouts) {
         this.resLayout = resLayout;
         this.argLayouts = List.copyOf(argLayouts);
-        this.options = options; // copied by accessor
     }
 
     /**
@@ -75,50 +72,6 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
      */
     public final List<MemoryLayout> argumentLayouts() {
         return argLayouts;
-    }
-
-    @Override
-    public FunctionDescriptorImpl asVariadic(MemoryLayout... variadicLayouts) {
-        return new VariadicFunctionDescriptor(this, variadicLayouts);
-    }
-
-    @Override
-    public FunctionDescriptorImpl addOptions(Linker.Option... options) {
-        return new FunctionDescriptorImpl(resLayout, argLayouts, addOptions(this.options, options));
-    }
-
-    private static Map<Class<?>, Linker.Option> addOptions(Map<Class<?>, Linker.Option> oldOptions,
-                                                           Linker.Option... optionsToAdd) {
-        Map<Class<?>, Linker.Option> newOptions = new HashMap<>(oldOptions);
-
-        for (Linker.Option option : optionsToAdd) {
-            if (newOptions.containsKey(option.getClass())) {
-                throw new IllegalArgumentException("Option already present: " + option);
-            }
-            newOptions.put(option.getClass(), option);
-        }
-        return newOptions;
-    }
-
-    @Override
-    public <T extends Linker.Option> T getOption(Class<T> optionType) {
-        return optionType.cast(options.get(optionType));
-    }
-
-    /**
-     * The index of the first variadic argument layout (where defined).
-     *
-     * @return The index of the first variadic argument layout, or {@code -1} if this is not a
-     * {@linkplain #asVariadic(MemoryLayout...) variadic} layout.
-     */
-    public int firstVariadicArgumentIndex() {
-        LinkerOptions.FirstVariadicArg firstVariadicArg = getOption(LinkerOptions.FirstVariadicArg.class);
-        return firstVariadicArg == null ? -1 : firstVariadicArg.index();
-    }
-
-    @Override
-    public List<Linker.Option> options() {
-        return List.copyOf(options.values());
     }
 
     /**
@@ -149,7 +102,7 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
         newLayouts.addAll(argLayouts.subList(0, index));
         newLayouts.addAll(added);
         newLayouts.addAll(argLayouts.subList(index, argLayouts.size()));
-        return new FunctionDescriptorImpl(resLayout, newLayouts, options);
+        return new FunctionDescriptorImpl(resLayout, newLayouts);
     }
 
     /**
@@ -160,7 +113,7 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
      */
     public FunctionDescriptorImpl changeReturnLayout(MemoryLayout newReturn) {
         requireNonNull(newReturn);
-        return new FunctionDescriptorImpl(newReturn, argLayouts, options);
+        return new FunctionDescriptorImpl(newReturn, argLayouts);
     }
 
     /**
@@ -170,7 +123,7 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
      * @return the new function descriptor.
      */
     public FunctionDescriptorImpl dropReturnLayout() {
-        return new FunctionDescriptorImpl(null, argLayouts, options);
+        return new FunctionDescriptorImpl(null, argLayouts);
     }
 
     private static Class<?> carrierTypeFor(MemoryLayout layout) {
@@ -199,9 +152,7 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
     @Override
     public final String toString() {
         return String.format("(%s)%s",
-                IntStream.range(0, argLayouts.size())
-                        .mapToObj(i -> (i == firstVariadicArgumentIndex() ?
-                                "..." : "") + argLayouts.get(i))
+                argLayouts.stream().map(Object::toString)
                         .collect(Collectors.joining()),
                 returnLayout()
                         .map(Object::toString)
@@ -224,8 +175,7 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
     public final boolean equals(Object other) {
         return other instanceof FunctionDescriptorImpl f &&
                 Objects.equals(resLayout, f.resLayout) &&
-                Objects.equals(argLayouts, f.argLayouts) &&
-                Objects.equals(options, f.options());
+                Objects.equals(argLayouts, f.argLayouts);
     }
 
     /**
@@ -233,61 +183,14 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
      */
     @Override
     public final int hashCode() {
-        return Objects.hash(argLayouts, resLayout, options);
+        return Objects.hash(argLayouts, resLayout);
     }
 
-    private static final Map<Class<?>, Linker.Option> NO_OPTIONS = Map.of();
-
     public static FunctionDescriptor of(MemoryLayout resLayout, List<MemoryLayout> argLayouts) {
-        return new FunctionDescriptorImpl(resLayout, argLayouts, NO_OPTIONS);
+        return new FunctionDescriptorImpl(resLayout, argLayouts);
     }
 
     public static FunctionDescriptor ofVoid(List<MemoryLayout> argLayouts) {
-        return new FunctionDescriptorImpl(null, argLayouts, NO_OPTIONS);
-    }
-
-    static final class VariadicFunctionDescriptor extends FunctionDescriptorImpl {
-
-        private final int firstVariadicIndex;
-
-        /**
-         * Constructor.
-         *
-         * @param descriptor the original functional descriptor
-         * @param argLayouts the memory layouts to apply
-         * @throws NullPointerException if any of the provided parameters or array elements are {@code null}
-         */
-        VariadicFunctionDescriptor(FunctionDescriptorImpl descriptor, MemoryLayout... argLayouts) {
-            super(descriptor.returnLayout().orElse(null),
-                    Stream.concat(descriptor.argumentLayouts().stream(), Arrays.stream(argLayouts)
-                            .map(Objects::requireNonNull))
-                            .toList(),
-                    descriptor.options);
-            this.firstVariadicIndex = descriptor.argumentLayouts().size();
-        }
-
-        @Override
-        public int firstVariadicArgumentIndex() {
-            return firstVariadicIndex;
-        }
-
-        @Override
-        public FunctionDescriptorImpl insertArgumentLayouts(int index, MemoryLayout... addedLayouts) {
-            throw newUnsupportedOperationException();
-        }
-
-        @Override
-        public FunctionDescriptorImpl changeReturnLayout(MemoryLayout newReturn) {
-            throw newUnsupportedOperationException();
-        }
-
-        @Override
-        public FunctionDescriptorImpl dropReturnLayout() {
-            throw newUnsupportedOperationException();
-        }
-
-        private UnsupportedOperationException newUnsupportedOperationException() {
-            return new UnsupportedOperationException("Method not supported by " + VariadicFunctionDescriptor.class.getSimpleName());
-        }
+        return new FunctionDescriptorImpl(null, argLayouts);
     }
 }

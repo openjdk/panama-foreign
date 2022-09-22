@@ -48,7 +48,7 @@ import jdk.internal.reflect.Reflection;
  *                                           .addVarg(C_DOUBLE, 3.8d));
  *}
  * Once created, clients can obtain the platform-dependent {@linkplain #segment() memory segment} associated a variable
- * argument list, which can then be passed to {@linkplain Linker#downcallHandle(FunctionDescriptor) downcall method handles}
+ * argument list, which can then be passed to {@linkplain Linker#downcallHandle(FunctionDescriptor, Linker.Option...) downcall method handles}
  * targeting native functions using the C {@code va_list} type.
  * <p>
  * The contents of a foreign memory segment modelling a variable argument list can be accessed by <em>unsafely</em> creating
