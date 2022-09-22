@@ -88,10 +88,6 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
         return bitSize == bitAlignment;
     }
 
-    public boolean isPadding() {
-        return false;
-    }
-
     // the following methods have to copy the same Javadoc as in MemoryLayout, or subclasses will just show
     // the Object methods javadoc
 

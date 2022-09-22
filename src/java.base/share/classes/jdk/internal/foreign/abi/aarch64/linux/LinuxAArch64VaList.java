@@ -55,7 +55,7 @@ import static jdk.internal.foreign.abi.aarch64.CallArranger.MAX_REGISTER_ARGUMEN
  * Linux. Variadic parameters may be passed in registers or on the stack.
  */
 public non-sealed class LinuxAArch64VaList implements VaList {
-    private static final Unsafe U = Unsafe.getUnsafe();
+    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
     // See AAPCS Appendix B "Variable Argument Lists" for definition of
     // va_list on AArch64.
@@ -131,9 +131,9 @@ public non-sealed class LinuxAArch64VaList implements VaList {
     }
 
     private static MemorySegment emptyListAddress() {
-        long ptr = U.allocateMemory(LAYOUT.byteSize());
+        long ptr = UNSAFE.allocateMemory(LAYOUT.byteSize());
         MemorySegment ms = MemorySegment.ofAddress(ptr, LAYOUT.byteSize(), MemorySession.openImplicit());
-        ms.session().addCloseAction(() -> U.freeMemory(ptr));
+        ms.session().addCloseAction(() -> UNSAFE.freeMemory(ptr));
         VH_stack.set(ms, MemorySegment.NULL);
         VH_gr_top.set(ms, MemorySegment.NULL);
         VH_vr_top.set(ms, MemorySegment.NULL);
