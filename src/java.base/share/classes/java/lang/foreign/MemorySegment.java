@@ -988,7 +988,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * its {@link #address()} is set to zero.
      *
      * @param intArray the primitive array backing the heap segment.
-     * @return a heap memory segment backed by a int array.
+     * @return a heap memory segment backed by an int array.
      */
     static MemorySegment ofArray(int[] intArray) {
         return HeapMemorySegmentImpl.OfInt.fromArray(intArray);
