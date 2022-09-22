@@ -45,7 +45,8 @@ import java.util.Objects;
 public abstract sealed class AbstractLinker implements Linker permits LinuxAArch64Linker, MacOsAArch64Linker,
                                                                       SysVx64Linker, Windowsx64Linker {
 
-    private final SoftReferenceCache<FunctionDescriptor, MethodHandle> DOWNCALL_CACHE = new SoftReferenceCache<>();
+    private record LinkRequest(FunctionDescriptor descriptor, LinkerOptions options) {}
+    private final SoftReferenceCache<LinkRequest, MethodHandle> DOWNCALL_CACHE = new SoftReferenceCache<>();
 
     @Override
     public MethodHandle downcallHandle(FunctionDescriptor function, Option... options) {
@@ -54,9 +55,10 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
         checkHasNaturalAlignment(function);
         LinkerOptions optionSet = LinkerOptions.of(options);
 
-        return DOWNCALL_CACHE.get(function, fd -> {
+        return DOWNCALL_CACHE.get(new LinkRequest(function, optionSet), linkRequest ->  {
+            FunctionDescriptor fd = linkRequest.descriptor();
             MethodType type = fd.toMethodType();
-            MethodHandle handle = arrangeDowncall(type, fd, optionSet);
+            MethodHandle handle = arrangeDowncall(type, fd, linkRequest.options());
             handle = SharedUtils.maybeInsertAllocator(fd, handle);
             return handle;
         });

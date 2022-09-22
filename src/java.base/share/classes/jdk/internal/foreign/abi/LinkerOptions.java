@@ -27,6 +27,7 @@ package jdk.internal.foreign.abi;
 import java.lang.foreign.Linker;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class LinkerOptions {
 
@@ -61,6 +62,18 @@ public class LinkerOptions {
     public boolean isVarargsIndex(int argIndex) {
         FirstVariadicArg fva = getOption(FirstVariadicArg.class);
         return fva != null && argIndex >= fva.index();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        return o instanceof LinkerOptions that
+                && Objects.equals(optionsMap, that.optionsMap);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(optionsMap);
     }
 
     public record FirstVariadicArg(int index) implements Linker.Option { }
