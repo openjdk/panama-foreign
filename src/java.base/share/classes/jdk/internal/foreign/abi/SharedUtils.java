@@ -316,11 +316,6 @@ public final class SharedUtils {
         }
     }
 
-    public static boolean isVarargsIndex(FunctionDescriptor descriptor, int argIndex) {
-        int firstPos = descriptor.firstVariadicArgumentIndex();
-        return firstPos != -1 && argIndex >= firstPos;
-    }
-
     public static NoSuchElementException newVaListNSEE(MemoryLayout layout) {
         return new NoSuchElementException("No such element: " + layout);
     }

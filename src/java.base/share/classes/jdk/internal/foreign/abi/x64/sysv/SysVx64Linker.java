@@ -26,6 +26,7 @@ package jdk.internal.foreign.abi.x64.sysv;
 
 
 import jdk.internal.foreign.abi.AbstractLinker;
+import jdk.internal.foreign.abi.LinkerOptions;
 
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.FunctionDescriptor;
@@ -52,7 +53,7 @@ public final class SysVx64Linker extends AbstractLinker {
         // Ensure there is only one instance
     }
     @Override
-    protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function) {
+    protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function, LinkerOptions options) {
         return CallArranger.arrangeDowncall(inferredMethodType, function);
     }
 

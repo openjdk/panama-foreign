@@ -25,6 +25,7 @@
 package jdk.internal.foreign.abi.x64.windows;
 
 import jdk.internal.foreign.abi.AbstractLinker;
+import jdk.internal.foreign.abi.LinkerOptions;
 
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
@@ -52,8 +53,8 @@ public final class Windowsx64Linker extends AbstractLinker {
     }
 
     @Override
-    protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function) {
-        return CallArranger.arrangeDowncall(inferredMethodType, function);
+    protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function, LinkerOptions options) {
+        return CallArranger.arrangeDowncall(inferredMethodType, function, options);
     }
 
     @Override

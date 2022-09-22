@@ -26,6 +26,7 @@
 package java.lang.foreign;
 
 import jdk.internal.foreign.abi.AbstractLinker;
+import jdk.internal.foreign.abi.LinkerOptions;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.javac.PreviewFeature;
 import jdk.internal.reflect.CallerSensitive;
@@ -46,7 +47,7 @@ import java.lang.invoke.MethodHandle;
  * in the JVM and foreign functions in the library. In particular:
  * <ul>
  * <li>A linker allows Java code to link against foreign functions, via
- * {@linkplain #downcallHandle(MemorySegment, FunctionDescriptor) downcall method handles}; and</li>
+ * {@linkplain #downcallHandle(MemorySegment, FunctionDescriptor, Option...) downcall method handles}; and</li>
  * <li>A linker allows foreign functions to call Java method handles,
  * via the generation of {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, MemorySession) upcall stubs}.</li>
  * </ul>
@@ -61,7 +62,7 @@ import java.lang.invoke.MethodHandle;
  *
  * <h2 id="downcall-method-handles">Downcall method handles</h2>
  *
- * {@linkplain #downcallHandle(FunctionDescriptor) Linking a foreign function} is a process which requires a function descriptor,
+ * {@linkplain #downcallHandle(FunctionDescriptor, Option...) Linking a foreign function} is a process which requires a function descriptor,
  * a set of memory layouts which, together, specify the signature of the foreign function to be linked, and returns,
  * when complete, a downcall method handle, that is, a method handle that can be used to invoke the target foreign function.
  * <p>
@@ -77,7 +78,7 @@ import java.lang.invoke.MethodHandle;
  * The downcall method handle type, derived as above, might be decorated by additional leading parameters,
  * in the given order if both are present:
  * <ul>
- * <li>If the downcall method handle is created {@linkplain #downcallHandle(FunctionDescriptor) without specifying a target address},
+ * <li>If the downcall method handle is created {@linkplain #downcallHandle(FunctionDescriptor, Option...) without specifying a target address},
  * the downcall method handle type features a leading parameter of type {@link MemorySegment}, from which the
  * address of the target foreign function can be derived.</li>
  * <li>If the function descriptor's return layout is a group layout, the resulting downcall method handle accepts
@@ -166,15 +167,15 @@ public sealed interface Linker permits AbstractLinker {
      * <p>
      * Any layout not listed above is <em>unsupported</em>; function descriptors containing unsupported layouts
      * will cause an {@link IllegalArgumentException} to be thrown, when used to create a
-     * {@link #downcallHandle(MemorySegment, FunctionDescriptor) downcall method handle} or an
+     * {@link #downcallHandle(MemorySegment, FunctionDescriptor, Option...) downcall method handle} or an
      * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, MemorySession) upcall stub}.
      * <p>
      * Variadic functions (e.g. a C function declared with a trailing ellipses {@code ...} at the end of the formal parameter
      * list or with an empty formal parameter list) are not supported directly. However, it is possible to link a
-     * variadic function by using a {@linkplain FunctionDescriptor#asVariadic(MemoryLayout...) <em>variadic</em>}
-     * function descriptor, in which the specialized signature of a given variable arity callsite is described in full.
-     * Alternatively, where the foreign library allows it, clients might be able to interact with variadic functions by
-     * passing a trailing parameter of type {@link VaList} (e.g. as in {@code vsprintf}).
+     * variadic function by using {@linkplain Linker.Option#firstVariadicArg(int) a linker option} to indicate
+     * the start of the list of variadic arguments, together with a specialized function descriptor describing a
+     * given variable arity callsite. Alternatively, where the foreign library allows it, clients might be able to
+     * interact with variadic functions by passing a trailing parameter of type {@link VaList} (e.g. as in {@code vsprintf}).
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -210,15 +211,17 @@ public sealed interface Linker permits AbstractLinker {
      * linker.downcallHandle(function).bindTo(symbol);
      * }
      *
-     * @param symbol the address of the target function.
+     * @param symbol   the address of the target function.
      * @param function the function descriptor of the target function.
+     * @param options  any linker options.
      * @return a downcall method handle. The method handle type is <a href="Linker.html#downcall-method-handles"><em>inferred</em></a>
      * @throws IllegalArgumentException if the provided function descriptor is not supported by this linker.
-     * or if the symbol is {@link MemorySegment#NULL}
+     *                                  or if the symbol is {@link MemorySegment#NULL}
+     * @throws IllegalArgumentException if an invalid combination of linker options is given.
      */
-    default MethodHandle downcallHandle(MemorySegment symbol, FunctionDescriptor function) {
+    default MethodHandle downcallHandle(MemorySegment symbol, FunctionDescriptor function, Option... options) {
         SharedUtils.checkSymbol(symbol);
-        return downcallHandle(function).bindTo(symbol);
+        return downcallHandle(function, options).bindTo(symbol);
     }
 
     /**
@@ -235,11 +238,13 @@ public sealed interface Linker permits AbstractLinker {
      * associated with the {@link MemorySegment#NULL} address, or a {@link NullPointerException} if that parameter is {@code null}.
      *
      * @param function the function descriptor of the target function.
+     * @param options  any linker options.
      * @return a downcall method handle. The method handle type is <a href="Linker.html#downcall-method-handles"><em>inferred</em></a>
      * from the provided function descriptor.
      * @throws IllegalArgumentException if the provided function descriptor is not supported by this linker.
+     * @throws IllegalArgumentException if an invalid combination of linker options is given.
      */
-    MethodHandle downcallHandle(FunctionDescriptor function);
+    MethodHandle downcallHandle(FunctionDescriptor function, Option... options);
 
     /**
      * Creates a stub which can be passed to other foreign functions as a function pointer, with the given
@@ -282,4 +287,21 @@ public sealed interface Linker permits AbstractLinker {
      * @return a symbol lookup for symbols in a set of commonly used libraries.
      */
     SymbolLookup defaultLookup();
+
+    /**
+     * A linker option that can be used to indicate additional linking requirements to the linker,
+     * besides what is described by a function descriptor.
+     */
+    sealed interface Option
+            permits LinkerOptions.FirstVariadicArg {
+
+        /**
+         * {@return A linker option used to denote the index of the first variadic argument layout in a
+         *          foreign function call}
+         * @param index the index of the first variadic argument in a downcall handle linkage request.
+         */
+        static Option firstVariadicArg(int index) {
+            return new LinkerOptions.FirstVariadicArg(index);
+        }
+    }
 }

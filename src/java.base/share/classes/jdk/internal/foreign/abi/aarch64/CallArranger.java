@@ -34,6 +34,7 @@ import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
 import jdk.internal.foreign.abi.DowncallLinker;
+import jdk.internal.foreign.abi.LinkerOptions;
 import jdk.internal.foreign.abi.UpcallLinker;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.VMStorage;
@@ -115,6 +116,10 @@ public abstract class CallArranger {
     protected CallArranger() {}
 
     public Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
+        return getBindings(mt, cDesc, forUpcall, LinkerOptions.empty());
+    }
+
+    public Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall, LinkerOptions options) {
         CallingSequenceBuilder csb = new CallingSequenceBuilder(C, forUpcall);
 
         BindingCalculator argCalc = forUpcall ? new BoxBindingCalculator(true) : new UnboxBindingCalculator(true);
@@ -133,7 +138,7 @@ public abstract class CallArranger {
         for (int i = 0; i < mt.parameterCount(); i++) {
             Class<?> carrier = mt.parameterType(i);
             MemoryLayout layout = cDesc.argumentLayouts().get(i);
-            if (varArgsOnStack() && SharedUtils.isVarargsIndex(cDesc, i)) {
+            if (varArgsOnStack() && options.isVarargsIndex(i)) {
                 argCalc.storageCalculator.adjustForVarArgs();
             }
             csb.addArgumentBindings(carrier, layout, argCalc.getBindings(carrier, layout));
@@ -142,8 +147,8 @@ public abstract class CallArranger {
         return new Bindings(csb.build(), returnInMemory);
     }
 
-    public MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc) {
-        Bindings bindings = getBindings(mt, cDesc, false);
+    public MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc, LinkerOptions options) {
+        Bindings bindings = getBindings(mt, cDesc, false, options);
 
         MethodHandle handle = new DowncallLinker(C, bindings.callingSequence).getBoundMethodHandle();
 

@@ -55,7 +55,7 @@ import jdk.internal.javac.PreviewFeature;
  * <p>
  * Passing a segment allocator to an API can be especially useful in circumstances where a client wants to communicate <em>where</em>
  * the results of a certain operation (performed by the API) should be stored, as a memory segment. For instance,
- * {@linkplain Linker#downcallHandle(FunctionDescriptor) downcall method handles} can accept an additional
+ * {@linkplain Linker#downcallHandle(FunctionDescriptor, Linker.Option...) downcall method handles} can accept an additional
  * {@link SegmentAllocator} parameter if the underlying foreign function is known to return a struct by-value. Effectively,
  * the allocator parameter tells the linker runtime where to store the return value of the foreign function.
  */

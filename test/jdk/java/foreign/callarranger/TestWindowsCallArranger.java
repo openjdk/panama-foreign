@@ -34,15 +34,18 @@
  */
 
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.CallingSequence;
+import jdk.internal.foreign.abi.LinkerOptions;
 import jdk.internal.foreign.abi.x64.windows.CallArranger;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodType;
 
+import static java.lang.foreign.Linker.Option.firstVariadicArg;
 import static java.lang.foreign.ValueLayout.ADDRESS;
 import static jdk.internal.foreign.PlatformLayouts.Win64.*;
 import static jdk.internal.foreign.abi.Binding.*;
@@ -187,10 +190,10 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
         MethodType mt = MethodType.methodType(void.class,
                 int.class, double.class, int.class, double.class, double.class);
         FunctionDescriptor fd = FunctionDescriptor.ofVoid(
-                C_INT, C_DOUBLE).asVariadic(C_INT, C_DOUBLE, C_DOUBLE);
+                C_INT, C_DOUBLE, C_INT, C_DOUBLE, C_DOUBLE);
         FunctionDescriptor fdExpected = FunctionDescriptor.ofVoid(
                 ADDRESS, C_INT, C_DOUBLE, C_INT, C_DOUBLE, C_DOUBLE);
-        CallArranger.Bindings bindings = CallArranger.getBindings(mt, fd, false);
+        CallArranger.Bindings bindings = CallArranger.getBindings(mt, fd, false, LinkerOptions.of(firstVariadicArg(2)));
 
         assertFalse(bindings.isInMemoryReturn());
         CallingSequence callingSequence = bindings.callingSequence();

@@ -30,6 +30,7 @@ import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
 import jdk.internal.foreign.abi.DowncallLinker;
+import jdk.internal.foreign.abi.LinkerOptions;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.UpcallLinker;
 import jdk.internal.foreign.abi.VMStorage;
@@ -79,6 +80,10 @@ public class CallArranger {
     }
 
     public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
+        return getBindings(mt, cDesc, forUpcall, LinkerOptions.empty());
+    }
+
+    public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall, LinkerOptions options) {
         class CallingSequenceBuilderHelper {
             final CallingSequenceBuilder csb = new CallingSequenceBuilder(CWindows, forUpcall);
             final BindingCalculator argCalc =
@@ -109,14 +114,14 @@ public class CallArranger {
         }
 
         for (int i = 0; i < mt.parameterCount(); i++) {
-            csb.addArgumentBindings(mt.parameterType(i), cDesc.argumentLayouts().get(i), SharedUtils.isVarargsIndex(cDesc, i));
+            csb.addArgumentBindings(mt.parameterType(i), cDesc.argumentLayouts().get(i), options.isVarargsIndex(i));
         }
 
         return new Bindings(csb.csb.build(), returnInMemory);
     }
 
-    public static MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc) {
-        Bindings bindings = getBindings(mt, cDesc, false);
+    public static MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc, LinkerOptions options) {
+        Bindings bindings = getBindings(mt, cDesc, false, options);
 
         MethodHandle handle = new DowncallLinker(CWindows, bindings.callingSequence).getBoundMethodHandle();
 
