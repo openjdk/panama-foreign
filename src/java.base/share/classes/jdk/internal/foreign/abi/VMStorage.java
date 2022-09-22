@@ -39,11 +39,8 @@ public record VMStorage(byte type,
                         int indexOrOffset,
                         String debugName) {
 
-    public static VMStorage stackStorage(byte type, short size, int byteOffset) {
-        return new VMStorage(type, size, byteOffset, "Stack@" + byteOffset);
+    public VMStorage(byte type, short segmentMaskOrSize, int indexOrOffset) {
+        this(type, segmentMaskOrSize, indexOrOffset, "Stack@" + indexOrOffset);
     }
 
-    public static VMStorage regStorage(byte type, short segmentMask, int index, String debugName) {
-        return new VMStorage(type, segmentMask, index, debugName);
-    }
 }
