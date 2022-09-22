@@ -92,15 +92,8 @@ public abstract class CallArranger {
         r10  // return buffer addr reg
     );
 
-    // record
-    public static class Bindings {
-        public final CallingSequence callingSequence;
-        public final boolean isInMemoryReturn;
-
-        Bindings(CallingSequence callingSequence, boolean isInMemoryReturn) {
-            this.callingSequence = callingSequence;
-            this.isInMemoryReturn = isInMemoryReturn;
-        }
+    public record Bindings(CallingSequence callingSequence,
+                           boolean isInMemoryReturn) {
     }
 
     public static final CallArranger LINUX = new LinuxAArch64CallArranger();
