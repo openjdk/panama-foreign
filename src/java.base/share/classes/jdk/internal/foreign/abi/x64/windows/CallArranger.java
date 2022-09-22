@@ -120,7 +120,7 @@ public class CallArranger {
         }
 
         for (int i = 0; i < mt.parameterCount(); i++) {
-            csb.addArgumentBindings(mt.parameterType(i), cDesc.argumentLayouts().get(i), SharedUtils.isVarargsIndex(options, i));
+            csb.addArgumentBindings(mt.parameterType(i), cDesc.argumentLayouts().get(i), options.isVarargsIndex(i));
         }
 
         return new Bindings(csb.csb.build(), returnInMemory);

@@ -145,7 +145,7 @@ public abstract class CallArranger {
         for (int i = 0; i < mt.parameterCount(); i++) {
             Class<?> carrier = mt.parameterType(i);
             MemoryLayout layout = cDesc.argumentLayouts().get(i);
-            if (varArgsOnStack() && SharedUtils.isVarargsIndex(options, i)) {
+            if (varArgsOnStack() && options.isVarargsIndex(i)) {
                 argCalc.storageCalculator.adjustForVarArgs();
             }
             csb.addArgumentBindings(carrier, layout, argCalc.getBindings(carrier, layout));

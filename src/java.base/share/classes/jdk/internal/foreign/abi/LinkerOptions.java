@@ -54,13 +54,13 @@ public class LinkerOptions {
         return EMPTY;
     }
 
-    public <T extends Linker.Option> T getOption(Class<T> type) {
+    private <T extends Linker.Option> T getOption(Class<T> type) {
         return type.cast(optionsMap.get(type));
     }
 
-    public int firstVarargIndex() {
+    public boolean isVarargsIndex(int argIndex) {
         FirstVariadicArg fva = getOption(FirstVariadicArg.class);
-        return fva == null ? -1 : fva.index();
+        return fva != null && argIndex >= fva.index();
     }
 
     public record FirstVariadicArg(int index) implements Linker.Option { }

@@ -211,12 +211,13 @@ public sealed interface Linker permits AbstractLinker {
      * linker.downcallHandle(function).bindTo(symbol);
      * }
      *
-     * @param symbol the address of the target function.
+     * @param symbol   the address of the target function.
      * @param function the function descriptor of the target function.
-     * @param options linker options.
+     * @param options  any linker options.
      * @return a downcall method handle. The method handle type is <a href="Linker.html#downcall-method-handles"><em>inferred</em></a>
      * @throws IllegalArgumentException if the provided function descriptor is not supported by this linker.
-     * or if the symbol is {@link MemorySegment#NULL}
+     *                                  or if the symbol is {@link MemorySegment#NULL}
+     * @throws IllegalArgumentException if an invalid combination of linker options is given
      */
     default MethodHandle downcallHandle(MemorySegment symbol, FunctionDescriptor function, Option... options) {
         SharedUtils.checkSymbol(symbol);
@@ -237,10 +238,11 @@ public sealed interface Linker permits AbstractLinker {
      * associated with the {@link MemorySegment#NULL} address, or a {@link NullPointerException} if that parameter is {@code null}.
      *
      * @param function the function descriptor of the target function.
-     * @param options  linker options.
+     * @param options  any linker options.
      * @return a downcall method handle. The method handle type is <a href="Linker.html#downcall-method-handles"><em>inferred</em></a>
      * from the provided function descriptor.
      * @throws IllegalArgumentException if the provided function descriptor is not supported by this linker.
+     * @throws IllegalArgumentException if an invalid combination of linker options is given
      */
     MethodHandle downcallHandle(FunctionDescriptor function, Option... options);
 
@@ -287,14 +289,15 @@ public sealed interface Linker permits AbstractLinker {
     SymbolLookup defaultLookup();
 
     /**
-     * Linker options used to steer linking
+     * A linker option that can be used to indicate additional linking requirements to the linker,
+     * besides what is described by a function descriptor.
      */
     sealed interface Option
             permits LinkerOptions.FirstVariadicArg {
 
         /**
          * {@return A linker characteristic used to denote the index of the first variadic argument layout in a
-         * foreign function call}
+         *          foreign function call}
          * @param index the index of the first variadic argument in a downcall handle linkage request.
          */
         static Option firstVariadicArg(int index) {

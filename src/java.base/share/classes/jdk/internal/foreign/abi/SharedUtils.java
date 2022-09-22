@@ -316,10 +316,6 @@ public final class SharedUtils {
         }
     }
 
-    public static boolean isVarargsIndex(LinkerOptions options, int argIndex) {
-        return options.firstVarargIndex() != -1 && argIndex >= options.firstVarargIndex();
-    }
-
     public static NoSuchElementException newVaListNSEE(MemoryLayout layout) {
         return new NoSuchElementException("No such element: " + layout);
     }

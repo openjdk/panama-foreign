@@ -24,26 +24,17 @@
  */
 package jdk.internal.foreign;
 
-import jdk.internal.foreign.abi.LinkerOptions;
-
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.Linker;
+import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.GroupLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodType;
-
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
@@ -165,7 +156,6 @@ public final class FunctionDescriptorImpl implements FunctionDescriptor {
      * <ul>
      *     <li>the two function descriptors have equals return layouts (see {@link MemoryLayout#equals(Object)}), or both have no return layout;</li>
      *     <li>the two function descriptors have argument layouts that are pair-wise {@linkplain MemoryLayout#equals(Object) equal}; and</li>
-     *     <li>the two function descriptors have the same linker options</li>
      * </ul>
      *
      * @param other the object to be compared for equality with this function descriptor.
