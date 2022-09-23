@@ -73,11 +73,6 @@ public final class PaddingLayoutImpl extends AbstractLayout<PaddingLayoutImpl> i
         return true;
     }
 
-    @Override
-    public boolean isPadding() {
-        return true;
-    }
-
     public static PaddingLayout of(long bitSize) {
         return new PaddingLayoutImpl(bitSize);
     }

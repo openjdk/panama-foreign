@@ -184,11 +184,11 @@ public class LayoutPath {
     public MethodHandle sliceHandle() {
         if (strides.length == 0) {
             // trigger checks eagerly
-            Utils.bitsToBytesOrThrow(offset, Utils.bitsToBytesThrowOffset);
+            Utils.bitsToBytesOrThrow(offset, Utils.BITS_TO_BYTES_THROW_OFFSET);
         }
 
         MethodHandle offsetHandle = offsetHandle(); // bit offset
-        offsetHandle = MethodHandles.filterReturnValue(offsetHandle, Utils.MH_bitsToBytesOrThrowForOffset); // byte offset
+        offsetHandle = MethodHandles.filterReturnValue(offsetHandle, Utils.MH_BITS_TO_BYTES_OR_THROW_FOR_OFFSET); // byte offset
 
         MethodHandle sliceHandle = MH_SLICE; // (MS, long, long) -> MS
         sliceHandle = MethodHandles.insertArguments(sliceHandle, 2, layout.byteSize()); // (MS, long) -> MS

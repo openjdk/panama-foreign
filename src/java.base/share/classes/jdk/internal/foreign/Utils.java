@@ -48,10 +48,11 @@ public final class Utils {
     private static final MethodHandle BYTE_TO_BOOL;
     private static final MethodHandle BOOL_TO_BYTE;
     private static final MethodHandle ADDRESS_TO_LONG;
-    private static final MethodHandle LONG_TO_ADDRESS_SAFE, LONG_TO_ADDRESS_UNSAFE;
-    public static final MethodHandle MH_bitsToBytesOrThrowForOffset;
+    private static final MethodHandle LONG_TO_ADDRESS_SAFE;
+    private static final MethodHandle LONG_TO_ADDRESS_UNSAFE;
+    public static final MethodHandle MH_BITS_TO_BYTES_OR_THROW_FOR_OFFSET;
 
-    public static final Supplier<RuntimeException> bitsToBytesThrowOffset
+    public static final Supplier<RuntimeException> BITS_TO_BYTES_THROW_OFFSET
             = () -> new UnsupportedOperationException("Cannot compute byte offset; bit offset is not a multiple of 8");
 
     static {
@@ -67,11 +68,11 @@ public final class Utils {
                     MethodType.methodType(MemorySegment.class, long.class));
             LONG_TO_ADDRESS_UNSAFE = lookup.findStatic(Utils.class, "longToAddressUnsafe",
                     MethodType.methodType(MemorySegment.class, long.class));
-            MH_bitsToBytesOrThrowForOffset = MethodHandles.insertArguments(
+            MH_BITS_TO_BYTES_OR_THROW_FOR_OFFSET = MethodHandles.insertArguments(
                     lookup.findStatic(Utils.class, "bitsToBytesOrThrow",
                             MethodType.methodType(long.class, long.class, Supplier.class)),
                     1,
-                    bitsToBytesThrowOffset);
+                    BITS_TO_BYTES_THROW_OFFSET);
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
