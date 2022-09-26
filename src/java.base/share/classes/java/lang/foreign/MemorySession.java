@@ -47,7 +47,7 @@ import jdk.internal.javac.PreviewFeature;
  * When a memory session is closed, the {@linkplain #addCloseAction(Runnable) close actions}
  * associated with that session are executed (in unspecified order). For instance, closing the memory session associated with
  * one or more {@linkplain MemorySession#allocate(long, long) native memory segments} results in releasing
- * the off-heap memory associated with said segments.
+ * the off-heap memory backing said segments.
  * <p>
  * The {@linkplain #global() global session} is a memory session that cannot be closed.
  * As a result, resources associated with the global session are never released. Examples of resources associated with
@@ -222,7 +222,7 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
      * A client is responsible for ensuring that this memory session is closed when the
      * segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
-     * The off-heap region of memory associated with the returned native memory segment is initialized to zero.
+     * The off-heap region of memory backing the returned native memory segment is initialized to zero.
      *
      * @param byteSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @param byteAlignment the alignment constraint (in bytes) of the off-heap region of memory backing the native memory segment.
