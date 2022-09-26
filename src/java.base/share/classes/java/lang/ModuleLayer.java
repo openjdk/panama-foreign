@@ -300,7 +300,7 @@ public final class ModuleLayer {
             return this;
         }
 
-        /***
+        /**
          * Enables native access for a module in the layer if the caller's module
          * has native access.
          *
