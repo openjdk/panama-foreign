@@ -315,10 +315,11 @@ public final class ModuleLayer {
          *
          * @return This controller
          *
-         * @throws IllegalCallerException if access to this method occurs from a module {@code M}
-         *         and the command line option {@code --enable-native-access} is specified, but
-         *         does not mention the module name {@code M}, or {@code ALL-UNNAMED} in case
-         *         {@code M} is an unnamed module.
+         * @throws IllegalArgumentException
+         *         If {@code target} is not in the module layer
+         *
+         * @throws IllegalCallerException
+         *         If the caller is in a module that does not have native access enabled
          */
          @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
          @CallerSensitive
