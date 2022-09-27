@@ -363,9 +363,9 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * into the lifetime intended for said region of memory by the foreign function that allocated it. The global memory
  * session ensures that the obtained segment can be passed, opaquely, to other pointer-accepting foreign functions.
  * <p>
- * To access native zero-length memory segments, clients have two options. First, they can
- * {@linkplain java.lang.foreign.MemorySegment#ofAddress(long, long, MemorySession) obtain}
- * a <em>new</em> native segment <em>unsafely</em>, with new spatial and temporal bounds, as follows:
+ * To access native zero-length memory segments, clients have two options, both of which are <em>unsafe</em>. Clients
+ * can {@linkplain java.lang.foreign.MemorySegment#ofAddress(long, long, MemorySession) obtain}
+ * a <em>new</em> native segment, with new spatial and temporal bounds, as follows:
  *
  * {@snippet lang = java:
  * MemorySession session = ... // initialize a memory session
@@ -374,10 +374,10 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * int x = segment.get(ValueLayout.JAVA_INT, 0); //ok
  *}
  *
- * Alternatively, clients can obtain, <em>unsafely</em>, an {@linkplain java.lang.foreign.ValueLayout.OfAddress#asUnbounded() unbounded}
+ * Alternatively, clients can obtain an {@linkplain java.lang.foreign.ValueLayout.OfAddress#asUnbounded() unbounded}
  * address value layout. When an access operation, or a function descriptor that is passed to a downcall method handle,
- * uses one or more unbounded address value layouts, the API will wrap any corresponding raw addresses with native segments
- * with maximal size (e.g. {@linkplain java.lang.Long#MAX_VALUE}). As such, these segments might be accessed directly, as follows:
+ * uses an unbounded address value layouts, the runtime will wrap any corresponding raw addresses with native segments
+ * with <em>maximal</em> size (i.e. {@linkplain java.lang.Long#MAX_VALUE}). As such, these segments can be accessed directly, as follows:
  *
  * {@snippet lang = java:
  * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS.asUnbounded(), 0); // wrap address into segment (size = Long.MAX_VALUE)
@@ -392,7 +392,7 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * wrapping a native pointer. For instance, if such pointer points to a C struct, the client might prefer to resize the
  * segment unsafely, to match the size of the struct (so that out-of-bounds access will be detected by the API).
  * In other instances, however, there will be no, or little information as to what spatial and/or temporal bounds should
- * be associated with a given native pointer. In these cases using an unbounded address layout might be preferrable.
+ * be associated with a given native pointer. In these cases using an unbounded address layout might be preferable.
  *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
