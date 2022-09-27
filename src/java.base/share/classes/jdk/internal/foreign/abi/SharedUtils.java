@@ -94,58 +94,8 @@ public final class SharedUtils {
         throw new IllegalStateException("Cannot get here");
     };
 
-    /**
-     * Align the specified type from a given address
-     * @return The address the data should be at based on alignment requirement
-     */
-    public static long align(MemoryLayout t, boolean isVar, long addr) {
-        return alignUp(addr, alignment(t, isVar));
-    }
-
     public static long alignUp(long addr, long alignment) {
         return ((addr - 1) | (alignment - 1)) + 1;
-    }
-
-    /**
-     * The alignment requirement for a given type
-     * @param isVar indicate if the type is a standalone variable. This change how
-     * array is aligned. for example.
-     */
-    public static long alignment(MemoryLayout t, boolean isVar) {
-        if (t instanceof ValueLayout) {
-            return alignmentOfScalar((ValueLayout) t);
-        } else if (t instanceof SequenceLayout) {
-            // when array is used alone
-            return alignmentOfArray((SequenceLayout) t, isVar);
-        } else if (t instanceof GroupLayout) {
-            return alignmentOfContainer((GroupLayout) t);
-        } else if (t instanceof PaddingLayout) {
-            return 1;
-        } else {
-            throw new IllegalArgumentException("Invalid type: " + t);
-        }
-    }
-
-    private static long alignmentOfScalar(ValueLayout st) {
-        return st.byteSize();
-    }
-
-    private static long alignmentOfArray(SequenceLayout ar, boolean isVar) {
-        if (ar.elementCount() == 0) {
-            // VLA or incomplete
-            return 16;
-        } else if ((ar.byteSize()) >= 16 && isVar) {
-            return 16;
-        } else {
-            // align as element type
-            MemoryLayout elementType = ar.elementLayout();
-            return alignment(elementType, false);
-        }
-    }
-
-    private static long alignmentOfContainer(GroupLayout ct) {
-        // Most strict member
-        return ct.memberLayouts().stream().mapToLong(t -> alignment(t, false)).max().orElse(1);
     }
 
     /**
@@ -364,11 +314,6 @@ public final class SharedUtils {
             throw new IllegalArgumentException(
                     String.format("Invalid operand type: %s. %s expected", actualType, expectedType));
         }
-    }
-
-    public static boolean isVarargsIndex(FunctionDescriptor descriptor, int argIndex) {
-        int firstPos = descriptor.firstVariadicArgumentIndex();
-        return firstPos != -1 && argIndex >= firstPos;
     }
 
     public static NoSuchElementException newVaListNSEE(MemoryLayout layout) {

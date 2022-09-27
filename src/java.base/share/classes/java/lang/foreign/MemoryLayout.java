@@ -312,7 +312,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * in {@code elements} is {@code null}.
      */
     default long byteOffset(PathElement... elements) {
-        return Utils.bitsToBytesOrThrow(bitOffset(elements), Utils.bitsToBytesThrowOffset);
+        return Utils.bitsToBytesOrThrow(bitOffset(elements), Utils.BITS_TO_BYTES_THROW_OFFSET);
     }
 
     /**
@@ -348,7 +348,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      */
     default MethodHandle byteOffsetHandle(PathElement... elements) {
         MethodHandle mh = bitOffsetHandle(elements);
-        mh = MethodHandles.filterReturnValue(mh, Utils.MH_bitsToBytesOrThrowForOffset);
+        mh = MethodHandles.filterReturnValue(mh, Utils.MH_BITS_TO_BYTES_OR_THROW_FOR_OFFSET);
         return mh;
     }
 

@@ -89,10 +89,11 @@ public class TestVarArgs extends CallGeneratorHelper {
             argLayouts.add(C_POINTER); // call info
             argLayouts.add(C_INT); // size
 
-            FunctionDescriptor desc = FunctionDescriptor.ofVoid(argLayouts.toArray(MemoryLayout[]::new))
-                    .asVariadic(args.stream().map(a -> a.layout).toArray(MemoryLayout[]::new));
+            FunctionDescriptor baseDesc = FunctionDescriptor.ofVoid(argLayouts.toArray(MemoryLayout[]::new));
+            Linker.Option varargIndex = Linker.Option.firstVariadicArg(baseDesc.argumentLayouts().size());
+            FunctionDescriptor desc = baseDesc.appendArgumentLayouts(args.stream().map(a -> a.layout).toArray(MemoryLayout[]::new));
 
-            MethodHandle downcallHandle = LINKER.downcallHandle(VARARGS_ADDR, desc);
+            MethodHandle downcallHandle = LINKER.downcallHandle(VARARGS_ADDR, desc, varargIndex);
 
             List<Object> argValues = new ArrayList<>();
             argValues.add(callInfoPtr); // call info

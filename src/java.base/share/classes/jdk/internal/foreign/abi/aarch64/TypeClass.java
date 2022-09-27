@@ -28,7 +28,6 @@ package jdk.internal.foreign.abi.aarch64;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.ValueLayout;
 
 public enum TypeClass {

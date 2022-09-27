@@ -1311,10 +1311,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
         Utils.checkElementAlignment(srcElementLayout, "Source layout alignment greater than its size");
         Utils.checkElementAlignment(dstElementLayout, "Destination layout alignment greater than its size");
         if (!srcImpl.isAlignedForElement(srcOffset, srcElementLayout)) {
-            throw new IllegalArgumentException("Source segment incompatible with alignment constraint");
+            throw new IllegalArgumentException("Source segment incompatible with alignment constraints");
         }
         if (!dstImpl.isAlignedForElement(dstOffset, dstElementLayout)) {
-            throw new IllegalArgumentException("Destination segment incompatible with alignment constraint");
+            throw new IllegalArgumentException("Destination segment incompatible with alignment constraints");
         }
         long size = elementCount * srcElementLayout.byteSize();
         srcImpl.checkAccess(srcOffset, size, true);
@@ -2108,28 +2108,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         Objects.requireNonNull(srcLayout);
-        long baseAndScale = getBaseAndScale(dstArray.getClass());
-        if (dstArray.getClass().componentType() != srcLayout.carrier()) {
-            throw new IllegalArgumentException("Incompatible value layout: " + srcLayout);
-        }
-        int dstBase = (int)baseAndScale;
-        long dstWidth = (int)(baseAndScale >> 32); // Use long arithmetics below
-        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        Utils.checkElementAlignment(srcLayout, "Source layout alignment greater than its size");
-        if (!srcImpl.isAlignedForElement(srcOffset, srcLayout)) {
-            throw new IllegalArgumentException("Source segment incompatible with alignment constraint");
-        }
-        srcImpl.checkAccess(srcOffset, elementCount * dstWidth, true);
-        Objects.checkFromIndexSize(dstIndex, elementCount, Array.getLength(dstArray));
-        if (dstWidth == 1 || srcLayout.order() == ByteOrder.nativeOrder()) {
-            ScopedMemoryAccess.getScopedMemoryAccess().copyMemory(srcImpl.sessionImpl(), null,
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
-                    dstArray, dstBase + (dstIndex * dstWidth), elementCount * dstWidth);
-        } else {
-            ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(srcImpl.sessionImpl(), null,
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
-                    dstArray, dstBase + (dstIndex * dstWidth), elementCount * dstWidth, dstWidth);
-        }
+
+        AbstractMemorySegmentImpl.copy(srcSegment, srcLayout, srcOffset,
+                dstArray, dstIndex,
+                elementCount);
     }
 
     /**
@@ -2160,48 +2142,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
         Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
         Objects.requireNonNull(dstLayout);
-        long baseAndScale = getBaseAndScale(srcArray.getClass());
-        if (srcArray.getClass().componentType() != dstLayout.carrier()) {
-            throw new IllegalArgumentException("Incompatible value layout: " + dstLayout);
-        }
-        int srcBase = (int)baseAndScale;
-        long srcWidth = (int)(baseAndScale >> 32); // Use long arithmetics below
-        Objects.checkFromIndexSize(srcIndex, elementCount, Array.getLength(srcArray));
-        AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
-        Utils.checkElementAlignment(dstLayout, "Destination layout alignment greater than its size");
-        if (!destImpl.isAlignedForElement(dstOffset, dstLayout)) {
-            throw new IllegalArgumentException("Destination segment incompatible with alignment constraint");
-        }
-        destImpl.checkAccess(dstOffset, elementCount * srcWidth, false);
-        if (srcWidth == 1 || dstLayout.order() == ByteOrder.nativeOrder()) {
-            ScopedMemoryAccess.getScopedMemoryAccess().copyMemory(null, destImpl.sessionImpl(),
-                    srcArray, srcBase + (srcIndex * srcWidth),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount * srcWidth);
-        } else {
-            ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(null, destImpl.sessionImpl(),
-                    srcArray, srcBase + (srcIndex * srcWidth),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount * srcWidth, srcWidth);
-        }
-    }
 
-    private static long getBaseAndScale(Class<?> arrayType) {
-        if (arrayType.equals(byte[].class)) {
-            return (long)Unsafe.ARRAY_BYTE_BASE_OFFSET | ((long)Unsafe.ARRAY_BYTE_INDEX_SCALE << 32);
-        } else if (arrayType.equals(char[].class)) {
-            return (long)Unsafe.ARRAY_CHAR_BASE_OFFSET | ((long)Unsafe.ARRAY_CHAR_INDEX_SCALE << 32);
-        } else if (arrayType.equals(short[].class)) {
-            return (long)Unsafe.ARRAY_SHORT_BASE_OFFSET | ((long)Unsafe.ARRAY_SHORT_INDEX_SCALE << 32);
-        } else if (arrayType.equals(int[].class)) {
-            return (long)Unsafe.ARRAY_INT_BASE_OFFSET | ((long) Unsafe.ARRAY_INT_INDEX_SCALE << 32);
-        } else if (arrayType.equals(float[].class)) {
-            return (long)Unsafe.ARRAY_FLOAT_BASE_OFFSET | ((long)Unsafe.ARRAY_FLOAT_INDEX_SCALE << 32);
-        } else if (arrayType.equals(long[].class)) {
-            return (long)Unsafe.ARRAY_LONG_BASE_OFFSET | ((long)Unsafe.ARRAY_LONG_INDEX_SCALE << 32);
-        } else if (arrayType.equals(double[].class)) {
-            return (long)Unsafe.ARRAY_DOUBLE_BASE_OFFSET | ((long)Unsafe.ARRAY_DOUBLE_INDEX_SCALE << 32);
-        } else {
-            throw new IllegalArgumentException("Not a supported array class: " + arrayType.getSimpleName());
-        }
+        AbstractMemorySegmentImpl.copy(srcArray, srcIndex,
+                dstSegment, dstLayout, dstOffset,
+                elementCount);
     }
 
     /**
@@ -2242,39 +2186,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     static long mismatch(MemorySegment srcSegment, long srcFromOffset, long srcToOffset,
                          MemorySegment dstSegment, long dstFromOffset, long dstToOffset) {
-        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)Objects.requireNonNull(srcSegment);
-        AbstractMemorySegmentImpl dstImpl = (AbstractMemorySegmentImpl)Objects.requireNonNull(dstSegment);
-        long srcBytes = srcToOffset - srcFromOffset;
-        long dstBytes = dstToOffset - dstFromOffset;
-        srcImpl.checkAccess(srcFromOffset, srcBytes, true);
-        dstImpl.checkAccess(dstFromOffset, dstBytes, true);
-        if (dstImpl == srcImpl) {
-            srcImpl.checkValidState();
-            return -1;
-        }
-
-        long bytes = Math.min(srcBytes, dstBytes);
-        long i = 0;
-        if (bytes > 7) {
-            if (srcImpl.get(JAVA_BYTE, srcFromOffset) != dstImpl.get(JAVA_BYTE, dstFromOffset)) {
-                return 0;
-            }
-            i = AbstractMemorySegmentImpl.vectorizedMismatchLargeForBytes(srcImpl.sessionImpl(), dstImpl.sessionImpl(),
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcFromOffset,
-                    dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstFromOffset,
-                    bytes);
-            if (i >= 0) {
-                return i;
-            }
-            long remaining = ~i;
-            assert remaining < 8 : "remaining greater than 7: " + remaining;
-            i = bytes - remaining;
-        }
-        for (; i < bytes; i++) {
-            if (srcImpl.get(JAVA_BYTE, srcFromOffset + i) != dstImpl.get(JAVA_BYTE, dstFromOffset + i)) {
-                return i;
-            }
-        }
-        return srcBytes != dstBytes ? bytes : -1;
+        return AbstractMemorySegmentImpl.mismatch(srcSegment, srcFromOffset, srcToOffset,
+                dstSegment, dstFromOffset, dstToOffset);
     }
 }

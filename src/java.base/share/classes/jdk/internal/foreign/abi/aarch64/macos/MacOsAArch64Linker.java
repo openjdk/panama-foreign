@@ -26,6 +26,7 @@
 package jdk.internal.foreign.abi.aarch64.macos;
 
 import jdk.internal.foreign.abi.AbstractLinker;
+import jdk.internal.foreign.abi.LinkerOptions;
 import jdk.internal.foreign.abi.aarch64.CallArranger;
 
 import java.lang.foreign.FunctionDescriptor;
@@ -55,8 +56,8 @@ public final class MacOsAArch64Linker extends AbstractLinker {
     }
 
     @Override
-    protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function) {
-        return CallArranger.MACOS.arrangeDowncall(inferredMethodType, function);
+    protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function, LinkerOptions options) {
+        return CallArranger.MACOS.arrangeDowncall(inferredMethodType, function, options);
     }
 
     @Override

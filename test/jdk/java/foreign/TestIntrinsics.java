@@ -43,6 +43,7 @@ import java.util.List;
 import java.lang.foreign.MemoryLayout;
 import org.testng.annotations.*;
 
+import static java.lang.foreign.Linker.Option.firstVariadicArg;
 import static java.lang.invoke.MethodType.methodType;
 import static java.lang.foreign.ValueLayout.JAVA_CHAR;
 import static org.testng.Assert.assertEquals;
@@ -106,8 +107,9 @@ public class TestIntrinsics extends NativeTestHelper {
 
         { // identity_va
             MemorySegment ma = findNativeOrThrow("identity_va");
-            FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT).asVariadic(C_DOUBLE, C_INT, C_FLOAT, C_LONG_LONG);
-            tests.add(abi.downcallHandle(ma, fd), 1, 1, 10D, 2, 3F, 4L);
+            FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT,
+                                                                 C_DOUBLE, C_INT, C_FLOAT, C_LONG_LONG);
+            tests.add(abi.downcallHandle(ma, fd, firstVariadicArg(1)), 1, 1, 10D, 2, 3F, 4L);
         }
 
         { // high_arity

@@ -416,7 +416,8 @@ public class Examples {
     public static void printf() throws Throwable {
         MethodHandle printf = LINKER.downcallHandle(
                 STDLIB.lookup("printf").get(),
-                FunctionDescriptor.of(JAVA_INT, ADDRESS).asVariadic(JAVA_INT, JAVA_INT, JAVA_INT)
+                FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT),
+                Linker.Option.firstVariadicArg(1) // first int is variadic
         );
         try (MemorySession session = MemorySession.openConfined()) {
             MemorySegment s = session.allocateUtf8String("%d plus %d equals %d\n");

@@ -38,7 +38,7 @@ import java.lang.foreign.ValueLayout;
 import java.util.Objects;
 import java.util.Optional;
 
-abstract sealed class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout>
+public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout>
         permits AbstractGroupLayout, PaddingLayoutImpl, SequenceLayoutImpl, ValueLayouts.AbstractValueLayout {
 
     private final long bitSize;
@@ -86,10 +86,6 @@ abstract sealed class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout>
 
     public boolean hasNaturalAlignment() {
         return bitSize == bitAlignment;
-    }
-
-    public boolean isPadding() {
-        return false;
     }
 
     // the following methods have to copy the same Javadoc as in MemoryLayout, or subclasses will just show

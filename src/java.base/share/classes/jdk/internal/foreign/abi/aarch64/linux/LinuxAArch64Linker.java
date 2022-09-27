@@ -26,6 +26,7 @@
 package jdk.internal.foreign.abi.aarch64.linux;
 
 import jdk.internal.foreign.abi.AbstractLinker;
+import jdk.internal.foreign.abi.LinkerOptions;
 import jdk.internal.foreign.abi.aarch64.CallArranger;
 
 import java.lang.foreign.MemorySession;
@@ -55,8 +56,8 @@ public final class LinuxAArch64Linker extends AbstractLinker {
     }
 
     @Override
-    protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function) {
-        return CallArranger.LINUX.arrangeDowncall(inferredMethodType, function);
+    protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function, LinkerOptions options) {
+        return CallArranger.LINUX.arrangeDowncall(inferredMethodType, function, options);
     }
 
     @Override

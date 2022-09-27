@@ -25,27 +25,23 @@
 package jdk.internal.foreign;
 
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.GroupLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodType;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
 /**
  * @implSpec This class and its subclasses are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  */
-public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
+public final class FunctionDescriptorImpl implements FunctionDescriptor {
 
     private final MemoryLayout resLayout; // Nullable
     private final List<MemoryLayout> argLayouts;
@@ -67,31 +63,6 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
      */
     public final List<MemoryLayout> argumentLayouts() {
         return argLayouts;
-    }
-
-    /**
-     * Creates a specialized variadic function descriptor, by appending given variadic layouts to this
-     * function descriptor argument layouts. The resulting function descriptor can report the position
-     * of the {@linkplain #firstVariadicArgumentIndex() first variadic argument}, and cannot be altered
-     * in any way: for instance, calling {@link #changeReturnLayout(MemoryLayout)} on the resulting descriptor
-     * will throw an {@link UnsupportedOperationException}.
-     *
-     * @param variadicLayouts the variadic argument layouts to be appended to this descriptor argument layouts.
-     * @return a variadic function descriptor, or this descriptor if {@code variadicLayouts.length == 0}.
-     */
-    public final FunctionDescriptorImpl asVariadic(MemoryLayout... variadicLayouts) {
-        // Null checks are implicit in the constructor of VariadicFunction
-        return variadicLayouts.length == 0 ? this : new VariadicFunctionDescriptor(this, variadicLayouts);
-    }
-
-    /**
-     * The index of the first variadic argument layout (where defined).
-     *
-     * @return The index of the first variadic argument layout, or {@code -1} if this is not a
-     * {@linkplain #asVariadic(MemoryLayout...) variadic} layout.
-     */
-    public int firstVariadicArgumentIndex() {
-        return -1;
     }
 
     /**
@@ -172,9 +143,7 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
     @Override
     public final String toString() {
         return String.format("(%s)%s",
-                IntStream.range(0, argLayouts.size())
-                        .mapToObj(i -> (i == firstVariadicArgumentIndex() ?
-                                "..." : "") + argLayouts.get(i))
+                argLayouts.stream().map(Object::toString)
                         .collect(Collectors.joining()),
                 returnLayout()
                         .map(Object::toString)
@@ -187,7 +156,6 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
      * <ul>
      *     <li>the two function descriptors have equals return layouts (see {@link MemoryLayout#equals(Object)}), or both have no return layout;</li>
      *     <li>the two function descriptors have argument layouts that are pair-wise {@linkplain MemoryLayout#equals(Object) equal}; and</li>
-     *     <li>the two function descriptors have the same leading {@linkplain #firstVariadicArgumentIndex() variadic argument index}</li>
      * </ul>
      *
      * @param other the object to be compared for equality with this function descriptor.
@@ -197,8 +165,7 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
     public final boolean equals(Object other) {
         return other instanceof FunctionDescriptorImpl f &&
                 Objects.equals(resLayout, f.resLayout) &&
-                Objects.equals(argLayouts, f.argLayouts) &&
-                firstVariadicArgumentIndex() == f.firstVariadicArgumentIndex();
+                Objects.equals(argLayouts, f.argLayouts);
     }
 
     /**
@@ -206,7 +173,7 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
      */
     @Override
     public final int hashCode() {
-        return Objects.hash(argLayouts, resLayout, firstVariadicArgumentIndex());
+        return Objects.hash(argLayouts, resLayout);
     }
 
     public static FunctionDescriptor of(MemoryLayout resLayout, List<MemoryLayout> argLayouts) {
@@ -215,49 +182,5 @@ public sealed class FunctionDescriptorImpl implements FunctionDescriptor {
 
     public static FunctionDescriptor ofVoid(List<MemoryLayout> argLayouts) {
         return new FunctionDescriptorImpl(null, argLayouts);
-    }
-
-    static final class VariadicFunctionDescriptor extends FunctionDescriptorImpl {
-
-        private final int firstVariadicIndex;
-
-        /**
-         * Constructor.
-         *
-         * @param descriptor the original functional descriptor
-         * @param argLayouts the memory layouts to apply
-         * @throws NullPointerException if any of the provided parameters or array elements are {@code null}
-         */
-        VariadicFunctionDescriptor(FunctionDescriptorImpl descriptor, MemoryLayout... argLayouts) {
-            super(descriptor.returnLayout().orElse(null),
-                    Stream.concat(descriptor.argumentLayouts().stream(), Arrays.stream(argLayouts)
-                            .map(Objects::requireNonNull))
-                            .toList());
-            this.firstVariadicIndex = descriptor.argumentLayouts().size();
-        }
-
-        @Override
-        public int firstVariadicArgumentIndex() {
-            return firstVariadicIndex;
-        }
-
-        @Override
-        public FunctionDescriptorImpl insertArgumentLayouts(int index, MemoryLayout... addedLayouts) {
-            throw newUnsupportedOperationException();
-        }
-
-        @Override
-        public FunctionDescriptorImpl changeReturnLayout(MemoryLayout newReturn) {
-            throw newUnsupportedOperationException();
-        }
-
-        @Override
-        public FunctionDescriptorImpl dropReturnLayout() {
-            throw newUnsupportedOperationException();
-        }
-
-        private UnsupportedOperationException newUnsupportedOperationException() {
-            return new UnsupportedOperationException("Method not supported by " + VariadicFunctionDescriptor.class.getSimpleName());
-        }
     }
 }

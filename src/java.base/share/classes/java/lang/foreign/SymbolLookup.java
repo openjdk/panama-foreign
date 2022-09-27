@@ -51,7 +51,7 @@ import java.util.function.BiFunction;
  * The address of a symbol is modelled as a zero-length {@linkplain MemorySegment memory segment}. The segment can be used in different ways:
  * <ul>
  *     <li>It can be passed to a {@link Linker} to create a downcall method handle, which can then be used to call the foreign function at the segment's address.</li>
- *     <li>It can be passed to an existing {@linkplain Linker#downcallHandle(FunctionDescriptor) downcall method handle}, as an argument to the underlying foreign function.</li>
+ *     <li>It can be passed to an existing {@linkplain Linker#downcallHandle(FunctionDescriptor, Linker.Option...) downcall method handle}, as an argument to the underlying foreign function.</li>
  *     <li>It can be {@linkplain MemorySegment#set(ValueLayout.OfAddress, long, MemorySegment) stored} inside another memory segment.</li>
  *     <li>It can be used to access the region of memory backing a global variable (this might require
  *     {@link MemorySegment#ofAddress(long, long, MemorySession) resizing} the segment first).</li>

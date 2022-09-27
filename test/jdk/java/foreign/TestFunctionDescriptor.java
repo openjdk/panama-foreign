@@ -100,11 +100,7 @@ public class TestFunctionDescriptor extends NativeTestHelper {
     @Test
     public void testEquals() {
         FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT);
-        FunctionDescriptor fd_va1 = FunctionDescriptor.of(C_INT).asVariadic(C_INT, C_INT);
-        FunctionDescriptor fd_va2 = FunctionDescriptor.of(C_INT, C_INT).asVariadic(C_INT);
         assertEquals(fd, fd);
-        assertNotEquals(fd, fd_va1);
-        assertNotEquals(fd, fd_va2);
     }
 
     @Test
