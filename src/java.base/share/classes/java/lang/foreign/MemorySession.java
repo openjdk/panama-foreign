@@ -47,7 +47,7 @@ import jdk.internal.javac.PreviewFeature;
  * When a memory session is closed, the {@linkplain #addCloseAction(Runnable) close actions}
  * associated with that session are executed (in unspecified order). For instance, closing the memory session associated with
  * one or more {@linkplain MemorySession#allocate(long, long) native memory segments} results in releasing
- * the off-heap memory associated with said segments.
+ * the off-heap memory backing said segments.
  * <p>
  * The {@linkplain #global() global session} is a memory session that cannot be closed.
  * As a result, resources associated with the global session are never released. Examples of resources associated with
@@ -215,14 +215,17 @@ public sealed interface MemorySession extends AutoCloseable, SegmentAllocator pe
 
      /**
      * Creates a native memory segment with the given size (in bytes), alignment constraint (in bytes) associated with
-      * this memory session.
+     * this memory session. The {@link MemorySegment#address()} of the returned memory segment is the starting address of
+     * the newly allocated off-heap memory region backing the segment. Moreover, the {@linkplain MemorySegment#address() address}
+     * of the returned segment will be aligned according the provided alignment constraint.
+     * <p>
      * A client is responsible for ensuring that this memory session is closed when the
      * segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
-     * The off-heap memory associated with the returned native memory segment is initialized to zero.
+     * The off-heap region of memory backing the returned native memory segment is initialized to zero.
      *
      * @param byteSize the size (in bytes) of the off-heap memory block backing the native memory segment.
-     * @param byteAlignment the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param byteAlignment the alignment constraint (in bytes) of the off-heap region of memory backing the native memory segment.
      * @return a new native memory segment.
      * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
      * is not a power of 2.

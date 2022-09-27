@@ -31,15 +31,15 @@
  *
  * <p>
  * The main abstraction introduced to support foreign memory access is {@link java.lang.foreign.MemorySegment}, which
- * models a contiguous memory region, residing either inside or outside the Java heap. The contents of a memory
+ * models a contiguous region of memory, residing either inside or outside the Java heap. The contents of a memory
  * segment can be described using a {@link java.lang.foreign.MemoryLayout memory layout}, which provides
  * basic operations to query sizes, offsets and alignment constraints. Memory layouts also provide
- * an alternate, more abstract way, to <a href=MemorySegment.html#segment-deref>dereference memory segments</a>
+ * an alternate, more abstract way, to <a href=MemorySegment.html#segment-deref>access memory segments</a>
  * using {@linkplain java.lang.foreign.MemoryLayout#varHandle(java.lang.foreign.MemoryLayout.PathElement...) access var handles},
  * which can be computed using <a href="MemoryLayout.html#layout-paths"><em>layout paths</em></a>.
  *
- * For example, to allocate an off-heap memory region big enough to hold 10 values of the primitive type {@code int}, and fill it with values
- * ranging from {@code 0} to {@code 9}, we can use the following code:
+ * For example, to allocate an off-heap region of memory big enough to hold 10 values of the primitive type {@code int},
+ * and fill it with values ranging from {@code 0} to {@code 9}, we can use the following code:
  *
  * {@snippet lang=java :
  * MemorySegment segment = MemorySegment.allocateNative(10 * 4);
@@ -50,15 +50,15 @@
  *
  * This code creates a <em>native</em> memory segment, that is, a memory segment backed by
  * off-heap memory; the size of the segment is 40 bytes, enough to store 10 values of the primitive type {@code int}.
- * The off-heap memory associated with the native memory segment will be released when the segment becomes
+ * The off-heap memory backing the native segment will be released when the segment becomes
  * <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>; this is similar to what happens
  * with direct buffers created via {@link java.nio.ByteBuffer#allocateDirect(int)}. It is also possible to manage
  * the lifecycle of allocated native segments more directly, as shown in a later section.
  * <p>
  * Inside a loop, we then initialize the contents of the memory segment; note how the
- * {@linkplain java.lang.foreign.MemorySegment#setAtIndex(ValueLayout.OfInt, long, int) dereference method}
- * accepts a {@linkplain java.lang.foreign.ValueLayout value layout}, which specifies the size, alignment constraints,
- * byte order as well as the Java type ({@code int}, in this case) associated with the dereference operation. More specifically,
+ * {@linkplain java.lang.foreign.MemorySegment#setAtIndex(ValueLayout.OfInt, long, int) access method}
+ * accepts a {@linkplain java.lang.foreign.ValueLayout value layout}, which specifies the size, alignment constraint,
+ * byte order as well as the Java type ({@code int}, in this case) associated with the access operation. More specifically,
  * if we view the memory segment as a set of 10 adjacent slots, {@code s[i]}, where {@code 0 <= i < 10},
  * where the size of each slot is exactly 4 bytes, the initialization logic above will set each slot
  * so that {@code s[i] = i}, again where {@code 0 <= i < 10}.
@@ -69,8 +69,8 @@
  * often crucial that the resources associated with a memory segment are released when the segment is no longer in use,
  * and in a timely fashion. For this reason, there might be cases where waiting for the garbage collector to determine that a segment
  * is <a href="../../../java/lang/ref/package.html#reachability">unreachable</a> is not optimal.
- * Clients that operate under these assumptions might want to programmatically release the memory associated
- * with a memory segment. This can be done, using the {@link java.lang.foreign.MemorySession} abstraction, as shown below:
+ * Clients that operate under these assumptions might want to programmatically release the memory backing a memory segment.
+ * This can be done, using the {@link java.lang.foreign.MemorySession} abstraction, as shown below:
  *
  * {@snippet lang=java :
  * try (MemorySession session = MemorySession.openConfined()) {
@@ -90,14 +90,14 @@
  *
  * This API provides strong safety guarantees when it comes to memory access. First, when dereferencing a memory segment,
  * the access coordinates are validated (upon access), to make sure that access does not occur at any address which resides
- * <em>outside</em> the boundaries of the memory segment used by the dereference operation. We call this guarantee <em>spatial safety</em>;
+ * <em>outside</em> the boundaries of the memory segment used by the access operation. We call this guarantee <em>spatial safety</em>;
  * in other words, access to memory segments is bounds-checked, in the same way as array access is, as described in
  * Section {@jls 15.10.4} of <cite>The Java Language Specification</cite>.
  * <p>
  * Since memory segments can be closed (see above), segments are also validated (upon access) to make sure that
  * the memory session associated with the segment being accessed has not been closed prematurely.
  * We call this guarantee <em>temporal safety</em>. Together, spatial and temporal safety ensure that each memory access
- * operation either succeeds - and accesses a valid memory location - or fails.
+ * operation either succeeds - and accesses a valid location of the region of memory backing the memory segment - or fails.
  *
  * <h2 id="ffa">Foreign function access</h2>
  * The key abstractions introduced to support foreign function access are {@link java.lang.foreign.SymbolLookup},
@@ -139,48 +139,6 @@
  * {@linkplain java.lang.foreign.MemorySegment#setUtf8String(long, java.lang.String) into} zero-terminated, UTF-8 strings and
  * {@linkplain java.lang.foreign.MemorySegment#getUtf8String(long) back}, as demonstrated in the above example.
  *
- * <h3 id="foreign-segments">Foreign memory segments</h3>
- *
- * When a memory segment is created from Java code, the segment properties (spatial bounds, temporal bounds and confinement)
- * are fully known at segment creation. But when interacting with foreign functions, clients will often receive memory segments
- * that wrap <em>raw</em> foreign addresses. We call these segments <em>foreign</em> memory segments.
- * <p>
- * Foreign memory segments are typically modelled using zero-length memory segments backed by the
- * {@linkplain java.lang.foreign.MemorySession#global() global} memory session. As such, attempts to dereference
- * foreign memory segments will fail with {@link java.lang.IndexOutOfBoundsException}. This is a crucial safety feature:
- * raw foreign addresses are not associated with spatial bounds. For example, the C type {@code char*} can refer to a single {@code char} value,
- * or an array of {@code char} values, of given size. Nor do said addresses have any notion of temporal bounds or thread-confinement.
- * <p>
- * To dereference foreign memory segments, clients have two options. First, they can
- * {@linkplain java.lang.foreign.MemorySegment#ofAddress(long, long, MemorySession) create}
- * a new native memory segment <em>unsafely</em>. This allows the client to inject extra knowledge about spatial and temporal bounds
- * which might, for instance, be available in the documentation of the foreign function which produced the memory segment.
- * Here is how a foreign segment can be dereferenced:
- *
- * {@snippet lang = java:
- * MemorySession session = ... // initialize a memory session
- * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS, 0); // obtain foreign segment (size = 0)
- * MemorySegment segment = MemorySegment.ofAddress(raw.address(), 4, session); // new segment (size = 4)
- * int x = segment.get(ValueLayout.JAVA_INT, 0); //ok
- *}
- *
- * Alternatively, clients can obtain, <em>unsafely</em>, an {@linkplain java.lang.foreign.ValueLayout.OfAddress#asUnbounded() unbounded}
- * address value layout. Unbounded address value layouts allow the API to view foreign segments as segments with maximal size
- * (e.g. {@linkplain java.lang.Long#MAX_VALUE}), meaning that clients can always perform dereference operations on a foreign
- * segment obtained using an unbounded address layout:
- *
- * {@snippet lang = java:
- * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS.asUnbounded(), 0); // obtain foreign segment (size = Long.MAX_VALUE)
- * int x = foreign.get(ValueLayout.JAVA_INT, 0); //ok
- *}
- *
- * Note that there is no <em>correct</em> choice here. Which approach is taken largely depends on the information
- * that a client has available when obtaining a foreign memory segment. For instance, if such segment points to
- * a C struct, the client might prefer to resize the foreign segment, to match the size of the struct (so that
- * out-of-bounds access will be detected by the API). In other instances, however, there will be no, or little
- * information as to what spatial and/or temporal bounds should be associated with a given foreign segment. In these
- * cases the second approach is preferrable.
- *
  * <h3 id="upcalls">Upcalls</h3>
  * The {@link java.lang.foreign.Linker} interface also allows clients to turn an existing method handle (which might point
  * to a Java method) into a memory segment, so that Java code can effectively be passed to other foreign functions.
@@ -196,7 +154,7 @@
  * }
  * }
  *
- * The above method dereferences two foreign memory segments containing an integer value, and performs a simple comparison
+ * The above method accesses two foreign memory segments containing an integer value, and performs a simple comparison
  * by returning the difference between such values. We can then obtain a method handle which targets the above static
  * method, as follows:
  *
@@ -242,7 +200,7 @@
  * Binding foreign data and/or functions is generally unsafe and, if done incorrectly, can result in VM crashes, or memory corruption when the bound Java API element is accessed.
  * For instance, in the case of {@link java.lang.foreign.MemorySegment#ofAddress(long, long, MemorySession)},
  * if the provided spatial bounds are incorrect, a client of the segment returned by that method might crash the VM, or corrupt
- * memory when attempting to dereference said segment. For these reasons, it is crucial for code that calls a restricted method
+ * memory when attempting to access said segment. For these reasons, it is crucial for code that calls a restricted method
  * to never pass arguments that might cause incorrect binding of foreign data and/or functions to a Java API.
  * <p>
  * Access to restricted methods can be controlled using the command line option {@code --enable-native-access=M1,M2, ... Mn},

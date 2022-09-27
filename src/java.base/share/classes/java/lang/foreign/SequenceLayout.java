@@ -67,7 +67,7 @@ public sealed interface SequenceLayout extends MemoryLayout permits SequenceLayo
     long elementCount();
 
     /**
-     * Returns a sequence layout with the same element layout, alignment constraints and name as this sequence layout,
+     * Returns a sequence layout with the same element layout, alignment constraint and name as this sequence layout,
      * but with the specified element count.
      * @param elementCount the new element count.
      * @return a sequence layout with the given element count.

@@ -142,7 +142,7 @@ public sealed interface VaList permits WinVaList, SysVVaList, LinuxAArch64VaList
     double nextVarg(ValueLayout.OfDouble layout);
 
     /**
-     * Reads the next address value, wraps it into a native memory segment, and advances this variable argument list's position.
+     * Reads the next address value, wraps it into a native segment, and advances this variable argument list's position.
      * The behavior of this method is equivalent to the C {@code va_arg} function. The returned segment's base
      * {@linkplain MemorySegment#address()} is set to the value read from the variable argument list, and the segment
      * is associated with the {@linkplain MemorySession#global() global} memory session. Under normal conditions, the size of the returned
@@ -150,7 +150,7 @@ public sealed interface VaList permits WinVaList, SysVVaList, LinuxAArch64VaList
      * address layout, then the size of the returned segment is {@code Long.MAX_VALUE}.
      *
      * @param layout the layout of the value to be read.
-     * @return a native memory segment whose {@linkplain MemorySegment#address() address} is the value read from
+     * @return a native segment whose {@linkplain MemorySegment#address() address} is the value read from
      * this variable argument list.
      * @throws IllegalStateException if the session associated with this variable argument list is not
      * {@linkplain MemorySession#isAlive() alive}.
@@ -235,7 +235,7 @@ public sealed interface VaList permits WinVaList, SysVVaList, LinuxAArch64VaList
      *
      * @param address the address of the variable argument list.
      * @param session the memory session to be associated with the returned variable argument list.
-     * @return a new variable argument list backed by a native memory region starting at the given address value.
+     * @return a new variable argument list backed by an off-heap region of memory starting at the given address value.
      * @throws IllegalStateException         if {@code session} is not {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException          if this method is called from a thread other than the thread
      *                                       {@linkplain MemorySession#ownerThread() owning} {@code session}.
@@ -325,7 +325,7 @@ public sealed interface VaList permits WinVaList, SysVVaList, LinuxAArch64VaList
         Builder addVarg(ValueLayout.OfDouble layout, double value);
 
         /**
-         * Writes the {@linkplain MemorySegment#address() address} of the provided native memory segment
+         * Writes the {@linkplain MemorySegment#address() address} of the provided native segment
          * to the variable argument list being constructed.
          *
          * @param layout the layout of the value to be written.

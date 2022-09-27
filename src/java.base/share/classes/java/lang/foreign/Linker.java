@@ -121,7 +121,7 @@ import java.lang.invoke.MethodHandle;
  *     <li>The memory session of {@code R} is <em>kept alive</em> (and cannot be closed) during the invocation.</li>
  *</ul>
  * A downcall method handle created from a function descriptor whose return layout is an
- * {@linkplain ValueLayout.OfAddress address layout} returns a native memory segment associated with
+ * {@linkplain ValueLayout.OfAddress address layout} returns a native segment associated with
  * the {@linkplain MemorySession#global() global session}. Under normal conditions, the size of the returned segment is {@code 0}.
  * However, if the return layout is an {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout,
  * then the size of the returned segment is {@code Long.MAX_VALUE}.
@@ -135,7 +135,7 @@ import java.lang.invoke.MethodHandle;
  * and even JVM crashes, since an upcall is typically executed in the context of a downcall method handle invocation.
  * <p>
  * An upcall stub argument whose corresponding layout is an {@linkplain ValueLayout.OfAddress address layout}
- * is a native memory segment associated with the {@linkplain MemorySession#global() global session}.
+ * is a native segment associated with the {@linkplain MemorySession#global() global session}.
  * Under normal conditions, the size of this segment argument is {@code 0}. However, if the layout associated with
  * the upcall stub argument is an {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout,
  * then the size of the segment argument is {@code Long.MAX_VALUE}.
@@ -160,7 +160,7 @@ public sealed interface Linker permits AbstractLinker {
      *     and its corresponding layout is dependent on the ABI of the returned linker;
      *     <li>Composite types are modelled by a {@linkplain GroupLayout group layout}. Depending on the ABI of the
      *     returned linker, additional {@linkplain MemoryLayout#paddingLayout(long) padding} member layouts might be required to conform
-     *     to the size and alignment constraints of a composite type definition in C (e.g. using {@code struct} or {@code union}); and</li>
+     *     to the size and alignment constraint of a composite type definition in C (e.g. using {@code struct} or {@code union}); and</li>
      *     <li>Pointer types are modelled by a {@linkplain ValueLayout value layout} instance with carrier {@link MemorySegment}.
      *     Examples of pointer types in C are {@code int**} and {@code int(*)(size_t*, size_t*)};</li>
      * </ul>
@@ -200,11 +200,11 @@ public sealed interface Linker permits AbstractLinker {
     }
 
     /**
-     * Creates a method handle which can be used to call a target foreign function with the given signature and address.
+     * Creates a method handle which can be used to call a foreign function with the given signature and address.
      * <p>
      * If the provided method type's return type is {@code MemorySegment}, then the resulting method handle features
-     * an additional prefix parameter, of type {@link SegmentAllocator}, which will be used by the linker runtime
-     * to allocate structs returned by-value.
+     * an additional prefix parameter, of type {@link SegmentAllocator}, which will be used by the linker to allocate
+     * structs returned by-value.
      * <p>
      * Calling this method is equivalent to the following code:
      * {@snippet lang=java :
@@ -225,14 +225,14 @@ public sealed interface Linker permits AbstractLinker {
     }
 
     /**
-     * Creates a method handle which can be used to call a target foreign function with the given signature.
+     * Creates a method handle which can be used to call a foreign function with the given signature.
      * The resulting method handle features a prefix parameter (as the first parameter) corresponding to the foreign function
      * entry point, of type {@link MemorySegment}, which is used to specify the address of the target function
      * to be called.
      * <p>
      * If the provided function descriptor's return layout is a {@link GroupLayout}, then the resulting method handle features an
      * additional prefix parameter (inserted immediately after the address parameter), of type {@link SegmentAllocator}),
-     * which will be used by the linker runtime to allocate structs returned by-value.
+     * which will be used by the linker to allocate structs returned by-value.
      * <p>
      * The returned method handle will throw an {@link IllegalArgumentException} if the {@link MemorySegment} parameter passed to it is
      * associated with the {@link MemorySegment#NULL} address, or a {@link NullPointerException} if that parameter is {@code null}.
@@ -251,7 +251,7 @@ public sealed interface Linker permits AbstractLinker {
      * memory session. Calling such a function pointer from foreign code will result in the execution of the provided
      * method handle.
      * <p>
-     * The returned memory segment's base address points to the newly allocated upcall stub, and is associated with
+     * The returned memory segment's address points to the newly allocated upcall stub, and is associated with
      * the provided memory session. When such session is closed, the corresponding upcall stub will be deallocated.
      * <p>
      * The target method handle should not throw any exceptions. If the target method handle does throw an exception,
@@ -263,7 +263,7 @@ public sealed interface Linker permits AbstractLinker {
      * @param target the target method handle.
      * @param function the upcall stub function descriptor.
      * @param session the upcall stub memory session.
-     * @return a zero-length segment whose base address is the address of the upcall stub.
+     * @return a zero-length segment whose address is the address of the upcall stub.
      * @throws IllegalArgumentException if the provided function descriptor is not supported by this linker.
      * @throws IllegalArgumentException if it is determined that the target method handle can throw an exception, or if the target method handle
      * has a type that does not match the upcall stub <a href="Linker.html#upcall-stubs"><em>inferred type</em></a>.

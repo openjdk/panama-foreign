@@ -190,7 +190,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
     Optional<String> name();
 
     /**
-     * Returns a memory layout of the same type with the same size and alignment constraints as this layout,
+     * Returns a memory layout of the same type with the same size and alignment constraint as this layout,
      * but with the specified name.
      *
      * @param name the layout name.
@@ -241,10 +241,10 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
 
     /**
      * Returns a memory layout of the same type with the same size and name as this layout,
-     * but with the specified alignment constraints (in bits).
+     * but with the specified alignment constraint (in bits).
      *
      * @param bitAlignment the layout alignment constraint, expressed in bits.
-     * @return a memory layout with the given alignment constraints.
+     * @return a memory layout with the given alignment constraint.
      * @throws IllegalArgumentException if {@code bitAlignment} is not a power of two, or if it's less than 8.
      */
     MemoryLayout withBitAlignment(long bitAlignment);
@@ -353,17 +353,19 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
     }
 
     /**
-     * Creates an access var handle that can be used to dereference memory at the layout selected by the given layout path,
+     * Creates an access var handle that can be used to access a memory segment at the layout selected by the given layout path,
      * where the path is considered rooted in this layout.
      * <p>
-     * The final memory location accessed by the returned var handle can be computed as follows:
+     * The final address accessed by the returned var handle can be computed as follows:
      *
      * <blockquote><pre>{@code
-     * address = base + offset
+     * address = base(segment) + offset
      * }</pre></blockquote>
      *
-     * where {@code base} denotes the base address associated with the {@link MemorySegment} access coordinate
-     * (see {@link MemorySegment#address()} and {@code offset} can be expressed in the following form:
+     * Where {@code base(segment)} denotes a function that returns the physical base address of the accessed
+     * memory segment. For native segments, this function just returns the native segment's
+     * {@linkplain MemorySegment#address() address}. For heap segments, this function is more complex, as the address
+     * of heap segments is virtualized. The {@code offset} coordinate can be expressed in the following form:
      *
      * <blockquote><pre>{@code
      * offset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
@@ -382,8 +384,8 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * features certain <em>access mode restrictions</em>, which are common to all memory segment view handles.
      *
      * @param elements the layout path elements.
-     * @return a var handle which can be used to dereference memory at the (possibly nested) layout selected by the layout path in {@code elements}.
-     * @throws UnsupportedOperationException if the layout path has one or more elements with incompatible alignment constraints.
+     * @return a var handle which can be used to access a memory segment at the (possibly nested) layout selected by the layout path in {@code elements}.
+     * @throws UnsupportedOperationException if the layout path has one or more elements with incompatible alignment constraint.
      * @throws IllegalArgumentException if the layout path in {@code elements} does not select a value layout (see {@link ValueLayout}).
      * @see MethodHandles#memorySegmentViewVarHandle(ValueLayout)
      */
@@ -580,7 +582,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
     /**
      * Compares the specified object with this layout for equality. Returns {@code true} if and only if the specified
      * object is also a layout, and it is equal to this layout. Two layouts are considered equal if they are of
-     * the same kind, have the same size, name and alignment constraints. Furthermore, depending on the layout kind, additional
+     * the same kind, have the same size, name and alignment constraint. Furthermore, depending on the layout kind, additional
      * conditions must be satisfied:
      * <ul>
      *     <li>two value layouts are considered equal if they have the same {@linkplain ValueLayout#order() order},
