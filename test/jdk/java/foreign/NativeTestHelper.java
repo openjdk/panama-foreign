@@ -26,10 +26,12 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 
 public class NativeTestHelper {
 
@@ -82,7 +84,7 @@ public class NativeTestHelper {
      */
     public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS.withBitAlignment(64).asUnbounded();
 
-    private static Linker LINKER = Linker.nativeLinker();
+    private static final Linker LINKER = Linker.nativeLinker();
 
     private static final MethodHandle FREE = LINKER.downcallHandle(
             LINKER.defaultLookup().find("free").get(), FunctionDescriptor.ofVoid(C_POINTER));
@@ -108,5 +110,18 @@ public class NativeTestHelper {
 
     public static MemorySegment findNativeOrThrow(String name) {
         return SymbolLookup.loaderLookup().find(name).orElseThrow();
+    }
+
+    public static MethodHandle downcallHandle(String symbol, FunctionDescriptor desc) {
+        return LINKER.downcallHandle(findNativeOrThrow(symbol), desc);
+    }
+
+    public static MemorySegment upcallStub(Class<?> holder, String name, FunctionDescriptor descriptor) {
+        try {
+            MethodHandle target = MethodHandles.lookup().findStatic(holder, name, descriptor.toMethodType());
+            return LINKER.upcallStub(target, descriptor, MemorySession.openImplicit());
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

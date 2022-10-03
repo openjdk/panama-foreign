@@ -28,6 +28,7 @@ import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.CABI;
+import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
@@ -258,6 +259,13 @@ public final class SharedUtils {
             t.printStackTrace();
             JLA.exit(1);
         }
+    }
+
+    static long unboxSegment(MemorySegment segment) {
+        if (segment instanceof HeapMemorySegmentImpl) {
+            throw new IllegalArgumentException("Heap segment not allowed: " + segment);
+        }
+        return segment.address();
     }
 
     public static void checkExceptions(MethodHandle target) {
