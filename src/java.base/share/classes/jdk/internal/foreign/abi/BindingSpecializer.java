@@ -85,7 +85,7 @@ public class BindingSpecializer {
     private static final String SESSION_DESC = methodType(MemorySession.class).descriptorString();
     private static final String SESSION_IMPL_DESC = methodType(MemorySessionImpl.class).descriptorString();
     private static final String CLOSE_DESC = VOID_DESC;
-    private static final String ADDRESS_DESC = methodType(long.class).descriptorString();
+    private static final String UNBOX_SEGMENT_DESC = methodType(long.class, MemorySegment.class).descriptorString();
     private static final String COPY_DESC = methodType(void.class, MemorySegment.class, long.class, MemorySegment.class, long.class, long.class).descriptorString();
     private static final String OF_LONG_DESC = methodType(MemorySegment.class, long.class, long.class).descriptorString();
     private static final String OF_LONG_UNCHECKED_DESC = methodType(MemorySegment.class, long.class, long.class, MemorySession.class).descriptorString();
@@ -575,10 +575,6 @@ public class BindingSpecializer {
         emitInvokeVirtual(Binding.Context.class, "close", CLOSE_DESC);
     }
 
-    private void emitAddress() {
-        emitInvokeInterface(MemorySegment.class, "address", ADDRESS_DESC);
-    }
-
     private void emitBoxAddress(Binding.BoxAddress boxAddress) {
         popType(long.class);
         emitConst(boxAddress.size());
@@ -717,7 +713,7 @@ public class BindingSpecializer {
 
     private void emitUnboxAddress() {
         popType(MemorySegment.class);
-        emitAddress();
+        emitInvokeStatic(SharedUtils.class, "unboxSegment", UNBOX_SEGMENT_DESC);
         pushType(long.class);
     }
 
