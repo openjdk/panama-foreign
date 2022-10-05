@@ -24,16 +24,20 @@
 /*
  * @test
  * @enablePreview
- * @run testng TestLinker
+ * @run junit TestLinker
  */
 
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.invoke.MethodHandle;
 
-import static org.testng.Assert.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestLinker extends NativeTestHelper {
 
@@ -45,6 +49,27 @@ public class TestLinker extends NativeTestHelper {
         MethodHandle mh2 = linker.downcallHandle(descriptor, Linker.Option.firstVariadicArg(1));
         // assert that these are 2 distinct link request. No caching allowed
         assertNotSame(mh1, mh2);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints={ -1, 42 })
+    public void testInvalidOption(int invalidIndex) {
+        Linker.Option option = Linker.Option.firstVariadicArg(invalidIndex);
+        FunctionDescriptor desc = FunctionDescriptor.ofVoid();
+        IllegalArgumentException thrown = assertThrows(
+               IllegalArgumentException.class,
+               () -> Linker.nativeLinker().downcallHandle(desc, option));
+        assertTrue(thrown.getMessage().matches(".*not in bounds for descriptor.*"));
+    }
+
+    @Test
+    public void testInvalidPreservedValueName() {
+        Linker.Option option = Linker.Option.preserveValue("foo");
+        FunctionDescriptor desc = FunctionDescriptor.ofVoid();
+        IllegalArgumentException thrown = assertThrows(
+                IllegalArgumentException.class,
+                () -> Linker.nativeLinker().downcallHandle(desc, option));
+        assertTrue(thrown.getMessage().matches(".*Unknown name.*"));
     }
 
 }

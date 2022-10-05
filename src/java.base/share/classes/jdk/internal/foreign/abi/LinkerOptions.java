@@ -24,28 +24,36 @@
  */
 package jdk.internal.foreign.abi;
 
+import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.StructLayout;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class LinkerOptions {
 
     private static final LinkerOptions EMPTY = LinkerOptions.of();
-    private final Map<Class<?>, Linker.Option> optionsMap;
+    private final Map<Class<?>, LinkerOptionImpl> optionsMap;
 
-    private LinkerOptions(Map<Class<?>, Linker.Option> optionsMap) {
+    private LinkerOptions(Map<Class<?>, LinkerOptionImpl> optionsMap) {
         this.optionsMap = optionsMap;
     }
 
     public static LinkerOptions of(Linker.Option... options) {
-        Map<Class<?>, Linker.Option> optionMap = new HashMap<>();
+        Map<Class<?>, LinkerOptionImpl> optionMap = new HashMap<>();
 
         for (Linker.Option option : options) {
             if (optionMap.containsKey(option.getClass())) {
                 throw new IllegalArgumentException("Duplicate option: " + option);
             }
-            optionMap.put(option.getClass(), option);
+            optionMap.put(option.getClass(), (LinkerOptionImpl) option);
         }
 
         return new LinkerOptions(optionMap);
@@ -55,6 +63,10 @@ public class LinkerOptions {
         return EMPTY;
     }
 
+    public void validateForDowncall(FunctionDescriptor descriptor) {
+        optionsMap.values().forEach(v -> v.validateForDowncall(descriptor));
+    }
+
     private <T extends Linker.Option> T getOption(Class<T> type) {
         return type.cast(optionsMap.get(type));
     }
@@ -62,6 +74,15 @@ public class LinkerOptions {
     public boolean isVarargsIndex(int argIndex) {
         FirstVariadicArg fva = getOption(FirstVariadicArg.class);
         return fva != null && argIndex >= fva.index();
+    }
+
+    public boolean hasSavedThreadLocals() {
+        return getOption(PreserveValueImpl.class) != null;
+    }
+
+    public Stream<String> savedThreadLocals() {
+        PreserveValueImpl stl = getOption(PreserveValueImpl.class);
+        return stl == null ? Stream.empty() : stl.saved().stream();
     }
 
     @Override
@@ -76,5 +97,48 @@ public class LinkerOptions {
         return Objects.hash(optionsMap);
     }
 
-    public record FirstVariadicArg(int index) implements Linker.Option { }
+    public sealed interface LinkerOptionImpl extends Linker.Option
+                                             permits FirstVariadicArg,
+                                                     PreserveValueImpl {
+        default void validateForDowncall(FunctionDescriptor descriptor) {
+            throw new IllegalArgumentException("Not supported for downcall: " + this);
+        }
+    }
+
+    public record FirstVariadicArg(int index) implements LinkerOptionImpl {
+        @Override
+        public void validateForDowncall(FunctionDescriptor descriptor) {
+            if (index < 0 || index > descriptor.argumentLayouts().size()) {
+                throw new IllegalArgumentException("Index '" + index + "' not in bounds for descriptor: " + descriptor);
+            }
+        }
+    }
+
+    public record PreserveValueImpl(Set<String> saved) implements LinkerOptionImpl, Linker.Option.PreserveValue {
+
+        @Override
+        public void validateForDowncall(FunctionDescriptor descriptor) {
+            for (String save : saved) {
+                if (!PreservableValues.isSupported(save)) {
+                    throw new IllegalArgumentException("Unknown name: " + save
+                            + ", must be one of: "
+                            + Stream.of(PreservableValues.values())
+                                    .map(PreservableValues::valueName)
+                                    .collect(Collectors.joining(",")));
+                }
+            }
+        }
+
+        @Override
+        public StructLayout layout() {
+            return MemoryLayout.structLayout(
+                saved.stream()
+                      .map(PreservableValues::forName)
+                      .sorted(Comparator.comparingInt(PreservableValues::ordinal))
+                      .map(PreservableValues::layout)
+                      .toArray(MemoryLayout[]::new)
+            );
+        }
+    }
+
 }

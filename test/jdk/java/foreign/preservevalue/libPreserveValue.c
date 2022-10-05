@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,25 +21,14 @@
  * questions.
  */
 
-#ifndef SHARE_VM_PRIMS_DOWNCALLLINKER_HPP
-#define SHARE_VM_PRIMS_DOWNCALLLINKER_HPP
+#include <errno.h>
 
-#include "prims/foreignGlobals.hpp"
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
 
-class RuntimeStub;
-
-class DowncallLinker: AllStatic {
-public:
-  static RuntimeStub* make_downcall_stub(BasicType*,
-                                         int num_args,
-                                         BasicType ret_bt,
-                                         const ABIDescriptor& abi,
-                                         const GrowableArray<VMStorage>& input_registers,
-                                         const GrowableArray<VMStorage>& output_registers,
-                                         bool needs_return_buffer,
-                                         int save_thread_local_mask);
-
-  static void save_thread_local(int32_t* value_ptr, int save_thread_local_mask);
-};
-
-#endif // SHARE_VM_PRIMS_DOWNCALLLINKER_HPP
+EXPORT void set_errno(int value) {
+    errno = value;
+}

@@ -35,6 +35,8 @@ import java.lang.invoke.MethodHandles;
 
 public class NativeTestHelper {
 
+    public static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
+
     public static boolean isIntegral(MemoryLayout layout) {
         return layout instanceof ValueLayout valueLayout && isIntegral(valueLayout.carrier());
     }
@@ -112,8 +114,8 @@ public class NativeTestHelper {
         return SymbolLookup.loaderLookup().find(name).orElseThrow();
     }
 
-    public static MethodHandle downcallHandle(String symbol, FunctionDescriptor desc) {
-        return LINKER.downcallHandle(findNativeOrThrow(symbol), desc);
+    public static MethodHandle downcallHandle(String symbol, FunctionDescriptor desc, Linker.Option... options) {
+        return LINKER.downcallHandle(findNativeOrThrow(symbol), desc, options);
     }
 
     public static MemorySegment upcallStub(Class<?> holder, String name, FunctionDescriptor descriptor) {

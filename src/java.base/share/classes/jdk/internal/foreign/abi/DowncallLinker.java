@@ -85,7 +85,8 @@ public class DowncallLinker {
             toStorageArray(argMoves),
             toStorageArray(retMoves),
             leafType,
-            callingSequence.needsReturnBuffer()
+            callingSequence.needsReturnBuffer(),
+            callingSequence.savedThreadLocalsMask()
         );
         MethodHandle handle = JLIA.nativeMethodHandle(nep);
 

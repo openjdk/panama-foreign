@@ -167,7 +167,8 @@ public class X86_64Architecture implements Architecture {
             shadowSpace,
             scratch1, scratch2,
             StubLocations.TARGET_ADDRESS.storage(StorageType.PLACEHOLDER),
-            StubLocations.RETURN_BUFFER.storage(StorageType.PLACEHOLDER));
+            StubLocations.RETURN_BUFFER.storage(StorageType.PLACEHOLDER),
+            StubLocations.SAVE_THREAD_LOCAL.storage(StorageType.PLACEHOLDER));
     }
 
 }

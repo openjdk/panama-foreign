@@ -24,13 +24,46 @@
  */
 package jdk.internal.foreign.abi;
 
-// must keep in sync with StubLocations in VM code
-public enum StubLocations {
-    TARGET_ADDRESS,
-    RETURN_BUFFER,
-    SAVE_THREAD_LOCAL;
+import java.lang.foreign.ValueLayout;
+import java.util.stream.Stream;
 
-    public VMStorage storage(byte type) {
-        return new VMStorage(type, (short) 8, ordinal());
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+
+public enum PreservableValues {
+    GET_LAST_ERROR    ("GetLastError",    JAVA_INT, 1 << 0),
+    WSA_GET_LAST_ERROR("WSAGetLastError", JAVA_INT, 1 << 1),
+    ERRNO             ("errno",           JAVA_INT, 1 << 2);
+
+    private final String valueName;
+    private final ValueLayout layout;
+    private final int mask;
+
+    PreservableValues(String valueName, ValueLayout layout, int mask) {
+        this.valueName = valueName;
+        this.layout = layout.withName(valueName);
+        this.mask = mask;
+    }
+
+    public static boolean isSupported(String name) {
+        return Stream.of(values()).anyMatch(stl -> stl.valueName().equals(name));
+    }
+
+    public static PreservableValues forName(String name) {
+        return Stream.of(values())
+                .filter(stl -> stl.valueName().equals(name))
+                .findAny()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown name: " + name));
+    }
+
+    public String valueName() {
+        return valueName;
+    }
+
+    public ValueLayout layout() {
+        return layout;
+    }
+
+    public int mask() {
+        return mask;
     }
 }

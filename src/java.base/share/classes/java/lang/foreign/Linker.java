@@ -27,12 +27,19 @@ package java.lang.foreign;
 
 import jdk.internal.foreign.abi.AbstractLinker;
 import jdk.internal.foreign.abi.LinkerOptions;
+import jdk.internal.foreign.abi.PreservableValues;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.javac.PreviewFeature;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
 import java.lang.invoke.MethodHandle;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A linker provides access to foreign functions from Java code, and access to Java code from foreign functions.
@@ -293,7 +300,8 @@ public sealed interface Linker permits AbstractLinker {
      * besides what is described by a function descriptor.
      */
     sealed interface Option
-            permits LinkerOptions.FirstVariadicArg {
+            permits LinkerOptions.LinkerOptionImpl,
+                    Option.PreserveValue {
 
         /**
          * {@return A linker option used to denote the index of the first variadic argument layout in a
@@ -302,6 +310,39 @@ public sealed interface Linker permits AbstractLinker {
          */
         static Option firstVariadicArg(int index) {
             return new LinkerOptions.FirstVariadicArg(index);
+        }
+
+        /**
+         * {@return A linker option used to preserve values that might be overwirtten by the runtime
+         *          before they can be read through conventional means}
+         * @param preservedValues the names of the values to preserve.
+         * @see PreserveValue#supported()
+         */
+        static PreserveValue preserveValue(String... preservedValues) {
+            Set<String> set = Stream.of(preservedValues).collect(Collectors.toSet());
+            return new LinkerOptions.PreserveValueImpl(set);
+        }
+
+        /**
+         * A linker option for preserving a value that might be overwritten by the runtime
+         * before it can be read through conventional means.
+         */
+        sealed interface PreserveValue extends Option
+                                       permits LinkerOptions.PreserveValueImpl {
+            /**
+             * {@return A struct layout that should be used to allocate the segment for,
+             *          and retrieve preserved values}
+             */
+            StructLayout layout();
+
+            /**
+             * {@return the names of the values that can be preserved by this implementation}
+             */
+            static Set<String> supported() {
+                return Arrays.stream(PreservableValues.values())
+                             .map(PreservableValues::valueName)
+                             .collect(Collectors.toSet());
+            }
         }
     }
 }
