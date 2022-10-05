@@ -36,7 +36,8 @@
 #include "runtime/jniHandles.inline.hpp"
 
 JNI_ENTRY(jlong, NEP_makeDowncallStub(JNIEnv* env, jclass _unused, jobject method_type, jobject jabi,
-                                      jobjectArray arg_moves, jobjectArray ret_moves, jboolean needs_return_buffer))
+                                      jobjectArray arg_moves, jobjectArray ret_moves,
+                                      jboolean needs_return_buffer))
   ResourceMark rm;
   const ABIDescriptor abi = ForeignGlobals::parse_abi_descriptor(jabi);
 
@@ -73,7 +74,6 @@ JNI_ENTRY(jlong, NEP_makeDowncallStub(JNIEnv* env, jclass _unused, jobject metho
     // we are NOT moving Java values, we are moving register-sized values
     output_regs.push(ForeignGlobals::parse_vmstorage(ret_moves_oop->obj_at(i)));
   }
-
   return (jlong) DowncallLinker::make_downcall_stub(
     basic_type, pslots, ret_bt, abi, input_regs, output_regs, needs_return_buffer)->code_begin();
 JNI_END

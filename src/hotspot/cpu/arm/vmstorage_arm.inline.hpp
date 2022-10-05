@@ -29,12 +29,12 @@
 #include "asm/register.hpp"
 #include "prims/vmstorageBase.inline.hpp"
 
-enum class RegType : int8_t {
+enum class StorageType : int8_t {
   STACK = 0
 };
 
-constexpr inline RegType VMStorage::stack_type() {
-  return RegType::STACK;
+constexpr inline StorageType VMStorage::stack_type() {
+  return StorageType::STACK;
 }
 
 inline VMStorage as_VMStorage(VMReg reg) {

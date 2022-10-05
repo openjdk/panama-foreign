@@ -215,10 +215,10 @@ void DowncallStubGenerator::generate() {
     int offset = 0;
     for (int i = 0; i < _output_registers.length(); i++) {
       VMStorage reg = _output_registers.at(i);
-      if (reg.type() == RegType::INTEGER) {
+      if (reg.type() == StorageType::INTEGER) {
         __ str(as_Register(reg), Address(tmp1, offset));
         offset += 8;
-      } else if(reg.type() == RegType::VECTOR) {
+      } else if(reg.type() == StorageType::VECTOR) {
         __ strd(as_FloatRegister(reg), Address(tmp1, offset));
         offset += 16;
       } else {

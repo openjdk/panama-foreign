@@ -268,10 +268,10 @@ address UpcallLinker::make_upcall_stub(jobject receiver, Method* entry,
     int offset = 0;
     for (int i = 0; i < call_regs._ret_regs.length(); i++) {
       VMStorage reg = call_regs._ret_regs.at(i);
-      if (reg.type() == RegType::INTEGER) {
+      if (reg.type() == StorageType::INTEGER) {
         __ ldr(as_Register(reg), Address(rscratch1, offset));
         offset += 8;
-      } else if (reg.type() == RegType::VECTOR) {
+      } else if (reg.type() == StorageType::VECTOR) {
         __ ldrd(as_FloatRegister(reg), Address(rscratch1, offset));
         offset += 16; // needs to match VECTOR_REG_SIZE in AArch64Architecture (Java)
       } else {

@@ -48,16 +48,16 @@ const ABIDescriptor ForeignGlobals::parse_abi_descriptor(jobject jabi) {
   ABIDescriptor abi;
 
   objArrayOop inputStorage = jdk_internal_foreign_abi_ABIDescriptor::inputStorage(abi_oop);
-  parse_register_array(inputStorage, (int) RegType::INTEGER, abi._integer_argument_registers, as_Register);
-  parse_register_array(inputStorage, (int) RegType::VECTOR, abi._vector_argument_registers, as_FloatRegister);
+  parse_register_array(inputStorage, (int) StorageType::INTEGER, abi._integer_argument_registers, as_Register);
+  parse_register_array(inputStorage, (int) StorageType::VECTOR, abi._vector_argument_registers, as_FloatRegister);
 
   objArrayOop outputStorage = jdk_internal_foreign_abi_ABIDescriptor::outputStorage(abi_oop);
-  parse_register_array(outputStorage, (int) RegType::INTEGER, abi._integer_return_registers, as_Register);
-  parse_register_array(outputStorage, (int) RegType::VECTOR, abi._vector_return_registers, as_FloatRegister);
+  parse_register_array(outputStorage, (int) StorageType::INTEGER, abi._integer_return_registers, as_Register);
+  parse_register_array(outputStorage, (int) StorageType::VECTOR, abi._vector_return_registers, as_FloatRegister);
 
   objArrayOop volatileStorage = jdk_internal_foreign_abi_ABIDescriptor::volatileStorage(abi_oop);
-  parse_register_array(volatileStorage, (int) RegType::INTEGER, abi._integer_additional_volatile_registers, as_Register);
-  parse_register_array(volatileStorage, (int) RegType::VECTOR, abi._vector_additional_volatile_registers, as_FloatRegister);
+  parse_register_array(volatileStorage, (int) StorageType::INTEGER, abi._integer_additional_volatile_registers, as_Register);
+  parse_register_array(volatileStorage, (int) StorageType::VECTOR, abi._vector_additional_volatile_registers, as_FloatRegister);
 
   abi._stack_alignment_bytes = jdk_internal_foreign_abi_ABIDescriptor::stackAlignment(abi_oop);
   abi._shadow_space_bytes = jdk_internal_foreign_abi_ABIDescriptor::shadowSpace(abi_oop);
@@ -69,18 +69,18 @@ const ABIDescriptor ForeignGlobals::parse_abi_descriptor(jobject jabi) {
 }
 
 int RegSpiller::pd_reg_size(VMStorage reg) {
-  if (reg.type() == RegType::INTEGER) {
+  if (reg.type() == StorageType::INTEGER) {
     return 8;
-  } else if (reg.type() == RegType::VECTOR) {
+  } else if (reg.type() == StorageType::VECTOR) {
     return 16;   // Always spill/unspill Q registers
   }
   return 0; // stack and BAD
 }
 
 void RegSpiller::pd_store_reg(MacroAssembler* masm, int offset, VMStorage reg) {
-  if (reg.type() == RegType::INTEGER) {
+  if (reg.type() == StorageType::INTEGER) {
     masm->spill(as_Register(reg), true, offset);
-  } else if (reg.type() == RegType::VECTOR) {
+  } else if (reg.type() == StorageType::VECTOR) {
     masm->spill(as_FloatRegister(reg), masm->Q, offset);
   } else {
     // stack and BAD
@@ -88,9 +88,9 @@ void RegSpiller::pd_store_reg(MacroAssembler* masm, int offset, VMStorage reg) {
 }
 
 void RegSpiller::pd_load_reg(MacroAssembler* masm, int offset, VMStorage reg) {
-  if (reg.type() == RegType::INTEGER) {
+  if (reg.type() == StorageType::INTEGER) {
     masm->unspill(as_Register(reg), true, offset);
-  } else if (reg.type() == RegType::VECTOR) {
+  } else if (reg.type() == StorageType::VECTOR) {
     masm->unspill(as_FloatRegister(reg), masm->Q, offset);
   } else {
     // stack and BAD
@@ -102,11 +102,11 @@ static constexpr int RFP_BIAS = 16; // skip old rfp and lr
 static void move_reg64(MacroAssembler* masm, int out_stk_bias,
                        Register from_reg, VMStorage to_reg) {
   switch (to_reg.type()) {
-    case RegType::INTEGER:
+    case StorageType::INTEGER:
       assert(to_reg.segment_mask() == REG64_MASK, "only moves to 64-bit registers supported");
       masm->mov(as_Register(to_reg), from_reg);
       break;
-    case RegType::STACK:
+    case StorageType::STACK:
       switch (to_reg.stack_size()) {
         // FIXME use correctly sized stores
         case 8: case 4: case 2: case 1:
@@ -122,7 +122,7 @@ static void move_reg64(MacroAssembler* masm, int out_stk_bias,
 static void move_stack(MacroAssembler* masm, Register tmp_reg, int in_stk_bias, int out_stk_bias,
                        VMStorage from_reg, VMStorage to_reg) {
   switch (to_reg.type()) {
-    case RegType::INTEGER:
+    case StorageType::INTEGER:
       assert(to_reg.segment_mask() == REG64_MASK, "only moves to 64-bit registers supported");
       switch (from_reg.stack_size()) {
         // FIXME use correctly sized loads
@@ -132,7 +132,7 @@ static void move_stack(MacroAssembler* masm, Register tmp_reg, int in_stk_bias, 
         default: ShouldNotReachHere();
       }
       break;
-    case RegType::VECTOR:
+    case StorageType::VECTOR:
       assert(to_reg.segment_mask() == V128_MASK, "only moves to v128 registers supported");
       switch (from_reg.stack_size()) {
         case 8:
@@ -144,7 +144,7 @@ static void move_stack(MacroAssembler* masm, Register tmp_reg, int in_stk_bias, 
         default: ShouldNotReachHere();
       }
       break;
-    case RegType::STACK:
+    case StorageType::STACK:
       // We assume 8 bytes stack size when converting from VMReg (Java CC)
       //assert(from_reg.stack_size() == to_reg.stack_size(), "must be same");
       switch (from_reg.stack_size()) {
@@ -163,11 +163,11 @@ static void move_stack(MacroAssembler* masm, Register tmp_reg, int in_stk_bias, 
 static void move_v128(MacroAssembler* masm, int out_stk_bias,
                       FloatRegister from_reg, VMStorage to_reg) {
   switch (to_reg.type()) {
-    case RegType::VECTOR:
+    case StorageType::VECTOR:
       assert(to_reg.segment_mask() == V128_MASK, "only moves to v128 registers supported");
       masm->fmovd(as_FloatRegister(to_reg), from_reg);
       break;
-    case RegType::STACK:
+    case StorageType::STACK:
       switch(to_reg.stack_size()) {
         case 8:
           masm->strd(from_reg, Address(sp, to_reg.offset() + out_stk_bias));
@@ -190,15 +190,15 @@ void ArgumentShuffle::pd_generate(MacroAssembler* masm, VMStorage tmp, int in_st
     VMStorage to_reg   = move.to;
 
     switch (from_reg.type()) {
-      case RegType::INTEGER:
+      case StorageType::INTEGER:
         assert(from_reg.segment_mask() == REG64_MASK, "only 64-bit register supported");
         move_reg64(masm, out_stk_bias, as_Register(from_reg), to_reg);
         break;
-      case RegType::VECTOR:
+      case StorageType::VECTOR:
         assert(from_reg.segment_mask() == V128_MASK, "only v128 register supported");
         move_v128(masm, out_stk_bias, as_FloatRegister(from_reg), to_reg);
         break;
-      case RegType::STACK:
+      case StorageType::STACK:
         move_stack(masm, tmp_reg, in_stk_bias, out_stk_bias, from_reg, to_reg);
         break;
       default: ShouldNotReachHere();
