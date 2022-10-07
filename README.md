@@ -1,15 +1,18 @@
 # Welcome to the JDK!
 
-For build instructions please see the [online documentation](https://openjdk.java.net/groups/build/doc/building.html), or either of these files:
+For build instructions please see the
+[online documentation](https://openjdk.org/groups/build/doc/building.html),
+or either of these files:
 
 - [doc/building.html](doc/building.html) (html version)
 - [doc/building.md](doc/building.md) (markdown version)
 
-See <https://openjdk.java.net/> for more information about the OpenJDK Community and the JDK.
+See <https://openjdk.org/> for more information about
+the OpenJDK Community and the JDK.
 
 ---
 Foreign Function & Memory API
-===================
+
 This repository contains changes which aim at improving the interoperability between the Java programming language and native libraries, which is one of the main goals of [Project Panama](https://openjdk.java.net/projects/panama/). This is done by introducing a new Java API, the Foreign Function & Memory API, which can be used to:
 
 * interact with different kinds of memory resources, including so-called off-heap or native memory, as shown [here](doc/panama_memaccess.md);
