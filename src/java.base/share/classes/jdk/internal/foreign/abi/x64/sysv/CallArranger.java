@@ -25,6 +25,7 @@
  */
 package jdk.internal.foreign.abi.x64.sysv;
 
+import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.ABIDescriptor;
 import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.CallingSequence;
@@ -33,13 +34,13 @@ import jdk.internal.foreign.abi.DowncallLinker;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.UpcallLinker;
 import jdk.internal.foreign.abi.VMStorage;
+import jdk.internal.foreign.abi.x64.X86_64Architecture;
 
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -49,6 +50,7 @@ import java.util.Optional;
 import static jdk.internal.foreign.PlatformLayouts.SysV;
 import static jdk.internal.foreign.abi.Binding.vmStore;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
+import static jdk.internal.foreign.abi.x64.X86_64Architecture.Regs.*;
 
 /**
  * For the SysV x64 C ABI specifically, this class uses namely CallingSequenceBuilder
@@ -57,9 +59,11 @@ import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
  * This includes taking care of synthetic arguments like pointers to return buffers for 'in-memory' returns.
  */
 public class CallArranger {
-    public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 6;
-    public static final int MAX_VECTOR_ARGUMENT_REGISTERS = 8;
-    private static final ABIDescriptor CSysV = abiFor(
+    private static final int STACK_SLOT_SIZE = 8;
+    private static final int MAX_INTEGER_ARGUMENT_REGISTERS = 6;
+    private static final int MAX_VECTOR_ARGUMENT_REGISTERS = 8;
+
+    private static final ABIDescriptor CSysV = X86_64Architecture.abiFor(
         new VMStorage[] { rdi, rsi, rdx, rcx, r8, r9, rax },
         new VMStorage[] { xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7 },
         new VMStorage[] { rax, rdx },
@@ -73,17 +77,10 @@ public class CallArranger {
         r11  // ret buf addr reg
     );
 
-    // record
-    public static class Bindings {
-        public final CallingSequence callingSequence;
-        public final boolean isInMemoryReturn;
-        public final int nVectorArgs;
-
-        Bindings(CallingSequence callingSequence, boolean isInMemoryReturn, int nVectorArgs) {
-            this.callingSequence = callingSequence;
-            this.isInMemoryReturn = isInMemoryReturn;
-            this.nVectorArgs = nVectorArgs;
-        }
+    public record Bindings(
+            CallingSequence callingSequence,
+            boolean isInMemoryReturn,
+            int nVectorArgs) {
     }
 
     public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
@@ -94,7 +91,7 @@ public class CallArranger {
 
         boolean returnInMemory = isInMemoryReturn(cDesc.returnLayout());
         if (returnInMemory) {
-            Class<?> carrier = MemoryAddress.class;
+            Class<?> carrier = MemorySegment.class;
             MemoryLayout layout = SysV.C_POINTER;
             csb.addArgumentBindings(carrier, layout, argCalc.getBindings(carrier, layout));
         } else if (cDesc.returnLayout().isPresent()) {
@@ -167,8 +164,8 @@ public class CallArranger {
 
         VMStorage stackAlloc() {
             assert forArguments : "no stack returns";
-            VMStorage storage = stackStorage((int)stackOffset);
-            stackOffset++;
+            VMStorage storage = X86_64Architecture.stackStorage((short) STACK_SLOT_SIZE, (int)stackOffset);
+            stackOffset += STACK_SLOT_SIZE;
             return storage;
         }
 
@@ -212,26 +209,18 @@ public class CallArranger {
         }
 
         int registerCount(int type) {
-            switch (type) {
-                case StorageClasses.INTEGER:
-                    return nIntegerReg;
-                case StorageClasses.VECTOR:
-                    return nVectorReg;
-                default:
-                    throw new IllegalStateException();
-            }
+            return switch (type) {
+                case StorageClasses.INTEGER -> nIntegerReg;
+                case StorageClasses.VECTOR -> nVectorReg;
+                default -> throw new IllegalStateException();
+            };
         }
 
         void incrementRegisterCount(int type) {
             switch (type) {
-                case StorageClasses.INTEGER:
-                    nIntegerReg++;
-                    break;
-                case StorageClasses.VECTOR:
-                    nVectorReg++;
-                    break;
-                default:
-                    throw new IllegalStateException();
+                case StorageClasses.INTEGER -> nIntegerReg++;
+                case StorageClasses.VECTOR -> nVectorReg++;
+                default -> throw new IllegalStateException();
             }
         }
     }
@@ -257,7 +246,7 @@ public class CallArranger {
             TypeClass argumentClass = TypeClass.classifyLayout(layout);
             Binding.Builder bindings = Binding.builder();
             switch (argumentClass.kind()) {
-                case STRUCT: {
+                case STRUCT -> {
                     assert carrier == MemorySegment.class;
                     VMStorage[] regs = storageCalculator.structStorages(argumentClass);
                     int regIndex = 0;
@@ -274,26 +263,21 @@ public class CallArranger {
                                 .vmStore(storage, type);
                         offset += copy;
                     }
-                    break;
                 }
-                case POINTER: {
-                    bindings.unboxAddress(carrier);
+                case POINTER -> {
+                    bindings.unboxAddress();
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
                     bindings.vmStore(storage, long.class);
-                    break;
-                }
-                case INTEGER: {
+                                    }
+                case INTEGER -> {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
                     bindings.vmStore(storage, carrier);
-                    break;
                 }
-                case FLOAT: {
+                case FLOAT -> {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.VECTOR);
                     bindings.vmStore(storage, carrier);
-                    break;
                 }
-                default:
-                    throw new UnsupportedOperationException("Unhandled class " + argumentClass);
+                default -> throw new UnsupportedOperationException("Unhandled class " + argumentClass);
             }
             return bindings.build();
         }
@@ -310,7 +294,7 @@ public class CallArranger {
             TypeClass argumentClass = TypeClass.classifyLayout(layout);
             Binding.Builder bindings = Binding.builder();
             switch (argumentClass.kind()) {
-                case STRUCT: {
+                case STRUCT -> {
                     assert carrier == MemorySegment.class;
                     bindings.allocate(layout);
                     VMStorage[] regs = storageCalculator.structStorages(argumentClass);
@@ -326,26 +310,21 @@ public class CallArranger {
                                 .bufferStore(offset, type);
                         offset += copy;
                     }
-                    break;
                 }
-                case POINTER: {
+                case POINTER -> {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
                     bindings.vmLoad(storage, long.class)
-                            .boxAddress();
-                    break;
+                            .boxAddressRaw(Utils.pointeeSize(layout));
                 }
-                case INTEGER: {
+                case INTEGER -> {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
                     bindings.vmLoad(storage, carrier);
-                    break;
                 }
-                case FLOAT: {
+                case FLOAT -> {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.VECTOR);
                     bindings.vmLoad(storage, carrier);
-                    break;
                 }
-                default:
-                    throw new UnsupportedOperationException("Unhandled class " + argumentClass);
+                default -> throw new UnsupportedOperationException("Unhandled class " + argumentClass);
             }
             return bindings.build();
         }
