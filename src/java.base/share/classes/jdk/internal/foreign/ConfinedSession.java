@@ -82,6 +82,8 @@ final class ConfinedSession extends MemorySessionImpl {
     void justClose() {
         checkValidState();
         if (state == 0 || state - ((int)ASYNC_RELEASE_COUNT.getVolatile(this)) == 0) {
+            assert state != 0 || ((int)ASYNC_RELEASE_COUNT.getVolatile(this)) == 0
+                    : "if state was 0, there should be no async releases";
             state = CLOSED;
         } else {
             throw alreadyAcquired(state);
