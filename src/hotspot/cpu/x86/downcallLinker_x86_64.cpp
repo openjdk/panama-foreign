@@ -222,8 +222,6 @@ void DowncallStubGenerator::generate() {
     }
   }
 
-  //////////////////////////////////////////////////////////////////////////////
-
   __ block_comment("{ thread native2java");
   __ restore_cpu_control_state_after_jni(rscratch1);
 

@@ -24,16 +24,10 @@
  */
 package jdk.internal.foreign.abi;
 
-import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.StructLayout;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class LinkerOptions {
 
