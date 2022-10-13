@@ -34,11 +34,19 @@ enum class StorageType : int8_t {
   INTEGER = 0,
   VECTOR = 1,
   STACK = 2,
+  PLACEHOLDER = 3,
+// special locations used only by native code
+  FRAME_DATA = PLACEHOLDER + 1,
+  INVALID = -1
 };
 
-constexpr inline StorageType VMStorage::stack_type() {
-  return StorageType::STACK;
+// need to define this before constructing VMStorage (below)
+constexpr inline bool VMStorage::is_reg(StorageType type) {
+   return type == StorageType::INTEGER || type == StorageType::VECTOR;
 }
+constexpr inline StorageType VMStorage::stack_type() { return StorageType::STACK; }
+constexpr inline StorageType VMStorage::placeholder_type() { return StorageType::PLACEHOLDER; }
+constexpr inline StorageType VMStorage::frame_data_type() { return StorageType::FRAME_DATA; }
 
 constexpr uint16_t REG64_MASK = 0b0000000000000001;
 constexpr uint16_t V128_MASK  = 0b0000000000000001;

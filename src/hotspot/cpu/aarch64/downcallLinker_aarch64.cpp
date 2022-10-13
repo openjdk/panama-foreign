@@ -96,9 +96,11 @@ RuntimeStub* DowncallLinker::make_downcall_stub(BasicType* signature,
                                                 const GrowableArray<VMStorage>& input_registers,
                                                 const GrowableArray<VMStorage>& output_registers,
                                                 bool needs_return_buffer) {
-  int locs_size  = 64;
+  int locs_size = 64;
   CodeBuffer code("nep_invoker_blob", native_invoker_code_size, locs_size);
-  DowncallStubGenerator g(&code, signature, num_args, ret_bt, abi, input_registers, output_registers, needs_return_buffer);
+  DowncallStubGenerator g(&code, signature, num_args, ret_bt, abi,
+                          input_registers, output_registers,
+                          needs_return_buffer);
   g.generate();
   code.log_section_sizes("nep_invoker_blob");
 
@@ -152,22 +154,21 @@ void DowncallStubGenerator::generate() {
 #endif
 
   int allocated_frame_size = 0;
+  assert(_abi._shadow_space_bytes == 0, "not expecting shadow space on AArch64");
+  allocated_frame_size += arg_shuffle.out_arg_bytes();
+
+  StubLocations locs;
+  locs.set(StubLocations::TARGET_ADDRESS, _abi._scratch1);
   if (_needs_return_buffer) {
+    locs.set_frame_data(StubLocations::RETURN_BUFFER, allocated_frame_size);
     allocated_frame_size += 8; // for address spill
   }
-  allocated_frame_size += arg_shuffle.out_arg_bytes();
-  assert(_abi._shadow_space_bytes == 0, "not expecting shadow space on AArch64");
 
-  int ret_buf_addr_sp_offset = -1;
-  if (_needs_return_buffer) {
-     // in sync with the above
-     ret_buf_addr_sp_offset = allocated_frame_size - 8;
-  }
-
+  bool should_save_return_value = !_needs_return_buffer;
   RegSpiller out_reg_spiller(_output_registers);
   int spill_offset = -1;
 
-  if (!_needs_return_buffer) {
+  if (should_save_return_value) {
     spill_offset = 0;
     // spill area can be shared with the above, so we take the max of the 2
     allocated_frame_size = out_reg_spiller.spill_size_bytes() > allocated_frame_size
@@ -199,19 +200,14 @@ void DowncallStubGenerator::generate() {
   __ stlrw(tmp1, tmp2);
 
   __ block_comment("{ argument shuffle");
-  arg_shuffle.generate(_masm, shuffle_reg, 0, _abi._shadow_space_bytes);
-  if (_needs_return_buffer) {
-    assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
-    __ str(_abi._ret_buf_addr_reg, Address(sp, ret_buf_addr_sp_offset));
-  }
+  arg_shuffle.generate(_masm, shuffle_reg, 0, _abi._shadow_space_bytes, locs);
   __ block_comment("} argument shuffle");
 
-  __ blr(_abi._target_addr_reg);
+  __ blr(as_Register(locs.get(StubLocations::TARGET_ADDRESS)));
   // this call is assumed not to have killed rthread
 
   if (_needs_return_buffer) {
-    assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
-    __ ldr(tmp1, Address(sp, ret_buf_addr_sp_offset));
+    __ ldr(tmp1, Address(sp, locs.data_offset(StubLocations::RETURN_BUFFER)));
     int offset = 0;
     for (int i = 0; i < _output_registers.length(); i++) {
       VMStorage reg = _output_registers.at(i);
@@ -271,7 +267,7 @@ void DowncallStubGenerator::generate() {
   __ block_comment("{ L_safepoint_poll_slow_path");
   __ bind(L_safepoint_poll_slow_path);
 
-  if (!_needs_return_buffer) {
+  if (should_save_return_value) {
     // Need to save the native result registers around any runtime calls.
     out_reg_spiller.generate_spill(_masm, spill_offset);
   }
@@ -281,7 +277,7 @@ void DowncallStubGenerator::generate() {
   __ lea(tmp1, RuntimeAddress(CAST_FROM_FN_PTR(address, JavaThread::check_special_condition_for_native_trans)));
   __ blr(tmp1);
 
-  if (!_needs_return_buffer) {
+  if (should_save_return_value) {
     out_reg_spiller.generate_fill(_masm, spill_offset);
   }
 
@@ -293,13 +289,13 @@ void DowncallStubGenerator::generate() {
   __ block_comment("{ L_reguard");
   __ bind(L_reguard);
 
-  if (!_needs_return_buffer) {
+  if (should_save_return_value) {
     out_reg_spiller.generate_spill(_masm, spill_offset);
   }
 
   __ rt_call(CAST_FROM_FN_PTR(address, SharedRuntime::reguard_yellow_pages), tmp1);
 
-  if (!_needs_return_buffer) {
+  if (should_save_return_value) {
     out_reg_spiller.generate_fill(_masm, spill_offset);
   }
 

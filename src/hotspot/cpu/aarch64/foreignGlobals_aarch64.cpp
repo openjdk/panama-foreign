@@ -62,8 +62,8 @@ const ABIDescriptor ForeignGlobals::parse_abi_descriptor(jobject jabi) {
   abi._stack_alignment_bytes = jdk_internal_foreign_abi_ABIDescriptor::stackAlignment(abi_oop);
   abi._shadow_space_bytes = jdk_internal_foreign_abi_ABIDescriptor::shadowSpace(abi_oop);
 
-  abi._target_addr_reg = as_Register(parse_vmstorage(jdk_internal_foreign_abi_ABIDescriptor::targetAddrStorage(abi_oop)));
-  abi._ret_buf_addr_reg = as_Register(parse_vmstorage(jdk_internal_foreign_abi_ABIDescriptor::retBufAddrStorage(abi_oop)));
+  abi._scratch1 = parse_vmstorage(jdk_internal_foreign_abi_ABIDescriptor::scratch1(abi_oop));
+  abi._scratch2 = parse_vmstorage(jdk_internal_foreign_abi_ABIDescriptor::scratch2(abi_oop));
 
   return abi;
 }
@@ -115,19 +115,29 @@ static void move_reg64(MacroAssembler* masm, int out_stk_bias,
         default: ShouldNotReachHere();
       }
       break;
+    case StorageType::FRAME_DATA:
+      switch (to_reg.stack_size()) {
+        // FIXME use correctly sized stores
+        case 8: case 4: case 2: case 1:
+          masm->str(from_reg, Address(sp, to_reg.offset()));
+        break;
+        default: ShouldNotReachHere();
+      }
+      break;
     default: ShouldNotReachHere();
   }
 }
 
 static void move_stack(MacroAssembler* masm, Register tmp_reg, int in_stk_bias, int out_stk_bias,
                        VMStorage from_reg, VMStorage to_reg) {
+  Address from_addr(rfp, RFP_BIAS + from_reg.offset() + in_stk_bias);
   switch (to_reg.type()) {
     case StorageType::INTEGER:
       assert(to_reg.segment_mask() == REG64_MASK, "only moves to 64-bit registers supported");
       switch (from_reg.stack_size()) {
         // FIXME use correctly sized loads
         case 8: case 4: case 2: case 1:
-          masm->ldr(as_Register(to_reg), Address(rfp, RFP_BIAS + from_reg.offset() + in_stk_bias));
+          masm->ldr(as_Register(to_reg), from_addr);
         break;
         default: ShouldNotReachHere();
       }
@@ -136,10 +146,10 @@ static void move_stack(MacroAssembler* masm, Register tmp_reg, int in_stk_bias, 
       assert(to_reg.segment_mask() == V128_MASK, "only moves to v128 registers supported");
       switch (from_reg.stack_size()) {
         case 8:
-          masm->ldrd(as_FloatRegister(to_reg), Address(rfp, RFP_BIAS + from_reg.offset() + in_stk_bias));
+          masm->ldrd(as_FloatRegister(to_reg), from_addr);
         break;
         case 4:
-          masm->ldrs(as_FloatRegister(to_reg), Address(rfp, RFP_BIAS + from_reg.offset() + in_stk_bias));
+          masm->ldrs(as_FloatRegister(to_reg), from_addr);
         break;
         default: ShouldNotReachHere();
       }
@@ -150,8 +160,18 @@ static void move_stack(MacroAssembler* masm, Register tmp_reg, int in_stk_bias, 
       switch (from_reg.stack_size()) {
         // FIXME use correctly sized loads & stores
         case 8: case 4: case 2: case 1:
-          masm->ldr(tmp_reg, Address(rfp, RFP_BIAS + from_reg.offset() + in_stk_bias));
+          masm->ldr(tmp_reg, from_addr);
           masm->str(tmp_reg, Address(sp, to_reg.offset() + out_stk_bias));
+        break;
+        default: ShouldNotReachHere();
+      }
+      break;
+    case StorageType::FRAME_DATA:
+      switch (to_reg.stack_size()) {
+        // FIXME use correctly sized stores
+        case 8: case 4: case 2: case 1:
+          masm->ldr(tmp_reg, from_addr);
+          masm->str(tmp_reg, Address(sp, to_reg.offset()));
         break;
         default: ShouldNotReachHere();
       }
@@ -182,12 +202,20 @@ static void move_v128(MacroAssembler* masm, int out_stk_bias,
   }
 }
 
-void ArgumentShuffle::pd_generate(MacroAssembler* masm, VMStorage tmp, int in_stk_bias, int out_stk_bias) const {
+void ArgumentShuffle::pd_generate(MacroAssembler* masm, VMStorage tmp, int in_stk_bias, int out_stk_bias, const StubLocations& locs) const {
   Register tmp_reg = as_Register(tmp);
   for (int i = 0; i < _moves.length(); i++) {
     Move move = _moves.at(i);
     VMStorage from_reg = move.from;
     VMStorage to_reg   = move.to;
+
+    // replace any placeholders
+    if (from_reg.type() == StorageType::PLACEHOLDER) {
+      from_reg = locs.get(from_reg);
+    }
+    if (to_reg.type() == StorageType::PLACEHOLDER) {
+      to_reg = locs.get(to_reg);
+    }
 
     switch (from_reg.type()) {
       case StorageType::INTEGER:
@@ -198,9 +226,9 @@ void ArgumentShuffle::pd_generate(MacroAssembler* masm, VMStorage tmp, int in_st
         assert(from_reg.segment_mask() == V128_MASK, "only v128 register supported");
         move_v128(masm, out_stk_bias, as_FloatRegister(from_reg), to_reg);
         break;
-      case StorageType::STACK:
+      case StorageType::STACK: {
         move_stack(masm, tmp_reg, in_stk_bias, out_stk_bias, from_reg, to_reg);
-        break;
+      } break;
       default: ShouldNotReachHere();
     }
   }
