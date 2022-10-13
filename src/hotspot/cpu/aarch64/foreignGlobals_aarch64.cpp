@@ -116,13 +116,8 @@ static void move_reg64(MacroAssembler* masm, int out_stk_bias,
       }
       break;
     case StorageType::FRAME_DATA:
-      switch (to_reg.stack_size()) {
-        // FIXME use correctly sized stores
-        case 8: case 4: case 2: case 1:
-          masm->str(from_reg, Address(sp, to_reg.offset()));
-        break;
-        default: ShouldNotReachHere();
-      }
+      assert(to_reg.stack_size() == 8, "only moves with 64-bit targets supported");
+      masm->str(from_reg, Address(sp, to_reg.offset()));
       break;
     default: ShouldNotReachHere();
   }
@@ -167,14 +162,9 @@ static void move_stack(MacroAssembler* masm, Register tmp_reg, int in_stk_bias, 
       }
       break;
     case StorageType::FRAME_DATA:
-      switch (to_reg.stack_size()) {
-        // FIXME use correctly sized stores
-        case 8: case 4: case 2: case 1:
-          masm->ldr(tmp_reg, from_addr);
-          masm->str(tmp_reg, Address(sp, to_reg.offset()));
-        break;
-        default: ShouldNotReachHere();
-      }
+      assert(to_reg.stack_size() == 8, "only moves with 64-bit targets supported");
+      masm->ldr(tmp_reg, from_addr);
+      masm->str(tmp_reg, Address(sp, to_reg.offset()));
       break;
     default: ShouldNotReachHere();
   }
