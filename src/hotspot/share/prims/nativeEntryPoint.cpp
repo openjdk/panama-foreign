@@ -36,8 +36,7 @@
 #include "runtime/jniHandles.inline.hpp"
 
 JNI_ENTRY(jlong, NEP_makeDowncallStub(JNIEnv* env, jclass _unused, jobject method_type, jobject jabi,
-                                      jobjectArray arg_moves, jobjectArray ret_moves,
-                                      jboolean needs_return_buffer))
+                                      jobjectArray arg_moves, jobjectArray ret_moves, jboolean needs_return_buffer))
   ResourceMark rm;
   const ABIDescriptor abi = ForeignGlobals::parse_abi_descriptor(jabi);
 

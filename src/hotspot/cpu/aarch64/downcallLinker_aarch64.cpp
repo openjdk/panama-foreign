@@ -96,11 +96,9 @@ RuntimeStub* DowncallLinker::make_downcall_stub(BasicType* signature,
                                                 const GrowableArray<VMStorage>& input_registers,
                                                 const GrowableArray<VMStorage>& output_registers,
                                                 bool needs_return_buffer) {
-  int locs_size = 64;
+  int locs_size  = 64;
   CodeBuffer code("nep_invoker_blob", native_invoker_code_size, locs_size);
-  DowncallStubGenerator g(&code, signature, num_args, ret_bt, abi,
-                          input_registers, output_registers,
-                          needs_return_buffer);
+  DowncallStubGenerator g(&code, signature, num_args, ret_bt, abi, input_registers, output_registers, needs_return_buffer);
   g.generate();
   code.log_section_sizes("nep_invoker_blob");
 
