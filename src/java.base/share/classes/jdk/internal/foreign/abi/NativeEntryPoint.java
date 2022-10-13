@@ -56,8 +56,7 @@ public class NativeEntryPoint {
 
     public static NativeEntryPoint make(ABIDescriptor abi,
                                         VMStorage[] argMoves, VMStorage[] returnMoves,
-                                        MethodType methodType,
-                                        boolean needsReturnBuffer) {
+                                        MethodType methodType, boolean needsReturnBuffer) {
         if (returnMoves.length > 1 != needsReturnBuffer) {
             throw new IllegalArgumentException("Multiple register return, but needsReturnBuffer was false");
         }

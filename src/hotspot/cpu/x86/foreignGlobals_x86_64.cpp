@@ -100,18 +100,17 @@ static constexpr int RBP_BIAS = 16; // skip old rbp and return address
 
 static void move_reg64(MacroAssembler* masm, int out_stk_bias,
                        Register from_reg, VMStorage to_reg) {
+  int out_bias = 0;
   switch (to_reg.type()) {
     case StorageType::INTEGER:
       assert(to_reg.segment_mask() == REG64_MASK, "only moves to 64-bit registers supported");
       masm->movq(as_Register(to_reg), from_reg);
       break;
     case StorageType::STACK:
-      assert(to_reg.stack_size() == 8, "only moves with 64-bit targets supported");
-      masm->movq(Address(rsp, to_reg.offset() + out_stk_bias), from_reg);
-      break;
+      out_bias = out_stk_bias;
     case StorageType::FRAME_DATA:
       assert(to_reg.stack_size() == 8, "only moves with 64-bit targets supported");
-      masm->movq(Address(rsp, to_reg.offset()), from_reg);
+      masm->movq(Address(rsp, to_reg.offset() + out_bias), from_reg);
       break;
     default: ShouldNotReachHere();
   }
@@ -119,6 +118,7 @@ static void move_reg64(MacroAssembler* masm, int out_stk_bias,
 
 static void move_stack64(MacroAssembler* masm, Register tmp_reg, int out_stk_bias,
                          Address from_address, VMStorage to_reg) {
+  int out_bias = 0;
   switch (to_reg.type()) {
     case StorageType::INTEGER:
       assert(to_reg.segment_mask() == REG64_MASK, "only moves to 64-bit registers supported");
@@ -129,14 +129,11 @@ static void move_stack64(MacroAssembler* masm, Register tmp_reg, int out_stk_bia
       masm->movdqu(as_XMMRegister(to_reg), from_address);
       break;
     case StorageType::STACK:
-      assert(to_reg.stack_size() == 8, "only moves with 64-bit targets supported");
-      masm->movq(tmp_reg, from_address);
-      masm->movq(Address(rsp, to_reg.offset() + out_stk_bias), tmp_reg);
-      break;
+      out_bias = out_stk_bias;
     case StorageType::FRAME_DATA:
       assert(to_reg.stack_size() == 8, "only moves with 64-bit targets supported");
       masm->movq(tmp_reg, from_address);
-      masm->movq(Address(rsp, to_reg.offset()), tmp_reg);
+      masm->movq(Address(rsp, to_reg.offset() + out_bias), tmp_reg);
       break;
     default: ShouldNotReachHere();
   }

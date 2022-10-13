@@ -101,12 +101,15 @@ static constexpr int RFP_BIAS = 16; // skip old rfp and lr
 
 static void move_reg64(MacroAssembler* masm, int out_stk_bias,
                        Register from_reg, VMStorage to_reg) {
+  int out_bias = 0;
   switch (to_reg.type()) {
     case StorageType::INTEGER:
       assert(to_reg.segment_mask() == REG64_MASK, "only moves to 64-bit registers supported");
       masm->mov(as_Register(to_reg), from_reg);
       break;
     case StorageType::STACK:
+      out_bias = out_stk_bias;
+    case StorageType::FRAME_DATA:
       switch (to_reg.stack_size()) {
         // FIXME use correctly sized stores
         case 8: case 4: case 2: case 1:
@@ -115,10 +118,6 @@ static void move_reg64(MacroAssembler* masm, int out_stk_bias,
         default: ShouldNotReachHere();
       }
       break;
-    case StorageType::FRAME_DATA:
-      assert(to_reg.stack_size() == 8, "only moves with 64-bit targets supported");
-      masm->str(from_reg, Address(sp, to_reg.offset()));
-      break;
     default: ShouldNotReachHere();
   }
 }
@@ -126,6 +125,7 @@ static void move_reg64(MacroAssembler* masm, int out_stk_bias,
 static void move_stack(MacroAssembler* masm, Register tmp_reg, int in_stk_bias, int out_stk_bias,
                        VMStorage from_reg, VMStorage to_reg) {
   Address from_addr(rfp, RFP_BIAS + from_reg.offset() + in_stk_bias);
+  int out_bias = 0;
   switch (to_reg.type()) {
     case StorageType::INTEGER:
       assert(to_reg.segment_mask() == REG64_MASK, "only moves to 64-bit registers supported");
@@ -150,21 +150,18 @@ static void move_stack(MacroAssembler* masm, Register tmp_reg, int in_stk_bias, 
       }
       break;
     case StorageType::STACK:
+      out_bias = out_stk_bias;
+    case StorageType::FRAME_DATA:
       // We assume 8 bytes stack size when converting from VMReg (Java CC)
       //assert(from_reg.stack_size() == to_reg.stack_size(), "must be same");
       switch (from_reg.stack_size()) {
         // FIXME use correctly sized loads & stores
         case 8: case 4: case 2: case 1:
           masm->ldr(tmp_reg, from_addr);
-          masm->str(tmp_reg, Address(sp, to_reg.offset() + out_stk_bias));
+          masm->str(tmp_reg, Address(sp, to_reg.offset() + out_bias));
         break;
         default: ShouldNotReachHere();
       }
-      break;
-    case StorageType::FRAME_DATA:
-      assert(to_reg.stack_size() == 8, "only moves with 64-bit targets supported");
-      masm->ldr(tmp_reg, from_addr);
-      masm->str(tmp_reg, Address(sp, to_reg.offset()));
       break;
     default: ShouldNotReachHere();
   }
@@ -216,9 +213,9 @@ void ArgumentShuffle::pd_generate(MacroAssembler* masm, VMStorage tmp, int in_st
         assert(from_reg.segment_mask() == V128_MASK, "only v128 register supported");
         move_v128(masm, out_stk_bias, as_FloatRegister(from_reg), to_reg);
         break;
-      case StorageType::STACK: {
+      case StorageType::STACK:
         move_stack(masm, tmp_reg, in_stk_bias, out_stk_bias, from_reg, to_reg);
-      } break;
+        break;
       default: ShouldNotReachHere();
     }
   }
