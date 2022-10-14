@@ -33,12 +33,13 @@
  */
 
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.LinkerOptions;
+import jdk.internal.foreign.abi.StubLocations;
+import jdk.internal.foreign.abi.VMStorage;
 import jdk.internal.foreign.abi.aarch64.CallArranger;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -57,7 +58,8 @@ import static org.testng.Assert.assertTrue;
 
 public class TestAarch64CallArranger extends CallArrangerTestBase {
 
-    private static final short STACK_SLOT_SIZE = 8;
+    private static final VMStorage TARGET_ADDRESS_STORAGE = StubLocations.TARGET_ADDRESS.storage(StorageType.PLACEHOLDER);
+    private static final VMStorage RETURN_BUFFER_STORAGE = StubLocations.RETURN_BUFFER.storage(StorageType.PLACEHOLDER);
 
     @Test
     public void testEmpty() {
@@ -71,7 +73,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(), vmStore(r9, long.class) }
+            { unboxAddress(), vmStore(TARGET_ADDRESS_STORAGE, long.class) }
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -95,7 +97,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(), vmStore(r9, long.class) },
+            { unboxAddress(), vmStore(TARGET_ADDRESS_STORAGE, long.class) },
             { vmStore(r0, int.class) },
             { vmStore(r1, int.class) },
             { vmStore(r2, int.class) },
@@ -125,7 +127,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(), vmStore(r9, long.class) },
+            { unboxAddress(), vmStore(TARGET_ADDRESS_STORAGE, long.class) },
             { vmStore(r0, int.class) },
             { vmStore(r1, int.class) },
             { vmStore(v0, float.class) },
@@ -147,7 +149,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(), vmStore(r9, long.class) },
+            { unboxAddress(), vmStore(TARGET_ADDRESS_STORAGE, long.class) },
             expectedBindings
         });
 
@@ -207,7 +209,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(), vmStore(r9, long.class) },
+            { unboxAddress(), vmStore(TARGET_ADDRESS_STORAGE, long.class) },
             {
                 copy(struct1),
                 unboxAddress(),
@@ -238,7 +240,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), FunctionDescriptor.ofVoid(ADDRESS, C_POINTER));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(), vmStore(r9, long.class) },
+            { unboxAddress(), vmStore(TARGET_ADDRESS_STORAGE, long.class) },
             {
                 unboxAddress(),
                 vmStore(r8, long.class)
@@ -262,8 +264,8 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(), vmStore(r10, long.class) },
-            { unboxAddress(), vmStore(r9, long.class) }
+            { unboxAddress(), vmStore(RETURN_BUFFER_STORAGE, long.class) },
+            { unboxAddress(), vmStore(TARGET_ADDRESS_STORAGE, long.class) }
         });
 
         checkReturnBindings(callingSequence, new Binding[]{
@@ -291,8 +293,8 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(), vmStore(r10, long.class) },
-            { unboxAddress(), vmStore(r9, long.class) },
+            { unboxAddress(), vmStore(RETURN_BUFFER_STORAGE, long.class) },
+            { unboxAddress(), vmStore(TARGET_ADDRESS_STORAGE, long.class) },
             { vmStore(v0, float.class) },
             { vmStore(r0, int.class) },
             {
@@ -329,7 +331,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(), vmStore(r9, long.class) },
+            { unboxAddress(), vmStore(TARGET_ADDRESS_STORAGE, long.class) },
             {
                 dup(),
                 bufferLoad(0, float.class),
@@ -383,7 +385,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(), vmStore(r9, long.class) },
+            { unboxAddress(), vmStore(TARGET_ADDRESS_STORAGE, long.class) },
             { copy(struct), unboxAddress(), vmStore(r0, long.class) },
             { copy(struct), unboxAddress(), vmStore(r1, long.class) },
             { vmStore(r2, int.class) },
@@ -413,7 +415,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         // This is identical to the non-variadic calling sequence
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(), vmStore(r9, long.class) },
+            { unboxAddress(), vmStore(TARGET_ADDRESS_STORAGE, long.class) },
             { vmStore(r0, int.class) },
             { vmStore(r1, int.class) },
             { vmStore(v0, float.class) },
@@ -436,7 +438,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         // The two variadic arguments should be allocated on the stack
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { unboxAddress(), vmStore(r9, long.class) },
+            { unboxAddress(), vmStore(TARGET_ADDRESS_STORAGE, long.class) },
             { vmStore(r0, int.class) },
             { vmStore(stackStorage((short) 4, 0), int.class) },
             { vmStore(stackStorage((short) 4, 8), float.class) },
