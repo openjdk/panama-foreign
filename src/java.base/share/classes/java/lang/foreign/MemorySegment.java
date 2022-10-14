@@ -942,7 +942,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @return a memory segment, derived from the given buffer instance.
      * @throws IllegalArgumentException if the provided {@code buffer} is obtained by calling either
      *                                  ({@link CharBuffer#wrap(CharSequence)} or {@link CharBuffer#wrap(char[], int, int)}
-     *                                  because these Buffer objects are not backed directly by a char array.
+     *                                  because these buffer objects are not backed directly by a char array.
      */
     static MemorySegment ofBuffer(Buffer buffer) {
         return AbstractMemorySegmentImpl.ofBuffer(buffer);

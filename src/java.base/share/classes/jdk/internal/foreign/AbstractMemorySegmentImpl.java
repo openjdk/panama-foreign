@@ -471,7 +471,7 @@ public abstract sealed class AbstractMemorySegmentImpl
         Objects.requireNonNull(bb);
         // StringCharBuffer is packet-private
         if ("java.nio.StringCharBuffer".equals(bb.getClass().getName())) {
-            throw new IllegalArgumentException("StringCharBuffer objects are not supported because they are not directly backed by a char[] array.");
+            throw new IllegalArgumentException("The provided CharBuffer is not backed by a char[].");
         }
         long bbAddress = NIO_ACCESS.getBufferAddress(bb);
         Object base = NIO_ACCESS.getBufferBase(bb);
