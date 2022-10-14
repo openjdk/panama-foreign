@@ -32,6 +32,7 @@ import java.lang.invoke.MethodHandles;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.*;
 import java.nio.charset.StandardCharsets;
@@ -939,7 +940,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      *
      * @param buffer the buffer instance to be turned into a new memory segment.
      * @return a memory segment, derived from the given buffer instance.
-     * @throws IllegalArgumentException if the provided {@code buffer} is a StringCharBuffer.
+     * @throws IllegalArgumentException if the provided {@code buffer} is obtained by calling either
+     *                                  ({@link CharBuffer#wrap(CharSequence)} or {@link CharBuffer#wrap(char[], int, int)}
+     *                                  because these Buffer objects are not backed directly by a char array.
      */
     static MemorySegment ofBuffer(Buffer buffer) {
         return AbstractMemorySegmentImpl.ofBuffer(buffer);
