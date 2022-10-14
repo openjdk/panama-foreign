@@ -939,6 +939,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      *
      * @param buffer the buffer instance to be turned into a new memory segment.
      * @return a memory segment, derived from the given buffer instance.
+     * @throws IllegalArgumentException if the provided {@code buffer} is a StringCharBuffer.
      */
     static MemorySegment ofBuffer(Buffer buffer) {
         return AbstractMemorySegmentImpl.ofBuffer(buffer);
