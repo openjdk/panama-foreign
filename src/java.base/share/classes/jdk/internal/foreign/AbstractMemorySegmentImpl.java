@@ -469,12 +469,11 @@ public abstract sealed class AbstractMemorySegmentImpl
 
     public static AbstractMemorySegmentImpl ofBuffer(Buffer bb) {
         Objects.requireNonNull(bb);
-        // StringCharBuffer is packet-private
-        if ("java.nio.StringCharBuffer".equals(bb.getClass().getName())) {
-            throw new IllegalArgumentException("The provided CharBuffer is not backed by a char[].");
+        Object base = NIO_ACCESS.getBufferBase(bb);
+        if (!bb.isDirect() && base == null) {
+            throw new IllegalArgumentException("The provided heap buffer is not backed by an array.");
         }
         long bbAddress = NIO_ACCESS.getBufferAddress(bb);
-        Object base = NIO_ACCESS.getBufferBase(bb);
         UnmapperProxy unmapper = NIO_ACCESS.unmapper(bb);
 
         int pos = bb.position();
