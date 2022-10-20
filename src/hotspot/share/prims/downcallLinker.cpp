@@ -30,7 +30,7 @@
 #include <Winsock2.h>
 #endif
 
-void DowncallLinker::save_thread_local(int32_t* value_ptr, int save_thread_local_mask) {
+void DowncallLinker::preserve_value(int32_t* value_ptr, int preserve_value_mask) {
   // keep in synch with NativeEntryPoint::SaveThreadLocal
   enum SaveThreadLocal {
     NONE = 0,
@@ -39,16 +39,16 @@ void DowncallLinker::save_thread_local(int32_t* value_ptr, int save_thread_local
     ERRNO = 1 << 2
   };
 #ifdef _WIN64
-  if (save_thread_local_mask & GET_LAST_ERROR) {
+  if (preserve_value_mask & GET_LAST_ERROR) {
     *value_ptr = GetLastError();
     value_ptr++;
   }
-  if (save_thread_local_mask & WSA_GET_LAST_ERROR) {
+  if (preserve_value_mask & WSA_GET_LAST_ERROR) {
     *value_ptr = WSAGetLastError();
     value_ptr++;
   }
 #endif
-  if (save_thread_local_mask & ERRNO) {
+  if (preserve_value_mask & ERRNO) {
     *value_ptr = errno;
   }
 }
