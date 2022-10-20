@@ -100,7 +100,7 @@ public class CallingSequenceBuilder {
             if (linkerOptions.hasSavedThreadLocals()) {
                 addArgumentBinding(0, MemorySegment.class, ValueLayout.ADDRESS, List.of(
                         Binding.unboxAddress(),
-                        Binding.vmStore(abi.saveThreadLocalStorage(), long.class)));
+                        Binding.vmStore(abi.preservedValueStorage(), long.class)));
             }
             addArgumentBinding(0, MemorySegment.class, ValueLayout.ADDRESS, List.of(
                 Binding.unboxAddress(),

@@ -47,7 +47,7 @@ public class NativeEntryPoint {
     private static final SoftReferenceCache<CacheKey, NativeEntryPoint> NEP_CACHE = new SoftReferenceCache<>();
     private record CacheKey(MethodType methodType, ABIDescriptor abi,
                             List<VMStorage> argMoves, List<VMStorage> retMoves,
-                            boolean needsReturnBuffer, int saveThreadLocal) {}
+                            boolean needsReturnBuffer, int preservedValueMask) {}
 
     private NativeEntryPoint(MethodType methodType, long downcallStubAddress) {
         this.methodType = methodType;
@@ -58,18 +58,18 @@ public class NativeEntryPoint {
                                         VMStorage[] argMoves, VMStorage[] returnMoves,
                                         MethodType methodType,
                                         boolean needsReturnBuffer,
-                                        int savedThreadLocalMask) {
+                                        int preservedValueMask) {
         if (returnMoves.length > 1 != needsReturnBuffer) {
             throw new IllegalArgumentException("Multiple register return, but needsReturnBuffer was false");
         }
 
         assert (methodType.parameterType(0) == long.class) : "Address expected";
-        assert ((!needsReturnBuffer && savedThreadLocalMask == 0) || methodType.parameterType(1) == long.class) : "return buffer or saved thread local address expected";
-        assert (!(needsReturnBuffer && savedThreadLocalMask != 0) || methodType.parameterType(2) == long.class) : "return buffer or saved thread local address expected";
+        assert ((!needsReturnBuffer && preservedValueMask == 0) || methodType.parameterType(1) == long.class) : "return buffer or saved thread local address expected";
+        assert (!(needsReturnBuffer && preservedValueMask != 0) || methodType.parameterType(2) == long.class) : "return buffer or saved thread local address expected";
 
-        CacheKey key = new CacheKey(methodType, abi, Arrays.asList(argMoves), Arrays.asList(returnMoves), needsReturnBuffer, savedThreadLocalMask);
+        CacheKey key = new CacheKey(methodType, abi, Arrays.asList(argMoves), Arrays.asList(returnMoves), needsReturnBuffer, preservedValueMask);
         return NEP_CACHE.get(key, k -> {
-            long downcallStub = makeDowncallStub(methodType, abi, argMoves, returnMoves, needsReturnBuffer, savedThreadLocalMask);
+            long downcallStub = makeDowncallStub(methodType, abi, argMoves, returnMoves, needsReturnBuffer, preservedValueMask);
             NativeEntryPoint nep = new NativeEntryPoint(methodType, downcallStub);
             CLEANER.register(nep, () -> freeDowncallStub(downcallStub));
             return nep;
@@ -79,7 +79,7 @@ public class NativeEntryPoint {
     private static native long makeDowncallStub(MethodType methodType, ABIDescriptor abi,
                                                 VMStorage[] encArgMoves, VMStorage[] encRetMoves,
                                                 boolean needsReturnBuffer,
-                                                int savedThreadLocalMask);
+                                                int preservedValueMask);
 
     private static native boolean freeDowncallStub0(long downcallStub);
     private static void freeDowncallStub(long downcallStub) {

@@ -30,7 +30,6 @@ import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.StructLayout;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -80,7 +79,7 @@ public class LinkerOptions {
         return getOption(PreserveValueImpl.class) != null;
     }
 
-    public Stream<String> savedThreadLocals() {
+    public Stream<String> preservedValues() {
         PreserveValueImpl stl = getOption(PreserveValueImpl.class);
         return stl == null ? Stream.empty() : stl.saved().stream();
     }

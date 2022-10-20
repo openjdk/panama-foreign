@@ -37,7 +37,7 @@
 
 JNI_ENTRY(jlong, NEP_makeDowncallStub(JNIEnv* env, jclass _unused, jobject method_type, jobject jabi,
                                       jobjectArray arg_moves, jobjectArray ret_moves,
-                                      jboolean needs_return_buffer, jint preserve_value_mask))
+                                      jboolean needs_return_buffer, jint preserved_value_mask))
   ResourceMark rm;
   const ABIDescriptor abi = ForeignGlobals::parse_abi_descriptor(jabi);
 
@@ -77,7 +77,7 @@ JNI_ENTRY(jlong, NEP_makeDowncallStub(JNIEnv* env, jclass _unused, jobject metho
 
   return (jlong) DowncallLinker::make_downcall_stub(basic_type, pslots, ret_bt, abi,
                                                     input_regs, output_regs,
-                                                    needs_return_buffer, preserve_value_mask)->code_begin();
+                                                    needs_return_buffer, preserved_value_mask)->code_begin();
 JNI_END
 
 JNI_ENTRY(jboolean, NEP_freeDowncallStub(JNIEnv* env, jclass _unused, jlong invoker))

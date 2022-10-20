@@ -185,8 +185,8 @@ public class CallingSequence {
         return !returnBindings.isEmpty();
     }
 
-    public int savedThreadLocalsMask() {
-        return linkerOptions.savedThreadLocals()
+    public int preservedValueMask() {
+        return linkerOptions.preservedValues()
                 .map(PreservableValues::forName)
                 .mapToInt(PreservableValues::mask)
                 .reduce(0, (a, b) -> a | b);

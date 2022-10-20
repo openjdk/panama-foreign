@@ -45,13 +45,13 @@ public class ABIDescriptor {
 
     final VMStorage targetAddrStorage;
     final VMStorage retBufAddrStorage;
-    final VMStorage saveThreadLocalStorage;
+    final VMStorage preservedValueStorage;
 
     public ABIDescriptor(Architecture arch, VMStorage[][] inputStorage, VMStorage[][] outputStorage,
                          VMStorage[][] volatileStorage, int stackAlignment, int shadowSpace,
                          VMStorage scratch1, VMStorage scratch2,
                          VMStorage targetAddrStorage, VMStorage retBufAddrStorage,
-                         VMStorage saveThreadLocalStorage) {
+                         VMStorage preservedValueStorage) {
         this.arch = arch;
         this.inputStorage = inputStorage;
         this.outputStorage = outputStorage;
@@ -62,7 +62,7 @@ public class ABIDescriptor {
         this.scratch2 = scratch2;
         this.targetAddrStorage = targetAddrStorage;
         this.retBufAddrStorage = retBufAddrStorage;
-        this.saveThreadLocalStorage = saveThreadLocalStorage;
+        this.preservedValueStorage = preservedValueStorage;
     }
 
     public VMStorage targetAddrStorage() {
@@ -73,7 +73,7 @@ public class ABIDescriptor {
         return retBufAddrStorage;
     }
 
-    public VMStorage saveThreadLocalStorage() {
-        return saveThreadLocalStorage;
+    public VMStorage preservedValueStorage() {
+        return preservedValueStorage;
     }
 }
