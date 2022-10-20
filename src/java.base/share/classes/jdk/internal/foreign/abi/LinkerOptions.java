@@ -75,7 +75,7 @@ public class LinkerOptions {
         return fva != null && argIndex >= fva.index();
     }
 
-    public boolean hasSavedThreadLocals() {
+    public boolean hasPreservedValues() {
         return getOption(PreserveValueImpl.class) != null;
     }
 

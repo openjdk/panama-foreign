@@ -97,7 +97,7 @@ public class CallingSequenceBuilder {
         MethodType callerMethodType;
         MethodType calleeMethodType;
         if (!forUpcall) {
-            if (linkerOptions.hasSavedThreadLocals()) {
+            if (linkerOptions.hasPreservedValues()) {
                 addArgumentBinding(0, MemorySegment.class, ValueLayout.ADDRESS, List.of(
                         Binding.unboxAddress(),
                         Binding.vmStore(abi.preservedValueStorage(), long.class)));

@@ -313,8 +313,13 @@ public sealed interface Linker permits AbstractLinker {
         }
 
         /**
-         * {@return A linker option used to preserve values that might be overwirtten by the runtime
+         * {@return A linker option used to preserve values that might be overwritten by the runtime
          *          before they can be read through conventional means}
+         * <p>
+         * A downcall method handle linked with this option will feature an additional {@link MemorySegment}
+         * parameter directly following the target address parameter. This memory segment represents
+         * the off-heap memory into which the preserved values are to be written.
+         *
          * @param preservedValues the names of the values to preserve.
          * @see PreserveValue#supported()
          */
@@ -326,12 +331,36 @@ public sealed interface Linker permits AbstractLinker {
         /**
          * A linker option for preserving a value that might be overwritten by the runtime
          * before it can be read through conventional means.
+         * <p>
+         * Values are preserved by a downcall method handle on invocation, by writing them
+         * to a region of off-heap memory provided by the user to the downcall method handle.
+         * <p>
+         * The off-heap memory region should have the layout {@linkplain PreserveValue#layout associated}
+         * with the particular {@code PreserveValue} instance used to link the downcall handle.
+         * <p>
+         * Preserved values can be retrieved from this region by constructing var handles
+         * from the {@linkplain PreserveValue#layout layout} of the region.
+         * <p>
+         * The following example demonstrates the use of this linker option:
+         * {@snippet lang = "java":
+         * MemorySegment targetAddress = ...
+         * PreserveValue pv = Linker.Option.preserveValue("errno");
+         * MethodHandle handle = Linker.nativeLinker().downcallHandle(targetAddress, FunctionDescriptor.ofVoid(), pv);
+         *
+         * VarHandle errnoHandle = pv.layout().varHandle(PathElement.groupElement("errno"));
+         * try (MemorySession session = MemorySession.openConfined()) {
+         *     MemorySegment preservedValues = session.allocate(pv.layout());
+         *     handle.invoke(preservedValues);
+         *     int errno = errnoHandle.get(preservedValues);
+         *     // use errno
+         * }
+         * }
          */
         sealed interface PreserveValue extends Option
                                        permits LinkerOptions.PreserveValueImpl {
             /**
-             * {@return A struct layout that should be used to allocate the segment for,
-             *          and retrieve preserved values}
+             * {@return A struct layout that represents the layout of the memory region passed
+             *          to a downcall handle linked with this {@code PreserveValue} instance}
              */
             StructLayout layout();
 
