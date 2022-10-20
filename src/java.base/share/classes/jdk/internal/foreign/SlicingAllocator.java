@@ -26,33 +26,27 @@
 package jdk.internal.foreign;
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 
-public final class ArenaAllocator implements SegmentAllocator {
+public final class SlicingAllocator implements SegmentAllocator {
 
     public static final long DEFAULT_BLOCK_SIZE = 4 * 1024;
 
-    private MemorySegment segment;
+    private final MemorySegment segment;
+    private final long maxAlign;
 
     private long sp = 0L;
-    private long size = 0;
-    private final long blockSize;
-    private final long arenaSize;
-    private final MemorySession session;
 
-    public ArenaAllocator(long blockSize, long arenaSize, MemorySession session) {
-        this.blockSize = blockSize;
-        this.arenaSize = arenaSize;
-        this.session = session;
-        this.segment = newSegment(blockSize, 1);
+    public SlicingAllocator(MemorySegment segment) {
+        this.segment = segment;
+        this.maxAlign = ((AbstractMemorySegmentImpl)segment).maxAlignMask();
     }
 
     MemorySegment trySlice(long byteSize, long byteAlignment) {
         long min = segment.address();
         long start = Utils.alignUp(min + sp, byteAlignment) - min;
         if (segment.byteSize() - start < byteSize) {
-            return null;
+            return MemorySegment.NULL;
         } else {
             MemorySegment slice = segment.asSlice(start, byteSize);
             sp = start + byteSize;
@@ -60,37 +54,10 @@ public final class ArenaAllocator implements SegmentAllocator {
         }
     }
 
-    private MemorySegment newSegment(long byteSize, long byteAlignment) {
-        long allocatedSize = Utils.alignUp(byteSize, byteAlignment);
-        if (size + allocatedSize > arenaSize) {
-            throw new OutOfMemoryError();
-        }
-        size += allocatedSize;
-        return session.allocate(byteSize, byteAlignment);
-    }
-
     @Override
     public MemorySegment allocate(long byteSize, long byteAlignment) {
-        Utils.checkAllocationSizeAndAlign(byteSize, byteAlignment);
-        MemorySessionImpl.toSessionImpl(session).checkValidState();
+        Utils.checkAllocationSizeAndAlign(byteSize, byteAlignment, maxAlign);
         // try to slice from current segment first...
-        MemorySegment slice = trySlice(byteSize, byteAlignment);
-        if (slice != null) {
-            return slice;
-        } else {
-            long maxPossibleAllocationSize = byteSize + byteAlignment - 1;
-            if (maxPossibleAllocationSize < 0) {
-                throw new OutOfMemoryError();
-            } else if (maxPossibleAllocationSize > blockSize) {
-                // too big
-                return newSegment(byteSize, byteAlignment);
-            } else {
-                // allocate a new segment and slice from there
-                sp = 0L;
-                segment = newSegment(blockSize, 1L);
-                slice = trySlice(byteSize, byteAlignment);
-                return slice;
-            }
-        }
+        return trySlice(byteSize, byteAlignment);
     }
 }

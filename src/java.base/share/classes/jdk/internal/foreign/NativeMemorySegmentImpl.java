@@ -31,6 +31,7 @@ import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
+import jdk.internal.foreign.MemorySessionImpl.ResourceList.ResourceCleanup;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;
 import jdk.internal.vm.annotation.ForceInline;
@@ -136,6 +137,17 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
 
     // Unsafe native segment factories. These are used by the implementation code, to skip the sanity checks
     // associated with MemorySegment::ofAddress.
+
+    @ForceInline
+    public static MemorySegment makeNativeSegmentUnchecked(long min, long byteSize, MemorySession session, Runnable action) {
+        MemorySessionImpl sessionImpl = MemorySessionImpl.toSessionImpl(session);
+        if (action == null) {
+            sessionImpl.checkValidState();
+        } else {
+            sessionImpl.addCloseAction(action);
+        }
+        return new NativeMemorySegmentImpl(min, byteSize, false, session);
+    }
 
     @ForceInline
     public static MemorySegment makeNativeSegmentUnchecked(long min, long byteSize, MemorySession session) {
