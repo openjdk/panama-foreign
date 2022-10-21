@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,26 +22,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.internal.foreign.abi;
 
-package java.lang.foreign;
+// must keep in sync with StubLocations in VM code
+public enum StubLocations {
+    TARGET_ADDRESS,
+    RETURN_BUFFER;
 
-import jdk.internal.javac.PreviewFeature;
-
-/**
- * An object that may be projected down to a {@linkplain #address() memory address}.
- * Examples of addressable types are {@link MemorySegment}, {@link MemoryAddress} and {@link VaList}.
- * <p>
- * The {@link Addressable} type is used by a {@linkplain Linker linker} to model the types of
- * {@linkplain Linker#downcallHandle(FunctionDescriptor) downcall handle} parameters that must be passed <em>by reference</em>
- * (e.g. memory addresses, variable argument lists and upcall stubs).
- *
- * @since 19
- */
-@PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface Addressable permits MemorySegment, MemoryAddress, VaList {
-
-    /**
-     * {@return the {@linkplain MemoryAddress memory address} associated with this addressable}
-     */
-    MemoryAddress address();
+    public VMStorage storage(byte type) {
+        return new VMStorage(type, (short) 8, ordinal());
+    }
 }

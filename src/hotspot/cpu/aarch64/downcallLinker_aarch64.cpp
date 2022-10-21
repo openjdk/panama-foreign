@@ -42,13 +42,13 @@ class DowncallStubGenerator : public StubCodeGenerator {
   BasicType _ret_bt;
   const ABIDescriptor& _abi;
 
-  const GrowableArray<VMReg>& _input_registers;
-  const GrowableArray<VMReg>& _output_registers;
+  const GrowableArray<VMStorage>& _input_registers;
+  const GrowableArray<VMStorage>& _output_registers;
 
   bool _needs_return_buffer;
 
   int _frame_complete;
-  int _framesize;
+  int _frame_size_slots;
   OopMapSet* _oop_maps;
 public:
   DowncallStubGenerator(CodeBuffer* buffer,
@@ -56,8 +56,8 @@ public:
                          int num_args,
                          BasicType ret_bt,
                          const ABIDescriptor& abi,
-                         const GrowableArray<VMReg>& input_registers,
-                         const GrowableArray<VMReg>& output_registers,
+                         const GrowableArray<VMStorage>& input_registers,
+                         const GrowableArray<VMStorage>& output_registers,
                          bool needs_return_buffer)
    : StubCodeGenerator(buffer, PrintMethodHandleStubs),
      _signature(signature),
@@ -68,7 +68,7 @@ public:
      _output_registers(output_registers),
      _needs_return_buffer(needs_return_buffer),
      _frame_complete(0),
-     _framesize(0),
+     _frame_size_slots(0),
      _oop_maps(NULL) {
   }
 
@@ -79,7 +79,7 @@ public:
   }
 
   int framesize() const {
-    return (_framesize >> (LogBytesPerWord - LogBytesPerInt));
+    return (_frame_size_slots >> (LogBytesPerWord - LogBytesPerInt));
   }
 
   OopMapSet* oop_maps() const {
@@ -93,8 +93,8 @@ RuntimeStub* DowncallLinker::make_downcall_stub(BasicType* signature,
                                                 int num_args,
                                                 BasicType ret_bt,
                                                 const ABIDescriptor& abi,
-                                                const GrowableArray<VMReg>& input_registers,
-                                                const GrowableArray<VMReg>& output_registers,
+                                                const GrowableArray<VMStorage>& input_registers,
+                                                const GrowableArray<VMStorage>& output_registers,
                                                 bool needs_return_buffer) {
   int locs_size  = 64;
   CodeBuffer code("nep_invoker_blob", native_invoker_code_size, locs_size);
@@ -137,10 +137,10 @@ void DowncallStubGenerator::generate() {
   Register tmp1 = r9;
   Register tmp2 = r10;
 
-  Register shuffle_reg = r19;
+  VMStorage shuffle_reg = VMS_R19;
   JavaCallingConvention in_conv;
   NativeCallingConvention out_conv(_input_registers);
-  ArgumentShuffle arg_shuffle(_signature, _num_args, _signature, _num_args, &in_conv, &out_conv, shuffle_reg->as_VMReg());
+  ArgumentShuffle arg_shuffle(_signature, _num_args, _signature, _num_args, &in_conv, &out_conv, shuffle_reg);
 
 #ifndef PRODUCT
   LogTarget(Trace, foreign, downcall) lt;
@@ -152,22 +152,21 @@ void DowncallStubGenerator::generate() {
 #endif
 
   int allocated_frame_size = 0;
+  assert(_abi._shadow_space_bytes == 0, "not expecting shadow space on AArch64");
+  allocated_frame_size += arg_shuffle.out_arg_bytes();
+
+  StubLocations locs;
+  locs.set(StubLocations::TARGET_ADDRESS, _abi._scratch1);
   if (_needs_return_buffer) {
+    locs.set_frame_data(StubLocations::RETURN_BUFFER, allocated_frame_size);
     allocated_frame_size += 8; // for address spill
   }
-  allocated_frame_size += arg_shuffle.out_arg_stack_slots() <<LogBytesPerInt;
-  assert(_abi._shadow_space_bytes == 0, "not expecting shadow space on AArch64");
 
-  int ret_buf_addr_sp_offset = -1;
-  if (_needs_return_buffer) {
-     // in sync with the above
-     ret_buf_addr_sp_offset = allocated_frame_size - 8;
-  }
-
+  bool should_save_return_value = !_needs_return_buffer;
   RegSpiller out_reg_spiller(_output_registers);
   int spill_offset = -1;
 
-  if (!_needs_return_buffer) {
+  if (should_save_return_value) {
     spill_offset = 0;
     // spill area can be shared with the above, so we take the max of the 2
     allocated_frame_size = out_reg_spiller.spill_size_bytes() > allocated_frame_size
@@ -175,9 +174,8 @@ void DowncallStubGenerator::generate() {
       : allocated_frame_size;
   }
 
-  _framesize = align_up(framesize
-    + (allocated_frame_size >> LogBytesPerInt), 4);
-  assert(is_even(_framesize/2), "sp not 16-byte aligned");
+  _frame_size_slots = align_up(framesize + (allocated_frame_size >> LogBytesPerInt), 4);
+  assert(is_even(_frame_size_slots/2), "sp not 16-byte aligned");
 
   _oop_maps  = new OopMapSet();
   address start = __ pc();
@@ -185,13 +183,13 @@ void DowncallStubGenerator::generate() {
   __ enter();
 
   // lr and fp are already in place
-  __ sub(sp, rfp, ((unsigned)_framesize-4) << LogBytesPerInt); // prolog
+  __ sub(sp, rfp, ((unsigned)_frame_size_slots-4) << LogBytesPerInt); // prolog
 
   _frame_complete = __ pc() - start;
 
   address the_pc = __ pc();
   __ set_last_Java_frame(sp, rfp, the_pc, tmp1);
-  OopMap* map = new OopMap(_framesize, 0);
+  OopMap* map = new OopMap(_frame_size_slots, 0);
   _oop_maps->add_gc_map(the_pc - start, map);
 
   // State transition
@@ -200,43 +198,22 @@ void DowncallStubGenerator::generate() {
   __ stlrw(tmp1, tmp2);
 
   __ block_comment("{ argument shuffle");
-  arg_shuffle.generate(_masm, shuffle_reg->as_VMReg(), 0, _abi._shadow_space_bytes);
-  if (_needs_return_buffer) {
-    assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
-    __ str(_abi._ret_buf_addr_reg, Address(sp, ret_buf_addr_sp_offset));
-  }
+  arg_shuffle.generate(_masm, shuffle_reg, 0, _abi._shadow_space_bytes, locs);
   __ block_comment("} argument shuffle");
 
-  __ blr(_abi._target_addr_reg);
+  __ blr(as_Register(locs.get(StubLocations::TARGET_ADDRESS)));
   // this call is assumed not to have killed rthread
 
-  if (!_needs_return_buffer) {
-    // Unpack native results.
-    switch (_ret_bt) {
-      case T_BOOLEAN: __ c2bool(r0);                     break;
-      case T_CHAR   : __ ubfx(r0, r0, 0, 16);            break;
-      case T_BYTE   : __ sbfx(r0, r0, 0, 8);             break;
-      case T_SHORT  : __ sbfx(r0, r0, 0, 16);            break;
-      case T_INT    : __ sbfx(r0, r0, 0, 32);            break;
-      case T_DOUBLE :
-      case T_FLOAT  :
-        // Result is in v0 we'll save as needed
-        break;
-      case T_VOID: break;
-      case T_LONG: break;
-      default       : ShouldNotReachHere();
-    }
-  } else {
-    assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
-    __ ldr(tmp1, Address(sp, ret_buf_addr_sp_offset));
+  if (_needs_return_buffer) {
+    __ ldr(tmp1, Address(sp, locs.data_offset(StubLocations::RETURN_BUFFER)));
     int offset = 0;
     for (int i = 0; i < _output_registers.length(); i++) {
-      VMReg reg = _output_registers.at(i);
-      if (reg->is_Register()) {
-        __ str(reg->as_Register(), Address(tmp1, offset));
+      VMStorage reg = _output_registers.at(i);
+      if (reg.type() == StorageType::INTEGER) {
+        __ str(as_Register(reg), Address(tmp1, offset));
         offset += 8;
-      } else if(reg->is_FloatRegister()) {
-        __ strd(reg->as_FloatRegister(), Address(tmp1, offset));
+      } else if(reg.type() == StorageType::VECTOR) {
+        __ strd(as_FloatRegister(reg), Address(tmp1, offset));
         offset += 16;
       } else {
         ShouldNotReachHere();
@@ -288,7 +265,7 @@ void DowncallStubGenerator::generate() {
   __ block_comment("{ L_safepoint_poll_slow_path");
   __ bind(L_safepoint_poll_slow_path);
 
-  if (!_needs_return_buffer) {
+  if (should_save_return_value) {
     // Need to save the native result registers around any runtime calls.
     out_reg_spiller.generate_spill(_masm, spill_offset);
   }
@@ -298,7 +275,7 @@ void DowncallStubGenerator::generate() {
   __ lea(tmp1, RuntimeAddress(CAST_FROM_FN_PTR(address, JavaThread::check_special_condition_for_native_trans)));
   __ blr(tmp1);
 
-  if (!_needs_return_buffer) {
+  if (should_save_return_value) {
     out_reg_spiller.generate_fill(_masm, spill_offset);
   }
 
@@ -310,13 +287,13 @@ void DowncallStubGenerator::generate() {
   __ block_comment("{ L_reguard");
   __ bind(L_reguard);
 
-  if (!_needs_return_buffer) {
+  if (should_save_return_value) {
     out_reg_spiller.generate_spill(_masm, spill_offset);
   }
 
   __ rt_call(CAST_FROM_FN_PTR(address, SharedRuntime::reguard_yellow_pages), tmp1);
 
-  if (!_needs_return_buffer) {
+  if (should_save_return_value) {
     out_reg_spiller.generate_fill(_masm, spill_offset);
   }
 
