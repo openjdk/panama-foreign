@@ -131,8 +131,6 @@ static void move_stack(MacroAssembler* masm, Register tmp_reg, int in_stk_bias, 
     case StorageType::INTEGER:
       assert(to_reg.segment_mask() == REG64_MASK, "only moves to 64-bit registers supported");
       switch (from_reg.stack_size()) {
-        // FIXME these loads zero upper bits of the register
-        // should we sign extend instead?
         case 8: masm->ldr (as_Register(to_reg), from_addr); break;
         case 4: masm->ldrw(as_Register(to_reg), from_addr); break;
         case 2: masm->ldrh(as_Register(to_reg), from_addr); break;
