@@ -190,12 +190,9 @@ public abstract class CallArranger {
             stackOffset = Utils.alignUp(stackOffset, alignment);
         }
 
-        VMStorage stackAlloc(long size, long alignment, boolean subSlotPacking) {
+        VMStorage stackAlloc(long size, long alignment) {
             assert forArguments : "no stack returns";
-            long stackSlotAlignment = subSlotPacking && !forVarArgs
-                    ? alignment
-                    : Math.max(alignment, STACK_SLOT_SIZE);
-            long alignedStackOffset = Utils.alignUp(stackOffset, stackSlotAlignment);
+            long alignedStackOffset = Utils.alignUp(stackOffset, alignment);
 
             short encodedSize = (short) size;
             assert (encodedSize & 0xFFFF) == size;
@@ -207,7 +204,10 @@ public abstract class CallArranger {
         }
 
         VMStorage stackAlloc(MemoryLayout layout) {
-            return stackAlloc(layout.byteSize(), layout.byteAlignment(), requiresSubSlotStackPacking());
+            long stackSlotAlignment = requiresSubSlotStackPacking() && !forVarArgs
+                    ? layout.byteAlignment()
+                    : Math.max(layout.byteAlignment(), STACK_SLOT_SIZE);
+            return stackAlloc(layout.byteSize(), stackSlotAlignment);
         }
 
         VMStorage[] regAlloc(int type, int count) {
@@ -251,8 +251,7 @@ public abstract class CallArranger {
 
                 VMStorage[] slots = new VMStorage[nFields];
                 for (int i = 0; i < nFields; i++) {
-                    MemoryLayout member = group.memberLayouts().get(i);
-                    slots[i] = stackAlloc(member.byteSize(), member.byteAlignment(), true);
+                    slots[i] = stackAlloc(group.memberLayouts().get(i));
                 }
 
                 return slots;
@@ -287,7 +286,7 @@ public abstract class CallArranger {
             while (offset < layout.byteSize()) {
                 long copy = Math.min(layout.byteSize() - offset, STACK_SLOT_SIZE);
                 VMStorage storage =
-                    storageCalculator.stackAlloc(copy, layout.byteAlignment(), false);
+                    storageCalculator.stackAlloc(copy, STACK_SLOT_SIZE);
                 if (offset + STACK_SLOT_SIZE < layout.byteSize()) {
                     bindings.dup();
                 }
@@ -314,7 +313,7 @@ public abstract class CallArranger {
             while (offset < layout.byteSize()) {
                 long copy = Math.min(layout.byteSize() - offset, STACK_SLOT_SIZE);
                 VMStorage storage =
-                    storageCalculator.stackAlloc(copy, layout.byteAlignment(), false);
+                    storageCalculator.stackAlloc(copy, STACK_SLOT_SIZE);
                 Class<?> type = SharedUtils.primitiveCarrierForSize(copy, false);
                 bindings.dup()
                         .vmLoad(storage, type)
