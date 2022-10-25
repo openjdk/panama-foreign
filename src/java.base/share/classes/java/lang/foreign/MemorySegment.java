@@ -549,7 +549,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * can be computed as follows:
      *
      * {@snippet lang=java :
-     * other.address() - segment.baseAddress()
+     * other.address() - segment.address()
      * }
      *
      * If the segments share the same address, {@code 0} is returned. If
