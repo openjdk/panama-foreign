@@ -62,10 +62,7 @@ public class NativeEntryPoint {
         if (returnMoves.length > 1 != needsReturnBuffer) {
             throw new IllegalArgumentException("Multiple register return, but needsReturnBuffer was false");
         }
-
-        assert (methodType.parameterType(0) == long.class) : "Address expected";
-        assert ((!needsReturnBuffer && preservedValueMask == 0) || methodType.parameterType(1) == long.class) : "return buffer or saved thread local address expected";
-        assert (!(needsReturnBuffer && preservedValueMask != 0) || methodType.parameterType(2) == long.class) : "return buffer or saved thread local address expected";
+        checkType(methodType, needsReturnBuffer, preservedValueMask);
 
         CacheKey key = new CacheKey(methodType, abi, Arrays.asList(argMoves), Arrays.asList(returnMoves), needsReturnBuffer, preservedValueMask);
         return NEP_CACHE.get(key, k -> {
@@ -74,6 +71,17 @@ public class NativeEntryPoint {
             CLEANER.register(nep, () -> freeDowncallStub(downcallStub));
             return nep;
         });
+    }
+
+    private static void checkType(MethodType methodType, boolean needsReturnBuffer, int preservedValueMask) {
+        if (methodType.parameterType(0) != long.class) {
+            throw new IllegalArgumentException("Address expected as first param: " + methodType);
+        }
+        int checkIdx = 1;
+        if ((needsReturnBuffer && methodType.parameterType(checkIdx++) != long.class)
+            || (preservedValueMask != 0 && methodType.parameterType(checkIdx) != long.class)) {
+            throw new IllegalArgumentException("return buffer and/or preserved value address expected: " + methodType);
+        }
     }
 
     private static native long makeDowncallStub(MethodType methodType, ABIDescriptor abi,

@@ -31,8 +31,8 @@
 #endif
 
 void DowncallLinker::preserve_values(int32_t* value_ptr, int preserved_value_mask) {
-  // keep in synch with NativeEntryPoint::SaveThreadLocal
-  enum SaveThreadLocal {
+  // keep in synch with jdk.internal.foreign.abi.PreservableValues
+  enum PreservableValues {
     NONE = 0,
     GET_LAST_ERROR = 1,
     WSA_GET_LAST_ERROR = 1 << 1,
