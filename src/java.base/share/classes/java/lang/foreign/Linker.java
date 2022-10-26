@@ -317,8 +317,8 @@ public sealed interface Linker permits AbstractLinker {
          *          before they can be read through conventional means}
          * <p>
          * A downcall method handle linked with this option will feature an additional {@link MemorySegment}
-         * parameter directly following the target address parameter. This memory segment represents
-         * the off-heap memory into which the preserved values are to be written.
+         * parameter directly following the target address parameter. This memory segment must be a
+         * native segment into which the preserved values are to be written.
          *
          * @param preservedValues the names of the values to preserve.
          * @see PreserveValue#supported()
@@ -359,7 +359,7 @@ public sealed interface Linker permits AbstractLinker {
         sealed interface PreserveValue extends Option
                                        permits LinkerOptions.PreserveValueImpl {
             /**
-             * {@return A struct layout that represents the layout of the memory region passed
+             * {@return A struct layout that represents the layout of the native segment passed
              *          to a downcall handle linked with this {@code PreserveValue} instance}
              */
             StructLayout layout();
