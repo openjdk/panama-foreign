@@ -27,7 +27,7 @@ package java.lang.foreign;
 
 import jdk.internal.foreign.abi.AbstractLinker;
 import jdk.internal.foreign.abi.LinkerOptions;
-import jdk.internal.foreign.abi.PreservableValues;
+import jdk.internal.foreign.abi.SavableValues;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.javac.PreviewFeature;
 import jdk.internal.reflect.CallerSensitive;
@@ -35,8 +35,6 @@ import jdk.internal.reflect.Reflection;
 
 import java.lang.invoke.MethodHandle;
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -301,7 +299,7 @@ public sealed interface Linker permits AbstractLinker {
      */
     sealed interface Option
             permits LinkerOptions.LinkerOptionImpl,
-                    Option.PreserveValue {
+                    Option.SaveValues {
 
         /**
          * {@return A linker option used to denote the index of the first variadic argument layout in a
@@ -320,12 +318,14 @@ public sealed interface Linker permits AbstractLinker {
          * parameter directly following the target address parameter. This memory segment must be a
          * native segment into which the preserved values are to be written.
          *
-         * @param preservedValues the names of the values to preserve.
-         * @see PreserveValue#supported()
+         * @param savedValues the names of the values to preserve.
+         * @see SaveValues#supported()
          */
-        static PreserveValue preserveValue(String... preservedValues) {
-            Set<String> set = Stream.of(preservedValues).collect(Collectors.toSet());
-            return new LinkerOptions.PreserveValueImpl(set);
+        static SaveValues saveValues(String... savedValues) {
+            Set<SavableValues> set = Stream.of(savedValues)
+                    .map(SavableValues::forName)
+                    .collect(Collectors.toSet());
+            return new LinkerOptions.SaveValuesImpl(set);
         }
 
         /**
@@ -335,32 +335,32 @@ public sealed interface Linker permits AbstractLinker {
          * Values are preserved by a downcall method handle on invocation, by writing them
          * to a region of off-heap memory provided by the user to the downcall method handle.
          * <p>
-         * The off-heap memory region should have the layout {@linkplain PreserveValue#layout associated}
-         * with the particular {@code PreserveValue} instance used to link the downcall handle.
+         * The off-heap memory region should have the layout {@linkplain SaveValues#layout associated}
+         * with the particular {@code SaveValues} instance used to link the downcall handle.
          * <p>
          * Preserved values can be retrieved from this region by constructing var handles
-         * from the {@linkplain PreserveValue#layout layout} of the region.
+         * from the {@linkplain SaveValues#layout layout} of the region.
          * <p>
          * The following example demonstrates the use of this linker option:
          * {@snippet lang = "java":
          * MemorySegment targetAddress = ...
-         * PreserveValue pv = Linker.Option.preserveValue("errno");
-         * MethodHandle handle = Linker.nativeLinker().downcallHandle(targetAddress, FunctionDescriptor.ofVoid(), pv);
+         * SaveValues sv = Linker.Option.saveValues("errno");
+         * MethodHandle handle = Linker.nativeLinker().downcallHandle(targetAddress, FunctionDescriptor.ofVoid(), sv);
          *
-         * VarHandle errnoHandle = pv.layout().varHandle(PathElement.groupElement("errno"));
+         * VarHandle errnoHandle = sv.layout().varHandle(PathElement.groupElement("errno"));
          * try (MemorySession session = MemorySession.openConfined()) {
-         *     MemorySegment preservedValues = session.allocate(pv.layout());
-         *     handle.invoke(preservedValues);
-         *     int errno = errnoHandle.get(preservedValues);
+         *     MemorySegment savedValues = session.allocate(svlayout());
+         *     handle.invoke(savedValues);
+         *     int errno = errnoHandle.get(savedValues);
          *     // use errno
          * }
          * }
          */
-        sealed interface PreserveValue extends Option
-                                       permits LinkerOptions.PreserveValueImpl {
+        sealed interface SaveValues extends Option
+                                    permits LinkerOptions.SaveValuesImpl {
             /**
              * {@return A struct layout that represents the layout of the native segment passed
-             *          to a downcall handle linked with this {@code PreserveValue} instance}
+             *          to a downcall handle linked with this {@code SaveValues} instance}
              */
             StructLayout layout();
 
@@ -368,8 +368,8 @@ public sealed interface Linker permits AbstractLinker {
              * {@return the names of the values that can be preserved by this implementation}
              */
             static Set<String> supported() {
-                return Arrays.stream(PreservableValues.values())
-                             .map(PreservableValues::valueName)
+                return Arrays.stream(SavableValues.values())
+                             .map(SavableValues::valueName)
                              .collect(Collectors.toSet());
             }
         }

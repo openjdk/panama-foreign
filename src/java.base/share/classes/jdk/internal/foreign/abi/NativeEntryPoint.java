@@ -47,7 +47,7 @@ public class NativeEntryPoint {
     private static final SoftReferenceCache<CacheKey, NativeEntryPoint> NEP_CACHE = new SoftReferenceCache<>();
     private record CacheKey(MethodType methodType, ABIDescriptor abi,
                             List<VMStorage> argMoves, List<VMStorage> retMoves,
-                            boolean needsReturnBuffer, int preservedValueMask) {}
+                            boolean needsReturnBuffer, int savedValueMask) {}
 
     private NativeEntryPoint(MethodType methodType, long downcallStubAddress) {
         this.methodType = methodType;
@@ -58,28 +58,28 @@ public class NativeEntryPoint {
                                         VMStorage[] argMoves, VMStorage[] returnMoves,
                                         MethodType methodType,
                                         boolean needsReturnBuffer,
-                                        int preservedValueMask) {
+                                        int savedValueMask) {
         if (returnMoves.length > 1 != needsReturnBuffer) {
             throw new IllegalArgumentException("Multiple register return, but needsReturnBuffer was false");
         }
-        checkType(methodType, needsReturnBuffer, preservedValueMask);
+        checkType(methodType, needsReturnBuffer, savedValueMask);
 
-        CacheKey key = new CacheKey(methodType, abi, Arrays.asList(argMoves), Arrays.asList(returnMoves), needsReturnBuffer, preservedValueMask);
+        CacheKey key = new CacheKey(methodType, abi, Arrays.asList(argMoves), Arrays.asList(returnMoves), needsReturnBuffer, savedValueMask);
         return NEP_CACHE.get(key, k -> {
-            long downcallStub = makeDowncallStub(methodType, abi, argMoves, returnMoves, needsReturnBuffer, preservedValueMask);
+            long downcallStub = makeDowncallStub(methodType, abi, argMoves, returnMoves, needsReturnBuffer, savedValueMask);
             NativeEntryPoint nep = new NativeEntryPoint(methodType, downcallStub);
             CLEANER.register(nep, () -> freeDowncallStub(downcallStub));
             return nep;
         });
     }
 
-    private static void checkType(MethodType methodType, boolean needsReturnBuffer, int preservedValueMask) {
+    private static void checkType(MethodType methodType, boolean needsReturnBuffer, int savedValueMask) {
         if (methodType.parameterType(0) != long.class) {
             throw new IllegalArgumentException("Address expected as first param: " + methodType);
         }
         int checkIdx = 1;
         if ((needsReturnBuffer && methodType.parameterType(checkIdx++) != long.class)
-            || (preservedValueMask != 0 && methodType.parameterType(checkIdx) != long.class)) {
+            || (savedValueMask != 0 && methodType.parameterType(checkIdx) != long.class)) {
             throw new IllegalArgumentException("return buffer and/or preserved value address expected: " + methodType);
         }
     }
@@ -87,7 +87,7 @@ public class NativeEntryPoint {
     private static native long makeDowncallStub(MethodType methodType, ABIDescriptor abi,
                                                 VMStorage[] encArgMoves, VMStorage[] encRetMoves,
                                                 boolean needsReturnBuffer,
-                                                int preservedValueMask);
+                                                int savedValueMask);
 
     private static native boolean freeDowncallStub0(long downcallStub);
     private static void freeDowncallStub(long downcallStub) {

@@ -26,7 +26,7 @@
  * @enablePreview
  * @library ../ /test/lib
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @run testng/othervm --enable-native-access=ALL-UNNAMED TestPreserveValue
+ * @run testng/othervm --enable-native-access=ALL-UNNAMED TestSaveValues
  */
 
 import org.testng.annotations.DataProvider;
@@ -45,10 +45,10 @@ import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static org.testng.Assert.assertEquals;
 
-public class TestPreserveValue extends NativeTestHelper {
+public class TestSaveValues extends NativeTestHelper {
 
     static {
-        System.loadLibrary("PreserveValue");
+        System.loadLibrary("SaveValues");
         if (IS_WINDOWS) {
             String system32 = System.getenv("SystemRoot") + "\\system32";
             System.load(system32 + "\\Kernel32.dll");
@@ -56,11 +56,11 @@ public class TestPreserveValue extends NativeTestHelper {
         }
     }
 
-    private record SavedThreadLocalCase(String nativeTarget, String threadLocalName) {}
+    private record SaveValuesCase(String nativeTarget, String threadLocalName) {}
 
     @Test(dataProvider = "cases")
-    public void testSavedThreadLocal(SavedThreadLocalCase testCase) throws Throwable {
-        Linker.Option.PreserveValue stl = Linker.Option.preserveValue(testCase.threadLocalName());
+    public void testSavedThreadLocal(SaveValuesCase testCase) throws Throwable {
+        Linker.Option.SaveValues stl = Linker.Option.saveValues(testCase.threadLocalName());
         MethodHandle handle = downcallHandle(testCase.nativeTarget(), FunctionDescriptor.ofVoid(JAVA_INT), stl);
 
         VarHandle errnoHandle = stl.layout().varHandle(groupElement(testCase.threadLocalName()));
@@ -76,12 +76,12 @@ public class TestPreserveValue extends NativeTestHelper {
 
     @DataProvider
     public static Object[][] cases() {
-        List<SavedThreadLocalCase> cases = new ArrayList<>();
+        List<SaveValuesCase> cases = new ArrayList<>();
 
-        cases.add(new SavedThreadLocalCase("set_errno", "errno"));
+        cases.add(new SaveValuesCase("set_errno", "errno"));
         if (IS_WINDOWS) {
-            cases.add(new SavedThreadLocalCase("SetLastError", "GetLastError"));
-            cases.add(new SavedThreadLocalCase("WSASetLastError", "WSAGetLastError"));
+            cases.add(new SaveValuesCase("SetLastError", "GetLastError"));
+            cases.add(new SaveValuesCase("WSASetLastError", "WSAGetLastError"));
         }
 
         return cases.stream().map(tc -> new Object[] {tc}).toArray(Object[][]::new);

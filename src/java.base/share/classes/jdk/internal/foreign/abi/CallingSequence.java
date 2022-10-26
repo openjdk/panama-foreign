@@ -185,10 +185,9 @@ public class CallingSequence {
         return !returnBindings.isEmpty();
     }
 
-    public int preservedValueMask() {
-        return linkerOptions.preservedValues()
-                .map(PreservableValues::forName)
-                .mapToInt(PreservableValues::mask)
+    public int savedValueMask() {
+        return linkerOptions.saveValues()
+                .mapToInt(SavableValues::mask)
                 .reduce(0, (a, b) -> a | b);
     }
 

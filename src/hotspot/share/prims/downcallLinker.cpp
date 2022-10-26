@@ -30,7 +30,7 @@
 #include <Winsock2.h>
 #endif
 
-void DowncallLinker::preserve_values(int32_t* value_ptr, int preserved_value_mask) {
+void DowncallLinker::save_values(int32_t* value_ptr, int saved_value_mask) {
   // keep in synch with jdk.internal.foreign.abi.PreservableValues
   enum PreservableValues {
     NONE = 0,
@@ -39,16 +39,16 @@ void DowncallLinker::preserve_values(int32_t* value_ptr, int preserved_value_mas
     ERRNO = 1 << 2
   };
 #ifdef _WIN64
-  if (preserved_value_mask & GET_LAST_ERROR) {
+  if (saved_value_mask & GET_LAST_ERROR) {
     *value_ptr = GetLastError();
     value_ptr++;
   }
-  if (preserved_value_mask & WSA_GET_LAST_ERROR) {
+  if (saved_value_mask & WSA_GET_LAST_ERROR) {
     *value_ptr = WSAGetLastError();
     value_ptr++;
   }
 #endif
-  if (preserved_value_mask & ERRNO) {
+  if (saved_value_mask & ERRNO) {
     *value_ptr = errno;
   }
 }

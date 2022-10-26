@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class LinkerOptions {
@@ -73,12 +72,12 @@ public class LinkerOptions {
         return fva != null && argIndex >= fva.index();
     }
 
-    public boolean hasPreservedValues() {
-        return getOption(PreserveValueImpl.class) != null;
+    public boolean hasSavedValues() {
+        return getOption(SaveValuesImpl.class) != null;
     }
 
-    public Stream<String> preservedValues() {
-        PreserveValueImpl stl = getOption(PreserveValueImpl.class);
+    public Stream<SavableValues> saveValues() {
+        SaveValuesImpl stl = getOption(SaveValuesImpl.class);
         return stl == null ? Stream.empty() : stl.saved().stream();
     }
 
@@ -96,7 +95,7 @@ public class LinkerOptions {
 
     public sealed interface LinkerOptionImpl extends Linker.Option
                                              permits FirstVariadicArg,
-                                                     PreserveValueImpl {
+                                                     SaveValuesImpl {
         default void validateForDowncall(FunctionDescriptor descriptor) {
             throw new IllegalArgumentException("Not supported for downcall: " + this);
         }
@@ -111,28 +110,19 @@ public class LinkerOptions {
         }
     }
 
-    public record PreserveValueImpl(Set<String> saved) implements LinkerOptionImpl, Linker.Option.PreserveValue {
+    public record SaveValuesImpl(Set<SavableValues> saved) implements LinkerOptionImpl, Linker.Option.SaveValues {
 
         @Override
         public void validateForDowncall(FunctionDescriptor descriptor) {
-            for (String save : saved) {
-                if (!PreservableValues.isSupported(save)) {
-                    throw new IllegalArgumentException("Unknown name: " + save
-                            + ", must be one of: "
-                            + Stream.of(PreservableValues.values())
-                                    .map(PreservableValues::valueName)
-                                    .collect(Collectors.joining(",")));
-                }
-            }
+            // done during construction
         }
 
         @Override
         public StructLayout layout() {
             return MemoryLayout.structLayout(
                 saved.stream()
-                      .map(PreservableValues::forName)
-                      .sorted(Comparator.comparingInt(PreservableValues::ordinal))
-                      .map(PreservableValues::layout)
+                      .sorted(Comparator.comparingInt(SavableValues::ordinal))
+                      .map(SavableValues::layout)
                       .toArray(MemoryLayout[]::new)
             );
         }

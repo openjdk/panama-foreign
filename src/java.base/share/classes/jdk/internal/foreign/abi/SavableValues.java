@@ -25,11 +25,12 @@
 package jdk.internal.foreign.abi;
 
 import java.lang.foreign.ValueLayout;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 
-public enum PreservableValues {
+public enum SavableValues {
     GET_LAST_ERROR    ("GetLastError",    JAVA_INT, 1 << 0),
     WSA_GET_LAST_ERROR("WSAGetLastError", JAVA_INT, 1 << 1),
     ERRNO             ("errno",           JAVA_INT, 1 << 2);
@@ -38,21 +39,21 @@ public enum PreservableValues {
     private final ValueLayout layout;
     private final int mask;
 
-    PreservableValues(String valueName, ValueLayout layout, int mask) {
+    SavableValues(String valueName, ValueLayout layout, int mask) {
         this.valueName = valueName;
         this.layout = layout.withName(valueName);
         this.mask = mask;
     }
 
-    public static boolean isSupported(String name) {
-        return Stream.of(values()).anyMatch(stl -> stl.valueName().equals(name));
-    }
-
-    public static PreservableValues forName(String name) {
+    public static SavableValues forName(String name) {
         return Stream.of(values())
                 .filter(stl -> stl.valueName().equals(name))
                 .findAny()
-                .orElseThrow(() -> new IllegalArgumentException("Unknown name: " + name));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Unknown name: " + name +", must be one of: "
+                            + Stream.of(SavableValues.values())
+                                    .map(SavableValues::valueName)
+                                    .collect(Collectors.joining(", "))));
     }
 
     public String valueName() {
