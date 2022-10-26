@@ -24,20 +24,17 @@
 /*
  * @test
  * @enablePreview
- * @run junit TestLinker
+ * @run testng TestLinker
  */
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.invoke.MethodHandle;
 
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.testng.Assert.assertNotSame;
 
 public class TestLinker extends NativeTestHelper {
 
@@ -51,25 +48,29 @@ public class TestLinker extends NativeTestHelper {
         assertNotSame(mh1, mh2);
     }
 
-    @ParameterizedTest
-    @ValueSource(ints={ -1, 42 })
+    @DataProvider
+    public static Object[][] invalidIndexCases() {
+        return new Object[][]{
+                { -1, },
+                { 42, },
+        };
+    }
+
+    @Test(dataProvider = "invalidIndexCases",
+          expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = ".*not in bounds for descriptor.*")
     public void testInvalidOption(int invalidIndex) {
         Linker.Option option = Linker.Option.firstVariadicArg(invalidIndex);
         FunctionDescriptor desc = FunctionDescriptor.ofVoid();
-        IllegalArgumentException thrown = assertThrows(
-               IllegalArgumentException.class,
-               () -> Linker.nativeLinker().downcallHandle(desc, option));
-        assertTrue(thrown.getMessage().matches(".*not in bounds for descriptor.*"));
+        Linker.nativeLinker().downcallHandle(desc, option); // throws
     }
 
-    @Test
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = ".*Unknown name.*")
     public void testInvalidPreservedValueName() {
         Linker.Option option = Linker.Option.preserveValue("foo");
         FunctionDescriptor desc = FunctionDescriptor.ofVoid();
-        IllegalArgumentException thrown = assertThrows(
-                IllegalArgumentException.class,
-                () -> Linker.nativeLinker().downcallHandle(desc, option));
-        assertTrue(thrown.getMessage().matches(".*Unknown name.*"));
+        Linker.nativeLinker().downcallHandle(desc, option); // throws
     }
 
 }
