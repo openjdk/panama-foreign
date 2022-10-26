@@ -38,21 +38,23 @@ import java.util.stream.Stream;
 
 public class LinkerOptions {
 
-    private static final LinkerOptions EMPTY = LinkerOptions.of();
+    private static final LinkerOptions EMPTY = new LinkerOptions(Map.of());
     private final Map<Class<?>, LinkerOptionImpl> optionsMap;
 
     private LinkerOptions(Map<Class<?>, LinkerOptionImpl> optionsMap) {
         this.optionsMap = optionsMap;
     }
 
-    public static LinkerOptions of(Linker.Option... options) {
+    public static LinkerOptions forDowncall(FunctionDescriptor desc, Linker.Option... options) {
         Map<Class<?>, LinkerOptionImpl> optionMap = new HashMap<>();
 
         for (Linker.Option option : options) {
             if (optionMap.containsKey(option.getClass())) {
                 throw new IllegalArgumentException("Duplicate option: " + option);
             }
-            optionMap.put(option.getClass(), (LinkerOptionImpl) option);
+            LinkerOptionImpl opImpl = (LinkerOptionImpl) option;
+            opImpl.validateForDowncall(desc);
+            optionMap.put(option.getClass(), opImpl);
         }
 
         return new LinkerOptions(optionMap);
@@ -60,10 +62,6 @@ public class LinkerOptions {
 
     public static LinkerOptions empty() {
         return EMPTY;
-    }
-
-    public void validateForDowncall(FunctionDescriptor descriptor) {
-        optionsMap.values().forEach(v -> v.validateForDowncall(descriptor));
     }
 
     private <T extends Linker.Option> T getOption(Class<T> type) {
