@@ -329,8 +329,8 @@ public sealed interface Linker permits AbstractLinker {
         }
 
         /**
-         * A linker option for saving a value that might be overwritten by the runtime
-         * before it can be read through conventional means.
+         * A linker option for saving values that might be overwritten by the runtime
+         * before they can be read through conventional means.
          * <p>
          * Values are saved by a downcall method handle on invocation, by writing them
          * to a region of off-heap memory provided by the user to the downcall method handle.
