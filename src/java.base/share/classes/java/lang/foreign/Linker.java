@@ -311,14 +311,14 @@ public sealed interface Linker permits AbstractLinker {
         }
 
         /**
-         * {@return A linker option used to preserve values that might be overwritten by the runtime
+         * {@return A linker option used to save values that might be overwritten by the runtime
          *          before they can be read through conventional means}
          * <p>
          * A downcall method handle linked with this option will feature an additional {@link MemorySegment}
          * parameter directly following the target address parameter. This memory segment must be a
-         * native segment into which the preserved values are to be written.
+         * native segment into which the saved values are to be written.
          *
-         * @param savedValues the names of the values to preserve.
+         * @param savedValues the names of the values to save.
          * @see SaveValues#supported()
          */
         static SaveValues saveValues(String... savedValues) {
@@ -329,16 +329,16 @@ public sealed interface Linker permits AbstractLinker {
         }
 
         /**
-         * A linker option for preserving a value that might be overwritten by the runtime
+         * A linker option for saving a value that might be overwritten by the runtime
          * before it can be read through conventional means.
          * <p>
-         * Values are preserved by a downcall method handle on invocation, by writing them
+         * Values are saved by a downcall method handle on invocation, by writing them
          * to a region of off-heap memory provided by the user to the downcall method handle.
          * <p>
          * The off-heap memory region should have the layout {@linkplain SaveValues#layout associated}
          * with the particular {@code SaveValues} instance used to link the downcall handle.
          * <p>
-         * Preserved values can be retrieved from this region by constructing var handles
+         * Saved values can be retrieved from this region by constructing var handles
          * from the {@linkplain SaveValues#layout layout} of the region.
          * <p>
          * The following example demonstrates the use of this linker option:
@@ -365,7 +365,7 @@ public sealed interface Linker permits AbstractLinker {
             StructLayout layout();
 
             /**
-             * {@return the names of the values that can be preserved by this implementation}
+             * {@return the names of the values that can be saved by this implementation}
              */
             static Set<String> supported() {
                 return Arrays.stream(SavableValues.values())
