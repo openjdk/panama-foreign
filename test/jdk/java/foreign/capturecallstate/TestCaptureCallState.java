@@ -26,7 +26,7 @@
  * @enablePreview
  * @library ../ /test/lib
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @run testng/othervm --enable-native-access=ALL-UNNAMED TestSaveValues
+ * @run testng/othervm --enable-native-access=ALL-UNNAMED TestCaptureCallState
  */
 
 import org.testng.annotations.DataProvider;
@@ -45,10 +45,10 @@ import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static org.testng.Assert.assertEquals;
 
-public class TestSaveValues extends NativeTestHelper {
+public class TestCaptureCallState extends NativeTestHelper {
 
     static {
-        System.loadLibrary("SaveValues");
+        System.loadLibrary("CaptureCallState");
         if (IS_WINDOWS) {
             String system32 = System.getenv("SystemRoot") + "\\system32";
             System.load(system32 + "\\Kernel32.dll");
@@ -60,7 +60,7 @@ public class TestSaveValues extends NativeTestHelper {
 
     @Test(dataProvider = "cases")
     public void testSavedThreadLocal(SaveValuesCase testCase) throws Throwable {
-        Linker.Option.SaveValues stl = Linker.Option.saveValues(testCase.threadLocalName());
+        Linker.Option.CaptureCallState stl = Linker.Option.captureCallState(testCase.threadLocalName());
         MethodHandle handle = downcallHandle(testCase.nativeTarget(), FunctionDescriptor.ofVoid(JAVA_INT), stl);
 
         VarHandle errnoHandle = stl.layout().varHandle(groupElement(testCase.threadLocalName()));

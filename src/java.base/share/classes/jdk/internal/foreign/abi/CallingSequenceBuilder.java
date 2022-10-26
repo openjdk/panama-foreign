@@ -97,10 +97,10 @@ public class CallingSequenceBuilder {
         MethodType callerMethodType;
         MethodType calleeMethodType;
         if (!forUpcall) {
-            if (linkerOptions.hasSavedValues()) {
+            if (linkerOptions.hasCapturedCallState()) {
                 addArgumentBinding(0, MemorySegment.class, ValueLayout.ADDRESS, List.of(
                         Binding.unboxAddress(),
-                        Binding.vmStore(abi.savedValueStorage(), long.class)));
+                        Binding.vmStore(abi.capturedStateStorage(), long.class)));
             }
             addArgumentBinding(0, MemorySegment.class, ValueLayout.ADDRESS, List.of(
                 Binding.unboxAddress(),

@@ -28,7 +28,7 @@ package jdk.internal.foreign.abi;
 public enum StubLocations {
     TARGET_ADDRESS,
     RETURN_BUFFER,
-    SAVED_VALUE_MASK;
+    CAPTURED_STATE_MASK;
 
     public VMStorage storage(byte type) {
         return new VMStorage(type, (short) 8, ordinal());

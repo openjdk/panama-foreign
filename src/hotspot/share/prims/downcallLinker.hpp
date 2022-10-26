@@ -37,9 +37,9 @@ public:
                                          const GrowableArray<VMStorage>& input_registers,
                                          const GrowableArray<VMStorage>& output_registers,
                                          bool needs_return_buffer,
-                                         int saved_value_mask);
+                                         int captured_state_mask);
 
-  static void save_values(int32_t* value_ptr, int saved_value_mask);
+  static void capture_state(int32_t* value_ptr, int captured_state_mask);
 };
 
 #endif // SHARE_VM_PRIMS_DOWNCALLLINKER_HPP

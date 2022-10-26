@@ -168,7 +168,7 @@ public class X86_64Architecture implements Architecture {
             scratch1, scratch2,
             StubLocations.TARGET_ADDRESS.storage(StorageType.PLACEHOLDER),
             StubLocations.RETURN_BUFFER.storage(StorageType.PLACEHOLDER),
-            StubLocations.SAVED_VALUE_MASK.storage(StorageType.PLACEHOLDER));
+            StubLocations.CAPTURED_STATE_MASK.storage(StorageType.PLACEHOLDER));
     }
 
 }

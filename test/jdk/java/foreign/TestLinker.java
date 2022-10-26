@@ -68,7 +68,7 @@ public class TestLinker extends NativeTestHelper {
     @Test(expectedExceptions = IllegalArgumentException.class,
           expectedExceptionsMessageRegExp = ".*Unknown name.*")
     public void testInvalidPreservedValueName() {
-        Linker.Option option = Linker.Option.saveValues("foo"); // throws
+        Linker.Option.captureCallState("foo"); // throws
     }
 
 }

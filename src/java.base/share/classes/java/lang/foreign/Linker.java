@@ -27,7 +27,7 @@ package java.lang.foreign;
 
 import jdk.internal.foreign.abi.AbstractLinker;
 import jdk.internal.foreign.abi.LinkerOptions;
-import jdk.internal.foreign.abi.SavableValues;
+import jdk.internal.foreign.abi.CapturableState;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.javac.PreviewFeature;
 import jdk.internal.reflect.CallerSensitive;
@@ -299,7 +299,7 @@ public sealed interface Linker permits AbstractLinker {
      */
     sealed interface Option
             permits LinkerOptions.LinkerOptionImpl,
-                    Option.SaveValues {
+                    Option.CaptureCallState {
 
         /**
          * {@return A linker option used to denote the index of the first variadic argument layout in a
@@ -311,65 +311,67 @@ public sealed interface Linker permits AbstractLinker {
         }
 
         /**
-         * {@return A linker option used to save values that might be overwritten by the runtime
-         *          before they can be read through conventional means}
+         * {@return A linker option used to portions of the execution state immediately after
+         *          calling a foreign function associated with a downcall method handle,
+         *          before it can be overwritten by the runtime, or read through conventional means}
          * <p>
          * A downcall method handle linked with this option will feature an additional {@link MemorySegment}
          * parameter directly following the target address parameter. This memory segment must be a
-         * native segment into which the saved values are to be written.
+         * native segment into which the captured state is written.
          *
-         * @param savedValues the names of the values to save.
-         * @see SaveValues#supported()
+         * @param capturedState the names of the values to save.
+         * @see CaptureCallState#supported()
          */
-        static SaveValues saveValues(String... savedValues) {
-            Set<SavableValues> set = Stream.of(savedValues)
-                    .map(SavableValues::forName)
+        static CaptureCallState captureCallState(String... capturedState) {
+            Set<CapturableState> set = Stream.of(capturedState)
+                    .map(CapturableState::forName)
                     .collect(Collectors.toSet());
-            return new LinkerOptions.SaveValuesImpl(set);
+            return new LinkerOptions.CaptureCallStateImpl(set);
         }
 
         /**
-         * A linker option for saving values that might be overwritten by the runtime
-         * before they can be read through conventional means.
+         * A linker option for portions of the execution state immediately
+         * calling a foreign function associated with a downcall method handle,
+         * before it can be overwritten by the runtime, or read through conventional means.
          * <p>
-         * Values are saved by a downcall method handle on invocation, by writing them
-         * to a region of off-heap memory provided by the user to the downcall method handle.
+         * State is captured by a downcall method handle on invocation, by writing it
+         * to a native segment provided by the user to the downcall method handle.
          * <p>
-         * The off-heap memory region should have the layout {@linkplain SaveValues#layout associated}
-         * with the particular {@code SaveValues} instance used to link the downcall handle.
+         * The native segment should have the layout {@linkplain CaptureCallState#layout associated}
+         * with the particular {@code CaptureCallState} instance used to link the downcall handle.
          * <p>
-         * Saved values can be retrieved from this region by constructing var handles
-         * from the {@linkplain SaveValues#layout layout} of the region.
+         * Captured state can be retrieved from this native segment by constructing var handles
+         * from the {@linkplain #layout layout} associated with the {@code CaptureCallState} instance.
          * <p>
          * The following example demonstrates the use of this linker option:
          * {@snippet lang = "java":
          * MemorySegment targetAddress = ...
-         * SaveValues sv = Linker.Option.saveValues("errno");
-         * MethodHandle handle = Linker.nativeLinker().downcallHandle(targetAddress, FunctionDescriptor.ofVoid(), sv);
+         * CaptureCallState ccs = Linker.Option.captureCallState("errno");
+         * MethodHandle handle = Linker.nativeLinker().downcallHandle(targetAddress, FunctionDescriptor.ofVoid(), ccs);
          *
-         * VarHandle errnoHandle = sv.layout().varHandle(PathElement.groupElement("errno"));
+         * VarHandle errnoHandle = ccs.layout().varHandle(PathElement.groupElement("errno"));
          * try (MemorySession session = MemorySession.openConfined()) {
-         *     MemorySegment savedValues = session.allocate(svlayout());
-         *     handle.invoke(savedValues);
-         *     int errno = errnoHandle.get(savedValues);
+         *     MemorySegment capturedState = session.allocate(ccs.layout());
+         *     handle.invoke(capturedState);
+         *     int errno = errnoHandle.get(capturedState);
          *     // use errno
          * }
          * }
          */
-        sealed interface SaveValues extends Option
-                                    permits LinkerOptions.SaveValuesImpl {
+        sealed interface CaptureCallState extends Option
+                                          permits LinkerOptions.CaptureCallStateImpl {
             /**
              * {@return A struct layout that represents the layout of the native segment passed
-             *          to a downcall handle linked with this {@code SaveValues} instance}
+             *          to a downcall handle linked with this {@code CapturedCallState} instance}
              */
             StructLayout layout();
 
             /**
-             * {@return the names of the values that can be saved by this implementation}
+             * {@return the names of the state that can be capture by this implementation}
              */
             static Set<String> supported() {
-                return Arrays.stream(SavableValues.values())
-                             .map(SavableValues::valueName)
+                return Arrays.stream(CapturableState.values())
+                             .map(CapturableState::stateName)
                              .collect(Collectors.toSet());
             }
         }

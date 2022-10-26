@@ -72,12 +72,12 @@ public class LinkerOptions {
         return fva != null && argIndex >= fva.index();
     }
 
-    public boolean hasSavedValues() {
-        return getOption(SaveValuesImpl.class) != null;
+    public boolean hasCapturedCallState() {
+        return getOption(CaptureCallStateImpl.class) != null;
     }
 
-    public Stream<SavableValues> saveValues() {
-        SaveValuesImpl stl = getOption(SaveValuesImpl.class);
+    public Stream<CapturableState> capturedCallState() {
+        CaptureCallStateImpl stl = getOption(CaptureCallStateImpl.class);
         return stl == null ? Stream.empty() : stl.saved().stream();
     }
 
@@ -95,7 +95,7 @@ public class LinkerOptions {
 
     public sealed interface LinkerOptionImpl extends Linker.Option
                                              permits FirstVariadicArg,
-                                                     SaveValuesImpl {
+                                                     CaptureCallStateImpl {
         default void validateForDowncall(FunctionDescriptor descriptor) {
             throw new IllegalArgumentException("Not supported for downcall: " + this);
         }
@@ -110,7 +110,7 @@ public class LinkerOptions {
         }
     }
 
-    public record SaveValuesImpl(Set<SavableValues> saved) implements LinkerOptionImpl, Linker.Option.SaveValues {
+    public record CaptureCallStateImpl(Set<CapturableState> saved) implements LinkerOptionImpl, Linker.Option.CaptureCallState {
 
         @Override
         public void validateForDowncall(FunctionDescriptor descriptor) {
@@ -121,8 +121,8 @@ public class LinkerOptions {
         public StructLayout layout() {
             return MemoryLayout.structLayout(
                 saved.stream()
-                      .sorted(Comparator.comparingInt(SavableValues::ordinal))
-                      .map(SavableValues::layout)
+                      .sorted(Comparator.comparingInt(CapturableState::ordinal))
+                      .map(CapturableState::layout)
                       .toArray(MemoryLayout[]::new)
             );
         }
