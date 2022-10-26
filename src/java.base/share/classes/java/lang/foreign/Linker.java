@@ -311,7 +311,7 @@ public sealed interface Linker permits AbstractLinker {
         }
 
         /**
-         * {@return A linker option used to portions of the execution state immediately after
+         * {@return A linker option used to save portions of the execution state immediately after
          *          calling a foreign function associated with a downcall method handle,
          *          before it can be overwritten by the runtime, or read through conventional means}
          * <p>
@@ -330,8 +330,8 @@ public sealed interface Linker permits AbstractLinker {
         }
 
         /**
-         * A linker option for portions of the execution state immediately
-         * calling a foreign function associated with a downcall method handle,
+         * A linker option for saving portions of the execution state immediately
+         * after calling a foreign function associated with a downcall method handle,
          * before it can be overwritten by the runtime, or read through conventional means.
          * <p>
          * State is captured by a downcall method handle on invocation, by writing it
