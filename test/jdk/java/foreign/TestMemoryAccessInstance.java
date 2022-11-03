@@ -184,6 +184,14 @@ public class TestMemoryAccessInstance {
                         })
                 },
 
+                {"byte/index", Accessor.ofSegment(ValueLayout.JAVA_BYTE, (byte) 42,
+                MemorySegment::getAtIndex, MemorySegment::setAtIndex,
+                        (bb, pos) -> bb.order(NE).get(pos), (bb, pos, v) -> bb.order(NE).put(pos, v))
+                },
+                {"bool/index", Accessor.ofSegment(ValueLayout.JAVA_BOOLEAN, false,
+                        MemorySegment::getAtIndex, MemorySegment::setAtIndex,
+                        (bb, pos) -> bb.order(NE).get(pos) != 0, (bb, pos, v) -> bb.order(NE).put(pos, v ? (byte) 1 : (byte) 0))
+                },
                 {"char/index", Accessor.ofSegment(ValueLayout.JAVA_CHAR, (char) 42,
                         MemorySegment::getAtIndex, MemorySegment::setAtIndex,
                         (bb, pos) -> bb.order(NE).getChar(pos * 2), (bb, pos, v) -> bb.order(NE).putChar(pos * 2, v))
