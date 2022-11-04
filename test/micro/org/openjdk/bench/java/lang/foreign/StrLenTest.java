@@ -146,6 +146,7 @@ public class StrLenTest extends CLayouts {
     static class RingAllocator implements SegmentAllocator {
         final MemorySegment segment;
         SegmentAllocator current;
+        long rem;
 
         public RingAllocator(MemorySession session) {
             this.segment = MemorySegment.allocateNative(1024, session);
@@ -154,17 +155,17 @@ public class StrLenTest extends CLayouts {
 
         @Override
         public MemorySegment allocate(long byteSize, long byteAlignment) {
-            MemorySegment res = current.allocate(byteSize, byteAlignment);
-            if (res.equals(MemorySegment.NULL)) {
-                // reached the end of the segment, start again
+            if (rem < byteSize) {
                 reset();
-                res = current.allocate(byteSize, byteAlignment);
             }
+            MemorySegment res = current.allocate(byteSize, byteAlignment);
+            rem -= segment.segmentOffset(res);
             return res;
         }
 
         void reset() {
             current = SegmentAllocator.slicingAllocator(segment);
+            rem = segment.byteSize();
         }
     }
 }

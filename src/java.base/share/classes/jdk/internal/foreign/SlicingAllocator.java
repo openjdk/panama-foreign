@@ -45,13 +45,9 @@ public final class SlicingAllocator implements SegmentAllocator {
     MemorySegment trySlice(long byteSize, long byteAlignment) {
         long min = segment.address();
         long start = Utils.alignUp(min + sp, byteAlignment) - min;
-        if (segment.byteSize() - start < byteSize) {
-            return MemorySegment.NULL;
-        } else {
-            MemorySegment slice = segment.asSlice(start, byteSize);
-            sp = start + byteSize;
-            return slice;
-        }
+        MemorySegment slice = segment.asSlice(start, byteSize);
+        sp = start + byteSize;
+        return slice;
     }
 
     @Override

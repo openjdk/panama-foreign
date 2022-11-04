@@ -85,7 +85,7 @@ public class TestSegmentAllocators {
                     try {
                         allocationFunction.allocate(allocator, alignedLayout, value);
                         assertFalse(isBound);
-                    } catch (IndexOutOfBoundsException | IllegalStateException ex) {
+                    } catch (IndexOutOfBoundsException ex) {
                         //failure is expected if bound
                         assertTrue(isBound);
                     }
@@ -118,8 +118,8 @@ public class TestSegmentAllocators {
     public void testTooBigForBoundedArena() {
         try (Arena arena = Arena.openConfined()) {
             SegmentAllocator allocator = SegmentAllocator.slicingAllocator(arena.allocate(10));
-            assertEquals(MemorySegment.NULL, allocator.allocate(12));
-            assertNotEquals(MemorySegment.NULL, allocator.allocate(5));
+            assertThrows(IndexOutOfBoundsException.class, () -> allocator.allocate(12));
+            allocator.allocate(5);
         }
     }
 

@@ -351,7 +351,7 @@ public interface SegmentAllocator {
      * current offset (modulo additional padding to satisfy alignment constraint), with given size.
      * <p>
      * When the returned allocator cannot satisfy an allocation request, e.g. because a slice of the provided
-     * segment with the requested size cannot be found, {@link MemorySegment#NULL} is returned instead.
+     * segment with the requested size cannot be found, an {@link IndexOutOfBoundsException} is thrown.
      *
      * @param segment the segment which the returned allocator should slice from.
      * @return a new slicing allocator
