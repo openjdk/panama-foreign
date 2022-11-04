@@ -54,7 +54,7 @@ import jdk.internal.reflect.Reflection;
  * The contents of a foreign memory segment modelling a variable argument list can be accessed by <em>unsafely</em> creating
  * a variable argument list, as follows:
  * {@snippet lang = java:
- * import java.lang.foreign.MemorySession.Handle;void upcall(int n, MemorySegment vaListSegment) {
+ * void upcall(int n, MemorySegment vaListSegment) {
  *    try (Arena arena = Arena.openConfined()) {
  *        VaList vaList = VaList.ofAddress(vaListSegment.address(), arena.session());
  *        VaList copy = vaList.copy();
