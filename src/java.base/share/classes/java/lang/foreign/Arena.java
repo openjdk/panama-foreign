@@ -25,7 +25,6 @@
 
 package java.lang.foreign;
 
-import jdk.internal.foreign.ArenaImpl;
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.javac.PreviewFeature;
 
@@ -56,24 +55,20 @@ import jdk.internal.javac.PreviewFeature;
  * @since 20
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface Arena extends SegmentAllocator, AutoCloseable permits ArenaImpl { //@@@: This can also be non-sealed!
+public interface Arena extends SegmentAllocator, AutoCloseable {
 
     /**
-     * Creates a native memory segment with the given size (in bytes), alignment constraint (in bytes) associated with
-     * the memory session associated with this arena. The {@link MemorySegment#address()} of the returned memory segment
-     * is the starting address of the newly allocated off-heap memory region backing the segment.
-     * Moreover, the {@linkplain MemorySegment#address() address} of the returned segment will be aligned according
-     * the provided alignment constraint.
-     * <p>
-     * Clients are responsible for ensuring that this arena is closed when the segments returned by this method are no
-     * longer in use. Failure to do so will result in off-heap memory leaks.
-     * <p>
-     * This is equivalent to the following code:
+     * Creates a native memory segment with the given size (in bytes), alignment constraint (in bytes).
+     * The returned segment is associated with the same memory session associated with this arena.
+     * The {@link MemorySegment#address()} of the returned memory segment is the starting address of the
+     * allocated off-heap memory region backing the segment. Moreover, the {@linkplain MemorySegment#address() address}
+     * of the returned segment is aligned according the provided alignment constraint.
+     *
+     * @implSpec
+     * The default implementation of this method is equivalent to the following code:
      * {@snippet lang=java :
      * MemorySegment.allocateNative(bytesSize, byteAlignment, session());
      * }
-     * <p>
-     * The region of off-heap memory backing the returned native memory segment is initialized to zero.
      *
      * @param byteSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @param byteAlignment the alignment constraint (in bytes) of the off-heap region of memory backing the native memory segment.
@@ -86,7 +81,9 @@ public sealed interface Arena extends SegmentAllocator, AutoCloseable permits Ar
      * @see MemorySegment#allocateNative(long, long, MemorySession)
      */
     @Override
-    MemorySegment allocate(long byteSize, long byteAlignment);
+    default MemorySegment allocate(long byteSize, long byteAlignment) {
+        return MemorySegment.allocateNative(byteSize, byteAlignment, session());
+    }
 
     /**
      * {@return the session associated with this arena}
@@ -109,7 +106,7 @@ public sealed interface Arena extends SegmentAllocator, AutoCloseable permits Ar
      * @return a new arena, associated with a new confined session.
      */
     static Arena openConfined() {
-        return new ArenaImpl(MemorySessionImpl.createConfined(Thread.currentThread()));
+        return makeArena(MemorySessionImpl.createConfined(Thread.currentThread()));
     }
 
     /**
@@ -117,6 +114,20 @@ public sealed interface Arena extends SegmentAllocator, AutoCloseable permits Ar
      * @return a new arena, associated with a new shared session.
      */
     static Arena openShared() {
-        return new ArenaImpl(MemorySessionImpl.createShared());
+        return makeArena(MemorySessionImpl.createShared());
+    }
+
+    private static Arena makeArena(MemorySessionImpl sessionImpl) {
+        return new Arena() {
+            @Override
+            public MemorySession session() {
+                return sessionImpl;
+            }
+
+            @Override
+            public void close() {
+                sessionImpl.close();
+            }
+        };
     }
 }
