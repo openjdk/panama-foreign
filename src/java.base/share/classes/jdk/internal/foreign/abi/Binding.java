@@ -25,7 +25,6 @@
 package jdk.internal.foreign.abi;
 
 import jdk.internal.foreign.NativeMemorySegmentImpl;
-import jdk.internal.org.objectweb.asm.Handle;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemoryLayout;
