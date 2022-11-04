@@ -60,9 +60,10 @@ public sealed interface Arena extends SegmentAllocator, AutoCloseable permits Ar
 
     /**
      * Creates a native memory segment with the given size (in bytes), alignment constraint (in bytes) associated with
-     * this memory session. The {@link MemorySegment#address()} of the returned memory segment is the starting address of
-     * the newly allocated off-heap memory region backing the segment. Moreover, the {@linkplain MemorySegment#address() address}
-     * of the returned segment will be aligned according the provided alignment constraint.
+     * the memory session associated with this arena. The {@link MemorySegment#address()} of the returned memory segment
+     * is the starting address of the newly allocated off-heap memory region backing the segment.
+     * Moreover, the {@linkplain MemorySegment#address() address} of the returned segment will be aligned according
+     * the provided alignment constraint.
      * <p>
      * Clients are responsible for ensuring that this arena is closed when the segments returned by this method are no
      * longer in use. Failure to do so will result in off-heap memory leaks.

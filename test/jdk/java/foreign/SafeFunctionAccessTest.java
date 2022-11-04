@@ -59,7 +59,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     public void testClosedStruct() throws Throwable {
         MemorySegment segment;
         try (Arena arena = Arena.openConfined()) {
-            segment = MemorySegment.allocateNative(POINT, arena.session());
+            segment = arena.allocate(POINT);
         }
         assertFalse(segment.session().isAlive());
         MethodHandle handle = Linker.nativeLinker().downcallHandle(
@@ -77,7 +77,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
         record Allocation(Arena drop, MemorySegment segment) {
             static Allocation of(MemoryLayout layout) {
                 Arena arena = Arena.openShared();
-                return new Allocation(arena, MemorySegment.allocateNative(layout, arena.session()));
+                return new Allocation(arena, arena.allocate(layout));
             }
         }
         for (int i = 0 ; i < 6 ; i++) {
@@ -162,7 +162,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
 
         try (Arena arena = Arena.openConfined()) {
-            MemorySegment segment = MemorySegment.allocateNative(POINT, arena.session());
+            MemorySegment segment = arena.allocate(POINT);
             handle.invokeExact(segment, sessionChecker(arena));
         }
     }

@@ -151,7 +151,7 @@ public abstract sealed class MemorySessionImpl
         }
     }
 
-    public Thread ownerThread() {
+    public final Thread ownerThread() {
         return owner;
     }
 

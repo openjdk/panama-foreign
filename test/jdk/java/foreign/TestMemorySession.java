@@ -245,6 +245,63 @@ public class TestMemorySession {
         }
     }
 
+    @Test
+    public void testConfinedSessionWithImplicitDependency() {
+        Arena root = Arena.openConfined();
+        // Create many implicit sessions which depend on 'root', and let them become unreachable.
+        for (int i = 0; i < N_THREADS; i++) {
+            keepAlive(MemorySession.implicit(), root.session());
+        }
+        // Now let's keep trying to close 'root' until we succeed. This is trickier than it seems: cleanup action
+        // might be called from another thread (the Cleaner thread), so that the confined session lock count is updated racily.
+        // If that happens, the loop below never terminates.
+        while (true) {
+            try {
+                root.close();
+                break; // success!
+            } catch (IllegalStateException ex) {
+                kickGC();
+                for (int i = 0 ; i < N_THREADS ; i++) {  // add more races from current thread
+                    try (Arena arena = Arena.openConfined()) {
+                        keepAlive(arena.session(), root.session());
+                        // dummy
+                    }
+                }
+                // try again
+            }
+        }
+    }
+
+    @Test
+    public void testConfinedSessionWithSharedDependency() {
+        Arena root = Arena.openConfined();
+        List<Thread> threads = new ArrayList<>();
+        // Create many implicit sessions which depend on 'root', and let them become unreachable.
+        for (int i = 0; i < N_THREADS; i++) {
+            Arena arena = Arena.openShared(); // create session inside same thread!
+            keepAlive(arena.session(), root.session());
+            Thread t = new Thread(arena::close); // close from another thread!
+            threads.add(t);
+            t.start();
+        }
+        for (int i = 0 ; i < N_THREADS ; i++) { // add more races from current thread
+            try (Arena arena = Arena.openConfined()) {
+                keepAlive(arena.session(), root.session());
+                // dummy
+            }
+        }
+        threads.forEach(t -> {
+            try {
+                t.join();
+            } catch (InterruptedException ex) {
+                // ok
+            }
+        });
+        // Now let's close 'root'. This is trickier than it seems: releases of the confined session happen in different
+        // threads, so that the confined session lock count is updated racily. If that happens, the following close will blow up.
+        root.close();
+    }
+
     private void waitSomeTime() {
         try {
             Thread.sleep(10);

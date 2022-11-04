@@ -353,7 +353,7 @@ public interface SegmentAllocator {
      * When the returned allocator cannot satisfy an allocation request, e.g. because a slice of the provided
      * segment with the requested size cannot be found, {@link MemorySegment#NULL} is returned instead.
      *
-     * @param segment the segment from which the returned allocator should slice from.
+     * @param segment the segment which the returned allocator should slice from.
      * @return a new slicing allocator
      */
     static SegmentAllocator slicingAllocator(MemorySegment segment) {

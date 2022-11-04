@@ -45,11 +45,11 @@ import jdk.internal.ref.CleanerFactory;
  * Memory sessions provide strong temporal safety guarantees: a memory segment associated with a session cannot be accessed
  * <em>after</em> the session has been closed. The costs associated with maintaining this safety invariant can vary greatly,
  * depending on how many threads have access to the memory segment associated to a memory session. For instance,
- * if a memory session is created and closed by one thread, and the segments it creates are only ever accessed by that very same
+ * if a memory session is created and closed by one thread, and the segments associated with it are only ever accessed by that very same
  * thread, it is easy to show that there cannot be situations where a memory segment is accessed <em>while</em> its
  * associated session is being closed.
  * <p>
- * Conversely, if a session creates segments that can be accessed by multiple threads, or if the session can be
+ * Conversely, if a session is associated with segments that can be accessed by multiple threads, or if the session can be
  * closed by a thread other than the accessing thread, the situation is much more complex. For instance, it would
  * be possible for a segment to be accessed while its associated session is being closed, concurrently,
  * by another thread. Even in this case, memory sessions provide strong temporal safety guarantees, but doing
