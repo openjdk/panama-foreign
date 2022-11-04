@@ -55,8 +55,8 @@ import jdk.internal.reflect.Reflection;
  * a variable argument list, as follows:
  * {@snippet lang = java:
  * import java.lang.foreign.MemorySession.Handle;void upcall(int n, MemorySegment vaListSegment) {
- *    try (MemorySession session = Handle.openConfined()) {
- *        VaList vaList = VaList.ofAddress(vaListSegment.address(), session);
+ *    try (Arena arena = Arena.openConfined()) {
+ *        VaList vaList = VaList.ofAddress(vaListSegment.address(), arena.session());
  *        VaList copy = vaList.copy();
  *        int i = vaList.nextVarg(C_INT);
  *        double d = vaList.nextVarg(C_DOUBLE);

@@ -65,8 +65,8 @@ import java.util.function.BiFunction;
  * with a {@linkplain  MemorySession memory session}; when the session is closed, the library is unloaded:
  *
  * {@snippet lang = java:
- * import java.lang.foreign.MemorySession.Handle;try (MemorySession session = Handle.openConfined()) {
- *     SymbolLookup libGL = SymbolLookup.libraryLookup("libGL.so"); // libGL.so loaded here
+ * try (Arena arena = Arena.openConfined()) {
+ *     SymbolLookup libGL = SymbolLookup.libraryLookup("libGL.so", arena.session()); // libGL.so loaded here
  *     MemorySegment glGetString = libGL.find("glGetString").orElseThrow();
  *     ...
  * } //  libGL.so unloaded here
