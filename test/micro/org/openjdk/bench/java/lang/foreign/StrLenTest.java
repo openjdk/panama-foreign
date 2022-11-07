@@ -159,7 +159,7 @@ public class StrLenTest extends CLayouts {
                 reset();
             }
             MemorySegment res = current.allocate(byteSize, byteAlignment);
-            rem -= segment.byteSize() - segment.segmentOffset(res);
+            rem = segment.byteSize() - segment.segmentOffset(res);
             return res;
         }
 
