@@ -30,9 +30,7 @@
  */
 
 import java.lang.foreign.*;
-import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -295,8 +293,8 @@ public class TestMemoryInspection {
 
     private static <T> T testWithFreshMemorySegment(long size,
                                                     Function<MemorySegment, T> mapper) {
-        try (final MemorySession session = MemorySession.openConfined()) {
-            var segment = session.allocate(size);
+        try (final Arena arena = Arena.openConfined()) {
+            var segment = MemorySegment.allocateNative(size, arena.session());;
             return mapper.apply(segment);
         }
     }

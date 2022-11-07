@@ -121,7 +121,7 @@ public class NativeTestHelper {
     public static MemorySegment upcallStub(Class<?> holder, String name, FunctionDescriptor descriptor) {
         try {
             MethodHandle target = MethodHandles.lookup().findStatic(holder, name, descriptor.toMethodType());
-            return LINKER.upcallStub(target, descriptor, MemorySession.openImplicit());
+            return LINKER.upcallStub(target, descriptor, MemorySession.implicit());
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
