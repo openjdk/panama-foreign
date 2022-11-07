@@ -1178,8 +1178,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain MemorySession#isOwnedBy(Thread) owning} {@code session}.
      */
     static MemorySegment allocateNative(MemoryLayout layout, MemorySession session) {
-        Objects.requireNonNull(session);
         Objects.requireNonNull(layout);
+        Objects.requireNonNull(session);
         return allocateNative(layout.byteSize(), layout.byteAlignment(), session);
     }
 
