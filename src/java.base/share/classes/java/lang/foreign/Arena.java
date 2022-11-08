@@ -63,6 +63,10 @@ import jdk.internal.javac.PreviewFeature;
  * An arena should be closed when no longer in use, by calling the {@link Arena#close} method. Failure to do so
  * might otherwise result in memory leaks.
  *
+ * @implSpec
+ * Implementations of this interface shall be thread-safe such that all threads that are allowed to use the
+ * associated {@linkplain #session() session} must also be allowed to concurrently invoke any arena method.
+ *
  * @since 20
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
