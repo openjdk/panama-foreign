@@ -29,17 +29,13 @@ import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.javac.PreviewFeature;
 
 /**
- * An arena allocates and manages the lifecycle of memory segments.
+ * An arena allocates and manages the lifecycle of native segments.
  * <p>
  * An arena is a {@linkplain AutoCloseable closeable} {@linkplain SegmentAllocator segment allocator} that
  * is associated with a {@link #session() memory session}.
  * <p>
  * The following holds for arenas produced by either of the standard factories {@linkplain #openConfined()} or {@linkplain #openShared()}
  * <ul>
- *     <li>
- *         The backing memory for {@linkplain #allocate(long, long) allocated} memory segments produced by the arena
- *         resides in native memory (off-heap).
- *     </li>
  *     <li>
  *         An associated session is created together with the arena, and is closed when the arena is
  *         {@linkplain #close() closed} implying all native segments {@linkplain #allocate(long, long) allocated}
@@ -73,11 +69,10 @@ import jdk.internal.javac.PreviewFeature;
 public interface Arena extends SegmentAllocator, AutoCloseable {
 
     /**
-     * {@return a new memory segment with the given size (in bytes) and alignment constraint (in bytes)}.
+     * {@return a new native memory segment with the given size (in bytes) and alignment constraint (in bytes)}.
      * <p>
      * The returned segment is associated with the {@linkplain #session() same memory session} associated with this arena.
-     * If the returned memory segment {@linkplain MemorySegment#isNative() is native}, the
-     * {@linkplain MemorySegment#address() address} of the returned memory segment is the starting address of the
+     * The {@linkplain MemorySegment#address() address} of the returned memory segment is the starting address of the
      * allocated off-heap memory region backing the segment. Moreover, the {@linkplain MemorySegment#address() address}
      * of the returned segment is aligned according the provided alignment constraint.
      *
@@ -86,9 +81,11 @@ public interface Arena extends SegmentAllocator, AutoCloseable {
      * {@snippet lang=java :
      * MemorySegment.allocateNative(bytesSize, byteAlignment, session());
      * }
+     * @implSpec
+     * The method shall return a {@linkplain MemorySegment#isNative() native} memory segment.
      *
-     * @param byteSize the size (in bytes) of the memory block backing the memory segment.
-     * @param byteAlignment the alignment constraint (in bytes) of the memory backing the memory segment.
+     * @param byteSize the size (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param byteAlignment byteAlignment the alignment constraint (in bytes) of the off-heap region of memory backing the native memory segment.
      * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
      * is not a power of 2.
      * @throws IllegalStateException if the session associated with this arena is not {@linkplain MemorySession#isAlive() alive}.
@@ -107,9 +104,14 @@ public interface Arena extends SegmentAllocator, AutoCloseable {
     MemorySession session();
 
     /**
-     * Closes this arena. This may close the {@linkplain #session() session} associated with this arena which would invalidate
+     * Closes this arena. This closes the {@linkplain #session() session} associated with this arena and invalidates
      * all the memory segments associated with it. Any off-heap region of memory backing the segments associated with
-     * that memory session are then also released.
+     * that memory session are also released.
+     *
+     * @implSpec
+     * If this method completes normally, the associated {@linkplain #session() session} must no longer be
+     * {@linkplain MemorySession#isAlive() alive}.
+     *
      * @throws IllegalStateException if the session associated with this arena is not {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread
      * {@linkplain MemorySession#isOwnedBy(Thread) owning} the session associated with this arena.
@@ -118,14 +120,14 @@ public interface Arena extends SegmentAllocator, AutoCloseable {
     void close();
 
     /**
-     * {@return a new arena, associated with a new confined session, that will produce native memory segments}.
+     * {@return a new arena, associated with a new confined session}.
      */
     static Arena openConfined() {
         return MemorySessionImpl.createConfined(Thread.currentThread()).asArena();
     }
 
     /**
-     * {@return a new arena, associated with a new shared session, that will produce native memory segments}.
+     * {@return a new arena, associated with a new shared session}.
      */
     static Arena openShared() {
         return MemorySessionImpl.createShared().asArena();
