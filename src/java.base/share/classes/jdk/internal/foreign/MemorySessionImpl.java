@@ -26,6 +26,7 @@
 
 package jdk.internal.foreign;
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
@@ -230,6 +231,23 @@ public abstract sealed class MemorySessionImpl
     }
 
     abstract void justClose();
+
+    public Arena asArena() {
+        return new ArenaImpl();
+    }
+
+    private final class ArenaImpl implements Arena {
+        @Override
+        public MemorySession session() {
+            return MemorySessionImpl.this;
+        }
+
+        @Override
+        public void close() {
+            MemorySessionImpl.this.close();
+        }
+    }
+
 
     public static MemorySessionImpl heapSession(Object ref) {
         return new GlobalSession(ref);
