@@ -85,7 +85,7 @@ public interface Arena extends SegmentAllocator, AutoCloseable {
      * The method shall return a {@linkplain MemorySegment#isNative() native} memory segment.
      *
      * @param byteSize the size (in bytes) of the off-heap memory block backing the native memory segment.
-     * @param byteAlignment byteAlignment the alignment constraint (in bytes) of the off-heap region of memory backing the native memory segment.
+     * @param byteAlignment the alignment constraint (in bytes) of the off-heap region of memory backing the native memory segment.
      * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
      * is not a power of 2.
      * @throws IllegalStateException if the session associated with this arena is not {@linkplain MemorySession#isAlive() alive}.
