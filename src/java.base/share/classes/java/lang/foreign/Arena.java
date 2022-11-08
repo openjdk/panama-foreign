@@ -94,7 +94,8 @@ public interface Arena extends SegmentAllocator, AutoCloseable {
      * is not a power of 2.
      * @throws IllegalStateException if the session associated with this arena is not {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread
-     * {@linkplain MemorySession#isOwnedBy(Thread) owning} the session associated with this arena.
+     * {@linkplain MemorySession#isOwnedBy(Thread) owning} the session associated with this arena and the associated session
+     * is confined.
      * @see MemorySegment#allocateNative(long, long, MemorySession)
      */
     @Override
@@ -118,7 +119,8 @@ public interface Arena extends SegmentAllocator, AutoCloseable {
      *
      * @throws IllegalStateException if the session associated with this arena is not {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread
-     * {@linkplain MemorySession#isOwnedBy(Thread) owning} the session associated with this arena.
+     * {@linkplain MemorySession#isOwnedBy(Thread) owning} the session associated with this arena and the associated session
+     * is confined.
      */
     @Override
     void close();
