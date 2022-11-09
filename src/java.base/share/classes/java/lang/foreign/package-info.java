@@ -215,7 +215,7 @@
  * type must not be null, and any null argument will elicit a {@code NullPointerException}.  This fact is not individually
  * documented for methods of this API.
  *
- * @apiNote The normal Java Ojbect access control, guarantees and constraints, for example stated in
+ * @apiNote Usual memory model guarantees, for example stated in
  * {@jls 6.6} and {@jls 10.4}, do not apply when accessing native memory segments as these segments are
  * backed by off-heap regions of memory.
  */
