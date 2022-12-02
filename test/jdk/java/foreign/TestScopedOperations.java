@@ -28,13 +28,14 @@
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestScopedOperations
  */
 
-import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.Arena;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.VaList;
 import java.lang.foreign.ValueLayout;
+
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -73,9 +74,9 @@ public class TestScopedOperations {
 
     @Test(dataProvider = "scopedOperations")
     public <Z> void testOpAfterClose(String name, ScopedOperation<Z> scopedOperation) {
-        MemorySession session = MemorySession.openConfined();
-        Z obj = scopedOperation.apply(session);
-        session.close();
+        Arena arena = Arena.openConfined();
+        Z obj = scopedOperation.apply(arena.session());
+        arena.close();
         try {
             scopedOperation.accept(obj);
             fail();
@@ -86,8 +87,8 @@ public class TestScopedOperations {
 
     @Test(dataProvider = "scopedOperations")
     public <Z> void testOpOutsideConfinement(String name, ScopedOperation<Z> scopedOperation) {
-        try (MemorySession session = MemorySession.openConfined()) {
-            Z obj = scopedOperation.apply(session);
+        try (Arena arena = Arena.openConfined()) {
+            Z obj = scopedOperation.apply(arena.session());
             AtomicReference<Throwable> failed = new AtomicReference<>();
             Thread t = new Thread(() -> {
                 try {
@@ -110,9 +111,7 @@ public class TestScopedOperations {
 
     static {
         // session operations
-        ScopedOperation.ofScope(session -> session.addCloseAction(() -> {
-        }), "MemorySession::addCloseAction");
-        ScopedOperation.ofScope(session -> MemorySegment.allocateNative(100, session), "MemorySegment::allocateNative");
+        ScopedOperation.ofScope(session -> MemorySegment.allocateNative(100, session), "MemorySession::allocate");;
         ScopedOperation.ofScope(session -> {
             try (FileChannel fileChannel = FileChannel.open(tempPath, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                 fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, 10L, session);
@@ -121,16 +120,13 @@ public class TestScopedOperations {
             }
         }, "FileChannel::map");
         ScopedOperation.ofScope(session -> VaList.make(b -> b.addVarg(JAVA_INT, 42), session), "VaList::make");
-        ScopedOperation.ofScope(session -> VaList.ofAddress(MemoryAddress.ofLong(42), session), "VaList::make");
-        ScopedOperation.ofScope(SegmentAllocator::newNativeArena, "SegmentAllocator::arenaAllocator");
+        ScopedOperation.ofScope(session -> VaList.ofAddress(42, session), "VaList::make");
         // segment operations
         ScopedOperation.ofSegment(s -> s.toArray(JAVA_BYTE), "MemorySegment::toArray(BYTE)");
-        ScopedOperation.ofSegment(MemorySegment::address, "MemorySegment::address");
         ScopedOperation.ofSegment(s -> s.copyFrom(s), "MemorySegment::copyFrom");
         ScopedOperation.ofSegment(s -> s.mismatch(s), "MemorySegment::mismatch");
         ScopedOperation.ofSegment(s -> s.fill((byte) 0), "MemorySegment::fill");
         // valist operations
-        ScopedOperation.ofVaList(VaList::address, "VaList::address");
         ScopedOperation.ofVaList(VaList::copy, "VaList::copy");
         ScopedOperation.ofVaList(list -> list.nextVarg(ValueLayout.ADDRESS), "VaList::nextVarg/address");
         ScopedOperation.ofVaList(list -> list.nextVarg(ValueLayout.JAVA_INT), "VaList::nextVarg/int");
@@ -228,7 +224,7 @@ public class TestScopedOperations {
                     throw new AssertionError(ex);
                 }
             }),
-            UNSAFE(session -> MemorySegment.ofAddress(MemoryAddress.NULL, 10, session));
+            UNSAFE(session -> MemorySegment.ofAddress(0, 10, session));
 
             static {
                 try {
@@ -248,8 +244,7 @@ public class TestScopedOperations {
         }
 
         enum AllocatorFactory {
-            ARENA_BOUNDED(session -> SegmentAllocator.newNativeArena(1000, session)),
-            ARENA_UNBOUNDED(SegmentAllocator::newNativeArena);
+            NATIVE_ALLOCATOR(SegmentAllocator::nativeAllocator);
 
             final Function<MemorySession, SegmentAllocator> allocatorFactory;
 

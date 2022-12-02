@@ -23,11 +23,11 @@
 
 import org.testng.annotations.Test;
 
-import java.lang.foreign.Addressable;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySession;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.nio.file.Path;
@@ -51,12 +51,12 @@ public class LibraryLookupTest {
 
     @Test
     void testLoadLibraryConfined() {
-        try (MemorySession session0 = MemorySession.openConfined()) {
-            callFunc(loadLibrary(session0));
-            try (MemorySession session1 = MemorySession.openConfined()) {
-                callFunc(loadLibrary(session1));
-                try (MemorySession session2 = MemorySession.openConfined()) {
-                    callFunc(loadLibrary(session2));
+        try (Arena arena0 = Arena.openConfined()) {
+            callFunc(loadLibrary(arena0.session()));
+            try (Arena arena1 = Arena.openConfined()) {
+                callFunc(loadLibrary(arena1.session()));
+                try (Arena arena2 = Arena.openConfined()) {
+                    callFunc(loadLibrary(arena2.session()));
                 }
             }
         }
@@ -64,21 +64,21 @@ public class LibraryLookupTest {
 
     @Test(expectedExceptions = IllegalStateException.class)
     void testLoadLibraryConfinedClosed() {
-        Addressable addr;
-        try (MemorySession session = MemorySession.openConfined()) {
-            addr = loadLibrary(session);
+        MemorySegment addr;
+        try (Arena arena = Arena.openConfined()) {
+            addr = loadLibrary(arena.session());
         }
         callFunc(addr);
     }
 
-    private static Addressable loadLibrary(MemorySession session) {
+    private static MemorySegment loadLibrary(MemorySession session) {
         SymbolLookup lib = SymbolLookup.libraryLookup(LIB_PATH, session);
-        MemorySegment addr = lib.lookup("inc").get();
+        MemorySegment addr = lib.find("inc").get();
         assertEquals(addr.session(), session);
         return addr;
     }
 
-    private static void callFunc(Addressable addr) {
+    private static void callFunc(MemorySegment addr) {
         try {
             INC.invokeExact(addr);
         } catch (IllegalStateException ex) {
@@ -116,8 +116,8 @@ public class LibraryLookupTest {
         @Override
         public void run() {
             for (int i = 0 ; i < ITERATIONS ; i++) {
-                try (MemorySession session = MemorySession.openConfined()) {
-                    callFunc(loadLibrary(session));
+                try (Arena arena = Arena.openConfined()) {
+                    callFunc(loadLibrary(arena.session()));
                 }
             }
         }
@@ -125,15 +125,15 @@ public class LibraryLookupTest {
 
     @Test
     void testLoadLibrarySharedClosed() throws Throwable {
-        MemorySession session = MemorySession.openShared();
-        Addressable addr = loadLibrary(session);
+        Arena arena = Arena.openShared();
+        MemorySegment addr = loadLibrary(arena.session());
         ExecutorService accessExecutor = Executors.newCachedThreadPool();
         for (int i = 0; i < NUM_ACCESSORS ; i++) {
             accessExecutor.execute(new LibraryAccess(addr));
         }
         while (true) {
             try {
-                session.close();
+                arena.close();
                 break;
             } catch (IllegalStateException ex) {
                 // wait for addressable parameter to be released
@@ -146,9 +146,9 @@ public class LibraryLookupTest {
 
     static class LibraryAccess implements Runnable {
 
-        final Addressable addr;
+        final MemorySegment addr;
 
-        LibraryAccess(Addressable addr) {
+        LibraryAccess(MemorySegment addr) {
             this.addr = addr;
         }
 
