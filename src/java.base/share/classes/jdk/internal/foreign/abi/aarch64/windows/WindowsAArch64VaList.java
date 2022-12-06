@@ -144,7 +144,7 @@ public non-sealed class WindowsAArch64VaList implements VaList {
     @Override
     public void skip(MemoryLayout... layouts) {
         Objects.requireNonNull(layouts);
-        MemorySessionImpl.toSessionImpl(segment.session()).checkValidState();
+        ((MemorySessionImpl)segment.session()).checkValidState();
 
         for (MemoryLayout layout : layouts) {
             Objects.requireNonNull(layout);
@@ -171,7 +171,7 @@ public non-sealed class WindowsAArch64VaList implements VaList {
 
     @Override
     public VaList copy() {
-        MemorySessionImpl.toSessionImpl(segment.session()).checkValidState();
+        ((MemorySessionImpl)segment.session()).checkValidState();
         return new WindowsAArch64VaList(segment);
     }
 
@@ -186,7 +186,7 @@ public non-sealed class WindowsAArch64VaList implements VaList {
         private final List<SimpleVaArg> args = new ArrayList<>();
 
         public Builder(MemorySession session) {
-            MemorySessionImpl.toSessionImpl(session).checkValidState();
+            ((MemorySessionImpl)session).checkValidState();
             this.session = session;
         }
 
