@@ -262,7 +262,7 @@ public abstract class CallArranger {
         }
 
         int requiredRegisters(MemoryLayout layout) {
-            return (layout == null) ? 0 : (int)Utils.alignUp(layout.byteSize(), 8) / 8;
+            return (int)Utils.alignUp(layout.byteSize(), 8) / 8;
         }
 
         VMStorage[] regAllocPartial(int type, MemoryLayout layout) {
