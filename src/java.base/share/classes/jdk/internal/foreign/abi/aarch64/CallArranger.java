@@ -206,13 +206,15 @@ public abstract class CallArranger {
 
     class StorageCalculator {
         private final boolean forArguments;
+        private final boolean forVariadicFunction;
         private boolean forVarArgs = false;
 
         private final int[] nRegs = new int[] { 0, 0 };
         private long stackOffset = 0;
 
-        public StorageCalculator(boolean forArguments) {
+        public StorageCalculator(boolean forArguments, boolean forVariadicFunction) {
             this.forArguments = forArguments;
+            this.forVariadicFunction = forVariadicFunction;
         }
 
         void alignStack(long alignment) {
@@ -258,7 +260,11 @@ public abstract class CallArranger {
         }
 
         VMStorage[] regAlloc(int type, MemoryLayout layout) {
-            return regAlloc(type, requiredRegisters(layout));
+            boolean spillRegistersPartially = forVariadicFunction && spillsVariadicStructsPartially();
+
+            return spillRegistersPartially ?
+                regAllocPartial(type, layout) :
+                regAlloc(type, requiredRegisters(layout));
         }
 
         int requiredRegisters(MemoryLayout layout) {
@@ -276,6 +282,15 @@ public abstract class CallArranger {
         }
 
         VMStorage nextStorage(int type, MemoryLayout layout) {
+            if (type == StorageType.VECTOR) {
+                boolean forVariadicFunctionArgs = forArguments && forVariadicFunction;
+                boolean useIntRegsForFloatingPointArgs = forVariadicFunctionArgs && useIntRegsForVariadicFloatingPointArgs();
+
+                if (useIntRegsForFloatingPointArgs) {
+                    type = StorageType.INTEGER;
+                }
+            }
+
             VMStorage[] storage = regAlloc(type, 1);
             if (storage == null) {
                 return stackAlloc(layout);
@@ -316,8 +331,8 @@ public abstract class CallArranger {
     abstract class BindingCalculator {
         protected final StorageCalculator storageCalculator;
 
-        protected BindingCalculator(boolean forArguments) {
-            this.storageCalculator = new StorageCalculator(forArguments);
+        protected BindingCalculator(boolean forArguments, boolean forVariadicFunction) {
+            this.storageCalculator = new StorageCalculator(forArguments, forVariadicFunction);
         }
 
         protected void spillStructUnbox(Binding.Builder bindings, MemoryLayout layout) {
@@ -385,7 +400,7 @@ public abstract class CallArranger {
         protected final boolean forVariadicFunction;
 
         UnboxBindingCalculator(boolean forArguments, boolean forVariadicFunction) {
-            super(forArguments);
+            super(forArguments, forVariadicFunction);
             this.forArguments = forArguments;
             this.forVariadicFunction = forVariadicFunction;
         }
@@ -403,18 +418,10 @@ public abstract class CallArranger {
             TypeClass argumentClass = getArgumentClassForBindings(layout, forVariadicFunction);
             Binding.Builder bindings = Binding.builder();
 
-            boolean forVariadicFunctionArgs = forArguments && forVariadicFunction;
-            boolean useIntRegsForFloatingPointArgs = forVariadicFunctionArgs && useIntRegsForVariadicFloatingPointArgs();
-
             switch (argumentClass) {
                 case STRUCT_REGISTER: {
                     assert carrier == MemorySegment.class;
-                    VMStorage[] regs;
-
-                    boolean spillRegistersPartially = forVariadicFunctionArgs && spillsVariadicStructsPartially();
-                    regs = spillRegistersPartially ?
-                        storageCalculator.regAllocPartial(StorageType.INTEGER, layout) :
-                        storageCalculator.regAlloc(StorageType.INTEGER, layout);
+                    VMStorage[] regs = storageCalculator.regAlloc(StorageType.INTEGER, layout);
 
                     if (regs != null) {
                         int regIndex = 0;
@@ -422,8 +429,7 @@ public abstract class CallArranger {
                         while (offset < layout.byteSize() && regIndex < regs.length) {
                             final long copy = Math.min(layout.byteSize() - offset, 8);
                             VMStorage storage = regs[regIndex++];
-                            boolean useFloat = (!useIntRegsForFloatingPointArgs) && storage.type() == StorageType.VECTOR;
-                            Class<?> type = SharedUtils.primitiveCarrierForSize(copy, useFloat);
+                            Class<?> type = SharedUtils.primitiveCarrierForSize(copy, false);
                             if (offset + copy < layout.byteSize()) {
                                 bindings.dup();
                             }
@@ -432,11 +438,9 @@ public abstract class CallArranger {
                             offset += copy;
                         }
 
-                        if (spillRegistersPartially) {
-                            final long bytesLeft = Math.min(layout.byteSize() - offset, 8);
-                            if (bytesLeft > 0) {
-                                spillPartialStructUnbox(bindings, layout, offset);
-                            }
+                        final long bytesLeft = Math.min(layout.byteSize() - offset, 8);
+                        if (bytesLeft > 0) {
+                            spillPartialStructUnbox(bindings, layout, offset);
                         }
                     } else {
                         spillStructUnbox(bindings, layout);
@@ -489,9 +493,8 @@ public abstract class CallArranger {
                     break;
                 }
                 case FLOAT: {
-                    int type = useIntRegsForFloatingPointArgs ? StorageType.INTEGER : StorageType.VECTOR;
                     VMStorage storage =
-                        storageCalculator.nextStorage(type, layout);
+                        storageCalculator.nextStorage(StorageType.VECTOR, layout);
                     bindings.vmStore(storage, carrier);
                     break;
                 }
@@ -504,7 +507,7 @@ public abstract class CallArranger {
 
     class BoxBindingCalculator extends BindingCalculator {
         BoxBindingCalculator(boolean forArguments) {
-            super(forArguments);
+            super(forArguments, false);
         }
 
         @Override
