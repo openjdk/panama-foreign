@@ -25,6 +25,7 @@
 /*
  * @test
  * @enablePreview
+ * @requires sun.arch.data.model == "64"
  * @bug 8292851
  * @run testng/othervm -Xmx4G TestLargeSegmentCopy
  */
@@ -45,7 +46,7 @@ public class TestLargeSegmentCopy {
         final long[] array = new long[longArrayLength];
 
         try (var arena = Arena.openConfined()) {
-            var segment = MemorySegment.allocateNative((long) longArrayLength * Long.BYTES, Long.SIZE, arena.session());
+            var segment = MemorySegment.allocateNative((long) longArrayLength * Long.BYTES, Long.SIZE, arena.scope());
             // Should not throw an exception or error
             MemorySegment.copy(segment, JAVA_LONG, 0, array, 0, longArrayLength);
             // Should not throw an exception or error

@@ -34,8 +34,11 @@ import jdk.internal.javac.PreviewFeature;
 import jdk.internal.reflect.CallerSensitive;
 
 /**
- * A value layout. A value layout is used to model the memory layout associated with values of basic data types, such as <em>integral</em> types
- * (either signed or unsigned) and <em>floating-point</em> types. Each value layout has a size, an alignment (in bits),
+ * A layout that models values of basic data types. Examples of values modelled by a value layout are
+ * <em>integral</em> values (either signed or unsigned), <em>floating-point</em> values and
+ * <em>address</em> values.
+ * <p>
+ * Each value layout has a size, an alignment (in bits),
  * a {@linkplain ByteOrder byte order}, and a <em>carrier</em>, that is, the Java type that should be used when
  * {@linkplain MemorySegment#get(OfInt, long) accessing} a region of memory using the value layout.
  * <p>
@@ -66,7 +69,7 @@ public sealed interface ValueLayout extends MemoryLayout {
     ValueLayout withOrder(ByteOrder order);
 
     /**
-     * Creates a <em>strided</em> access var handle that can be used to access a memory segment as multi-dimensional
+     * Creates a <em>strided</em> var handle that can be used to access a memory segment as multi-dimensional
      * array. The layout of this array is a sequence layout with {@code shape.length} nested sequence layouts. The element
      * layout of the sequence layout at depth {@code shape.length} is this value layout.
      * As a result, if {@code shape.length == 0}, the array layout will feature only one dimension.
@@ -130,29 +133,43 @@ public sealed interface ValueLayout extends MemoryLayout {
      */
     Class<?> carrier();
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     ValueLayout withName(String name);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
 
     ValueLayout withBitAlignment(long bitAlignment);
 
     /**
      * A value layout whose carrier is {@code boolean.class}.
-     * <p>
-     * New instances of this type can be created using {@link #JAVA_BOOLEAN}.
      *
+     * @see #JAVA_BOOLEAN
      * @since 19
      */
     @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     sealed interface OfBoolean extends ValueLayout permits ValueLayouts.OfBooleanImpl {
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfBoolean withName(String name);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfBoolean withBitAlignment(long bitAlignment);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfBoolean withOrder(ByteOrder order);
 
@@ -160,20 +177,28 @@ public sealed interface ValueLayout extends MemoryLayout {
 
     /**
      * A value layout whose carrier is {@code byte.class}.
-     * <p>
-     * New instances of this type can be created using {@link #JAVA_BYTE}.
      *
+     * @see #JAVA_BYTE
      * @since 19
      */
     @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     sealed interface OfByte extends ValueLayout permits ValueLayouts.OfByteImpl {
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfByte withName(String name);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfByte withBitAlignment(long bitAlignment);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfByte withOrder(ByteOrder order);
 
@@ -181,20 +206,29 @@ public sealed interface ValueLayout extends MemoryLayout {
 
     /**
      * A value layout whose carrier is {@code char.class}.
-     * <p>
-     * New instances of this type can be created using {@link #JAVA_CHAR}.
      *
+     * @see #JAVA_CHAR
+     * @see #JAVA_CHAR_UNALIGNED
      * @since 19
      */
     @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     sealed interface OfChar extends ValueLayout permits ValueLayouts.OfCharImpl {
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfChar withName(String name);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfChar withBitAlignment(long bitAlignment);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfChar withOrder(ByteOrder order);
 
@@ -202,20 +236,29 @@ public sealed interface ValueLayout extends MemoryLayout {
 
     /**
      * A value layout whose carrier is {@code short.class}.
-     * <p>
-     * New instances of this type can be created using {@link #JAVA_SHORT}.
      *
+     * @see #JAVA_SHORT
+     * @see #JAVA_SHORT_UNALIGNED
      * @since 19
      */
     @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     sealed interface OfShort extends ValueLayout permits ValueLayouts.OfShortImpl {
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfShort withName(String name);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfShort withBitAlignment(long bitAlignment);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfShort withOrder(ByteOrder order);
 
@@ -223,20 +266,29 @@ public sealed interface ValueLayout extends MemoryLayout {
 
     /**
      * A value layout whose carrier is {@code int.class}.
-     * <p>
-     * New instances of this type can be created using {@link #JAVA_INT}.
      *
+     * @see #JAVA_INT
+     * @see #JAVA_INT_UNALIGNED
      * @since 19
      */
     @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     sealed interface OfInt extends ValueLayout permits ValueLayouts.OfIntImpl {
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfInt withName(String name);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfInt withBitAlignment(long bitAlignment);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfInt withOrder(ByteOrder order);
 
@@ -244,20 +296,29 @@ public sealed interface ValueLayout extends MemoryLayout {
 
     /**
      * A value layout whose carrier is {@code float.class}.
-     * <p>
-     * New instances of this type can be created using {@link #JAVA_FLOAT}.
      *
+     * @see #JAVA_FLOAT
+     * @see #JAVA_FLOAT_UNALIGNED
      * @since 19
      */
     @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     sealed interface OfFloat extends ValueLayout permits ValueLayouts.OfFloatImpl {
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfFloat withName(String name);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfFloat withBitAlignment(long bitAlignment);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfFloat withOrder(ByteOrder order);
 
@@ -265,20 +326,29 @@ public sealed interface ValueLayout extends MemoryLayout {
 
     /**
      * A value layout whose carrier is {@code long.class}.
-     * <p>
-     * New instances of this type can be created using {@link #JAVA_LONG}.
      *
+     * @see #JAVA_LONG
+     * @see #JAVA_LONG_UNALIGNED
      * @since 19
      */
     @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     sealed interface OfLong extends ValueLayout permits ValueLayouts.OfLongImpl {
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfLong withName(String name);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfLong withBitAlignment(long bitAlignment);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfLong withOrder(ByteOrder order);
 
@@ -286,20 +356,29 @@ public sealed interface ValueLayout extends MemoryLayout {
 
     /**
      * A value layout whose carrier is {@code double.class}.
-     * <p>
-     * New instances of this type can be created using {@link #JAVA_LONG}.
      *
+     * @see #JAVA_DOUBLE
+     * @see #JAVA_DOUBLE_UNALIGNED
      * @since 19
      */
     @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     sealed interface OfDouble extends ValueLayout permits ValueLayouts.OfDoubleImpl {
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfDouble withName(String name);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfDouble withBitAlignment(long bitAlignment);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfDouble withOrder(ByteOrder order);
 
@@ -307,26 +386,35 @@ public sealed interface ValueLayout extends MemoryLayout {
 
     /**
      * A value layout whose carrier is {@code MemorySegment.class}.
-     * <p>
-     * New instances of this type can be created using {@link #ADDRESS}.
      *
+     * @see #ADDRESS
+     * @see #ADDRESS_UNALIGNED
      * @since 19
      */
     @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     sealed interface OfAddress extends ValueLayout permits ValueLayouts.OfAddressImpl {
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfAddress withName(String name);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfAddress withBitAlignment(long bitAlignment);
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         OfAddress withOrder(ByteOrder order);
 
         /**
          * Returns an <em>unbounded</em> address layout with the same carrier, alignment constraint, name and order as this address layout,
-         * but with the specified pointee layout. An unbounded address layouts allow raw addresses to be accessed
+         * but with the specified pointee layout. An unbounded address layout allow raw addresses to be accessed
          * as {@linkplain MemorySegment memory segments} whose size is set to {@link Long#MAX_VALUE}. As such,
          * these segments can be used in subsequent access operations.
          * <p>
@@ -353,8 +441,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * bit alignment set to {@code sizeof(size_t) * 8}, byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * ADDRESS.of(ByteOrder.nativeOrder())
-     *             .withBitAlignment(<address size>);
+     * MemoryLayout.valueLayout(MemorySegment.class, ByteOrder.nativeOrder());
      * }
      */
     OfAddress ADDRESS = ValueLayouts.OfAddressImpl.of(ByteOrder.nativeOrder());
@@ -364,7 +451,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * bit alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * JAVA_BYTE.of(ByteOrder.nativeOrder()).withBitAlignment(8);
+     * MemoryLayout.valueLayout(byte.class, ByteOrder.nativeOrder());
      * }
      */
     OfByte JAVA_BYTE = ValueLayouts.OfByteImpl.of(ByteOrder.nativeOrder());
@@ -374,7 +461,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * bit alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * JAVA_BOOLEAN.of(ByteOrder.nativeOrder()).withBitAlignment(8);
+     * MemoryLayout.valueLayout(boolean.class, ByteOrder.nativeOrder());
      * }
      */
     OfBoolean JAVA_BOOLEAN = ValueLayouts.OfBooleanImpl.of(ByteOrder.nativeOrder());
@@ -384,7 +471,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * bit alignment set to 16, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * JAVA_CHAR.of(ByteOrder.nativeOrder()).withBitAlignment(16);
+     * MemoryLayout.valueLayout(char.class, ByteOrder.nativeOrder());
      * }
      */
     OfChar JAVA_CHAR = ValueLayouts.OfCharImpl.of(ByteOrder.nativeOrder());
@@ -394,7 +481,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * bit alignment set to 16, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * JAVA_SHORT.of(ByteOrder.nativeOrder()).withBitAlignment(16);
+     * MemoryLayout.valueLayout(short.class, ByteOrder.nativeOrder());
      * }
      */
     OfShort JAVA_SHORT = ValueLayouts.OfShortImpl.of(ByteOrder.nativeOrder());
@@ -404,7 +491,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * bit alignment set to 32, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * JAVA_INT.of(ByteOrder.nativeOrder()).withBitAlignment(32);
+     * MemoryLayout.valueLayout(int.class, ByteOrder.nativeOrder());
      * }
      */
     OfInt JAVA_INT = ValueLayouts.OfIntImpl.of(ByteOrder.nativeOrder());
@@ -414,7 +501,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * bit alignment set to 64, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * JAVA_LONG.of(ByteOrder.nativeOrder()).withBitAlignment(64);
+     * MemoryLayout.valueLayout(long.class, ByteOrder.nativeOrder());
      * }
      */
     OfLong JAVA_LONG = ValueLayouts.OfLongImpl.of(ByteOrder.nativeOrder());
@@ -424,7 +511,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * bit alignment set to 32, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * JAVA_FLOAT.of(ByteOrder.nativeOrder()).withBitAlignment(32);
+     * MemoryLayout.valueLayout(float.class, ByteOrder.nativeOrder()).withBitAlignment(32);
      * }
      */
     OfFloat JAVA_FLOAT = ValueLayouts.OfFloatImpl.of(ByteOrder.nativeOrder());
@@ -434,7 +521,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * bit alignment set to 64, and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * JAVA_DOUBLE.of(ByteOrder.nativeOrder()).withBitAlignment(64);
+     * MemoryLayout.valueLayout(double.class, ByteOrder.nativeOrder());
      * }
      */
     OfDouble JAVA_DOUBLE = ValueLayouts.OfDoubleImpl.of(ByteOrder.nativeOrder());

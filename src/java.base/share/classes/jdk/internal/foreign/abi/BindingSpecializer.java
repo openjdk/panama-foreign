@@ -24,9 +24,9 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
-import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.Utils;
 import jdk.internal.misc.VM;
 import jdk.internal.org.objectweb.asm.ClassReader;
@@ -47,7 +47,7 @@ import java.lang.constant.ConstantDescs;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
+import java.lang.foreign.SegmentScope;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
@@ -82,13 +82,13 @@ public class BindingSpecializer {
     private static final String OF_BOUNDED_ALLOCATOR_DESC = methodType(Binding.Context.class, long.class).descriptorString();
     private static final String OF_SESSION_DESC = methodType(Binding.Context.class).descriptorString();
     private static final String ALLOCATOR_DESC = methodType(SegmentAllocator.class).descriptorString();
-    private static final String SESSION_DESC = methodType(MemorySession.class).descriptorString();
+    private static final String SESSION_DESC = methodType(SegmentScope.class).descriptorString();
     private static final String SESSION_IMPL_DESC = methodType(MemorySessionImpl.class).descriptorString();
     private static final String CLOSE_DESC = VOID_DESC;
     private static final String UNBOX_SEGMENT_DESC = methodType(long.class, MemorySegment.class).descriptorString();
     private static final String COPY_DESC = methodType(void.class, MemorySegment.class, long.class, MemorySegment.class, long.class, long.class).descriptorString();
     private static final String OF_LONG_DESC = methodType(MemorySegment.class, long.class, long.class).descriptorString();
-    private static final String OF_LONG_UNCHECKED_DESC = methodType(MemorySegment.class, long.class, long.class, MemorySession.class).descriptorString();
+    private static final String OF_LONG_UNCHECKED_DESC = methodType(MemorySegment.class, long.class, long.class, SegmentScope.class).descriptorString();
     private static final String ALLOCATE_DESC = methodType(MemorySegment.class, long.class, long.class).descriptorString();
     private static final String HANDLE_UNCAUGHT_EXCEPTION_DESC = methodType(void.class, Throwable.class).descriptorString();
     private static final String METHOD_HANDLES_INTRN = Type.getInternalName(MethodHandles.class);
@@ -498,8 +498,8 @@ public class BindingSpecializer {
     }
 
     private void emitAcquireScope() {
-        emitCheckCast(Scoped.class);
-        emitInvokeInterface(Scoped.class, "sessionImpl", SESSION_IMPL_DESC);
+        emitCheckCast(AbstractMemorySegmentImpl.class);
+        emitInvokeVirtual(AbstractMemorySegmentImpl.class, "sessionImpl", SESSION_IMPL_DESC);
         Label skipAcquire = new Label();
         Label end = new Label();
 
@@ -676,10 +676,9 @@ public class BindingSpecializer {
         Class<?> fromType = cast.fromType();
         Class<?> toType = cast.toType();
 
-        if (fromType == int.class) {
-            popType(int.class);
-
-            if (toType == boolean.class) {
+        popType(fromType);
+        switch (cast) {
+            case INT_TO_BOOLEAN -> {
                 // implement least significant byte non-zero test
 
                 // select first byte
@@ -688,28 +687,16 @@ public class BindingSpecializer {
 
                 // convert to boolean
                 emitInvokeStatic(Utils.class, "byteToBoolean", "(B)Z");
-            } else if (toType == byte.class) {
-                mv.visitInsn(I2B);
-            } else if (toType == short.class) {
-                mv.visitInsn(I2S);
-            } else {
-                assert toType == char.class;
-                mv.visitInsn(I2C);
             }
-
-            pushType(toType);
-        } else {
-            popType(fromType);
-
-            assert fromType == boolean.class
-                    || fromType == byte.class
-                    || fromType == short.class
-                    || fromType == char.class;
-            // no-op in bytecode
-
-            assert toType == int.class;
-            pushType(int.class);
+            case INT_TO_BYTE -> mv.visitInsn(I2B);
+            case INT_TO_CHAR -> mv.visitInsn(I2C);
+            case INT_TO_SHORT -> mv.visitInsn(I2S);
+            case BOOLEAN_TO_INT, BYTE_TO_INT, CHAR_TO_INT, SHORT_TO_INT -> {
+                // no-op in bytecode
+            }
+            default -> throw new IllegalStateException("Unknown cast: " + cast);
         }
+        pushType(toType);
     }
 
     private void emitUnboxAddress() {

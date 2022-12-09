@@ -26,7 +26,7 @@
 
 #include "code/vmreg.hpp"
 #include "oops/oopsHierarchy.hpp"
-#include "prims/vmstorage.inline.hpp"
+#include "prims/vmstorage.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "utilities/growableArray.hpp"
 #include "utilities/macros.hpp"
@@ -41,11 +41,11 @@ public:
   enum Location : uint32_t {
     TARGET_ADDRESS,
     RETURN_BUFFER,
-    CAPTURED_STATE_MASK,
-    MAX
+    CAPTURED_STATE_BUFFER,
+    LOCATION_LIMIT
   };
 private:
-  VMStorage _locs[MAX];
+  VMStorage _locs[LOCATION_LIMIT];
 public:
   StubLocations();
 
@@ -73,7 +73,7 @@ struct CallRegs {
 class ForeignGlobals {
 private:
   template<typename T>
-  static void parse_register_array(objArrayOop jarray, int type_index, GrowableArray<T>& array, T (*converter)(int));
+  static void parse_register_array(objArrayOop jarray, StorageType type_index, GrowableArray<T>& array, T (*converter)(int));
 
 public:
   static const ABIDescriptor parse_abi_descriptor(jobject jabi);
@@ -116,7 +116,6 @@ private:
 };
 
 struct Move {
-  BasicType bt;
   VMStorage from;
   VMStorage to;
 };

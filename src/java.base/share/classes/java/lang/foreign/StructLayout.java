@@ -29,12 +29,12 @@ import jdk.internal.foreign.layout.StructLayoutImpl;
 import jdk.internal.javac.PreviewFeature;
 
 /**
- * A <em>struct</em> layout where member layouts are laid out one after the other (see {@link MemoryLayout#structLayout(MemoryLayout...)}).
+ * A group layout whose member layouts are laid out one after the other.
  *
  * @implSpec
  * Implementing classes are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
- * @since 19
+ * @since 20
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
 public sealed interface StructLayout extends GroupLayout permits StructLayoutImpl {

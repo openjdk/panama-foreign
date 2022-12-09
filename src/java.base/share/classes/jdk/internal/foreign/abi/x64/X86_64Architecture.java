@@ -156,8 +156,8 @@ public class X86_64Architecture implements Architecture {
                 outputIntRegs,
                 outputVectorRegs,
                 IntStream.range(0, numX87Outputs)
-                        .mapToObj(X86_64Architecture::x87Storage)
-                        .toArray(VMStorage[]::new)
+                         .mapToObj(X86_64Architecture::x87Storage)
+                         .toArray(VMStorage[]::new)
             },
             new VMStorage[][] {
                 volatileIntRegs,
@@ -168,7 +168,7 @@ public class X86_64Architecture implements Architecture {
             scratch1, scratch2,
             StubLocations.TARGET_ADDRESS.storage(StorageType.PLACEHOLDER),
             StubLocations.RETURN_BUFFER.storage(StorageType.PLACEHOLDER),
-            StubLocations.CAPTURED_STATE_MASK.storage(StorageType.PLACEHOLDER));
+            StubLocations.CAPTURED_STATE_BUFFER.storage(StorageType.PLACEHOLDER));
     }
 
 }
