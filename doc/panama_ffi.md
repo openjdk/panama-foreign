@@ -17,7 +17,7 @@ If clients want to dereference a zero-length memory segment, they can do so *uns
 ```java
 MemorySegment raw = ... //obtain address from native code
 try (Arena arena = Arena.openConfined()) {
-	MemorySegment segment = MemorySegment.ofAddress(raw.address(), 100, arena.scope());
+    MemorySegment segment = MemorySegment.ofAddress(raw.address(), 100, arena.scope());
 	int x = segment.get(JAVA_INT, 0);
 }
 ```
@@ -58,7 +58,7 @@ There are a number of issues with the above code snippet:
 To address these problems, the FFM API provides a `SegmentAllocator` abstraction, a functional interface which provides methods to allocate commonly used values. Since `Arena` implements the `SegmentAllocator` interface, the above code can be rewritten conveniently as follows:
 
 ```java
-try (Arena arena = Arena.openConfined()) {    
+try (Arena arena = Arena.openConfined()) {
     MemorySegment arr = arena.allocateArray(JAVA_INT, 0, 1, 2, 3, 4);
 } // 'arr' is released here
 ```
@@ -108,7 +108,7 @@ At the core of the FFM API's foreign function support we find the `Linker` abstr
 ```java
 interface Linker {
     MethodHandle downcallHandle(Addressable symbol, FunctionDescriptor function);
-    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, SegmentScope scope);    
+    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, SegmentScope scope);
     ... // some overloads omitted here
 
     static Linker nativeLinker() { ... }
@@ -159,7 +159,7 @@ Here's an example of how we might want to do that (a full listing of all the exa
 ```java
 Linker linker = Linker.nativeLinker();
 MethodHandle strlen = linker.downcallHandle(
-		linker.defaultLookup().find("strlen").get(),
+        linker.defaultLookup().find("strlen").get(),
         FunctionDescriptor.of(JAVA_LONG, ADDRESS)
 );
 ```
@@ -283,7 +283,7 @@ MethodHandle printf = linker.downcallHandle(
 Then we can call the specialized downcall handle as usual:
 
 ```java
-try (Arena arena = Arena.openConfined()) {    
+try (Arena arena = Arena.openConfined()) {
     printf.invoke(arena.allocateUtf8String("%d plus %d equals %d"), 2, 2, 4); //prints "2 plus 2 equals 4"
 }
 ```
