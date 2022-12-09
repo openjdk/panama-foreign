@@ -52,6 +52,7 @@ public final class SysVx64Linker extends AbstractLinker {
     private SysVx64Linker() {
         // Ensure there is only one instance
     }
+
     @Override
     protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function, LinkerOptions options) {
         return CallArranger.arrangeDowncall(inferredMethodType, function, options);
