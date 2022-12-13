@@ -134,7 +134,7 @@ The `Linker::nativeLinker` factory is used to obtain a `Linker` implementation f
 
 Both C structs/unions and pointers are modelled using the `MemorySegment` carrier type. However, C structs/unions are modelled in function descriptors with memory layouts of type `GroupLayout`, whereas pointers are modelled using the `ADDRESS` value layout constant (whose size is platform-specific). Moreover, the behavior of a downcall method handle returning a struct/union type is radically different from that of a downcall method handle returning a C pointer:
 
-* donwcall method handles returning C pointers will wrap the pointer address into a fresh zero-length memory segment (unless an unbounded address layout is specified);
+* downcall method handles returning C pointers will wrap the pointer address into a fresh zero-length memory segment (unless an unbounded address layout is specified);
 * downcall method handles returning a C struct/union type will return a *new* segment, of given size (the size of the struct/union). The segment is allocated using a user-provided `SegmentAllocator`, which is provided using an additional prefix parameter inserted in the downcall method handle signature.
 
 A tool, such as `jextract`, will generate all the required C layouts (for scalars and structs/unions) *automatically*, so that clients do not have to worry about platform-dependent details such as sizes, alignment constraints and padding.
