@@ -39,7 +39,7 @@ try (Arena arena = Arena.openConfined()) {
 } // all segments are deallocated here
 ```
 
-When the arena is closed (above, this is done with the *try-with-resources* construct) the arena scope is no longer alive, all the segments associated with it are invalidated,  and the regions of memory backing the segments are deallocated  atomically.
+When the arena is closed (above, this is done with the *try-with-resources* construct) the arena scope is no longer alive, all the segments associated with it are invalidated atomically, and the regions of memory backing the segments are deallocated.
 
 ### Thread-confinement
 
