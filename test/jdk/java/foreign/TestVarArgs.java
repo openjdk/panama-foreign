@@ -69,13 +69,8 @@ public class TestVarArgs extends CallGeneratorHelper {
     }
 
     static final MemorySegment VARARGS_ADDR = findNativeOrThrow("varargs");
-    static final MemorySegment SUM_HFA_FLOATS_ADDR = findNativeOrThrow("sum_struct_hfa_floats");
-    static final MemorySegment SUM_HFA_DOUBLES_ADDR = findNativeOrThrow("sum_struct_hfa_doubles");
-    static final MemorySegment SUM_SPILLED_STRUCT_INTS_ADDR = findNativeOrThrow("sum_spilled_struct_ints");
-    static final MemorySegment SUM_SPILLED_HFA_FLOATS_ADDR = findNativeOrThrow("sum_spilled_struct_hfa_floats");
-    static final MemorySegment SUM_SPILLED_HFA_DOUBLES_ADDR = findNativeOrThrow("sum_spilled_struct_hfa_doubles");
 
-    @Test(dataProvider = "functions")
+    @Test(dataProvider = "variadicFunctions")
     public void testVarArgs(int count, String fName, Ret ret, // ignore this stuff
                             List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Arg> args = makeArgs(paramTypes, fields);
@@ -116,123 +111,56 @@ public class TestVarArgs extends CallGeneratorHelper {
         }
     }
 
-    @DataProvider(name = "variadicStructDescriptions")
-    public static Object[][] variadicStructDescriptions() {
-        return new Object[][] {
-            new Object[] { StructFieldType.FLOAT, 0, SUM_HFA_FLOATS_ADDR },
-            new Object[] { StructFieldType.FLOAT, 6, SUM_SPILLED_HFA_FLOATS_ADDR },
-            new Object[] { StructFieldType.DOUBLE, 0, SUM_HFA_DOUBLES_ADDR },
-            new Object[] { StructFieldType.DOUBLE, 6, SUM_SPILLED_HFA_DOUBLES_ADDR },
-            new Object[] { StructFieldType.INT, 6, SUM_SPILLED_STRUCT_INTS_ADDR },
-        };
+    private static List<ParamType> createParameterTypesForStruct(int extraIntArgs) {
+        List<ParamType> paramTypes = new ArrayList<ParamType>();
+        for (int i = 0; i < extraIntArgs; i++) {
+            paramTypes.add(ParamType.INT);
+        }
+        paramTypes.add(ParamType.STRUCT);
+        return paramTypes;
     }
 
-    @Test(dataProvider = "variadicStructDescriptions")
-    public void testSumVariadicHfa(StructFieldType structFieldType, int extraIntArgs, MemorySegment foreignFunctionSymbol) throws Throwable {
-        assertTrue(structFieldType == StructFieldType.INT ||
-            structFieldType == StructFieldType.FLOAT ||
-            structFieldType == StructFieldType.DOUBLE);
-
-        int maxFields = structFieldType == StructFieldType.DOUBLE ? 2 : 4;
-
-        for (int num_fields = 1; num_fields <= maxFields; num_fields++) {
-            List<StructFieldType> fields = new ArrayList<StructFieldType>();
-            for (int i=0; i < num_fields; i++) {
-                fields.add(structFieldType);
-            }
-
-            try (Arena arena = Arena.openConfined()) {
-                GroupLayout groupLayout = (GroupLayout)ParamType.STRUCT.layout(fields);
-                MemorySegment structMemorySegment = MemorySegment.allocateNative(groupLayout, arena.session());
-
-                int expectedSumOfFieldsAsInt = 0;
-                float expectedSumOfFieldsAsFloat = 0;
-                double expectedSumOfFieldsAsDouble = 0;
-
-                int fieldId = 1;
-                for (MemoryLayout memberLayout : groupLayout.memberLayouts()) {
-                    if (memberLayout instanceof PaddingLayout) continue;
-
-                    assertTrue(memberLayout instanceof ValueLayout);
-                    assertTrue(!isPointer(memberLayout));
-                    if (isIntegral(memberLayout)) {
-                        assertTrue(structFieldType == StructFieldType.INT);
-                    }
-
-                    VarHandle accessor = groupLayout.varHandle(MemoryLayout.PathElement.groupElement(memberLayout.name().get()));
-
-                    switch (structFieldType) {
-                        case FLOAT: {
-                            float fieldValueAsFloat = fieldId * 42.0f;
-                            expectedSumOfFieldsAsFloat += fieldValueAsFloat;
-                            accessor.set(structMemorySegment, fieldValueAsFloat);
-                            break;
-                        }
-                        case DOUBLE: {
-                            double fieldValueAsDouble = fieldId * 51.75;
-                            expectedSumOfFieldsAsDouble += fieldValueAsDouble;
-                            accessor.set(structMemorySegment, fieldValueAsDouble);
-                            break;
-                        }
-                        case INT: {
-                            int fieldValueAsInt = fieldId * 2022;
-                            expectedSumOfFieldsAsInt += fieldValueAsInt;
-                            accessor.set(structMemorySegment, fieldValueAsInt);
-                            break;
-                        }
-                    }
-
-                    fieldId++;
-                }
-
-                List<MemoryLayout> argLayouts = new ArrayList<>();
-                argLayouts.add(C_INT); // number of fields
-                for (int i=0; i < extraIntArgs; i++) {
-                    argLayouts.add(C_INT);
-                }
-
-                MemoryLayout resLayout;
-
-                switch (structFieldType) {
-                    case FLOAT: resLayout = C_FLOAT; break;
-                    case DOUBLE: resLayout = C_DOUBLE; break;
-                    case INT: resLayout = C_INT; break;
-                    default: throw new UnsupportedOperationException("Unhandled field type " + structFieldType);
-                }
-
-                FunctionDescriptor baseDesc = FunctionDescriptor.of(resLayout, argLayouts.toArray(MemoryLayout[]::new));
-                Linker.Option varargIndex = Linker.Option.firstVariadicArg(baseDesc.argumentLayouts().size());
-                FunctionDescriptor desc = baseDesc.appendArgumentLayouts(groupLayout);
-
-                MethodHandle downcallHandle = LINKER.downcallHandle(foreignFunctionSymbol, desc, varargIndex);
-
-                List<Object> argValues = new ArrayList<>();
-                argValues.add(num_fields);
-
-                for (int i=0; i < extraIntArgs; i++) {
-                    argValues.add(i+1);
-                }
-
-                argValues.add(structMemorySegment);
-
-                Object result = downcallHandle.invokeWithArguments(argValues);
-
-                switch (structFieldType) {
-                    case FLOAT: {
-                        assertEquals((float)result, expectedSumOfFieldsAsFloat);
-                        break;
-                    }
-                    case DOUBLE: {
-                        assertEquals((double)result, expectedSumOfFieldsAsDouble);
-                        break;
-                    }
-                    case INT: {
-                        assertEquals((int)result, expectedSumOfFieldsAsInt);
-                        break;
-                    }
-                }
-            }
+    private static List<StructFieldType> createFieldsForStruct(int fieldCount, StructFieldType fieldType) {
+        List<StructFieldType> fields = new ArrayList<StructFieldType>();
+        for (int i = 0; i < fieldCount; i++) {
+            fields.add(fieldType);
         }
+        return fields;
+    }
+
+    @DataProvider(name = "variadicFunctions")
+    public static Object[][] variadicFunctions() {
+        List<Object[]> downcalls = new ArrayList<>();
+
+        var functionsDowncalls = functions();
+        for (var array : functionsDowncalls) {
+            downcalls.add(array);
+        }
+
+        // Test struct with 4 floats
+        int extraIntArgs = 0;
+        List<StructFieldType> fields = createFieldsForStruct(4, StructFieldType.FLOAT);
+        List<ParamType> paramTypes = createParameterTypesForStruct(extraIntArgs);
+        downcalls.add(new Object[] { 0, "", Ret.VOID, paramTypes, fields });
+
+        // Test struct with 4 floats without enough registers for all fields
+        extraIntArgs = 6;
+        fields = createFieldsForStruct(4, StructFieldType.FLOAT);
+        paramTypes = createParameterTypesForStruct(extraIntArgs);
+        downcalls.add(new Object[] { 0, "", Ret.VOID, paramTypes, fields });
+
+        // Test struct with 2 doubles without enough registers for all fields
+        extraIntArgs = 7;
+        fields = createFieldsForStruct(2, StructFieldType.DOUBLE);
+        paramTypes = createParameterTypesForStruct(extraIntArgs);
+        downcalls.add(new Object[] { 0, "", Ret.VOID, paramTypes, fields });
+
+        // Test struct with 2 ints without enough registers for all fields
+        fields = createFieldsForStruct(2, StructFieldType.INT);
+        paramTypes = createParameterTypesForStruct(extraIntArgs);
+        downcalls.add(new Object[] { 0, "", Ret.VOID, paramTypes, fields });
+
+        return downcalls.toArray(new Object[0][]);
     }
 
     private static List<Arg> makeArgs(List<ParamType> paramTypes, List<StructFieldType> fields) throws ReflectiveOperationException {
@@ -391,6 +319,7 @@ public class TestVarArgs extends CallGeneratorHelper {
             S_PPF,
             S_PPD,
             S_PPP,
+            S_FFFF,
             ;
 
             public static NativeType of(String type) {
