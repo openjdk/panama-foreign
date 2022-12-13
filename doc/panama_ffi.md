@@ -65,7 +65,7 @@ try (Arena arena = Arena.openConfined()) {
 
 In the above code, the arena acts as a *native* allocator (that is, an allocator built on top of `MemorySegment::allocateNative`). The arena is then used to create a native array, initialized to the values `0, 1, 2, 3, 4`.  The array initialization is more efficient, compared to the previous snippet, as the Java array is copied *in bulk* into the memory region associated with the newly allocated memory segment. The returned segment is associated with the scope of the arena which performed the allocation, meaning that the segment will no longer be accessible after the try-with-resource construct.
 
-Custom segment allocators are also critical to achieve optimal allocation performance; for this reason, a number of predefined allocators are available via factories in the `SegmentAllocator` interface. or example, the following code creates a *slicing* allocator and uses it to allocate a segment whose content is initialized from a Java `int` array:
+Custom segment allocators are also critical to achieve optimal allocation performance; for this reason, a number of predefined allocators are available via factories in the `SegmentAllocator` interface. For example, the following code creates a *slicing* allocator and uses it to allocate a segment whose content is initialized from a Java `int` array:
 
 ```java
 try (Arena arena = Arena.openConfined()) {
