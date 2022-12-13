@@ -18,7 +18,7 @@ If clients want to dereference a zero-length memory segment, they can do so *uns
 MemorySegment raw = ... //obtain address from native code
 try (Arena arena = Arena.openConfined()) {
     MemorySegment segment = MemorySegment.ofAddress(raw.address(), 100, arena.scope());
-	int x = segment.get(JAVA_INT, 0);
+    int x = segment.get(JAVA_INT, 0);
 }
 ```
 
