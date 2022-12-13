@@ -180,7 +180,7 @@ We have been able to derive, from a basic memory access var handle, a new var ha
 
 ### Unsafe segments
 
-The FFM API provides basic safety guarantees for all memory segments created using the API. More specifically, a memory dereference operation should either succeed, or result in a runtime exception — but, crucially, should never result in a VM crash, or, more subtly, in memory corruption occurring *outside* the region of memory associated with a memory segment. This is indeed the case, as all memory segments feature immutable *spatial bounds*, and, as we have seen, are associated with a segment scope which make sure that segments cannot be dereferenced after their backing region of memory have been deallocated.
+The FFM API provides basic safety guarantees for all memory segments created using the API. More specifically, a memory dereference operation should either succeed, or result in a runtime exception — but, crucially, should never result in a VM crash, or, more subtly, in memory corruption occurring *outside* the region of memory associated with a memory segment. This is indeed the case, as all memory segments feature immutable *spatial bounds*, and, as we have seen, are associated with a segment scope which make sure that segments cannot be dereferenced after their backing regions of memory have been deallocated.
 
 That said, it is sometimes necessary to create a segment out of an existing memory source, which might be managed by native code. This is the case, for instance, if we want to create a segment out of a memory region managed by a *custom allocator*.
 
