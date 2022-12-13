@@ -26,7 +26,7 @@ MemorySegment segment = MemorySegment.allocateNative(100, SegmentScope.auto());
 
 Segments associated with an automatic scope are alive as long as they are determined to be reachable by the garbage collector. In other words, the above snippet creates a native segment whose behavior closely matches that of a `ByteBuffer` allocated with the `allocateDirect` factory.
 
-There are cases, however, where automatic deallocation is not enough: consider the case where a large memory segment is mapped from a file (this is possible using `MemorySegment::map`); in this case, an application would probably prefer to release (e.g. `unmap`) the memory associated with this segment in a *deterministic* fashion, to ensure that memory doesn't remain available for longer than in needs to.
+There are cases, however, where automatic deallocation is not enough: consider the case where a large memory segment is mapped from a file (this is possible using `MemorySegment::map`); in this case, an application would probably prefer to release (e.g. `unmap`) the memory associated with this segment in a *deterministic* fashion, to ensure that memory doesn't remain available for longer than it needs to.
 
 An `Arena` provides a scope - the arena scope - which features a bounded and deterministic lifetime. The arena scope is alive from the time when the arena is opened, until the time when the arena is closed. Multiple segments allocated with the same arena scope  enjoy the same bounded lifetime and can safely contain mutual references. For example, this code opens an arena and uses the arena's scope to specify the lifetime of two segments:
 
