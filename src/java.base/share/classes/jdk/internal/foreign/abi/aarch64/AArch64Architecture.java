@@ -40,7 +40,7 @@ public final class AArch64Architecture implements Architecture {
     private static final int VECTOR_REG_SIZE = 16;
 
     // Suppresses default constructor, ensuring non-instantiability.
-    public AArch64Architecture() {}
+    private AArch64Architecture() {}
 
     @Override
     public boolean isStackType(int cls) {
