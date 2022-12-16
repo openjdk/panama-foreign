@@ -69,8 +69,8 @@ public final class SysVx64Linker extends AbstractLinker {
         return builder.build();
     }
 
-    public static VaList newVaListOfAddress(long address, SegmentScope session) {
-        return SysVVaList.ofAddress(address, session);
+    public static VaList newVaListOfAddress(long address, SegmentScope scope) {
+        return SysVVaList.ofAddress(address, scope);
     }
 
     public static VaList emptyVaList() {
