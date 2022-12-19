@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,7 +64,7 @@ public class MemorySegmentVsBits {
 
     Arena arena = Arena.openConfined();
 
-    @Param({"16", "64", "256"})
+    @Param({"2", "16", "64", "256"})
     public int size;
     private long[] longs;
     private byte[] bytes;
@@ -97,7 +97,6 @@ public class MemorySegmentVsBits {
 
     @Benchmark
     public void panamaHeap() {
-        //         for (int i = 0, o = 0; i < size; i++, o += 8) {
         for (int i = 0; i < size; i++) {
             segment.set(JAVA_LONG_UNALIGNED, i * Long.BYTES, longs[i]);
         }
