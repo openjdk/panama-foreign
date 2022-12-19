@@ -64,7 +64,7 @@ public class MemorySegmentVsBits {
 
     Arena arena = Arena.openConfined();
 
-    @Param({"2", "16", "64", "256"})
+    @Param({"1", "2", "16", "64", "256"})
     public int size;
     private long[] longs;
     private byte[] bytes;
