@@ -23,7 +23,7 @@
 
 package handle.lookup;
 
-import java.lang.foreign.MemorySession;
+import java.lang.foreign.SegmentScope;
 import java.lang.foreign.Linker;
 
 import java.lang.invoke.MethodHandle;
@@ -51,13 +51,19 @@ public class MethodHandleLookup {
                     { MethodHandles.lookup().findStatic(Linker.class, "nativeLinker",
                             MethodType.methodType(Linker.class)), "Linker::nativeLinker" },
                     { MethodHandles.lookup().findStatic(MemorySegment.class, "ofAddress",
-                            MethodType.methodType(MemorySegment.class, long.class, long.class, MemorySession.class)),
-                            "MemorySegment::ofAddressNative" },
+                            MethodType.methodType(MemorySegment.class, long.class, long.class)),
+                            "MemorySegment::ofAddress/2" },
+                    { MethodHandles.lookup().findStatic(MemorySegment.class, "ofAddress",
+                            MethodType.methodType(MemorySegment.class, long.class, long.class, SegmentScope.class)),
+                            "MemorySegment::ofAddress/3" },
+                    { MethodHandles.lookup().findStatic(MemorySegment.class, "ofAddress",
+                            MethodType.methodType(MemorySegment.class, long.class, long.class, SegmentScope.class, Runnable.class)),
+                            "MemorySegment::ofAddress/4" },
                     { MethodHandles.lookup().findStatic(SymbolLookup.class, "libraryLookup",
-                            MethodType.methodType(SymbolLookup.class, String.class, MemorySession.class)),
+                            MethodType.methodType(SymbolLookup.class, String.class, SegmentScope.class)),
                             "SymbolLookup::libraryLookup(String)" },
                     { MethodHandles.lookup().findStatic(SymbolLookup.class, "libraryLookup",
-                            MethodType.methodType(SymbolLookup.class, Path.class, MemorySession.class)),
+                            MethodType.methodType(SymbolLookup.class, Path.class, SegmentScope.class)),
                             "SymbolLookup::libraryLookup(Path)" },
             };
         } catch (Throwable ex) {

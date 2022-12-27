@@ -53,6 +53,7 @@ import static jdk.internal.foreign.abi.Binding.*;
 import static jdk.internal.foreign.abi.Binding.copy;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.Regs.*;
+
 import static org.testng.Assert.*;
 
 public class TestWindowsCallArranger extends CallArrangerTestBase {

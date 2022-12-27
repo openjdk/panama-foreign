@@ -28,7 +28,7 @@ package jdk.internal.foreign.abi.x64.windows;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
+import java.lang.foreign.SegmentScope;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.VaList;
 import java.lang.foreign.ValueLayout;
@@ -115,7 +115,7 @@ public non-sealed class WinVaList implements VaList {
             res = switch (typeClass) {
                 case STRUCT_REFERENCE -> {
                     MemorySegment structAddr = (MemorySegment) VH_address.get(segment);
-                    MemorySegment struct = MemorySegment.ofAddress(structAddr.address(), layout.byteSize(), segment.session());
+                    MemorySegment struct = MemorySegment.ofAddress(structAddr.address(), layout.byteSize(), segment.scope());
                     MemorySegment seg = allocator.allocate(layout);
                     seg.copyFrom(struct);
                     yield seg;
@@ -141,7 +141,7 @@ public non-sealed class WinVaList implements VaList {
     @Override
     public void skip(MemoryLayout... layouts) {
         Objects.requireNonNull(layouts);
-        MemorySessionImpl.toSessionImpl(segment.session()).checkValidState();
+        ((MemorySessionImpl) segment.scope()).checkValidState();
         for (MemoryLayout layout : layouts) {
             Objects.requireNonNull(layout);
             checkElement(layout);
@@ -149,33 +149,34 @@ public non-sealed class WinVaList implements VaList {
         }
     }
 
-    static WinVaList ofAddress(long address, MemorySession session) {
-        return new WinVaList(MemorySegment.ofAddress(address, Long.MAX_VALUE, session));
+    static WinVaList ofAddress(long address, SegmentScope scope) {
+        return new WinVaList(MemorySegment.ofAddress(address, Long.MAX_VALUE, scope));
     }
 
-    static Builder builder(MemorySession session) {
-        return new Builder(session);
+    static Builder builder(SegmentScope scope) {
+        return new Builder(scope);
     }
 
     @Override
     public VaList copy() {
-        MemorySessionImpl.toSessionImpl(segment.session()).checkValidState();
+        ((MemorySessionImpl) segment.scope()).checkValidState();
         return new WinVaList(segment);
     }
 
     @Override
     public MemorySegment segment() {
+        // make sure that returned segment cannot be accessed
         return segment.asSlice(0, 0);
     }
 
     public static non-sealed class Builder implements VaList.Builder {
 
-        private final MemorySession session;
+        private final SegmentScope scope;
         private final List<SimpleVaArg> args = new ArrayList<>();
 
-        public Builder(MemorySession session) {
-            MemorySessionImpl.toSessionImpl(session).checkValidState();
-            this.session = session;
+        public Builder(SegmentScope scope) {
+            ((MemorySessionImpl) scope).checkValidState();
+            this.scope = scope;
         }
 
         private Builder arg(MemoryLayout layout, Object value) {
@@ -215,7 +216,7 @@ public non-sealed class WinVaList implements VaList {
                 return EMPTY;
             }
 
-            MemorySegment segment = MemorySegment.allocateNative(VA_SLOT_SIZE_BYTES * args.size(), session);
+            MemorySegment segment = MemorySegment.allocateNative(VA_SLOT_SIZE_BYTES * args.size(), scope);
             MemorySegment cursor = segment;
 
             for (SimpleVaArg arg : args) {
@@ -224,7 +225,7 @@ public non-sealed class WinVaList implements VaList {
                     TypeClass typeClass = TypeClass.typeClassFor(arg.layout, false);
                     switch (typeClass) {
                         case STRUCT_REFERENCE -> {
-                            MemorySegment copy = MemorySegment.allocateNative(arg.layout, session);
+                            MemorySegment copy = MemorySegment.allocateNative(arg.layout, scope);
                             copy.copyFrom(msArg); // by-value
                             VH_address.set(cursor, copy);
                         }

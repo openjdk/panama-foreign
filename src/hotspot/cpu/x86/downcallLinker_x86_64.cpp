@@ -139,7 +139,7 @@ void DowncallStubGenerator::generate() {
     // out arg area (e.g. for stack args)
   };
 
-  VMStorage shuffle_reg = VMS_RBX;
+  VMStorage shuffle_reg = as_VMStorage(rbx);
   JavaCallingConvention in_conv;
   NativeCallingConvention out_conv(_input_registers);
   ArgumentShuffle arg_shuffle(_signature, _num_args, _signature, _num_args, &in_conv, &out_conv, shuffle_reg);
@@ -177,11 +177,11 @@ void DowncallStubGenerator::generate() {
   locs.set(StubLocations::TARGET_ADDRESS, _abi._scratch1);
   if (_needs_return_buffer) {
     locs.set_frame_data(StubLocations::RETURN_BUFFER, allocated_frame_size);
-    allocated_frame_size += 8;
+    allocated_frame_size += BytesPerWord;
   }
   if (_captured_state_mask != 0) {
-    locs.set_frame_data(StubLocations::CAPTURED_STATE_MASK, allocated_frame_size);
-    allocated_frame_size += 8;
+    locs.set_frame_data(StubLocations::CAPTURED_STATE_BUFFER, allocated_frame_size);
+    allocated_frame_size += BytesPerWord;
   }
 
   allocated_frame_size = align_up(allocated_frame_size, 16);
@@ -239,11 +239,11 @@ void DowncallStubGenerator::generate() {
     __ block_comment("{ save thread local");
     __ vzeroupper();
 
-    if(should_save_return_value) {
+    if (should_save_return_value) {
       out_reg_spiller.generate_spill(_masm, spill_rsp_offset);
     }
 
-    __ movptr(c_rarg0, Address(rsp, locs.data_offset(StubLocations::CAPTURED_STATE_MASK)));
+    __ movptr(c_rarg0, Address(rsp, locs.data_offset(StubLocations::CAPTURED_STATE_BUFFER)));
     __ movl(c_rarg1, _captured_state_mask);
     __ mov(r12, rsp); // remember sp
     __ subptr(rsp, frame::arg_reg_save_area_bytes); // windows
@@ -252,7 +252,7 @@ void DowncallStubGenerator::generate() {
     __ mov(rsp, r12); // restore sp
     __ reinit_heapbase();
 
-    if(should_save_return_value) {
+    if (should_save_return_value) {
       out_reg_spiller.generate_fill(_masm, spill_rsp_offset);
     }
 
@@ -304,7 +304,7 @@ void DowncallStubGenerator::generate() {
   __ bind(L_safepoint_poll_slow_path);
   __ vzeroupper();
 
-  if(should_save_return_value) {
+  if (should_save_return_value) {
     out_reg_spiller.generate_spill(_masm, spill_rsp_offset);
   }
 
@@ -316,7 +316,7 @@ void DowncallStubGenerator::generate() {
   __ mov(rsp, r12); // restore sp
   __ reinit_heapbase();
 
-  if(should_save_return_value) {
+  if (should_save_return_value) {
     out_reg_spiller.generate_fill(_masm, spill_rsp_offset);
   }
 
@@ -329,7 +329,7 @@ void DowncallStubGenerator::generate() {
   __ bind(L_reguard);
   __ vzeroupper();
 
-  if(should_save_return_value) {
+  if (should_save_return_value) {
     out_reg_spiller.generate_spill(_masm, spill_rsp_offset);
   }
 
@@ -340,7 +340,7 @@ void DowncallStubGenerator::generate() {
   __ mov(rsp, r12); // restore sp
   __ reinit_heapbase();
 
-  if(should_save_return_value) {
+  if (should_save_return_value) {
     out_reg_spiller.generate_fill(_masm, spill_rsp_offset);
   }
 

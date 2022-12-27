@@ -143,7 +143,7 @@ void DowncallStubGenerator::generate() {
   Register tmp1 = r9;
   Register tmp2 = r10;
 
-  VMStorage shuffle_reg = VMS_R19;
+  VMStorage shuffle_reg = as_VMStorage(r19);
   JavaCallingConvention in_conv;
   NativeCallingConvention out_conv(_input_registers);
   ArgumentShuffle arg_shuffle(_signature, _num_args, _signature, _num_args, &in_conv, &out_conv, shuffle_reg);
@@ -179,11 +179,11 @@ void DowncallStubGenerator::generate() {
   locs.set(StubLocations::TARGET_ADDRESS, _abi._scratch1);
   if (_needs_return_buffer) {
     locs.set_frame_data(StubLocations::RETURN_BUFFER, allocated_frame_size);
-    allocated_frame_size += 8; // for address spill
+    allocated_frame_size += BytesPerWord; // for address spill
   }
   if (_captured_state_mask != 0) {
-    locs.set_frame_data(StubLocations::CAPTURED_STATE_MASK, allocated_frame_size);
-    allocated_frame_size += 8;
+    locs.set_frame_data(StubLocations::CAPTURED_STATE_BUFFER, allocated_frame_size);
+    allocated_frame_size += BytesPerWord;
   }
 
   _frame_size_slots = align_up(framesize + (allocated_frame_size >> LogBytesPerInt), 4);
@@ -224,7 +224,7 @@ void DowncallStubGenerator::generate() {
       if (reg.type() == StorageType::INTEGER) {
         __ str(as_Register(reg), Address(tmp1, offset));
         offset += 8;
-      } else if(reg.type() == StorageType::VECTOR) {
+      } else if (reg.type() == StorageType::VECTOR) {
         __ strd(as_FloatRegister(reg), Address(tmp1, offset));
         offset += 16;
       } else {
@@ -238,15 +238,15 @@ void DowncallStubGenerator::generate() {
   if (_captured_state_mask != 0) {
     __ block_comment("{ save thread local");
 
-    if(should_save_return_value) {
+    if (should_save_return_value) {
       out_reg_spiller.generate_spill(_masm, spill_offset);
     }
 
-    __ ldr(c_rarg0, Address(sp, locs.data_offset(StubLocations::CAPTURED_STATE_MASK)));
+    __ ldr(c_rarg0, Address(sp, locs.data_offset(StubLocations::CAPTURED_STATE_BUFFER)));
     __ movw(c_rarg1, _captured_state_mask);
     __ rt_call(CAST_FROM_FN_PTR(address, DowncallLinker::capture_state), tmp1);
 
-    if(should_save_return_value) {
+    if (should_save_return_value) {
       out_reg_spiller.generate_fill(_masm, spill_offset);
     }
 

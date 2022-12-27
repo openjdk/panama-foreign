@@ -40,10 +40,8 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
-import java.lang.foreign.PaddingLayout;
+import java.lang.foreign.SegmentScope;
 import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.VaList;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
@@ -292,23 +290,24 @@ public final class SharedUtils {
             throw new IllegalArgumentException("Symbol is NULL: " + symbol);
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession session) {
+    public static VaList newVaList(Consumer<VaList.Builder> actions, SegmentScope scope) {
         return switch (CABI.current()) {
-            case WIN_64 -> Windowsx64Linker.newVaList(actions, session);
-            case SYS_V -> SysVx64Linker.newVaList(actions, session);
-            case LINUX_AARCH_64 -> LinuxAArch64Linker.newVaList(actions, session);
-            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.newVaList(actions, session);
-            case WIN_AARCH_64 -> WindowsAArch64Linker.newVaList(actions, session);
+
+            case WIN_64 -> Windowsx64Linker.newVaList(actions, scope);
+            case SYS_V -> SysVx64Linker.newVaList(actions, scope);
+            case LINUX_AARCH_64 -> LinuxAArch64Linker.newVaList(actions, scope);
+            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.newVaList(actions, scope);
+            case WIN_AARCH_64 -> WindowsAArch64Linker.newVaList(actions, scope);
         };
     }
 
-    public static VaList newVaListOfAddress(long address, MemorySession session) {
+    public static VaList newVaListOfAddress(long address, SegmentScope scope) {
         return switch (CABI.current()) {
-            case WIN_64 -> Windowsx64Linker.newVaListOfAddress(address, session);
-            case SYS_V -> SysVx64Linker.newVaListOfAddress(address, session);
-            case LINUX_AARCH_64 -> LinuxAArch64Linker.newVaListOfAddress(address, session);
-            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.newVaListOfAddress(address, session);
-            case WIN_AARCH_64 -> WindowsAArch64Linker.newVaListOfAddress(address, session);
+            case WIN_64 -> Windowsx64Linker.newVaListOfAddress(address, scope);
+            case SYS_V -> SysVx64Linker.newVaListOfAddress(address, scope);
+            case LINUX_AARCH_64 -> LinuxAArch64Linker.newVaListOfAddress(address, scope);
+            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.newVaListOfAddress(address, scope);
+            case WIN_AARCH_64 -> WindowsAArch64Linker.newVaListOfAddress(address, scope);
         };
     }
 

@@ -30,7 +30,7 @@ import jdk.internal.foreign.abi.Architecture;
 import jdk.internal.foreign.abi.StubLocations;
 import jdk.internal.foreign.abi.VMStorage;
 
-public class AArch64Architecture implements Architecture {
+public final class AArch64Architecture implements Architecture {
     public static final Architecture INSTANCE = new AArch64Architecture();
 
     private static final short REG64_MASK = 0b0000_0000_0000_0001;
@@ -38,6 +38,9 @@ public class AArch64Architecture implements Architecture {
 
     private static final int INTEGER_REG_SIZE = 8;
     private static final int VECTOR_REG_SIZE = 16;
+
+    // Suppresses default constructor, ensuring non-instantiability.
+    private AArch64Architecture() {}
 
     @Override
     public boolean isStackType(int cls) {
@@ -169,7 +172,7 @@ public class AArch64Architecture implements Architecture {
             scratch1, scratch2,
             StubLocations.TARGET_ADDRESS.storage(StorageType.PLACEHOLDER),
             StubLocations.RETURN_BUFFER.storage(StorageType.PLACEHOLDER),
-            StubLocations.CAPTURED_STATE_MASK.storage(StorageType.PLACEHOLDER));
+            StubLocations.CAPTURED_STATE_BUFFER.storage(StorageType.PLACEHOLDER));
     }
 
 }

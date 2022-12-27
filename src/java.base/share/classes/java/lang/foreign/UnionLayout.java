@@ -29,19 +29,25 @@ import jdk.internal.foreign.layout.UnionLayoutImpl;
 import jdk.internal.javac.PreviewFeature;
 
 /**
- * A <em>union</em> layout where member layouts are laid out at the same starting offset (see {@link MemoryLayout#unionLayout(MemoryLayout...)}).
+ * A group layout whose member layouts are laid out at the same starting offset.
  *
  * @implSpec
  * Implementing classes are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
- * @since 19
+ * @since 20
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
 public sealed interface UnionLayout extends GroupLayout permits UnionLayoutImpl {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     UnionLayout withName(String name);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     UnionLayout withBitAlignment(long bitAlignment);
 }

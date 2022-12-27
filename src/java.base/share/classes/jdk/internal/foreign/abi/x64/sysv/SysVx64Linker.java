@@ -28,7 +28,7 @@ package jdk.internal.foreign.abi.x64.sysv;
 import jdk.internal.foreign.abi.AbstractLinker;
 import jdk.internal.foreign.abi.LinkerOptions;
 
-import java.lang.foreign.MemorySession;
+import java.lang.foreign.SegmentScope;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.VaList;
@@ -52,24 +52,25 @@ public final class SysVx64Linker extends AbstractLinker {
     private SysVx64Linker() {
         // Ensure there is only one instance
     }
+
     @Override
     protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function, LinkerOptions options) {
         return CallArranger.arrangeDowncall(inferredMethodType, function, options);
     }
 
     @Override
-    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, MemorySession scope) {
+    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, SegmentScope scope) {
         return CallArranger.arrangeUpcall(target, targetType, function, scope);
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions, MemorySession scope) {
+    public static VaList newVaList(Consumer<VaList.Builder> actions, SegmentScope scope) {
         SysVVaList.Builder builder = SysVVaList.builder(scope);
         actions.accept(builder);
         return builder.build();
     }
 
-    public static VaList newVaListOfAddress(long address, MemorySession session) {
-        return SysVVaList.ofAddress(address, session);
+    public static VaList newVaListOfAddress(long address, SegmentScope scope) {
+        return SysVVaList.ofAddress(address, scope);
     }
 
     public static VaList emptyVaList() {
