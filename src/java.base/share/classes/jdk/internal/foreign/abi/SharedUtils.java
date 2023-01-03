@@ -156,25 +156,29 @@ public final class SharedUtils {
     }
 
     public static Class<?> primitiveCarrierForSize(long size, boolean useFloat) {
+        return primitiveLayoutForSize(size, useFloat).carrier();
+    }
+
+    public static ValueLayout primitiveLayoutForSize(long size, boolean useFloat) {
         if (useFloat) {
             if (size == 4) {
-                return float.class;
+                return JAVA_FLOAT;
             } else if (size == 8) {
-                return double.class;
+                return JAVA_DOUBLE;
             }
         } else {
             if (size == 1) {
-                return byte.class;
+                return JAVA_BYTE;
             } else if (size == 2) {
-                return short.class;
+                return JAVA_SHORT;
             } else if (size <= 4) {
-                return int.class;
+                return JAVA_INT;
             } else if (size <= 8) {
-                return long.class;
+                return JAVA_LONG;
             }
         }
 
-        throw new IllegalArgumentException("No type for size: " + size + " isFloat=" + useFloat);
+        throw new IllegalArgumentException("No layout for size: " + size + " isFloat=" + useFloat);
     }
 
     public static Linker getSystemLinker() {
