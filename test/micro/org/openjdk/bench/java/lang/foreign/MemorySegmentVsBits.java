@@ -49,11 +49,10 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.foreign.ValueLayout.*;
 import static java.nio.ByteOrder.BIG_ENDIAN;
-import static java.nio.ByteOrder.LITTLE_ENDIAN;
 
 /**
  * This benchmark creates an array of longs with random contents. The array
- * is then copied into a byte array (using little endian) using different
+ * is then copied into a byte array (using big endian) using different
  * methods.
  */
 @BenchmarkMode(Mode.AverageTime)
@@ -64,7 +63,7 @@ import static java.nio.ByteOrder.LITTLE_ENDIAN;
 @Fork(value = 3, jvmArgsAppend = {"--enable-native-access=ALL-UNNAMED", "--enable-preview"})
 public class MemorySegmentVsBits {
 
-    public static final VarHandle LONG_ARRAY_VH = MethodHandles.byteArrayViewVarHandle(long[].class, LITTLE_ENDIAN);
+    public static final VarHandle LONG_ARRAY_VH = MethodHandles.byteArrayViewVarHandle(long[].class, BIG_ENDIAN);
 
     Arena arena = Arena.openConfined();
 
@@ -78,8 +77,8 @@ public class MemorySegmentVsBits {
     private MemorySegment segment;
     private MemorySegment nativeSegment;
 
-    private static final ValueLayout.OfLong OF_LONG = (JAVA_LONG.order() == BIG_ENDIAN)
-            ? JAVA_LONG.withOrder(LITTLE_ENDIAN)
+    private static final ValueLayout.OfLong OF_LONG = (JAVA_LONG.order() != BIG_ENDIAN)
+            ? JAVA_LONG.withOrder(BIG_ENDIAN)
             : JAVA_LONG;
 
     @Setup
@@ -144,7 +143,7 @@ public class MemorySegmentVsBits {
         }
     }
 
-    // java.nio.Bits is package private
+    // java.io.Bits is package private
     static void putLong(byte[] b, int off, long val) {
         b[off + 7] = (byte) (val);
         b[off + 6] = (byte) (val >>> 8);
