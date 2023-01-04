@@ -38,20 +38,21 @@ import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 
 import java.lang.foreign.Arena;
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
-import java.nio.ByteOrder;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.nio.ByteBuffer;
+import java.nio.LongBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.foreign.ValueLayout.*;
 import static java.nio.ByteOrder.BIG_ENDIAN;
-import static java.nio.ByteOrder.LITTLE_ENDIAN;
 
 /**
  * This benchmark creates an array of longs with random contents. The array
- * is then copied into a byte array (using little endian) using different
+ * is then copied into a byte array (using big endian) using different
  * methods.
  */
 @BenchmarkMode(Mode.AverageTime)
@@ -62,23 +63,30 @@ import static java.nio.ByteOrder.LITTLE_ENDIAN;
 @Fork(value = 3, jvmArgsAppend = {"--enable-native-access=ALL-UNNAMED", "--enable-preview"})
 public class MemorySegmentVsBits {
 
+    public static final VarHandle LONG_ARRAY_VH = MethodHandles.byteArrayViewVarHandle(long[].class, BIG_ENDIAN);
+
     Arena arena = Arena.openConfined();
 
     @Param({"1", "2", "16", "64", "256"})
     public int size;
     private long[] longs;
     private byte[] bytes;
+
+    private ByteBuffer byteBuffer;
+    private LongBuffer longBuffer;
     private MemorySegment segment;
     private MemorySegment nativeSegment;
 
-    private static final ValueLayout.OfLong OF_LONG = (JAVA_LONG.order() == BIG_ENDIAN)
-            ? JAVA_LONG.withOrder(LITTLE_ENDIAN)
+    private static final ValueLayout.OfLong OF_LONG = (JAVA_LONG.order() != BIG_ENDIAN)
+            ? JAVA_LONG.withOrder(BIG_ENDIAN)
             : JAVA_LONG;
 
     @Setup
     public void setup() {
         longs = ThreadLocalRandom.current().longs(size).toArray();
         bytes = new byte[size * Long.BYTES];
+        byteBuffer = ByteBuffer.wrap(bytes);
+        longBuffer = byteBuffer.asLongBuffer();
         segment = MemorySegment.ofArray(bytes);
         nativeSegment = arena.allocate(size * Long.BYTES);
     }
@@ -92,6 +100,25 @@ public class MemorySegmentVsBits {
     public void bitsEquivalent() {
         for (int i = 0; i < size; i++) {
             putLong(bytes, i * Long.BYTES, longs[i]);
+        }
+    }
+    @Benchmark
+    public void byteVarHandle() {
+        for (int i = 0; i < size; i++) {
+            LONG_ARRAY_VH.set(bytes, i * Long.BYTES, longs[i]);
+        }
+    }
+    @Benchmark
+    public void byteBuffer() {
+        for (int i = 0; i < size; i++) {
+            byteBuffer.putLong(i * Long.BYTES, longs[i]);
+        }
+    }
+
+    @Benchmark
+    public void longBuffer() {
+        for (int i = 0; i < size; i++) {
+            longBuffer.put(i, longs[i]);
         }
     }
 
@@ -116,7 +143,7 @@ public class MemorySegmentVsBits {
         }
     }
 
-    // java.nio.Bits is package private
+    // java.io.Bits is package private
     static void putLong(byte[] b, int off, long val) {
         b[off + 7] = (byte) (val);
         b[off + 6] = (byte) (val >>> 8);
@@ -126,17 +153,6 @@ public class MemorySegmentVsBits {
         b[off + 2] = (byte) (val >>> 40);
         b[off + 1] = (byte) (val >>> 48);
         b[off] = (byte) (val >>> 56);
-    }
-
-    static long getLong(byte[] b, int off) {
-        return ((b[off + 7] & 0xFFL)) +
-                ((b[off + 6] & 0xFFL) << 8) +
-                ((b[off + 5] & 0xFFL) << 16) +
-                ((b[off + 4] & 0xFFL) << 24) +
-                ((b[off + 3] & 0xFFL) << 32) +
-                ((b[off + 2] & 0xFFL) << 40) +
-                ((b[off + 1] & 0xFFL) << 48) +
-                (((long) b[off]) << 56);
     }
 
 }
