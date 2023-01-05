@@ -30,6 +30,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -611,15 +612,17 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
     String toString();
 
     /**
-     * Creates a padding layout with the given size.
+     * Creates a padding layout with the given bitSize and a bit-alignment of eight.
      *
-     * @param size the padding size in bits.
+     * @param bitSize the padding size in bits.
      * @return the new selector layout.
-     * @throws IllegalArgumentException if {@code size <= 0}.
+     * @throws IllegalArgumentException if {@code bitSize < 8} or {@code bitSize % 8 != 0}
      */
-    static PaddingLayout paddingLayout(long size) {
-        MemoryLayoutUtil.checkSize(size);
-        return PaddingLayoutImpl.of(size);
+    static PaddingLayout paddingLayout(long bitSize) {
+        if (bitSize < 8 || bitSize % 8 != 0) {
+            throw new IllegalArgumentException("bitSize cannot be " + bitSize);
+        }
+        return PaddingLayoutImpl.of(bitSize);
     }
 
     /**
@@ -709,10 +712,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      */
     static StructLayout structLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
-        return wrapOverflow(() ->
-                StructLayoutImpl.of(Stream.of(elements)
-                        .map(Objects::requireNonNull)
-                        .toList()));
+        return wrapOverflow(() -> StructLayoutImpl.of(List.of(elements)));
     }
 
     /**
@@ -723,9 +723,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      */
     static UnionLayout unionLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
-        return UnionLayoutImpl.of(Stream.of(elements)
-                .map(Objects::requireNonNull)
-                .toList());
+        return UnionLayoutImpl.of(List.of(elements));
     }
 
     private static <L extends MemoryLayout> L wrapOverflow(Supplier<L> layoutSupplier) {

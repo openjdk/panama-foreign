@@ -168,25 +168,6 @@ public class TestLayoutPaths {
         seq.byteOffsetHandle(sequenceElement(0, 1)); // ranges not accepted
     }
 
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testBadMultiple() {
-        GroupLayout g = MemoryLayout.structLayout(MemoryLayout.paddingLayout(3), JAVA_INT.withName("foo"));
-        g.byteOffset(groupElement("foo"));
-    }
-
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testBadByteOffsetNoMultipleOf8() {
-        MemoryLayout layout = MemoryLayout.structLayout(MemoryLayout.paddingLayout(7), JAVA_INT.withName("x"));
-        layout.byteOffset(groupElement("x"));
-    }
-
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testBadByteOffsetHandleNoMultipleOf8() throws Throwable {
-        MemoryLayout layout = MemoryLayout.structLayout(MemoryLayout.paddingLayout(7), JAVA_INT.withName("x"));
-        MethodHandle handle = layout.byteOffsetHandle(groupElement("x"));
-        handle.invoke();
-    }
-
     @Test
     public void testBadContainerAlign() {
         GroupLayout g = MemoryLayout.structLayout(JAVA_INT.withBitAlignment(16).withName("foo")).withBitAlignment(8);
@@ -364,10 +345,10 @@ public class TestLayoutPaths {
             (JAVA_INT.bitSize() * 2) * 4 + JAVA_INT.bitSize()
         });
         testCases.add(new Object[] {
-            MemoryLayout.sequenceLayout(10, MemoryLayout.structLayout(MemoryLayout.paddingLayout(5), JAVA_INT.withName("y"))),
+            MemoryLayout.sequenceLayout(10, MemoryLayout.structLayout(MemoryLayout.paddingLayout(8), JAVA_INT.withName("y"))),
             new PathElement[] { sequenceElement(), groupElement("y") },
             new long[] { 4 },
-            (JAVA_INT.bitSize() + 5) * 4 + 5
+            (JAVA_INT.bitSize() + 8) * 4 + 8
         });
         testCases.add(new Object[] {
             MemoryLayout.sequenceLayout(10, JAVA_INT),
@@ -441,45 +422,5 @@ public class TestLayoutPaths {
         }
     }
 
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testSliceHandleUOEInvalidOffsetEager() throws Throwable {
-        MemoryLayout layout = MemoryLayout.structLayout(
-            MemoryLayout.paddingLayout(5),
-            JAVA_INT.withName("y") // offset not a multiple of 8
-        );
-
-        layout.sliceHandle(groupElement("y")); // should throw
-    }
-
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testSliceHandleUOEInvalidOffsetLate() throws Throwable {
-        MemoryLayout layout = MemoryLayout.sequenceLayout(3,
-            MemoryLayout.structLayout(
-                MemoryLayout.paddingLayout(4),
-                    JAVA_INT.withName("y") // offset not a multiple of 8
-            )
-        );
-
-        MethodHandle sliceHandle;
-        try {
-            sliceHandle = layout.sliceHandle(sequenceElement(), groupElement("y")); // should work
-        } catch (UnsupportedOperationException uoe) {
-            fail("Unexpected exception", uoe);
-            return;
-        }
-
-        try (Arena arena = Arena.openConfined()) {
-            MemorySegment segment = MemorySegment.allocateNative(layout, arena.scope());
-
-            try {
-                sliceHandle.invokeExact(segment, 1); // should work
-            } catch (UnsupportedOperationException uoe) {
-                fail("Unexpected exception", uoe);
-                return;
-            }
-
-            sliceHandle.invokeExact(segment, 0); // should throw
-        }
-    }
 }
 

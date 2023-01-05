@@ -48,9 +48,9 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
     private long byteSize;
 
     AbstractLayout(long bitSize, long bitAlignment, Optional<String> name) {
-        this.bitSize = bitSize;
-        this.bitAlignment = bitAlignment;
-        this.name = name;
+        this.bitSize = MemoryLayoutUtil.checkSize(bitSize, true);
+        this.bitAlignment = requirePowerOfTwoAndGreaterOrEqualToEight(bitAlignment);
+        this.name = Objects.requireNonNull(name);
     }
 
     public final L withName(String name) {
@@ -63,7 +63,6 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
     }
 
     public final L withBitAlignment(long bitAlignment) {
-        checkAlignment(bitAlignment);
         return dup(bitAlignment, name);
     }
 
@@ -145,12 +144,12 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
         return s;
     }
 
-    private static void checkAlignment(long alignmentBitCount) {
-        if (((alignmentBitCount & (alignmentBitCount - 1)) != 0L) || //alignment must be a power of two
-                (alignmentBitCount < 8)) { //alignment must be greater than 8
-            throw new IllegalArgumentException("Invalid alignment: " + alignmentBitCount);
+    private static long requirePowerOfTwoAndGreaterOrEqualToEight(long value) {
+        if (((value & (value - 1)) != 0L) || // value must be a power of two
+                (value < 8)) { // value must be greater or equal to 8
+            throw new IllegalArgumentException("Invalid alignment: " + value);
         }
+        return value;
     }
-
 
 }

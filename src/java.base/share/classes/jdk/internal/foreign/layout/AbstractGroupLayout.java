@@ -145,7 +145,7 @@ public sealed abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L
             return elems.stream()
                     .mapToLong(MemoryLayout::bitAlignment)
                     .max() // max alignment in case we have member layouts
-                    .orElse(1); // or minimal alignment if no member layout is given
+                    .orElse(8); // or minimal alignment if no member layout is given
         }
     }
 }

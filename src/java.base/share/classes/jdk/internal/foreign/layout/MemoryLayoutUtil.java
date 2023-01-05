@@ -30,14 +30,15 @@ public final class MemoryLayoutUtil {
     private MemoryLayoutUtil() {
     }
 
-    public static void checkSize(long size) {
-        checkSize(size, false);
+    public static long checkSize(long size) {
+        return checkSize(size, false);
     }
 
-    public static void checkSize(long size, boolean includeZero) {
-        if (size < 0 || (!includeZero && size == 0)) {
+    public static long checkSize(long size, boolean allowZero) {
+        if (size < 0 || (!allowZero && size == 0)) {
             throw new IllegalArgumentException("Invalid size for layout: " + size);
         }
+        return size;
     }
 
 }
