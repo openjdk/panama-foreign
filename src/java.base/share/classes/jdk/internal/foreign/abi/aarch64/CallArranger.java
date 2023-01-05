@@ -227,7 +227,7 @@ public abstract class CallArranger {
             return nRegs[type] + count <= MAX_REGISTER_ARGUMENTS;
         }
 
-        private Class<?> adjustCarrier(Class<?> carrier) {
+        private static Class<?> adjustCarrierForStack(Class<?> carrier) {
             if (carrier == float.class) {
                 carrier = int.class;
             } else if (carrier == double.class) {
@@ -236,23 +236,23 @@ public abstract class CallArranger {
             return carrier;
         }
 
-        record StructCopy(long offset, Class<?> carrier, VMStorage storage) {}
+        record StructStorage(long offset, Class<?> carrier, VMStorage storage) {}
 
         /*
         In the simplest case structs are copied in chunks. i.e. the fields don't matter, just the size.
-        The struct is split into 8-byte chunks, and those chunks are either passed in registers or on the stack.
+        The struct is split into 8-byte chunks, and those chunks are either passed in registers and/or on the stack.
 
-        Homogeneous float aggregates (HFAs) can be copied in a field-wise manner, i.e. the struct is split into it's fields
-        and those fields are the chunks which are passed. The rules are more complicated and ABI based:
+        Homogeneous float aggregates (HFAs) can be copied in a field-wise manner, i.e. the struct is split into it's
+        fields and those fields are the chunks which are passed. The rules are more complicated and ABI based:
 
                 | enough registers | some registers, but not enough  | no registers
-        --------+------------------------------------------------------------------------------
-        Linux   | Field-wise copy  | CW on the stack                 | CW on the stack
-        MacOs   | Field-wise copy  | FW on the stack                 | FW on the stack
-        Windows | Field-wise copy  | FW split between regs and stack | CW on the stack
+        --------+------------------+---------------------------------+-------------------------
+        Linux   | FW in regs       | CW on the stack                 | CW on the stack
+        MacOs   | FW in regs       | FW on the stack                 | FW on the stack
+        Windows | FW in regs       | FW split between regs and stack | CW on the stack
         (where FW = Field-wise copy, and CW = Chunk-wise copy)
          */
-        StructCopy[] allocForStruct(GroupLayout layout, boolean forHFA) {
+        StructStorage[] structStorages(GroupLayout layout, boolean forHFA) {
             int regType = forHFA ? StorageType.VECTOR : StorageType.INTEGER;
             int numChunks = (int)Utils.alignUp(layout.byteSize(), MAX_COPY_SIZE) / MAX_COPY_SIZE;
             int requiredStorages = forHFA ? layout.memberLayouts().size() : numChunks;
@@ -276,27 +276,28 @@ public abstract class CallArranger {
                 nRegs[regType] = MAX_REGISTER_ARGUMENTS;
             }
 
-            StructCopy[] copies = new StructCopy[requiredStorages];
+            StructStorage[] structStorages = new StructStorage[requiredStorages];
             long offset = 0;
-            for (int i = 0; i < copies.length; i++) {
-                boolean isRegCopy = hasRegister(regType);
-                // Don't use floats for the stack
-                boolean useFloat = isRegCopy && regType == StorageType.VECTOR;
-
+            for (int i = 0; i < structStorages.length; i++) {
                 ValueLayout copyLayout;
                 if (isFieldWise) {
+                    // fields only, no padding
                     copyLayout = (ValueLayout) layout.memberLayouts().get(i);
                 } else {
+                    // chunk-wise copy
                     long copySize = Math.min(layout.byteSize() - offset, MAX_COPY_SIZE);
+                    boolean useFloat = false; // never use float for chunk-wise copies
                     copyLayout = SharedUtils.primitiveLayoutForSize(copySize, useFloat);
                 }
 
-                VMStorage storage = isRegCopy ? regAlloc(regType) : stackAlloc(copyLayout);
+                VMStorage storage = nextStorage(regType, copyLayout);
                 Class<?> carrier = copyLayout.carrier();
-                if (isFieldWise && !useFloat) {
-                    carrier = adjustCarrier(copyLayout.carrier());
+                if (isFieldWise && storage.type() == StorageType.STACK) {
+                    // chunkLayout is a field of an HFA
+                    // Don't use floats on the stack
+                    carrier = adjustCarrierForStack(copyLayout.carrier());
                 }
-                copies[i] = new StructCopy(offset, carrier, storage);
+                structStorages[i] = new StructStorage(offset, carrier, storage);
                 offset += copyLayout.byteSize();
             }
 
@@ -306,22 +307,17 @@ public abstract class CallArranger {
                 stackOffset = Utils.alignUp(stackOffset, STACK_SLOT_SIZE);
             }
 
-            return copies;
+            return structStorages;
         }
 
         // allocate a single ValueLayout, either in a register or on the stack
         VMStorage nextStorage(int type, ValueLayout layout) {
-            if (hasRegister(type)) {
-                return regAlloc(type);
-            }
-
-            return stackAlloc(layout);
+            return hasRegister(type) ? regAlloc(type) : stackAlloc(layout);
         }
 
         private VMStorage regAlloc(int type) {
             ABIDescriptor abiDescriptor = abiDescriptor();
-            VMStorage[] source =
-                    (forArguments ? abiDescriptor.inputStorage : abiDescriptor.outputStorage)[type];
+            VMStorage[] source = (forArguments ? abiDescriptor.inputStorage : abiDescriptor.outputStorage)[type];
             return source[nRegs[type]++];
         }
 
@@ -387,24 +383,24 @@ public abstract class CallArranger {
             switch (argumentClass) {
                 case STRUCT_REGISTER, STRUCT_HFA -> {
                     assert carrier == MemorySegment.class;
-                    boolean isHFA = argumentClass == TypeClass.STRUCT_HFA;
-                    StorageCalculator.StructCopy[] storages = storageCalculator.allocForStruct((GroupLayout) layout, isHFA);
+                    boolean forHFA = argumentClass == TypeClass.STRUCT_HFA;
+                    StorageCalculator.StructStorage[] structStorages
+                            = storageCalculator.structStorages((GroupLayout) layout, forHFA);
 
-                    for (int i = 0; i < storages.length; i++) {
-                        StorageCalculator.StructCopy copy = storages[i];
-                        if (i < storages.length - 1) {
+                    for (int i = 0; i < structStorages.length; i++) {
+                        StorageCalculator.StructStorage structStorage = structStorages[i];
+                        if (i < structStorages.length - 1) {
                             bindings.dup();
                         }
-                        bindings.bufferLoad(copy.offset(), copy.carrier())
-                                .vmStore(copy.storage(), copy.carrier());
+                        bindings.bufferLoad(structStorage.offset(), structStorage.carrier())
+                                .vmStore(structStorage.storage(), structStorage.carrier());
                     }
                 }
                 case STRUCT_REFERENCE -> {
                     assert carrier == MemorySegment.class;
                     bindings.copy(layout)
                             .unboxAddress();
-                    VMStorage storage = storageCalculator.nextStorage(
-                            StorageType.INTEGER, AArch64.C_POINTER);
+                    VMStorage storage = storageCalculator.nextStorage(StorageType.INTEGER, AArch64.C_POINTER);
                     bindings.vmStore(storage, long.class);
                 }
                 case POINTER -> {
@@ -413,15 +409,14 @@ public abstract class CallArranger {
                     bindings.vmStore(storage, long.class);
                 }
                 case INTEGER -> {
-                    VMStorage storage =
-                            storageCalculator.nextStorage(StorageType.INTEGER, (ValueLayout) layout);
+                    VMStorage storage = storageCalculator.nextStorage(StorageType.INTEGER, (ValueLayout) layout);
                     bindings.vmStore(storage, carrier);
                 }
                 case FLOAT -> {
                     boolean forVariadicFunctionArgs = forArguments && forVariadicFunction;
-                    boolean useIntRegsForFloatingPointArgs = forVariadicFunctionArgs && useIntRegsForVariadicFloatingPointArgs();
+                    boolean useIntReg = forVariadicFunctionArgs && useIntRegsForVariadicFloatingPointArgs();
 
-                    int type = useIntRegsForFloatingPointArgs ? StorageType.INTEGER : StorageType.VECTOR;
+                    int type = useIntReg ? StorageType.INTEGER : StorageType.VECTOR;
                     VMStorage storage = storageCalculator.nextStorage(type, (ValueLayout) layout);
                     bindings.vmStore(storage, carrier);
                 }
@@ -451,37 +446,34 @@ public abstract class CallArranger {
             switch (argumentClass) {
                 case STRUCT_REGISTER, STRUCT_HFA -> {
                     assert carrier == MemorySegment.class;
-                    boolean isHFA = argumentClass == TypeClass.STRUCT_HFA;
+                    boolean forHFA = argumentClass == TypeClass.STRUCT_HFA;
                     bindings.allocate(layout);
-                    StorageCalculator.StructCopy[] copies = storageCalculator.allocForStruct((GroupLayout) layout, isHFA);
+                    StorageCalculator.StructStorage[] structStorages
+                            = storageCalculator.structStorages((GroupLayout) layout, forHFA);
 
-                    for (StorageCalculator.StructCopy copy : copies) {
+                    for (StorageCalculator.StructStorage structStorage : structStorages) {
                         bindings.dup();
-                        bindings.vmLoad(copy.storage(), copy.carrier())
-                                .bufferStore(copy.offset(), copy.carrier());
+                        bindings.vmLoad(structStorage.storage(), structStorage.carrier())
+                                .bufferStore(structStorage.offset(), structStorage.carrier());
                     }
                 }
                 case STRUCT_REFERENCE -> {
                     assert carrier == MemorySegment.class;
-                    VMStorage storage = storageCalculator.nextStorage(
-                            StorageType.INTEGER, AArch64.C_POINTER);
+                    VMStorage storage = storageCalculator.nextStorage(StorageType.INTEGER, AArch64.C_POINTER);
                     bindings.vmLoad(storage, long.class)
                             .boxAddress(layout);
                 }
                 case POINTER -> {
-                    VMStorage storage =
-                            storageCalculator.nextStorage(StorageType.INTEGER, (ValueLayout) layout);
+                    VMStorage storage = storageCalculator.nextStorage(StorageType.INTEGER, (ValueLayout) layout);
                     bindings.vmLoad(storage, long.class)
                             .boxAddressRaw(Utils.pointeeSize(layout));
                 }
                 case INTEGER -> {
-                    VMStorage storage =
-                            storageCalculator.nextStorage(StorageType.INTEGER, (ValueLayout) layout);
+                    VMStorage storage = storageCalculator.nextStorage(StorageType.INTEGER, (ValueLayout) layout);
                     bindings.vmLoad(storage, carrier);
                 }
                 case FLOAT -> {
-                    VMStorage storage =
-                            storageCalculator.nextStorage(StorageType.VECTOR, (ValueLayout) layout);
+                    VMStorage storage = storageCalculator.nextStorage(StorageType.VECTOR, (ValueLayout) layout);
                     bindings.vmLoad(storage, carrier);
                 }
                 default -> throw new UnsupportedOperationException("Unhandled class " + argumentClass);
