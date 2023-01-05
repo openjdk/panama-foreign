@@ -243,7 +243,7 @@ public abstract class CallArranger {
         The struct is split into 8-byte chunks, and those chunks are either passed in registers and/or on the stack.
 
         Homogeneous float aggregates (HFAs) can be copied in a field-wise manner, i.e. the struct is split into it's
-        fields and those fields are the chunks which are passed. The rules are more complicated and ABI based:
+        fields and those fields are the chunks which are passed. For HFAs the rules are more complicated and ABI based:
 
                 | enough registers | some registers, but not enough  | no registers
         --------+------------------+---------------------------------+-------------------------
@@ -293,9 +293,9 @@ public abstract class CallArranger {
                 VMStorage storage = nextStorage(regType, copyLayout);
                 Class<?> carrier = copyLayout.carrier();
                 if (isFieldWise && storage.type() == StorageType.STACK) {
-                    // chunkLayout is a field of an HFA
+                    // copyLayout is a field of an HFA
                     // Don't use floats on the stack
-                    carrier = adjustCarrierForStack(copyLayout.carrier());
+                    carrier = adjustCarrierForStack(carrier);
                 }
                 structStorages[i] = new StructStorage(offset, carrier, storage);
                 offset += copyLayout.byteSize();
