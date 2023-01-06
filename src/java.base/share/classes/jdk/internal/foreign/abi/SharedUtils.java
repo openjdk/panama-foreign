@@ -41,7 +41,6 @@ import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentScope;
 import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.VaList;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -288,42 +287,11 @@ public final class SharedUtils {
             throw new IllegalArgumentException("Symbol is NULL: " + symbol);
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions, SegmentScope scope) {
-        return switch (CABI.current()) {
-            case WIN_64 -> Windowsx64Linker.newVaList(actions, scope);
-            case SYS_V -> SysVx64Linker.newVaList(actions, scope);
-            case LINUX_AARCH_64 -> LinuxAArch64Linker.newVaList(actions, scope);
-            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.newVaList(actions, scope);
-        };
-    }
-
-    public static VaList newVaListOfAddress(long address, SegmentScope scope) {
-        return switch (CABI.current()) {
-            case WIN_64 -> Windowsx64Linker.newVaListOfAddress(address, scope);
-            case SYS_V -> SysVx64Linker.newVaListOfAddress(address, scope);
-            case LINUX_AARCH_64 -> LinuxAArch64Linker.newVaListOfAddress(address, scope);
-            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.newVaListOfAddress(address, scope);
-        };
-    }
-
-    public static VaList emptyVaList() {
-        return switch (CABI.current()) {
-            case WIN_64 -> Windowsx64Linker.emptyVaList();
-            case SYS_V -> SysVx64Linker.emptyVaList();
-            case LINUX_AARCH_64 -> LinuxAArch64Linker.emptyVaList();
-            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.emptyVaList();
-        };
-    }
-
     static void checkType(Class<?> actualType, Class<?> expectedType) {
         if (expectedType != actualType) {
             throw new IllegalArgumentException(
                     String.format("Invalid operand type: %s. %s expected", actualType, expectedType));
         }
-    }
-
-    public static NoSuchElementException newVaListNSEE(MemoryLayout layout) {
-        return new NoSuchElementException("No such element: " + layout);
     }
 
     public static final class SimpleVaArg {
@@ -337,59 +305,6 @@ public final class SharedUtils {
 
         public VarHandle varHandle() {
             return layout.varHandle();
-        }
-    }
-
-    public static final class EmptyVaList implements VaList {
-
-        private final MemorySegment address;
-
-        public EmptyVaList(MemorySegment address) {
-            this.address = address;
-        }
-
-        private static UnsupportedOperationException uoe() {
-            return new UnsupportedOperationException("Empty VaList");
-        }
-
-        @Override
-        public int nextVarg(ValueLayout.OfInt layout) {
-            throw uoe();
-        }
-
-        @Override
-        public long nextVarg(ValueLayout.OfLong layout) {
-            throw uoe();
-        }
-
-        @Override
-        public double nextVarg(ValueLayout.OfDouble layout) {
-            throw uoe();
-        }
-
-        @Override
-        public MemorySegment nextVarg(ValueLayout.OfAddress layout) {
-            throw uoe();
-        }
-
-        @Override
-        public MemorySegment nextVarg(GroupLayout layout, SegmentAllocator allocator) {
-            throw uoe();
-        }
-
-        @Override
-        public void skip(MemoryLayout... layouts) {
-            throw uoe();
-        }
-
-        @Override
-        public VaList copy() {
-            return this;
-        }
-
-        @Override
-        public MemorySegment segment() {
-            return address;
         }
     }
 
