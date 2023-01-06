@@ -41,7 +41,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -132,21 +131,6 @@ public class StdLibTest extends NativeTestHelper {
                 .map(a -> a.javaValue).toArray());
 
         int found = stdLibHelper.printf(formatString, args);
-        assertEquals(found, expected.length());
-    }
-
-    @Test(dataProvider = "printfArgs")
-    void test_vprintf(List<PrintfArg> args) throws Throwable {
-        String formatArgs = args.stream()
-                .map(a -> a.format)
-                .collect(Collectors.joining(","));
-
-        String formatString = "hello(" + formatArgs + ")\n";
-
-        String expected = String.format(formatString, args.stream()
-                .map(a -> a.javaValue).toArray());
-
-        int found = stdLibHelper.vprintf(formatString, args);
         assertEquals(found, expected.length());
     }
 
@@ -305,14 +289,6 @@ public class StdLibTest extends NativeTestHelper {
             }
         }
 
-        int vprintf(String format, List<PrintfArg> args) throws Throwable {
-            try (var arena = Arena.openConfined()) {
-                MemorySegment formatStr = arena.allocateUtf8String(format);
-                VaList vaList = VaList.make(b -> args.forEach(a -> a.accept(b, arena)), arena.scope());
-                return (int)vprintf.invokeExact(formatStr, vaList.segment());
-            }
-        }
-
         private MethodHandle specializedPrintf(List<PrintfArg> args) {
             //method type
             MethodType mt = MethodType.methodType(int.class, MemorySegment.class);
@@ -384,40 +360,27 @@ public class StdLibTest extends NativeTestHelper {
                 .toArray(Object[][]::new);
     }
 
-    enum PrintfArg implements BiConsumer<VaList.Builder, Arena> {
+    enum PrintfArg {
 
-        INTEGRAL(int.class, C_INT, "%d", arena -> 42, 42, VaList.Builder::addVarg),
+        INTEGRAL(int.class, C_INT, "%d", arena -> 42, 42),
         STRING(MemorySegment.class, C_POINTER, "%s", arena -> {
             return arena.allocateUtf8String("str");
-        }, "str", VaList.Builder::addVarg),
-        CHAR(byte.class, C_CHAR, "%c", arena -> (byte) 'h', 'h', (builder, layout, value) -> builder.addVarg(C_INT, (int)value)),
-        DOUBLE(double.class, C_DOUBLE, "%.4f", arena ->1.2345d, 1.2345d, VaList.Builder::addVarg);
+        }, "str"),
+        CHAR(byte.class, C_CHAR, "%c", arena -> (byte) 'h', 'h'),
+        DOUBLE(double.class, C_DOUBLE, "%.4f", arena ->1.2345d, 1.2345d);
 
         final Class<?> carrier;
         final ValueLayout layout;
         final String format;
         final Function<Arena, ?> nativeValueFactory;
         final Object javaValue;
-        @SuppressWarnings("rawtypes")
-        final VaListBuilderCall builderCall;
 
-        <Z, L extends ValueLayout> PrintfArg(Class<?> carrier, L layout, String format, Function<Arena, Z> nativeValueFactory, Object javaValue, VaListBuilderCall<Z, L> builderCall) {
+        <Z, L extends ValueLayout> PrintfArg(Class<?> carrier, L layout, String format, Function<Arena, Z> nativeValueFactory, Object javaValue) {
             this.carrier = carrier;
             this.layout = layout;
             this.format = format;
             this.nativeValueFactory = nativeValueFactory;
             this.javaValue = javaValue;
-            this.builderCall = builderCall;
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public void accept(VaList.Builder builder, Arena arena) {
-            builderCall.build(builder, layout, nativeValueFactory.apply(arena));
-        }
-
-        interface VaListBuilderCall<V, L> {
-            void build(VaList.Builder builder, L layout, V value);
         }
 
         public Object nativeValue(Arena arena) {
