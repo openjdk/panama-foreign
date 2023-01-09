@@ -270,13 +270,14 @@ The foreign function support can support variadic calls, but with a caveat: the 
 printf("%d plus %d equals %d", 2, 2, 4);
 ```
 
-To do this using the foreign function support provided by the FFM API we would have to build a *specialized* downcall handle for that call shape, using the `FunctionDescriptor::asVariadic` to inject additional variadic layouts, as follows:
+To do this using the foreign function support provided by the FFM API we would have to build a *specialized* downcall handle for that call shape, using a linker option to specify the position of the first variadic layout, as follows:
 
 ```java
 Linker linker = Linker.nativeLinker();
 MethodHandle printf = linker.downcallHandle(
 		linker.defaultLookup().lookup("printf").get(),
-        FunctionDescriptor.of(JAVA_INT, ADDRESS).asVariadic(JAVA_INT, JAVA_INT, JAVA_INT)
+        FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT)
+        Linker.Option.firstVariadicArg(1) // first int is variadic
 );
 ```
 
@@ -288,44 +289,10 @@ try (Arena arena = Arena.openConfined()) {
 }
 ```
 
-While this works, and provides optimal performance, there are some drawbacks:
+While this works, and provides optimal performance, it has some limitations:
 
 * If the variadic function needs to be called with many shapes, we have to create many downcall handles
 * while this approach works for downcalls (since the Java code is in charge of determining which and how many arguments should be passed) it fails to scale to upcalls; in that case, the call comes from native code, so we have no way to guarantee that the shape of the upcall stub we have created will match that required by the native function.
-
-To add flexibility, the standard C foreign linker comes equipped with support for C variable argument lists — or `va_list`.  When a variadic function is called, C code has to unpack the variadic arguments by creating a `va_list` structure, and then accessing the variadic arguments through the `va_list` one by one (using the `va_arg` macro). To facilitate interop between standard variadic functions and `va_list` many C library functions in fact define *two* flavors of the same function, one using standard variadic signature, one using an extra `va_list` parameter. For instance, in the case of `printf` we can find that a `va_list`-accepting function performing the same task is also defined:
-
-```c
-int vprintf(const char *format, va_list ap);
-```
-
-The behavior of this function is the same as before — the only difference is that the ellipsis notation `...` has been replaced with a single `va_list` parameter; in other words, the function is no longer variadic.
-
-It is indeed fairly easy to create a downcall for `vprintf`:
-
-```java
-Linker linker = Linker.nativeLinker();
-MethodHandle vprintf = linker.downcallHandle(
-		linker.defaultLookup().lookup("vprintf").get(),
-		FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS));
-```
-
-Here, the layout of a `va_list` parameter is simply `ADDRESS` (as va lists are passed by reference). To call the `vprintf` handle we need to create an instance of `VaList` which contains the arguments we want to pass to the `vprintf` function — we can do so, as follows:
-
-```java
-try (Arena arena = Arena.openConfined()) {
-    vprintf.invoke(
-            arena.allocateUtf8String("%d plus %d equals %d"),
-            VaList.make(builder ->
-                            builder.addVarg(JAVA_INT, 2)
-                                   .addVarg(JAVA_INT, 2)
-                                   .addVarg(JAVA_INT, 4), arena.scope()).segment()
-); //prints "2 plus 2 equals 4"
-```
-
-While the callee has to do more work to call the `vprintf` handle, note that that now we're back in a place where the downcall handle  `vprintf` can be shared across multiple callees. Note that both the format string and the `VaList` are associated with the given segment scope — this means that both will remain valid throughout the native function call.
-
-Using `VaList` also scales to upcall stubs — it is therefore possible for clients to create upcalls stubs which take a `VaList` and then, from the Java upcall, read the arguments packed inside the `VaList` one by one using the methods provided by the `VaList` API (e.g. `VaList::nextVarg(ValueLayout.OfInt)`), which mimics the behavior of the C `va_arg` macro.
 
 ### Appendix: full source code
 
@@ -355,7 +322,6 @@ public class Examples {
         strlen_virtual();
         qsort();
         printf();
-        vprintf();
     }
 
     public static void strlen() throws Throwable {
@@ -423,22 +389,6 @@ public class Examples {
             printf.invoke(s, 2, 2, 4);
         }
     }
-
-    public static void vprintf() throws Throwable {
-
-        MethodHandle vprintf = LINKER.downcallHandle(
-                STDLIB.find("vprintf").get(),
-                FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS));
-
-        try (Arena arena = Arena.openConfined()) {
-            MemorySegment s = arena.allocateUtf8String("%d plus %d equals %d\n");
-            VaList vlist = VaList.make(builder ->
-                     builder.addVarg(JAVA_INT, 2)
-                            .addVarg(JAVA_INT, 2)
-                            .addVarg(JAVA_INT, 4), arena.scope());
-            vprintf.invoke(s, vlist.segment());
-        }
-    }
 }
 ```
 
@@ -446,3 +396,4 @@ public class Examples {
 
 * <a id="1"/>(<sup>1</sup>):<small> For simplicity, the examples shown in this document use `MethodHandle::invoke` rather than `MethodHandle::invokeExact`; by doing so we avoid having to cast by-reference arguments back to `Addressable`. With `invokeExact` the method handle invocation should be rewritten as `strlen.invokeExact((Addressable)session.allocateUtf8String("Hello"));`</small>
 * <a id="2"/>(<sup>2</sup>):<small> In reality this is not entirely new; even in JNI, when you call a `native` method the VM trusts that the corresponding implementing function in C will feature compatible parameter types and return values; if not a crash might occur.</small>
+* <a id="3"/>(<sup>3</sup>):<small> Previous iterations of the FFM API provided a `VaList` class that could be used to model a C `va_list`. This class was later dropped from the FFM API as too implementation specific. It is possible that a future version of the `jextract` tool might provide higher-level bindings for variadic calls. </small>
