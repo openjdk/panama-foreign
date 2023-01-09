@@ -1,6 +1,6 @@
 ## State of foreign function support
 
-**December 2022**
+**January 2023**
 
 **Maurizio Cimadamore**
 
@@ -191,7 +191,7 @@ try (Arena arena = Arena openConfined()) {
 }
 ```
 
-It is important to note that, albeit the interop code is written in Java, the above code can *not* be considered 100% safe. There are many arbitrary decisions to be made when setting up downcall method handles such as the one above, some of which might be obvious to us (e.g. how many parameters does the function take), but which cannot ultimately be verified by the Java runtime. After all, a symbol in a dynamic library is nothing but a numeric offset and, unless we are using a shared library with debugging information, no type information is attached to a given library symbol. This means that the Java runtime has to *trust* the function descriptor passed in<a href="#3"><sup>2</sup></a>; for this reason, the `Linker::nativeLinker` factory is also a restricted method.
+It is important to note that, albeit the interop code is written in Java, the above code can *not* be considered 100% safe. There are many arbitrary decisions to be made when setting up downcall method handles such as the one above, some of which might be obvious to us (e.g. how many parameters does the function take), but which cannot ultimately be verified by the Java runtime. After all, a symbol in a dynamic library is nothing but a numeric offset and, unless we are using a shared library with debugging information, no type information is attached to a given library symbol. This means that the Java runtime has to *trust* the function descriptor passed in<a href="#2"><sup>2</sup></a>; for this reason, the `Linker::nativeLinker` factory is also a restricted method.
 
 When working with shared arenas, it is always possible for the arena associated with a memory segment passed *by reference* to a native function to be closed (by another thread) *while* the native function is executing. When this happens, the native code is at risk of dereferencing already-freed memory, which might trigger a JVM crash, or even result in silent memory corruption. For this reason, the `Linker` API provides some basic temporal safety guarantees: any `MemorySegment` instance passed by reference to a downcall method handle will be *kept alive* for the entire duration of the call. In other words, it's as if the call to the downcall method handle occurred inside an invisible call to `SegmentScope::whileAlive`.
 
@@ -289,7 +289,7 @@ try (Arena arena = Arena.openConfined()) {
 }
 ```
 
-While this works, and provides optimal performance, it has some limitations:
+While this works, and provides optimal performance, it has some limitations<a href="#3"><sup>3</sup></a>:
 
 * If the variadic function needs to be called with many shapes, we have to create many downcall handles
 * while this approach works for downcalls (since the Java code is in charge of determining which and how many arguments should be passed) it fails to scale to upcalls; in that case, the call comes from native code, so we have no way to guarantee that the shape of the upcall stub we have created will match that required by the native function.
