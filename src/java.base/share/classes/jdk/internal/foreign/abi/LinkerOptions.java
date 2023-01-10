@@ -83,7 +83,7 @@ public class LinkerOptions {
 
     public boolean isVariadicFunction() {
         FirstVariadicArg fva = getOption(FirstVariadicArg.class);
-        return fva != null && fva.index >= 0;
+        return fva != null;
     }
 
     @Override
