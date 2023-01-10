@@ -39,8 +39,11 @@ import jdk.internal.loader.RawNativeLibraries;
 import sun.security.action.GetPropertyAction;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
+import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
 public final class SystemLookup implements SymbolLookup {
+
+    private static final boolean IS_WINDOWS = privilegedGetProperty("os.name").startsWith("Windows");
 
     private SystemLookup() { }
 
@@ -57,11 +60,11 @@ public final class SystemLookup implements SymbolLookup {
 
     private static SymbolLookup makeSystemLookup() {
         try {
-            return switch (CABI.current()) {
-                case SYS_V, LINUX_AARCH_64, MAC_OS_AARCH_64 -> libLookup(libs -> libs.load(jdkLibraryPath("syslookup")));
-                case WIN_64, WIN_AARCH_64 -> makeWindowsLookup(); // out of line to workaround javac crash
-                case UNKNOWN -> FALLBACK_LOOKUP;
-            };
+            if (IS_WINDOWS) {
+                return makeWindowsLookup();
+            } else {
+                return libLookup(libs -> libs.load(jdkLibraryPath("syslookup")));
+            }
         } catch (Throwable ex) {
             // This can happen in the event of a library loading failure - e.g. if one of the libraries the
             // system lookup depends on cannot be loaded for some reason. In such extreme cases, rather than
@@ -119,11 +122,7 @@ public final class SystemLookup implements SymbolLookup {
      */
     private static Path jdkLibraryPath(String name) {
         Path javahome = Path.of(GetPropertyAction.privilegedGetProperty("java.home"));
-        String lib = switch (CABI.current()) {
-            case SYS_V, LINUX_AARCH_64, MAC_OS_AARCH_64 -> "lib";
-            case WIN_64, WIN_AARCH_64 -> "bin";
-            case UNKNOWN -> throw new UnsupportedOperationException();
-        };
+        String lib = IS_WINDOWS ? "bin" : "lib";
         String libname = System.mapLibraryName(name);
         return javahome.resolve(lib).resolve(libname);
     }

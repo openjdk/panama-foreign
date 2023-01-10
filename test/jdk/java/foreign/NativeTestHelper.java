@@ -91,7 +91,7 @@ public class NativeTestHelper {
     public static void freeMemory(MemorySegment address) {
         class Holder {
             static final MethodHandle FREE = LINKER.downcallHandle(
-                LINKER.defaultLookup().lookup("free").orElseThrow(), FunctionDescriptor.ofVoid(ValueLayout.ADDRESS));
+                LINKER.defaultLookup().find("free").orElseThrow(), FunctionDescriptor.ofVoid(C_POINTER));
         }
         try {
             Holder.FREE.invokeExact(address);
@@ -103,7 +103,7 @@ public class NativeTestHelper {
     public static MemorySegment allocateMemory(long size) {
         class Holder {
             static final MethodHandle MALLOC = LINKER.downcallHandle(
-                LINKER.defaultLookup().find("malloc").orElseThrow(), FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.JAVA_LONG));
+                LINKER.defaultLookup().find("malloc").orElseThrow(), FunctionDescriptor.of(C_POINTER, C_LONG_LONG));
         }
         try {
             return (MemorySegment) Holder.MALLOC.invokeExact(size);

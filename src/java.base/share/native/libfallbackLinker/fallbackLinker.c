@@ -28,6 +28,12 @@
 
 #include <ffi.h>
 
+#include <errno.h>
+#ifdef _WIN64
+#include <Windows.h>
+#include <Winsock2.h>
+#endif
+
 #include "jlong.h"
 
 JNIEXPORT jlong JNICALL
@@ -44,9 +50,37 @@ Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1get_1struct_1offsets(
   return ffi_get_struct_offsets((ffi_abi) abi, jlong_to_ptr(type), jlong_to_ptr(offsets));
 }
 
+static void do_capture_state(int32_t* value_ptr, int captured_state_mask) {
+    // keep in synch with jdk.internal.foreign.abi.CapturableState
+  enum PreservableValues {
+    NONE = 0,
+    GET_LAST_ERROR = 1,
+    WSA_GET_LAST_ERROR = 1 << 1,
+    ERRNO = 1 << 2
+  };
+#ifdef _WIN64
+  if (captured_state_mask & GET_LAST_ERROR) {
+    *value_ptr = GetLastError();
+    value_ptr++;
+  }
+  if (captured_state_mask & WSA_GET_LAST_ERROR) {
+    *value_ptr = WSAGetLastError();
+    value_ptr++;
+  }
+#endif
+  if (captured_state_mask & ERRNO) {
+    *value_ptr = errno;
+  }
+}
+
 JNIEXPORT void JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1call(JNIEnv* env, jclass cls, jlong cif, jlong fn, jlong rvalue, jlong avalues) {
+Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1call(JNIEnv* env, jclass cls, jlong cif, jlong fn, jlong rvalue, jlong avalues, jlong jcaptured_state, jint captured_state_mask) {
   ffi_call(jlong_to_ptr(cif), jlong_to_ptr(fn), jlong_to_ptr(rvalue), jlong_to_ptr(avalues));
+
+  if (captured_state_mask != 0) {
+    int32_t* captured_state = jlong_to_ptr(jcaptured_state);
+    do_capture_state(captured_state, captured_state_mask);
+  }
 }
 
 JNIEXPORT jint JNICALL

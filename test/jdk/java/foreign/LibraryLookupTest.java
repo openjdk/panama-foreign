@@ -64,6 +64,7 @@ public class LibraryLookupTest {
 
     @Test(expectedExceptions = IllegalStateException.class)
     void testLoadLibraryConfinedClosed() {
+        System.out.print("##### testLoadLibraryConfinedClosed");
         MemorySegment addr;
         try (Arena arena = Arena.openConfined()) {
             addr = loadLibrary(arena.scope());
@@ -104,6 +105,7 @@ public class LibraryLookupTest {
 
     @Test
     void testLoadLibraryShared() throws Throwable {
+        System.out.print("##### testLoadLibraryShared");
         ExecutorService accessExecutor = Executors.newCachedThreadPool();
         for (int i = 0; i < NUM_ACCESSORS ; i++) {
             accessExecutor.execute(new LibraryLoadAndAccess());
@@ -125,6 +127,7 @@ public class LibraryLookupTest {
 
     @Test
     void testLoadLibrarySharedClosed() throws Throwable {
+        System.out.print("##### testLoadLibrarySharedClosed");
         Arena arena = Arena.openShared();
         MemorySegment addr = loadLibrary(arena.scope());
         ExecutorService accessExecutor = Executors.newCachedThreadPool();

@@ -35,6 +35,7 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.SegmentScope;
 import java.lang.invoke.MethodHandle;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
@@ -51,6 +52,14 @@ public class TestPassHeapSegment extends UpcallTestHelper  {
         MethodHandle handle = downcallHandle("test_args", FunctionDescriptor.ofVoid(ADDRESS));
         MemorySegment segment = MemorySegment.ofArray(new byte[]{ 0, 1, 2 });
         handle.invoke(segment); // should throw
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+        expectedExceptionsMessageRegExp = ".*Heap segment not allowed.*")
+    public void testNoHeapSets() {
+        MemorySegment targetSegment = MemorySegment.allocateNative(ADDRESS.byteSize(), SegmentScope.auto());
+        MemorySegment segment = MemorySegment.ofArray(new byte[]{ 0, 1, 2 });
+        targetSegment.set(ADDRESS, 0, segment); // should throw
     }
 
     @Test(dataProvider = "specs")
