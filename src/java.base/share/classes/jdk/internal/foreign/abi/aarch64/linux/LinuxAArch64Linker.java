@@ -32,7 +32,6 @@ import jdk.internal.foreign.abi.aarch64.CallArranger;
 import java.lang.foreign.SegmentScope;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.VaList;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.function.Consumer;
@@ -63,19 +62,5 @@ public final class LinuxAArch64Linker extends AbstractLinker {
     @Override
     protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, SegmentScope scope) {
         return CallArranger.LINUX.arrangeUpcall(target, targetType, function, scope);
-    }
-
-    public static VaList newVaList(Consumer<VaList.Builder> actions, SegmentScope scope) {
-        LinuxAArch64VaList.Builder builder = LinuxAArch64VaList.builder(scope);
-        actions.accept(builder);
-        return builder.build();
-    }
-
-    public static VaList newVaListOfAddress(long address, SegmentScope scope) {
-        return LinuxAArch64VaList.ofAddress(address, scope);
-    }
-
-    public static VaList emptyVaList() {
-        return LinuxAArch64VaList.empty();
     }
 }
