@@ -298,7 +298,7 @@ public abstract class CallArranger {
             for (int i = 0; i < structStorages.length; i++) {
                 ValueLayout copyLayout;
                 if (isFieldWise) {
-                    // We only expect to see fields here, no padding (the cast would fail)
+                    // We should only get here for HFAs, which can't have padding (the cast would fail)
                     copyLayout = (ValueLayout) layout.memberLayouts().get(i);
                 } else {
                     // chunk-wise copy
