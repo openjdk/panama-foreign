@@ -312,7 +312,7 @@ public abstract class CallArranger {
                 offset += copyLayout.byteSize();
             }
 
-            if (requiresSubSlotStackPacking()) {
+            if (requiresSubSlotStackPacking() && !isFieldWise) {
                 // Pad to the next stack slot boundary instead of packing
                 // additional arguments into the unused space.
                 stackOffset = Utils.alignUp(stackOffset, STACK_SLOT_SIZE);
