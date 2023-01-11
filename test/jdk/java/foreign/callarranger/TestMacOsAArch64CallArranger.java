@@ -280,4 +280,111 @@ public class TestMacOsAArch64CallArranger extends CallArrangerTestBase {
 
         checkReturnBindings(callingSequence, new Binding[]{});
     }
+
+    @Test
+    public void testMacArgsOnStack5() {
+        StructLayout struct = MemoryLayout.structLayout(
+            C_FLOAT
+        );
+        MethodType mt = MethodType.methodType(void.class,
+                long.class, long.class, long.class, long.class,
+                long.class, long.class, long.class, long.class,
+                double.class, double.class, double.class, double.class,
+                double.class, double.class, double.class, double.class,
+                MemorySegment.class, int.class, MemorySegment.class);
+        FunctionDescriptor fd = FunctionDescriptor.ofVoid(
+                C_LONG_LONG, C_LONG_LONG, C_LONG_LONG, C_LONG_LONG,
+                C_LONG_LONG, C_LONG_LONG, C_LONG_LONG, C_LONG_LONG,
+                C_DOUBLE, C_DOUBLE, C_DOUBLE, C_DOUBLE,
+                C_DOUBLE, C_DOUBLE, C_DOUBLE, C_DOUBLE,
+                struct, C_INT, C_POINTER);
+        CallArranger.Bindings bindings = CallArranger.MACOS.getBindings(mt, fd, false);
+
+        assertFalse(bindings.isInMemoryReturn());
+        CallingSequence callingSequence = bindings.callingSequence();
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, MemorySegment.class));
+        assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
+
+        checkArgumentBindings(callingSequence, new Binding[][]{
+            { unboxAddress(), vmStore(TARGET_ADDRESS_STORAGE, long.class) },
+            { vmStore(r0, long.class) },
+            { vmStore(r1, long.class) },
+            { vmStore(r2, long.class) },
+            { vmStore(r3, long.class) },
+            { vmStore(r4, long.class) },
+            { vmStore(r5, long.class) },
+            { vmStore(r6, long.class) },
+            { vmStore(r7, long.class) },
+            { vmStore(v0, double.class) },
+            { vmStore(v1, double.class) },
+            { vmStore(v2, double.class) },
+            { vmStore(v3, double.class) },
+            { vmStore(v4, double.class) },
+            { vmStore(v5, double.class) },
+            { vmStore(v6, double.class) },
+            { vmStore(v7, double.class) },
+            {
+                bufferLoad(0, int.class),
+                vmStore(stackStorage((short) 4, 0), int.class),
+            },
+            { vmStore(stackStorage((short) 4, 4), int.class) },
+            { unboxAddress(), vmStore(stackStorage((short) 8, 8), long.class) },
+        });
+
+        checkReturnBindings(callingSequence, new Binding[]{});
+    }
+
+    @Test
+    public void testMacArgsOnStack6() {
+        StructLayout struct = MemoryLayout.structLayout(
+            C_INT
+        );
+        MethodType mt = MethodType.methodType(void.class,
+                long.class, long.class, long.class, long.class,
+                long.class, long.class, long.class, long.class,
+                double.class, double.class, double.class, double.class,
+                double.class, double.class, double.class, double.class,
+                int.class, MemorySegment.class, double.class, MemorySegment.class);
+        FunctionDescriptor fd = FunctionDescriptor.ofVoid(
+                C_LONG_LONG, C_LONG_LONG, C_LONG_LONG, C_LONG_LONG,
+                C_LONG_LONG, C_LONG_LONG, C_LONG_LONG, C_LONG_LONG,
+                C_DOUBLE, C_DOUBLE, C_DOUBLE, C_DOUBLE,
+                C_DOUBLE, C_DOUBLE, C_DOUBLE, C_DOUBLE,
+                C_INT, struct, C_DOUBLE, C_POINTER);
+        CallArranger.Bindings bindings = CallArranger.MACOS.getBindings(mt, fd, false);
+
+        assertFalse(bindings.isInMemoryReturn());
+        CallingSequence callingSequence = bindings.callingSequence();
+        assertEquals(callingSequence.callerMethodType(), mt.insertParameterTypes(0, MemorySegment.class));
+        assertEquals(callingSequence.functionDesc(), fd.insertArgumentLayouts(0, ADDRESS));
+
+        checkArgumentBindings(callingSequence, new Binding[][]{
+            { unboxAddress(), vmStore(TARGET_ADDRESS_STORAGE, long.class) },
+            { vmStore(r0, long.class) },
+            { vmStore(r1, long.class) },
+            { vmStore(r2, long.class) },
+            { vmStore(r3, long.class) },
+            { vmStore(r4, long.class) },
+            { vmStore(r5, long.class) },
+            { vmStore(r6, long.class) },
+            { vmStore(r7, long.class) },
+            { vmStore(v0, double.class) },
+            { vmStore(v1, double.class) },
+            { vmStore(v2, double.class) },
+            { vmStore(v3, double.class) },
+            { vmStore(v4, double.class) },
+            { vmStore(v5, double.class) },
+            { vmStore(v6, double.class) },
+            { vmStore(v7, double.class) },
+            { vmStore(stackStorage((short) 4, 0), int.class) },
+            {
+                bufferLoad(0, int.class),
+                vmStore(stackStorage((short) 4, 8), int.class),
+            },
+            { vmStore(stackStorage((short) 8, 16), double.class) },
+            { unboxAddress(), vmStore(stackStorage((short) 8, 24), long.class) },
+        });
+
+        checkReturnBindings(callingSequence, new Binding[]{});
+    }
 }
