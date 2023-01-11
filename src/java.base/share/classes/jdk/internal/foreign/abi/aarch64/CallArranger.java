@@ -287,6 +287,12 @@ public abstract class CallArranger {
                 nRegs[regType] = MAX_REGISTER_ARGUMENTS;
             }
 
+            if (requiresSubSlotStackPacking() && !isFieldWise) {
+                // Pad to the next stack slot boundary instead of packing
+                // additional arguments into the unused space.
+                alignStack(STACK_SLOT_SIZE);
+            }
+
             StructStorage[] structStorages = new StructStorage[requiredStorages];
             long offset = 0;
             for (int i = 0; i < structStorages.length; i++) {
@@ -315,10 +321,14 @@ public abstract class CallArranger {
             if (requiresSubSlotStackPacking() && !isFieldWise) {
                 // Pad to the next stack slot boundary instead of packing
                 // additional arguments into the unused space.
-                stackOffset = Utils.alignUp(stackOffset, STACK_SLOT_SIZE);
+                alignStack(STACK_SLOT_SIZE);
             }
 
             return structStorages;
+        }
+
+        private void alignStack(long alignment) {
+            stackOffset = Utils.alignUp(stackOffset, alignment);
         }
 
         // allocate a single ValueLayout, either in a register or on the stack
