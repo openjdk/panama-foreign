@@ -48,7 +48,7 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
     private long byteSize;
 
     AbstractLayout(long bitSize, long bitAlignment, Optional<String> name) {
-        this.bitSize = MemoryLayoutUtil.checkSize(bitSize, true);
+        this.bitSize = MemoryLayoutUtil.requireBitSizeValid(bitSize);
         this.bitAlignment = requirePowerOfTwoAndGreaterOrEqualToEight(bitAlignment);
         this.name = Objects.requireNonNull(name);
     }

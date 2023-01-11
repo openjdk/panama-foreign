@@ -36,7 +36,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
+
 import jdk.internal.foreign.LayoutPath;
 import jdk.internal.foreign.LayoutPath.PathElementImpl.PathKind;
 import jdk.internal.foreign.Utils;
@@ -679,7 +679,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * @throws IllegalArgumentException if {@code elementCount } is negative.
      */
     static SequenceLayout sequenceLayout(long elementCount, MemoryLayout elementLayout) {
-        MemoryLayoutUtil.checkSize(elementCount, true);
+        MemoryLayoutUtil.requireNonNegative(elementCount);
         Objects.requireNonNull(elementLayout);
         return wrapOverflow(() ->
                 SequenceLayoutImpl.of(elementCount, elementLayout));

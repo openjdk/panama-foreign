@@ -30,15 +30,18 @@ public final class MemoryLayoutUtil {
     private MemoryLayoutUtil() {
     }
 
-    public static long checkSize(long size) {
-        return checkSize(size, false);
+    public static long requireNonNegative(long value) {
+        if (value < 0) {
+            throw new IllegalArgumentException("The provided value was negative: " + value);
+        }
+        return value;
     }
 
-    public static long checkSize(long size, boolean allowZero) {
-        if (size < 0 || (!allowZero && size == 0)) {
-            throw new IllegalArgumentException("Invalid size for layout: " + size);
+    public static long requireBitSizeValid(long bitSize) {
+        if (bitSize < 0 || bitSize % 8 != 0) {
+            throw new IllegalArgumentException("Invalid bitSize: " + bitSize);
         }
-        return size;
+        return bitSize;
     }
 
 }

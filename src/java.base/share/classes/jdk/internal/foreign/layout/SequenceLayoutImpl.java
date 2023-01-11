@@ -68,7 +68,6 @@ public final class SequenceLayoutImpl extends AbstractLayout<SequenceLayoutImpl>
      * @throws IllegalArgumentException if {@code elementCount < 0}.
      */
     public SequenceLayout withElementCount(long elementCount) {
-        MemoryLayoutUtil.checkSize(elementCount, true);
         return new SequenceLayoutImpl(elementCount, elementLayout, bitAlignment(), name());
     }
 
