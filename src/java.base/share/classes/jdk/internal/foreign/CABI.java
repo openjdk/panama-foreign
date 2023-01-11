@@ -32,7 +32,8 @@ public enum CABI {
     SYS_V,
     WIN_64,
     LINUX_AARCH_64,
-    MAC_OS_AARCH_64;
+    MAC_OS_AARCH_64,
+    WIN_AARCH_64;
 
     private static final CABI ABI;
     private static final String ARCH;
@@ -54,6 +55,8 @@ public enum CABI {
         } else if (ARCH.equals("aarch64")) {
             if (OS.startsWith("Mac")) {
                 ABI = MAC_OS_AARCH_64;
+            } else if (OS.startsWith("Windows")) {
+                ABI = WIN_AARCH_64;
             } else {
                 // The Linux ABI follows the standard AAPCS ABI
                 ABI = LINUX_AARCH_64;
