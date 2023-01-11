@@ -281,6 +281,7 @@ public class TestMacOsAArch64CallArranger extends CallArrangerTestBase {
         checkReturnBindings(callingSequence, new Binding[]{});
     }
 
+    // structs that are passed field-wise should not have padding after them
     @Test
     public void testMacArgsOnStack5() {
         StructLayout struct = MemoryLayout.structLayout(
@@ -334,6 +335,7 @@ public class TestMacOsAArch64CallArranger extends CallArrangerTestBase {
         checkReturnBindings(callingSequence, new Binding[]{});
     }
 
+    // structs that are passed chunk-wise should have padding before them, as well as after
     @Test
     public void testMacArgsOnStack6() {
         StructLayout struct = MemoryLayout.structLayout(
