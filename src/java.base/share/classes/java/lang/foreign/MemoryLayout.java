@@ -616,10 +616,10 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      *
      * @param bitSize the padding size in bits.
      * @return the new selector layout.
-     * @throws IllegalArgumentException if {@code bitSize < 8} or {@code bitSize % 8 != 0}
+     * @throws IllegalArgumentException if {@code bitSize < 0} or {@code bitSize % 8 != 0}
      */
     static PaddingLayout paddingLayout(long bitSize) {
-        if (bitSize < 8 || bitSize % 8 != 0) {
+        if (bitSize < 0 || bitSize % 8 != 0) {
             throw new IllegalArgumentException("bitSize cannot be " + bitSize);
         }
         return PaddingLayoutImpl.of(bitSize);
