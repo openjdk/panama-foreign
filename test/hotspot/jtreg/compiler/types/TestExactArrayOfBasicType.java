@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,23 +19,28 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
+ */
+
+/*
+ * @test
+ * @bug 8297556
+ * @summary Parse::check_interpreter_type fails with assert "must constrain OSR typestate"
+ *
+ * @run main/othervm -Xbatch -XX:-TieredCompilation -XX:CompileOnly=TestExactArrayOfBasicType::test TestExactArrayOfBasicType
  *
  */
 
-#ifndef SHARE_METAPROGRAMMING_REMOVEPOINTER_HPP
-#define SHARE_METAPROGRAMMING_REMOVEPOINTER_HPP
 
-#include "memory/allStatic.hpp"
+public class TestExactArrayOfBasicType {
+    public static void test() {
+        int[][][][][] array = new int[1][2][3][4][5];
 
-// This metafunction returns for a type T either the underlying type behind
-// the pointer iff T is a pointer type (irrespective of CV qualifiers),
-// or the same type T if T is not a pointer type.
+        for (int i = 0; i < 50_000; ++i) {
+            array[0] = new int[0][1][2][3];
+        }
+    }
 
-template <typename T> struct RemovePointer: AllStatic { typedef T type; };
-
-template <typename T> struct RemovePointer<T*>: AllStatic { typedef T type; };
-template <typename T> struct RemovePointer<T* const>: AllStatic { typedef T type; };
-template <typename T> struct RemovePointer<T* volatile>: AllStatic { typedef T type; };
-template <typename T> struct RemovePointer<T* const volatile>: AllStatic { typedef T type; };
-
-#endif // SHARE_METAPROGRAMMING_REMOVEPOINTER_HPP
+    public static void main(String args[]) {
+        test();
+    }
+}
