@@ -39,7 +39,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
-import java.lang.foreign.VaList;
 import java.util.stream.Stream;
 
 import org.testng.annotations.*;
@@ -113,20 +112,6 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
-    public void testClosedVaList() throws Throwable {
-        VaList list;
-        try (Arena arena = Arena.openConfined()) {
-            list = VaList.make(b -> b.addVarg(C_INT, 42), arena.scope());
-        }
-        assertFalse(list.segment().scope().isAlive());
-        MethodHandle handle = Linker.nativeLinker().downcallHandle(
-                findNativeOrThrow("addr_func"),
-                FunctionDescriptor.ofVoid(C_POINTER));
-
-        handle.invokeExact(list.segment());
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class)
     public void testClosedUpcall() throws Throwable {
         MemorySegment upcall;
         try (Arena arena = Arena.openConfined()) {
@@ -142,18 +127,6 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     }
 
     static void dummy() { }
-
-    @Test
-    public void testClosedVaListCallback() throws Throwable {
-        MethodHandle handle = Linker.nativeLinker().downcallHandle(
-                findNativeOrThrow("addr_func_cb"),
-                FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
-
-        try (Arena arena = Arena.openConfined()) {
-            VaList list = VaList.make(b -> b.addVarg(C_INT, 42), arena.scope());
-            handle.invokeExact(list.segment(), sessionChecker(arena));
-        }
-    }
 
     @Test
     public void testClosedStructCallback() throws Throwable {

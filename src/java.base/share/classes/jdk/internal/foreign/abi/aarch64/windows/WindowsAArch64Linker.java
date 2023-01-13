@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, Arm Limited. All rights reserved.
+ * Copyright (c) 2021, 2022, Microsoft. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,43 +24,41 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign.abi.x64.windows;
+package jdk.internal.foreign.abi.aarch64.windows;
 
 import jdk.internal.foreign.abi.AbstractLinker;
 import jdk.internal.foreign.abi.LinkerOptions;
+import jdk.internal.foreign.abi.aarch64.CallArranger;
 
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentScope;
+import java.lang.foreign.SegmentScope ;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.function.Consumer;
 
 /**
- * ABI implementation based on Windows ABI AMD64 supplement v.0.99.6
+ * ABI implementation for Windows/AArch64. Based on AAPCS with
+ * changes to va_list.
  */
-public final class Windowsx64Linker extends AbstractLinker {
+public final class WindowsAArch64Linker extends AbstractLinker {
+    private static WindowsAArch64Linker instance;
 
-    public static Windowsx64Linker getInstance() {
-        final class Holder {
-            private static final Windowsx64Linker INSTANCE = new Windowsx64Linker();
+    public static WindowsAArch64Linker getInstance() {
+        if (instance == null) {
+            instance = new WindowsAArch64Linker();
         }
-
-        return Holder.INSTANCE;
-    }
-
-    private Windowsx64Linker() {
-        // Ensure there is only one instance
+        return instance;
     }
 
     @Override
     protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function, LinkerOptions options) {
-        return CallArranger.arrangeDowncall(inferredMethodType, function, options);
+        return CallArranger.WINDOWS.arrangeDowncall(inferredMethodType, function, options);
     }
 
     @Override
     protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, SegmentScope scope) {
-        return CallArranger.arrangeUpcall(target, targetType, function, scope);
+        return  CallArranger.WINDOWS.arrangeUpcall(target, targetType, function, scope);
     }
-}
 
+}

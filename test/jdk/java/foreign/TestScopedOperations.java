@@ -29,11 +29,9 @@
  */
 
 import java.lang.foreign.Arena;
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentScope;
 import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.VaList;
 import java.lang.foreign.ValueLayout;
 
 import org.testng.annotations.DataProvider;
@@ -119,22 +117,11 @@ public class TestScopedOperations {
                 fail();
             }
         }, "FileChannel::map");
-        ScopedOperation.ofScope(session -> VaList.make(b -> b.addVarg(JAVA_INT, 42), session), "VaList::make");
-        ScopedOperation.ofScope(session -> VaList.ofAddress(42, session), "VaList::make");
         // segment operations
         ScopedOperation.ofSegment(s -> s.toArray(JAVA_BYTE), "MemorySegment::toArray(BYTE)");
         ScopedOperation.ofSegment(s -> s.copyFrom(s), "MemorySegment::copyFrom");
         ScopedOperation.ofSegment(s -> s.mismatch(s), "MemorySegment::mismatch");
         ScopedOperation.ofSegment(s -> s.fill((byte) 0), "MemorySegment::fill");
-        // valist operations
-        ScopedOperation.ofVaList(VaList::copy, "VaList::copy");
-        ScopedOperation.ofVaList(list -> list.nextVarg(ValueLayout.ADDRESS), "VaList::nextVarg/address");
-        ScopedOperation.ofVaList(list -> list.nextVarg(ValueLayout.JAVA_INT), "VaList::nextVarg/int");
-        ScopedOperation.ofVaList(list -> list.nextVarg(ValueLayout.JAVA_LONG), "VaList::nextVarg/long");
-        ScopedOperation.ofVaList(list -> list.nextVarg(ValueLayout.JAVA_DOUBLE), "VaList::nextVarg/double");
-        ScopedOperation.ofVaList(VaList::skip, "VaList::skip");
-        ScopedOperation.ofVaList(list -> list.nextVarg(MemoryLayout.structLayout(ValueLayout.JAVA_INT),
-                SegmentAllocator.prefixAllocator(MemorySegment.ofArray(new byte[4]))), "VaList::nextVargs/segment");
         // allocator operations
         ScopedOperation.ofAllocator(a -> a.allocate(1), "NativeAllocator::allocate/size");
         ScopedOperation.ofAllocator(a -> a.allocate(1, 1), "NativeAllocator::allocate/size/align");
@@ -189,11 +176,6 @@ public class TestScopedOperations {
 
         static void ofScope(Consumer<SegmentScope> scopeConsumer, String name) {
             scopedOperations.add(new ScopedOperation<>(Function.identity(), scopeConsumer, name));
-        }
-
-        static void ofVaList(Consumer<VaList> vaListConsumer, String name) {
-            scopedOperations.add(new ScopedOperation<>(session -> VaList.make(builder -> builder.addVarg(JAVA_LONG, 42), session),
-                    vaListConsumer, name));
         }
 
         static void ofSegment(Consumer<MemorySegment> segmentConsumer, String name) {

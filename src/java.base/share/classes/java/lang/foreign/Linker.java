@@ -165,8 +165,7 @@ public sealed interface Linker permits AbstractLinker {
      * list or with an empty formal parameter list) are not supported directly. However, it is possible to link a
      * variadic function by using {@linkplain Linker.Option#firstVariadicArg(int) a linker option} to indicate
      * the start of the list of variadic arguments, together with a specialized function descriptor describing a
-     * given variable arity callsite. Alternatively, where the foreign library allows it, clients might be able to
-     * interact with variadic functions by passing a trailing parameter of type {@link VaList} (e.g. as in {@code vsprintf}).
+     * given variable arity callsite.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash

@@ -29,9 +29,6 @@
  */
 
 import java.lang.foreign.Linker;
-import java.lang.foreign.SegmentScope;
-import java.lang.foreign.VaList;
-import java.lang.foreign.ValueLayout;
 
 import org.testng.annotations.Test;
 
@@ -40,20 +37,5 @@ public class TestUnsupportedLinker {
     @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testLinker() {
         Linker.nativeLinker();
-    }
-
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testEmptyVaList() {
-        VaList.empty();
-    }
-
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testNonEmptyVaList() {
-        VaList.make(builder -> builder.addVarg(ValueLayout.JAVA_INT, 42), SegmentScope.auto());
-    }
-
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testUnsafeVaList() {
-        VaList.ofAddress(0L, SegmentScope.auto());
     }
 }

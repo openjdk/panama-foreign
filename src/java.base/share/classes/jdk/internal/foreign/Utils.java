@@ -46,6 +46,9 @@ import static java.lang.foreign.ValueLayout.JAVA_BYTE;
  * This class contains misc helper functions to support creation of memory segments.
  */
 public final class Utils {
+
+    private Utils() {}
+
     private static final MethodHandle BYTE_TO_BOOL;
     private static final MethodHandle BOOL_TO_BYTE;
     private static final MethodHandle ADDRESS_TO_LONG;
@@ -97,11 +100,11 @@ public final class Utils {
     }
 
     public static VarHandle makeSegmentViewVarHandle(ValueLayout layout) {
-        class VarHandleCache {
-            private static final Map<ValueLayout, VarHandle> handleMap = new ConcurrentHashMap<>();
+        final class VarHandleCache {
+            private static final Map<ValueLayout, VarHandle> HANDLE_MAP = new ConcurrentHashMap<>();
 
             static VarHandle put(ValueLayout layout, VarHandle handle) {
-                VarHandle prev = handleMap.putIfAbsent(layout, handle);
+                VarHandle prev = HANDLE_MAP.putIfAbsent(layout, handle);
                 return prev != null ? prev : handle;
             }
         }
