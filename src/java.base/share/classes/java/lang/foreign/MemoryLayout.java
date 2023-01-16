@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2023, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -172,7 +172,7 @@ import jdk.internal.javac.PreviewFeature;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, PaddingLayout, ValueLayout {
+public sealed interface MemoryLayout permits GroupLayout, PaddingLayout, SequenceLayout, ValueLayout {
 
     /**
      * {@return the layout size, in bits}
@@ -236,10 +236,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * @return the layout alignment constraint, in bytes.
      * @throws UnsupportedOperationException if {@code bitAlignment()} is not a multiple of 8.
      */
-    default long byteAlignment() {
-        return Utils.bitsToBytesOrThrow(bitAlignment(),
-                () -> new UnsupportedOperationException("Cannot compute byte alignment; bit alignment is not a multiple of 8"));
-    }
+    long byteAlignment();
 
     /**
      * Returns a memory layout of the same type with the same size and name as this layout,

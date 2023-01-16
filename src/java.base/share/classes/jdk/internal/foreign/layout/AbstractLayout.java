@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2023, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,6 @@
  */
 package jdk.internal.foreign.layout;
 
-import jdk.internal.foreign.Utils;
-import jdk.internal.vm.annotation.ForceInline;
-import jdk.internal.vm.annotation.Stable;
-
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.SequenceLayout;
@@ -41,21 +37,19 @@ import java.util.Optional;
 public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & MemoryLayout>
         permits AbstractGroupLayout, PaddingLayoutImpl, SequenceLayoutImpl, ValueLayouts.AbstractValueLayout {
 
-    private final long bitSize;
-    private final long bitAlignment;
+    private final long byteSize;
+    private final long byteAlignment;
     private final Optional<String> name;
-    @Stable
-    private long byteSize;
 
     AbstractLayout(long bitSize, long bitAlignment, Optional<String> name) {
-        this.bitSize = MemoryLayoutUtil.requireBitSizeValid(bitSize);
-        this.bitAlignment = requirePowerOfTwoAndGreaterOrEqualToEight(bitAlignment);
+        this.byteSize = MemoryLayoutUtil.requireBitSizeValid(bitSize) / 8;
+        this.byteAlignment = requirePowerOfTwoAndGreaterOrEqualToEight(bitAlignment) / 8;
         this.name = Objects.requireNonNull(name);
     }
 
     public final L withName(String name) {
         Objects.requireNonNull(name);
-        return dup(bitAlignment, Optional.of(name));
+        return dup(bitAlignment(), Optional.of(name));
     }
 
     public final Optional<String> name() {
@@ -67,24 +61,23 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
     }
 
     public final long bitAlignment() {
-        return bitAlignment;
+        return byteAlignment * 8;
     }
 
-    @ForceInline
+    public final long byteAlignment() {
+        return byteAlignment;
+    }
+
     public final long byteSize() {
-        if (byteSize == 0) {
-            byteSize = Utils.bitsToBytesOrThrow(bitSize(),
-                    () -> new UnsupportedOperationException("Cannot compute byte size; bit size is not a multiple of 8"));
-        }
         return byteSize;
     }
 
     public final long bitSize() {
-        return bitSize;
+        return byteSize * 8;
     }
 
     public boolean hasNaturalAlignment() {
-        return bitSize == bitAlignment;
+        return byteSize == byteAlignment;
     }
 
     // the following methods have to copy the same Javadoc as in MemoryLayout, or subclasses will just show
@@ -95,7 +88,7 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
      */
     @Override
     public int hashCode() {
-        return Objects.hash(name, bitSize, bitAlignment);
+        return Objects.hash(name, byteSize, byteAlignment);
     }
 
     /**
@@ -123,13 +116,14 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
 
         return other instanceof AbstractLayout<?> otherLayout &&
                 name.equals(otherLayout.name) &&
-                bitSize == otherLayout.bitSize &&
-                bitAlignment == otherLayout.bitAlignment;
+                byteSize == otherLayout.byteSize &&
+                byteAlignment == otherLayout.byteAlignment;
     }
 
     /**
      * {@return the string representation of this layout}
      */
+    @Override
     public abstract String toString();
 
     abstract L dup(long alignment, Optional<String> name);
@@ -139,7 +133,7 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
             s = String.format("%s(%s)", s, name().get());
         }
         if (!hasNaturalAlignment()) {
-            s = bitAlignment + "%" + s;
+            s = bitAlignment() + "%" + s;
         }
         return s;
     }
