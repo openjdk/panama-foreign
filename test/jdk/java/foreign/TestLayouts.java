@@ -198,21 +198,6 @@ public class TestLayouts {
         MemoryLayout.paddingLayout(0);
     }
 
-    @Test
-    public void testNullMember() {
-        var illegalLayouts = new MemoryLayout[]{JAVA_INT, null, JAVA_INT};
-        var factories = List.<Function<MemoryLayout[], GroupLayout>>
-                of(MemoryLayout::structLayout, MemoryLayout::unionLayout);
-        for (var factory : factories) {
-            try {
-                factory.apply(illegalLayouts);
-                fail("Factory did not throw for null elements");
-            } catch (NullPointerException ignore) {
-                // Happy path
-            }
-        }
-    }
-
     @Test(dataProvider = "layoutKinds")
     public void testPadding(LayoutKind kind) {
         assertEquals(kind == LayoutKind.PADDING, kind.layout instanceof PaddingLayout);

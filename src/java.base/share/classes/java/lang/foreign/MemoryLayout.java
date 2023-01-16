@@ -36,6 +36,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import jdk.internal.foreign.LayoutPath;
 import jdk.internal.foreign.LayoutPath.PathElementImpl.PathKind;
@@ -616,10 +617,7 @@ public sealed interface MemoryLayout permits GroupLayout, PaddingLayout, Sequenc
      * @throws IllegalArgumentException if {@code bitSize < 0} or {@code bitSize % 8 != 0}
      */
     static PaddingLayout paddingLayout(long bitSize) {
-        if (bitSize < 0 || bitSize % 8 != 0) {
-            throw new IllegalArgumentException("bitSize cannot be " + bitSize);
-        }
-        return PaddingLayoutImpl.of(bitSize);
+        return PaddingLayoutImpl.of(MemoryLayoutUtil.requireBitSizeValid(bitSize));
     }
 
     /**
@@ -709,7 +707,9 @@ public sealed interface MemoryLayout permits GroupLayout, PaddingLayout, Sequenc
      */
     static StructLayout structLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
-        return wrapOverflow(() -> StructLayoutImpl.of(List.of(elements)));
+        return wrapOverflow(() -> StructLayoutImpl.of(Stream.of(elements)
+                .map(Objects::requireNonNull)
+                .toList()));
     }
 
     /**
@@ -720,7 +720,9 @@ public sealed interface MemoryLayout permits GroupLayout, PaddingLayout, Sequenc
      */
     static UnionLayout unionLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
-        return UnionLayoutImpl.of(List.of(elements));
+        return UnionLayoutImpl.of(Stream.of(elements)
+                .map(Objects::requireNonNull)
+                .toList());
     }
 
     private static <L extends MemoryLayout> L wrapOverflow(Supplier<L> layoutSupplier) {
