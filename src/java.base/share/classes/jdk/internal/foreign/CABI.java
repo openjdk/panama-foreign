@@ -44,6 +44,11 @@ public enum CABI {
             return CABI.valueOf(abi);
         }
 
+        boolean isZeroVM = privilegedGetProperty("java.vm.name").endsWith(" Zero VM");
+        if (isZeroVM) {
+            return UNKNOWN; // use fallback linker
+        }
+
         String arch = privilegedGetProperty("os.arch");
         String os = privilegedGetProperty("os.name");
         long addressSize = ADDRESS.bitSize();
