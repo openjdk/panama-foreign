@@ -83,6 +83,64 @@ Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1call(JNIEnv* env, jcl
   }
 }
 
+static JavaVM* VM;
+static jclass FallbackLinker_class;
+static jmethodID FallbackLinker_doUpcall_ID;
+static const char* FallbackLinker_doUpcall_sig = "(JJLjdk/internal/foreign/abi/fallback/FallbackLinker$UpcallData;)V";
+
+static void do_upcall(ffi_cif* cif, void* ret, void** args, void* user_data) {
+  // attach thread
+  JNIEnv* env;
+  jint result = (*VM)->AttachCurrentThreadAsDaemon(VM, (void**) &env, NULL);
+
+  // call into doUpcall in FallbackLinker
+  jobject upcall_data = (jobject) user_data;
+  (*env)->CallStaticVoidMethod(env, FallbackLinker_class, FallbackLinker_doUpcall_ID,
+    ptr_to_jlong(ret), ptr_to_jlong(args), upcall_data);
+
+  // detach?
+}
+
+static void free_closure(JNIEnv* env, void* closure, jobject upcall_data) {
+  ffi_closure_free(closure);
+  (*env)->DeleteGlobalRef(env, upcall_data);
+}
+
+JNIEXPORT jint JNICALL
+Java_jdk_internal_foreign_abi_fallback_FallbackLinker_createClosure(JNIEnv* env, jclass cls, jlong cif, jobject upcall_data, jlongArray jptrs) {
+  if (VM == NULL) {
+    jint status = (*env)->GetJavaVM(env, &VM);
+    FallbackLinker_class = (*env)->FindClass(env, "jdk/internal/foreign/abi/fallback/FallbackLinker");
+    FallbackLinker_doUpcall_ID = (*env)->GetStaticMethodID(env,
+      FallbackLinker_class, "doUpcall", FallbackLinker_doUpcall_sig);
+  }
+
+  void* code;
+  void* closure = ffi_closure_alloc(sizeof(ffi_closure), &code);
+
+  jobject global_upcall_data = (*env)->NewGlobalRef(env, upcall_data);
+
+  ffi_status status = ffi_prep_closure_loc(closure, jlong_to_ptr(cif), &do_upcall, (void*) global_upcall_data, code);
+
+  if (status != FFI_OK) {
+    free_closure(env,closure, global_upcall_data);
+    return status;
+  }
+
+  jlong* ptrs = (*env)->GetLongArrayElements(env, jptrs, NULL);
+  ptrs[0] = ptr_to_jlong(closure);
+  ptrs[1] = ptr_to_jlong(code);
+  ptrs[2] = ptr_to_jlong(global_upcall_data);
+  (*env)->ReleaseLongArrayElements(env, jptrs, ptrs, JNI_COMMIT);
+
+  return status;
+}
+
+JNIEXPORT void JNICALL
+Java_jdk_internal_foreign_abi_fallback_FallbackLinker_freeClosure(JNIEnv* env, jclass cls, jlong closure, jlong upcall_data) {
+  free_closure(env, jlong_to_ptr(closure), jlong_to_ptr(upcall_data));
+}
+
 JNIEXPORT jint JNICALL
 Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1default_1abi(JNIEnv* env, jclass cls) {
   return (jint) FFI_DEFAULT_ABI;

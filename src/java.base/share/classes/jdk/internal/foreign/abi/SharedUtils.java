@@ -258,7 +258,7 @@ public final class SharedUtils {
         return MH_REACHABILITY_FENCE.asType(MethodType.methodType(void.class, type));
     }
 
-    static void handleUncaughtException(Throwable t) {
+    public static void handleUncaughtException(Throwable t) {
         if (t != null) {
             t.printStackTrace();
             JLA.exit(1);
