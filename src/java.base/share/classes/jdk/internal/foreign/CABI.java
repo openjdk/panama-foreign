@@ -25,6 +25,8 @@
  */
 package jdk.internal.foreign;
 
+import jdk.internal.vm.ForeignLinkerSupport;
+
 import static java.lang.foreign.ValueLayout.ADDRESS;
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
@@ -44,8 +46,7 @@ public enum CABI {
             return CABI.valueOf(abi);
         }
 
-        boolean isZeroVM = privilegedGetProperty("java.vm.name").endsWith(" Zero VM");
-        if (isZeroVM) {
+        if (!ForeignLinkerSupport.isSupported()) {
             return UNKNOWN; // use fallback linker
         }
 

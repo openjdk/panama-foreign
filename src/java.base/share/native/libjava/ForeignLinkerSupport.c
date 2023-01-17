@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2021, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,35 +23,12 @@
  * questions.
  */
 
-#include "precompiled.hpp"
-#include "code/vmreg.hpp"
-#include "prims/foreignGlobals.hpp"
-#include "utilities/debug.hpp"
+#include "jni.h"
+#include "jvm.h"
 
-class MacroAssembler;
+#include "jdk_internal_vm_ForeignLinkerSupport.h"
 
-bool ForeignGlobals::has_port() {
-  return false;
-}
-
-const ABIDescriptor ForeignGlobals::parse_abi_descriptor(jobject jabi) {
-  ShouldNotCallThis();
-  return {};
-}
-
-int RegSpiller::pd_reg_size(VMStorage reg) {
-  Unimplemented();
-  return -1;
-}
-
-void RegSpiller::pd_store_reg(MacroAssembler* masm, int offset, VMStorage reg) {
-  Unimplemented();
-}
-
-void RegSpiller::pd_load_reg(MacroAssembler* masm, int offset, VMStorage reg) {
-  Unimplemented();
-}
-
-void ArgumentShuffle::pd_generate(MacroAssembler* masm, VMStorage tmp, int in_stk_bias, int out_stk_bias, const StubLocations& locs) const {
-  Unimplemented();
+JNIEXPORT jboolean JNICALL
+Java_jdk_internal_vm_ForeignLinkerSupport_isSupported0(JNIEnv *env, jclass cls) {
+    return JVM_IsForeignLinkerSupported();
 }
