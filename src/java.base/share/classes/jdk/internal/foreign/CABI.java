@@ -61,10 +61,10 @@ public enum CABI {
             } else {
                 return SYS_V;
             }
-        } else if (ARCH.equals("aarch64")) {
-            if (OS.startsWith("Mac")) {
+        } else if (arch.equals("aarch64")) {
+            if (os.startsWith("Mac")) {
                 return MAC_OS_AARCH_64;
-            } else if (OS.startsWith("Windows")) {
+            } else if (os.startsWith("Windows")) {
                 return WIN_AARCH_64;
             } else {
                 // The Linux ABI follows the standard AAPCS ABI
