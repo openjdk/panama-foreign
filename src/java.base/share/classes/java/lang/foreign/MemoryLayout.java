@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2023, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+
 import jdk.internal.foreign.LayoutPath;
 import jdk.internal.foreign.LayoutPath.PathElementImpl.PathKind;
 import jdk.internal.foreign.Utils;
@@ -235,10 +236,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * @return the layout alignment constraint, in bytes.
      * @throws UnsupportedOperationException if {@code bitAlignment()} is not a multiple of 8.
      */
-    default long byteAlignment() {
-        return Utils.bitsToBytesOrThrow(bitAlignment(),
-                () -> new UnsupportedOperationException("Cannot compute byte alignment; bit alignment is not a multiple of 8"));
-    }
+    long byteAlignment();
 
     /**
      * Returns a memory layout of the same type with the same size and name as this layout,
@@ -611,15 +609,14 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
     String toString();
 
     /**
-     * Creates a padding layout with the given size.
+     * Creates a padding layout with the given bitSize and a bit-alignment of eight.
      *
-     * @param size the padding size in bits.
+     * @param bitSize the padding size in bits.
      * @return the new selector layout.
-     * @throws IllegalArgumentException if {@code size <= 0}.
+     * @throws IllegalArgumentException if {@code bitSize < 0} or {@code bitSize % 8 != 0}
      */
-    static PaddingLayout paddingLayout(long size) {
-        MemoryLayoutUtil.checkSize(size);
-        return PaddingLayoutImpl.of(size);
+    static PaddingLayout paddingLayout(long bitSize) {
+        return PaddingLayoutImpl.of(MemoryLayoutUtil.requireBitSizeValid(bitSize));
     }
 
     /**
@@ -676,7 +673,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * @throws IllegalArgumentException if {@code elementCount } is negative.
      */
     static SequenceLayout sequenceLayout(long elementCount, MemoryLayout elementLayout) {
-        MemoryLayoutUtil.checkSize(elementCount, true);
+        MemoryLayoutUtil.requireNonNegative(elementCount);
         Objects.requireNonNull(elementLayout);
         return wrapOverflow(() ->
                 SequenceLayoutImpl.of(elementCount, elementLayout));
