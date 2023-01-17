@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -98,7 +98,8 @@ static void do_upcall(ffi_cif* cif, void* ret, void** args, void* user_data) {
   (*env)->CallStaticVoidMethod(env, FallbackLinker_class, FallbackLinker_doUpcall_ID,
     ptr_to_jlong(ret), ptr_to_jlong(args), upcall_data);
 
-  // detach?
+  // always detach for now
+  (*VM)->DetachCurrentThread(VM);
 }
 
 static void free_closure(JNIEnv* env, void* closure, jobject upcall_data) {

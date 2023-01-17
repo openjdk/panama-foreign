@@ -88,25 +88,23 @@ public class NativeTestHelper {
 
     private static final Linker LINKER = Linker.nativeLinker();
 
+    private static final MethodHandle FREE = LINKER.downcallHandle(
+            LINKER.defaultLookup().find("free").get(), FunctionDescriptor.ofVoid(C_POINTER));
+
+    private static final MethodHandle MALLOC = LINKER.downcallHandle(
+            LINKER.defaultLookup().find("malloc").get(), FunctionDescriptor.of(C_POINTER, C_LONG_LONG));
+
     public static void freeMemory(MemorySegment address) {
-        class Holder {
-            static final MethodHandle FREE = LINKER.downcallHandle(
-                LINKER.defaultLookup().find("free").orElseThrow(), FunctionDescriptor.ofVoid(C_POINTER));
-        }
         try {
-            Holder.FREE.invokeExact(address);
+            FREE.invokeExact(address);
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
     }
 
     public static MemorySegment allocateMemory(long size) {
-        class Holder {
-            static final MethodHandle MALLOC = LINKER.downcallHandle(
-                LINKER.defaultLookup().find("malloc").orElseThrow(), FunctionDescriptor.of(C_POINTER, C_LONG_LONG));
-        }
         try {
-            return (MemorySegment) Holder.MALLOC.invokeExact(size);
+            return (MemorySegment) MALLOC.invokeExact(size);
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }

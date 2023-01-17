@@ -871,7 +871,13 @@ AC_DEFUN([JDKOPT_SETUP_MACOSX_SIGNING],
 #
 AC_DEFUN_ONCE([JDKOPT_SETUP_FALLBACK_LINKER],
 [
-  UTIL_ARG_ENABLE(NAME: fallback-linker, DEFAULT: false,
+  FALLBACK_LINKER_DEFAULT=false
+
+  if HOTSPOT_CHECK_JVM_VARIANT(zero); then
+    FALLBACK_LINKER_DEFAULT=true
+  fi
+
+  UTIL_ARG_ENABLE(NAME: fallback-linker, DEFAULT: $FALLBACK_LINKER_DEFAULT,
       RESULT: ENABLE_FALLBACK_LINKER,
       DESC: [enable libffi-based fallback implementation of java.lang.foreign.Linker],
       CHECKING_MSG: [if fallback linker enabled])

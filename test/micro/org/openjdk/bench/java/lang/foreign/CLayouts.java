@@ -68,27 +68,25 @@ public class CLayouts {
      */
     public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS.asUnbounded();
 
-    private static final Linker LINKER = Linker.nativeLinker();
+    private static Linker LINKER = Linker.nativeLinker();
+
+    private static final MethodHandle FREE = LINKER.downcallHandle(
+            LINKER.defaultLookup().find("free").get(), FunctionDescriptor.ofVoid(ValueLayout.ADDRESS));
+
+    private static final MethodHandle MALLOC = LINKER.downcallHandle(
+            LINKER.defaultLookup().find("malloc").get(), FunctionDescriptor.of(ValueLayout.ADDRESS.asUnbounded(), ValueLayout.JAVA_LONG));
 
     public static void freeMemory(MemorySegment address) {
-        class Holder {
-            static final MethodHandle FREE = LINKER.downcallHandle(
-                LINKER.defaultLookup().find("free").orElseThrow(), FunctionDescriptor.ofVoid(ValueLayout.ADDRESS));
-        }
         try {
-            Holder.FREE.invokeExact(address);
+            FREE.invokeExact(address);
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
     }
 
     public static MemorySegment allocateMemory(long size) {
-        class Holder {
-            static final MethodHandle MALLOC = LINKER.downcallHandle(
-                LINKER.defaultLookup().find("malloc").orElseThrow(), FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.JAVA_LONG));
-        }
         try {
-            return (MemorySegment) Holder.MALLOC.invokeExact(size);
+            return (MemorySegment)MALLOC.invokeExact(size);
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }

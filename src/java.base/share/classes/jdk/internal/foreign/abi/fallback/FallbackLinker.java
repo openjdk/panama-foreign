@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,13 +64,25 @@ import static java.lang.invoke.MethodHandles.foldArguments;
 
 public final class FallbackLinker extends AbstractLinker {
 
+    private static final boolean SUPPORTED;
+
     private static final MethodHandle MH_DO_DOWNCALL;
-    private static final VarHandle PTR_ARRAY = ADDRESS.arrayElementVarHandle().withInvokeExactBehavior();
-    private static final VarHandle LONG_ARRAY = JAVA_LONG.arrayElementVarHandle().withInvokeExactBehavior();
-    private static final VarHandle INT_ARRAY = JAVA_INT.arrayElementVarHandle().withInvokeExactBehavior();
+
+    private static boolean tryLoadLibrary() {
+        try {
+            System.loadLibrary("fallbackLinker");
+        } catch (UnsatisfiedLinkError ule) {
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean isSupported() {
+        return SUPPORTED;
+    }
 
     static {
-        System.loadLibrary("fallbackLinker");
+        SUPPORTED = tryLoadLibrary();
 
         try {
             MH_DO_DOWNCALL = MethodHandles.lookup().findStatic(FallbackLinker.class, "doDowncall",
@@ -79,8 +91,8 @@ public final class FallbackLinker extends AbstractLinker {
             throw new ExceptionInInitializerError(e);
         }
     }
-    private static FallbackLinker INSTANCE;
 
+    private static FallbackLinker INSTANCE;
 
     public static FallbackLinker getInstance() {
         if (INSTANCE == null) {
@@ -135,16 +147,14 @@ public final class FallbackLinker extends AbstractLinker {
     protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function, LinkerOptions options) {
         SegmentScope cifScope = SegmentScope.auto();
         List<FallbackLinker.TypeClass> aTypes = function.argumentLayouts().stream().map(TypeClass::classify).toList();
-        int numScopedArgs = (int) aTypes.stream().filter(tp -> tp == TypeClass.ADDRESS).count();
         FallbackLinker.TypeClass rType = function.returnLayout().map(TypeClass::classify).orElse(TypeClass.VOID);
-        long allocatorSize = computeAllocatorSize(function);
         MemorySegment cif = prepCif(inferredMethodType, function, cifScope);
 
         int capturedStateMask = options.capturedCallState()
                 .mapToInt(CapturableState::mask)
                 .reduce(0, (a, b) -> a | b);
         DowncallData invData = new DowncallData(cif, function.returnLayout().orElse(null),
-                rType, function.argumentLayouts(), List.copyOf(aTypes), allocatorSize, numScopedArgs, capturedStateMask);
+                rType, function.argumentLayouts(), List.copyOf(aTypes), capturedStateMask);
 
         MethodHandle target = MethodHandles.insertArguments(MH_DO_DOWNCALL, 2, invData);
 
@@ -160,25 +170,6 @@ public final class FallbackLinker extends AbstractLinker {
         target = SharedUtils.swapArguments(target, 0, 1); // normalize parameter order
 
         return target;
-    }
-
-    private static long computeAllocatorSize(FunctionDescriptor function) {
-        long allocatorSize = function.argumentLayouts().size() * ADDRESS.byteSize();
-
-        for (int i = 0; i < function.argumentLayouts().size(); i++) {
-            MemoryLayout layout = function.argumentLayouts().get(i);
-            allocatorSize = SharedUtils.alignUp(allocatorSize, layout.byteAlignment());
-            allocatorSize += layout.byteSize();
-        }
-
-        if (function.returnLayout().isPresent()
-                && !(function.returnLayout().get() instanceof GroupLayout)) { // returned struct is allocated by caller
-            MemoryLayout retLayout = function.returnLayout().get();
-            allocatorSize = SharedUtils.alignUp(allocatorSize, retLayout.byteAlignment());
-            allocatorSize += retLayout.byteSize();
-        }
-
-        return allocatorSize;
     }
 
     @Override
@@ -208,7 +199,7 @@ public final class FallbackLinker extends AbstractLinker {
         for (int i = 0; i < argLayouts.size(); i++) {
             Class<?> pType = inferredMethodType.parameterType(i);
             MemoryLayout layout = argLayouts.get(i);
-            setAddress(argPtrs, i, toFFIType(cifScope, pType, layout));
+            argPtrs.setAtIndex(ADDRESS, i, toFFIType(cifScope, pType, layout));
         }
 
         MemorySegment ffiRType = inferredMethodType.returnType() != void.class
@@ -233,10 +224,10 @@ public final class FallbackLinker extends AbstractLinker {
             for (; i < elements.size(); i++) {
                 MemoryLayout elementLayout = elements.get(i);
                 MemorySegment elementType = toFFIType(scope, inferCarrier(elementLayout), elementLayout);
-                setAddress(elementsSeg, i, elementType);
+                elementsSeg.setAtIndex(ADDRESS, i, elementType);
             }
             // elements array is null-terminated
-            setAddress(elementsSeg, i, MemorySegment.NULL);
+            elementsSeg.setAtIndex(ADDRESS, i, MemorySegment.NULL);
 
             MemorySegment ffiType = MemorySegment.allocateNative(SIZE_BYTES, scope);
             setType(ffiType.address(), STRUCT_TYPE);
@@ -279,8 +270,8 @@ public final class FallbackLinker extends AbstractLinker {
                 element.name().ifPresent(name -> {
                     long layoutOffset = grpl.byteOffset(MemoryLayout.PathElement.groupElement(name));
                     long ffiOffset = switch ((int) ADDRESS.bitSize()) {
-                        case 64 -> getLong(offsetsOut, finalI);
-                        case 32 -> getInt(offsetsOut, finalI);
+                        case 64 -> offsetsOut.getAtIndex(JAVA_LONG, finalI);
+                        case 32 -> offsetsOut.getAtIndex(JAVA_INT, finalI);
                         default -> throw new IllegalStateException("Address size not supported: " + ADDRESS.byteSize());
                     };
                     if (ffiOffset != layoutOffset) {
@@ -351,10 +342,10 @@ public final class FallbackLinker extends AbstractLinker {
 
     private record DowncallData(MemorySegment cif, MemoryLayout returnLayout, FallbackLinker.TypeClass rType,
                                 List<MemoryLayout> argLayouts, List<FallbackLinker.TypeClass> aTypes,
-                                long allocatorSize, int numScopedArgs, int capturedStateMask) {}
+                                int capturedStateMask) {}
 
     private static Object doDowncall(SegmentAllocator returnAllocator, Object[] args, DowncallData invData) {
-        List<MemorySessionImpl> acquiredSessions = new ArrayList<>(invData.numScopedArgs());
+        List<MemorySessionImpl> acquiredSessions = new ArrayList<>();
         try (Arena arena = Arena.openConfined()) {
             int argStart = 0;
 
@@ -382,7 +373,7 @@ public final class FallbackLinker extends AbstractLinker {
                     sessionImpl.acquire0();
                     acquiredSessions.add(sessionImpl);
                 });
-                setAddress(argPtrs, i, argSeg);
+                argPtrs.setAtIndex(ADDRESS, i, argSeg);
             }
 
             MemorySegment retSeg = null;
@@ -464,7 +455,7 @@ public final class FallbackLinker extends AbstractLinker {
             for (int i = 0; i < numArgs; i++) {
                 MemoryLayout argLayout = argLayouts.get(i);
                 FallbackLinker.TypeClass argType = data.aTypes().get(i);
-                MemorySegment argPtr = MemorySegment.ofAddress(getLong(argsSeg, i), argLayout.byteSize(), upcallArena.scope());
+                MemorySegment argPtr = MemorySegment.ofAddress(argsSeg.getAtIndex(JAVA_LONG, i), argLayout.byteSize(), upcallArena.scope());
 
                 args[i] = readValue(argPtr, argType, argLayout);
             }
@@ -475,18 +466,6 @@ public final class FallbackLinker extends AbstractLinker {
         } catch (Throwable t) {
             SharedUtils.handleUncaughtException(t);
         }
-    }
-
-    private static void setAddress(MemorySegment segment, long index, MemorySegment addr) {
-        PTR_ARRAY.set(segment, index, addr);
-    }
-
-    private static long getLong(MemorySegment segment, long index) {
-        return (long) LONG_ARRAY.get(segment, index);
-    }
-
-    private static int getInt(MemorySegment segment, long index) {
-        return (int) INT_ARRAY.get(segment, index);
     }
 
     private static native long sizeofCif();

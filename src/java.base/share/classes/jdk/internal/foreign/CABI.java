@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2020, 2023, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
  */
 package jdk.internal.foreign;
 
+import jdk.internal.foreign.abi.fallback.FallbackLinker;
 import jdk.internal.vm.ForeignLinkerSupport;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
@@ -36,7 +37,8 @@ public enum CABI {
     LINUX_AARCH_64,
     MAC_OS_AARCH_64,
     WIN_AARCH_64,
-    UNKNOWN;
+    FALLBACK,
+    UNSUPPORTED;
 
     private static final CABI CURRENT = computeCurrent();
 
@@ -46,33 +48,34 @@ public enum CABI {
             return CABI.valueOf(abi);
         }
 
-        if (!ForeignLinkerSupport.isSupported()) {
-            return UNKNOWN; // use fallback linker
+        if (ForeignLinkerSupport.isSupported()) {
+            // figure out the ABI based on the platform
+            String arch = privilegedGetProperty("os.arch");
+            String os = privilegedGetProperty("os.name");
+            long addressSize = ADDRESS.bitSize();
+            // might be running in a 32-bit VM on a 64-bit platform.
+            // addressSize will be correctly 32
+            if ((arch.equals("amd64") || arch.equals("x86_64")) && addressSize == 64) {
+                if (os.startsWith("Windows")) {
+                    return WIN_64;
+                } else {
+                    return SYS_V;
+                }
+            } else if (arch.equals("aarch64")) {
+                if (os.startsWith("Mac")) {
+                    return MAC_OS_AARCH_64;
+                } else if (os.startsWith("Windows")) {
+                    return WIN_AARCH_64;
+                } else {
+                    // The Linux ABI follows the standard AAPCS ABI
+                    return LINUX_AARCH_64;
+                }
+            }
+        } else if (FallbackLinker.isSupported()) {
+            return FALLBACK; // fallback linker
         }
 
-        String arch = privilegedGetProperty("os.arch");
-        String os = privilegedGetProperty("os.name");
-        long addressSize = ADDRESS.bitSize();
-        // might be running in a 32-bit VM on a 64-bit platform.
-        // addressSize will be correctly 32
-        if ((arch.equals("amd64") || arch.equals("x86_64")) && addressSize == 64) {
-            if (os.startsWith("Windows")) {
-                return WIN_64;
-            } else {
-                return SYS_V;
-            }
-        } else if (arch.equals("aarch64")) {
-            if (os.startsWith("Mac")) {
-                return MAC_OS_AARCH_64;
-            } else if (os.startsWith("Windows")) {
-                return WIN_AARCH_64;
-            } else {
-                // The Linux ABI follows the standard AAPCS ABI
-                return LINUX_AARCH_64;
-            }
-        }
-
-        return UNKNOWN;
+        return UNSUPPORTED;
     }
 
     public static CABI current() {
