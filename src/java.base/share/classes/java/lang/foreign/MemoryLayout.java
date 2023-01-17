@@ -30,7 +30,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -173,7 +172,7 @@ import jdk.internal.javac.PreviewFeature;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface MemoryLayout permits GroupLayout, PaddingLayout, SequenceLayout, ValueLayout {
+public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, PaddingLayout, ValueLayout {
 
     /**
      * {@return the layout size, in bits}
@@ -707,9 +706,10 @@ public sealed interface MemoryLayout permits GroupLayout, PaddingLayout, Sequenc
      */
     static StructLayout structLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
-        return wrapOverflow(() -> StructLayoutImpl.of(Stream.of(elements)
-                .map(Objects::requireNonNull)
-                .toList()));
+        return wrapOverflow(() ->
+                StructLayoutImpl.of(Stream.of(elements)
+                        .map(Objects::requireNonNull)
+                        .toList()));
     }
 
     /**
