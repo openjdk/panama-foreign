@@ -36,16 +36,16 @@
 #include "jlong.h"
 
 static JavaVM* VM;
-static jclass FallbackLinker_class;
-static jmethodID FallbackLinker_doUpcall_ID;
-static const char* FallbackLinker_doUpcall_sig = "(JJLjdk/internal/foreign/abi/fallback/FallbackLinker$UpcallData;)V";
+static jclass LibFallback_class;
+static jmethodID LibFallback_doUpcall_ID;
+static const char* LibFallback_doUpcall_sig = "(JJLjava/lang/invoke/MethodHandle;)V";
 
 JNIEXPORT void JNICALL
 Java_jdk_internal_foreign_abi_fallback_LibFallback_init(JNIEnv* env, jclass cls) {
-  jint status = (*env)->GetJavaVM(env, &VM);
-  FallbackLinker_class = (*env)->FindClass(env, "jdk/internal/foreign/abi/fallback/FallbackLinker");
-  FallbackLinker_doUpcall_ID = (*env)->GetStaticMethodID(env,
-    FallbackLinker_class, "doUpcall", FallbackLinker_doUpcall_sig);
+  (*env)->GetJavaVM(env, &VM);
+  LibFallback_class = (*env)->FindClass(env, "jdk/internal/foreign/abi/fallback/LibFallback");
+  LibFallback_doUpcall_ID = (*env)->GetStaticMethodID(env,
+    LibFallback_class, "doUpcall", LibFallback_doUpcall_sig);
 }
 
 JNIEXPORT jlong JNICALL
@@ -100,9 +100,9 @@ static void do_upcall(ffi_cif* cif, void* ret, void** args, void* user_data) {
   JNIEnv* env;
   jint result = (*VM)->AttachCurrentThreadAsDaemon(VM, (void**) &env, NULL);
 
-  // call into doUpcall in FallbackLinker
+  // call into doUpcall in LibFallback
   jobject upcall_data = (jobject) user_data;
-  (*env)->CallStaticVoidMethod(env, FallbackLinker_class, FallbackLinker_doUpcall_ID,
+  (*env)->CallStaticVoidMethod(env, LibFallback_class, LibFallback_doUpcall_ID,
     ptr_to_jlong(ret), ptr_to_jlong(args), upcall_data);
 
   // always detach for now
@@ -200,21 +200,4 @@ Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1double(JNIEnv* env
 JNIEXPORT jlong JNICALL
 Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1pointer(JNIEnv* env, jclass cls) {
   return ptr_to_jlong(&ffi_type_pointer);
-}
-
-JNIEXPORT jlong JNICALL Java_jdk_internal_foreign_abi_fallback_LibFallback_FFITypeSizeof
-  (JNIEnv *env, jclass cls) {
-  return sizeof(ffi_type);
-}
-
-JNIEXPORT void JNICALL Java_jdk_internal_foreign_abi_fallback_LibFallback_FFITypeSetType
-  (JNIEnv *env, jclass cls, jlong lptr, jshort type) {
-  ffi_type* ptr = jlong_to_ptr(lptr);
-  ptr->type = type;
-}
-
-JNIEXPORT void JNICALL Java_jdk_internal_foreign_abi_fallback_LibFallback_FFITypeSetElements
-  (JNIEnv *env, jclass cls, jlong lptr, jlong lelements) {
-  ffi_type* ptr = jlong_to_ptr(lptr);
-  ptr->elements = jlong_to_ptr(lelements);
 }

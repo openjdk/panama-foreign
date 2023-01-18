@@ -24,13 +24,15 @@
  */
 package jdk.internal.foreign.abi.fallback;
 
-/*
-typedef enum {
-  FFI_OK = 0,
-  FFI_BAD_TYPEDEF,
-  FFI_BAD_ABI,
-  FFI_BAD_ARGTYPE
-} ffi_status;
+/**
+ * See doc: <a href="https://github.com/libffi/libffi/blob/7611bb4cfe90884b55ad225e0166136a1d2cf22b/doc/libffi.texi#L159"></a>
+ * <p>
+ * typedef enum {
+ *   FFI_OK = 0,
+ *   FFI_BAD_TYPEDEF,
+ *   FFI_BAD_ABI,
+ *   FFI_BAD_ARGTYPE
+ * } ffi_status;
  */
 enum FFIStatus {
     FFI_OK,

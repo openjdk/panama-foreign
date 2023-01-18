@@ -24,6 +24,9 @@
  */
 package jdk.internal.foreign.abi.fallback;
 
+/**
+ * enum which maps the {@code ffi_abi} enum
+ */
 enum FFIABI {
     DEFAULT(LibFallback.DEFAULT_ABI);
 

@@ -24,15 +24,15 @@
  */
 package jdk.internal.foreign.abi.fallback;
 
+import jdk.internal.foreign.abi.SharedUtils;
+
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentScope;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 
 class LibFallback {
-    static final boolean SUPPORTED;
-
-    static {
-        SUPPORTED = tryLoadLibrary();
-    }
+    static final boolean SUPPORTED = tryLoadLibrary();
 
     private static boolean tryLoadLibrary() {
         try {
@@ -59,39 +59,112 @@ class LibFallback {
     static final MemorySegment VOID_TYPE = MemorySegment.ofAddress(ffi_type_void());
     static final short STRUCT_TAG = ffi_type_struct();
 
-    static void doDowncall(MemorySegment cif, MemorySegment target, long retPtr, MemorySegment argPtrs,
-                                  long capturedStateAddr, int capturedStateMask) {
+    private static final long SIZEOF_CIF = sizeofCif();
+
+    private static final MethodType UPCALL_TARGET_TYPE = MethodType.methodType(void.class, MemorySegment.class, MemorySegment.class);
+
+    /**
+     * Do a libffi based downcall. This method wraps the {@code ffi_call} function
+     *
+     * @param cif a pointer to a {@code ffi_cif} struct
+     * @param target the address of the target function
+     * @param retPtr a pointer to a buffer into which the return value shall be written, or {@code null} if the target
+     *               function does not return a value
+     * @param argPtrs a pointer to an array of pointers, which each point to an argument value
+     * @param capturedState a pointer to a buffer into which captured state is written, or {@code null} if no state is
+     *                      to be captured
+     * @param capturedStateMask the bit mask indicating which state to capture
+     *
+     * @see jdk.internal.foreign.abi.CapturableState
+     */
+    static void doDowncall(MemorySegment cif, MemorySegment target, MemorySegment retPtr, MemorySegment argPtrs,
+                                  MemorySegment capturedState, int capturedStateMask) {
             doDowncall(cif.address(), target.address(),
-                    retPtr, argPtrs.address(), capturedStateAddr, capturedStateMask);
+                    retPtr == null ? 0 : retPtr.address(), argPtrs.address(),
+                    capturedState == null ? 0 : capturedState.address(), capturedStateMask);
     }
 
-    static MemorySegment prepCif(MemorySegment returnType, int numArgs, MemorySegment argTypes, FFIABI abi,
-                                        SegmentScope scope) {
-        MemorySegment cif = MemorySegment.allocateNative(sizeofCif(), scope);
-        checkStatus(ffi_prep_cif(cif.address(), abi.value(), numArgs,
-                returnType.address(), argTypes.address()));
+    /**
+     * Wrapper for {@code ffi_prep_cif}
+     *
+     * @param returnType a pointer to an @{code ffi_type} describing the return type
+     * @param numArgs the number of arguments
+     * @param paramTypes a pointer to an array of pointers, which each point to an {@code ffi_type} describing a
+     *                parameter type
+     * @param abi the abi to be used
+     * @param scope the scope into which to allocate the returned {@code ffi_cif} struct
+     * @return a pointer to a prepared {@code ffi_cif} struct
+     *
+     * @throws IllegalStateException if the call to {@code ffi_prep_cif} returns a non-zero status code
+     */
+    static MemorySegment prepCif(MemorySegment returnType, int numArgs, MemorySegment paramTypes, FFIABI abi,
+                                         SegmentScope scope) throws IllegalStateException {
+        MemorySegment cif = MemorySegment.allocateNative(SIZEOF_CIF, scope);
+        checkStatus(ffi_prep_cif(cif.address(), abi.value(), numArgs, returnType.address(), paramTypes.address()));
         return cif;
     }
 
-    static MemorySegment createClosure(MemorySegment cif, Object userData, SegmentScope scope) {
+    /**
+     * Create an upcallStub-style closure. This method wraps the {@code ffi_closure_alloc}
+     * and {@code ffi_prep_closure_loc} functions.
+     * <p>
+     * The closure will end up calling into {@link #doUpcall(long, long, MethodHandle)}
+     * <p>
+     * The target method handle should have the type {@code (MemorySegment, MemorySegment) -> void}. The first
+     * argument is a pointer to the buffer into which the native return value should be written. The second argument
+     * is a pointer to an array of pointers, which each point to a native argument value.
+     *
+     * @param cif a pointer to a {@code ffi_cif} struct
+     * @param target a method handle that points to the target function
+     * @param scope the scope to which to attach the created upcall stub
+     * @return the created upcall stub
+     *
+     * @throws IllegalStateException if the call to {@code ffi_prep_closure_loc} returns a non-zero status code
+     * @throws IllegalArgumentException if {@code target} does not have the right type
+     */
+    static MemorySegment createClosure(MemorySegment cif, MethodHandle target, SegmentScope scope)
+            throws IllegalStateException, IllegalArgumentException {
+        if (target.type() != UPCALL_TARGET_TYPE) {
+            throw new IllegalArgumentException("Target handle has wrong type: " + target.type() + " != " + UPCALL_TARGET_TYPE);
+        }
+
         long[] ptrs = new long[3];
-        checkStatus(createClosure(cif.address(), userData, ptrs));
+        checkStatus(createClosure(cif.address(), target, ptrs));
         long closurePtr = ptrs[0];
         long execPtr = ptrs[1];
-        long globalUserData = ptrs[2];
+        long globalTarget = ptrs[2];
 
-        return MemorySegment.ofAddress(execPtr, 0, scope, () -> freeClosure(closurePtr, globalUserData));
+        return MemorySegment.ofAddress(execPtr, 0, scope, () -> freeClosure(closurePtr, globalTarget));
     }
 
-    static void getStructOffsets(MemorySegment structType, MemorySegment offsetsOut, FFIABI abi) {
-        checkStatus(ffi_get_struct_offsets(abi.value(),
-                    structType.address(), offsetsOut.address()));
+    // the target function for a closure call
+    private static void doUpcall(long retPtr, long argPtrs, MethodHandle target) {
+        try {
+            target.invokeExact(MemorySegment.ofAddress(retPtr), MemorySegment.ofAddress(argPtrs));
+        } catch (Throwable t) {
+            SharedUtils.handleUncaughtException(t);
+        }
+    }
+
+    /**
+     * Wrapper for {@code ffi_get_struct_offsets}
+     *
+     * @param structType a pointer to an {@code ffi_type} representing a struct
+     * @param offsetsOut a pointer to an array of {@code size_t}, with one element for each element of the struct.
+     *                   This is an 'out' parameter that will be filled in by this call
+     * @param abi the abi to be used
+     *
+     * @throws IllegalStateException if the call to {@code ffi_get_struct_offsets} returns a non-zero status code
+     */
+    static void getStructOffsets(MemorySegment structType, MemorySegment offsetsOut, FFIABI abi)
+            throws IllegalStateException  {
+        checkStatus(ffi_get_struct_offsets(abi.value(), structType.address(), offsetsOut.address()));
     }
 
     private static void checkStatus(int code) {
         FFIStatus status = FFIStatus.of(code);
-        if (FFIStatus.of(code) != FFIStatus.FFI_OK) {
-            throw new IllegalStateException("libffi call failed with code: " + status);
+        if (status != FFIStatus.FFI_OK) {
+            throw new IllegalStateException("libffi call failed with status: " + status);
         }
     }
 
@@ -99,8 +172,8 @@ class LibFallback {
 
     private static native long sizeofCif();
 
-    private static native int createClosure(long cif, Object invData, long[] ptrs);
-    private static native void freeClosure(long closureAddress, long globalRef);
+    private static native int createClosure(long cif, Object userData, long[] ptrs);
+    private static native void freeClosure(long closureAddress, long globalTarget);
     private static native void doDowncall(long cif, long fn, long rvalue, long avalues, long capturedState, int capturedStateMask);
 
     private static native int ffi_prep_cif(long cif, int abi, int nargs, long rtype, long atypes);
@@ -121,8 +194,4 @@ class LibFallback {
     private static native long ffi_type_float();
     private static native long ffi_type_double();
     private static native long ffi_type_pointer();
-
-    static native long FFITypeSizeof();
-    static native void FFITypeSetType(long ptr, short type);
-    static native void FFITypeSetElements(long ptr, long elements);
 }

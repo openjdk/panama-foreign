@@ -53,11 +53,14 @@ import static java.lang.invoke.MethodHandles.foldArguments;
 public final class FallbackLinker extends AbstractLinker {
 
     private static final MethodHandle MH_DO_DOWNCALL;
+    private static final MethodHandle MH_DO_UPCALL;
 
     static {
         try {
             MH_DO_DOWNCALL = MethodHandles.lookup().findStatic(FallbackLinker.class, "doDowncall",
                     MethodType.methodType(Object.class, SegmentAllocator.class, Object[].class, FallbackLinker.DowncallData.class));
+            MH_DO_UPCALL = MethodHandles.lookup().findStatic(FallbackLinker.class, "doUpcall",
+                    MethodType.methodType(void.class, MemorySegment.class, MemorySegment.class, UpcallData.class));
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -76,16 +79,15 @@ public final class FallbackLinker extends AbstractLinker {
 
     @Override
     protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function, LinkerOptions options) {
-        SegmentScope cifScope = SegmentScope.auto();
         List<TypeClass> aTypes = function.argumentLayouts().stream().map(TypeClass::classify).toList();
         TypeClass rType = function.returnLayout().map(TypeClass::classify).orElse(TypeClass.VOID);
-        MemorySegment cif = makeCif(inferredMethodType, function, FFIABI.DEFAULT, cifScope);
+        MemorySegment cif = makeCif(inferredMethodType, function, FFIABI.DEFAULT, SegmentScope.auto());
 
         int capturedStateMask = options.capturedCallState()
                 .mapToInt(CapturableState::mask)
                 .reduce(0, (a, b) -> a | b);
         DowncallData invData = new DowncallData(cif, function.returnLayout().orElse(null),
-                rType, function.argumentLayouts(), List.copyOf(aTypes), capturedStateMask);
+                rType, function.argumentLayouts(), aTypes, capturedStateMask);
 
         MethodHandle target = MethodHandles.insertArguments(MH_DO_DOWNCALL, 2, invData);
 
@@ -113,22 +115,22 @@ public final class FallbackLinker extends AbstractLinker {
         UpcallData invData = new UpcallData(target, function.returnLayout().orElse(null), rType,
                 function.argumentLayouts(), aTypes);
 
-        return LibFallback.createClosure(cif, invData, scope);
+        MethodHandle doUpcallMH = MethodHandles.insertArguments(MH_DO_UPCALL, 2, invData);
+        return LibFallback.createClosure(cif, doUpcallMH, scope);
     }
 
-    private static MemorySegment makeCif(MethodType methodType, FunctionDescriptor function, FFIABI abi, SegmentScope cifScope) {
-        MemorySegment argTypes = MemorySegment.allocateNative(function.argumentLayouts().size() * ADDRESS.byteSize(), cifScope);
+    private static MemorySegment makeCif(MethodType methodType, FunctionDescriptor function, FFIABI abi, SegmentScope scope) {
+        MemorySegment argTypes = MemorySegment.allocateNative(function.argumentLayouts().size() * ADDRESS.byteSize(), scope);
         List<MemoryLayout> argLayouts = function.argumentLayouts();
         for (int i = 0; i < argLayouts.size(); i++) {
-            Class<?> pType = methodType.parameterType(i);
             MemoryLayout layout = argLayouts.get(i);
-            argTypes.setAtIndex(ADDRESS, i, FFIType.toFFIType(cifScope, pType, layout, abi));
+            argTypes.setAtIndex(ADDRESS, i, FFIType.toFFIType(layout, abi, scope));
         }
 
         MemorySegment returnType = methodType.returnType() != void.class
-                ? FFIType.toFFIType(cifScope, methodType.returnType(), function.returnLayout().orElseThrow(), abi)
+                ? FFIType.toFFIType(function.returnLayout().orElseThrow(), abi, scope)
                 : LibFallback.VOID_TYPE;
-        return LibFallback.prepCif(returnType, argLayouts.size(), argTypes, abi, cifScope);
+        return LibFallback.prepCif(returnType, argLayouts.size(), argTypes, abi, scope);
     }
 
     private record DowncallData(MemorySegment cif, MemoryLayout returnLayout, TypeClass rType,
@@ -168,14 +170,11 @@ public final class FallbackLinker extends AbstractLinker {
             }
 
             MemorySegment retSeg = null;
-            long retPtr = 0;
             if (invData.rType != TypeClass.VOID) {
                 retSeg = (invData.rType() == TypeClass.SEGMENT ? returnAllocator : arena).allocate(invData.returnLayout);
-                retPtr = retSeg.address();
             }
 
-            long capturedStateAddr = capturedState == null ? 0 : capturedState.address();
-            LibFallback.doDowncall(invData.cif, target, retPtr, argPtrs, capturedStateAddr, invData.capturedStateMask());
+            LibFallback.doDowncall(invData.cif, target, retSeg, argPtrs, capturedState, invData.capturedStateMask());
 
             Reference.reachabilityFence(invData.cif());
 
@@ -190,14 +189,14 @@ public final class FallbackLinker extends AbstractLinker {
     private record UpcallData(MethodHandle target, MemoryLayout returnLayout, TypeClass rType,
                               List<MemoryLayout> argLayouts, List<TypeClass> aTypes) {}
 
-    private static void doUpcall(long retPtr, long argPtrs, UpcallData data) {
+    private static void doUpcall(MemorySegment retPtr, MemorySegment argPtrs, UpcallData data) throws Throwable {
         List<MemoryLayout> argLayouts = data.argLayouts();
         int numArgs = argLayouts.size();
         MemoryLayout retLayout = data.returnLayout();
         try (Arena upcallArena = Arena.openConfined()) {
-            MemorySegment argsSeg = MemorySegment.ofAddress(argPtrs, numArgs * ADDRESS.byteSize(), upcallArena.scope());
+            MemorySegment argsSeg = MemorySegment.ofAddress(argPtrs.address(), numArgs * ADDRESS.byteSize(), upcallArena.scope());
             MemorySegment retSeg = data.rType() != TypeClass.VOID
-                ? MemorySegment.ofAddress(retPtr, retLayout.byteSize(), upcallArena.scope())
+                ? MemorySegment.ofAddress(retPtr.address(), retLayout.byteSize(), upcallArena.scope())
                 : null;
 
             Object[] args = new Object[numArgs];
@@ -212,8 +211,6 @@ public final class FallbackLinker extends AbstractLinker {
             Object result = data.target().invokeWithArguments(args);
 
             writeValue(data.rType(), result, data.returnLayout(), retSeg);
-        } catch (Throwable t) {
-            SharedUtils.handleUncaughtException(t);
         }
     }
 

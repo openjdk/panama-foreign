@@ -24,6 +24,8 @@
  */
 package jdk.internal.foreign.abi.fallback;
 
+import jdk.internal.foreign.Utils;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
@@ -34,7 +36,7 @@ import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.StructLayout;
 import java.lang.foreign.UnionLayout;
 import java.lang.foreign.ValueLayout;
-import java.nio.ByteOrder;
+import java.lang.invoke.VarHandle;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -46,23 +48,43 @@ import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static java.lang.foreign.ValueLayout.JAVA_LONG;
 import static java.lang.foreign.ValueLayout.JAVA_SHORT;
 
-final class FFIType {
-    private static final long SIZE_BYTES = LibFallback.FFITypeSizeof();
+/**
+ * typedef struct _ffi_type
+ * {
+ *   size_t size;
+ *   unsigned short alignment;
+ *   unsigned short type;
+ *   struct _ffi_type **elements;
+ * } ffi_type;
+ */
+class FFIType {
+    private static final ValueLayout SIZE_T = switch ((int) ADDRESS.bitSize()) {
+            case 64 -> JAVA_LONG;
+            case 32 -> JAVA_INT;
+            default -> throw new IllegalStateException("Address size not supported: " + ADDRESS.byteSize());
+        };
+    private static final ValueLayout UNSIGNED_SHORT = JAVA_SHORT;
+    private static final StructLayout LAYOUT = Utils.computeStructLayout(
+            SIZE_T, UNSIGNED_SHORT, UNSIGNED_SHORT.withName("type"), ADDRESS.withName("elements"));
 
-    private static MemorySegment makeStructType(List<MemoryLayout> elements, FFIABI abi, SegmentScope scope) {
+    private static final VarHandle VH_TYPE = LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("type"));
+    private static final VarHandle VH_ELEMENTS = LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("elements"));
+    private static final VarHandle VH_SIZE_T_ARRAY = SIZE_T.arrayElementVarHandle();
+
+    private static MemorySegment make(List<MemoryLayout> elements, FFIABI abi, SegmentScope scope) {
         MemorySegment elementsSeg = MemorySegment.allocateNative((elements.size() + 1) * ADDRESS.byteSize(), scope);
         int i = 0;
         for (; i < elements.size(); i++) {
             MemoryLayout elementLayout = elements.get(i);
-            MemorySegment elementType = toFFIType(scope, inferCarrier(elementLayout), elementLayout, abi);
+            MemorySegment elementType = toFFIType(elementLayout, abi, scope);
             elementsSeg.setAtIndex(ADDRESS, i, elementType);
         }
         // elements array is null-terminated
         elementsSeg.setAtIndex(ADDRESS, i, MemorySegment.NULL);
 
-        MemorySegment ffiType = MemorySegment.allocateNative(SIZE_BYTES, scope);
-        LibFallback.FFITypeSetType(ffiType.address(), LibFallback.STRUCT_TAG);
-        LibFallback.FFITypeSetElements(ffiType.address(), elementsSeg.address());
+        MemorySegment ffiType = MemorySegment.allocateNative(LAYOUT, scope);
+        VH_TYPE.set(ffiType, LibFallback.STRUCT_TAG);
+        VH_ELEMENTS.set(ffiType, elementsSeg);
 
         return ffiType;
     }
@@ -79,15 +101,14 @@ final class FFIType {
         MemorySegment.class, LibFallback.POINTER_TYPE
     );
 
-    static MemorySegment toFFIType(SegmentScope cifScope, Class<?> type, MemoryLayout layout, FFIABI abi) {
+    static MemorySegment toFFIType(MemoryLayout layout, FFIABI abi, SegmentScope scope) {
         if (layout instanceof GroupLayout grpl) {
-            assert type == MemorySegment.class;
             if (grpl instanceof StructLayout) {
                 // libffi doesn't want our padding
                 List<MemoryLayout> filteredLayouts = grpl.memberLayouts().stream()
                         .filter(Predicate.not(PaddingLayout.class::isInstance))
                         .toList();
-                MemorySegment structType = makeStructType(filteredLayouts, abi, cifScope);
+                MemorySegment structType = make(filteredLayouts, abi, scope);
                 verifyStructType(grpl, filteredLayouts, structType, abi);
                 return structType;
             }
@@ -95,27 +116,23 @@ final class FFIType {
             throw new UnsupportedOperationException("No unions (TODO)");
         } else if (layout instanceof SequenceLayout sl) {
             List<MemoryLayout> elements = Collections.nCopies(Math.toIntExact(sl.elementCount()), sl.elementLayout());
-            return makeStructType(elements, abi, cifScope);
+            return make(elements, abi, scope);
         }
-        return Objects.requireNonNull(CARRIER_TO_TYPE.get(type));
+        return Objects.requireNonNull(CARRIER_TO_TYPE.get(((ValueLayout) layout).carrier()));
     }
 
-    // verify layout against what libffi set
+    // verify layout against what libffi sets
     private static void verifyStructType(GroupLayout grpl, List<MemoryLayout> filteredLayouts, MemorySegment structType,
                                          FFIABI abi) {
         try (Arena verifyArena = Arena.openConfined()) {
-            MemorySegment offsetsOut = verifyArena.allocate(ADDRESS.byteSize() * filteredLayouts.size());
+            MemorySegment offsetsOut = verifyArena.allocate(SIZE_T.byteSize() * filteredLayouts.size());
             LibFallback.getStructOffsets(structType, offsetsOut, abi);
             for (int i = 0; i < filteredLayouts.size(); i++) {
                 MemoryLayout element = filteredLayouts.get(i);
                 final int finalI = i;
                 element.name().ifPresent(name -> {
                     long layoutOffset = grpl.byteOffset(MemoryLayout.PathElement.groupElement(name));
-                    long ffiOffset = switch ((int) ADDRESS.bitSize()) {
-                        case 64 -> offsetsOut.getAtIndex(JAVA_LONG, finalI);
-                        case 32 -> offsetsOut.getAtIndex(JAVA_INT, finalI);
-                        default -> throw new IllegalStateException("Address size not supported: " + ADDRESS.byteSize());
-                    };
+                    long ffiOffset = (long) VH_SIZE_T_ARRAY.get(offsetsOut, finalI);
                     if (ffiOffset != layoutOffset) {
                         throw new IllegalArgumentException("Invalid group layout." +
                                 " Offset of '" + name + "': " + layoutOffset + " != " + ffiOffset);
@@ -123,16 +140,5 @@ final class FFIType {
                 });
             }
         }
-    }
-
-    private static Class<?> inferCarrier(MemoryLayout element) {
-        if (element instanceof ValueLayout vl) {
-            return vl.carrier();
-        } else if (element instanceof GroupLayout) {
-            return MemorySegment.class;
-        } else if (element instanceof SequenceLayout) {
-            return null; // field of struct
-        }
-        throw new IllegalArgumentException("Can not infer carrier for: " + element);
     }
 }

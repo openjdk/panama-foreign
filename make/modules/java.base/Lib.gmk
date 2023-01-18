@@ -229,6 +229,6 @@ ifeq ($(ENABLE_FALLBACK_LINKER), true)
                  $(call SET_SHARED_LIBRARY_ORIGIN), \
       LIBS := $(LIBFFI_LIBS), \
   ))
-  
+
   TARGETS += $(BUILD_LIBFALLBACKLINKER)
 endif
