@@ -23,8 +23,7 @@
  * questions.
  */
 
-#include "jdk_internal_foreign_abi_fallback_FallbackLinker.h"
-#include "jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_type.h"
+#include "jdk_internal_foreign_abi_fallback_LibFallback.h"
 
 #include <ffi.h>
 
@@ -36,17 +35,30 @@
 
 #include "jlong.h"
 
+static JavaVM* VM;
+static jclass FallbackLinker_class;
+static jmethodID FallbackLinker_doUpcall_ID;
+static const char* FallbackLinker_doUpcall_sig = "(JJLjdk/internal/foreign/abi/fallback/FallbackLinker$UpcallData;)V";
+
+JNIEXPORT void JNICALL
+Java_jdk_internal_foreign_abi_fallback_LibFallback_init(JNIEnv* env, jclass cls) {
+  jint status = (*env)->GetJavaVM(env, &VM);
+  FallbackLinker_class = (*env)->FindClass(env, "jdk/internal/foreign/abi/fallback/FallbackLinker");
+  FallbackLinker_doUpcall_ID = (*env)->GetStaticMethodID(env,
+    FallbackLinker_class, "doUpcall", FallbackLinker_doUpcall_sig);
+}
+
 JNIEXPORT jlong JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_sizeofCif(JNIEnv* env, jclass cls) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_sizeofCif(JNIEnv* env, jclass cls) {
   return sizeof(ffi_cif);
 }
 
 JNIEXPORT jint JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1prep_1cif(JNIEnv* env, jclass cls, jlong cif, jint abi, jint nargs, jlong rtype, jlong atypes) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1prep_1cif(JNIEnv* env, jclass cls, jlong cif, jint abi, jint nargs, jlong rtype, jlong atypes) {
   return ffi_prep_cif(jlong_to_ptr(cif), (ffi_abi) abi, (unsigned int) nargs, jlong_to_ptr(rtype), jlong_to_ptr(atypes));
 }
 JNIEXPORT jint JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1get_1struct_1offsets(JNIEnv* env, jclass cls, jint abi, jlong type, jlong offsets) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1get_1struct_1offsets(JNIEnv* env, jclass cls, jint abi, jlong type, jlong offsets) {
   return ffi_get_struct_offsets((ffi_abi) abi, jlong_to_ptr(type), jlong_to_ptr(offsets));
 }
 
@@ -74,7 +86,7 @@ static void do_capture_state(int32_t* value_ptr, int captured_state_mask) {
 }
 
 JNIEXPORT void JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1call(JNIEnv* env, jclass cls, jlong cif, jlong fn, jlong rvalue, jlong avalues, jlong jcaptured_state, jint captured_state_mask) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_doDowncall(JNIEnv* env, jclass cls, jlong cif, jlong fn, jlong rvalue, jlong avalues, jlong jcaptured_state, jint captured_state_mask) {
   ffi_call(jlong_to_ptr(cif), jlong_to_ptr(fn), jlong_to_ptr(rvalue), jlong_to_ptr(avalues));
 
   if (captured_state_mask != 0) {
@@ -82,11 +94,6 @@ Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1call(JNIEnv* env, jcl
     do_capture_state(captured_state, captured_state_mask);
   }
 }
-
-static JavaVM* VM;
-static jclass FallbackLinker_class;
-static jmethodID FallbackLinker_doUpcall_ID;
-static const char* FallbackLinker_doUpcall_sig = "(JJLjdk/internal/foreign/abi/fallback/FallbackLinker$UpcallData;)V";
 
 static void do_upcall(ffi_cif* cif, void* ret, void** args, void* user_data) {
   // attach thread
@@ -108,14 +115,7 @@ static void free_closure(JNIEnv* env, void* closure, jobject upcall_data) {
 }
 
 JNIEXPORT jint JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_createClosure(JNIEnv* env, jclass cls, jlong cif, jobject upcall_data, jlongArray jptrs) {
-  if (VM == NULL) {
-    jint status = (*env)->GetJavaVM(env, &VM);
-    FallbackLinker_class = (*env)->FindClass(env, "jdk/internal/foreign/abi/fallback/FallbackLinker");
-    FallbackLinker_doUpcall_ID = (*env)->GetStaticMethodID(env,
-      FallbackLinker_class, "doUpcall", FallbackLinker_doUpcall_sig);
-  }
-
+Java_jdk_internal_foreign_abi_fallback_LibFallback_createClosure(JNIEnv* env, jclass cls, jlong cif, jobject upcall_data, jlongArray jptrs) {
   void* code;
   void* closure = ffi_closure_alloc(sizeof(ffi_closure), &code);
 
@@ -138,99 +138,82 @@ Java_jdk_internal_foreign_abi_fallback_FallbackLinker_createClosure(JNIEnv* env,
 }
 
 JNIEXPORT void JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_freeClosure(JNIEnv* env, jclass cls, jlong closure, jlong upcall_data) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_freeClosure(JNIEnv* env, jclass cls, jlong closure, jlong upcall_data) {
   free_closure(env, jlong_to_ptr(closure), jlong_to_ptr(upcall_data));
 }
 
 JNIEXPORT jint JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1default_1abi(JNIEnv* env, jclass cls) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1default_1abi(JNIEnv* env, jclass cls) {
   return (jint) FFI_DEFAULT_ABI;
 }
 
 JNIEXPORT jshort JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1type_1struct(JNIEnv* env, jclass cls) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1struct(JNIEnv* env, jclass cls) {
   return (jshort) FFI_TYPE_STRUCT;
 }
 
 JNIEXPORT jlong JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1type_1void(JNIEnv* env, jclass cls) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1void(JNIEnv* env, jclass cls) {
   return ptr_to_jlong(&ffi_type_void);
 }
 
 JNIEXPORT jlong JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1type_1uint8(JNIEnv* env, jclass cls) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1uint8(JNIEnv* env, jclass cls) {
   return ptr_to_jlong(&ffi_type_uint8);
 }
 JNIEXPORT jlong JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1type_1sint8(JNIEnv* env, jclass cls) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1sint8(JNIEnv* env, jclass cls) {
   return ptr_to_jlong(&ffi_type_sint8);
 }
 JNIEXPORT jlong JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1type_1uint16(JNIEnv* env, jclass cls) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1uint16(JNIEnv* env, jclass cls) {
   return ptr_to_jlong(&ffi_type_uint16);
 }
 JNIEXPORT jlong JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1type_1sint16(JNIEnv* env, jclass cls) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1sint16(JNIEnv* env, jclass cls) {
   return ptr_to_jlong(&ffi_type_sint16);
 }
 JNIEXPORT jlong JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1type_1uint32(JNIEnv* env, jclass cls) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1uint32(JNIEnv* env, jclass cls) {
   return ptr_to_jlong(&ffi_type_uint32);
 }
 JNIEXPORT jlong JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1type_1sint32(JNIEnv* env, jclass cls) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1sint32(JNIEnv* env, jclass cls) {
   return ptr_to_jlong(&ffi_type_sint32);
 }
 JNIEXPORT jlong JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1type_1uint64(JNIEnv* env, jclass cls) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1uint64(JNIEnv* env, jclass cls) {
   return ptr_to_jlong(&ffi_type_uint64);
 }
 JNIEXPORT jlong JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1type_1sint64(JNIEnv* env, jclass cls) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1sint64(JNIEnv* env, jclass cls) {
   return ptr_to_jlong(&ffi_type_sint64);
 }
 JNIEXPORT jlong JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1type_1float(JNIEnv* env, jclass cls) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1float(JNIEnv* env, jclass cls) {
   return ptr_to_jlong(&ffi_type_float);
 }
 JNIEXPORT jlong JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1type_1double(JNIEnv* env, jclass cls) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1double(JNIEnv* env, jclass cls) {
   return ptr_to_jlong(&ffi_type_double);
 }
 JNIEXPORT jlong JNICALL
-Java_jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_1type_1pointer(JNIEnv* env, jclass cls) {
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1pointer(JNIEnv* env, jclass cls) {
   return ptr_to_jlong(&ffi_type_pointer);
 }
 
-// ffi_type impl
-
-/*
- * Class:     jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_type
- * Method:    sizeof
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_jdk_internal_foreign_abi_fallback_FallbackLinker_00024ffi_1type_sizeof
+JNIEXPORT jlong JNICALL Java_jdk_internal_foreign_abi_fallback_LibFallback_FFITypeSizeof
   (JNIEnv *env, jclass cls) {
   return sizeof(ffi_type);
 }
 
-/*
- * Class:     jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_type
- * Method:    setType
- * Signature: (JS)V
- */
-JNIEXPORT void JNICALL Java_jdk_internal_foreign_abi_fallback_FallbackLinker_00024ffi_1type_setType
+JNIEXPORT void JNICALL Java_jdk_internal_foreign_abi_fallback_LibFallback_FFITypeSetType
   (JNIEnv *env, jclass cls, jlong lptr, jshort type) {
   ffi_type* ptr = jlong_to_ptr(lptr);
   ptr->type = type;
 }
 
-/*
- * Class:     jdk_internal_foreign_abi_fallback_FallbackLinker_ffi_type
- * Method:    setElements
- * Signature: (JJ)V
- */
-JNIEXPORT void JNICALL Java_jdk_internal_foreign_abi_fallback_FallbackLinker_00024ffi_1type_setElements
+JNIEXPORT void JNICALL Java_jdk_internal_foreign_abi_fallback_LibFallback_FFITypeSetElements
   (JNIEnv *env, jclass cls, jlong lptr, jlong lelements) {
   ffi_type* ptr = jlong_to_ptr(lptr);
   ptr->elements = jlong_to_ptr(lelements);

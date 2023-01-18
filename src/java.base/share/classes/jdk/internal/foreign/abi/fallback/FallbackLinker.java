@@ -27,128 +27,59 @@ package jdk.internal.foreign.abi.fallback;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.abi.AbstractLinker;
-import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.CapturableState;
 import jdk.internal.foreign.abi.LinkerOptions;
 import jdk.internal.foreign.abi.SharedUtils;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.PaddingLayout;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.SegmentScope;
-import java.lang.foreign.SequenceLayout;
-import java.lang.foreign.StructLayout;
-import java.lang.foreign.UnionLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.invoke.VarHandle;
 import java.lang.ref.Reference;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
-import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static java.lang.foreign.ValueLayout.JAVA_LONG;
 import static java.lang.invoke.MethodHandles.foldArguments;
 
 public final class FallbackLinker extends AbstractLinker {
 
-    private static final boolean SUPPORTED;
-
     private static final MethodHandle MH_DO_DOWNCALL;
 
-    private static boolean tryLoadLibrary() {
-        try {
-            System.loadLibrary("fallbackLinker");
-        } catch (UnsatisfiedLinkError ule) {
-            return false;
-        }
-        return true;
-    }
-
-    public static boolean isSupported() {
-        return SUPPORTED;
-    }
-
     static {
-        SUPPORTED = tryLoadLibrary();
-
         try {
             MH_DO_DOWNCALL = MethodHandles.lookup().findStatic(FallbackLinker.class, "doDowncall",
-                    MethodType.methodType(Object.class, SegmentAllocator.class, Object[].class, DowncallData.class));
+                    MethodType.methodType(Object.class, SegmentAllocator.class, Object[].class, FallbackLinker.DowncallData.class));
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
         }
     }
 
-    private static FallbackLinker INSTANCE;
-
     public static FallbackLinker getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new FallbackLinker();
+        class Holder {
+            static final FallbackLinker INSTANCE = new FallbackLinker();
         }
-        return INSTANCE;
+        return Holder.INSTANCE;
     }
 
-    private static final Map<Class<?>, MemorySegment> CARRIER_TO_TYPE = Map.of(
-        boolean.class, MemorySegment.ofAddress(ffi_type_uint8()),
-        byte.class, MemorySegment.ofAddress(ffi_type_sint8()),
-        short.class, MemorySegment.ofAddress(ffi_type_sint16()),
-        char.class, MemorySegment.ofAddress(ffi_type_uint16()),
-        int.class, MemorySegment.ofAddress(ffi_type_sint32()),
-        long.class, MemorySegment.ofAddress(ffi_type_sint64()),
-        float.class, MemorySegment.ofAddress(ffi_type_float()),
-        double.class, MemorySegment.ofAddress(ffi_type_double()),
-        MemorySegment.class, MemorySegment.ofAddress(ffi_type_pointer())
-    );
-
-    private static final MemorySegment VOID_TYPE = MemorySegment.ofAddress(ffi_type_void());
-    private static final short STRUCT_TYPE = ffi_type_struct();
-
-    private static final int DEFAULT_ABI = ffi_default_abi();
-
-    /*
-    typedef enum {
-      FFI_OK = 0,
-      FFI_BAD_TYPEDEF,
-      FFI_BAD_ABI,
-      FFI_BAD_ARGTYPE
-    } ffi_status;
-     */
-    private enum ffi_status {
-        FFI_OK,
-        FFI_BAD_TYPEDEF,
-        FFI_BAD_ABI,
-        FFI_BAD_ARGTYPE;
-
-        public static ffi_status of(int code) {
-            return switch (code) {
-                case 0 -> FFI_OK;
-                case 1 -> FFI_BAD_TYPEDEF;
-                case 2 -> FFI_BAD_ABI;
-                case 3 -> FFI_BAD_ARGTYPE;
-                default -> throw new IllegalArgumentException("Unknown status code: " + code);
-            };
-        }
+    public static boolean isSupported() {
+        return LibFallback.SUPPORTED;
     }
 
     @Override
     protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function, LinkerOptions options) {
         SegmentScope cifScope = SegmentScope.auto();
-        List<FallbackLinker.TypeClass> aTypes = function.argumentLayouts().stream().map(TypeClass::classify).toList();
-        FallbackLinker.TypeClass rType = function.returnLayout().map(TypeClass::classify).orElse(TypeClass.VOID);
-        MemorySegment cif = prepCif(inferredMethodType, function, cifScope);
+        List<TypeClass> aTypes = function.argumentLayouts().stream().map(TypeClass::classify).toList();
+        TypeClass rType = function.returnLayout().map(TypeClass::classify).orElse(TypeClass.VOID);
+        MemorySegment cif = makeCif(inferredMethodType, function, FFIABI.DEFAULT, cifScope);
 
         int capturedStateMask = options.capturedCallState()
                 .mapToInt(CapturableState::mask)
@@ -175,173 +106,33 @@ public final class FallbackLinker extends AbstractLinker {
     @Override
     protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function,
                                           SegmentScope scope) {
-        List<FallbackLinker.TypeClass> aTypes = function.argumentLayouts().stream().map(TypeClass::classify).toList();
-        FallbackLinker.TypeClass rType = function.returnLayout().map(TypeClass::classify).orElse(TypeClass.VOID);
-        MemorySegment cif = prepCif(targetType, function, scope);
+        List<TypeClass> aTypes = function.argumentLayouts().stream().map(TypeClass::classify).toList();
+        TypeClass rType = function.returnLayout().map(TypeClass::classify).orElse(TypeClass.VOID);
+        MemorySegment cif = makeCif(targetType, function, FFIABI.DEFAULT, scope);
 
         UpcallData invData = new UpcallData(target, function.returnLayout().orElse(null), rType,
                 function.argumentLayouts(), aTypes);
 
-        long[] ptrs = new long[3];
-        checkStatus(createClosure(cif.address(), invData, ptrs));
-        long closurePtr = ptrs[0];
-        long execPtr = ptrs[1];
-        long globalUpdallData = ptrs[2];
-
-        return MemorySegment.ofAddress(execPtr, 0, scope, () -> freeClosure(closurePtr, globalUpdallData));
+        return LibFallback.createClosure(cif, invData, scope);
     }
 
-    private static MemorySegment prepCif(MethodType inferredMethodType, FunctionDescriptor function, SegmentScope cifScope) {
-        MemorySegment cif = MemorySegment.allocateNative(sizeofCif(), cifScope);
-
-        MemorySegment argPtrs = MemorySegment.allocateNative(function.argumentLayouts().size() * ADDRESS.byteSize(), cifScope);
+    private static MemorySegment makeCif(MethodType methodType, FunctionDescriptor function, FFIABI abi, SegmentScope cifScope) {
+        MemorySegment argTypes = MemorySegment.allocateNative(function.argumentLayouts().size() * ADDRESS.byteSize(), cifScope);
         List<MemoryLayout> argLayouts = function.argumentLayouts();
         for (int i = 0; i < argLayouts.size(); i++) {
-            Class<?> pType = inferredMethodType.parameterType(i);
+            Class<?> pType = methodType.parameterType(i);
             MemoryLayout layout = argLayouts.get(i);
-            argPtrs.setAtIndex(ADDRESS, i, toFFIType(cifScope, pType, layout));
+            argTypes.setAtIndex(ADDRESS, i, FFIType.toFFIType(cifScope, pType, layout, abi));
         }
 
-        MemorySegment ffiRType = inferredMethodType.returnType() != void.class
-                ? toFFIType(cifScope, inferredMethodType.returnType(), function.returnLayout().orElseThrow())
-                : VOID_TYPE;
-
-        checkStatus(ffi_prep_cif(cif.address(), DEFAULT_ABI, argLayouts.size(),
-                ffiRType.address(), argPtrs.address()));
-
-        return cif;
+        MemorySegment returnType = methodType.returnType() != void.class
+                ? FFIType.toFFIType(cifScope, methodType.returnType(), function.returnLayout().orElseThrow(), abi)
+                : LibFallback.VOID_TYPE;
+        return LibFallback.prepCif(returnType, argLayouts.size(), argTypes, abi, cifScope);
     }
 
-    private static final class ffi_type {
-        private static final long SIZE_BYTES = sizeof();
-        private static native long sizeof();
-        private static native void setType(long ptr, short type);
-        private static native void setElements(long ptr, long elements);
-
-        static MemorySegment make(List<MemoryLayout> elements, SegmentScope scope) {
-            MemorySegment elementsSeg = MemorySegment.allocateNative((elements.size() + 1) * ADDRESS.byteSize(), scope);
-            int i = 0;
-            for (; i < elements.size(); i++) {
-                MemoryLayout elementLayout = elements.get(i);
-                MemorySegment elementType = toFFIType(scope, inferCarrier(elementLayout), elementLayout);
-                elementsSeg.setAtIndex(ADDRESS, i, elementType);
-            }
-            // elements array is null-terminated
-            elementsSeg.setAtIndex(ADDRESS, i, MemorySegment.NULL);
-
-            MemorySegment ffiType = MemorySegment.allocateNative(SIZE_BYTES, scope);
-            setType(ffiType.address(), STRUCT_TYPE);
-            setElements(ffiType.address(), elementsSeg.address());
-
-            return ffiType;
-        }
-    }
-
-    private static MemorySegment toFFIType(SegmentScope cifScope, Class<?> type, MemoryLayout layout) {
-        if (layout instanceof GroupLayout grpl) {
-            assert type == MemorySegment.class;
-            if (grpl instanceof StructLayout) {
-                // libffi doesn't want our padding
-                List<MemoryLayout> filteredLayouts = grpl.memberLayouts().stream()
-                        .filter(Predicate.not(PaddingLayout.class::isInstance))
-                        .toList();
-                MemorySegment structType = ffi_type.make(filteredLayouts, cifScope);
-                verifyStructType(grpl, filteredLayouts, structType);
-                return structType;
-            }
-            assert grpl instanceof UnionLayout;
-            throw new UnsupportedOperationException("No unions (TODO)");
-        } else if (layout instanceof SequenceLayout sl) {
-            List<MemoryLayout> elements = Collections.nCopies(Math.toIntExact(sl.elementCount()), sl.elementLayout());
-            return ffi_type.make(elements, cifScope);
-        }
-        return Objects.requireNonNull(CARRIER_TO_TYPE.get(type));
-    }
-
-    // verify layout against what libffi set
-    private static void verifyStructType(GroupLayout grpl, List<MemoryLayout> filteredLayouts, MemorySegment structType) {
-        try (Arena verifyArena = Arena.openConfined()) {
-            MemorySegment offsetsOut = verifyArena.allocate(ADDRESS.byteSize() * filteredLayouts.size());
-            checkStatus(ffi_get_struct_offsets(DEFAULT_ABI,
-                    structType.address(), offsetsOut.address()));
-            for (int i = 0; i < filteredLayouts.size(); i++) {
-                MemoryLayout element = filteredLayouts.get(i);
-                final int finalI = i;
-                element.name().ifPresent(name -> {
-                    long layoutOffset = grpl.byteOffset(MemoryLayout.PathElement.groupElement(name));
-                    long ffiOffset = switch ((int) ADDRESS.bitSize()) {
-                        case 64 -> offsetsOut.getAtIndex(JAVA_LONG, finalI);
-                        case 32 -> offsetsOut.getAtIndex(JAVA_INT, finalI);
-                        default -> throw new IllegalStateException("Address size not supported: " + ADDRESS.byteSize());
-                    };
-                    if (ffiOffset != layoutOffset) {
-                        throw new IllegalArgumentException("Invalid group layout." +
-                                " Offset of '" + name + "': " + layoutOffset + " != " + ffiOffset);
-                    }
-                });
-            }
-        }
-    }
-
-    private static void checkStatus(int code) {
-        ffi_status status = ffi_status.of(code);
-        if (ffi_status.of(code) != ffi_status.FFI_OK) {
-            throw new IllegalStateException("ffi_prep_cif failed with code: " + status);
-        }
-    }
-
-    private static Class<?> inferCarrier(MemoryLayout element) {
-        if (element instanceof ValueLayout vl) {
-            return vl.carrier();
-        } else if (element instanceof GroupLayout) {
-            return MemorySegment.class;
-        } else if (element instanceof SequenceLayout) {
-            return null; // field of struct
-        }
-        throw new IllegalArgumentException("Can not infer carrier for: " + element);
-    }
-
-    private enum TypeClass {
-        BOOLEAN,
-        BYTE,
-        CHAR,
-        SHORT,
-        INT,
-        LONG,
-        FLOAT,
-        DOUBLE,
-        ADDRESS,
-        SEGMENT,
-        VOID;
-
-        public static TypeClass classify(MemoryLayout layout) {
-            if (layout instanceof ValueLayout.OfBoolean) {
-                return BOOLEAN;
-            } else if (layout instanceof ValueLayout.OfByte) {
-                return BYTE;
-            } else if (layout instanceof ValueLayout.OfShort) {
-                return SHORT;
-            } else if (layout instanceof ValueLayout.OfChar) {
-                return CHAR;
-            } else if (layout instanceof ValueLayout.OfInt) {
-                return INT;
-            } else if (layout instanceof ValueLayout.OfLong) {
-                return LONG;
-            } else if (layout instanceof ValueLayout.OfFloat) {
-                return FLOAT;
-            } else if (layout instanceof ValueLayout.OfDouble) {
-                return DOUBLE;
-            } else if (layout instanceof ValueLayout.OfAddress) {
-                return ADDRESS;
-            } else if (layout instanceof GroupLayout) {
-                return SEGMENT;
-            }
-            throw new IllegalArgumentException("Can not classify layout: " + layout);
-        }
-    }
-
-    private record DowncallData(MemorySegment cif, MemoryLayout returnLayout, FallbackLinker.TypeClass rType,
-                                List<MemoryLayout> argLayouts, List<FallbackLinker.TypeClass> aTypes,
+    private record DowncallData(MemorySegment cif, MemoryLayout returnLayout, TypeClass rType,
+                                List<MemoryLayout> argLayouts, List<TypeClass> aTypes,
                                 int capturedStateMask) {}
 
     private static Object doDowncall(SegmentAllocator returnAllocator, Object[] args, DowncallData invData) {
@@ -384,8 +175,7 @@ public final class FallbackLinker extends AbstractLinker {
             }
 
             long capturedStateAddr = capturedState == null ? 0 : capturedState.address();
-            ffi_call(invData.cif().address(), target.address(),
-                    retPtr, argPtrs.address(), capturedStateAddr, invData.capturedStateMask());
+            LibFallback.doDowncall(invData.cif, target, retPtr, argPtrs, capturedStateAddr, invData.capturedStateMask());
 
             Reference.reachabilityFence(invData.cif());
 
@@ -397,11 +187,42 @@ public final class FallbackLinker extends AbstractLinker {
         }
     }
 
-    private static void writeValue(FallbackLinker.TypeClass type, Object arg, MemoryLayout layout, MemorySegment argSeg) {
+    private record UpcallData(MethodHandle target, MemoryLayout returnLayout, TypeClass rType,
+                              List<MemoryLayout> argLayouts, List<TypeClass> aTypes) {}
+
+    private static void doUpcall(long retPtr, long argPtrs, UpcallData data) {
+        List<MemoryLayout> argLayouts = data.argLayouts();
+        int numArgs = argLayouts.size();
+        MemoryLayout retLayout = data.returnLayout();
+        try (Arena upcallArena = Arena.openConfined()) {
+            MemorySegment argsSeg = MemorySegment.ofAddress(argPtrs, numArgs * ADDRESS.byteSize(), upcallArena.scope());
+            MemorySegment retSeg = data.rType() != TypeClass.VOID
+                ? MemorySegment.ofAddress(retPtr, retLayout.byteSize(), upcallArena.scope())
+                : null;
+
+            Object[] args = new Object[numArgs];
+            for (int i = 0; i < numArgs; i++) {
+                MemoryLayout argLayout = argLayouts.get(i);
+                TypeClass argType = data.aTypes().get(i);
+                MemorySegment argPtr = MemorySegment.ofAddress(argsSeg.getAtIndex(JAVA_LONG, i), argLayout.byteSize(), upcallArena.scope());
+
+                args[i] = readValue(argPtr, argType, argLayout);
+            }
+
+            Object result = data.target().invokeWithArguments(args);
+
+            writeValue(data.rType(), result, data.returnLayout(), retSeg);
+        } catch (Throwable t) {
+            SharedUtils.handleUncaughtException(t);
+        }
+    }
+
+    // where
+    private static void writeValue(TypeClass type, Object arg, MemoryLayout layout, MemorySegment argSeg) {
         writeValue(type, arg, layout, argSeg, addr -> {});
     }
 
-    private static void writeValue(FallbackLinker.TypeClass type, Object arg, MemoryLayout layout, MemorySegment argSeg,
+    private static void writeValue(TypeClass type, Object arg, MemoryLayout layout, MemorySegment argSeg,
                                    Consumer<MemorySegment> acquireCallback) {
         switch (type) {
             case BOOLEAN -> argSeg.set((ValueLayout.OfBoolean) layout, 0, (Boolean) arg);
@@ -422,7 +243,7 @@ public final class FallbackLinker extends AbstractLinker {
         }
     }
 
-    private static Object readValue(MemorySegment seg, FallbackLinker.TypeClass type, MemoryLayout layout) {
+    private static Object readValue(MemorySegment seg, TypeClass type, MemoryLayout layout) {
         return switch (type) {
             case BOOLEAN -> seg.get((ValueLayout.OfBoolean) layout, 0);
             case BYTE -> seg.get((ValueLayout.OfByte) layout, 0);
@@ -437,58 +258,4 @@ public final class FallbackLinker extends AbstractLinker {
             case VOID -> null;
         };
     }
-
-    private record UpcallData(MethodHandle target, MemoryLayout returnLayout, FallbackLinker.TypeClass rType,
-                              List<MemoryLayout> argLayouts, List<FallbackLinker.TypeClass> aTypes) {}
-
-    private static void doUpcall(long retPtr, long argPtrs, UpcallData data) {
-        List<MemoryLayout> argLayouts = data.argLayouts();
-        int numArgs = argLayouts.size();
-        MemoryLayout retLayout = data.returnLayout();
-        try (Arena upcallArena = Arena.openConfined()) {
-            MemorySegment argsSeg = MemorySegment.ofAddress(argPtrs, numArgs * ADDRESS.byteSize(), upcallArena.scope());
-            MemorySegment retSeg = data.rType() != TypeClass.VOID
-                ? MemorySegment.ofAddress(retPtr, retLayout.byteSize(), upcallArena.scope())
-                : null;
-
-            Object[] args = new Object[numArgs];
-            for (int i = 0; i < numArgs; i++) {
-                MemoryLayout argLayout = argLayouts.get(i);
-                FallbackLinker.TypeClass argType = data.aTypes().get(i);
-                MemorySegment argPtr = MemorySegment.ofAddress(argsSeg.getAtIndex(JAVA_LONG, i), argLayout.byteSize(), upcallArena.scope());
-
-                args[i] = readValue(argPtr, argType, argLayout);
-            }
-
-            Object result = data.target().invokeWithArguments(args);
-
-            writeValue(data.rType(), result, data.returnLayout(), retSeg);
-        } catch (Throwable t) {
-            SharedUtils.handleUncaughtException(t);
-        }
-    }
-
-    private static native long sizeofCif();
-
-    private static native int createClosure(long cif, UpcallData invData, long[] ptrs);
-    private static native void freeClosure(long closureAddress, long globalRef);
-
-    private static native int ffi_prep_cif(long cif, int abi, int nargs, long rtype, long atypes);
-    private static native void ffi_call(long cif, long fn, long rvalue, long avalues, long capturedState, int capturedStateMask);
-    private static native short ffi_type_struct();
-    private static native int ffi_get_struct_offsets(int abi, long type, long offsets);
-
-    private static native int ffi_default_abi();
-    private static native long ffi_type_void();
-    private static native long ffi_type_uint8();
-    private static native long ffi_type_sint8();
-    private static native long ffi_type_uint16();
-    private static native long ffi_type_sint16();
-    private static native long ffi_type_uint32();
-    private static native long ffi_type_sint32();
-    private static native long ffi_type_uint64();
-    private static native long ffi_type_sint64();
-    private static native long ffi_type_float();
-    private static native long ffi_type_double();
-    private static native long ffi_type_pointer();
 }
