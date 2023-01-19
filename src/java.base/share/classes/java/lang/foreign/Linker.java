@@ -316,6 +316,27 @@ public sealed interface Linker permits AbstractLinker {
         }
 
         /**
+         * {@return A linker option used to mark a function as trivial}
+         * <p>
+         * A 'trivial' function is a function that has an extremely short running time
+         * in all cases (similar to calling an empty function), and does not call back into Java.
+         * <p>
+         * Marking a function using this linker option is a hint which some implementations may use to apply
+         * optimizations that are only valid for trivial functions.
+         * <p>
+         * Marking a function that is not trivial using this linker option will result in a loss
+         * of performance, and has the potential to cause JVM crashes.
+         * <p>
+         * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+         * Restricted methods are unsafe, and, if used incorrectly, their use might crash
+         * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+         * restricted methods, and use safe and supported functionalities, where possible.
+         */
+        static Option isTrivial() {
+            return LinkerOptions.IsTrivial.INSTANCE;
+        }
+
+        /**
          * A linker option for saving portions of the execution state immediately
          * after calling a foreign function associated with a downcall method handle,
          * before it can be overwritten by the runtime, or read through conventional means.
