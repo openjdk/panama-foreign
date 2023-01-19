@@ -64,7 +64,7 @@ class FFIType {
             default -> throw new IllegalStateException("Address size not supported: " + ADDRESS.byteSize());
         };
     private static final ValueLayout UNSIGNED_SHORT = JAVA_SHORT;
-    private static final StructLayout LAYOUT = Utils.computeStructLayout(
+    private static final StructLayout LAYOUT = Utils.computePaddedStructLayout(
             SIZE_T, UNSIGNED_SHORT, UNSIGNED_SHORT.withName("type"), ADDRESS.withName("elements"));
 
     private static final VarHandle VH_TYPE = LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("type"));

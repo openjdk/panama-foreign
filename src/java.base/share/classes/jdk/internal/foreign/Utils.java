@@ -216,7 +216,12 @@ public final class Utils {
         }
     }
 
-    public static StructLayout computeStructLayout(MemoryLayout... elements) {
+    /**
+     * {@return return a struct layout constructed from the given elements, with padding computed automatically}
+     *
+     * @param elements the structs' fields
+     */
+    public static StructLayout computePaddedStructLayout(MemoryLayout... elements) {
         long offset = 0L;
         List<MemoryLayout> layouts = new ArrayList<>();
         long align = 0;
