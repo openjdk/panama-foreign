@@ -33,6 +33,7 @@ import jdk.internal.foreign.abi.SharedUtils;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
@@ -79,15 +80,13 @@ public final class FallbackLinker extends AbstractLinker {
 
     @Override
     protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function, LinkerOptions options) {
-        List<TypeClass> aTypes = function.argumentLayouts().stream().map(TypeClass::classify).toList();
-        TypeClass rType = function.returnLayout().map(TypeClass::classify).orElse(TypeClass.VOID);
         MemorySegment cif = makeCif(inferredMethodType, function, FFIABI.DEFAULT, SegmentScope.auto());
 
         int capturedStateMask = options.capturedCallState()
                 .mapToInt(CapturableState::mask)
                 .reduce(0, (a, b) -> a | b);
         DowncallData invData = new DowncallData(cif, function.returnLayout().orElse(null),
-                rType, function.argumentLayouts(), aTypes, capturedStateMask);
+                function.argumentLayouts(), capturedStateMask);
 
         MethodHandle target = MethodHandles.insertArguments(MH_DO_DOWNCALL, 2, invData);
 
@@ -108,12 +107,10 @@ public final class FallbackLinker extends AbstractLinker {
     @Override
     protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function,
                                           SegmentScope scope) {
-        List<TypeClass> aTypes = function.argumentLayouts().stream().map(TypeClass::classify).toList();
-        TypeClass rType = function.returnLayout().map(TypeClass::classify).orElse(TypeClass.VOID);
         MemorySegment cif = makeCif(targetType, function, FFIABI.DEFAULT, scope);
 
-        UpcallData invData = new UpcallData(target, function.returnLayout().orElse(null), rType,
-                function.argumentLayouts(), aTypes);
+        UpcallData invData = new UpcallData(target, function.returnLayout().orElse(null),
+                function.argumentLayouts());
 
         MethodHandle doUpcallMH = MethodHandles.insertArguments(MH_DO_UPCALL, 2, invData);
         return LibFallback.createClosure(cif, doUpcallMH, scope);
@@ -133,8 +130,7 @@ public final class FallbackLinker extends AbstractLinker {
         return LibFallback.prepCif(returnType, argLayouts.size(), argTypes, abi, scope);
     }
 
-    private record DowncallData(MemorySegment cif, MemoryLayout returnLayout, TypeClass rType,
-                                List<MemoryLayout> argLayouts, List<TypeClass> aTypes,
+    private record DowncallData(MemorySegment cif, MemoryLayout returnLayout, List<MemoryLayout> argLayouts,
                                 int capturedStateMask) {}
 
     private static Object doDowncall(SegmentAllocator returnAllocator, Object[] args, DowncallData invData) {
@@ -161,7 +157,7 @@ public final class FallbackLinker extends AbstractLinker {
                 Object arg = args[argStart + i];
                 MemoryLayout layout = argLayouts.get(i);
                 MemorySegment argSeg = arena.allocate(layout);
-                writeValue(invData.aTypes().get(i), arg, layout, argSeg, addr -> {
+                writeValue(arg, layout, argSeg, addr -> {
                     MemorySessionImpl sessionImpl = ((AbstractMemorySegmentImpl) addr).sessionImpl();
                     sessionImpl.acquire0();
                     acquiredSessions.add(sessionImpl);
@@ -170,15 +166,15 @@ public final class FallbackLinker extends AbstractLinker {
             }
 
             MemorySegment retSeg = null;
-            if (invData.rType != TypeClass.VOID) {
-                retSeg = (invData.rType() == TypeClass.SEGMENT ? returnAllocator : arena).allocate(invData.returnLayout);
+            if (invData.returnLayout() != null) {
+                retSeg = (invData.returnLayout() instanceof GroupLayout ? returnAllocator : arena).allocate(invData.returnLayout);
             }
 
             LibFallback.doDowncall(invData.cif, target, retSeg, argPtrs, capturedState, invData.capturedStateMask());
 
             Reference.reachabilityFence(invData.cif());
 
-            return readValue(retSeg, invData.rType(), invData.returnLayout());
+            return readValue(retSeg, invData.returnLayout());
         } finally {
             for (MemorySessionImpl session : acquiredSessions) {
                 session.release0();
@@ -186,8 +182,7 @@ public final class FallbackLinker extends AbstractLinker {
         }
     }
 
-    private record UpcallData(MethodHandle target, MemoryLayout returnLayout, TypeClass rType,
-                              List<MemoryLayout> argLayouts, List<TypeClass> aTypes) {}
+    private record UpcallData(MethodHandle target, MemoryLayout returnLayout, List<MemoryLayout> argLayouts) {}
 
     private static void doUpcall(MemorySegment retPtr, MemorySegment argPtrs, UpcallData data) throws Throwable {
         List<MemoryLayout> argLayouts = data.argLayouts();
@@ -195,64 +190,81 @@ public final class FallbackLinker extends AbstractLinker {
         MemoryLayout retLayout = data.returnLayout();
         try (Arena upcallArena = Arena.openConfined()) {
             MemorySegment argsSeg = MemorySegment.ofAddress(argPtrs.address(), numArgs * ADDRESS.byteSize(), upcallArena.scope());
-            MemorySegment retSeg = data.rType() != TypeClass.VOID
+            MemorySegment retSeg = retLayout != null
                 ? MemorySegment.ofAddress(retPtr.address(), retLayout.byteSize(), upcallArena.scope())
                 : null;
 
             Object[] args = new Object[numArgs];
             for (int i = 0; i < numArgs; i++) {
                 MemoryLayout argLayout = argLayouts.get(i);
-                TypeClass argType = data.aTypes().get(i);
                 MemorySegment argPtr = MemorySegment.ofAddress(argsSeg.getAtIndex(JAVA_LONG, i), argLayout.byteSize(), upcallArena.scope());
 
-                args[i] = readValue(argPtr, argType, argLayout);
+                args[i] = readValue(argPtr, argLayout);
             }
 
             Object result = data.target().invokeWithArguments(args);
 
-            writeValue(data.rType(), result, data.returnLayout(), retSeg);
+            writeValue(result, data.returnLayout(), retSeg);
         }
     }
 
     // where
-    private static void writeValue(TypeClass type, Object arg, MemoryLayout layout, MemorySegment argSeg) {
-        writeValue(type, arg, layout, argSeg, addr -> {});
+    private static void writeValue(Object arg, MemoryLayout layout, MemorySegment argSeg) {
+        writeValue(arg, layout, argSeg, addr -> {});
     }
 
-    private static void writeValue(TypeClass type, Object arg, MemoryLayout layout, MemorySegment argSeg,
+    private static void writeValue(Object arg, MemoryLayout layout, MemorySegment argSeg,
                                    Consumer<MemorySegment> acquireCallback) {
-        switch (type) {
-            case BOOLEAN -> argSeg.set((ValueLayout.OfBoolean) layout, 0, (Boolean) arg);
-            case BYTE -> argSeg.set((ValueLayout.OfByte) layout, 0, (Byte) arg);
-            case CHAR -> argSeg.set((ValueLayout.OfChar) layout, 0, (Character) arg);
-            case SHORT -> argSeg.set((ValueLayout.OfShort) layout, 0, (Short) arg);
-            case INT -> argSeg.set((ValueLayout.OfInt) layout, 0, (Integer) arg);
-            case LONG -> argSeg.set((ValueLayout.OfLong) layout, 0, (Long) arg);
-            case FLOAT -> argSeg.set((ValueLayout.OfFloat) layout, 0, (Float) arg);
-            case DOUBLE -> argSeg.set((ValueLayout.OfDouble) layout, 0, (Double) arg);
-            case ADDRESS -> {
-                MemorySegment addrArg = (MemorySegment) arg;
-                acquireCallback.accept(addrArg);
-                argSeg.set((ValueLayout.OfAddress) layout, 0, addrArg);
-            }
-            case SEGMENT -> argSeg.copyFrom((MemorySegment) arg); // by-value struct
-            case VOID -> {}
+        if (layout instanceof ValueLayout.OfBoolean bl) {
+            argSeg.set(bl, 0, (Boolean) arg);
+        } else if (layout instanceof ValueLayout.OfByte bl) {
+            argSeg.set(bl, 0, (Byte) arg);
+        } else if (layout instanceof ValueLayout.OfShort sl) {
+            argSeg.set(sl, 0, (Short) arg);
+        } else if (layout instanceof ValueLayout.OfChar cl) {
+            argSeg.set(cl, 0, (Character) arg);
+        } else if (layout instanceof ValueLayout.OfInt il) {
+            argSeg.set(il, 0, (Integer) arg);
+        } else if (layout instanceof ValueLayout.OfLong ll) {
+            argSeg.set(ll, 0, (Long) arg);
+        } else if (layout instanceof ValueLayout.OfFloat fl) {
+            argSeg.set(fl, 0, (Float) arg);
+        } else if (layout instanceof ValueLayout.OfDouble dl) {
+            argSeg.set(dl, 0, (Double) arg);
+        } else if (layout instanceof ValueLayout.OfAddress al) {
+            MemorySegment addrArg = (MemorySegment) arg;
+            acquireCallback.accept(addrArg);
+            argSeg.set(al, 0, addrArg);
+        } else if (layout instanceof GroupLayout) {
+            argSeg.copyFrom((MemorySegment) arg); // by-value struct
+        } else {
+            assert layout == null;
         }
     }
 
-    private static Object readValue(MemorySegment seg, TypeClass type, MemoryLayout layout) {
-        return switch (type) {
-            case BOOLEAN -> seg.get((ValueLayout.OfBoolean) layout, 0);
-            case BYTE -> seg.get((ValueLayout.OfByte) layout, 0);
-            case CHAR -> seg.get((ValueLayout.OfChar) layout, 0);
-            case SHORT -> seg.get((ValueLayout.OfShort) layout, 0);
-            case INT -> seg.get((ValueLayout.OfInt) layout, 0);
-            case LONG -> seg.get((ValueLayout.OfLong) layout, 0);
-            case FLOAT -> seg.get((ValueLayout.OfFloat) layout, 0);
-            case DOUBLE -> seg.get((ValueLayout.OfDouble) layout, 0);
-            case ADDRESS -> seg.get((ValueLayout.OfAddress) layout, 0);
-            case SEGMENT -> seg;
-            case VOID -> null;
-        };
+    private static Object readValue(MemorySegment seg, MemoryLayout layout) {
+        if (layout instanceof ValueLayout.OfBoolean bl) {
+            return seg.get(bl, 0);
+        } else if (layout instanceof ValueLayout.OfByte bl) {
+            return seg.get(bl, 0);
+        } else if (layout instanceof ValueLayout.OfShort sl) {
+            return seg.get(sl, 0);
+        } else if (layout instanceof ValueLayout.OfChar cl) {
+            return seg.get(cl, 0);
+        } else if (layout instanceof ValueLayout.OfInt il) {
+            return seg.get(il, 0);
+        } else if (layout instanceof ValueLayout.OfLong ll) {
+            return seg.get(ll, 0);
+        } else if (layout instanceof ValueLayout.OfFloat fl) {
+            return seg.get(fl, 0);
+        } else if (layout instanceof ValueLayout.OfDouble dl) {
+            return seg.get(dl, 0);
+        } else if (layout instanceof ValueLayout.OfAddress al) {
+            return seg.get(al, 0);
+        } else if (layout instanceof GroupLayout) {
+            return seg;
+        }
+        assert layout == null;
+        return null;
     }
 }
