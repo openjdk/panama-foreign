@@ -324,7 +324,7 @@ public sealed interface Linker permits AbstractLinker {
          * Marking a function using this linker option is a hint which some implementations may use to apply
          * optimizations that are only valid for trivial functions.
          * <p>
-         * Marking a function that is not trivial using this linker option will result in a loss
+         * Marking a function that is not trivial using this linker option can result in a loss
          * of performance, and has the potential to cause JVM crashes.
          * <p>
          * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
