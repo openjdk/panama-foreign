@@ -24,17 +24,12 @@
 # questions.
 #
 
-# This script generates a libclang bundle. On linux by building it from source
-# using a devkit, which should match the devkit used to build the JDK. On Macos
-# prebuilt binaries are downloaded and repackaged. On Windows, the binary LLVM
-# distribution needs to be downloaded and installed manually first.
+# This script generates a libffi bundle. On linux by building it from source
+# using a devkit, which should match the devkit used to build the JDK.
 #
 # Set MAKE_ARGS to add parameters to make. Ex:
 #
-# $ MAKE_ARGS=-j32 bash createLibclangBundle.sh
-#
-# The llvm/clang build is very resource intensive at the end so often needs
-# to be restarted a few times before it fully succeeds.
+# $ MAKE_ARGS=-j32 bash createLibffiBundle.sh
 #
 # The script tries to behave well on multiple invocations, only performing steps
 # not already done. To redo a step, manually delete the target files from that
