@@ -34,6 +34,9 @@
 # The script tries to behave well on multiple invocations, only performing steps
 # not already done. To redo a step, manually delete the target files from that
 # step.
+#
+# Note that the libtool and texinfo packages are needed to build libffi
+# $ sudo apt install libtool texinfo
 
 LIBFFI_VERSION=3.4.2
 
