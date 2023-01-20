@@ -103,13 +103,13 @@ class FFIType {
 
     static MemorySegment toFFIType(MemoryLayout layout, FFIABI abi, SegmentScope scope) {
         if (layout instanceof GroupLayout grpl) {
-            if (grpl instanceof StructLayout) {
+            if (grpl instanceof StructLayout strl) {
                 // libffi doesn't want our padding
-                List<MemoryLayout> filteredLayouts = grpl.memberLayouts().stream()
+                List<MemoryLayout> filteredLayouts = strl.memberLayouts().stream()
                         .filter(Predicate.not(PaddingLayout.class::isInstance))
                         .toList();
                 MemorySegment structType = make(filteredLayouts, abi, scope);
-                verifyStructType(grpl, filteredLayouts, structType, abi);
+                verifyStructType(strl, filteredLayouts, structType, abi);
                 return structType;
             }
             assert grpl instanceof UnionLayout;
@@ -122,14 +122,14 @@ class FFIType {
     }
 
     // verify layout against what libffi sets
-    private static void verifyStructType(GroupLayout grpl, List<MemoryLayout> filteredLayouts, MemorySegment structType,
+    private static void verifyStructType(StructLayout structLayout, List<MemoryLayout> filteredLayouts, MemorySegment structType,
                                          FFIABI abi) {
         try (Arena verifyArena = Arena.openConfined()) {
             MemorySegment offsetsOut = verifyArena.allocate(SIZE_T.byteSize() * filteredLayouts.size());
             LibFallback.getStructOffsets(structType, offsetsOut, abi);
             long expectedOffset = 0;
             int offsetIdx = 0;
-            for (MemoryLayout element : grpl.memberLayouts()) {
+            for (MemoryLayout element : structLayout.memberLayouts()) {
                 if (!(element instanceof PaddingLayout)) {
                     long ffiOffset = (long) VH_SIZE_T_ARRAY.get(offsetsOut, offsetIdx++);
                     if (ffiOffset != expectedOffset) {
