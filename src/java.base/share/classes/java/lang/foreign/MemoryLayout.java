@@ -487,6 +487,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
          *
          * @implSpec in case multiple group elements with a matching name exist, the path element returned by this
          * method will select the first one; that is, the group element with the lowest offset from current path is selected.
+         * In such cases, using {@link #groupElement(long)} might be preferable.
          *
          * @param name the name of the group element to be selected.
          * @return a path element which selects the group element with the given name.
@@ -495,6 +496,23 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
             Objects.requireNonNull(name);
             return new LayoutPath.PathElementImpl(PathKind.GROUP_ELEMENT,
                                                   path -> path.groupElement(name));
+        }
+
+        /**
+         * Returns a path element which selects a member layout with the given index in a group layout.
+         * The path element returned by this method does not alter the number of free dimensions of any path
+         * that is combined with such element.
+         *
+         * @param index the index of the group element to be selected.
+         * @return a path element which selects the group element with the given index.
+         * @throws IllegalArgumentException if {@code index < 0}.
+         */
+        static PathElement groupElement(long index) {
+            if (index < 0) {
+                throw new IllegalArgumentException("Index < 0");
+            }
+            return new LayoutPath.PathElementImpl(PathKind.GROUP_ELEMENT,
+                    path -> path.groupElement(index));
         }
 
         /**
