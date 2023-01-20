@@ -127,17 +127,18 @@ class FFIType {
         try (Arena verifyArena = Arena.openConfined()) {
             MemorySegment offsetsOut = verifyArena.allocate(SIZE_T.byteSize() * filteredLayouts.size());
             LibFallback.getStructOffsets(structType, offsetsOut, abi);
-            for (int i = 0; i < filteredLayouts.size(); i++) {
-                MemoryLayout element = filteredLayouts.get(i);
-                final int finalI = i;
-                element.name().ifPresent(name -> {
-                    long layoutOffset = grpl.byteOffset(MemoryLayout.PathElement.groupElement(name));
-                    long ffiOffset = (long) VH_SIZE_T_ARRAY.get(offsetsOut, finalI);
-                    if (ffiOffset != layoutOffset) {
+            long expectedOffset = 0;
+            int offsetIdx = 0;
+            for (MemoryLayout element : grpl.memberLayouts()) {
+                if (!(element instanceof PaddingLayout)) {
+                    long ffiOffset = (long) VH_SIZE_T_ARRAY.get(offsetsOut, offsetIdx++);
+                    if (ffiOffset != expectedOffset) {
                         throw new IllegalArgumentException("Invalid group layout." +
-                                " Offset of '" + name + "': " + layoutOffset + " != " + ffiOffset);
+                                " Offset of '" + element.name().orElse("<unnamed>")
+                                + "': " + expectedOffset + " != " + ffiOffset);
                     }
-                });
+                }
+                expectedOffset += element.byteSize();
             }
         }
     }
