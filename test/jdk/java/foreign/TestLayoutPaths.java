@@ -42,6 +42,7 @@ import org.testng.annotations.*;
 import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntFunction;
 
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static java.lang.foreign.MemoryLayout.PathElement.sequenceElement;
@@ -96,6 +97,18 @@ public class TestLayoutPaths {
     public void testUnknownByteStructField() {
         GroupLayout g = MemoryLayout.structLayout(JAVA_INT);
         g.byteOffset(groupElement("foo"));
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testTooBigGroupElementIndex() {
+        GroupLayout g = MemoryLayout.structLayout(JAVA_INT);
+        g.byteOffset(groupElement(1));
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testNegativeGroupElementIndex() {
+        GroupLayout g = MemoryLayout.structLayout(JAVA_INT);
+        g.byteOffset(groupElement(-1));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -239,58 +252,66 @@ public class TestLayoutPaths {
         }
     }
 
-    @Test
-    public void testStructPaths() {
+    @Test(dataProvider = "groupSelectors")
+    public void testStructPaths(IntFunction<PathElement> groupSelector) {
         long[] offsets = { 0, 8, 24, 56 };
         GroupLayout g = MemoryLayout.structLayout(
-                ValueLayout.JAVA_BYTE.withName("1"),
-                ValueLayout.JAVA_CHAR.withName("2"),
-                ValueLayout.JAVA_FLOAT.withName("3"),
-                ValueLayout.JAVA_LONG.withName("4")
+                ValueLayout.JAVA_BYTE.withName("0"),
+                ValueLayout.JAVA_CHAR.withName("1"),
+                ValueLayout.JAVA_FLOAT.withName("2"),
+                ValueLayout.JAVA_LONG.withName("3")
         );
 
         // test select
 
-        for (int i = 1 ; i <= 4 ; i++) {
-            MemoryLayout selected = g.select(groupElement(String.valueOf(i)));
-            assertTrue(selected == g.memberLayouts().get(i - 1));
+        for (int i = 0 ; i < 4 ; i++) {
+            MemoryLayout selected = g.select(groupSelector.apply(i));
+            assertTrue(selected == g.memberLayouts().get(i));
         }
 
         // test offset
 
-        for (int i = 1 ; i <= 4 ; i++) {
-            long bitOffset = g.bitOffset(groupElement(String.valueOf(i)));
-            assertEquals(offsets[i - 1], bitOffset);
-            long byteOffset = g.byteOffset(groupElement(String.valueOf(i)));
-            assertEquals((offsets[i - 1]) >>> 3, byteOffset);
+        for (int i = 0 ; i < 4 ; i++) {
+            long bitOffset = g.bitOffset(groupSelector.apply(i));
+            assertEquals(offsets[i], bitOffset);
+            long byteOffset = g.byteOffset(groupSelector.apply(i));
+            assertEquals((offsets[i]) >>> 3, byteOffset);
         }
     }
 
-    @Test
-    public void testUnionPaths() {
+    @Test(dataProvider = "groupSelectors")
+    public void testUnionPaths(IntFunction<PathElement> groupSelector) {
         long[] offsets = { 0, 0, 0, 0 };
         GroupLayout g = MemoryLayout.unionLayout(
-                ValueLayout.JAVA_BYTE.withName("1"),
-                ValueLayout.JAVA_CHAR.withName("2"),
-                ValueLayout.JAVA_FLOAT.withName("3"),
-                ValueLayout.JAVA_LONG.withName("4")
+                ValueLayout.JAVA_BYTE.withName("0"),
+                ValueLayout.JAVA_CHAR.withName("1"),
+                ValueLayout.JAVA_FLOAT.withName("2"),
+                ValueLayout.JAVA_LONG.withName("3")
         );
 
         // test select
 
-        for (int i = 1 ; i <= 4 ; i++) {
-            MemoryLayout selected = g.select(groupElement(String.valueOf(i)));
-            assertTrue(selected == g.memberLayouts().get(i - 1));
+        for (int i = 0 ; i < 4 ; i++) {
+            MemoryLayout selected = g.select(groupSelector.apply(i));
+            assertTrue(selected == g.memberLayouts().get(i));
         }
 
         // test offset
 
-        for (int i = 1 ; i <= 4 ; i++) {
-            long bitOffset = g.bitOffset(groupElement(String.valueOf(i)));
-            assertEquals(offsets[i - 1], bitOffset);
-            long byteOffset = g.byteOffset(groupElement(String.valueOf(i)));
-            assertEquals((offsets[i - 1]) >>> 3, byteOffset);
+        for (int i = 0 ; i < 4 ; i++) {
+            long bitOffset = g.bitOffset(groupSelector.apply(i));
+            assertEquals(offsets[i], bitOffset);
+            long byteOffset = g.byteOffset(groupSelector.apply(i));
+            assertEquals((offsets[i]) >>> 3, byteOffset);
         }
+    }
+
+    @DataProvider
+    public static Object[][] groupSelectors() {
+        return new Object[][] {
+                { (IntFunction<PathElement>) PathElement::groupElement }, // by index
+                { (IntFunction<PathElement>) i -> PathElement.groupElement(String.valueOf(i)) } // by name
+        };
     }
 
     @Test
