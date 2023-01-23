@@ -137,6 +137,24 @@ public class LayoutPath {
         return LayoutPath.nestedPath(elem, this.offset + offset, strides, bounds, this);
     }
 
+    public LayoutPath groupElement(long index) {
+        check(GroupLayout.class, "attempting to select a group element from a non-group layout");
+        GroupLayout g = (GroupLayout)layout;
+        long elemSize = g.memberLayouts().size();
+        long offset = 0;
+        MemoryLayout elem = null;
+        for (int i = 0; i <= index; i++) {
+            if (i == elemSize) {
+                throw badLayoutPath("cannot resolve element " + index + " in layout " + layout);
+            }
+            elem = g.memberLayouts().get(i);
+            if (g instanceof StructLayout && i < index) {
+                offset += elem.bitSize();
+            }
+        }
+        return LayoutPath.nestedPath(elem, this.offset + offset, strides, bounds, this);
+    }
+
     // Layout path projections
 
     public long offset() {

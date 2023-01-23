@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2023, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,8 @@ import java.lang.foreign.*;
 
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
+import java.util.List;
+import java.util.function.Function;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
 
@@ -79,11 +81,11 @@ public class TestLayouts {
     public void testEmptyGroup() {
         MemoryLayout struct = MemoryLayout.structLayout();
         assertEquals(struct.bitSize(), 0);
-        assertEquals(struct.bitAlignment(), 1);
+        assertEquals(struct.bitAlignment(), 8);
 
         MemoryLayout union = MemoryLayout.unionLayout();
         assertEquals(union.bitSize(), 0);
-        assertEquals(union.bitAlignment(), 1);
+        assertEquals(union.bitAlignment(), 8);
     }
 
     @Test
@@ -101,7 +103,7 @@ public class TestLayouts {
 
     @Test(dataProvider="basicLayouts")
     public void testPaddingNoAlign(MemoryLayout layout) {
-        assertEquals(MemoryLayout.paddingLayout(layout.bitSize()).bitAlignment(), 1);
+        assertEquals(MemoryLayout.paddingLayout(layout.bitSize()).bitAlignment(), 8);
     }
 
     @Test(dataProvider="basicLayouts")
@@ -164,6 +166,36 @@ public class TestLayouts {
                 () -> MemoryLayout.structLayout(MemoryLayout.sequenceLayout(Long.MAX_VALUE, JAVA_BYTE),
                                                 MemoryLayout.sequenceLayout(Long.MAX_VALUE, JAVA_BYTE),
                                                 MemoryLayout.sequenceLayout(Long.MAX_VALUE, JAVA_BYTE)));
+    }
+
+    @Test
+    public void testPadding() {
+        var padding = MemoryLayout.paddingLayout(8);
+        assertEquals(padding.byteAlignment(), 1);
+    }
+
+    @Test
+    public void testPaddingInStruct() {
+        var padding = MemoryLayout.paddingLayout(8);
+        var struct = MemoryLayout.structLayout(padding);
+        assertEquals(struct.byteAlignment(), 1);
+    }
+
+    @Test
+    public void testPaddingIllegalBitSize() {
+        for (long bitSize : List.of(-1L, 1L, 7L)) {
+            try {
+                MemoryLayout.paddingLayout(bitSize);
+                fail("bitSize cannot be " + bitSize);
+            } catch (IllegalArgumentException ignore) {
+                // Happy path
+            }
+        }
+    }
+
+    @Test
+    public void testPaddingZeroBitSize() {
+        MemoryLayout.paddingLayout(0);
     }
 
     @Test(dataProvider = "layoutKinds")

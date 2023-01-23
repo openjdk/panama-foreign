@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,8 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
+import jdk.internal.foreign.abi.aarch64.windows.WindowsAArch64Linker;
+import jdk.internal.foreign.abi.fallback.FallbackLinker;
 import jdk.internal.foreign.abi.riscv64.linux.LinuxRISCV64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
@@ -40,9 +42,7 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentScope;
 import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.VaList;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -52,9 +52,7 @@ import java.lang.ref.Reference;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -73,6 +71,7 @@ public final class SharedUtils {
     private static final MethodHandle MH_ALLOC_BUFFER;
     private static final MethodHandle MH_BUFFER_COPY;
     private static final MethodHandle MH_REACHABILITY_FENCE;
+    public static final MethodHandle MH_CHECK_SYMBOL;
 
     static {
         try {
@@ -83,6 +82,8 @@ public final class SharedUtils {
                     methodType(MemorySegment.class, MemorySegment.class, MemorySegment.class));
             MH_REACHABILITY_FENCE = lookup.findStatic(Reference.class, "reachabilityFence",
                     methodType(void.class, Object.class));
+            MH_CHECK_SYMBOL = lookup.findStatic(SharedUtils.class, "checkSymbol",
+                    methodType(void.class, MemorySegment.class));
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
         }
@@ -157,25 +158,29 @@ public final class SharedUtils {
     }
 
     public static Class<?> primitiveCarrierForSize(long size, boolean useFloat) {
+        return primitiveLayoutForSize(size, useFloat).carrier();
+    }
+
+    public static ValueLayout primitiveLayoutForSize(long size, boolean useFloat) {
         if (useFloat) {
             if (size == 4) {
-                return float.class;
+                return JAVA_FLOAT;
             } else if (size == 8) {
-                return double.class;
+                return JAVA_DOUBLE;
             }
         } else {
             if (size == 1) {
-                return byte.class;
+                return JAVA_BYTE;
             } else if (size == 2) {
-                return short.class;
+                return JAVA_SHORT;
             } else if (size <= 4) {
-                return int.class;
+                return JAVA_INT;
             } else if (size <= 8) {
-                return long.class;
+                return JAVA_LONG;
             }
         }
 
-        throw new IllegalArgumentException("No type for size: " + size + " isFloat=" + useFloat);
+        throw new IllegalArgumentException("No layout for size: " + size + " isFloat=" + useFloat);
     }
 
     public static Linker getSystemLinker() {
@@ -184,7 +189,10 @@ public final class SharedUtils {
             case SYS_V -> SysVx64Linker.getInstance();
             case LINUX_AARCH_64 -> LinuxAArch64Linker.getInstance();
             case MAC_OS_AARCH_64 -> MacOsAArch64Linker.getInstance();
+            case WIN_AARCH_64 -> WindowsAArch64Linker.getInstance();
             case LINUX_RISCV_64 -> LinuxRISCV64Linker.getInstance();
+            case FALLBACK -> FallbackLinker.getInstance();
+            case UNSUPPORTED -> throw new UnsupportedOperationException("Platform does not support native linker");
         };
     }
 
@@ -236,7 +244,7 @@ public final class SharedUtils {
     }
 
 
-    static MethodHandle swapArguments(MethodHandle mh, int firstArg, int secondArg) {
+    public static MethodHandle swapArguments(MethodHandle mh, int firstArg, int secondArg) {
         MethodType mtype = mh.type();
         int[] perms = new int[mtype.parameterCount()];
         MethodType swappedType = MethodType.methodType(mtype.returnType());
@@ -254,7 +262,7 @@ public final class SharedUtils {
         return MH_REACHABILITY_FENCE.asType(MethodType.methodType(void.class, type));
     }
 
-    static void handleUncaughtException(Throwable t) {
+    public static void handleUncaughtException(Throwable t) {
         if (t != null) {
             t.printStackTrace();
             JLA.exit(1);
@@ -290,45 +298,11 @@ public final class SharedUtils {
             throw new IllegalArgumentException("Symbol is NULL: " + symbol);
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions, SegmentScope scope) {
-        return switch (CABI.current()) {
-            case WIN_64 -> Windowsx64Linker.newVaList(actions, scope);
-            case SYS_V -> SysVx64Linker.newVaList(actions, scope);
-            case LINUX_AARCH_64 -> LinuxAArch64Linker.newVaList(actions, scope);
-            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.newVaList(actions, scope);
-            case LINUX_RISCV_64 -> LinuxRISCV64Linker.newVaList(actions, scope);
-        };
-    }
-
-    public static VaList newVaListOfAddress(long address, SegmentScope scope) {
-        return switch (CABI.current()) {
-            case WIN_64 -> Windowsx64Linker.newVaListOfAddress(address, scope);
-            case SYS_V -> SysVx64Linker.newVaListOfAddress(address, scope);
-            case LINUX_AARCH_64 -> LinuxAArch64Linker.newVaListOfAddress(address, scope);
-            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.newVaListOfAddress(address, scope);
-            case LINUX_RISCV_64 -> LinuxRISCV64Linker.newVaListOfAddress(address, scope);
-        };
-    }
-
-    public static VaList emptyVaList() {
-        return switch (CABI.current()) {
-            case WIN_64 -> Windowsx64Linker.emptyVaList();
-            case SYS_V -> SysVx64Linker.emptyVaList();
-            case LINUX_AARCH_64 -> LinuxAArch64Linker.emptyVaList();
-            case MAC_OS_AARCH_64 -> MacOsAArch64Linker.emptyVaList();
-            case LINUX_RISCV_64 -> LinuxRISCV64Linker.emptyVaList();
-        };
-    }
-
     static void checkType(Class<?> actualType, Class<?> expectedType) {
         if (expectedType != actualType) {
             throw new IllegalArgumentException(
                     String.format("Invalid operand type: %s. %s expected", actualType, expectedType));
         }
-    }
-
-    public static NoSuchElementException newVaListNSEE(MemoryLayout layout) {
-        return new NoSuchElementException("No such element: " + layout);
     }
 
     public static final class SimpleVaArg {
@@ -342,59 +316,6 @@ public final class SharedUtils {
 
         public VarHandle varHandle() {
             return layout.varHandle();
-        }
-    }
-
-    public static final class EmptyVaList implements VaList {
-
-        private final MemorySegment address;
-
-        public EmptyVaList(MemorySegment address) {
-            this.address = address;
-        }
-
-        private static UnsupportedOperationException uoe() {
-            return new UnsupportedOperationException("Empty VaList");
-        }
-
-        @Override
-        public int nextVarg(ValueLayout.OfInt layout) {
-            throw uoe();
-        }
-
-        @Override
-        public long nextVarg(ValueLayout.OfLong layout) {
-            throw uoe();
-        }
-
-        @Override
-        public double nextVarg(ValueLayout.OfDouble layout) {
-            throw uoe();
-        }
-
-        @Override
-        public MemorySegment nextVarg(ValueLayout.OfAddress layout) {
-            throw uoe();
-        }
-
-        @Override
-        public MemorySegment nextVarg(GroupLayout layout, SegmentAllocator allocator) {
-            throw uoe();
-        }
-
-        @Override
-        public void skip(MemoryLayout... layouts) {
-            throw uoe();
-        }
-
-        @Override
-        public VaList copy() {
-            return this;
-        }
-
-        @Override
-        public MemorySegment segment() {
-            return address;
         }
     }
 

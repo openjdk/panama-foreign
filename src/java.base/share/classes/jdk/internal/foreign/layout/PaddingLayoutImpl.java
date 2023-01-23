@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2023, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import java.util.Optional;
 public final class PaddingLayoutImpl extends AbstractLayout<PaddingLayoutImpl> implements PaddingLayout {
 
     private PaddingLayoutImpl(long bitSize) {
-        this(bitSize, 1, Optional.empty());
+        this(bitSize, 8, Optional.empty());
     }
 
     private PaddingLayoutImpl(long bitSize, long bitAlignment, Optional<String> name) {
