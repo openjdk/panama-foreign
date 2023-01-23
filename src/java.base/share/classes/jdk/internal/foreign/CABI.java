@@ -37,6 +37,7 @@ public enum CABI {
     LINUX_AARCH_64,
     MAC_OS_AARCH_64,
     WIN_AARCH_64,
+    LINUX_RISCV_64,
     FALLBACK,
     UNSUPPORTED;
 
@@ -69,6 +70,10 @@ public enum CABI {
                 } else {
                     // The Linux ABI follows the standard AAPCS ABI
                     return LINUX_AARCH_64;
+                }
+            } else if (arch.equals("riscv64")) {
+                if (os.startsWith("Linux")) {
+                    return LINUX_RISCV_64;
                 }
             }
         } else if (FallbackLinker.isSupported()) {

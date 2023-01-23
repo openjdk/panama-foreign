@@ -194,8 +194,7 @@ public final class SystemLookup implements SymbolLookup {
         wscanf_s,
 
         // time
-        gmtime
-        ;
+        gmtime;
 
         static WindowsFallbackSymbols valueOfOrNull(String name) {
             try {
