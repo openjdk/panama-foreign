@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
  * @test
  * @enablePreview
  *
- * @run testng/othervm -Dos.arch=unknown -Dos.name=unknown --enable-native-access=ALL-UNNAMED TestUnsupportedLinker
+ * @run testng/othervm -Djdk.internal.foreign.CABI=UNSUPPORTED --enable-native-access=ALL-UNNAMED TestUnsupportedLinker
  */
 
 import java.lang.foreign.Linker;
