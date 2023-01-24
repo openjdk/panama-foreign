@@ -37,17 +37,21 @@ EXPORT int identity(int value) {
 
 // 128 bit struct returned in buffer on SysV
 struct Big {
-  long long x;
-  long long y;
+    long long x;
+    long long y;
 };
 
 EXPORT struct Big with_return_buffer() {
-  struct Big b;
-  b.x = 10;
-  b.y = 11;
-  return b;
+    struct Big b;
+    b.x = 10;
+    b.y = 11;
+    return b;
 }
 
 EXPORT void capture_errno(int value) {
-  errno = value;
+    errno = value;
+}
+
+EXPORT void do_upcall(void(*f)(void)) {
+    f();
 }

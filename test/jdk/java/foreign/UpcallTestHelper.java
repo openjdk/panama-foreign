@@ -37,13 +37,17 @@ import static org.testng.Assert.assertTrue;
 
 public class UpcallTestHelper extends NativeTestHelper {
     public record Output(List<String> stdout, List<String> stderr) {
-        private static void assertContains(List<String> lines, String shouldInclude) {
+        private static void assertContains(List<String> lines, String shouldInclude, String name) {
             assertTrue(lines.stream().anyMatch(line -> line.contains(shouldInclude)),
-                "Did not find '" + shouldInclude + "' in stderr");
+                "Did not find '" + shouldInclude + "' in " + name);
         }
 
         public void assertStdErrContains(String shouldInclude) {
-            assertContains(stderr, shouldInclude);
+            assertContains(stderr, shouldInclude, "stderr");
+        }
+
+        public void assertStdOutContains(String shouldInclude) {
+            assertContains(stdout, shouldInclude, "stdout");
         }
     }
 
