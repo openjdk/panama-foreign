@@ -176,8 +176,9 @@ public final class SequenceLayoutImpl extends AbstractLayout<SequenceLayoutImpl>
 
     @Override
     public String toString() {
+        boolean max = (Long.MAX_VALUE / elementLayout.bitSize()) == elemCount;
         return decorateLayoutString(String.format("[%s:%s]",
-                elemCount, elementLayout));
+                max ? "*" : elemCount, elementLayout));
     }
 
     @Override

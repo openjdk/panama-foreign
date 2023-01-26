@@ -98,8 +98,8 @@ public final class ValueLayouts {
         abstract V withOrder(ByteOrder order);
 
         @Override
-        public final String toString() {
-            char descriptor = carrier == MemorySegment.class ? 'A' : carrier.descriptorString().charAt(0);
+        public String toString() {
+            char descriptor = carrier.descriptorString().charAt(0);
             if (order == ByteOrder.LITTLE_ENDIAN) {
                 descriptor = Character.toLowerCase(descriptor);
             }
@@ -452,6 +452,19 @@ public final class ValueLayouts {
 
         public static OfAddress of(ByteOrder order) {
             return new OfAddressImpl(order);
+        }
+
+        @Override
+        public String toString() {
+            char descriptor = 'A';
+            if (order() == ByteOrder.LITTLE_ENDIAN) {
+                descriptor = Character.toLowerCase(descriptor);
+            }
+            String str = decorateLayoutString(String.format("%s%d", descriptor, bitSize()));
+            if (targetLayout != null) {
+                str += ":" + targetLayout;
+            }
+            return str;
         }
     }
 
