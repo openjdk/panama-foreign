@@ -361,7 +361,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * into the lifetime intended for said region of memory by the foreign function that allocated it. The global scope
  * ensures that the obtained segment can be passed, opaquely, to other pointer-accepting foreign functions.
  * <p>
- * To access native zero-length memory segments, clients several options, all of which are <em>unsafe</em>.
+ * To access native zero-length memory segments, clients have several options, all of which are <em>unsafe</em>.
  * <p>
  * First, clients can unsafely resize a zero-length memory segment using an unbounded {@linkplain #asSliceUnbounded(long, long)}
  * slicing operation. This can be used to set the size of the zero-length segment to some desired size, so that
