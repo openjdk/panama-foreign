@@ -396,7 +396,7 @@ public class LinuxRISCV64CallArranger {
                 case POINTER -> {
                     VMStorage storage = storageCalculator.getStorage(StorageType.INTEGER);
                     bindings.vmLoad(storage, long.class)
-                            .boxAddressRaw(Utils.pointeeSize(layout));
+                            .boxAddress(layout);
                 }
                 case STRUCT_REGISTER_X -> {
                     assert carrier == MemorySegment.class;

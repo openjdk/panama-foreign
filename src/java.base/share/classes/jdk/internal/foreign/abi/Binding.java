@@ -347,8 +347,8 @@ public interface Binding {
         return new Allocate(layout.byteSize(), layout.byteAlignment());
     }
 
-    static BoxAddress boxAddressRaw(long size) {
-        return new BoxAddress(size, 1, false);
+    static BoxAddress boxAddressRaw(long size, long align) {
+        return new BoxAddress(size, align, false);
     }
 
     static BoxAddress boxAddress(MemoryLayout layout) {
@@ -448,8 +448,8 @@ public interface Binding {
             return this;
         }
 
-        public Binding.Builder boxAddressRaw(long size) {
-            bindings.add(Binding.boxAddressRaw(size));
+        public Binding.Builder boxAddressRaw(long size, long align) {
+            bindings.add(Binding.boxAddressRaw(size, align));
             return this;
         }
 

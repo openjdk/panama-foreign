@@ -456,7 +456,7 @@ public abstract class CallArranger {
         List<Binding> getIndirectBindings() {
             return Binding.builder()
                 .vmLoad(INDIRECT_RESULT, long.class)
-                .boxAddressRaw(Long.MAX_VALUE)
+                .boxAddressRaw(Long.MAX_VALUE, 1)
                 .build();
         }
 
@@ -487,7 +487,7 @@ public abstract class CallArranger {
                 case POINTER -> {
                     VMStorage storage = storageCalculator.nextStorage(StorageType.INTEGER, (ValueLayout) layout);
                     bindings.vmLoad(storage, long.class)
-                            .boxAddressRaw(Utils.pointeeSize(layout));
+                            .boxAddressRaw(Utils.pointeeSize(layout), Utils.pointeeAlign(layout));
                 }
                 case INTEGER -> {
                     VMStorage storage = storageCalculator.nextStorage(StorageType.INTEGER, (ValueLayout) layout);
