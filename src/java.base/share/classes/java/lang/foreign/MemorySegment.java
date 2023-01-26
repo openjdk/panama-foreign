@@ -374,7 +374,7 @@ import jdk.internal.vm.annotation.ForceInline;
  *}
  *
  * Alternatively, if the size of the foreign segment is known statically, clients can associate a
- * {@linkplain OfAddress#withTargetLayout(MemoryLayout) target layout} to the address layout used to obtain the
+ * {@linkplain OfAddress#withTargetLayout(MemoryLayout) target layout} with the address layout used to obtain the
  * segment. When an access operation, or a function descriptor that is passed to a downcall method handle,
  * uses an address value layout with target layout {@code T}, the runtime will wrap any corresponding raw addresses
  * with native segments with size set to {@code T.byteSize()}:
