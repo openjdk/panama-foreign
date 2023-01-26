@@ -363,7 +363,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * <p>
  * To access native zero-length memory segments, clients have several options, all of which are <em>unsafe</em>.
  * <p>
- * First, clients can unsafely resize a zero-length memory segment using an unbounded {@linkplain #asSliceUnbounded(long, long)}
+ * First, clients can unsafely resize a zero-length memory segment using an {@linkplain #asSliceUnbounded(long, long) unbounded}
  * slicing operation. This can be used to set the size of the zero-length segment to some desired size, so that
  * the segment can then be accessed directly, as follows:
  *
