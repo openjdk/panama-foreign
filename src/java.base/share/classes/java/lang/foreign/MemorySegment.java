@@ -523,7 +523,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Returns a slice of this memory segment, at the given offset. The returned segment's address is the address
-     * of this segment plus the given offset; its size is specified by the given argument.
+     * of this segment plus the given offset; its size is specified by the given size argument.
      * <p>
      * This method does not perform any spatial check; that is, the size of the requested slice can be <em>greater</em>
      * than the size of this segment. This might be useful when resizing <a href="#unchecked-address">zero-length
