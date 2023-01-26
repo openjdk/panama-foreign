@@ -84,7 +84,8 @@ public class NativeTestHelper {
     /**
      * The {@code T*} native type.
      */
-    public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS.withBitAlignment(64).asUnbounded();
+    public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS.withBitAlignment(64)
+            .withTargetLayout(MemoryLayout.sequenceLayout(C_CHAR));
 
     private static final Linker LINKER = Linker.nativeLinker();
 

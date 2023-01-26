@@ -33,6 +33,7 @@ import jdk.internal.javac.PreviewFeature;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
+import java.lang.foreign.ValueLayout.OfAddress;
 import java.lang.invoke.MethodHandle;
 import java.util.Arrays;
 import java.util.Set;
@@ -114,8 +115,8 @@ import java.util.stream.Stream;
  * A downcall method handle created from a function descriptor whose return layout is an
  * {@linkplain ValueLayout.OfAddress address layout} returns a native segment associated with
  * the {@linkplain SegmentScope#global() global scope}. Under normal conditions, the size of the returned segment is {@code 0}.
- * However, if the return layout is an {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout,
- * then the size of the returned segment is {@code Long.MAX_VALUE}.
+ * However, if the return address layout has a {@linkplain OfAddress#targetLayout()} {@code T}, then the size of the returned segment
+ * is set to {@code T.byteSize()}.
  * <p>
  * When creating upcall stubs the linker runtime validates the type of the target method handle against the provided
  * function descriptor and report an error if any mismatch is detected. As for downcalls, JVM crashes might occur,
@@ -127,9 +128,9 @@ import java.util.stream.Stream;
  * <p>
  * An upcall stub argument whose corresponding layout is an {@linkplain ValueLayout.OfAddress address layout}
  * is a native segment associated with the {@linkplain SegmentScope#global() global scope}.
- * Under normal conditions, the size of this segment argument is {@code 0}. However, if the layout associated with
- * the upcall stub argument is an {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout,
- * then the size of the segment argument is {@code Long.MAX_VALUE}.
+ * Under normal conditions, the size of this segment argument is {@code 0}.
+ * However, if the address layout has a {@linkplain OfAddress#targetLayout()} {@code T}, then the size of the
+ * segment argument is set to {@code T.byteSize()}.
  *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.

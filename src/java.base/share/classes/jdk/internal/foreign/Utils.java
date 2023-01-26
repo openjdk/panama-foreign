@@ -29,6 +29,7 @@ package jdk.internal.foreign;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
+import java.lang.foreign.SegmentScope;
 import java.lang.foreign.StructLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
@@ -55,8 +56,7 @@ public final class Utils {
     private static final MethodHandle BYTE_TO_BOOL;
     private static final MethodHandle BOOL_TO_BYTE;
     private static final MethodHandle ADDRESS_TO_LONG;
-    private static final MethodHandle LONG_TO_ADDRESS_SAFE;
-    private static final MethodHandle LONG_TO_ADDRESS_UNSAFE;
+    private static final MethodHandle LONG_TO_ADDRESS;
     public static final MethodHandle MH_BITS_TO_BYTES_OR_THROW_FOR_OFFSET;
 
     public static final Supplier<RuntimeException> BITS_TO_BYTES_THROW_OFFSET
@@ -71,10 +71,8 @@ public final class Utils {
                     MethodType.methodType(byte.class, boolean.class));
             ADDRESS_TO_LONG = lookup.findStatic(SharedUtils.class, "unboxSegment",
                     MethodType.methodType(long.class, MemorySegment.class));
-            LONG_TO_ADDRESS_SAFE = lookup.findStatic(Utils.class, "longToAddressSafe",
-                    MethodType.methodType(MemorySegment.class, long.class));
-            LONG_TO_ADDRESS_UNSAFE = lookup.findStatic(Utils.class, "longToAddressUnsafe",
-                    MethodType.methodType(MemorySegment.class, long.class));
+            LONG_TO_ADDRESS = lookup.findStatic(Utils.class, "longToAddress",
+                    MethodType.methodType(MemorySegment.class, long.class, long.class, long.class));
             MH_BITS_TO_BYTES_OR_THROW_FOR_OFFSET = MethodHandles.insertArguments(
                     lookup.findStatic(Utils.class, "bitsToBytesOrThrow",
                             MethodType.methodType(long.class, long.class, Supplier.class)),
@@ -127,11 +125,11 @@ public final class Utils {
 
         if (layout.carrier() == boolean.class) {
             handle = MethodHandles.filterValue(handle, BOOL_TO_BYTE, BYTE_TO_BOOL);
-        } else if (layout instanceof ValueLayout.OfAddress addressLayout) {
+        } else if (layout instanceof ValueLayout.OfAddress) {
             handle = MethodHandles.filterValue(handle,
-                    MethodHandles.explicitCastArguments(ADDRESS_TO_LONG, MethodType.methodType(baseCarrier, MemorySegment.class)),
-                    MethodHandles.explicitCastArguments(addressLayout.isUnbounded() ?
-                            LONG_TO_ADDRESS_UNSAFE : LONG_TO_ADDRESS_SAFE, MethodType.methodType(MemorySegment.class, baseCarrier)));
+                    ADDRESS_TO_LONG,
+                    MethodHandles.insertArguments(LONG_TO_ADDRESS, 1,
+                            pointeeSize(layout), pointeeAlign(layout)));
         }
         return VarHandleCache.put(layout, handle);
     }
@@ -145,13 +143,19 @@ public final class Utils {
     }
 
     @ForceInline
-    private static MemorySegment longToAddressSafe(long addr) {
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(addr, 0);
+    public static MemorySegment longToAddress(long addr, long size, long align) {
+        if (!isAligned(addr, align)) {
+            throw new IllegalArgumentException("Invalid alignment constraint for address: " + addr);
+        }
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(addr, size);
     }
 
     @ForceInline
-    private static MemorySegment longToAddressUnsafe(long addr) {
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(addr, Long.MAX_VALUE);
+    public static MemorySegment longToAddress(long addr, long size, long align, SegmentScope scope) {
+        if (!isAligned(addr, align)) {
+            throw new IllegalArgumentException("Invalid alignment constraint for address: " + addr);
+        }
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(addr, size, scope);
     }
 
     public static void copy(MemorySegment addr, byte[] bytes) {
@@ -180,7 +184,15 @@ public final class Utils {
 
     public static long pointeeSize(MemoryLayout layout) {
         if (layout instanceof ValueLayout.OfAddress addressLayout) {
-            return addressLayout.isUnbounded() ? Long.MAX_VALUE : 0L;
+            return addressLayout.targetLayout().map(MemoryLayout::byteSize).orElse(0L);
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static long pointeeAlign(MemoryLayout layout) {
+        if (layout instanceof ValueLayout.OfAddress addressLayout) {
+            return addressLayout.targetLayout().map(MemoryLayout::byteAlignment).orElse(1L);
         } else {
             throw new UnsupportedOperationException();
         }

@@ -87,8 +87,8 @@ public class BindingSpecializer {
     private static final String CLOSE_DESC = VOID_DESC;
     private static final String UNBOX_SEGMENT_DESC = methodType(long.class, MemorySegment.class).descriptorString();
     private static final String COPY_DESC = methodType(void.class, MemorySegment.class, long.class, MemorySegment.class, long.class, long.class).descriptorString();
-    private static final String OF_LONG_DESC = methodType(MemorySegment.class, long.class, long.class).descriptorString();
-    private static final String OF_LONG_UNCHECKED_DESC = methodType(MemorySegment.class, long.class, long.class, SegmentScope.class).descriptorString();
+    private static final String LONG_TO_ADDRESS_NO_SCOPE_DESC = methodType(MemorySegment.class, long.class, long.class, long.class).descriptorString();
+    private static final String LONG_TO_ADDRESS_SCOPE_DESC = methodType(MemorySegment.class, long.class, long.class, long.class, SegmentScope.class).descriptorString();
     private static final String ALLOCATE_DESC = methodType(MemorySegment.class, long.class, long.class).descriptorString();
     private static final String HANDLE_UNCAUGHT_EXCEPTION_DESC = methodType(void.class, Throwable.class).descriptorString();
     private static final String METHOD_HANDLES_INTRN = Type.getInternalName(MethodHandles.class);
@@ -579,11 +579,12 @@ public class BindingSpecializer {
     private void emitBoxAddress(Binding.BoxAddress boxAddress) {
         popType(long.class);
         emitConst(boxAddress.size());
+        emitConst(boxAddress.align());
         if (needsSession()) {
             emitLoadInternalSession();
-            emitInvokeStatic(NativeMemorySegmentImpl.class, "makeNativeSegmentUnchecked", OF_LONG_UNCHECKED_DESC);
+            emitInvokeStatic(Utils.class, "longToAddress", LONG_TO_ADDRESS_SCOPE_DESC);
         } else {
-            emitInvokeStatic(NativeMemorySegmentImpl.class, "makeNativeSegmentUnchecked", OF_LONG_DESC);
+            emitInvokeStatic(Utils.class, "longToAddress", LONG_TO_ADDRESS_NO_SCOPE_DESC);
         }
         pushType(MemorySegment.class);
     }

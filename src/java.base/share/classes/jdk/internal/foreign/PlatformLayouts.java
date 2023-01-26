@@ -25,6 +25,7 @@
  */
 package jdk.internal.foreign;
 
+import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.ValueLayout;
 
 public final class PlatformLayouts {
@@ -84,7 +85,8 @@ public final class PlatformLayouts {
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS.withBitAlignment(64).asUnbounded();
+        public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS.withBitAlignment(64)
+                .withTargetLayout(MemoryLayout.sequenceLayout(C_CHAR));
 
         /**
          * The {@code va_list} native type, as it is passed to a function.
@@ -143,7 +145,8 @@ public final class PlatformLayouts {
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS.withBitAlignment(64).asUnbounded();
+        public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS.withBitAlignment(64)
+                .withTargetLayout(MemoryLayout.sequenceLayout(C_CHAR));
 
         /**
          * The {@code va_list} native type, as it is passed to a function.
@@ -203,7 +206,8 @@ public final class PlatformLayouts {
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS.withBitAlignment(64).asUnbounded();
+        public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS.withBitAlignment(64)
+                .withTargetLayout(MemoryLayout.sequenceLayout(C_CHAR));
 
         /**
          * The {@code va_list} native type, as it is passed to a function.
@@ -259,7 +263,8 @@ public final class PlatformLayouts {
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS.withBitAlignment(64).asUnbounded();
+        public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS.withBitAlignment(64)
+                .withTargetLayout(MemoryLayout.sequenceLayout(C_CHAR));
 
         /**
          * The {@code va_list} native type, as it is passed to a function.

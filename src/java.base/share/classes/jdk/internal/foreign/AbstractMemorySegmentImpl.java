@@ -52,6 +52,8 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.misc.Unsafe;
+import jdk.internal.reflect.CallerSensitive;
+import jdk.internal.reflect.Reflection;
 import jdk.internal.util.ArraysSupport;
 import jdk.internal.util.Preconditions;
 import jdk.internal.vm.annotation.ForceInline;
@@ -110,6 +112,34 @@ public abstract sealed class AbstractMemorySegmentImpl
     public AbstractMemorySegmentImpl asSlice(long offset) {
         checkBounds(offset, 0);
         return asSliceNoCheck(offset, length - offset);
+    }
+
+    @Override
+    public MemorySegment asSlice(long offset, MemoryLayout layout) {
+        Objects.requireNonNull(layout);
+        checkBounds(offset, layout.byteSize());
+        if (!isAlignedForElement(offset, layout)) {
+            throw new IllegalArgumentException("Target offset incompatible with alignment constraints");
+        }
+        return asSliceNoCheck(offset, layout.byteSize());
+    }
+
+    @Override
+    @CallerSensitive
+    public AbstractMemorySegmentImpl asSliceUnbounded(long offset, long newSize) {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "asSliceUnbounded");
+        return asSliceNoCheck(offset, newSize);
+    }
+
+    @Override
+    @CallerSensitive
+    public MemorySegment asSliceUnbounded(long offset, MemoryLayout layout) {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "asSliceUnbounded");
+        Objects.requireNonNull(layout);
+        if (!isAlignedForElement(offset, layout)) {
+            throw new IllegalArgumentException("Target offset incompatible with alignment constraints");
+        }
+        return asSliceNoCheck(offset, layout.byteSize());
     }
 
     private AbstractMemorySegmentImpl asSliceNoCheck(long offset, long newSize) {

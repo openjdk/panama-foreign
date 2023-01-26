@@ -28,6 +28,7 @@ package java.lang.foreign;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
+import java.util.Optional;
 
 import jdk.internal.foreign.layout.ValueLayouts;
 import jdk.internal.javac.PreviewFeature;
@@ -386,7 +387,9 @@ public sealed interface ValueLayout extends MemoryLayout {
     }
 
     /**
-     * A value layout whose carrier is {@code MemorySegment.class}.
+     * A value layout whose carrier is {@code MemorySegment.class}. An address layout may optionally feature
+     * a {@linkplain #targetLayout() target layout}. The target layout indicates the layout of the region
+     * of memory pointed to by the address described by this layout.
      *
      * @see #ADDRESS
      * @see #ADDRESS_UNALIGNED
@@ -414,27 +417,29 @@ public sealed interface ValueLayout extends MemoryLayout {
         OfAddress withOrder(ByteOrder order);
 
         /**
-         * Returns an <em>unbounded</em> address layout with the same carrier, alignment constraint, name and order as this address layout,
-         * but with the specified pointee layout. An unbounded address layout allow raw addresses to be accessed
-         * as {@linkplain MemorySegment memory segments} whose size is set to {@link Long#MAX_VALUE}. As such,
-         * these segments can be used in subsequent access operations.
+         * Returns an address layout with the same carrier, alignment constraint, name and order as this address layout,
+         * but associated with the specified target layout. The returned address layout allows raw addresses to be accessed
+         * as {@linkplain MemorySegment memory segments} whose size is set to the size of the specified layout. Moreover,
+         * if the accessed raw address is not compatible with the alignment constraint in the provided layout,
+         * {@linkplain IllegalArgumentException} will be thrown.
          * <p>
          * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
          * Restricted methods are unsafe, and, if used incorrectly, their use might crash
          * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
          * restricted methods, and use safe and supported functionalities, where possible.
          *
-         * @return an unbounded address layout with same characteristics as this layout.
+         * @param layout the target layout.
+         * @return an address layout with same characteristics as this layout, but with the provided target layout.
          * @throws IllegalCallerException If the caller is in a module that does not have native access enabled.
-         * @see #isUnbounded()
+         * @see #targetLayout()
          */
         @CallerSensitive
-        OfAddress asUnbounded();
+        OfAddress withTargetLayout(MemoryLayout layout);
 
         /**
-         * {@return {@code true}, if this address layout is an {@linkplain #asUnbounded() unbounded address layout}}.
+         * {@return the target layout associated with this address layout (if any)}.
          */
-        boolean isUnbounded();
+        Optional<MemoryLayout> targetLayout();
 
     }
 
