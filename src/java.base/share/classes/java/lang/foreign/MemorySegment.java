@@ -394,7 +394,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * int x = foreign.get(ValueLayout.JAVA_INT, 0); //ok
  *}
  *
- * Both {@link #asSliceUnbounded(long, long)}, {@link ValueLayout.OfAddress#withTargetLayout(MemoryLayout)}
+ * All of {@link #asSliceUnbounded(long, long)}, {@link ValueLayout.OfAddress#withTargetLayout(MemoryLayout)}
  * and {@link #ofAddress(long, long, SegmentScope)} are
  * <a href="package-summary.html#restricted"><em>restricted</em></a> methods, and should be used with caution:
  * for instance, resizing a segment incorrectly could result in a VM crash when attempting to access the memory segment.
