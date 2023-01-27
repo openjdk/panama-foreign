@@ -363,8 +363,8 @@ public interface SegmentAllocator {
 
     /**
      * Returns a segment allocator which responds to allocation requests by recycling a single segment. Each
-     * new allocation request will return a new slice starting at the segment offset {@code 0} (alignment
-     * constraints are ignored by this allocator), hence the name <em>prefix allocator</em>.
+     * new allocation request will return a new slice starting at the segment offset {@code 0}, hence the name
+     * <em>prefix allocator</em>.
      * Equivalent to (but likely more efficient than) the following code:
      * {@snippet lang=java :
      * MemorySegment segment = ...
