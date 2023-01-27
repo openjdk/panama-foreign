@@ -566,9 +566,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      *
      * @return a new memory segment with unbounded size.
      * @throws UnsupportedOperationException if this segment is not a {@linkplain #isNative() native} segment.
-     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is specified, but does not mention the module name {@code M}, or
-     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
+     * @throws IllegalCallerException If the caller is in a module that does not have native access enabled.
      */
     @CallerSensitive
     MemorySegment asUnbounded();

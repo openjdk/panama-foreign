@@ -24,7 +24,8 @@
 /*
  * @test
  * @enablePreview
- * @requires os.arch=="amd64" | os.arch=="x86_64" | os.arch=="aarch64" | os.arch=="riscv64"
+ * @library ../ /test/lib
+ * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64" | os.arch == "riscv64"
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestAddressDereference
  */
 
@@ -44,7 +45,7 @@ import org.testng.annotations.*;
 
 import static org.testng.Assert.*;
 
-public class TestAddressDereference {
+public class TestAddressDereference extends UpcallTestHelper {
 
     static final Linker LINKER = Linker.nativeLinker();
     static final MemorySegment GET_ADDR_SYM;
@@ -110,7 +111,7 @@ public class TestAddressDereference {
     }
 
     @Test(dataProvider = "layoutsAndAlignments")
-    public void testNativeUpcallArg(long alignment, ValueLayout layout) throws Throwable {
+    public void testNativeUpcallArgPos(long alignment, ValueLayout layout) throws Throwable {
         boolean badAlign = layout.byteAlignment() > alignment;
         if (badAlign) return; // this will crash the JVM (exception occurs when going into the upcall stub)
         try (Arena arena = Arena.openConfined()) {
@@ -118,6 +119,36 @@ public class TestAddressDereference {
             MethodHandle upcallHandle = MethodHandles.insertArguments(TEST_ARG_HANDLE, 1, layout.byteSize());
             MemorySegment testStub = LINKER.upcallStub(upcallHandle, testDesc, arena.scope());
             GET_ADDR_CB_HANDLE.invokeExact(MemorySegment.ofAddress(alignment), testStub);
+        }
+    }
+
+    @Test(dataProvider = "layoutsAndAlignments")
+    public void testNativeUpcallArgNeg(long alignment, ValueLayout layout) throws Throwable {
+        boolean badAlign = layout.byteAlignment() > alignment;
+        if (!badAlign) return;
+        runInNewProcess(UpcallTestRunner.class, true,
+                new String[] {Long.toString(alignment), layout.toString() })
+                .assertStdErrContains("alignment constraint for address");
+    }
+
+    public static class UpcallTestRunner {
+        public static void main(String[] args) throws Throwable {
+            long alignment = parseAlignment(args[0]);
+            ValueLayout layout = parseLayout(args[1]);
+            try (Arena arena = Arena.openConfined()) {
+                FunctionDescriptor testDesc = FunctionDescriptor.ofVoid(ValueLayout.ADDRESS.withTargetLayout(layout));
+                MethodHandle upcallHandle = MethodHandles.insertArguments(TEST_ARG_HANDLE, 1, layout.byteSize());
+                MemorySegment testStub = LINKER.upcallStub(upcallHandle, testDesc, arena.scope());
+                GET_ADDR_CB_HANDLE.invokeExact(MemorySegment.ofAddress(alignment), testStub);
+            }
+        }
+
+        static long parseAlignment(String s) {
+            return Long.parseLong(s);
+        }
+
+        static ValueLayout parseLayout(String s) {
+            return LayoutKind.parse(s).layout;
         }
     }
 
@@ -151,6 +182,20 @@ public class TestAddressDereference {
 
         LayoutKind(ValueLayout segment) {
             this.layout = segment;
+        }
+
+        static LayoutKind parse(String layoutString) {
+            return switch (layoutString.charAt(0)) {
+                case 'A','a' -> ADDRESS;
+                case 'z','Z' -> BOOL;
+                case 'c','C' -> CHAR;
+                case 's','S' -> SHORT;
+                case 'i','I' -> INT;
+                case 'f','F' -> FLOAT;
+                case 'j','J' -> LONG;
+                case 'd','D' -> DOUBLE;
+                default -> throw new AssertionError("Invalid layout string: " + layoutString);
+            };
         }
     }
 }
