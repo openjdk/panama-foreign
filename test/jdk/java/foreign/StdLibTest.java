@@ -237,7 +237,7 @@ public class StdLibTest extends NativeTestHelper {
             );
 
             Tm(MemorySegment addr) {
-                this.base = addr.asSlice(0, LAYOUT);
+                this.base = addr;
             }
 
             int sec() {

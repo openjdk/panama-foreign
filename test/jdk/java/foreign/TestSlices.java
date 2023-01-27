@@ -124,14 +124,17 @@ public class TestSlices {
     }
 
     @Test
-    public void testSliceUnboundedSizeTooBig() {
-        MemorySegment.ofArray(new byte[100]).asSliceUnbounded(0, 120);
-    }
-
-    @Test
-    public void testSliceUnboundedLayoutTooBig() {
-        MemorySegment.ofArray(new byte[100])
-                .asSliceUnbounded(0, MemoryLayout.sequenceLayout(120, ValueLayout.JAVA_BYTE));
+    public void testUnboundedSlice() {
+        try (Arena arena = Arena.openConfined()) {
+            MemorySegment segment = arena.allocate(MemoryLayout.sequenceLayout(2, ValueLayout.JAVA_INT)); // size = 8
+            MemorySegment slice = segment.asSlice(0, ValueLayout.JAVA_INT); // size = 4
+            assertThrows(IndexOutOfBoundsException.class, () -> slice.getAtIndex(ValueLayout.JAVA_INT, 1));
+            MemorySegment unbounded = slice.asUnbounded();
+            assertEquals(unbounded.byteSize(), Long.MAX_VALUE);
+            unbounded = unbounded.asSlice(0, MemoryLayout.sequenceLayout(2, ValueLayout.JAVA_INT)); // size = 8
+            assertEquals(unbounded.byteSize(), segment.byteSize());
+            assertEquals(segment.getAtIndex(ValueLayout.JAVA_INT, 1), unbounded.getAtIndex(ValueLayout.JAVA_INT, 1));
+        }
     }
 
     @Test(dataProvider = "segmentsAndLayouts")
@@ -139,18 +142,6 @@ public class TestSlices {
         boolean badAlign = layout.byteAlignment() > alignment;
         try {
             segment.asSlice(0, layout);
-            assertFalse(badAlign);
-        } catch (IllegalArgumentException ex) {
-            assertTrue(badAlign);
-            assertTrue(ex.getMessage().contains("incompatible with alignment constraints"));
-        }
-    }
-
-    @Test(dataProvider = "segmentsAndLayouts")
-    public void testSliceUnboundedAlignment(MemorySegment segment, long alignment, ValueLayout layout) {
-        boolean badAlign = layout.byteAlignment() > alignment;
-        try {
-            segment.asSliceUnbounded(0, layout);
             assertFalse(badAlign);
         } catch (IllegalArgumentException ex) {
             assertTrue(badAlign);

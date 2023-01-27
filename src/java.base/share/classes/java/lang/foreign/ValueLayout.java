@@ -422,6 +422,15 @@ public sealed interface ValueLayout extends MemoryLayout {
          * as {@linkplain MemorySegment memory segments} whose size is set to the size of the specified layout. Moreover,
          * if the accessed raw address is not compatible with the alignment constraint in the provided layout,
          * {@linkplain IllegalArgumentException} will be thrown.
+         * @apiNote
+         * This method can also be used to create an address layout which, when used, creates native memory
+         * segments with maximal size (e.g. {@linkplain Long#MAX_VALUE}. This can be done by using a target sequence
+         * layout with unspecified size, as follows:
+         * {@snippet lang=java :
+         * ValueLayout.OfAddress addressLayout = ...
+         * ValueLayout.OfAddress unboundedLayout = addressLayout.withTargetLayout(
+         *         MemoryLayout.sequenceLayout(ValueLayout.JAVA_BYTE));
+         * }
          * <p>
          * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
          * Restricted methods are unsafe, and, if used incorrectly, their use might crash
