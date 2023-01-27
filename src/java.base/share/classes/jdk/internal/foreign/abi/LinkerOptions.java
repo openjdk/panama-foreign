@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 public class LinkerOptions {
@@ -45,14 +46,23 @@ public class LinkerOptions {
     }
 
     public static LinkerOptions forDowncall(FunctionDescriptor desc, Linker.Option... options) {
-        Map<Class<?>, LinkerOptionImpl> optionMap = new HashMap<>();
+        return forShared(LinkerOptionImpl::validateForDowncall, desc, options);
+    }
+
+    public static LinkerOptions forUpcall(FunctionDescriptor desc, Linker.Option[] options) {
+        return forShared(LinkerOptionImpl::validateForUpcall, desc, options);
+    }
+
+    private static LinkerOptions forShared(BiConsumer<LinkerOptionImpl, FunctionDescriptor> validator,
+                                           FunctionDescriptor desc, Linker.Option... options) {
+       Map<Class<?>, LinkerOptionImpl> optionMap = new HashMap<>();
 
         for (Linker.Option option : options) {
             if (optionMap.containsKey(option.getClass())) {
                 throw new IllegalArgumentException("Duplicate option: " + option);
             }
             LinkerOptionImpl opImpl = (LinkerOptionImpl) option;
-            opImpl.validateForDowncall(desc);
+            validator.accept(opImpl, desc);
             optionMap.put(option.getClass(), opImpl);
         }
 
@@ -91,6 +101,11 @@ public class LinkerOptions {
         return it != null;
     }
 
+    public Thread.UncaughtExceptionHandler uncaughtExceptionHandler() {
+        UncaughtExceptionHandler ueh = getOption(UncaughtExceptionHandler.class);
+        return ueh != null ? ueh.handler() : null;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -104,9 +119,13 @@ public class LinkerOptions {
     }
 
     public sealed interface LinkerOptionImpl extends Linker.Option
-            permits CaptureCallStateImpl, FirstVariadicArg, IsTrivial {
+            permits CaptureCallStateImpl, FirstVariadicArg, IsTrivial, UncaughtExceptionHandler {
         default void validateForDowncall(FunctionDescriptor descriptor) {
             throw new IllegalArgumentException("Not supported for downcall: " + this);
+        }
+
+        default void validateForUpcall(FunctionDescriptor descriptor) {
+            throw new IllegalArgumentException("Not supported for upcall: " + this);
         }
     }
 
@@ -146,4 +165,10 @@ public class LinkerOptions {
         }
     }
 
+    public record UncaughtExceptionHandler(Thread.UncaughtExceptionHandler handler) implements LinkerOptionImpl {
+        @Override
+        public void validateForUpcall(FunctionDescriptor descriptor) {
+            // always allowed
+        }
+    }
 }

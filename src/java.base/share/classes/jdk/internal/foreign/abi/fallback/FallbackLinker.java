@@ -34,6 +34,7 @@ import jdk.internal.foreign.abi.SharedUtils;
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
+import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
@@ -106,14 +107,14 @@ public final class FallbackLinker extends AbstractLinker {
 
     @Override
     protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function,
-                                          SegmentScope scope) {
+                                          SegmentScope scope, LinkerOptions options) {
         MemorySegment cif = makeCif(targetType, function, FFIABI.DEFAULT, scope);
 
         UpcallData invData = new UpcallData(target, function.returnLayout().orElse(null),
                 function.argumentLayouts());
 
         MethodHandle doUpcallMH = MethodHandles.insertArguments(MH_DO_UPCALL, 2, invData);
-        return LibFallback.createClosure(cif, doUpcallMH, scope);
+        return LibFallback.createClosure(cif, doUpcallMH, options.uncaughtExceptionHandler(), scope);
     }
 
     private static MemorySegment makeCif(MethodType methodType, FunctionDescriptor function, FFIABI abi, SegmentScope scope) {
