@@ -52,6 +52,8 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.misc.Unsafe;
+import jdk.internal.reflect.CallerSensitive;
+import jdk.internal.reflect.Reflection;
 import jdk.internal.util.ArraysSupport;
 import jdk.internal.util.Preconditions;
 import jdk.internal.vm.annotation.ForceInline;
@@ -112,6 +114,23 @@ public abstract sealed class AbstractMemorySegmentImpl
         return asSliceNoCheck(offset, length - offset);
     }
 
+    @Override
+    public MemorySegment asSlice(long offset, long newSize, long byteAlignment) {
+        checkBounds(offset, newSize);
+        if (!isAlignedForElement(offset, byteAlignment)) {
+            throw new IllegalArgumentException("Target offset incompatible with alignment constraints");
+        }
+        return asSliceNoCheck(offset, newSize);
+    }
+
+    @Override
+    @CallerSensitive
+    public AbstractMemorySegmentImpl asUnbounded() {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "asUnbounded");
+        if (!isNative()) throw new UnsupportedOperationException("Not a native segment");
+        return asSliceNoCheck(0, Long.MAX_VALUE);
+    }
+
     private AbstractMemorySegmentImpl asSliceNoCheck(long offset, long newSize) {
         return dup(offset, newSize, readOnly, scope);
     }
@@ -148,7 +167,7 @@ public abstract sealed class AbstractMemorySegmentImpl
     @Override
     public MemorySegment allocate(long byteSize, long byteAlignment) {
         Utils.checkAllocationSizeAndAlign(byteSize, byteAlignment);
-        return asSlice(0, byteSize);
+        return asSlice(0, byteSize, byteAlignment);
     }
 
     /**
@@ -325,7 +344,12 @@ public abstract sealed class AbstractMemorySegmentImpl
 
     @ForceInline
     public final boolean isAlignedForElement(long offset, MemoryLayout layout) {
-        return (((unsafeGetOffset() + offset) | maxAlignMask()) & (layout.byteAlignment() - 1)) == 0;
+        return isAlignedForElement(offset, layout.byteAlignment());
+    }
+
+    @ForceInline
+    public final boolean isAlignedForElement(long offset, long byteAlignment) {
+        return (((unsafeGetOffset() + offset) | maxAlignMask()) & (byteAlignment - 1)) == 0;
     }
 
     private int checkArraySize(String typeName, int elemSize) {

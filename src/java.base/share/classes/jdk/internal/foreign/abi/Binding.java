@@ -347,16 +347,16 @@ public interface Binding {
         return new Allocate(layout.byteSize(), layout.byteAlignment());
     }
 
-    static BoxAddress boxAddressRaw(long size) {
-        return new BoxAddress(size, false);
+    static BoxAddress boxAddressRaw(long size, long align) {
+        return new BoxAddress(size, align, false);
     }
 
     static BoxAddress boxAddress(MemoryLayout layout) {
-        return new BoxAddress(layout.byteSize(), true);
+        return new BoxAddress(layout.byteSize(), layout.byteAlignment(), true);
     }
 
     static BoxAddress boxAddress(long byteSize) {
-        return new BoxAddress(byteSize, true);
+        return new BoxAddress(byteSize, 1, true);
     }
 
     static UnboxAddress unboxAddress() {
@@ -448,8 +448,8 @@ public interface Binding {
             return this;
         }
 
-        public Binding.Builder boxAddressRaw(long size) {
-            bindings.add(Binding.boxAddressRaw(size));
+        public Binding.Builder boxAddressRaw(long size, long align) {
+            bindings.add(Binding.boxAddressRaw(size, align));
             return this;
         }
 
@@ -681,7 +681,7 @@ public interface Binding {
      * Pops a 'long' from the operand stack, converts it to a 'MemorySegment', with the given size and memory scope
      * (either the context scope, or the global scope), and pushes that onto the operand stack.
      */
-    record BoxAddress(long size, boolean needsScope) implements Binding {
+    record BoxAddress(long size, long align, boolean needsScope) implements Binding {
 
         @Override
         public Tag tag() {
@@ -698,9 +698,11 @@ public interface Binding {
         @Override
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
                               BindingInterpreter.LoadFunc loadFunc, Context context) {
-            SegmentScope scope = needsScope ?
-                    context.scope() : SegmentScope.global();
-            stack.push(NativeMemorySegmentImpl.makeNativeSegmentUnchecked((long) stack.pop(), size, scope));
+            if (needsScope) {
+                stack.push(Utils.longToAddress((long) stack.pop(), size, align, context.scope));
+            } else {
+                stack.push(Utils.longToAddress((long) stack.pop(), size, align));
+            }
         }
     }
 

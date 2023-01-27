@@ -98,8 +98,8 @@ public final class ValueLayouts {
         abstract V withOrder(ByteOrder order);
 
         @Override
-        public final String toString() {
-            char descriptor = carrier == MemorySegment.class ? 'A' : carrier.descriptorString().charAt(0);
+        public String toString() {
+            char descriptor = carrier.descriptorString().charAt(0);
             if (order == ByteOrder.LITTLE_ENDIAN) {
                 descriptor = Character.toLowerCase(descriptor);
             }
@@ -403,54 +403,68 @@ public final class ValueLayouts {
 
     public static final class OfAddressImpl extends AbstractValueLayout<OfAddressImpl> implements ValueLayout.OfAddress {
 
-        private final boolean isUnbounded;
+        private final MemoryLayout targetLayout;
 
         private OfAddressImpl(ByteOrder order) {
             super(MemorySegment.class, order, ADDRESS_SIZE_BITS);
-            this.isUnbounded = false; // safe
+            this.targetLayout = null;
         }
 
-        private OfAddressImpl(ByteOrder order, long size, long bitAlignment, boolean isUnbounded, Optional<String> name) {
+        private OfAddressImpl(ByteOrder order, long size, long bitAlignment, MemoryLayout targetLayout, Optional<String> name) {
             super(MemorySegment.class, order, size, bitAlignment, name);
-            this.isUnbounded = isUnbounded;
+            this.targetLayout = targetLayout;
         }
 
         @Override
         OfAddressImpl dup(long alignment, Optional<String> name) {
-            return new OfAddressImpl(order(), bitSize(), alignment, isUnbounded, name);
+            return new OfAddressImpl(order(), bitSize(), alignment, targetLayout, name);
         }
 
         @Override
         public OfAddressImpl withOrder(ByteOrder order) {
             Objects.requireNonNull(order);
-            return new OfAddressImpl(order, bitSize(), bitAlignment(), isUnbounded, name());
+            return new OfAddressImpl(order, bitSize(), bitAlignment(), targetLayout, name());
         }
 
         @Override
         public boolean equals(Object other) {
             return super.equals(other) &&
-                    ((OfAddressImpl) other).isUnbounded == this.isUnbounded;
+                    Objects.equals(((OfAddressImpl)other).targetLayout, this.targetLayout);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(super.hashCode(), isUnbounded);
+            return Objects.hash(super.hashCode(), targetLayout);
         }
 
         @Override
         @CallerSensitive
-        public OfAddress asUnbounded() {
-            Reflection.ensureNativeAccess(Reflection.getCallerClass(), OfAddress.class, "asUnbounded");
-            return new OfAddressImpl(order(), bitSize(), bitAlignment(), true, name());
+        public OfAddress withTargetLayout(MemoryLayout layout) {
+            Reflection.ensureNativeAccess(Reflection.getCallerClass(), OfAddress.class, "withTargetLayout");
+            Objects.requireNonNull(layout);
+            return new OfAddressImpl(order(), bitSize(), bitAlignment(), layout, name());
         }
 
         @Override
-        public boolean isUnbounded() {
-            return isUnbounded;
+        public Optional<MemoryLayout> targetLayout() {
+            return Optional.ofNullable(targetLayout);
         }
 
         public static OfAddress of(ByteOrder order) {
             return new OfAddressImpl(order);
+        }
+
+        @Override
+        public String toString() {
+            char descriptor = 'A';
+            if (order() == ByteOrder.LITTLE_ENDIAN) {
+                descriptor = Character.toLowerCase(descriptor);
+            }
+            String str = decorateLayoutString(String.format("%s%d", descriptor, bitSize()));
+            if (targetLayout != null) {
+                str += ":" + targetLayout;
+            }
+            return str;
         }
     }
 

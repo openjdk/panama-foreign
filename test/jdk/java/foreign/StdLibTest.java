@@ -149,12 +149,13 @@ public class StdLibTest extends NativeTestHelper {
                 FunctionDescriptor.of(C_INT, C_POINTER));
 
         final static MethodHandle gmtime = abi.downcallHandle(abi.defaultLookup().find("gmtime").get(),
-                FunctionDescriptor.of(C_POINTER, C_POINTER));
+                FunctionDescriptor.of(C_POINTER.withTargetLayout(Tm.LAYOUT), C_POINTER));
 
         final static MethodHandle qsort = abi.downcallHandle(abi.defaultLookup().find("qsort").get(),
                 FunctionDescriptor.ofVoid(C_POINTER, C_LONG_LONG, C_LONG_LONG, C_POINTER));
 
-        final static FunctionDescriptor qsortComparFunction = FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER);
+        final static FunctionDescriptor qsortComparFunction = FunctionDescriptor.of(C_INT,
+                C_POINTER.withTargetLayout(C_INT), C_POINTER.withTargetLayout(C_INT));
 
         final static MethodHandle qsortCompar;
 
@@ -222,10 +223,21 @@ public class StdLibTest extends NativeTestHelper {
             //Tm pointer should never be freed directly, as it points to shared memory
             private final MemorySegment base;
 
-            static final long SIZE = 56;
+            static final MemoryLayout LAYOUT = MemoryLayout.structLayout(
+                    C_INT.withName("sec"),
+                    C_INT.withName("min"),
+                    C_INT.withName("hour"),
+                    C_INT.withName("mday"),
+                    C_INT.withName("mon"),
+                    C_INT.withName("year"),
+                    C_INT.withName("wday"),
+                    C_INT.withName("yday"),
+                    C_BOOL.withName("isdst"),
+                    MemoryLayout.paddingLayout(24)
+            );
 
             Tm(MemorySegment addr) {
-                this.base = addr.asSlice(0, SIZE);
+                this.base = addr;
             }
 
             int sec() {

@@ -47,8 +47,8 @@ public class TestLayoutEquality {
     public void testReconstructedEquality(ValueLayout layout) {
         ValueLayout newLayout = MemoryLayout.valueLayout(layout.carrier(), layout.order());
         newLayout = newLayout.withBitAlignment(layout.bitAlignment());
-        if (layout instanceof ValueLayout.OfAddress addressLayout && addressLayout.isUnbounded()) {
-            newLayout = ((ValueLayout.OfAddress)newLayout).asUnbounded();
+        if (layout instanceof ValueLayout.OfAddress addressLayout && addressLayout.targetLayout().isPresent()) {
+            newLayout = ((ValueLayout.OfAddress)newLayout).withTargetLayout(addressLayout.targetLayout().get());
         }
 
         // properties should be equal
