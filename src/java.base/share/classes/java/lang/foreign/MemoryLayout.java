@@ -29,6 +29,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
+import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -262,7 +263,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      */
     default long bitOffset(PathElement... elements) {
         return computePathOp(LayoutPath.rootPath(this), LayoutPath::offset,
-                EnumSet.of(PathKind.SEQUENCE_ELEMENT, PathKind.SEQUENCE_RANGE), elements);
+                EnumSet.of(PathKind.SEQUENCE_ELEMENT, PathKind.SEQUENCE_RANGE, PathKind.DEREF_ELEMENT), elements);
     }
 
     /**
@@ -294,7 +295,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      */
     default MethodHandle bitOffsetHandle(PathElement... elements) {
         return computePathOp(LayoutPath.rootPath(this), LayoutPath::offsetHandle,
-                EnumSet.of(PathKind.SEQUENCE_RANGE), elements);
+                EnumSet.of(PathKind.SEQUENCE_RANGE, PathKind.DEREF_ELEMENT), elements);
     }
 
     /**
@@ -447,7 +448,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      */
     default MemoryLayout select(PathElement... elements) {
         return computePathOp(LayoutPath.rootPath(this), LayoutPath::layout,
-                EnumSet.of(PathKind.SEQUENCE_ELEMENT_INDEX, PathKind.SEQUENCE_RANGE), elements);
+                EnumSet.of(PathKind.SEQUENCE_ELEMENT_INDEX, PathKind.SEQUENCE_RANGE, PathKind.DEREF_ELEMENT), elements);
     }
 
     private static <Z> Z computePathOp(LayoutPath path, Function<LayoutPath, Z> finalizer,
@@ -593,6 +594,19 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
         static PathElement sequenceElement() {
             return new LayoutPath.PathElementImpl(PathKind.SEQUENCE_ELEMENT,
                                                   LayoutPath::sequenceElement);
+        }
+
+        /**
+         * Returns a path element which dereferences an address as the given layout.
+         * The path element returned by this method does not alter the number of free dimensions of any path
+         * that is combined with such element.
+         *
+         * @param layout the dereference layout
+         * @return which dereferences an address as the given layout.
+         */
+        static PathElement derefElement(MemoryLayout layout) {
+            return new LayoutPath.PathElementImpl(PathKind.DEREF_ELEMENT,
+                    path -> path.derefElement(layout));
         }
     }
 

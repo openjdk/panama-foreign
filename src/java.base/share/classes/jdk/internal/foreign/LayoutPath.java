@@ -30,6 +30,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.SegmentScope;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.StructLayout;
 import java.lang.foreign.ValueLayout;
@@ -53,9 +54,11 @@ public class LayoutPath {
 
     private static final long[] EMPTY_STRIDES = new long[0];
     private static final long[] EMPTY_BOUNDS = new long[0];
+    private static final MethodHandle[] EMPTY_DEREF_HANDLES = new MethodHandle[0];
 
     private static final MethodHandle MH_ADD_SCALED_OFFSET;
     private static final MethodHandle MH_SLICE;
+    private static final MethodHandle MH_SEGMENT_RESIZE;
 
     static {
         try {
@@ -64,6 +67,8 @@ public class LayoutPath {
                     MethodType.methodType(long.class, long.class, long.class, long.class, long.class));
             MH_SLICE = lookup.findVirtual(MemorySegment.class, "asSlice",
                     MethodType.methodType(MemorySegment.class, long.class, long.class));
+            MH_SEGMENT_RESIZE = lookup.findStatic(LayoutPath.class, "resizeSegment",
+                    MethodType.methodType(MemorySegment.class, MemorySegment.class, MemoryLayout.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -75,12 +80,14 @@ public class LayoutPath {
     private final long[] strides;
 
     private final long[] bounds;
+    private final MethodHandle[] derefAdapters;
 
-    private LayoutPath(MemoryLayout layout, long offset, long[] strides, long[] bounds, LayoutPath enclosing) {
+    private LayoutPath(MemoryLayout layout, long offset, long[] strides, long[] bounds, MethodHandle[] derefAdapters, LayoutPath enclosing) {
         this.layout = layout;
         this.offset = offset;
         this.strides = strides;
         this.bounds = bounds;
+        this.derefAdapters = derefAdapters;
         this.enclosing = enclosing;
     }
 
@@ -90,7 +97,7 @@ public class LayoutPath {
         check(SequenceLayout.class, "attempting to select a sequence element from a non-sequence layout");
         SequenceLayout seq = (SequenceLayout)layout;
         MemoryLayout elem = seq.elementLayout();
-        return LayoutPath.nestedPath(elem, offset, addStride(elem.bitSize()), addBound(seq.elementCount()), this);
+        return LayoutPath.nestedPath(elem, offset, addStride(elem.bitSize()), addBound(seq.elementCount()), derefAdapters, this);
     }
 
     public LayoutPath sequenceElement(long start, long step) {
@@ -104,7 +111,7 @@ public class LayoutPath {
                 start + 1;
         long maxIndex = Math.ceilDiv(nelems, Math.abs(step));
         return LayoutPath.nestedPath(elem, offset + (start * elemSize),
-                                     addStride(elemSize * step), addBound(maxIndex), this);
+                                     addStride(elemSize * step), addBound(maxIndex), derefAdapters, this);
     }
 
     public LayoutPath sequenceElement(long index) {
@@ -113,7 +120,7 @@ public class LayoutPath {
         checkSequenceBounds(seq, index);
         long elemSize = seq.elementLayout().bitSize();
         long elemOffset = elemSize * index;
-        return LayoutPath.nestedPath(seq.elementLayout(), offset + elemOffset, strides, bounds, this);
+        return LayoutPath.nestedPath(seq.elementLayout(), offset + elemOffset, strides, bounds, derefAdapters,this);
     }
 
     public LayoutPath groupElement(String name) {
@@ -134,7 +141,7 @@ public class LayoutPath {
         if (elem == null) {
             throw badLayoutPath("cannot resolve '" + name + "' in layout " + layout);
         }
-        return LayoutPath.nestedPath(elem, this.offset + offset, strides, bounds, this);
+        return LayoutPath.nestedPath(elem, this.offset + offset, strides, bounds, derefAdapters, this);
     }
 
     public LayoutPath groupElement(long index) {
@@ -152,7 +159,22 @@ public class LayoutPath {
                 offset += elem.bitSize();
             }
         }
-        return LayoutPath.nestedPath(elem, this.offset + offset, strides, bounds, this);
+        return LayoutPath.nestedPath(elem, this.offset + offset, strides, bounds, derefAdapters, this);
+    }
+
+    public LayoutPath derefElement(MemoryLayout derefLayout) {
+        if (!(layout instanceof ValueLayout valueLayout) ||
+                valueLayout.carrier() != MemorySegment.class) {
+            throw badLayoutPath("Cannot dereference layout: " + layout);
+        }
+        MethodHandle handle = dereferenceHandle(false).toMethodHandle(VarHandle.AccessMode.GET);
+        handle = MethodHandles.filterReturnValue(handle,
+                MethodHandles.insertArguments(MH_SEGMENT_RESIZE, 1, derefLayout));
+        return derefPath(derefLayout, handle, this);
+    }
+
+    private static MemorySegment resizeSegment(MemorySegment segment, MemoryLayout layout) {
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(segment.address(), Long.MAX_VALUE);
     }
 
     // Layout path projections
@@ -162,6 +184,10 @@ public class LayoutPath {
     }
 
     public VarHandle dereferenceHandle() {
+        return dereferenceHandle(true);
+    }
+
+    public VarHandle dereferenceHandle(boolean adapt) {
         if (!(layout instanceof ValueLayout valueLayout)) {
             throw new IllegalArgumentException("Path does not select a value layout");
         }
@@ -178,6 +204,12 @@ public class LayoutPath {
         }
         handle = MethodHandles.insertCoordinates(handle, 1,
                 Utils.bitsToBytesOrThrow(offset, IllegalArgumentException::new));
+
+        if (adapt) {
+            for (int i = derefAdapters.length; i > 0; i--) {
+                handle = MethodHandles.collectCoordinates(handle, 0, derefAdapters[i - 1]);
+            }
+        }
         return handle;
     }
 
@@ -222,11 +254,18 @@ public class LayoutPath {
     // Layout path construction
 
     public static LayoutPath rootPath(MemoryLayout layout) {
-        return new LayoutPath(layout, 0L, EMPTY_STRIDES, EMPTY_BOUNDS, null);
+        return new LayoutPath(layout, 0L, EMPTY_STRIDES, EMPTY_BOUNDS, EMPTY_DEREF_HANDLES, null);
     }
 
-    private static LayoutPath nestedPath(MemoryLayout layout, long offset, long[] strides, long[] bounds, LayoutPath encl) {
-        return new LayoutPath(layout, offset, strides, bounds, encl);
+    private static LayoutPath nestedPath(MemoryLayout layout, long offset, long[] strides, long[] bounds, MethodHandle[] derefAdapters, LayoutPath encl) {
+        return new LayoutPath(layout, offset, strides, bounds, derefAdapters, encl);
+    }
+
+    private static LayoutPath derefPath(MemoryLayout layout, MethodHandle handle, LayoutPath encl) {
+        MethodHandle[] handles = new MethodHandle[encl.derefAdapters.length + 1];
+        System.arraycopy(encl.derefAdapters, 0, handles, 0, encl.derefAdapters.length);
+        handles[encl.derefAdapters.length] = handle;
+        return new LayoutPath(layout, 0L, EMPTY_STRIDES, EMPTY_BOUNDS, handles, null);
     }
 
     // Helper methods
@@ -289,7 +328,8 @@ public class LayoutPath {
             SEQUENCE_ELEMENT("unbound sequence element"),
             SEQUENCE_ELEMENT_INDEX("bound sequence element"),
             SEQUENCE_RANGE("sequence range"),
-            GROUP_ELEMENT("group element");
+            GROUP_ELEMENT("group element"),
+            DEREF_ELEMENT("dereference element");
 
             final String description;
 
