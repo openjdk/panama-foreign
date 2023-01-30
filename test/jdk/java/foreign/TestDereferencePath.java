@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -28,12 +28,13 @@
  * @run testng TestDereferencePath
  */
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 
 import java.lang.foreign.ValueLayout;
+
 import org.testng.annotations.*;
 
 import java.lang.invoke.VarHandle;
@@ -41,30 +42,32 @@ import static org.testng.Assert.*;
 
 public class TestDereferencePath {
 
-    static final MemoryLayout A = MemoryLayout.structLayout(
-            ValueLayout.ADDRESS.withName("b")
-    );
-
-    static final MemoryLayout B = MemoryLayout.structLayout(
-            ValueLayout.ADDRESS.withName("c")
-    );
-
     static final MemoryLayout C = MemoryLayout.structLayout(
             ValueLayout.JAVA_INT.withName("x")
     );
 
+    static final MemoryLayout B = MemoryLayout.structLayout(
+            ValueLayout.ADDRESS.withName("c")
+                               .withTargetLayout(C)
+    );
+
+    static final MemoryLayout A = MemoryLayout.structLayout(
+            ValueLayout.ADDRESS.withName("b")
+                               .withTargetLayout(B)
+    );
+
     static final VarHandle abcx = A.varHandle(
-            PathElement.groupElement("b"), PathElement.derefElement(B),
-            PathElement.groupElement("c"), PathElement.derefElement(C),
+            PathElement.groupElement("b"), PathElement.dereferenceElement(),
+            PathElement.groupElement("c"), PathElement.dereferenceElement(),
             PathElement.groupElement("x"));
 
     @Test
     public void testSingle() {
-        try (MemorySession session = MemorySession.openConfined()) {
+        try (Arena arena = Arena.openConfined()) {
             // init structs
-            MemorySegment a = MemorySegment.allocateNative(A, session);
-            MemorySegment b = MemorySegment.allocateNative(B, session);
-            MemorySegment c = MemorySegment.allocateNative(C, session);
+            MemorySegment a = arena.allocate(A);
+            MemorySegment b = arena.allocate(B);
+            MemorySegment c = arena.allocate(C);
             // init struct fields
             a.set(ValueLayout.ADDRESS, 0, b);
             b.set(ValueLayout.ADDRESS, 0, c);
@@ -75,18 +78,28 @@ public class TestDereferencePath {
         }
     }
 
-    static final VarHandle abcx_multi = A.varHandle(
-            PathElement.groupElement("b"), PathElement.derefElement(MemoryLayout.sequenceLayout(2, B)), PathElement.sequenceElement(),
-            PathElement.groupElement("c"), PathElement.derefElement(MemoryLayout.sequenceLayout(2, C)), PathElement.sequenceElement(),
+    static final MemoryLayout B_MULTI = MemoryLayout.structLayout(
+            ValueLayout.ADDRESS.withName("cs")
+                    .withTargetLayout(MemoryLayout.sequenceLayout(2, C))
+    );
+
+    static final MemoryLayout A_MULTI = MemoryLayout.structLayout(
+            ValueLayout.ADDRESS.withName("bs")
+                    .withTargetLayout(MemoryLayout.sequenceLayout(2, B_MULTI))
+    );
+
+    static final VarHandle abcx_multi = A_MULTI.varHandle(
+            PathElement.groupElement("bs"), PathElement.dereferenceElement(), PathElement.sequenceElement(),
+            PathElement.groupElement("cs"), PathElement.dereferenceElement(), PathElement.sequenceElement(),
             PathElement.groupElement("x"));
 
     @Test
     public void testMulti() {
-        try (MemorySession session = MemorySession.openConfined()) {
+        try (Arena arena = Arena.openConfined()) {
             // init structs
-            MemorySegment a = session.allocate(A);
-            MemorySegment b = session.allocateArray(B, 2);
-            MemorySegment c = session.allocateArray(C, 4);
+            MemorySegment a = arena.allocate(A);
+            MemorySegment b = arena.allocateArray(B, 2);
+            MemorySegment c = arena.allocateArray(C, 4);
             // init struct fields
             a.set(ValueLayout.ADDRESS, 0, b);
             b.set(ValueLayout.ADDRESS, 0, c);
@@ -105,5 +118,65 @@ public class TestDereferencePath {
             int val11 = (int) abcx_multi.get(a, 1, 1); // a->b[1]->c[1] = 4
             assertEquals(val11, 4);
         }
+    }
+
+    static final MemoryLayout A_MULTI_NO_TARGET = MemoryLayout.structLayout(
+            ValueLayout.ADDRESS.withName("bs")
+    );
+
+    static final MemoryLayout B_MULTI_NO_TARGET = MemoryLayout.structLayout(
+            ValueLayout.ADDRESS.withName("cs")
+    );
+
+    static final VarHandle abcx_multi_no_target = A_MULTI_NO_TARGET.varHandle(
+            PathElement.groupElement("bs"), PathElement.dereferenceElement(MemoryLayout.sequenceLayout(2, B_MULTI_NO_TARGET)),
+            PathElement.sequenceElement(), PathElement.groupElement("cs"), PathElement.dereferenceElement(MemoryLayout.sequenceLayout(2, C)),
+            PathElement.sequenceElement(), PathElement.groupElement("x"));
+
+    @Test
+    public void testMultiNoTarget() {
+        try (Arena arena = Arena.openConfined()) {
+            // init structs
+            MemorySegment a = arena.allocate(A);
+            MemorySegment b = arena.allocateArray(B, 2);
+            MemorySegment c = arena.allocateArray(C, 4);
+            // init struct fields
+            a.set(ValueLayout.ADDRESS, 0, b);
+            b.set(ValueLayout.ADDRESS, 0, c);
+            b.setAtIndex(ValueLayout.ADDRESS, 1, c.asSlice(C.byteSize() * 2));
+            c.setAtIndex(ValueLayout.JAVA_INT, 0, 1);
+            c.setAtIndex(ValueLayout.JAVA_INT, 1, 2);
+            c.setAtIndex(ValueLayout.JAVA_INT, 2, 3);
+            c.setAtIndex(ValueLayout.JAVA_INT, 3, 4);
+            // dereference
+            int val00 = (int) abcx_multi_no_target.get(a, 0, 0); // a->b[0]->c[0] = 1
+            assertEquals(val00, 1);
+            int val10 = (int) abcx_multi_no_target.get(a, 1, 0); // a->b[1]->c[0] = 3
+            assertEquals(val10, 3);
+            int val01 = (int) abcx_multi_no_target.get(a, 0, 1); // a->b[0]->c[1] = 2
+            assertEquals(val01, 2);
+            int val11 = (int) abcx_multi_no_target.get(a, 1, 1); // a->b[1]->c[1] = 4
+            assertEquals(val11, 4);
+        }
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    void testBadDerefInSelect() {
+        A.select(PathElement.groupElement("b"), PathElement.dereferenceElement());
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    void testBadDerefInOffset() {
+        A.byteOffset(PathElement.groupElement("b"), PathElement.dereferenceElement());
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    void badDerefAddressNoTarget() {
+        A_MULTI_NO_TARGET.varHandle(PathElement.groupElement("bs"), PathElement.dereferenceElement());
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    void badDerefAddressAlreadyHasTarget() {
+        A_MULTI.varHandle(PathElement.groupElement("bs"), PathElement.dereferenceElement(MemoryLayout.sequenceLayout(2, B_MULTI)));
     }
 }

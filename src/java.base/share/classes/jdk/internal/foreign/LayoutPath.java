@@ -162,11 +162,23 @@ public class LayoutPath {
         return LayoutPath.nestedPath(elem, this.offset + offset, strides, bounds, derefAdapters, this);
     }
 
-    public LayoutPath derefElement(MemoryLayout derefLayout) {
-        if (!(layout instanceof ValueLayout valueLayout) ||
-                valueLayout.carrier() != MemorySegment.class) {
+    public LayoutPath derefElement() {
+        if (!(layout instanceof ValueLayout.OfAddress addressLayout) ||
+                addressLayout.targetLayout().isEmpty()) {
             throw badLayoutPath("Cannot dereference layout: " + layout);
         }
+        return derefElementInternal(addressLayout.targetLayout().get());
+    }
+
+    public LayoutPath derefElement(MemoryLayout derefLayout) {
+        if (!(layout instanceof ValueLayout.OfAddress addressLayout) ||
+            !addressLayout.targetLayout().isEmpty()) {
+            throw badLayoutPath("Cannot dereference layout: " + layout);
+        }
+        return derefElementInternal(derefLayout);
+    }
+
+    private LayoutPath derefElementInternal(MemoryLayout derefLayout) {
         MethodHandle handle = dereferenceHandle(false).toMethodHandle(VarHandle.AccessMode.GET);
         handle = MethodHandles.filterReturnValue(handle,
                 MethodHandles.insertArguments(MH_SEGMENT_RESIZE, 1, derefLayout));
@@ -174,7 +186,7 @@ public class LayoutPath {
     }
 
     private static MemorySegment resizeSegment(MemorySegment segment, MemoryLayout layout) {
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(segment.address(), Long.MAX_VALUE);
+        return Utils.longToAddress(segment.address(), layout.byteSize(), layout.byteAlignment());
     }
 
     // Layout path projections

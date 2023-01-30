@@ -25,11 +25,11 @@
  */
 package java.lang.foreign;
 
+import java.lang.foreign.ValueLayout.OfAddress;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
-import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -258,6 +258,8 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * @throws IllegalArgumentException if the layout path does not select any layout nested in this layout, or if the
      * layout path contains one or more path elements that select multiple sequence element indices
      * (see {@link PathElement#sequenceElement()} and {@link PathElement#sequenceElement(long, long)}).
+     * @throws IllegalArgumentException if the layout path contains one or more dereference path elements
+     * (see {@link PathElement#dereferenceElement()} and {@link PathElement#dereferenceElement(MemoryLayout)}).
      * @throws NullPointerException if either {@code elements == null}, or if any of the elements
      * in {@code elements} is {@code null}.
      */
@@ -292,6 +294,8 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * specified by the given layout path elements, when supplied with the missing sequence element indices.
      * @throws IllegalArgumentException if the layout path contains one or more path elements that select
      * multiple sequence element indices (see {@link PathElement#sequenceElement(long, long)}).
+     * @throws IllegalArgumentException if the layout path contains one or more dereference path elements
+     * (see {@link PathElement#dereferenceElement()} and {@link PathElement#dereferenceElement(MemoryLayout)}).
      */
     default MethodHandle bitOffsetHandle(PathElement... elements) {
         return computePathOp(LayoutPath.rootPath(this), LayoutPath::offsetHandle,
@@ -307,6 +311,8 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * @throws IllegalArgumentException if the layout path does not select any layout nested in this layout, or if the
      * layout path contains one or more path elements that select multiple sequence element indices
      * (see {@link PathElement#sequenceElement()} and {@link PathElement#sequenceElement(long, long)}).
+     * @throws IllegalArgumentException if the layout path contains one or more dereference path elements
+     * (see {@link PathElement#dereferenceElement()} and {@link PathElement#dereferenceElement(MemoryLayout)}).
      * @throws UnsupportedOperationException if {@code bitOffset(elements)} is not a multiple of 8.
      * @throws NullPointerException if either {@code elements == null}, or if any of the elements
      * in {@code elements} is {@code null}.
@@ -345,6 +351,8 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * specified by the given layout path elements, when supplied with the missing sequence element indices.
      * @throws IllegalArgumentException if the layout path contains one or more path elements that select
      * multiple sequence element indices (see {@link PathElement#sequenceElement(long, long)}).
+     * @throws IllegalArgumentException if the layout path contains one or more dereference path elements
+     * (see {@link PathElement#dereferenceElement()} and {@link PathElement#dereferenceElement(MemoryLayout)}).
      */
     default MethodHandle byteOffsetHandle(PathElement... elements) {
         MethodHandle mh = bitOffsetHandle(elements);
@@ -378,6 +386,28 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * <p>
      * Additionally, the provided dynamic values must conform to some bound which is derived from the layout path, that is,
      * {@code 0 <= x_i < b_i}, where {@code 1 <= i <= n}, or {@link IndexOutOfBoundsException} is thrown.
+     * <p>
+     * Multiple paths can be chained, by using {@linkplain PathElement#dereferenceElement() dereference path elements}.
+     * A dereference path element allows to obtain a native memory segment whose base address is the address obtained
+     * by following the layout path elements immediately preceding the dereference path element. In other words,
+     * if a layout path contains one or more dereference path elements, the final address accessed by the returned
+     * var handle can be computed as follows:
+     *
+     * <blockquote><pre>{@code
+     * address_1 = base(segment) + offset_1
+     * address_2 = base(segment_1) + offset_2
+     * ...
+     * address_k = base(segment_k-1) + offset_k
+     * }</pre></blockquote>
+     *
+     * where {@code k} is the number of dereference path elements in a layout path, {@code segment} is the input segment,
+     * {@code segment_1}, ...  {@code segment_k-1} are the segments obtained by dereferencing the address associated with
+     * a given dereference path element (e.g. {@code segment_1} is a native segment whose base address is {@code address_1}),
+     * and {@code offset_1}, {@code offset_2}, ... {@code offset_k} are the offsets computed by evaluating
+     * the path elements after a given dereference operation (these offsets are obtained using the computation described
+     * above). In these more complex access operations, all memory accesses immediately preceding a dereference operation
+     * (e.g. those at addresses {@code address_1}, {@code address_2}, ...,  {@code address_k-1} are performed using the
+     * {@link VarHandle.AccessMode#GET} access mode.
      *
      * @apiNote the resulting var handle will feature an additional {@code long} access coordinate for every
      * unspecified sequence access component contained in this layout path. Moreover, the resulting var handle
@@ -431,6 +461,8 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * @param elements the layout path elements.
      * @return a method handle which can be used to create a slice of the selected layout element, given a segment.
      * @throws UnsupportedOperationException if the size of the selected layout in bits is not a multiple of 8.
+     * @throws IllegalArgumentException if the layout path contains one or more dereference path elements
+     * (see {@link PathElement#dereferenceElement()} and {@link PathElement#dereferenceElement(MemoryLayout)}).
      */
     default MethodHandle sliceHandle(PathElement... elements) {
         return computePathOp(LayoutPath.rootPath(this), LayoutPath::sliceHandle,
@@ -445,6 +477,8 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * @throws IllegalArgumentException if the layout path does not select any layout nested in this layout,
      * or if the layout path contains one or more path elements that select one or more sequence element indices
      * (see {@link PathElement#sequenceElement(long)} and {@link PathElement#sequenceElement(long, long)}).
+     * @throws IllegalArgumentException if the layout path contains one or more dereference path elements
+     * (see {@link PathElement#dereferenceElement()} and {@link PathElement#dereferenceElement(MemoryLayout)}).
      */
     default MemoryLayout select(PathElement... elements) {
         return computePathOp(LayoutPath.rootPath(this), LayoutPath::layout,
@@ -597,14 +631,31 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
         }
 
         /**
-         * Returns a path element which dereferences an address as the given layout.
+         * Returns a path element which dereferences an address layout as its
+         * {@linkplain OfAddress#targetLayout() target layout} (where set).
          * The path element returned by this method does not alter the number of free dimensions of any path
-         * that is combined with such element.
+         * that is combined with such element. Using this path layout to dereference an address layout
+         * that has no target layout results in an {@link IllegalArgumentException} (e.g. when
+         * a var handle is {@linkplain #varHandle(PathElement...) obtained}).
          *
-         * @param layout the dereference layout
-         * @return which dereferences an address as the given layout.
+         * @return a path element which dereferences an address layout.
          */
-        static PathElement derefElement(MemoryLayout layout) {
+        static PathElement dereferenceElement() {
+            return new LayoutPath.PathElementImpl(PathKind.DEREF_ELEMENT,
+                    LayoutPath::derefElement);
+        }
+
+        /**
+         * Returns a path element which dereferences an address layout as the given layout.
+         * The path element returned by this method does not alter the number of free dimensions of any path
+         * that is combined with such element. Using this path layout to dereference an address layout
+         * that already has a target layout results in an {@link IllegalArgumentException} (e.g. when
+         * a var handle is {@linkplain #varHandle(PathElement...) obtained}).
+         *
+         * @param layout the
+         * @return a path element which dereferences an address layout.
+         */
+        static PathElement dereferenceElement(MemoryLayout layout) {
             return new LayoutPath.PathElementImpl(PathKind.DEREF_ELEMENT,
                     path -> path.derefElement(layout));
         }
