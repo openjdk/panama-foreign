@@ -167,18 +167,7 @@ public class LayoutPath {
                 addressLayout.targetLayout().isEmpty()) {
             throw badLayoutPath("Cannot dereference layout: " + layout);
         }
-        return derefElementInternal(addressLayout.targetLayout().get());
-    }
-
-    public LayoutPath derefElement(MemoryLayout derefLayout) {
-        if (!(layout instanceof ValueLayout.OfAddress addressLayout) ||
-            !addressLayout.targetLayout().isEmpty()) {
-            throw badLayoutPath("Cannot dereference layout: " + layout);
-        }
-        return derefElementInternal(derefLayout);
-    }
-
-    private LayoutPath derefElementInternal(MemoryLayout derefLayout) {
+        MemoryLayout derefLayout = addressLayout.targetLayout().get();
         MethodHandle handle = dereferenceHandle(false).toMethodHandle(VarHandle.AccessMode.GET);
         handle = MethodHandles.filterReturnValue(handle,
                 MethodHandles.insertArguments(MH_SEGMENT_RESIZE, 1, derefLayout));
@@ -274,8 +263,7 @@ public class LayoutPath {
     }
 
     private static LayoutPath derefPath(MemoryLayout layout, MethodHandle handle, LayoutPath encl) {
-        MethodHandle[] handles = new MethodHandle[encl.derefAdapters.length + 1];
-        System.arraycopy(encl.derefAdapters, 0, handles, 0, encl.derefAdapters.length);
+        MethodHandle[] handles = Arrays.copyOf(encl.derefAdapters, encl.derefAdapters.length + 1);
         handles[encl.derefAdapters.length] = handle;
         return new LayoutPath(layout, 0L, EMPTY_STRIDES, EMPTY_BOUNDS, handles, null);
     }
