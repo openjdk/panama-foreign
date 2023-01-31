@@ -27,9 +27,8 @@
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestMemoryAccessInstance
  */
 
-import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentScope;
+import java.lang.foreign.Arena;
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -80,8 +79,9 @@ public class TestMemoryAccessInstance {
         }
 
         void test() {
-            try (Arena arena = Arena.openConfined()) {
-                MemorySegment segment = MemorySegment.allocateNative(128, arena.scope());;
+            try (Arena arena = Arena.ofConfined()) {
+                Arena scope = arena;
+                MemorySegment segment = scope.allocate(128, 1);;
                 ByteBuffer buffer = segment.asByteBuffer();
                 T t = transform.apply(segment);
                 segmentSetter.set(t, layout, 8, value);
@@ -93,8 +93,9 @@ public class TestMemoryAccessInstance {
 
         @SuppressWarnings("unchecked")
         void testHyperAligned() {
-            try (Arena arena = Arena.openConfined()) {
-                MemorySegment segment = MemorySegment.allocateNative(64, arena.scope());;
+            try (Arena arena = Arena.ofConfined()) {
+                Arena scope = arena;
+                MemorySegment segment = scope.allocate(64, 1);;
                 T t = transform.apply(segment);
                 L alignedLayout = (L)layout.withBitAlignment(layout.byteSize() * 8 * 2);
                 try {
@@ -136,7 +137,9 @@ public class TestMemoryAccessInstance {
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = ".*Heap segment not allowed.*")
     public void badHeapSegmentSet() {
-        MemorySegment targetSegment = MemorySegment.allocateNative(ValueLayout.ADDRESS.byteSize(), SegmentScope.auto());
+        long byteSize = ValueLayout.ADDRESS.byteSize();
+        Arena scope = Arena.ofAuto();
+        MemorySegment targetSegment = scope.allocate(byteSize, 1);
         MemorySegment segment = MemorySegment.ofArray(new byte[]{ 0, 1, 2 });
         targetSegment.set(ValueLayout.ADDRESS, 0, segment); // should throw
     }
@@ -144,7 +147,9 @@ public class TestMemoryAccessInstance {
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = ".*Heap segment not allowed.*")
     public void badHeapSegmentSetAtIndex() {
-        MemorySegment targetSegment = MemorySegment.allocateNative(ValueLayout.ADDRESS.byteSize(), SegmentScope.auto());
+        long byteSize = ValueLayout.ADDRESS.byteSize();
+        Arena scope = Arena.ofAuto();
+        MemorySegment targetSegment = scope.allocate(byteSize, 1);
         MemorySegment segment = MemorySegment.ofArray(new byte[]{ 0, 1, 2 });
         targetSegment.setAtIndex(ValueLayout.ADDRESS, 0, segment); // should throw
     }

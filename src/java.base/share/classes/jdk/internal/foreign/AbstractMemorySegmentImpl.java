@@ -25,11 +25,7 @@
 
 package jdk.internal.foreign;
 
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.SegmentScope;
-import java.lang.foreign.ValueLayout;
+import java.lang.foreign.*;
 import java.lang.reflect.Array;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -79,16 +75,20 @@ public abstract sealed class AbstractMemorySegmentImpl
 
     final long length;
     final boolean readOnly;
-    final SegmentScope scope;
+    final MemorySessionImpl scope;
 
     @ForceInline
-    AbstractMemorySegmentImpl(long length, boolean readOnly, SegmentScope scope) {
+    AbstractMemorySegmentImpl(long length, boolean readOnly, MemorySessionImpl scope) {
         this.length = length;
         this.readOnly = readOnly;
         this.scope = scope;
     }
 
-    abstract AbstractMemorySegmentImpl dup(long offset, long size, boolean readOnly, SegmentScope scope);
+    public static Arena arena(MemorySegment segment) {
+        return ((AbstractMemorySegmentImpl)segment).scope.asArena();
+    }
+
+    abstract AbstractMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySessionImpl scope);
 
     abstract ByteBuffer makeByteBuffer();
 
@@ -382,13 +382,18 @@ public abstract sealed class AbstractMemorySegmentImpl
     }
 
     @Override
-    public SegmentScope scope() {
+    public Scope scope() {
         return scope;
+    }
+
+    @Override
+    public boolean isAccessibleBy(Thread thread) {
+        return sessionImpl().isAccessibleBy(thread);
     }
 
     @ForceInline
     public final MemorySessionImpl sessionImpl() {
-        return (MemorySessionImpl)scope;
+        return scope;
     }
 
     private IndexOutOfBoundsException outOfBoundException(long offset, long length) {
@@ -505,7 +510,7 @@ public abstract sealed class AbstractMemorySegmentImpl
         int size = limit - pos;
 
         AbstractMemorySegmentImpl bufferSegment = (AbstractMemorySegmentImpl) NIO_ACCESS.bufferSegment(bb);
-        final SegmentScope bufferScope;
+        final MemorySessionImpl bufferScope;
         if (bufferSegment != null) {
             bufferScope = bufferSegment.scope;
         } else {
@@ -515,19 +520,19 @@ public abstract sealed class AbstractMemorySegmentImpl
         int scaleFactor = getScaleFactor(bb);
         if (base != null) {
             if (base instanceof byte[]) {
-                return new HeapMemorySegmentImpl.OfByte(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly);
+                return new HeapMemorySegmentImpl.OfByte(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
             } else if (base instanceof short[]) {
-                return new HeapMemorySegmentImpl.OfShort(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly);
+                return new HeapMemorySegmentImpl.OfShort(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
             } else if (base instanceof char[]) {
-                return new HeapMemorySegmentImpl.OfChar(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly);
+                return new HeapMemorySegmentImpl.OfChar(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
             } else if (base instanceof int[]) {
-                return new HeapMemorySegmentImpl.OfInt(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly);
+                return new HeapMemorySegmentImpl.OfInt(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
             } else if (base instanceof float[]) {
-                return new HeapMemorySegmentImpl.OfFloat(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly);
+                return new HeapMemorySegmentImpl.OfFloat(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
             } else if (base instanceof long[]) {
-                return new HeapMemorySegmentImpl.OfLong(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly);
+                return new HeapMemorySegmentImpl.OfLong(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
             } else if (base instanceof double[]) {
-                return new HeapMemorySegmentImpl.OfDouble(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly);
+                return new HeapMemorySegmentImpl.OfDouble(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
             } else {
                 throw new AssertionError("Cannot get here");
             }

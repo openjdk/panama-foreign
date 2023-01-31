@@ -26,8 +26,8 @@ package jdk.internal.foreign.abi.fallback;
 
 import jdk.internal.foreign.abi.SharedUtils;
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentScope;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
@@ -98,8 +98,8 @@ class LibFallback {
      * @throws IllegalStateException if the call to {@code ffi_prep_cif} returns a non-zero status code
      */
     static MemorySegment prepCif(MemorySegment returnType, int numArgs, MemorySegment paramTypes, FFIABI abi,
-                                         SegmentScope scope) throws IllegalStateException {
-        MemorySegment cif = MemorySegment.allocateNative(SIZEOF_CIF, scope);
+                                         Arena scope) throws IllegalStateException {
+        MemorySegment cif = scope.allocate(SIZEOF_CIF);
         checkStatus(ffi_prep_cif(cif.address(), abi.value(), numArgs, returnType.address(), paramTypes.address()));
         return cif;
     }
@@ -123,7 +123,7 @@ class LibFallback {
      * @throws IllegalArgumentException if {@code target} does not have the right type
      */
     static MemorySegment createClosure(MemorySegment cif, MethodHandle target,
-                                       Thread.UncaughtExceptionHandler handler, SegmentScope scope)
+                                       Thread.UncaughtExceptionHandler handler, Arena scope)
             throws IllegalStateException, IllegalArgumentException {
         if (target.type() != UPCALL_TARGET_TYPE) {
             throw new IllegalArgumentException("Target handle has wrong type: " + target.type() + " != " + UPCALL_TARGET_TYPE);

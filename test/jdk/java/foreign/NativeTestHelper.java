@@ -22,13 +22,8 @@
  *
  */
 
-import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.Linker;
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentScope;
-import java.lang.foreign.SymbolLookup;
-import java.lang.foreign.ValueLayout;
+import java.lang.foreign.*;
+import java.lang.foreign.Arena;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -105,7 +100,7 @@ public class NativeTestHelper {
 
     public static MemorySegment allocateMemory(long size) {
         try {
-            return (MemorySegment) MALLOC.invokeExact(size);
+            return ((MemorySegment) MALLOC.invokeExact(size)).asUnbounded();
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
@@ -122,7 +117,7 @@ public class NativeTestHelper {
     public static MemorySegment upcallStub(Class<?> holder, String name, FunctionDescriptor descriptor) {
         try {
             MethodHandle target = MethodHandles.lookup().findStatic(holder, name, descriptor.toMethodType());
-            return LINKER.upcallStub(target, descriptor, SegmentScope.auto());
+            return LINKER.upcallStub(target, descriptor, Arena.ofAuto());
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }

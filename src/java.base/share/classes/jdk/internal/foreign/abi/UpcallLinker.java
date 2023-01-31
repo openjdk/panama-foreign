@@ -28,7 +28,7 @@ package jdk.internal.foreign.abi;
 import sun.security.action.GetPropertyAction;
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentScope;
+import java.lang.foreign.Arena;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -61,7 +61,7 @@ public class UpcallLinker {
         }
     }
 
-    public static MemorySegment make(ABIDescriptor abi, MethodHandle target, CallingSequence callingSequence, SegmentScope scope) {
+    public static MemorySegment make(ABIDescriptor abi, MethodHandle target, CallingSequence callingSequence, Arena scope) {
         assert callingSequence.forUpcall();
         Binding.VMLoad[] argMoves = argMoveBindings(callingSequence);
         Binding.VMStore[] retMoves = retMoveBindings(callingSequence);

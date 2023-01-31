@@ -30,9 +30,9 @@ import jdk.internal.foreign.abi.AbstractLinker;
 import jdk.internal.foreign.abi.LinkerOptions;
 import jdk.internal.foreign.abi.aarch64.CallArranger;
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentScope ;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.function.Consumer;
@@ -57,7 +57,7 @@ public final class WindowsAArch64Linker extends AbstractLinker {
     }
 
     @Override
-    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, SegmentScope scope, LinkerOptions options) {
+    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, Arena scope, LinkerOptions options) {
         return  CallArranger.WINDOWS.arrangeUpcall(target, targetType, function, scope, options);
     }
 

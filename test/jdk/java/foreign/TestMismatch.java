@@ -28,7 +28,6 @@
  */
 
 import java.lang.foreign.Arena;
-import java.lang.foreign.SegmentScope;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -172,8 +171,9 @@ public class TestMismatch {
     public void testEmpty() {
         var s1 = MemorySegment.ofArray(new byte[0]);
         assertEquals(s1.mismatch(s1), -1);
-        try (Arena arena = Arena.openConfined()) {
-            var nativeSegment = MemorySegment.allocateNative(4, 4, arena.scope());;
+        try (Arena arena = Arena.ofConfined()) {
+            Arena scope = arena;
+            var nativeSegment = scope.allocate(4, 4);;
             var s2 = nativeSegment.asSlice(0, 0);
             assertEquals(s1.mismatch(s2), -1);
             assertEquals(s2.mismatch(s1), -1);
@@ -184,9 +184,11 @@ public class TestMismatch {
     public void testLarge() {
         // skip if not on 64 bits
         if (ValueLayout.ADDRESS.byteSize() > 32) {
-            try (Arena arena = Arena.openConfined()) {
-                var s1 = MemorySegment.allocateNative((long) Integer.MAX_VALUE + 10L, 8, arena.scope());;
-                var s2 = MemorySegment.allocateNative((long) Integer.MAX_VALUE + 10L, 8, arena.scope());;
+            try (Arena arena = Arena.ofConfined()) {
+                Arena scope1 = arena;
+                var s1 = scope1.allocate((long) Integer.MAX_VALUE + 10L, 8);;
+                Arena scope = arena;
+                var s2 = scope.allocate((long) Integer.MAX_VALUE + 10L, 8);;
                 assertEquals(s1.mismatch(s1), -1);
                 assertEquals(s1.mismatch(s2), -1);
                 assertEquals(s2.mismatch(s1), -1);
@@ -228,9 +230,18 @@ public class TestMismatch {
     @Test
     public void testClosed() {
         MemorySegment s1, s2;
-        try (Arena arena = Arena.openConfined()) {
-            s1 = MemorySegment.allocateNative(4, 1, arena.scope());;
-            s2 = MemorySegment.allocateNative(4, 1, arena.scope());;
+        try (Arena arena = Arena.ofConfined()) {
+            Arena scope1 = arena;
+            try {
+                s1 = scope1.allocate(4, 1);
+            } catch (ExceptionInInitializerError ex) {
+                Throwable t = ex;
+                t.getCause().printStackTrace();
+                throw new AssertionError(t);
+            }
+
+            Arena scope = arena;
+            s2 = scope.allocate(4, 1);;
         }
         assertThrows(ISE, () -> s1.mismatch(s1));
         assertThrows(ISE, () -> s1.mismatch(s2));
@@ -239,8 +250,9 @@ public class TestMismatch {
 
     @Test
     public void testThreadAccess() throws Exception {
-        try (Arena arena = Arena.openConfined()) {
-            var segment = MemorySegment.allocateNative(4, 1, arena.scope());;
+        try (Arena arena = Arena.ofConfined()) {
+            Arena scope = arena;
+            var segment = scope.allocate(4, 1);;
             {
                 AtomicReference<RuntimeException> exception = new AtomicReference<>();
                 Runnable action = () -> {
@@ -281,7 +293,9 @@ public class TestMismatch {
     }
 
     enum SegmentKind {
-        NATIVE(i -> MemorySegment.allocateNative(i, SegmentScope.auto())),
+        NATIVE(i -> {
+            return Arena.ofAuto().allocate(i, 1);
+        }),
         ARRAY(i -> MemorySegment.ofArray(new byte[i]));
 
         final IntFunction<MemorySegment> segmentFactory;

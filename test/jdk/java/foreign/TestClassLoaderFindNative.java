@@ -28,8 +28,8 @@
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestClassLoaderFindNative
  */
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentScope;
 import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import org.testng.annotations.Test;
@@ -62,7 +62,7 @@ public class TestClassLoaderFindNative {
         MemorySegment segment = MemorySegment.ofAddress(
                 SymbolLookup.loaderLookup().find("c").get().address(),
                 ValueLayout.JAVA_INT.byteSize(),
-                SegmentScope.global());
+                Arena.global());
         assertEquals(segment.get(JAVA_BYTE, 0), 42);
     }
 }

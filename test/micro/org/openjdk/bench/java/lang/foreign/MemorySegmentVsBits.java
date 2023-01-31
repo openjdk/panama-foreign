@@ -65,7 +65,7 @@ public class MemorySegmentVsBits {
 
     public static final VarHandle LONG_ARRAY_VH = MethodHandles.byteArrayViewVarHandle(long[].class, BIG_ENDIAN);
 
-    Arena arena = Arena.openConfined();
+    Arena arena = Arena.ofConfined();
 
     @Param({"1", "2", "16", "64", "256"})
     public int size;

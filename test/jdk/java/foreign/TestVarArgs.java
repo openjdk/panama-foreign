@@ -75,11 +75,14 @@ public class TestVarArgs extends CallGeneratorHelper {
                             List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Arg> args = makeArgs(paramTypes, fields);
 
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             MethodHandle checker = MethodHandles.insertArguments(MH_CHECK, 2, args);
-            MemorySegment writeBack = LINKER.upcallStub(checker, FunctionDescriptor.ofVoid(C_INT, C_POINTER), arena.scope());
-            MemorySegment callInfo = MemorySegment.allocateNative(CallInfo.LAYOUT, arena.scope());;
-            MemorySegment argIDs = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(args.size(), C_INT), arena.scope());;
+            MemorySegment writeBack = LINKER.upcallStub(checker, FunctionDescriptor.ofVoid(C_INT, C_POINTER), arena);
+            Arena scope1 = arena;
+            MemorySegment callInfo = scope1.allocate(CallInfo.LAYOUT);;
+            MemoryLayout layout = MemoryLayout.sequenceLayout(args.size(), C_INT);
+            Arena scope = arena;
+            MemorySegment argIDs = scope.allocate(layout);;
 
             MemorySegment callInfoPtr = callInfo;
 
@@ -182,8 +185,8 @@ public class TestVarArgs extends CallGeneratorHelper {
         MemoryLayout layout = varArg.layout;
         MethodHandle getter = varArg.getter;
         List<Consumer<Object>> checks = varArg.checks;
-        try (Arena arena = Arena.openConfined()) {
-            MemorySegment seg = MemorySegment.ofAddress(ptr.address(), layout.byteSize(), arena.scope());
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment seg = MemorySegment.ofAddress(ptr.address(), layout.byteSize(), arena);
             Object obj = getter.invoke(seg);
             checks.forEach(check -> check.accept(obj));
         } catch (Throwable e) {

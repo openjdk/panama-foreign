@@ -53,9 +53,9 @@ public class TestUpcallScope extends TestUpcallBase {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         MemorySegment addr = findNativeOrThrow(fName);
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             MethodHandle mh = downcallHandle(ABI, addr, arena, function(ret, paramTypes, fields));
-            Object[] args = makeArgs(arena.scope(), ret, paramTypes, fields, returnChecks, argChecks);
+            Object[] args = makeArgs(arena, ret, paramTypes, fields, returnChecks, argChecks);
             Object[] callArgs = args;
             Object res = mh.invokeWithArguments(callArgs);
             argChecks.forEach(c -> c.accept(args));

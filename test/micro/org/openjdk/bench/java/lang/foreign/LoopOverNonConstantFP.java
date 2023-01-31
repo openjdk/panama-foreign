@@ -72,9 +72,11 @@ public class LoopOverNonConstantFP {
         for (int i = 0; i < ELEM_SIZE; i++) {
             unsafe.putDouble(unsafe_addrOut + (i * CARRIER_SIZE), i);
         }
-        arena = Arena.openConfined();
-        segmentIn = MemorySegment.allocateNative(ALLOC_SIZE, arena.scope());
-        segmentOut = MemorySegment.allocateNative(ALLOC_SIZE, arena.scope());
+        arena = Arena.ofConfined();
+        Arena scope1 = arena;
+        segmentIn = scope1.allocate(ALLOC_SIZE, 1);
+        Arena scope = arena;
+        segmentOut = scope.allocate(ALLOC_SIZE, 1);
         for (int i = 0; i < ELEM_SIZE; i++) {
             segmentIn.setAtIndex(JAVA_DOUBLE, i, i);
         }

@@ -180,16 +180,16 @@ public class StdLibTest extends NativeTestHelper {
         }
 
         String strcat(String s1, String s2) throws Throwable {
-            try (var arena = Arena.openConfined()) {
+            try (var arena = Arena.ofConfined()) {
                 MemorySegment buf = arena.allocate(s1.length() + s2.length() + 1);
                 buf.setUtf8String(0, s1);
                 MemorySegment other = arena.allocateUtf8String(s2);
-                return ((MemorySegment)strcat.invokeExact(buf, other)).getUtf8String(0);
+                return ((MemorySegment)strcat.invokeExact(buf, other)).asUnbounded().getUtf8String(0);
             }
         }
 
         int strcmp(String s1, String s2) throws Throwable {
-            try (var arena = Arena.openConfined()) {
+            try (var arena = Arena.ofConfined()) {
                 MemorySegment ns1 = arena.allocateUtf8String(s1);
                 MemorySegment ns2 = arena.allocateUtf8String(s2);
                 return (int)strcmp.invokeExact(ns1, ns2);
@@ -197,21 +197,21 @@ public class StdLibTest extends NativeTestHelper {
         }
 
         int puts(String msg) throws Throwable {
-            try (var arena = Arena.openConfined()) {
+            try (var arena = Arena.ofConfined()) {
                 MemorySegment s = arena.allocateUtf8String(msg);
                 return (int)puts.invokeExact(s);
             }
         }
 
         int strlen(String msg) throws Throwable {
-            try (var arena = Arena.openConfined()) {
+            try (var arena = Arena.ofConfined()) {
                 MemorySegment s = arena.allocateUtf8String(msg);
                 return (int)strlen.invokeExact(s);
             }
         }
 
         Tm gmtime(long arg) throws Throwable {
-            try (var arena = Arena.openConfined()) {
+            try (var arena = Arena.ofConfined()) {
                 MemorySegment time = arena.allocate(8);
                 time.set(C_LONG_LONG, 0, arg);
                 return new Tm((MemorySegment)gmtime.invokeExact(time));
@@ -271,11 +271,11 @@ public class StdLibTest extends NativeTestHelper {
 
         int[] qsort(int[] arr) throws Throwable {
             //init native array
-            try (var arena = Arena.openConfined()) {
+            try (var arena = Arena.ofConfined()) {
                 MemorySegment nativeArr = arena.allocateArray(C_INT, arr);
 
                 //call qsort
-                MemorySegment qsortUpcallStub = abi.upcallStub(qsortCompar, qsortComparFunction, arena.scope());
+                MemorySegment qsortUpcallStub = abi.upcallStub(qsortCompar, qsortComparFunction, arena);
 
                 qsort.invokeExact(nativeArr, (long)arr.length, C_INT.byteSize(), qsortUpcallStub);
 
@@ -285,8 +285,8 @@ public class StdLibTest extends NativeTestHelper {
         }
 
         static int qsortCompare(MemorySegment addr1, MemorySegment addr2) {
-            return addr1.get(C_INT, 0) -
-                   addr2.get(C_INT, 0);
+            return addr1.asUnbounded().get(C_INT, 0) -
+                   addr2.asUnbounded().get(C_INT, 0);
         }
 
         int rand() throws Throwable {
@@ -294,7 +294,7 @@ public class StdLibTest extends NativeTestHelper {
         }
 
         int printf(String format, List<PrintfArg> args) throws Throwable {
-            try (var arena = Arena.openConfined()) {
+            try (var arena = Arena.ofConfined()) {
                 MemorySegment formatStr = arena.allocateUtf8String(format);
                 return (int)specializedPrintf(args).invokeExact(formatStr,
                         args.stream().map(a -> a.nativeValue(arena)).toArray());

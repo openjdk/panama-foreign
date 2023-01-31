@@ -38,7 +38,6 @@ import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.SegmentScope;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -81,7 +80,7 @@ public final class FallbackLinker extends AbstractLinker {
 
     @Override
     protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function, LinkerOptions options) {
-        MemorySegment cif = makeCif(inferredMethodType, function, FFIABI.DEFAULT, SegmentScope.auto());
+        MemorySegment cif = makeCif(inferredMethodType, function, FFIABI.DEFAULT, Arena.ofAuto());
 
         int capturedStateMask = options.capturedCallState()
                 .mapToInt(CapturableState::mask)
@@ -107,7 +106,7 @@ public final class FallbackLinker extends AbstractLinker {
 
     @Override
     protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function,
-                                          SegmentScope scope, LinkerOptions options) {
+                                          Arena scope, LinkerOptions options) {
         MemorySegment cif = makeCif(targetType, function, FFIABI.DEFAULT, scope);
 
         UpcallData invData = new UpcallData(target, function.returnLayout().orElse(null),
@@ -117,8 +116,8 @@ public final class FallbackLinker extends AbstractLinker {
         return LibFallback.createClosure(cif, doUpcallMH, options.uncaughtExceptionHandler(), scope);
     }
 
-    private static MemorySegment makeCif(MethodType methodType, FunctionDescriptor function, FFIABI abi, SegmentScope scope) {
-        MemorySegment argTypes = MemorySegment.allocateNative(function.argumentLayouts().size() * ADDRESS.byteSize(), scope);
+    private static MemorySegment makeCif(MethodType methodType, FunctionDescriptor function, FFIABI abi, Arena scope) {
+        MemorySegment argTypes = scope.allocate(function.argumentLayouts().size() * ADDRESS.byteSize());
         List<MemoryLayout> argLayouts = function.argumentLayouts();
         for (int i = 0; i < argLayouts.size(); i++) {
             MemoryLayout layout = argLayouts.get(i);
@@ -136,7 +135,7 @@ public final class FallbackLinker extends AbstractLinker {
 
     private static Object doDowncall(SegmentAllocator returnAllocator, Object[] args, DowncallData invData) {
         List<MemorySessionImpl> acquiredSessions = new ArrayList<>();
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             int argStart = 0;
 
             MemorySegment target = (MemorySegment) args[argStart++];
@@ -189,16 +188,16 @@ public final class FallbackLinker extends AbstractLinker {
         List<MemoryLayout> argLayouts = data.argLayouts();
         int numArgs = argLayouts.size();
         MemoryLayout retLayout = data.returnLayout();
-        try (Arena upcallArena = Arena.openConfined()) {
-            MemorySegment argsSeg = MemorySegment.ofAddress(argPtrs.address(), numArgs * ADDRESS.byteSize(), upcallArena.scope());
+        try (Arena upcallArena = Arena.ofConfined()) {
+            MemorySegment argsSeg = MemorySegment.ofAddress(argPtrs.address(), numArgs * ADDRESS.byteSize(), upcallArena);
             MemorySegment retSeg = retLayout != null
-                ? MemorySegment.ofAddress(retPtr.address(), retLayout.byteSize(), upcallArena.scope())
+                ? MemorySegment.ofAddress(retPtr.address(), retLayout.byteSize(), upcallArena)
                 : null;
 
             Object[] args = new Object[numArgs];
             for (int i = 0; i < numArgs; i++) {
                 MemoryLayout argLayout = argLayouts.get(i);
-                MemorySegment argPtr = MemorySegment.ofAddress(argsSeg.getAtIndex(JAVA_LONG, i), argLayout.byteSize(), upcallArena.scope());
+                MemorySegment argPtr = MemorySegment.ofAddress(argsSeg.getAtIndex(JAVA_LONG, i), argLayout.byteSize(), upcallArena);
 
                 args[i] = readValue(argPtr, argLayout);
             }
