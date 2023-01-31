@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2020, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,19 +21,37 @@
  * questions.
  */
 
-#include "precompiled.hpp"
-#include "prims/downcallLinker.hpp"
-#include "utilities/debug.hpp"
+#include <errno.h>
 
-RuntimeStub* DowncallLinker::make_downcall_stub(BasicType* signature,
-                                                int num_args,
-                                                BasicType ret_bt,
-                                                const ABIDescriptor& abi,
-                                                const GrowableArray<VMStorage>& input_registers,
-                                                const GrowableArray<VMStorage>& output_registers,
-                                                bool needs_return_buffer,
-                                                int captured_state_mask,
-                                                bool needs_transition) {
-  Unimplemented();
-  return nullptr;
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
+EXPORT void empty() {}
+
+EXPORT int identity(int value) {
+    return value;
+}
+
+// 128 bit struct returned in buffer on SysV
+struct Big {
+    long long x;
+    long long y;
+};
+
+EXPORT struct Big with_return_buffer() {
+    struct Big b;
+    b.x = 10;
+    b.y = 11;
+    return b;
+}
+
+EXPORT void capture_errno(int value) {
+    errno = value;
+}
+
+EXPORT void do_upcall(void(*f)(void)) {
+    f();
 }

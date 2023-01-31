@@ -86,6 +86,11 @@ public class LinkerOptions {
         return fva != null;
     }
 
+    public boolean isTrivial() {
+        IsTrivial it = getOption(IsTrivial.class);
+        return it != null;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -99,8 +104,7 @@ public class LinkerOptions {
     }
 
     public sealed interface LinkerOptionImpl extends Linker.Option
-                                             permits FirstVariadicArg,
-                                                     CaptureCallStateImpl {
+            permits CaptureCallStateImpl, FirstVariadicArg, IsTrivial {
         default void validateForDowncall(FunctionDescriptor descriptor) {
             throw new IllegalArgumentException("Not supported for downcall: " + this);
         }
@@ -130,6 +134,15 @@ public class LinkerOptions {
                       .map(CapturableState::layout)
                       .toArray(MemoryLayout[]::new)
             );
+        }
+    }
+
+    public record IsTrivial() implements LinkerOptionImpl {
+        public static IsTrivial INSTANCE = new IsTrivial();
+
+        @Override
+        public void validateForDowncall(FunctionDescriptor descriptor) {
+            // always allowed
         }
     }
 
