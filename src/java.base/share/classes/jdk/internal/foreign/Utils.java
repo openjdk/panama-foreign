@@ -45,11 +45,14 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.vm.annotation.ForceInline;
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
 /**
  * This class contains misc helper functions to support creation of memory segments.
  */
 public final class Utils {
+
+    public static final boolean IS_WINDOWS = privilegedGetProperty("os.name").startsWith("Windows");
 
     private Utils() {}
 

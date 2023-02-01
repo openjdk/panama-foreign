@@ -26,9 +26,6 @@ package jdk.internal.foreign.abi;
 
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.StructLayout;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -83,11 +80,11 @@ public class LinkerOptions {
     }
 
     public boolean hasCapturedCallState() {
-        return getOption(CaptureCallStateImpl.class) != null;
+        return getOption(CaptureCallState.class) != null;
     }
 
     public Stream<CapturableState> capturedCallState() {
-        CaptureCallStateImpl stl = getOption(CaptureCallStateImpl.class);
+        CaptureCallState stl = getOption(CaptureCallState.class);
         return stl == null ? Stream.empty() : stl.saved().stream();
     }
 
@@ -119,7 +116,7 @@ public class LinkerOptions {
     }
 
     public sealed interface LinkerOptionImpl extends Linker.Option
-            permits CaptureCallStateImpl, FirstVariadicArg, IsTrivial, UncaughtExceptionHandler {
+            permits CaptureCallState, FirstVariadicArg, IsTrivial, UncaughtExceptionHandler {
         default void validateForDowncall(FunctionDescriptor descriptor) {
             throw new IllegalArgumentException("Not supported for downcall: " + this);
         }
@@ -138,21 +135,10 @@ public class LinkerOptions {
         }
     }
 
-    public record CaptureCallStateImpl(Set<CapturableState> saved) implements LinkerOptionImpl, Linker.Option.CaptureCallState {
-
+    public record CaptureCallState(Set<CapturableState> saved) implements LinkerOptionImpl {
         @Override
         public void validateForDowncall(FunctionDescriptor descriptor) {
             // done during construction
-        }
-
-        @Override
-        public StructLayout layout() {
-            return MemoryLayout.structLayout(
-                saved.stream()
-                      .sorted(Comparator.comparingInt(CapturableState::ordinal))
-                      .map(CapturableState::layout)
-                      .toArray(MemoryLayout[]::new)
-            );
         }
     }
 
