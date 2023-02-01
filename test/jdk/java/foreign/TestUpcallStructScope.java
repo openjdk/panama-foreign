@@ -29,11 +29,11 @@
  *
  * @run testng/othervm/native
  *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
+ *   -Djdk.internal.foreign.DowncallLinker.USE_SPEC=false
  *   TestUpcallStructScope
  * @run testng/othervm/native
  *   --enable-native-access=ALL-UNNAMED
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
+ *   -Djdk.internal.foreign.DowncallLinker.USE_SPEC=true
  *   TestUpcallStructScope
  */
 

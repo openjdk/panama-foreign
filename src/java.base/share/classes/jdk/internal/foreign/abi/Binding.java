@@ -672,7 +672,7 @@ public interface Binding {
         @Override
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
                               BindingInterpreter.LoadFunc loadFunc, Context context) {
-            stack.push(((MemorySegment)stack.pop()).address());
+            stack.push(SharedUtils.unboxSegment((MemorySegment)stack.pop()));
         }
     }
 

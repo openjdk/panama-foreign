@@ -163,7 +163,8 @@ public class BindingSpecializer {
         byte[] bytes = specializeHelper(leafHandle.type(), callerMethodType, callingSequence, abi);
 
         try {
-            MethodHandles.Lookup definedClassLookup = MethodHandles.lookup().defineHiddenClassWithClassData(bytes, leafHandle, false);
+            MethodHandles.Lookup definedClassLookup = MethodHandles.lookup()
+                    .defineHiddenClassWithClassData(bytes, leafHandle, false);
             return definedClassLookup.findStatic(definedClassLookup.lookupClass(), METHOD_NAME, callerMethodType);
         } catch (IllegalAccessException | NoSuchMethodException e) {
             throw new InternalError("Should not happen", e);
@@ -180,7 +181,10 @@ public class BindingSpecializer {
             // For upcalls, we must initialize the class since the upcall stubs don't have a clinit barrier,
             // and the slow path in the c2i adapter we end up calling can not handle the particular code shape
             // where the caller is an upcall stub.
-            MethodHandles.Lookup defineClassLookup = MethodHandles.lookup().defineHiddenClass(bytes, true);
+            Thread.UncaughtExceptionHandler uncaughtExceptionHandler = callingSequence.uncaughtExceptionHandler();
+            MethodHandles.Lookup defineClassLookup = uncaughtExceptionHandler != null
+                ? MethodHandles.lookup().defineHiddenClassWithClassData(bytes, uncaughtExceptionHandler, true)
+                : MethodHandles.lookup().defineHiddenClass(bytes, true);
             return defineClassLookup.findStatic(defineClassLookup.lookupClass(), METHOD_NAME, callerMethodType);
         } catch (IllegalAccessException | NoSuchMethodException e) {
             throw new InternalError("Should not happen", e);
@@ -420,7 +424,7 @@ public class BindingSpecializer {
         if (callingSequence.forDowncall()) {
             mv.visitInsn(ATHROW);
         } else {
-            emitConst(callingSequence.uncaughtExceptionHandler());
+            emitConst(CLASS_DATA_CONDY);
             emitInvokeStatic(SharedUtils.class, "handleUncaughtException", HANDLE_UNCAUGHT_EXCEPTION_DESC);
             if (callerMethodType.returnType() != void.class) {
                 emitConstZero(callerMethodType.returnType());
