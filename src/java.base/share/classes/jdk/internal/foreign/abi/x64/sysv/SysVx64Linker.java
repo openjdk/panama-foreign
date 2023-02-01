@@ -28,12 +28,9 @@ package jdk.internal.foreign.abi.x64.sysv;
 import jdk.internal.foreign.abi.AbstractLinker;
 import jdk.internal.foreign.abi.LinkerOptions;
 
-import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.util.function.Consumer;
 
 /**
  * ABI implementation based on System V ABI AMD64 supplement v.0.99.6
@@ -58,7 +55,7 @@ public final class SysVx64Linker extends AbstractLinker {
     }
 
     @Override
-    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, Arena scope, LinkerOptions options) {
-        return CallArranger.arrangeUpcall(target, targetType, function, scope, options);
+    protected UpcallStubFactory arrangeUpcall(MethodType targetType, FunctionDescriptor function, LinkerOptions options) {
+        return CallArranger.arrangeUpcall(targetType, function, options);
     }
 }

@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
+import java.util.function.UnaryOperator;
 
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
@@ -107,8 +108,6 @@ public class BindingSpecializer {
 
     private static final String SUPER_NAME = OBJECT_INTRN;
 
-    private static final SoftReferenceCache<FunctionDescriptor, MethodHandle> UPCALL_WRAPPER_CACHE = new SoftReferenceCache<>();
-
     // Instance fields start here
     private final MethodVisitor mv;
     private final MethodType callerMethodType;
@@ -138,16 +137,7 @@ public class BindingSpecializer {
         this.leafType = leafType;
     }
 
-    static MethodHandle specialize(MethodHandle leafHandle, CallingSequence callingSequence, ABIDescriptor abi) {
-        if (callingSequence.forUpcall()) {
-            MethodHandle wrapper = UPCALL_WRAPPER_CACHE.get(callingSequence.functionDesc(), fd -> specializeUpcall(leafHandle, callingSequence, abi));
-            return MethodHandles.insertArguments(wrapper, 0, leafHandle); // lazily customized for leaf handle instances
-        } else {
-            return specializeDowncall(leafHandle, callingSequence, abi);
-        }
-    }
-
-    private static MethodHandle specializeDowncall(MethodHandle leafHandle, CallingSequence callingSequence, ABIDescriptor abi) {
+    static MethodHandle specializeDowncall(MethodHandle leafHandle, CallingSequence callingSequence, ABIDescriptor abi) {
         MethodType callerMethodType = callingSequence.callerMethodType();
         if (callingSequence.needsReturnBuffer()) {
             callerMethodType = callerMethodType.dropParameterTypes(0, 1); // Return buffer does not appear in the parameter list
@@ -165,11 +155,11 @@ public class BindingSpecializer {
         }
     }
 
-    private static MethodHandle specializeUpcall(MethodHandle leafHandle, CallingSequence callingSequence, ABIDescriptor abi) {
+    static MethodHandle specializeUpcall(MethodType targetType, CallingSequence callingSequence, ABIDescriptor abi) {
         MethodType callerMethodType = callingSequence.callerMethodType();
         callerMethodType = callerMethodType.insertParameterTypes(0, MethodHandle.class); // target
 
-        byte[] bytes = specializeHelper(leafHandle.type(), callerMethodType, callingSequence, abi);
+        byte[] bytes = specializeHelper(targetType, callerMethodType, callingSequence, abi);
 
         try {
             // For upcalls, we must initialize the class since the upcall stubs don't have a clinit barrier,

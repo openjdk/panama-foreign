@@ -203,6 +203,10 @@ public class CallingSequence {
         return 2 + (linkerOptions.hasCapturedCallState() ? 1 : 0); // 2 for addr, allocator
     }
 
+    public LinkerOptions linkerOptions() {
+        return linkerOptions;
+    }
+
     public String asString() {
         StringBuilder sb = new StringBuilder();
 

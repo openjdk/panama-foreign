@@ -34,7 +34,6 @@ import jdk.internal.foreign.abi.SharedUtils;
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
-import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
@@ -61,7 +60,7 @@ public final class FallbackLinker extends AbstractLinker {
             MH_DO_DOWNCALL = MethodHandles.lookup().findStatic(FallbackLinker.class, "doDowncall",
                     MethodType.methodType(Object.class, SegmentAllocator.class, Object[].class, FallbackLinker.DowncallData.class));
             MH_DO_UPCALL = MethodHandles.lookup().findStatic(FallbackLinker.class, "doUpcall",
-                    MethodType.methodType(void.class, MemorySegment.class, MemorySegment.class, UpcallData.class));
+                    MethodType.methodType(void.class, MethodHandle.class, MemorySegment.class, MemorySegment.class, UpcallData.class));
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -105,15 +104,16 @@ public final class FallbackLinker extends AbstractLinker {
     }
 
     @Override
-    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function,
-                                          Arena scope, LinkerOptions options) {
-        MemorySegment cif = makeCif(targetType, function, FFIABI.DEFAULT, scope);
+    protected UpcallStubFactory arrangeUpcall(MethodType targetType, FunctionDescriptor function, LinkerOptions options) {
+        MemorySegment cif = makeCif(targetType, function, FFIABI.DEFAULT, Arena.ofAuto());
 
-        UpcallData invData = new UpcallData(target, function.returnLayout().orElse(null),
-                function.argumentLayouts());
-
+        UpcallData invData = new UpcallData(function.returnLayout().orElse(null), function.argumentLayouts(), cif);
         MethodHandle doUpcallMH = MethodHandles.insertArguments(MH_DO_UPCALL, 2, invData);
-        return LibFallback.createClosure(cif, doUpcallMH, options.uncaughtExceptionHandler(), scope);
+
+        return (target, scope) -> {
+            target = MethodHandles.insertArguments(doUpcallMH, 0, target);
+            return LibFallback.createClosure(cif, target, options.uncaughtExceptionHandler(), scope);
+        };
     }
 
     private static MemorySegment makeCif(MethodType methodType, FunctionDescriptor function, FFIABI abi, Arena scope) {
@@ -182,9 +182,10 @@ public final class FallbackLinker extends AbstractLinker {
         }
     }
 
-    private record UpcallData(MethodHandle target, MemoryLayout returnLayout, List<MemoryLayout> argLayouts) {}
+    // note that cif is not used, but we store it here to keep it alive
+    private record UpcallData(MemoryLayout returnLayout, List<MemoryLayout> argLayouts, MemorySegment cif) {}
 
-    private static void doUpcall(MemorySegment retPtr, MemorySegment argPtrs, UpcallData data) throws Throwable {
+    private static void doUpcall(MethodHandle target, MemorySegment retPtr, MemorySegment argPtrs, UpcallData data) throws Throwable {
         List<MemoryLayout> argLayouts = data.argLayouts();
         int numArgs = argLayouts.size();
         MemoryLayout retLayout = data.returnLayout();
@@ -202,7 +203,7 @@ public final class FallbackLinker extends AbstractLinker {
                 args[i] = readValue(argPtr, argLayout);
             }
 
-            Object result = data.target().invokeWithArguments(args);
+            Object result = target.invokeWithArguments(args);
 
             writeValue(result, data.returnLayout(), retSeg);
         }

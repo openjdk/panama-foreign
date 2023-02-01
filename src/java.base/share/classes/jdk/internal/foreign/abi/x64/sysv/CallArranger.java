@@ -27,6 +27,7 @@ package jdk.internal.foreign.abi.x64.sysv;
 
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.ABIDescriptor;
+import jdk.internal.foreign.abi.AbstractLinker;
 import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
@@ -37,7 +38,6 @@ import jdk.internal.foreign.abi.UpcallLinker;
 import jdk.internal.foreign.abi.VMStorage;
 import jdk.internal.foreign.abi.x64.X86_64Architecture;
 
-import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
@@ -132,14 +132,22 @@ public class CallArranger {
         return handle;
     }
 
-    public static MemorySegment arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, Arena scope, LinkerOptions options) {
+    public static AbstractLinker.UpcallStubFactory arrangeUpcall(MethodType mt, FunctionDescriptor cDesc, LinkerOptions options) {
         Bindings bindings = getBindings(mt, cDesc, true, options);
 
+        MethodType targetType = mt;
         if (bindings.isInMemoryReturn) {
-            target = SharedUtils.adaptUpcallForIMR(target, true /* drop return, since we don't have bindings for it */);
+            targetType = SharedUtils.computeUpcallIMRType(mt, true /* drop return, since we don't have bindings for it */);
         }
 
-        return UpcallLinker.make(CSysV, target, bindings.callingSequence, scope);
+        AbstractLinker.UpcallStubFactory factory = UpcallLinker.makeFactory(targetType, CSysV, bindings.callingSequence);
+
+        return (target, scope) -> {
+           if (bindings.isInMemoryReturn) {
+                target = SharedUtils.adaptUpcallForIMR(target, true /* drop return, since we don't have bindings for it */);
+            }
+           return factory.makeStub(target, scope);
+        };
     }
 
     private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {

@@ -50,9 +50,13 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
                                                                       Windowsx64Linker, LinuxRISCV64Linker,
                                                                       FallbackLinker {
 
+    public interface UpcallStubFactory {
+        MemorySegment makeStub(MethodHandle target, Arena arena);
+    }
 
     private record LinkRequest(FunctionDescriptor descriptor, LinkerOptions options) {}
     private final SoftReferenceCache<LinkRequest, MethodHandle> DOWNCALL_CACHE = new SoftReferenceCache<>();
+    private final SoftReferenceCache<LinkRequest, UpcallStubFactory> UPCALL_CACHE = new SoftReferenceCache<>();
 
     @Override
     public MethodHandle downcallHandle(FunctionDescriptor function, Option... options) {
@@ -84,12 +88,14 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
         if (!type.equals(target.type())) {
             throw new IllegalArgumentException("Wrong method handle type: " + target.type());
         }
-        return arrangeUpcall(target, target.type(), function, arena, optionSet);
+
+        // FIXME should the returned segment/scope keep reference to UpcallStubFactory?
+        UpcallStubFactory factory = UPCALL_CACHE.get(new LinkRequest(function, optionSet), linkRequest ->
+            arrangeUpcall(type, linkRequest.descriptor(), linkRequest.options()));
+        return factory.makeStub(target, arena);
     }
 
-    protected abstract MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType,
-                                                   FunctionDescriptor function, Arena arena,
-                                                   LinkerOptions options);
+    protected abstract UpcallStubFactory arrangeUpcall(MethodType targetType, FunctionDescriptor function, LinkerOptions options);
 
     @Override
     public SystemLookup defaultLookup() {
