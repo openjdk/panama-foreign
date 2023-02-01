@@ -424,7 +424,11 @@ public class BindingSpecializer {
         if (callingSequence.forDowncall()) {
             mv.visitInsn(ATHROW);
         } else {
-            emitConst(CLASS_DATA_CONDY);
+            if (callingSequence.uncaughtExceptionHandler() != null) {
+                emitConst(CLASS_DATA_CONDY);
+            } else {
+                emitConst(null);
+            }
             emitInvokeStatic(SharedUtils.class, "handleUncaughtException", HANDLE_UNCAUGHT_EXCEPTION_DESC);
             if (callerMethodType.returnType() != void.class) {
                 emitConstZero(callerMethodType.returnType());
