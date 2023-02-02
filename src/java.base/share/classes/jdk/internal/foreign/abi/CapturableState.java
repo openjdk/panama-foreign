@@ -41,10 +41,7 @@ public enum CapturableState {
     ERRNO             ("errno",           JAVA_INT, 1 << 2, true);
 
     public static final StructLayout LAYOUT = MemoryLayout.structLayout(
-        Stream.of(values())
-              .filter(CapturableState::isSupported)
-              .map(CapturableState::layout)
-              .toArray(MemoryLayout[]::new));
+        supportedStates().map(CapturableState::layout).toArray(MemoryLayout[]::new));
 
     private final String stateName;
     private final ValueLayout layout;
@@ -58,6 +55,10 @@ public enum CapturableState {
         this.isSupported = isSupported;
     }
 
+    private static Stream<CapturableState> supportedStates() {
+        return Stream.of(values()).filter(CapturableState::isSupported);
+    }
+
     public static CapturableState forName(String name) {
         return Stream.of(values())
                 .filter(stl -> stl.stateName().equals(name))
@@ -65,7 +66,7 @@ public enum CapturableState {
                 .findAny()
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Unknown name: " + name +", must be one of: "
-                            + Stream.of(CapturableState.values())
+                            + supportedStates()
                                     .map(CapturableState::stateName)
                                     .collect(Collectors.joining(", "))));
     }
