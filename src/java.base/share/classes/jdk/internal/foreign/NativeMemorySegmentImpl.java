@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2020, 2023, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -54,7 +54,11 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
     @ForceInline
     NativeMemorySegmentImpl(long min, long length, boolean readOnly, SegmentScope scope) {
         super(length, readOnly, scope);
-        this.min = min;
+        this.min = (UNSAFE.addressSize() == 4)
+                // On 32-bit systems, normalize the upper unused 32-bits to zero
+                ? min & 0x0000_0000_FFFF_FFFFL
+                // On 64-bit systems, all the bits are used
+                : min;
     }
 
     @Override

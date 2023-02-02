@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2023, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -1123,6 +1123,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@snippet lang = java:
      * ofAddress(address, 0);
      *}
+     * <p>
+     * On 32-bit platforms, the given address value will be normalized such that the
+     * upper 32 bits of the {@link MemorySegment#address() address} of returned memory segment
+     * are set to zero.
+     *
      * @param address the address of the returned native segment.
      * @return a zero-length native segment with the given address.
      */
@@ -1142,6 +1147,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
+     * <p>
+     * On 32-bit platforms, the given address value will be normalized such that the
+     * upper 32 bits of the {@link MemorySegment#address() address} of returned memory segment
+     * are set to zero.
+     *
      * @param address the address of the returned native segment.
      * @param byteSize the size (in bytes) of the returned native segment.
      * @return a zero-length native segment with the given address and size.
@@ -1171,6 +1181,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
+     * <p>
+     * On 32-bit platforms, the given address value will be normalized such that the
+     * upper 32 bits of the {@link MemorySegment#address() address} of returned memory segment
+     * are set to zero.
+     *
      * @param address the returned segment's address.
      * @param byteSize the desired size.
      * @param scope the scope associated with the returned native segment.
@@ -1209,7 +1224,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
-     *
+     * <p>
+     * On 32-bit platforms, the given address value will be normalized such that the
+     * upper 32 bits of the {@link MemorySegment#address() address} of returned memory segment
+     * are set to zero.
      *
      * @param address the returned segment's address.
      * @param byteSize the desired size.
