@@ -1125,8 +1125,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      *}
      * <p>
      * On 32-bit platforms, the given address value will be normalized such that the
-     * upper 32 bits of the {@link MemorySegment#address() address} of returned memory segment
-     * are set to zero.
+     * highest-order ("leftmost") 32 bits of the {@link MemorySegment#address() address}
+     * of the returned memory segment are set to zero.
      *
      * @param address the address of the returned native segment.
      * @return a zero-length native segment with the given address.
@@ -1149,8 +1149,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * restricted methods, and use safe and supported functionalities, where possible.
      * <p>
      * On 32-bit platforms, the given address value will be normalized such that the
-     * upper 32 bits of the {@link MemorySegment#address() address} of returned memory segment
-     * are set to zero.
+     * highest-order ("leftmost") 32 bits of the {@link MemorySegment#address() address}
+     * of the returned memory segment are set to zero.
      *
      * @param address the address of the returned native segment.
      * @param byteSize the size (in bytes) of the returned native segment.
@@ -1183,8 +1183,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * restricted methods, and use safe and supported functionalities, where possible.
      * <p>
      * On 32-bit platforms, the given address value will be normalized such that the
-     * upper 32 bits of the {@link MemorySegment#address() address} of returned memory segment
-     * are set to zero.
+     * highest-order ("leftmost") 32 bits of the {@link MemorySegment#address() address}
+     * of the returned memory segment are set to zero.
      *
      * @param address the returned segment's address.
      * @param byteSize the desired size.
@@ -1226,8 +1226,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * restricted methods, and use safe and supported functionalities, where possible.
      * <p>
      * On 32-bit platforms, the given address value will be normalized such that the
-     * upper 32 bits of the {@link MemorySegment#address() address} of returned memory segment
-     * are set to zero.
+     * highest-order ("leftmost") 32 bits of the {@link MemorySegment#address() address}
+     * of the returned memory segment are set to zero.
      *
      * @param address the returned segment's address.
      * @param byteSize the desired size.
