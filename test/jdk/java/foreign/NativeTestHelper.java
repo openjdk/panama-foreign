@@ -43,10 +43,10 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import java.util.random.RandomGenerator;
 
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static java.lang.foreign.MemoryLayout.PathElement.sequenceElement;
@@ -159,7 +159,7 @@ public class NativeTestHelper {
 
     public record TestValue (Object value, Consumer<Object> check) {}
 
-    public static TestValue genTestValue(Random random, MemoryLayout layout, SegmentAllocator allocator) {
+    public static TestValue genTestValue(RandomGenerator random, MemoryLayout layout, SegmentAllocator allocator) {
         if (layout instanceof StructLayout struct) {
             MemorySegment segment = allocator.allocate(struct);
             List<Consumer<Object>> fieldChecks = new ArrayList<>();
@@ -212,7 +212,7 @@ public class NativeTestHelper {
         throw new IllegalStateException("Unexpected layout: " + layout);
     }
 
-    private static Consumer<Object> initField(Random random, MemorySegment container, MemoryLayout containerLayout,
+    private static Consumer<Object> initField(RandomGenerator random, MemorySegment container, MemoryLayout containerLayout,
                                               MemoryLayout fieldLayout, MemoryLayout.PathElement fieldPath,
                                               SegmentAllocator allocator) {
         TestValue fieldValue = genTestValue(random, fieldLayout, allocator);
