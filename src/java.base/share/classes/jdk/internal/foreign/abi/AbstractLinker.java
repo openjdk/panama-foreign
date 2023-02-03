@@ -72,22 +72,24 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
     protected abstract MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function, LinkerOptions options);
 
     @Override
-    public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, SegmentScope scope) {
+    public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, SegmentScope scope, Linker.Option... options) {
         Objects.requireNonNull(scope);
         Objects.requireNonNull(target);
         Objects.requireNonNull(function);
         checkHasNaturalAlignment(function);
         SharedUtils.checkExceptions(target);
+        LinkerOptions optionSet = LinkerOptions.forUpcall(function, options);
 
         MethodType type = function.toMethodType();
         if (!type.equals(target.type())) {
             throw new IllegalArgumentException("Wrong method handle type: " + target.type());
         }
-        return arrangeUpcall(target, target.type(), function, scope);
+        return arrangeUpcall(target, target.type(), function, scope, optionSet);
     }
 
     protected abstract MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType,
-                                                   FunctionDescriptor function, SegmentScope scope);
+                                                   FunctionDescriptor function, SegmentScope scope,
+                                                   LinkerOptions options);
 
     @Override
     public SystemLookup defaultLookup() {

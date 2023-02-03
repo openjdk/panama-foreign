@@ -55,7 +55,7 @@ import java.util.stream.Stream;
  * <li>A linker allows Java code to link against foreign functions, via
  * {@linkplain #downcallHandle(MemorySegment, FunctionDescriptor, Option...) downcall method handles}; and</li>
  * <li>A linker allows foreign functions to call Java method handles,
- * via the generation of {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, SegmentScope) upcall stubs}.</li>
+ * via the generation of {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, SegmentScope, Option...) upcall stubs}.</li>
  * </ul>
  * In addition, a linker provides a way to look up foreign functions in libraries that conform to the ABI. Each linker
  * chooses a set of libraries that are commonly used on the OS and processor combination associated with the ABI.
@@ -86,7 +86,7 @@ import java.util.stream.Stream;
  *
  * <h2 id="upcall-stubs">Upcall stubs</h2>
  *
- * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, SegmentScope) Creating an upcall stub} requires a method
+ * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, SegmentScope, Option...) Creating an upcall stub} requires a method
  * handle and a function descriptor; in this case, the set of memory layouts in the function descriptor
  * specify the signature of the function pointer associated with the upcall stub.
  * <p>
@@ -160,7 +160,7 @@ public sealed interface Linker permits AbstractLinker {
      * Any layout not listed above is <em>unsupported</em>; function descriptors containing unsupported layouts
      * will cause an {@link IllegalArgumentException} to be thrown, when used to create a
      * {@link #downcallHandle(MemorySegment, FunctionDescriptor, Option...) downcall method handle} or an
-     * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, SegmentScope) upcall stub}.
+     * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, SegmentScope, Option...) upcall stub}.
      * <p>
      * Variadic functions (e.g. a C function declared with a trailing ellipses {@code ...} at the end of the formal parameter
      * list or with an empty formal parameter list) are not supported directly. However, it is possible to link a
@@ -253,6 +253,7 @@ public sealed interface Linker permits AbstractLinker {
      * @param target the target method handle.
      * @param function the upcall stub function descriptor.
      * @param scope the scope associated with the returned upcall stub segment.
+     * @param options  any linker options.
      * @return a zero-length segment whose address is the address of the upcall stub.
      * @throws IllegalArgumentException if the provided function descriptor is not supported by this linker.
      * @throws IllegalArgumentException if it is determined that the target method handle can throw an exception, or if the target method handle
@@ -261,7 +262,7 @@ public sealed interface Linker permits AbstractLinker {
      * @throws WrongThreadException if this method is called from a thread {@code T},
      * such that {@code scope.isAccessibleBy(T) == false}.
      */
-    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, SegmentScope scope);
+    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, SegmentScope scope, Linker.Option... options);
 
     /**
      * Returns a symbol lookup for symbols in a set of commonly used libraries.
@@ -330,6 +331,19 @@ public sealed interface Linker permits AbstractLinker {
          */
         static Option isTrivial() {
             return LinkerOptions.IsTrivial.INSTANCE;
+        }
+
+        /**
+         * {@return a linker option that can be used to specify the uncaught exception handler that should be executed
+         *          if an exception is thrown, but not caught, during an upcall}
+         *
+         * @apiNote using a custom exception handler will not prevent the VM from exiting in the case of an uncaught
+         * exception during an upcall.
+         *
+         * @param handler the handler
+         */
+        static Option uncaughtExceptionHandler(Thread.UncaughtExceptionHandler handler) {
+            return new LinkerOptions.UncaughtExceptionHandler(handler);
         }
 
         /**

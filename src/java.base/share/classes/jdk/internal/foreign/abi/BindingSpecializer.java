@@ -90,7 +90,7 @@ public class BindingSpecializer {
     private static final String LONG_TO_ADDRESS_NO_SCOPE_DESC = methodType(MemorySegment.class, long.class, long.class, long.class).descriptorString();
     private static final String LONG_TO_ADDRESS_SCOPE_DESC = methodType(MemorySegment.class, long.class, long.class, long.class, SegmentScope.class).descriptorString();
     private static final String ALLOCATE_DESC = methodType(MemorySegment.class, long.class, long.class).descriptorString();
-    private static final String HANDLE_UNCAUGHT_EXCEPTION_DESC = methodType(void.class, Throwable.class).descriptorString();
+    private static final String HANDLE_UNCAUGHT_EXCEPTION_DESC = methodType(void.class, Throwable.class, Thread.UncaughtExceptionHandler.class).descriptorString();
     private static final String METHOD_HANDLES_INTRN = Type.getInternalName(MethodHandles.class);
     private static final String CLASS_DATA_DESC = methodType(Object.class, MethodHandles.Lookup.class, String.class, Class.class).descriptorString();
     private static final String RELEASE0_DESC = VOID_DESC;
@@ -163,7 +163,8 @@ public class BindingSpecializer {
         byte[] bytes = specializeHelper(leafHandle.type(), callerMethodType, callingSequence, abi);
 
         try {
-            MethodHandles.Lookup definedClassLookup = MethodHandles.lookup().defineHiddenClassWithClassData(bytes, leafHandle, false);
+            MethodHandles.Lookup definedClassLookup = MethodHandles.lookup()
+                    .defineHiddenClassWithClassData(bytes, leafHandle, false);
             return definedClassLookup.findStatic(definedClassLookup.lookupClass(), METHOD_NAME, callerMethodType);
         } catch (IllegalAccessException | NoSuchMethodException e) {
             throw new InternalError("Should not happen", e);
@@ -180,7 +181,10 @@ public class BindingSpecializer {
             // For upcalls, we must initialize the class since the upcall stubs don't have a clinit barrier,
             // and the slow path in the c2i adapter we end up calling can not handle the particular code shape
             // where the caller is an upcall stub.
-            MethodHandles.Lookup defineClassLookup = MethodHandles.lookup().defineHiddenClass(bytes, true);
+            Thread.UncaughtExceptionHandler uncaughtExceptionHandler = callingSequence.uncaughtExceptionHandler();
+            MethodHandles.Lookup defineClassLookup = uncaughtExceptionHandler != null
+                ? MethodHandles.lookup().defineHiddenClassWithClassData(bytes, uncaughtExceptionHandler, true)
+                : MethodHandles.lookup().defineHiddenClass(bytes, true);
             return defineClassLookup.findStatic(defineClassLookup.lookupClass(), METHOD_NAME, callerMethodType);
         } catch (IllegalAccessException | NoSuchMethodException e) {
             throw new InternalError("Should not happen", e);
@@ -420,13 +424,18 @@ public class BindingSpecializer {
         if (callingSequence.forDowncall()) {
             mv.visitInsn(ATHROW);
         } else {
-           emitInvokeStatic(SharedUtils.class, "handleUncaughtException", HANDLE_UNCAUGHT_EXCEPTION_DESC);
-           if (callerMethodType.returnType() != void.class) {
-               emitConstZero(callerMethodType.returnType());
-               emitReturn(callerMethodType.returnType());
-           } else {
-               mv.visitInsn(RETURN);
-           }
+            if (callingSequence.uncaughtExceptionHandler() != null) {
+                emitConst(CLASS_DATA_CONDY);
+            } else {
+                emitConst(null);
+            }
+            emitInvokeStatic(SharedUtils.class, "handleUncaughtException", HANDLE_UNCAUGHT_EXCEPTION_DESC);
+            if (callerMethodType.returnType() != void.class) {
+                emitConstZero(callerMethodType.returnType());
+                emitReturn(callerMethodType.returnType());
+            } else {
+                mv.visitInsn(RETURN);
+            }
         }
 
         mv.visitTryCatchBlock(tryStart, tryEnd, catchStart, null);
