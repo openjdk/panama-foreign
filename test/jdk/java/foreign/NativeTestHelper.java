@@ -55,11 +55,11 @@ public class NativeTestHelper {
 
     public static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
-    private static final MethodHandle MH_PAYLOAD;
+    private static final MethodHandle MH_SAVER;
 
     static {
         try {
-            MH_PAYLOAD = MethodHandles.lookup().findStatic(NativeTestHelper.class, "saver",
+            MH_SAVER = MethodHandles.lookup().findStatic(NativeTestHelper.class, "saver",
                     MethodType.methodType(Object.class, Object[].class, List.class, AtomicReference.class, SegmentAllocator.class, int.class));
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
@@ -261,7 +261,7 @@ public class NativeTestHelper {
      */
     public static MemorySegment makeArgSaverCB(FunctionDescriptor fd, Arena arena,
                                                AtomicReference<Object[]> capturedArgs, int retIdx) {
-        MethodHandle target = MethodHandles.insertArguments(MH_PAYLOAD, 1, fd.argumentLayouts(), capturedArgs, arena, retIdx);
+        MethodHandle target = MethodHandles.insertArguments(MH_SAVER, 1, fd.argumentLayouts(), capturedArgs, arena, retIdx);
         target = target.asCollector(Object[].class, fd.argumentLayouts().size());
         target = target.asType(fd.toMethodType());
         return LINKER.upcallStub(target, fd, arena.scope());
