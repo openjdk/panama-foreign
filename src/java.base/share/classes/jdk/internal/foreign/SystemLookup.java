@@ -43,8 +43,6 @@ import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
 public final class SystemLookup implements SymbolLookup {
 
-    private static final boolean IS_WINDOWS = privilegedGetProperty("os.name").startsWith("Windows");
-
     private SystemLookup() { }
 
     private static final SystemLookup INSTANCE = new SystemLookup();
@@ -60,7 +58,7 @@ public final class SystemLookup implements SymbolLookup {
 
     private static SymbolLookup makeSystemLookup() {
         try {
-            if (IS_WINDOWS) {
+            if (Utils.IS_WINDOWS) {
                 return makeWindowsLookup();
             } else {
                 return libLookup(libs -> libs.load(jdkLibraryPath("syslookup")));
@@ -122,7 +120,7 @@ public final class SystemLookup implements SymbolLookup {
      */
     private static Path jdkLibraryPath(String name) {
         Path javahome = Path.of(GetPropertyAction.privilegedGetProperty("java.home"));
-        String lib = IS_WINDOWS ? "bin" : "lib";
+        String lib = Utils.IS_WINDOWS ? "bin" : "lib";
         String libname = System.mapLibraryName(name);
         return javahome.resolve(lib).resolve(libname);
     }

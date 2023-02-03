@@ -76,7 +76,25 @@ public class TestIllegalLink extends NativeTestHelper {
         ABI.upcallStub(DUMMY_TARGET_MH, FunctionDescriptor.ofVoid(), SegmentScope.auto(), downcallOnlyOption);
     }
 
+    @Test(dataProvider = "illegalCaptureState",
+          expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = ".*Unknown name.*")
+    public void testIllegalCaptureState(String name) {
+        Linker.Option.captureCallState(name);
+    }
+
     // where
+
+    @DataProvider
+    public static Object[][] illegalCaptureState() {
+        if (!IS_WINDOWS) {
+            return new Object[][]{
+                { "GetLastError" },
+                { "WSAGetLastError" },
+            };
+        }
+        return new Object[][]{};
+    }
 
     @DataProvider
     public static Object[][] upcallOnlyOptions() {
