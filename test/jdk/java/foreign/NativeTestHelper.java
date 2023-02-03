@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static java.lang.foreign.MemoryLayout.PathElement.sequenceElement;
@@ -184,28 +185,28 @@ public class NativeTestHelper {
             for (int i = 0; i < array.elementCount(); i++) {
                 elementChecks.add(initField(random, segment, array, array.elementLayout(), sequenceElement(i), allocator));
             }
-            return new TestValue(segment, o -> elementChecks.forEach(check -> check.accept(o)));
+            return new TestValue(segment, actual -> elementChecks.forEach(check -> check.accept(actual)));
         } else if (layout instanceof ValueLayout.OfAddress) {
             MemorySegment value = MemorySegment.ofAddress(random.nextLong());
-            return new TestValue(value, o -> assertEquals(o, value));
+            return new TestValue(value, actual -> assertEquals(actual, value));
         }else if (layout instanceof ValueLayout.OfByte) {
             byte value = (byte) random.nextInt();
-            return new TestValue(value, o -> assertEquals(o, value));
+            return new TestValue(value, actual -> assertEquals(actual, value));
         } else if (layout instanceof ValueLayout.OfShort) {
             short value = (short) random.nextInt();
-            return new TestValue(value, o -> assertEquals(o, value));
+            return new TestValue(value, actual -> assertEquals(actual, value));
         } else if (layout instanceof ValueLayout.OfInt) {
             int value = random.nextInt();
-            return new TestValue(value, o -> assertEquals(o, value));
+            return new TestValue(value, actual -> assertEquals(actual, value));
         } else if (layout instanceof ValueLayout.OfLong) {
             long value = random.nextLong();
-            return new TestValue(value, o -> assertEquals(o, value));
+            return new TestValue(value, actual -> assertEquals(actual, value));
         } else if (layout instanceof ValueLayout.OfFloat) {
             float value = random.nextFloat();
-            return new TestValue(value, o -> assertEquals(o, value));
+            return new TestValue(value, actual -> assertEquals(actual, value));
         } else if (layout instanceof ValueLayout.OfDouble) {
             double value = random.nextDouble();
-            return new TestValue(value, o -> assertEquals(o, value));
+            return new TestValue(value, actual -> assertEquals(actual, value));
         }
 
         throw new IllegalStateException("Unexpected layout: " + layout);
@@ -217,29 +218,27 @@ public class NativeTestHelper {
         TestValue fieldValue = genTestValue(random, fieldLayout, allocator);
         Consumer<Object> fieldCheck = fieldValue.check();
         if (fieldLayout instanceof GroupLayout || fieldLayout instanceof SequenceLayout) {
-            MethodHandle slicer = containerLayout.sliceHandle(fieldPath);
-            MemorySegment slice;
-            try {
-                slice = (MemorySegment) slicer.invokeExact(container);
-            } catch (Throwable e) {
-                throw new IllegalStateException(e);
-            }
+            UnaryOperator<MemorySegment> slicer = slicer(containerLayout, fieldPath);
+            MemorySegment slice = slicer.apply(container);
             slice.copyFrom((MemorySegment) fieldValue.value());
-
-            return o -> {
-                MemorySegment actual = (MemorySegment) o;
-                try {
-                    fieldCheck.accept((MemorySegment) slicer.invokeExact(actual));
-                } catch (Throwable ex) {
-                    throw new IllegalStateException(ex);
-                }
-            };
+            return actual -> fieldCheck.accept(slicer.apply((MemorySegment) actual));
         } else {
             VarHandle accessor = containerLayout.varHandle(fieldPath);
             //set value
             accessor.set(container, fieldValue.value());
-            return o -> fieldCheck.accept(accessor.get((MemorySegment) o));
+            return actual -> fieldCheck.accept(accessor.get((MemorySegment) actual));
         }
+    }
+
+    private static UnaryOperator<MemorySegment> slicer(MemoryLayout containerLayout, MemoryLayout.PathElement fieldPath) {
+        MethodHandle slicer = containerLayout.sliceHandle(fieldPath);
+        return container -> {
+              try {
+                return (MemorySegment) slicer.invokeExact(container);
+            } catch (Throwable e) {
+                throw new IllegalStateException(e);
+            }
+        };
     }
 
     private static void assertEquals(Object actual, Object expected) {
