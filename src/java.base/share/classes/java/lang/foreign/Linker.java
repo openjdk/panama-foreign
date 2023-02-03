@@ -306,13 +306,14 @@ public sealed interface Linker permits AbstractLinker {
          * For this purpose, a downcall method handle linked with the this
          * option will feature an additional {@link MemorySegment} parameter directly
          * following the target address, and optional {@link SegmentAllocator} parameters.
-         * This parameter represents the native segment into which the captured state is written.
+         * This parameter, called the 'capture state segment', represents the native segment into which
+         * the captured state is written.
          * <p>
-         * The native segment should have the layout returned by {@linkplain #capturedStateLayout}.
+         * The capture state segment should have the layout returned by {@linkplain #captureStateLayout}.
          * This layout is a struct layout which has a named field for each captured value.
          * <p>
-         * Captured state can be retrieved from this native segment by constructing var handles
-         * from the {@linkplain #capturedStateLayout captured state layout}.
+         * Captured state can be retrieved from the capture state segment by constructing var handles
+         * from the {@linkplain #captureStateLayout capture state layout}.
          * <p>
          * The following example demonstrates the use of this linker option:
          * {@snippet lang = "java":
@@ -331,7 +332,7 @@ public sealed interface Linker permits AbstractLinker {
          * }
          *
          * @param capturedState the names of the values to save.
-         * @see #capturedStateLayout()
+         * @see #captureStateLayout()
          */
         static Option captureCallState(String... capturedState) {
             Set<CapturableState> set = Stream.of(capturedState)
@@ -341,10 +342,12 @@ public sealed interface Linker permits AbstractLinker {
         }
 
          /**
-         * {@return A struct layout that represents the layout of the native segment passed
-         *          to a downcall handle linked with this {@code CapturedCallState} instance}
+         * {@return A struct layout that represents the layout of the capture state segment that is passed
+         *          to a downcall handle linked with {@link #captureCallState(String...)}}
+         *
+         * @see #captureCallState(String...)
          */
-        static StructLayout capturedStateLayout() {
+        static StructLayout captureStateLayout() {
             return CapturableState.LAYOUT;
         }
 

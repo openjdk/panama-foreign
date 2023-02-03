@@ -84,7 +84,7 @@ public class TestTrivial extends NativeTestHelper {
     public void testCaptureErrno() throws Throwable {
         Linker.Option ccs = Linker.Option.captureCallState("errno");
         MethodHandle handle = downcallHandle("capture_errno", FunctionDescriptor.ofVoid(C_INT), Linker.Option.isTrivial(), ccs);
-        StructLayout capturedStateLayout = Linker.Option.capturedStateLayout();
+        StructLayout capturedStateLayout = Linker.Option.captureStateLayout();
         VarHandle errnoHandle = capturedStateLayout.varHandle(MemoryLayout.PathElement.groupElement("errno"));
         try (Arena arena  = Arena.openConfined()) {
             MemorySegment captureSeg = arena.allocate(capturedStateLayout);

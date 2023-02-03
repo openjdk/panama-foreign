@@ -69,7 +69,7 @@ public class TestCaptureCallState extends NativeTestHelper {
         Linker.Option stl = Linker.Option.captureCallState(testCase.threadLocalName());
         MethodHandle handle = downcallHandle(testCase.nativeTarget(), testCase.nativeDesc(), stl);
 
-        StructLayout capturedStateLayout = Linker.Option.capturedStateLayout();
+        StructLayout capturedStateLayout = Linker.Option.captureStateLayout();
         VarHandle errnoHandle = capturedStateLayout.varHandle(groupElement(testCase.threadLocalName()));
 
         try (Arena arena = Arena.openConfined()) {
