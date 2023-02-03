@@ -336,8 +336,8 @@ public sealed interface Linker permits AbstractLinker {
         /**
          * {@return a linker option that can be used to specify the uncaught exception handler that should be executed
          *          if an exception is thrown, but not caught, during an upcall}
-         * <p>
-         * Note that using a custom exception handler will not prevent the VM from exiting in the case of an uncaught
+         *
+         * @apiNote using a custom exception handler will not prevent the VM from exiting in the case of an uncaught
          * exception during an upcall.
          *
          * @param handler the handler

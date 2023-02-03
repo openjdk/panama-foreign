@@ -67,7 +67,6 @@ public class TestUpcallException extends UpcallTestHelper {
         public static void main(String[] args) throws Throwable {
             try (Arena arena = Arena.openConfined()) {
                 MemorySegment stub = Linker.nativeLinker().upcallStub(VOID_TARGET, FunctionDescriptor.ofVoid(), arena.scope());
-
                 downcallVoid.invoke(stub); // should call Shutdown.exit(1);
             }
         }
@@ -75,14 +74,8 @@ public class TestUpcallException extends UpcallTestHelper {
 
     public static class NonVoidUpcallRunner extends ExceptionRunnerBase {
         public static void main(String[] args) throws Throwable {
-            MethodHandle handle = MethodHandles.identity(int.class);
-            handle = MethodHandles.collectArguments(handle, 0, MH_throwException);
-            MethodHandle invoker = MethodHandles.exactInvoker(MethodType.methodType(int.class, int.class));
-            handle = MethodHandles.insertArguments(invoker, 0, handle);
-
             try (Arena arena = Arena.openConfined()) {
-                MemorySegment stub = Linker.nativeLinker().upcallStub(handle, FunctionDescriptor.of(C_INT, C_INT), arena.scope());
-
+                MemorySegment stub = Linker.nativeLinker().upcallStub(INT_TARGET, FunctionDescriptor.of(C_INT, C_INT), arena.scope());
                 downcallNonVoid.invoke(42, stub); // should call Shutdown.exit(1);
             }
         }
@@ -129,8 +122,8 @@ public class TestUpcallException extends UpcallTestHelper {
     private static class ExceptionRunnerBase {
         static final MethodHandle downcallVoid;
         static final MethodHandle downcallNonVoid;
-        static final MethodHandle MH_throwException;
         static final MethodHandle VOID_TARGET;
+        static final MethodHandle INT_TARGET;
 
         static final Thread.UncaughtExceptionHandler UNCAUGHT_EXCEPTION_HANDLER
                 = (thread, throwable) -> System.out.println("From uncaught exception handler");
@@ -146,17 +139,22 @@ public class TestUpcallException extends UpcallTestHelper {
                     FunctionDescriptor.of(C_INT, C_INT, C_POINTER)
             );
             try {
-                MH_throwException = MethodHandles.lookup().findStatic(ExceptionRunnerBase.class, "throwException",
+                MethodHandles.Lookup lookup = MethodHandles.lookup();
+                VOID_TARGET = lookup.findStatic(ExceptionRunnerBase.class, "throwException",
                         MethodType.methodType(void.class));
+                INT_TARGET = lookup.findStatic(ExceptionRunnerBase.class, "throwException",
+                        MethodType.methodType(int.class, int.class));
             } catch (ReflectiveOperationException e) {
                 throw new ExceptionInInitializerError(e);
             }
-            MethodHandle invoker = MethodHandles.exactInvoker(MethodType.methodType(void.class));
-            VOID_TARGET = MethodHandles.insertArguments(invoker, 0, MH_throwException);
         }
 
-        public static void throwException() throws Throwable {
-            throw new Throwable("Testing upcall exceptions");
+        public static void throwException() {
+            throw new RuntimeException("Testing upcall exceptions");
+        }
+
+        public static int throwException(int x) {
+            throw new RuntimeException("Testing upcall exceptions");
         }
     }
 }
