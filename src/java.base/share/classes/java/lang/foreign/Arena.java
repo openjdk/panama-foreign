@@ -240,7 +240,7 @@ public interface Arena extends SegmentAllocator, AutoCloseable {
      * exception being thrown. This reflects a deliberate design choice: failure to close an arena might reveal a bug
      * in the underlying application logic.
      *
-     * @implSpe If this method completes normally, then {@code this.scope().isAlive() == false}.
+     * @implSpec If this method completes normally, then {@code this.scope().isAlive() == false}.
      * Implementations are allowed to throw {@link UnsupportedOperationException} if an explicit close operation is
      * not supported.
      *
