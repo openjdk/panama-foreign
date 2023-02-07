@@ -160,6 +160,7 @@ public interface Arena extends SegmentAllocator, AutoCloseable {
      * Creates a new arena that is managed, automatically, by the garbage collector.
      * Segments obtained with the returned arena can be
      * {@linkplain MemorySegment#isAccessibleBy(Thread) accessed} by any thread.
+     * Calling {@link #close()} on the returned arena will result in an {@link UnsupportedOperationException}.
      *
      * @return a new arena that is managed, automatically, by the garbage collector.
      */
@@ -170,6 +171,7 @@ public interface Arena extends SegmentAllocator, AutoCloseable {
     /**
      * Obtains the global arena. Segments obtained with the global arena can be
      * {@linkplain MemorySegment#isAccessibleBy(Thread) accessed} by any thread.
+     * Calling {@link #close()} on the returned arena will result in an {@link UnsupportedOperationException}.
      *
      * @return the global arena.
      */
@@ -238,6 +240,10 @@ public interface Arena extends SegmentAllocator, AutoCloseable {
      * exception being thrown. This reflects a deliberate design choice: failure to close an arena might reveal a bug
      * in the underlying application logic.
      *
+     * @implSpe If this method completes normally, then {@code this.scope().isAlive() == false}.
+     * Implementations are allowed to throw {@link UnsupportedOperationException} if an explicit close operation is
+     * not supported.
+     *
      * @see Scope#isAlive()
      *
      * @throws IllegalStateException if the arena has already been closed.
@@ -245,6 +251,7 @@ public interface Arena extends SegmentAllocator, AutoCloseable {
      * by a {@linkplain Linker#downcallHandle(FunctionDescriptor, Linker.Option...) downcall method handle}.
      * @throws WrongThreadException if this arena is confined, and this method is called from a thread {@code T}
      * other than the arena owner thread.
+     * @throws UnsupportedOperationException if this arena does not support explicit closure.
      */
     @Override
     void close();
