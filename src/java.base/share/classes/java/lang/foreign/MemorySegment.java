@@ -1196,7 +1196,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @param arena the arena associated with the returned native segment.
      * @return a native segment with the given address, size and arena.
      * @throws IllegalArgumentException if {@code byteSize < 0}.
-     * @throws IllegalStateException if {@code arena.isAlive() == false}
+     * @throws IllegalStateException if {@code arena.scope().isAlive() == false}
      * @throws WrongThreadException if {@code arena} is a confined arena, and this method is called from a
      * thread {@code T}, other than the arena's owner thread.
      * @throws IllegalCallerException If the caller is in a module that does not have native access enabled.
@@ -1241,7 +1241,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @param cleanupAction the custom cleanup action to be associated to the returned segment (can be null).
      * @return a native segment with the given address, size and arena.
      * @throws IllegalArgumentException if {@code byteSize < 0}.
-     * @throws IllegalStateException if {@code arena.isAlive() == false}
+     * @throws IllegalStateException if {@code arena.scope().isAlive() == false}
      * @throws WrongThreadException if {@code arena} is a confined arena, and this method is called from a
      * thread {@code T}, other than the arena's owner thread.
      * @throws IllegalCallerException If the caller is in a module that does not have native access enabled.

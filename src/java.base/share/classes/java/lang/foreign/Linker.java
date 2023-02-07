@@ -94,7 +94,8 @@ import java.util.stream.Stream;
  * which is {@linkplain FunctionDescriptor#toMethodType() derived} from the provided function descriptor.
  * <p>
  * Upcall stubs are modelled by instances of type {@link MemorySegment}; upcall stubs can be passed by reference to other
- * downcall method handles and, they are released via their associated {@linkplain MemorySegment.Scope scope}.
+ * downcall method handles. An upcall stub can be released by {@linkplain Arena#close() closing} the arena which was used
+ * to create it.
  *
  * <h2 id="safety">Safety considerations</h2>
  *
@@ -106,8 +107,7 @@ import java.util.stream.Stream;
  * the linker runtime guarantees the following for any argument {@code A} of type {@link MemorySegment} whose corresponding
  * layout is {@link ValueLayout#ADDRESS}:
  * <ul>
- *     <li>Either {@code A.scope().isPresent() == false}, or {@code A.scope().get().isAlive() == true}. Otherwise,
- *     the invocation throws {@link IllegalStateException};</li>
+ *     <li>{@code A.scope().isAlive() == true}. Otherwise, the invocation throws {@link IllegalStateException};</li>
  *     <li>The invocation occurs in a thread {@code T} such that {@code A.isAccessibleBy(T) == true}.
  *     Otherwise, the invocation throws {@link WrongThreadException}; and</li>
  *     <li>{@code A} is kept alive during the invocation. For instance, if {@code A} has been obtained using a
@@ -261,7 +261,7 @@ public sealed interface Linker permits AbstractLinker {
      * @throws IllegalArgumentException if the provided function descriptor is not supported by this linker.
      * @throws IllegalArgumentException if it is determined that the target method handle can throw an exception, or if the target method handle
      * has a type that does not match the upcall stub <a href="Linker.html#upcall-stubs"><em>inferred type</em></a>.
-     * @throws IllegalStateException if {@code arena.isAlive() == false}
+     * @throws IllegalStateException if {@code arena.scope().isAlive() == false}
      * @throws WrongThreadException if {@code arena} is a confined arena, and this method is called from a
      * thread {@code T}, other than the arena's owner thread.
      */

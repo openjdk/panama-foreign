@@ -197,7 +197,7 @@ public interface SymbolLookup {
      * @param name the name of the library in which symbols should be looked up.
      * @param arena the arema associated with symbols obtained from the returned lookup.
      * @return a new symbol lookup suitable to find symbols in a library with the given name.
-     * @throws IllegalStateException if {@code arena.isAlive() == false}
+     * @throws IllegalStateException if {@code arena.scope().isAlive() == false}
      * @throws WrongThreadException if {@code arena} is a confined arena, and this method is called from a
      * thread {@code T}, other than the arena's owner thread.
      * @throws IllegalArgumentException if {@code name} does not identify a valid library.
@@ -226,7 +226,7 @@ public interface SymbolLookup {
      * @param path the path of the library in which symbols should be looked up.
      * @param arena the arena associated with symbols obtained from the returned lookup.
      * @return a new symbol lookup suitable to find symbols in a library with the given path.
-     * @throws IllegalStateException if {@code arena.isAlive() == false}
+     * @throws IllegalStateException if {@code arena.scope().isAlive() == false}
      * @throws WrongThreadException if {@code arena} is a confined arena, and this method is called from a
      * thread {@code T}, other than the arena's owner thread.
      * @throws IllegalArgumentException if {@code path} does not point to a valid library.
