@@ -125,7 +125,7 @@ public abstract sealed class AbstractMemorySegmentImpl
 
     @Override
     @CallerSensitive
-    public AbstractMemorySegmentImpl asUnbounded() {
+    public final AbstractMemorySegmentImpl asUnbounded() {
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "asUnbounded");
         if (!isNative()) throw new UnsupportedOperationException("Not a native segment");
         return asSliceNoCheck(0, Long.MAX_VALUE);
