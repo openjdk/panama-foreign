@@ -114,7 +114,7 @@ class FFIType {
                 return structType;
             }
             assert grpl instanceof UnionLayout;
-            throw new UnsupportedOperationException("libffi does not reliably support by-value unions");
+            throw new IllegalArgumentException("Fallback linker does not support by-value unions: " + grpl);
         } else if (layout instanceof SequenceLayout sl) {
             List<MemoryLayout> elements = Collections.nCopies(Math.toIntExact(sl.elementCount()), sl.elementLayout());
             return make(elements, abi, scope);
