@@ -264,10 +264,17 @@ public abstract class CallArranger {
         Windows, VF     | CW in regs       | CW split between regs and stack | CW on the stack
          */
         StructStorage[] structStorages(GroupLayout layout, boolean forHFA) {
-            int regType = forHFA ? StorageType.VECTOR : StorageType.INTEGER;
             int numChunks = (int)Utils.alignUp(layout.byteSize(), MAX_COPY_SIZE) / MAX_COPY_SIZE;
-            List<MemoryLayout> scalarLayouts = forHFA ? TypeClass.scalarLayouts(layout) : null;
-            int requiredStorages = forHFA ? scalarLayouts.size() : numChunks;
+
+            int regType = StorageType.INTEGER;
+            List<MemoryLayout> scalarLayouts = null;
+            int requiredStorages = numChunks;
+            if (forHFA) {
+                regType = StorageType.VECTOR;
+                scalarLayouts = TypeClass.scalarLayouts(layout);
+                requiredStorages = scalarLayouts.size();
+            }
+
             boolean hasEnoughRegisters = hasEnoughRegisters(regType, requiredStorages);
 
             // For the ABI variants that pack arguments spilled to the

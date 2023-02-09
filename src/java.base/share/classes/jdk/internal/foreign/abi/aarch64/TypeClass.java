@@ -63,14 +63,14 @@ public enum TypeClass {
 
     static List<MemoryLayout> scalarLayouts(GroupLayout gl) {
         List<MemoryLayout> out = new ArrayList<>();
-        scalarLayoutsR(out, gl);
+        scalarLayoutsInternal(out, gl);
         return out;
     }
 
-    private static void scalarLayoutsR(List<MemoryLayout> out, GroupLayout gl) {
+    private static void scalarLayoutsInternal(List<MemoryLayout> out, GroupLayout gl) {
         for (MemoryLayout member : gl.memberLayouts()) {
             if (member instanceof GroupLayout memberGl) {
-                scalarLayoutsR(out, memberGl);
+                scalarLayoutsInternal(out, memberGl);
             } else if (member instanceof SequenceLayout memberSl) {
                 for (long i = 0; i < memberSl.elementCount(); i++) {
                     out.add(memberSl.elementLayout());
