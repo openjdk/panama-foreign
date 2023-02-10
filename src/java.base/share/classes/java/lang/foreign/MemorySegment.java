@@ -1117,7 +1117,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * A zero-length native segment modelling the {@code NULL} address.
      */
-    MemorySegment NULL = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(0L, 0);
+    MemorySegment NULL = new NativeMemorySegmentImpl();
 
     /**
      * Creates a zero-length native segment from the given {@linkplain #address() address value}.

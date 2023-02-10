@@ -54,11 +54,22 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
     @ForceInline
     NativeMemorySegmentImpl(long min, long length, boolean readOnly, MemorySessionImpl scope) {
         super(length, readOnly, scope);
-        this.min = (Unsafe.ADDRESS_SIZE == 4)
+        this.min = (Unsafe.getUnsafe().addressSize() == 4)
                 // On 32-bit systems, normalize the upper unused 32-bits to zero
                 ? min & 0x0000_0000_FFFF_FFFFL
                 // On 64-bit systems, all the bits are used
                 : min;
+    }
+
+    /**
+     * This constructor should only be used when initializing {@link MemorySegment#NULL}. Note: because of the memory
+     * segment class hierarchy, it is possible to end up in a situation where this constructor is called
+     * when the static fields in this class are not yet initialized.
+     */
+    @ForceInline
+    public NativeMemorySegmentImpl() {
+        super(0L, false, MemorySessionImpl.GLOBAL);
+        this.min = 0L;
     }
 
     @Override

@@ -37,6 +37,7 @@ import java.lang.foreign.UnionLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -112,7 +113,7 @@ class FFIType {
                 return structType;
             }
             assert grpl instanceof UnionLayout;
-            throw new UnsupportedOperationException("No unions (TODO)");
+            throw new IllegalArgumentException("Fallback linker does not support by-value unions: " + grpl);
         } else if (layout instanceof SequenceLayout sl) {
             List<MemoryLayout> elements = Collections.nCopies(Math.toIntExact(sl.elementCount()), sl.elementLayout());
             return make(elements, abi, scope);
