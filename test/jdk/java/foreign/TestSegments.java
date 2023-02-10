@@ -85,8 +85,7 @@ public class TestSegments {
     public void testNativeSegmentIsZeroed() {
         VarHandle byteHandle = ValueLayout.JAVA_BYTE.arrayElementVarHandle();
         try (Arena arena = Arena.ofConfined()) {
-            Arena scope = arena;
-            MemorySegment segment = scope.allocate(1000, 1);
+            MemorySegment segment = arena.allocate(1000, 1);
             for (long i = 0 ; i < segment.byteSize() ; i++) {
                 assertEquals(0, (byte)byteHandle.get(segment, i));
             }
@@ -97,8 +96,7 @@ public class TestSegments {
     public void testSlices() {
         VarHandle byteHandle = ValueLayout.JAVA_BYTE.arrayElementVarHandle();
         try (Arena arena = Arena.ofConfined()) {
-            Arena scope = arena;
-            MemorySegment segment = scope.allocate(10, 1);
+            MemorySegment segment = arena.allocate(10, 1);
             //init
             for (byte i = 0 ; i < segment.byteSize() ; i++) {
                 byteHandle.set(segment, (long)i, i);
@@ -125,8 +123,7 @@ public class TestSegments {
             assertNotEquals(segment, segment.asSlice(10, 90));
             assertEquals(segment, segment.asSlice(0, 90));
             assertEquals(segment, MemorySegment.ofAddress(segment.address(), 100, Arena.global()));
-            Arena scope = arena;
-            MemorySegment segment2 = scope.allocate(100, 1);
+            MemorySegment segment2 = arena.allocate(100, 1);
             assertNotEquals(segment, segment2);
         }
     }
@@ -145,8 +142,7 @@ public class TestSegments {
     @Test
     public void testHashCodeOffHeap() {
         try (Arena arena = Arena.ofConfined()) {
-            Arena scope = arena;
-            MemorySegment segment = scope.allocate(100, 1);
+            MemorySegment segment = arena.allocate(100, 1);
             assertEquals(segment.hashCode(), segment.asReadOnly().hashCode());
             assertEquals(segment.hashCode(), segment.asSlice(0, 100).hashCode());
             assertEquals(segment.hashCode(), segment.asSlice(0, 90).hashCode());
@@ -224,14 +220,10 @@ public class TestSegments {
                 () -> MemorySegment.ofArray(new long[] { 1l, 2l, 3l, 4l } ),
                 () -> MemorySegment.ofArray(new short[] { 1, 2, 3, 4 } ),
                 () -> Arena.ofAuto().allocate(4L, 1),
-                () -> {
-                    return Arena.ofAuto().allocate(4L, 8);
-                },
+                () -> Arena.ofAuto().allocate(4L, 8),
                 () -> Arena.ofAuto().allocate(JAVA_INT),
                 () -> Arena.ofAuto().allocate(4L, 1),
-                () -> {
-                    return Arena.ofAuto().allocate(4L, 8);
-                },
+                () -> Arena.ofAuto().allocate(4L, 8),
                 () -> Arena.ofAuto().allocate(JAVA_INT)
 
         );

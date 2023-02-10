@@ -431,8 +431,7 @@ public class TestLayoutPaths {
         sliceHandle = sliceHandle.asSpreader(long[].class, indexes.length);
 
         try (Arena arena = Arena.ofConfined()) {
-            Arena scope = arena;
-            MemorySegment segment = scope.allocate(layout);
+            MemorySegment segment = arena.allocate(layout);
             MemorySegment slice = (MemorySegment) sliceHandle.invokeExact(segment, indexes);
             assertEquals(slice.address() - segment.address(), expectedBitOffset / 8);
             assertEquals(slice.byteSize(), selected.byteSize());

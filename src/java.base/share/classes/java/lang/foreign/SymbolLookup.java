@@ -195,7 +195,7 @@ public interface SymbolLookup {
      * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param name the name of the library in which symbols should be looked up.
-     * @param arena the arema associated with symbols obtained from the returned lookup.
+     * @param arena the arena associated with symbols obtained from the returned lookup.
      * @return a new symbol lookup suitable to find symbols in a library with the given name.
      * @throws IllegalStateException if {@code arena.scope().isAlive() == false}
      * @throws WrongThreadException if {@code arena} is a confined arena, and this method is called from a

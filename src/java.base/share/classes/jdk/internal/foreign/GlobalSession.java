@@ -35,16 +35,10 @@ import jdk.internal.vm.annotation.ForceInline;
 final class GlobalSession extends MemorySessionImpl {
 
     final Object ref;
-    final boolean internal;
 
-    public GlobalSession(Object ref, boolean internal) {
+    public GlobalSession(Object ref) {
         super(null, null);
         this.ref = ref;
-        this.internal = internal;
-    }
-
-    boolean isInternal() {
-        return internal;
     }
 
     @Override

@@ -154,7 +154,7 @@ public final class SharedUtils {
     }
 
     private static MemorySegment bufferCopy(MemorySegment dest, MemorySegment buffer) {
-        return dest.asUnbounded().copyFrom(buffer);
+        return dest.copyFrom(buffer);
     }
 
     public static Class<?> primitiveCarrierForSize(long size, boolean useFloat) {

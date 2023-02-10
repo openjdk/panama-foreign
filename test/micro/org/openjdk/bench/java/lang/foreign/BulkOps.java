@@ -63,12 +63,7 @@ public class BulkOps {
     final Arena arena = Arena.ofShared();
 
     final long unsafe_addr = unsafe.allocateMemory(ALLOC_SIZE);
-    final MemorySegment segment;
-
-    {
-        Arena scope = arena;
-        segment = scope.allocate(ALLOC_SIZE, 1);
-    }
+    final MemorySegment segment = arena.allocate(ALLOC_SIZE, 1);
 
     final IntBuffer buffer = IntBuffer.allocate(ELEM_SIZE);
 

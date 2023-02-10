@@ -84,7 +84,7 @@
  * }
  *}
  *
- * A confined arena can be {@linkplain java.lang.foreign.Arena#close()}. When a confined
+ * A confined arena can be {@linkplain java.lang.foreign.Arena#close() closed}. When a confined
  * arena is closed, all the segments allocated by it are invalidated, and become inaccessible.
  * Note the use of the <em>try-with-resources</em> construct: this idiom ensures
  * that the off-heap region of memory backing the native segment will be released at the end of the block, according to

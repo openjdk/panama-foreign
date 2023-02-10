@@ -127,8 +127,7 @@ public class TestArrays {
         try (Arena arena = Arena.ofConfined()) {
             long byteSize = layout.byteSize() + 1;
             long byteAlignment = layout.byteSize();
-            Arena scope = arena;
-            MemorySegment segment = scope.allocate(byteSize, byteAlignment);
+            MemorySegment segment = arena.allocate(byteSize, byteAlignment);
             arrayFactory.apply(segment);
         }
     }
@@ -137,8 +136,7 @@ public class TestArrays {
             expectedExceptions = IllegalStateException.class)
     public void testArrayFromClosedSegment(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
         Arena arena = Arena.ofConfined();
-        Arena scope = arena;
-        MemorySegment segment = scope.allocate(layout);
+        MemorySegment segment = arena.allocate(layout);
         arena.close();
         arrayFactory.apply(segment);
     }

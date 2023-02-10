@@ -59,8 +59,8 @@ public abstract sealed class MemorySessionImpl
     static final VarHandle STATE;
     static final int MAX_FORKS = Integer.MAX_VALUE;
 
-    public static final MemorySessionImpl GLOBAL = new GlobalSession(null, false);
-    public static final MemorySessionImpl NATIVE = new GlobalSession(null, true);
+    public static final MemorySessionImpl GLOBAL = new GlobalSession(null);
+    public static final MemorySessionImpl NATIVE = new GlobalSession(null);
 
     static final ScopedMemoryAccess.ScopedAccessError ALREADY_CLOSED = new ScopedMemoryAccess.ScopedAccessError(MemorySessionImpl::alreadyClosed);
     static final ScopedMemoryAccess.ScopedAccessError WRONG_THREAD = new ScopedMemoryAccess.ScopedAccessError(MemorySessionImpl::wrongThread);
@@ -96,16 +96,22 @@ public abstract sealed class MemorySessionImpl
     }
 
     public Arena asArena() {
-        return new SessionArena(this);
+        return new Arena() {
+            @Override
+            public Scope scope() {
+                return MemorySessionImpl.this;
+            }
+
+            @Override
+            public void close() {
+                MemorySessionImpl.this.close();
+            }
+        };
     }
 
     @ForceInline
     public static final MemorySessionImpl toMemorySession(Arena arena) {
-        if (arena instanceof SessionArena arenaImpl) {
-            return arenaImpl.sessionImpl;
-        } else {
-            return (MemorySessionImpl) arena.scope();
-        }
+        return (MemorySessionImpl) arena.scope();
     }
 
     public final boolean isCloseableBy(Thread thread) {
@@ -259,7 +265,7 @@ public abstract sealed class MemorySessionImpl
     abstract void justClose();
 
     public static MemorySessionImpl heapSession(Object ref) {
-        return new GlobalSession(ref, true);
+        return new GlobalSession(ref);
     }
 
     /**

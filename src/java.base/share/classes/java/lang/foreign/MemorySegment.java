@@ -1169,14 +1169,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Creates a native segment with the given size, address, and arena.
-     * This method can be useful when interacting with custom memory sources (e.g. custom allocators),
-     * where an address to some underlying region of memory is typically obtained from foreign code
-     * (often as a plain {@code long} value).
-     * <p>
-     * The returned segment is not read-only (see {@link MemorySegment#isReadOnly()}), and its lifetime is controlled
-     * by the provided arena. For instance, if the provided arena is a confined arena, the returned
-     * native segment will be invalidated when the provided confined arena is {@linkplain Arena#close() closed}.
+     * Creates a native segment with the given size, {@linkplain #address() address value} and arena.
+     * The returned segment is always accessible, from any thread.
      * <p>
      * This is equivalent to the following code:
      * {@snippet lang = java:
@@ -1212,12 +1206,12 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Creates a native segment with the given size, address, and arena.
+     * Creates a native segment with the given size, {@linkplain #address() address value}, and arena.
      * This method can be useful when interacting with custom memory sources (e.g. custom allocators),
      * where an address to some underlying region of memory is typically obtained from foreign code
      * (often as a plain {@code long} value).
      * <p>
-     * The returned segment is not read-only (see {@link MemorySegment#isReadOnly()}), and its lifetime is controlled
+     * The returned segment is not {@linkplain MemorySegment#isReadOnly()} read-only), and its lifetime is controlled
      * by the provided arena. For instance, if the provided arena is a confined arena, the returned
      * native segment will be invalidated - and the provided cleanup action invoked - when the provided confined arena
      * is {@linkplain Arena#close() closed}.
@@ -1715,6 +1709,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * such that {@code isAccessibleBy(T) == false}.
      * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a> in the provided layout.
+     * @throws IllegalArgumentException if provided address layout has a {@linkplain OfAddress#targetLayout() target layout}
+     * {@code T}, and the address of the returned segment
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a> in {@code T}.
      * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
@@ -2040,7 +2037,6 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     /**
      * Reads an address from this segment at the given at the given index, scaled by the given layout size. The read address is wrapped in
      * a native segment, associated with a scope that is always alive. Under normal conditions,
      * the size of the returned segment is {@code 0}. However, if the provided address layout has a
@@ -2253,7 +2249,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
     sealed interface Scope permits MemorySessionImpl {
         /**
-         * {@return {@code true}, if the segments associated with this scope can be accessed}.
+         * {@return {@code true}, if the regions of memory backing the memory segments associated with this scope are
+         * still valid}
          */
         boolean isAlive();
 

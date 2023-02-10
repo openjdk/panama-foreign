@@ -348,9 +348,8 @@ public class TestSegmentAllocators {
     }
 
     enum AllocationFactory {
-        SLICING(true, (size, drop) -> {
-            Arena scope = drop;
-            return SegmentAllocator.slicingAllocator(scope.allocate(size, 1));
+        SLICING(true, (size, arena) -> {
+            return SegmentAllocator.slicingAllocator(arena.allocate(size, 1));
         });
 
         private final boolean isBound;

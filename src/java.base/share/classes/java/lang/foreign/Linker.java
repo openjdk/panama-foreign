@@ -35,7 +35,6 @@ import jdk.internal.reflect.Reflection;
 
 import java.lang.foreign.ValueLayout.OfAddress;
 import java.lang.invoke.MethodHandle;
-import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -129,7 +128,7 @@ import java.util.stream.Stream;
  * and even JVM crashes, since an upcall is typically executed in the context of a downcall method handle invocation.
  * <p>
  * An upcall stub argument whose corresponding layout is an {@linkplain ValueLayout.OfAddress address layout}
- * is a native segment associated with a scope that is alive for the entire duration of the upcall.
+ * is a native segment associated with a scope that is always alive.
  * Under normal conditions, the size of this segment argument is {@code 0}.
  * However, if the address layout has a {@linkplain OfAddress#targetLayout()} {@code T}, then the size of the
  * segment argument is set to {@code T.byteSize()}.

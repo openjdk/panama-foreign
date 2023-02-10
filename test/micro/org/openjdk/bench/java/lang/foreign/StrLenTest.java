@@ -78,8 +78,7 @@ public class StrLenTest extends CLayouts {
     @Setup
     public void setup() {
         str = makeString(size);
-        Arena scope = arena;
-        segmentAllocator = SegmentAllocator.prefixAllocator(scope.allocate(size + 1, 1));
+        segmentAllocator = SegmentAllocator.prefixAllocator(arena.allocate(size + 1, 1));
     }
 
     @TearDown

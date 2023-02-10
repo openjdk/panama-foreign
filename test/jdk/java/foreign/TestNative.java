@@ -142,8 +142,7 @@ public class TestNative extends NativeTestHelper {
     @Test(dataProvider="nativeAccessOps")
     public void testNativeAccess(Consumer<MemorySegment> checker, Consumer<MemorySegment> initializer, SequenceLayout seq) {
         try (Arena arena = Arena.ofConfined()) {
-            Arena scope = arena;
-            MemorySegment segment = scope.allocate(seq);;
+            MemorySegment segment = arena.allocate(seq);;
             initializer.accept(segment);
             checker.accept(segment);
         }
@@ -153,8 +152,7 @@ public class TestNative extends NativeTestHelper {
     public void testNativeCapacity(Function<ByteBuffer, Buffer> bufferFunction, int elemSize) {
         int capacity = (int)doubles.byteSize();
         try (Arena arena = Arena.ofConfined()) {
-            Arena scope = arena;
-            MemorySegment segment = scope.allocate(doubles);;
+            MemorySegment segment = arena.allocate(doubles);;
             ByteBuffer bb = segment.asByteBuffer();
             Buffer buf = bufferFunction.apply(bb);
             int expected = capacity / elemSize;
@@ -197,8 +195,7 @@ public class TestNative extends NativeTestHelper {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadResize() {
         try (Arena arena = Arena.ofConfined()) {
-            Arena scope = arena;
-            MemorySegment segment = scope.allocate(4, 1);;
+            MemorySegment segment = arena.allocate(4, 1);;
             MemorySegment.ofAddress(segment.address(), -1, Arena.global());
         }
     }

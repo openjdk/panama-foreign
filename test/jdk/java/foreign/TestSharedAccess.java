@@ -50,8 +50,7 @@ public class TestSharedAccess {
     public void testShared() throws Throwable {
         SequenceLayout layout = MemoryLayout.sequenceLayout(1024, ValueLayout.JAVA_INT);
         try (Arena arena = Arena.ofShared()) {
-            Arena scope = arena;
-            MemorySegment s = scope.allocate(layout);;
+            MemorySegment s = arena.allocate(layout);;
             for (int i = 0 ; i < layout.elementCount() ; i++) {
                 setInt(s.asSlice(i * 4), 42);
             }
@@ -96,8 +95,7 @@ public class TestSharedAccess {
     @Test
     public void testSharedUnsafe() throws Throwable {
         try (Arena arena = Arena.ofShared()) {
-            Arena scope = arena;
-            MemorySegment s = scope.allocate(4, 1);;
+            MemorySegment s = arena.allocate(4, 1);;
             setInt(s, 42);
             assertEquals(getInt(s), 42);
             List<Thread> threads = new ArrayList<>();
@@ -125,8 +123,7 @@ public class TestSharedAccess {
         CompletableFuture<?> r;
         try (Arena arena = Arena.ofConfined()) {
             MemoryLayout layout = MemoryLayout.sequenceLayout(2, ValueLayout.JAVA_INT);
-            Arena scope = arena;
-            MemorySegment s1 = scope.allocate(layout);;
+            MemorySegment s1 = arena.allocate(layout);;
             r = CompletableFuture.runAsync(() -> {
                 try {
                     ByteBuffer bb = s1.asByteBuffer();

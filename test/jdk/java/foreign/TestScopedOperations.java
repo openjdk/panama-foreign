@@ -107,7 +107,7 @@ public class TestScopedOperations {
 
     static {
         // session operations
-        ScopedOperation.ofScope(session -> session.allocate(100, 1), "MemorySession::allocate");;
+        ScopedOperation.ofScope(session -> session.allocate(100, 1), "MemorySession::allocate");
         ScopedOperation.ofScope(session -> {
             try (FileChannel fileChannel = FileChannel.open(tempPath, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                 fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, 10L, session);

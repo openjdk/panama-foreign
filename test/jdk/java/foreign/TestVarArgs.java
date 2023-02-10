@@ -81,8 +81,7 @@ public class TestVarArgs extends CallGeneratorHelper {
             Arena scope1 = arena;
             MemorySegment callInfo = scope1.allocate(CallInfo.LAYOUT);;
             MemoryLayout layout = MemoryLayout.sequenceLayout(args.size(), C_INT);
-            Arena scope = arena;
-            MemorySegment argIDs = scope.allocate(layout);;
+            MemorySegment argIDs = arena.allocate(layout);;
 
             MemorySegment callInfoPtr = callInfo;
 

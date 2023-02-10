@@ -49,8 +49,7 @@ public class TestSlices {
     @Test(dataProvider = "slices")
     public void testSlices(VarHandle handle, int lo, int hi, int[] values) {
         try (Arena arena = Arena.ofConfined()) {
-            Arena scope = arena;
-            MemorySegment segment = scope.allocate(LAYOUT);;
+            MemorySegment segment = arena.allocate(LAYOUT);;
             //init
             for (long i = 0 ; i < 2 ; i++) {
                 for (long j = 0 ; j < 5 ; j++) {
@@ -65,8 +64,7 @@ public class TestSlices {
     @Test(dataProvider = "slices")
     public void testSliceBadIndex(VarHandle handle, int lo, int hi, int[] values) {
         try (Arena arena = Arena.ofConfined()) {
-            Arena scope = arena;
-            MemorySegment segment = scope.allocate(LAYOUT);;
+            MemorySegment segment = arena.allocate(LAYOUT);;
             assertThrows(() -> handle.get(segment, lo, 0));
             assertThrows(() -> handle.get(segment, 0, hi));
         }

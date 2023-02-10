@@ -70,9 +70,7 @@ public class LibraryLookupTest {
     private static MemorySegment loadLibrary(Arena session) {
         SymbolLookup lib = SymbolLookup.libraryLookup(LIB_PATH, session);
         MemorySegment addr = lib.find("inc").get();
-        if (session instanceof Arena arena) {
-            assertEquals(addr.scope(), arena.scope());
-        }
+        assertEquals(addr.scope(), session.scope());
         return addr;
     }
 

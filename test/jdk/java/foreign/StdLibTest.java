@@ -184,7 +184,7 @@ public class StdLibTest extends NativeTestHelper {
                 MemorySegment buf = arena.allocate(s1.length() + s2.length() + 1);
                 buf.setUtf8String(0, s1);
                 MemorySegment other = arena.allocateUtf8String(s2);
-                return ((MemorySegment)strcat.invokeExact(buf, other)).asUnbounded().getUtf8String(0);
+                return ((MemorySegment)strcat.invokeExact(buf, other)).getUtf8String(0);
             }
         }
 
@@ -285,8 +285,8 @@ public class StdLibTest extends NativeTestHelper {
         }
 
         static int qsortCompare(MemorySegment addr1, MemorySegment addr2) {
-            return addr1.asUnbounded().get(C_INT, 0) -
-                   addr2.asUnbounded().get(C_INT, 0);
+            return addr1.get(C_INT, 0) -
+                   addr2.get(C_INT, 0);
         }
 
         int rand() throws Throwable {

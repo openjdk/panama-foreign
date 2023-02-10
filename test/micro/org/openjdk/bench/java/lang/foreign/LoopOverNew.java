@@ -57,12 +57,7 @@ public class LoopOverNew extends JavaLayouts {
     static final int ALLOC_SIZE = ELEM_SIZE * CARRIER_SIZE;
     static final MemoryLayout ALLOC_LAYOUT = MemoryLayout.sequenceLayout(ELEM_SIZE, JAVA_INT);
     final Arena arena = Arena.ofConfined();
-    final SegmentAllocator recyclingAlloc;
-
-    {
-        Arena scope = arena;
-        recyclingAlloc = SegmentAllocator.prefixAllocator(scope.allocate(ALLOC_LAYOUT));
-    }
+    final SegmentAllocator recyclingAlloc = SegmentAllocator.prefixAllocator(arena.allocate(ALLOC_LAYOUT));
 
     @TearDown
     public void tearDown() throws Throwable {

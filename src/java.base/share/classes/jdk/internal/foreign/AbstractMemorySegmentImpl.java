@@ -84,10 +84,6 @@ public abstract sealed class AbstractMemorySegmentImpl
         this.scope = scope;
     }
 
-    public static Arena arena(MemorySegment segment) {
-        return ((AbstractMemorySegmentImpl)segment).scope.asArena();
-    }
-
     abstract AbstractMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySessionImpl scope);
 
     abstract ByteBuffer makeByteBuffer();

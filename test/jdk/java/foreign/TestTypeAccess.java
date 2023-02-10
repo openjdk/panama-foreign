@@ -54,8 +54,7 @@ public class TestTypeAccess {
     @Test(expectedExceptions=ClassCastException.class)
     public void testMemoryAddressValueGetAsString() {
         try (Arena arena = Arena.ofConfined()) {
-            Arena scope = arena;
-            MemorySegment s = scope.allocate(8, 8);;
+            MemorySegment s = arena.allocate(8, 8);;
             String address = (String)ADDR_HANDLE.get(s);
         }
     }
@@ -63,8 +62,7 @@ public class TestTypeAccess {
     @Test(expectedExceptions=ClassCastException.class)
     public void testMemoryAddressValueSetAsString() {
         try (Arena arena = Arena.ofConfined()) {
-            Arena scope = arena;
-            MemorySegment s = scope.allocate(8, 8);;
+            MemorySegment s = arena.allocate(8, 8);;
             ADDR_HANDLE.set(s, "string");
         }
     }
@@ -72,8 +70,7 @@ public class TestTypeAccess {
     @Test(expectedExceptions=WrongMethodTypeException.class)
     public void testMemoryAddressValueGetAsPrimitive() {
         try (Arena arena = Arena.ofConfined()) {
-            Arena scope = arena;
-            MemorySegment s = scope.allocate(8, 8);;
+            MemorySegment s = arena.allocate(8, 8);;
             int address = (int)ADDR_HANDLE.get(s);
         }
     }
@@ -81,8 +78,7 @@ public class TestTypeAccess {
     @Test(expectedExceptions=WrongMethodTypeException.class)
     public void testMemoryAddressValueSetAsPrimitive() {
         try (Arena arena = Arena.ofConfined()) {
-            Arena scope = arena;
-            MemorySegment s = scope.allocate(8, 8);;
+            MemorySegment s = arena.allocate(8, 8);;
             ADDR_HANDLE.set(s, 1);
         }
     }

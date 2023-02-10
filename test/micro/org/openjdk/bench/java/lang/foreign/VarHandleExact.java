@@ -64,8 +64,7 @@ public class VarHandleExact {
     @Setup
     public void setup() {
         arena = Arena.ofConfined();
-        Arena scope = arena;
-        data = scope.allocate(JAVA_INT);
+        data = arena.allocate(JAVA_INT);
     }
 
     @TearDown

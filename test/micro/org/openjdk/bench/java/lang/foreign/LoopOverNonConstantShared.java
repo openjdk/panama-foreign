@@ -69,8 +69,7 @@ public class LoopOverNonConstantShared extends JavaLayouts {
             unsafe.putInt(unsafe_addr + (i * CARRIER_SIZE) , i);
         }
         arena = Arena.ofConfined();
-        Arena scope = arena;
-        segment = scope.allocate(ALLOC_SIZE, CARRIER_SIZE);
+        segment = arena.allocate(ALLOC_SIZE, CARRIER_SIZE);
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_INT.set(segment, (long) i, i);
         }
