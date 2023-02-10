@@ -2248,7 +2248,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * are considered {@linkplain #equals(Object)} if they denote the same lifetime.
      */
     @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-    sealed interface Scope permits MemorySessionImpl, AbstractMemorySegmentImpl.ScopeImpl {
+    sealed interface Scope permits MemorySessionImpl {
         /**
          * {@return {@code true}, if the regions of memory backing the memory segments associated with this scope are
          * still valid}

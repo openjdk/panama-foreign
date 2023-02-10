@@ -76,15 +76,13 @@ public abstract sealed class AbstractMemorySegmentImpl
 
     final long length;
     final boolean readOnly;
-    final AbstractMemorySegmentImpl parent;
     final MemorySessionImpl scope;
 
     @ForceInline
-    AbstractMemorySegmentImpl(long length, boolean readOnly, MemorySessionImpl scope, AbstractMemorySegmentImpl parent) {
+    AbstractMemorySegmentImpl(long length, boolean readOnly, MemorySessionImpl scope) {
         this.length = length;
         this.readOnly = readOnly;
         this.scope = scope;
-        this.parent = parent;
     }
 
     abstract AbstractMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySessionImpl scope);
@@ -382,43 +380,7 @@ public abstract sealed class AbstractMemorySegmentImpl
 
     @Override
     public Scope scope() {
-        return scope == MemorySessionImpl.EXTERNAL ?
-                new ScopeImpl(this) : scope;
-    }
-
-    /**
-     * Some segments are backed by an 'external' memory session. This is the case for (a) heap memory segments,
-     * and (b) native segments created unsafely from raw native addresses and (c) segments created from
-     * heap buffers. In these cases, we return a fresh scope instance which wraps a segment.
-     * Equality on these scopes is defined in terms of equality of the "roots" of their associated segments.
-     * This means that externally managed memory segments have a scope that is a "singleton":
-     * a segment and all the slices derived from it have scopes that are equals.
-     */
-    public static final class ScopeImpl implements Scope {
-        final MemorySegment root;
-
-        @Override
-        public boolean isAlive() {
-            return true;
-        }
-
-        public ScopeImpl(AbstractMemorySegmentImpl segment) {
-            while (segment.parent != null) {
-                segment = segment.parent;
-            }
-            this.root = segment;
-        }
-
-        @Override
-        public boolean equals(Object that) {
-            return that instanceof ScopeImpl scopeImpl &&
-                    root == scopeImpl.root; // do not use segment equality (which is too loose)
-        }
-
-        @Override
-        public int hashCode() {
-            return root.hashCode();
-        }
+        return scope;
     }
 
     @Override
@@ -555,27 +517,27 @@ public abstract sealed class AbstractMemorySegmentImpl
         }
         if (base != null) {
             if (base instanceof byte[]) {
-                return new HeapMemorySegmentImpl.OfByte(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferSegment);
+                return new HeapMemorySegmentImpl.OfByte(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
             } else if (base instanceof short[]) {
-                return new HeapMemorySegmentImpl.OfShort(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferSegment);
+                return new HeapMemorySegmentImpl.OfShort(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
             } else if (base instanceof char[]) {
-                return new HeapMemorySegmentImpl.OfChar(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferSegment);
+                return new HeapMemorySegmentImpl.OfChar(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
             } else if (base instanceof int[]) {
-                return new HeapMemorySegmentImpl.OfInt(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferSegment);
+                return new HeapMemorySegmentImpl.OfInt(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
             } else if (base instanceof float[]) {
-                return new HeapMemorySegmentImpl.OfFloat(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferSegment);
+                return new HeapMemorySegmentImpl.OfFloat(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
             } else if (base instanceof long[]) {
-                return new HeapMemorySegmentImpl.OfLong(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferSegment);
+                return new HeapMemorySegmentImpl.OfLong(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
             } else if (base instanceof double[]) {
-                return new HeapMemorySegmentImpl.OfDouble(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferSegment);
+                return new HeapMemorySegmentImpl.OfDouble(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
             } else {
                 throw new AssertionError("Cannot get here");
             }
         } else if (unmapper == null) {
-            return new NativeMemorySegmentImpl(bbAddress + (pos << scaleFactor), size << scaleFactor, readOnly, bufferScope, bufferSegment);
+            return new NativeMemorySegmentImpl(bbAddress + (pos << scaleFactor), size << scaleFactor, readOnly, bufferScope);
         } else {
             // we can ignore scale factor here, a mapped buffer is always a byte buffer, so scaleFactor == 0.
-            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, readOnly, bufferScope, bufferSegment);
+            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, readOnly, bufferScope);
         }
     }
 
