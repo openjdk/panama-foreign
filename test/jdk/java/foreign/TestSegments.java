@@ -117,8 +117,13 @@ public class TestSegments {
     public void testDerivedScopes(Supplier<MemorySegment> segmentSupplier) {
         MemorySegment segment = segmentSupplier.get();
         assertEquals(segment.scope(), segment.scope());
+        // one level
         assertEquals(segment.asSlice(0).scope(), segment.scope());
         assertEquals(segment.asReadOnly().scope(), segment.scope());
+        // two levels
+        assertEquals(segment.asSlice(0).asReadOnly().scope(), segment.scope());
+        assertEquals(segment.asReadOnly().asSlice(0).scope(), segment.scope());
+        // check fresh every time
         MemorySegment another = segmentSupplier.get();
         assertNotEquals(segment.scope(), another.scope());
     }

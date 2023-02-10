@@ -79,31 +79,13 @@ public class BulkOps {
         mismatchSegmentLarge1 = arena.allocate(SIZE_WITH_TAIL, 1);
     }
 
-    final MemorySegment mismatchSegmentLarge2;
-
-    {
-        mismatchSegmentLarge2 = arena.allocate(SIZE_WITH_TAIL, 1);
-    }
-
-    ;
+    final MemorySegment mismatchSegmentLarge2 = arena.allocate(SIZE_WITH_TAIL, 1);
     final ByteBuffer mismatchBufferLarge1 = ByteBuffer.allocateDirect(SIZE_WITH_TAIL);
     final ByteBuffer mismatchBufferLarge2 = ByteBuffer.allocateDirect(SIZE_WITH_TAIL);
 
     // mismatch at first byte
-    final MemorySegment mismatchSegmentSmall1;
-
-    {
-        mismatchSegmentSmall1 = arena.allocate(7, 1);
-    }
-
-    ;
-    final MemorySegment mismatchSegmentSmall2;
-
-    {
-        mismatchSegmentSmall2 = arena.allocate(7, 1);
-    }
-
-    ;
+    final MemorySegment mismatchSegmentSmall1 = arena.allocate(7, 1);
+    final MemorySegment mismatchSegmentSmall2 = arena.allocate(7, 1);
     final ByteBuffer mismatchBufferSmall1 = ByteBuffer.allocateDirect(7);
     final ByteBuffer mismatchBufferSmall2 = ByteBuffer.allocateDirect(7);
 

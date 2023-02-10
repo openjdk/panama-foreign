@@ -677,8 +677,13 @@ public class TestByteBuffer {
     public void testDerivedBufferScopes(Supplier<Buffer> bufferFactory) {
         MemorySegment segment = MemorySegment.ofBuffer(bufferFactory.get());
         assertEquals(segment.scope(), segment.scope());
+        // one level
         assertEquals(segment.asSlice(0).scope(), segment.scope());
         assertEquals(segment.asReadOnly().scope(), segment.scope());
+        // two levels
+        assertEquals(segment.asSlice(0).asReadOnly().scope(), segment.scope());
+        assertEquals(segment.asReadOnly().asSlice(0).scope(), segment.scope());
+        // check fresh every time
         MemorySegment another = MemorySegment.ofBuffer(bufferFactory.get());
         assertNotEquals(segment.scope(), another.scope());
     }
