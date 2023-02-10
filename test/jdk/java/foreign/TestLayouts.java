@@ -32,16 +32,12 @@ import java.lang.foreign.*;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.List;
-import java.util.function.Function;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
 
 import org.testng.annotations.*;
 
-import static java.lang.foreign.ValueLayout.JAVA_BYTE;
-import static java.lang.foreign.ValueLayout.JAVA_INT;
-import static java.lang.foreign.ValueLayout.JAVA_LONG;
-import static java.lang.foreign.ValueLayout.JAVA_SHORT;
+import static java.lang.foreign.ValueLayout.*;
 import static org.testng.Assert.*;
 
 public class TestLayouts {
@@ -49,6 +45,34 @@ public class TestLayouts {
     @Test(dataProvider = "badAlignments", expectedExceptions = IllegalArgumentException.class)
     public void testBadLayoutAlignment(MemoryLayout layout, long alignment) {
         layout.withBitAlignment(alignment);
+    }
+
+    @Test
+    public void testNotEquals() {
+        List<MemoryLayout> basic = Stream.concat(Stream.of(basicLayouts), Stream.of(ADDRESS)).toList();
+        MemoryLayout differentName = JAVA_INT.withName("CustomName");
+        basic.forEach(l ->
+                assertFalse(l.equals(differentName))
+        );
+        // Swap endian
+        MemoryLayout differentOrder = JAVA_INT.withOrder(JAVA_INT.order() == ByteOrder.BIG_ENDIAN ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
+        basic.forEach(l ->
+                assertFalse(l.equals(differentOrder))
+        );
+
+        // Something totally different
+        basic.forEach(l ->
+                assertFalse(l.equals("A"))
+        );
+        // Null
+        basic.forEach(l ->
+                assertFalse(l.equals(null))
+        );
+    }
+
+    public void testTargetLayoutEquals() {
+        MemoryLayout differentTargetLayout = ADDRESS.withTargetLayout(JAVA_CHAR);
+        assertFalse(ADDRESS.equals(differentTargetLayout));
     }
 
     @Test
