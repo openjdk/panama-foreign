@@ -35,6 +35,7 @@ import jdk.internal.reflect.Reflection;
 
 import java.lang.foreign.ValueLayout.OfAddress;
 import java.lang.invoke.MethodHandle;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -335,7 +336,8 @@ public sealed interface Linker permits AbstractLinker {
          * @see #captureStateLayout()
          */
         static Option captureCallState(String... capturedState) {
-            Set<CapturableState> set = Stream.of(capturedState)
+            Set<CapturableState> set = Stream.of(Objects.requireNonNull(capturedState))
+                    .map(Objects::requireNonNull)
                     .map(CapturableState::forName)
                     .collect(Collectors.toSet());
             return new LinkerOptions.CaptureCallState(set);
@@ -377,7 +379,7 @@ public sealed interface Linker permits AbstractLinker {
          * @param handler the handler
          */
         static Option uncaughtExceptionHandler(Thread.UncaughtExceptionHandler handler) {
-            return new LinkerOptions.UncaughtExceptionHandler(handler);
+            return new LinkerOptions.UncaughtExceptionHandler(Objects.requireNonNull(handler));
         }
     }
 }

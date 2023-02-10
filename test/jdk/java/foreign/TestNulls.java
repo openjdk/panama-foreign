@@ -97,6 +97,7 @@ public class TestNulls {
             ValueLayout.OfAddress.class,
             GroupLayout.class,
             Linker.class,
+            Linker.Option.class,
             FunctionDescriptor.class,
             SegmentAllocator.class,
             SegmentScope.class,
@@ -183,6 +184,7 @@ public class TestNulls {
         addDefaultMapping(SegmentAllocator.class, SegmentAllocator.prefixAllocator(MemorySegment.ofArray(new byte[10])));
         addDefaultMapping(Supplier.class, () -> null);
         addDefaultMapping(ClassLoader.class, TestNulls.class.getClassLoader());
+        addDefaultMapping(Thread.UncaughtExceptionHandler.class, (thread, ex) -> {});
     }
 
     static final Map<Class<?>, Object[]> REPLACEMENT_VALUES = new HashMap<>();
