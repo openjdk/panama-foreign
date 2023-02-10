@@ -92,18 +92,18 @@ public class PointerInvoke extends CLayouts {
     }
 
     @Benchmark
-    public MemorySegment long_to_ptr() throws Throwable {
-        return (MemorySegment)F_LONG_PTR.invokeExact(segment.address());
+    public long long_to_ptr() throws Throwable {
+        return ((MemorySegment)F_LONG_PTR.invokeExact(segment.address())).address();
     }
 
     @Benchmark
-    public MemorySegment ptr_to_ptr() throws Throwable {
-        return (MemorySegment)F_PTR_PTR.invokeExact(segment);
+    public long ptr_to_ptr() throws Throwable {
+        return ((MemorySegment)F_PTR_PTR.invokeExact(segment)).address();
     }
 
     @Benchmark
-    public MemorySegment ptr_to_ptr_new_segment() throws Throwable {
+    public long ptr_to_ptr_new_segment() throws Throwable {
         MemorySegment newSegment = MemorySegment.ofAddress(segment.address(), 100, arena);
-        return (MemorySegment)F_PTR_PTR.invokeExact(newSegment);
+        return ((MemorySegment)F_PTR_PTR.invokeExact(newSegment)).address();
     }
 }
