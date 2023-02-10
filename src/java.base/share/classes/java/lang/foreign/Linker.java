@@ -326,7 +326,7 @@ public sealed interface Linker permits AbstractLinker {
          *
          * StructLayout capturedStateLayout = Linker.Option.capturedStateLayout();
          * VarHandle errnoHandle = capturedStateLayout.varHandle(PathElement.groupElement("errno"));
-         * try (Arena arena = Arena.openConfined()) {
+         * try (Arena arena = Arena.ofConfined()) {
          *     MemorySegment capturedState = arena.allocate(capturedStateLayout);
          *     handle.invoke(capturedState);
          *     int errno = errnoHandle.get(capturedState);
