@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2023, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 package java.lang.foreign;
 
 import java.io.UncheckedIOException;
+import java.lang.foreign.ValueLayout.OfAddress;
 import java.lang.invoke.MethodHandles;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -360,34 +361,49 @@ import jdk.internal.vm.annotation.ForceInline;
  * into the lifetime intended for said region of memory by the foreign function that allocated it. The global scope
  * ensures that the obtained segment can be passed, opaquely, to other pointer-accepting foreign functions.
  * <p>
- * To access native zero-length memory segments, clients have two options, both of which are <em>unsafe</em>. Clients
- * can {@linkplain java.lang.foreign.MemorySegment#ofAddress(long, long, SegmentScope) obtain}
+ * To access native zero-length memory segments, clients have several options, all of which are <em>unsafe</em>.
+ * <p>
+ * First, clients can unsafely resize a zero-length memory segment by {@linkplain #asUnbounded() obtaining} a
+ * memory segment with same base address as the zero-length memory segment, but with maximal size (i.e. {@link Long#MAX_VALUE}).
+ * This segment can then be resized as needed, so that the resulting segment can then be accessed directly, as follows:
+ *
+ * {@snippet lang = java:
+ * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS, 0); // wrap address into segment (size = 0) *
+ * foreign = foreign.asUnbounded() // size = Long.MAX_VALUE
+ *                  .asSlice(0, JAVA_INT); // size = 4
+ * int x = foreign.get(ValueLayout.JAVA_INT, 0); //ok
+ *}
+ *
+ * Alternatively, if the size of the foreign segment is known statically, clients can associate a
+ * {@linkplain OfAddress#withTargetLayout(MemoryLayout) target layout} with the address layout used to obtain the
+ * segment. When an access operation, or a function descriptor that is passed to a downcall method handle,
+ * uses an address value layout with target layout {@code T}, the runtime will wrap any corresponding raw addresses
+ * with native segments with size set to {@code T.byteSize()}:
+ *
+ * {@snippet lang = java:
+ * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS.withTargetLayout(JAVA_INT), 0); // wrap address into segment (size = 4)
+ * int x = foreign.get(ValueLayout.JAVA_INT, 0); //ok
+ *}
+ *
+ * Finally, clients can {@linkplain java.lang.foreign.MemorySegment#ofAddress(long, long, SegmentScope) obtain}
  * a <em>new</em> native segment, with new spatial and temporal bounds, as follows:
  *
  * {@snippet lang = java:
  * SegmentScope scope = ... // obtains a scope
  * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS, 0); // wrap address into segment (size = 0)
- * MemorySegment segment = MemorySegment.ofAddress(foreign.address(), 4, scope); // create new segment (size = 4)
- * int x = segment.get(ValueLayout.JAVA_INT, 0); //ok
- *}
- *
- * Alternatively, clients can obtain an {@linkplain java.lang.foreign.ValueLayout.OfAddress#asUnbounded() unbounded}
- * address value layout. When an access operation, or a function descriptor that is passed to a downcall method handle,
- * uses an unbounded address value layouts, the runtime will wrap any corresponding raw addresses with native segments
- * with <em>maximal</em> size (i.e. {@linkplain java.lang.Long#MAX_VALUE}). As such, these segments can be accessed directly, as follows:
- *
- * {@snippet lang = java:
- * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS.asUnbounded(), 0); // wrap address into segment (size = Long.MAX_VALUE)
+ * foreign = MemorySegment.ofAddress(foreign.address(), 4, scope); // create new segment (size = 4)
  * int x = foreign.get(ValueLayout.JAVA_INT, 0); //ok
  *}
  *
- * Both {@link #ofAddress(long, long, SegmentScope)} and {@link ValueLayout.OfAddress#asUnbounded()} are
+ * All of {@link #asUnbounded()}, {@link ValueLayout.OfAddress#withTargetLayout(MemoryLayout)}
+ * and {@link #ofAddress(long, long, SegmentScope)} are
  * <a href="package-summary.html#restricted"><em>restricted</em></a> methods, and should be used with caution:
- * for instance, sizing a segment incorrectly could result in a VM crash when attempting to access the memory segment.
+ * for instance, resizing a segment incorrectly could result in a VM crash when attempting to access the memory segment.
  * <p>
  * Which approach is taken largely depends on the information that a client has available when obtaining a memory segment
  * wrapping a native pointer. For instance, if such pointer points to a C struct, the client might prefer to resize the
- * segment unsafely, to match the size of the struct (so that out-of-bounds access will be detected by the API).
+ * segment unsafely, to match the size of the struct (so that out-of-bounds access will be detected by the API). If the
+ * size is known statically, using an address layout with the correct target layout might be preferable.
  * In other instances, however, there will be no, or little information as to what spatial and/or temporal bounds should
  * be associated with a given native pointer. In these cases using an unbounded address layout might be preferable.
  *
@@ -461,8 +477,13 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Returns a slice of this memory segment, at the given offset. The returned segment's address is the address
      * of this segment plus the given offset; its size is specified by the given argument.
+     * <p>
+     * Equivalent to the following code:
+     * {@snippet lang=java :
+     * asSlice(offset, layout.byteSize(), 1);
+     * }
      *
-     * @see #asSlice(long)
+     * @see #asSlice(long, long, long)
      *
      * @param offset The new segment base offset (relative to the address of this segment), specified in bytes.
      * @param newSize The new segment size, specified in bytes.
@@ -470,6 +491,44 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IndexOutOfBoundsException if {@code offset < 0}, {@code offset > byteSize()}, {@code newSize < 0}, or {@code newSize > byteSize() - offset}
      */
     MemorySegment asSlice(long offset, long newSize);
+
+    /**
+     * Returns a slice of this memory segment, at the given offset, with the provided alignment constraint.
+     * The returned segment's address is the address of this segment plus the given offset; its size is specified by the given argument.
+     *
+     * @param offset The new segment base offset (relative to the address of this segment), specified in bytes.
+     * @param newSize The new segment size, specified in bytes.
+     * @param byteAlignment The alignment constraint (in bytes) of the returned slice.
+     * @return a slice of this memory segment.
+     * @throws IndexOutOfBoundsException if {@code offset < 0}, {@code offset > byteSize()}, {@code newSize < 0}, or {@code newSize > byteSize() - offset}
+     * @throws IllegalArgumentException if this segment cannot be accessed at {@code offset} under
+     * the provided alignment constraint.
+     */
+    MemorySegment asSlice(long offset, long newSize, long byteAlignment);
+
+    /**
+     * Returns a slice of this memory segment with the given layout, at the given offset. The returned segment's address is the address
+     * of this segment plus the given offset; its size is the same as the size of the provided layout.
+     * <p>
+     * Equivalent to the following code:
+     * {@snippet lang=java :
+     * asSlice(offset, layout.byteSize(), layout.byteAlignment());
+     * }
+     *
+     * @see #asSlice(long, long, long)
+     *
+     * @param offset The new segment base offset (relative to the address of this segment), specified in bytes.
+     * @param layout The layout of the segment slice.
+     * @throws IndexOutOfBoundsException if {@code offset < 0}, {@code offset > layout.byteSize()},
+     * {@code newSize < 0}, or {@code newSize > layout.byteSize() - offset}
+     * @throws IllegalArgumentException if this segment cannot be accessed at {@code offset} under
+     * the alignment constraint specified by {@code layout}.
+     * @return a slice of this memory segment.
+     */
+    default MemorySegment asSlice(long offset, MemoryLayout layout) {
+        Objects.requireNonNull(layout);
+        return asSlice(offset, layout.byteSize(), layout.byteAlignment());
+    }
 
     /**
      * Returns a slice of this memory segment, at the given offset. The returned segment's address is the address
@@ -489,6 +548,28 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default MemorySegment asSlice(long offset) {
         return asSlice(offset, byteSize() - offset);
     }
+
+    /**
+     * Returns a new memory segment that has the same address and lifecycle as this segment, but with <em>unbounded</em> size.
+     * That is, the byte size of the returned segment is set to {@link Long#MAX_VALUE}. This method
+     * can be used, in combination with other slicing methods, to resize zero-length memory segments:
+     * {@snippet lang=java :
+     * MemorySegment zeroLengthSegment = ... // (size = 0)
+     * MemorySegment intSegment = zeroLengthSegment.asUnbounded() // (size = Long.MAX_VALUE)
+     *                                             .asSlice(0, ValueLayout.JAVA_INT) // (size = 0)
+     * }
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     *
+     * @return a new memory segment with unbounded size.
+     * @throws UnsupportedOperationException if this segment is not a {@linkplain #isNative() native} segment.
+     * @throws IllegalCallerException If the caller is in a module that does not have native access enabled.
+     */
+    @CallerSensitive
+    MemorySegment asUnbounded();
 
     /**
      * {@return {@code true}, if this segment is read-only}
@@ -1032,7 +1113,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * A zero-length native segment modelling the {@code NULL} address.
      */
-    MemorySegment NULL = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(0L, 0);
+    MemorySegment NULL = new NativeMemorySegmentImpl();
 
     /**
      * Creates a zero-length native segment from the given {@linkplain #address() address value}.
@@ -1042,6 +1123,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@snippet lang = java:
      * ofAddress(address, 0);
      *}
+     * <p>
+     * On 32-bit platforms, the given address value will be normalized such that the
+     * highest-order ("leftmost") 32 bits of the {@link MemorySegment#address() address}
+     * of the returned memory segment are set to zero.
+     *
      * @param address the address of the returned native segment.
      * @return a zero-length native segment with the given address.
      */
@@ -1061,6 +1147,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
+     * <p>
+     * On 32-bit platforms, the given address value will be normalized such that the
+     * highest-order ("leftmost") 32 bits of the {@link MemorySegment#address() address}
+     * of the returned memory segment are set to zero.
+     *
      * @param address the address of the returned native segment.
      * @param byteSize the size (in bytes) of the returned native segment.
      * @return a zero-length native segment with the given address and size.
@@ -1090,6 +1181,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
+     * <p>
+     * On 32-bit platforms, the given address value will be normalized such that the
+     * highest-order ("leftmost") 32 bits of the {@link MemorySegment#address() address}
+     * of the returned memory segment are set to zero.
+     *
      * @param address the returned segment's address.
      * @param byteSize the desired size.
      * @param scope the scope associated with the returned native segment.
@@ -1128,7 +1224,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
-     *
+     * <p>
+     * On 32-bit platforms, the given address value will be normalized such that the
+     * highest-order ("leftmost") 32 bits of the {@link MemorySegment#address() address}
+     * of the returned memory segment are set to zero.
      *
      * @param address the returned segment's address.
      * @param byteSize the desired size.
@@ -1699,9 +1798,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Reads an address from this segment at the given offset, with the given layout. The read address is wrapped in
      * a native segment, associated with the {@linkplain SegmentScope#global() global scope}. Under normal conditions,
-     * the size of the returned segment is {@code 0}. However, if the provided layout is an
-     * {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout, then the size of the returned
-     * segment is {@code Long.MAX_VALUE}.
+     * the size of the returned segment is {@code 0}. However, if the provided address layout has a
+     * {@linkplain OfAddress#targetLayout()} {@code T}, then the size of the returned segment
+     * is set to {@code T.byteSize()}.
      * @param layout the layout of the region of memory to be read.
      * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @return a native segment wrapping an address read from this segment.
@@ -1711,6 +1810,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * such that {@code scope().isAccessibleBy(T) == false}.
      * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a> in the provided layout.
+     * @throws IllegalArgumentException if provided address layout has a {@linkplain OfAddress#targetLayout() target layout}
+     * {@code T}, and the address of the returned segment
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a> in {@code T}.
      * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
@@ -2038,9 +2140,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Reads an address from this segment at the given at the given index, scaled by the given layout size. The read address is wrapped in
      * a native segment, associated with the {@linkplain SegmentScope#global() global scope}. Under normal conditions,
-     * the size of the returned segment is {@code 0}. However, if the provided layout is an
-     * {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout, then the size of the returned
-     * segment is {@code Long.MAX_VALUE}.
+     * the size of the returned segment is {@code 0}. However, if the provided address layout has a
+     * {@linkplain OfAddress#targetLayout()} {@code T}, then the size of the returned segment
+     * is set to {@code T.byteSize()}.
      *
      * @param layout the layout of the region of memory to be read.
      * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
@@ -2053,6 +2155,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a> in the provided layout,
      * or if the layout alignment is greater than its size.
+     * @throws IllegalArgumentException if provided address layout has a {@linkplain OfAddress#targetLayout() target layout}
+     * {@code T}, and the address of the returned segment
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a> in {@code T}.
      * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */

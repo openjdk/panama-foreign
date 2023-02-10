@@ -33,8 +33,8 @@ import jdk.internal.javac.PreviewFeature;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
+import java.lang.foreign.ValueLayout.OfAddress;
 import java.lang.invoke.MethodHandle;
-import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -54,7 +54,7 @@ import java.util.stream.Stream;
  * <li>A linker allows Java code to link against foreign functions, via
  * {@linkplain #downcallHandle(MemorySegment, FunctionDescriptor, Option...) downcall method handles}; and</li>
  * <li>A linker allows foreign functions to call Java method handles,
- * via the generation of {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, SegmentScope) upcall stubs}.</li>
+ * via the generation of {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, SegmentScope, Option...) upcall stubs}.</li>
  * </ul>
  * In addition, a linker provides a way to look up foreign functions in libraries that conform to the ABI. Each linker
  * chooses a set of libraries that are commonly used on the OS and processor combination associated with the ABI.
@@ -85,7 +85,7 @@ import java.util.stream.Stream;
  *
  * <h2 id="upcall-stubs">Upcall stubs</h2>
  *
- * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, SegmentScope) Creating an upcall stub} requires a method
+ * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, SegmentScope, Option...) Creating an upcall stub} requires a method
  * handle and a function descriptor; in this case, the set of memory layouts in the function descriptor
  * specify the signature of the function pointer associated with the upcall stub.
  * <p>
@@ -114,8 +114,8 @@ import java.util.stream.Stream;
  * A downcall method handle created from a function descriptor whose return layout is an
  * {@linkplain ValueLayout.OfAddress address layout} returns a native segment associated with
  * the {@linkplain SegmentScope#global() global scope}. Under normal conditions, the size of the returned segment is {@code 0}.
- * However, if the return layout is an {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout,
- * then the size of the returned segment is {@code Long.MAX_VALUE}.
+ * However, if the return address layout has a {@linkplain OfAddress#targetLayout()} {@code T}, then the size of the returned segment
+ * is set to {@code T.byteSize()}.
  * <p>
  * When creating upcall stubs the linker runtime validates the type of the target method handle against the provided
  * function descriptor and report an error if any mismatch is detected. As for downcalls, JVM crashes might occur,
@@ -127,9 +127,9 @@ import java.util.stream.Stream;
  * <p>
  * An upcall stub argument whose corresponding layout is an {@linkplain ValueLayout.OfAddress address layout}
  * is a native segment associated with the {@linkplain SegmentScope#global() global scope}.
- * Under normal conditions, the size of this segment argument is {@code 0}. However, if the layout associated with
- * the upcall stub argument is an {@linkplain ValueLayout.OfAddress#asUnbounded() unbounded} address layout,
- * then the size of the segment argument is {@code Long.MAX_VALUE}.
+ * Under normal conditions, the size of this segment argument is {@code 0}.
+ * However, if the address layout has a {@linkplain OfAddress#targetLayout()} {@code T}, then the size of the
+ * segment argument is set to {@code T.byteSize()}.
  *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
@@ -159,14 +159,13 @@ public sealed interface Linker permits AbstractLinker {
      * Any layout not listed above is <em>unsupported</em>; function descriptors containing unsupported layouts
      * will cause an {@link IllegalArgumentException} to be thrown, when used to create a
      * {@link #downcallHandle(MemorySegment, FunctionDescriptor, Option...) downcall method handle} or an
-     * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, SegmentScope) upcall stub}.
+     * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, SegmentScope, Option...) upcall stub}.
      * <p>
      * Variadic functions (e.g. a C function declared with a trailing ellipses {@code ...} at the end of the formal parameter
      * list or with an empty formal parameter list) are not supported directly. However, it is possible to link a
      * variadic function by using {@linkplain Linker.Option#firstVariadicArg(int) a linker option} to indicate
      * the start of the list of variadic arguments, together with a specialized function descriptor describing a
-     * given variable arity callsite. Alternatively, where the foreign library allows it, clients might be able to
-     * interact with variadic functions by passing a trailing parameter of type {@link VaList} (e.g. as in {@code vsprintf}).
+     * given variable arity callsite.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -253,6 +252,7 @@ public sealed interface Linker permits AbstractLinker {
      * @param target the target method handle.
      * @param function the upcall stub function descriptor.
      * @param scope the scope associated with the returned upcall stub segment.
+     * @param options  any linker options.
      * @return a zero-length segment whose address is the address of the upcall stub.
      * @throws IllegalArgumentException if the provided function descriptor is not supported by this linker.
      * @throws IllegalArgumentException if it is determined that the target method handle can throw an exception, or if the target method handle
@@ -261,7 +261,7 @@ public sealed interface Linker permits AbstractLinker {
      * @throws WrongThreadException if this method is called from a thread {@code T},
      * such that {@code scope.isAccessibleBy(T) == false}.
      */
-    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, SegmentScope scope);
+    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, SegmentScope scope, Linker.Option... options);
 
     /**
      * Returns a symbol lookup for symbols in a set of commonly used libraries.
@@ -285,8 +285,7 @@ public sealed interface Linker permits AbstractLinker {
      */
     @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
     sealed interface Option
-            permits LinkerOptions.LinkerOptionImpl,
-                    Option.CaptureCallState {
+            permits LinkerOptions.LinkerOptionImpl {
 
         /**
          * {@return a linker option used to denote the index of the first variadic argument layout in a
@@ -302,70 +301,83 @@ public sealed interface Linker permits AbstractLinker {
          *          calling a foreign function associated with a downcall method handle,
          *          before it can be overwritten by the Java runtime, or read through conventional means}
          * <p>
-         * A downcall method handle linked with this option will feature an additional {@link MemorySegment}
-         * parameter directly following the target address, and optional {@link SegmentAllocator} parameters.
-         * This memory segment must be a native segment into which the captured state is written.
-         *
-         * @param capturedState the names of the values to save.
-         * @see CaptureCallState#supported()
-         */
-        static CaptureCallState captureCallState(String... capturedState) {
-            Set<CapturableState> set = Stream.of(capturedState)
-                    .map(CapturableState::forName)
-                    .collect(Collectors.toSet());
-            return new LinkerOptions.CaptureCallStateImpl(set);
-        }
-
-        /**
-         * A linker option for saving portions of the execution state immediately
-         * after calling a foreign function associated with a downcall method handle,
-         * before it can be overwritten by the runtime, or read through conventional means.
-         * <p>
          * Execution state is captured by a downcall method handle on invocation, by writing it
          * to a native segment provided by the user to the downcall method handle.
-         * For this purpose, a downcall method handle linked with the {@link #captureCallState(String[])}
+         * For this purpose, a downcall method handle linked with the this
          * option will feature an additional {@link MemorySegment} parameter directly
          * following the target address, and optional {@link SegmentAllocator} parameters.
-         * This parameter represents the native segment into which the captured state is written.
+         * This parameter, called the 'capture state segment', represents the native segment into which
+         * the captured state is written.
          * <p>
-         * The native segment should have the layout {@linkplain CaptureCallState#layout associated}
-         * with the particular {@code CaptureCallState} instance used to link the downcall handle.
+         * The capture state segment should have the layout returned by {@linkplain #captureStateLayout}.
+         * This layout is a struct layout which has a named field for each captured value.
          * <p>
-         * Captured state can be retrieved from this native segment by constructing var handles
-         * from the {@linkplain #layout layout} associated with the {@code CaptureCallState} instance.
+         * Captured state can be retrieved from the capture state segment by constructing var handles
+         * from the {@linkplain #captureStateLayout capture state layout}.
          * <p>
          * The following example demonstrates the use of this linker option:
          * {@snippet lang = "java":
          * MemorySegment targetAddress = ...
-         * CaptureCallState ccs = Linker.Option.captureCallState("errno");
+         * Linker.Option ccs = Linker.Option.captureCallState("errno");
          * MethodHandle handle = Linker.nativeLinker().downcallHandle(targetAddress, FunctionDescriptor.ofVoid(), ccs);
          *
-         * VarHandle errnoHandle = ccs.layout().varHandle(PathElement.groupElement("errno"));
+         * StructLayout capturedStateLayout = Linker.Option.capturedStateLayout();
+         * VarHandle errnoHandle = capturedStateLayout.varHandle(PathElement.groupElement("errno"));
          * try (Arena arena = Arena.openConfined()) {
-         *     MemorySegment capturedState = arena.allocate(ccs.layout());
+         *     MemorySegment capturedState = arena.allocate(capturedStateLayout);
          *     handle.invoke(capturedState);
          *     int errno = errnoHandle.get(capturedState);
          *     // use errno
          * }
          * }
+         *
+         * @param capturedState the names of the values to save.
+         * @see #captureStateLayout()
          */
-        @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-        sealed interface CaptureCallState extends Option
-                                          permits LinkerOptions.CaptureCallStateImpl {
-            /**
-             * {@return A struct layout that represents the layout of the native segment passed
-             *          to a downcall handle linked with this {@code CapturedCallState} instance}
-             */
-            StructLayout layout();
+        static Option captureCallState(String... capturedState) {
+            Set<CapturableState> set = Stream.of(capturedState)
+                    .map(CapturableState::forName)
+                    .collect(Collectors.toSet());
+            return new LinkerOptions.CaptureCallState(set);
+        }
 
-            /**
-             * {@return the names of the state that can be capture by this implementation}
-             */
-            static Set<String> supported() {
-                return Arrays.stream(CapturableState.values())
-                             .map(CapturableState::stateName)
-                             .collect(Collectors.toSet());
-            }
+         /**
+         * {@return A struct layout that represents the layout of the capture state segment that is passed
+         *          to a downcall handle linked with {@link #captureCallState(String...)}}
+         *
+         * @see #captureCallState(String...)
+         */
+        static StructLayout captureStateLayout() {
+            return CapturableState.LAYOUT;
+        }
+
+        /**
+         * {@return A linker option used to mark a foreign function as <em>trivial</em>}
+         * <p>
+         * A trivial function is a function that has an extremely short running time
+         * in all cases (similar to calling an empty function), and does not call back into Java (e.g. using an upcall stub).
+         * <p>
+         * Using this linker option is a hint which some implementations may use to apply
+         * optimizations that are only valid for trivial functions.
+         * <p>
+         * Using this linker option when linking non trivial functions is likely to have adverse effects,
+         * such as loss of performance, or JVM crashes.
+         */
+        static Option isTrivial() {
+            return LinkerOptions.IsTrivial.INSTANCE;
+        }
+
+        /**
+         * {@return a linker option that can be used to specify the uncaught exception handler that should be executed
+         *          if an exception is thrown, but not caught, during an upcall}
+         *
+         * @apiNote using a custom exception handler will not prevent the VM from exiting in the case of an uncaught
+         * exception during an upcall.
+         *
+         * @param handler the handler
+         */
+        static Option uncaughtExceptionHandler(Thread.UncaughtExceptionHandler handler) {
+            return new LinkerOptions.UncaughtExceptionHandler(handler);
         }
     }
 }

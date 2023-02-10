@@ -123,9 +123,10 @@ public class MemoryLayoutTypeRetentionTest {
                 .withName(NAME)
                 .withOrder(BYTE_ORDER);
         check(v);
-        assertFalse(v.isUnbounded());
-        OfAddress v2 = v.asUnbounded();
-        assertTrue(v2.isUnbounded());
+        assertFalse(v.targetLayout().isPresent());
+        OfAddress v2 = v.withTargetLayout(JAVA_INT);
+        assertTrue(v2.targetLayout().isPresent());
+        assertEquals(v2.targetLayout().get(), JAVA_INT);
     }
 
     @Test

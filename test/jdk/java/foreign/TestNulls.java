@@ -56,7 +56,6 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -98,8 +97,6 @@ public class TestNulls {
             ValueLayout.OfAddress.class,
             GroupLayout.class,
             Linker.class,
-            VaList.class,
-            VaList.Builder.class,
             FunctionDescriptor.class,
             SegmentAllocator.class,
             SegmentScope.class,
@@ -181,27 +178,11 @@ public class TestNulls {
         addDefaultMapping(MemorySegment.class, MemorySegment.ofArray(new byte[10]));
         addDefaultMapping(FunctionDescriptor.class, FunctionDescriptor.ofVoid());
         addDefaultMapping(Linker.class, Linker.nativeLinker());
-        addDefaultMapping(VaList.class, VaListHelper.vaList);
-        addDefaultMapping(VaList.Builder.class, VaListHelper.vaListBuilder);
         addDefaultMapping(Arena.class, Arena.openConfined());
         addDefaultMapping(SegmentScope.class, SegmentScope.auto());
         addDefaultMapping(SegmentAllocator.class, SegmentAllocator.prefixAllocator(MemorySegment.ofArray(new byte[10])));
         addDefaultMapping(Supplier.class, () -> null);
         addDefaultMapping(ClassLoader.class, TestNulls.class.getClassLoader());
-    }
-
-    static class VaListHelper {
-        static final VaList vaList;
-        static final VaList.Builder vaListBuilder;
-
-        static {
-            AtomicReference<VaList.Builder> builderRef = new AtomicReference<>();
-            vaList = VaList.make(b -> {
-                builderRef.set(b);
-                b.addVarg(JAVA_LONG, 42L);
-            }, SegmentScope.auto());
-            vaListBuilder = builderRef.get();
-        }
     }
 
     static final Map<Class<?>, Object[]> REPLACEMENT_VALUES = new HashMap<>();
