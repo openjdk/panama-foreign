@@ -39,7 +39,7 @@ import org.testng.annotations.NoInjection;
 import org.testng.annotations.Test;
 
 import java.lang.constant.Constable;
-import java.lang.foreign.SegmentScope;
+import java.lang.foreign.Arena;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -99,28 +99,12 @@ public class TestNulls {
             Linker.class,
             FunctionDescriptor.class,
             SegmentAllocator.class,
-            SegmentScope.class,
+            MemorySegment.Scope.class,
             SymbolLookup.class
     };
 
     static final Set<String> EXCLUDE_LIST = Set.of(
-            "java.lang.foreign.MemorySegment/ofAddress(long,long,java.lang.foreign.SegmentScope,java.lang.Runnable)/3/0",
-            "java.lang.foreign.MemorySegment.MemorySession/openConfined(java.lang.ref.Cleaner)/0/0",
-            "java.lang.foreign.MemorySegment.MemorySession/openShared(java.lang.ref.Cleaner)/0/0",
-            "java.lang.foreign.MemoryLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "java.lang.foreign.SequenceLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "java.lang.foreign.ValueLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "java.lang.foreign.ValueLayout$OfAddress/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "java.lang.foreign.ValueLayout$OfBoolean/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "java.lang.foreign.ValueLayout$OfByte/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "java.lang.foreign.ValueLayout$OfChar/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "java.lang.foreign.ValueLayout$OfShort/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "java.lang.foreign.ValueLayout$OfInt/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "java.lang.foreign.ValueLayout$OfFloat/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "java.lang.foreign.ValueLayout$OfLong/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "java.lang.foreign.ValueLayout$OfDouble/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "java.lang.foreign.GroupLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "java.lang.foreign.FunctionDescriptor/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0"
+            "java.lang.foreign.MemorySegment/ofAddress(long,long,java.lang.foreign.Arena,java.lang.Runnable)/3/0"
     );
 
     static final Set<String> OBJECT_METHODS = Stream.of(Object.class.getMethods())
@@ -178,8 +162,8 @@ public class TestNulls {
         addDefaultMapping(MemorySegment.class, MemorySegment.ofArray(new byte[10]));
         addDefaultMapping(FunctionDescriptor.class, FunctionDescriptor.ofVoid());
         addDefaultMapping(Linker.class, Linker.nativeLinker());
-        addDefaultMapping(Arena.class, Arena.openConfined());
-        addDefaultMapping(SegmentScope.class, SegmentScope.auto());
+        addDefaultMapping(Arena.class, Arena.ofConfined());
+        addDefaultMapping(MemorySegment.Scope.class, Arena.ofAuto().scope());
         addDefaultMapping(SegmentAllocator.class, SegmentAllocator.prefixAllocator(MemorySegment.ofArray(new byte[10])));
         addDefaultMapping(Supplier.class, () -> null);
         addDefaultMapping(ClassLoader.class, TestNulls.class.getClassLoader());

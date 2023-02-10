@@ -34,7 +34,6 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemoryLayout;
 
-import java.lang.foreign.SegmentScope;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -57,7 +56,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     @Test(expectedExceptions = IllegalStateException.class)
     public void testClosedStruct() throws Throwable {
         MemorySegment segment;
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             segment = arena.allocate(POINT);
         }
         assertFalse(segment.scope().isAlive());
@@ -75,7 +74,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
         record Allocation(Arena drop, MemorySegment segment) {
             static Allocation of(MemoryLayout layout) {
-                Arena arena = Arena.openShared();
+                Arena arena = Arena.ofShared();
                 return new Allocation(arena, arena.allocate(layout));
             }
         }
@@ -114,9 +113,9 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
     @Test(expectedExceptions = IllegalStateException.class)
     public void testClosedUpcall() throws Throwable {
         MemorySegment upcall;
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             MethodHandle dummy = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "dummy", MethodType.methodType(void.class));
-            upcall = Linker.nativeLinker().upcallStub(dummy, FunctionDescriptor.ofVoid(), arena.scope());
+            upcall = Linker.nativeLinker().upcallStub(dummy, FunctionDescriptor.ofVoid(), arena);
         }
         assertFalse(upcall.scope().isAlive());
         MethodHandle handle = Linker.nativeLinker().downcallHandle(
@@ -134,7 +133,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
                 findNativeOrThrow("addr_func_cb"),
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
 
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             MemorySegment segment = arena.allocate(POINT);
             handle.invokeExact(segment, sessionChecker(arena));
         }
@@ -146,9 +145,9 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
                 findNativeOrThrow("addr_func_cb"),
                 FunctionDescriptor.ofVoid(C_POINTER, C_POINTER));
 
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             MethodHandle dummy = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "dummy", MethodType.methodType(void.class));
-            MemorySegment upcall = Linker.nativeLinker().upcallStub(dummy, FunctionDescriptor.ofVoid(), arena.scope());
+            MemorySegment upcall = Linker.nativeLinker().upcallStub(dummy, FunctionDescriptor.ofVoid(), arena);
             handle.invokeExact(upcall, sessionChecker(arena));
         }
     }
@@ -158,7 +157,7 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
             MethodHandle handle = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "checkSession",
                     MethodType.methodType(void.class, Arena.class));
             handle = handle.bindTo(arena);
-            return Linker.nativeLinker().upcallStub(handle, FunctionDescriptor.ofVoid(), SegmentScope.auto());
+            return Linker.nativeLinker().upcallStub(handle, FunctionDescriptor.ofVoid(), Arena.ofAuto());
         } catch (Throwable ex) {
             throw new AssertionError(ex);
         }

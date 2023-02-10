@@ -25,10 +25,7 @@
 
 package org.openjdk.bench.java.lang.foreign;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.Linker;
-import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.MemorySegment;
+import java.lang.foreign.*;
 
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -40,7 +37,6 @@ import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
-import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.util.concurrent.TimeUnit;
 
@@ -52,8 +48,8 @@ import java.util.concurrent.TimeUnit;
 @Fork(value = 3, jvmArgsAppend = { "--enable-native-access=ALL-UNNAMED", "--enable-preview" })
 public class PointerInvoke extends CLayouts {
 
-    Arena arena = Arena.openConfined();
-    MemorySegment segment = MemorySegment.allocateNative(100, arena.scope());
+    Arena arena = Arena.ofConfined();
+    MemorySegment segment = arena.allocate(100, 1);
 
     static {
         System.loadLibrary("Ptr");
@@ -87,7 +83,7 @@ public class PointerInvoke extends CLayouts {
 
     @Benchmark
     public int panama_call_as_new_segment() throws Throwable {
-        MemorySegment newSegment = MemorySegment.ofAddress(segment.address(), 100, arena.scope());
+        MemorySegment newSegment = MemorySegment.ofAddress(segment.address(), 100, arena);
         return (int)F_PTR.invokeExact(newSegment);
     }
 }

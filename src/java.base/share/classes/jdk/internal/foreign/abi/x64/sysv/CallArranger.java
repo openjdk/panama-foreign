@@ -37,7 +37,7 @@ import jdk.internal.foreign.abi.UpcallLinker;
 import jdk.internal.foreign.abi.VMStorage;
 import jdk.internal.foreign.abi.x64.X86_64Architecture;
 
-import java.lang.foreign.SegmentScope;
+import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
@@ -132,7 +132,7 @@ public class CallArranger {
         return handle;
     }
 
-    public static MemorySegment arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, SegmentScope scope, LinkerOptions options) {
+    public static MemorySegment arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, Arena scope, LinkerOptions options) {
         Bindings bindings = getBindings(mt, cDesc, true, options);
 
         if (bindings.isInMemoryReturn) {

@@ -63,7 +63,7 @@ public class TestDereferencePath {
 
     @Test
     public void testSingle() {
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             // init structs
             MemorySegment a = arena.allocate(A);
             MemorySegment b = arena.allocate(B);
@@ -95,7 +95,7 @@ public class TestDereferencePath {
 
     @Test
     public void testMulti() {
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             // init structs
             MemorySegment a = arena.allocate(A);
             MemorySegment b = arena.allocateArray(B, 2);

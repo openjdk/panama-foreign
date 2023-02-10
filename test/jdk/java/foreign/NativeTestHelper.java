@@ -30,7 +30,6 @@ import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.PaddingLayout;
 import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.SegmentScope;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.StructLayout;
 import java.lang.foreign.SymbolLookup;
@@ -151,7 +150,7 @@ public class NativeTestHelper {
     public static MemorySegment upcallStub(Class<?> holder, String name, FunctionDescriptor descriptor) {
         try {
             MethodHandle target = MethodHandles.lookup().findStatic(holder, name, descriptor.toMethodType());
-            return LINKER.upcallStub(target, descriptor, SegmentScope.auto());
+            return LINKER.upcallStub(target, descriptor, Arena.ofAuto());
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -264,7 +263,7 @@ public class NativeTestHelper {
         MethodHandle target = MethodHandles.insertArguments(MH_SAVER, 1, fd.argumentLayouts(), capturedArgs, arena, retIdx);
         target = target.asCollector(Object[].class, fd.argumentLayouts().size());
         target = target.asType(fd.toMethodType());
-        return LINKER.upcallStub(target, fd, arena.scope());
+        return LINKER.upcallStub(target, fd, arena);
     }
 
     private static Object saver(Object[] o, List<MemoryLayout> argLayouts, AtomicReference<Object[]> ref, SegmentAllocator allocator, int retArg) {

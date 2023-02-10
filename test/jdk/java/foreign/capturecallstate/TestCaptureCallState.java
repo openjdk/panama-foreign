@@ -72,7 +72,7 @@ public class TestCaptureCallState extends NativeTestHelper {
         StructLayout capturedStateLayout = Linker.Option.captureStateLayout();
         VarHandle errnoHandle = capturedStateLayout.varHandle(groupElement(testCase.threadLocalName()));
 
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             MemorySegment saveSeg = arena.allocate(capturedStateLayout);
             int testValue = 42;
             boolean needsAllocator = testCase.nativeDesc().returnLayout().map(StructLayout.class::isInstance).orElse(false);
@@ -129,3 +129,4 @@ public class TestCaptureCallState extends NativeTestHelper {
     }
 
 }
+

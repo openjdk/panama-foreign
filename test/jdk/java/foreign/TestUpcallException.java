@@ -65,8 +65,8 @@ public class TestUpcallException extends UpcallTestHelper {
 
     public static class VoidUpcallRunner extends ExceptionRunnerBase {
         public static void main(String[] args) throws Throwable {
-            try (Arena arena = Arena.openConfined()) {
-                MemorySegment stub = Linker.nativeLinker().upcallStub(VOID_TARGET, FunctionDescriptor.ofVoid(), arena.scope());
+            try (Arena arena = Arena.ofConfined()) {
+                MemorySegment stub = Linker.nativeLinker().upcallStub(VOID_TARGET, FunctionDescriptor.ofVoid(), arena);
                 downcallVoid.invoke(stub); // should call Shutdown.exit(1);
             }
         }
@@ -74,8 +74,8 @@ public class TestUpcallException extends UpcallTestHelper {
 
     public static class NonVoidUpcallRunner extends ExceptionRunnerBase {
         public static void main(String[] args) throws Throwable {
-            try (Arena arena = Arena.openConfined()) {
-                MemorySegment stub = Linker.nativeLinker().upcallStub(INT_TARGET, FunctionDescriptor.of(C_INT, C_INT), arena.scope());
+            try (Arena arena = Arena.ofConfined()) {
+                MemorySegment stub = Linker.nativeLinker().upcallStub(INT_TARGET, FunctionDescriptor.of(C_INT, C_INT), arena);
                 downcallNonVoid.invoke(42, stub); // should call Shutdown.exit(1);
             }
         }
@@ -99,9 +99,9 @@ public class TestUpcallException extends UpcallTestHelper {
 
     public static class UncaughtHandlerOptionRunner extends VoidUpcallRunner {
         public static void main(String[] args) throws Throwable {
-            try (Arena arena = Arena.openConfined()) {
+            try (Arena arena = Arena.ofConfined()) {
                 MemorySegment stub = Linker.nativeLinker().upcallStub(VOID_TARGET, FunctionDescriptor.ofVoid(),
-                        arena.scope(), Linker.Option.uncaughtExceptionHandler(UNCAUGHT_EXCEPTION_HANDLER));
+                        arena, Linker.Option.uncaughtExceptionHandler(UNCAUGHT_EXCEPTION_HANDLER));
                 downcallVoid.invoke(stub);
             }
         }
@@ -110,8 +110,8 @@ public class TestUpcallException extends UpcallTestHelper {
     public static class UncaughtHandlerThreadRunner extends VoidUpcallRunner {
         public static void main(String[] args) throws Throwable {
             Thread.currentThread().setUncaughtExceptionHandler(UNCAUGHT_EXCEPTION_HANDLER);
-            try (Arena arena = Arena.openConfined()) {
-                MemorySegment stub = Linker.nativeLinker().upcallStub(VOID_TARGET, FunctionDescriptor.ofVoid(), arena.scope());
+            try (Arena arena = Arena.ofConfined()) {
+                MemorySegment stub = Linker.nativeLinker().upcallStub(VOID_TARGET, FunctionDescriptor.ofVoid(), arena);
                 downcallVoid.invoke(stub);
             }
         }

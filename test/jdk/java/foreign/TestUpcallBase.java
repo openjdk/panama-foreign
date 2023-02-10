@@ -22,12 +22,8 @@
  *
  */
 
-import java.lang.foreign.GroupLayout;
-import java.lang.foreign.Linker;
-import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.SegmentScope;
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
+import java.lang.foreign.*;
+import java.lang.foreign.Arena;
 
 import org.testng.annotations.BeforeClass;
 
@@ -65,7 +61,7 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
 
     @BeforeClass
     void setup() {
-        DUMMY_STUB = ABI.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), SegmentScope.auto());
+        DUMMY_STUB = ABI.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), Arena.ofAuto());
     }
 
     static FunctionDescriptor function(Ret ret, List<ParamType> params, List<StructFieldType> fields) {
@@ -81,11 +77,11 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
                 FunctionDescriptor.of(layouts[prefix.size()], layouts);
     }
 
-    static Object[] makeArgs(SegmentScope session, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) throws ReflectiveOperationException {
+    static Object[] makeArgs(Arena session, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) throws ReflectiveOperationException {
         return makeArgs(session, ret, params, fields, checks, argChecks, List.of());
     }
 
-    static Object[] makeArgs(SegmentScope session, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks, List<MemoryLayout> prefix) throws ReflectiveOperationException {
+    static Object[] makeArgs(Arena session, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks, List<MemoryLayout> prefix) throws ReflectiveOperationException {
         Object[] args = new Object[prefix.size() + params.size() + 1];
         int argNum = 0;
         for (MemoryLayout layout : prefix) {
@@ -98,7 +94,7 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
         return args;
     }
 
-    static MemorySegment makeCallback(SegmentScope session, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks, List<MemoryLayout> prefix) {
+    static MemorySegment makeCallback(Arena session, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks, List<MemoryLayout> prefix) {
         if (params.isEmpty()) {
             return DUMMY_STUB;
         }
@@ -152,7 +148,9 @@ public abstract class TestUpcallBase extends CallGeneratorHelper {
         for (int i = 0; i < o.length; i++) {
             if (layouts.get(i) instanceof GroupLayout) {
                 MemorySegment ms = (MemorySegment) o[i];
-                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), SegmentScope.auto());
+                long byteSize = ms.byteSize();
+                Arena scope = Arena.ofAuto();
+                MemorySegment copy = scope.allocate(byteSize, 1);
                 copy.copyFrom(ms);
                 o[i] = copy;
             }

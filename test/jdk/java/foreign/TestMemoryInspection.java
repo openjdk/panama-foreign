@@ -293,8 +293,8 @@ public class TestMemoryInspection {
 
     private static <T> T testWithFreshMemorySegment(long size,
                                                     Function<MemorySegment, T> mapper) {
-        try (final Arena arena = Arena.openConfined()) {
-            var segment = MemorySegment.allocateNative(size, arena.scope());
+        try (final Arena arena = Arena.ofConfined()) {
+            var segment = arena.allocate(size);
             return mapper.apply(segment);
         }
     }

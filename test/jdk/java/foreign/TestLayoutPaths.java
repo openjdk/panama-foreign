@@ -28,14 +28,9 @@
  * @run testng TestLayoutPaths
  */
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.GroupLayout;
-import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.*;
 import java.lang.foreign.MemoryLayout.PathElement;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SequenceLayout;
 
-import java.lang.foreign.ValueLayout;
 import org.testng.SkipException;
 import org.testng.annotations.*;
 
@@ -435,8 +430,8 @@ public class TestLayoutPaths {
         MethodHandle sliceHandle = layout.sliceHandle(pathElements);
         sliceHandle = sliceHandle.asSpreader(long[].class, indexes.length);
 
-        try (Arena arena = Arena.openConfined()) {
-            MemorySegment segment = MemorySegment.allocateNative(layout, arena.scope());
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment segment = arena.allocate(layout);
             MemorySegment slice = (MemorySegment) sliceHandle.invokeExact(segment, indexes);
             assertEquals(slice.address() - segment.address(), expectedBitOffset / 8);
             assertEquals(slice.byteSize(), selected.byteSize());

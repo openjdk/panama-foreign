@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Benchmark)
 public class PointerBench {
 
-    final Arena arena = Arena.openConfined();
+    final Arena arena = Arena.ofConfined();
     static final int ELEM_SIZE = 1_000_000;
     Pointer<Integer> intPointer = Pointer.allocate(NativeType.C_INT, ELEM_SIZE, arena);
     Pointer<Pointer<Integer>> intPointerPointer = Pointer.allocate(NativeType.C_INT_PTR, ELEM_SIZE, arena);

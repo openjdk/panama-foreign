@@ -32,7 +32,7 @@ import java.lang.foreign.*;
 
 import org.testng.annotations.*;
 
-import java.lang.foreign.SegmentScope;
+import java.lang.foreign.Arena;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -69,8 +69,8 @@ public class TestSegmentAllocators {
             List<MemorySegment> addressList = new ArrayList<>();
             int elems = ELEMS / ((int)alignedLayout.byteAlignment() / (int)layout.byteAlignment());
             Arena[] arenas = {
-                    Arena.openConfined(),
-                    Arena.openShared()
+                    Arena.ofConfined(),
+                    Arena.ofShared()
             };
             for (Arena arena : arenas) {
                 try (arena) {
@@ -103,7 +103,7 @@ public class TestSegmentAllocators {
 
     @Test
     public void testBigAllocationInUnboundedSession() {
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             for (int i = 8 ; i < SIZE_256M ; i *= 8) {
                 SegmentAllocator allocator = SegmentAllocator.slicingAllocator(arena.allocate(i * 2 + 1));
                 MemorySegment address = allocator.allocate(i, i);
@@ -117,7 +117,7 @@ public class TestSegmentAllocators {
 
     @Test
     public void testTooBigForBoundedArena() {
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             SegmentAllocator allocator = SegmentAllocator.slicingAllocator(arena.allocate(10));
             assertThrows(IndexOutOfBoundsException.class, () -> allocator.allocate(12));
             allocator.allocate(5);
@@ -151,7 +151,7 @@ public class TestSegmentAllocators {
 
     @Test(expectedExceptions = OutOfMemoryError.class)
     public void testBadArenaNullReturn() {
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             arena.allocate(Long.MAX_VALUE, 2);
         }
     }
@@ -188,7 +188,7 @@ public class TestSegmentAllocators {
             @Override
 
             public MemorySegment allocate(long byteSize, long byteAlignment) {
-                return MemorySegment.allocateNative(byteSize, byteAlignment, SegmentScope.auto());
+                return Arena.ofAuto().allocate(byteSize, byteAlignment);
             }
 
             @Override
@@ -206,8 +206,8 @@ public class TestSegmentAllocators {
     public <Z> void testArray(AllocationFactory allocationFactory, ValueLayout layout, AllocationFunction<Object, ValueLayout> allocationFunction, ToArrayHelper<Z> arrayHelper) {
         Z arr = arrayHelper.array();
         Arena[] arenas = {
-                Arena.openConfined(),
-                Arena.openShared()
+                Arena.ofConfined(),
+                Arena.ofShared()
         };
         for (Arena arena : arenas) {
             try (arena) {
@@ -348,8 +348,9 @@ public class TestSegmentAllocators {
     }
 
     enum AllocationFactory {
-        SLICING(true, (size, drop) -> SegmentAllocator.slicingAllocator(MemorySegment.allocateNative(size, drop.scope()))),
-        NATIVE_ALLOCATOR(false, (size, drop) -> SegmentAllocator.nativeAllocator(drop.scope()));
+        SLICING(true, (size, arena) -> {
+            return SegmentAllocator.slicingAllocator(arena.allocate(size, 1));
+        });
 
         private final boolean isBound;
         private final BiFunction<Long, Arena, SegmentAllocator> factory;
@@ -481,8 +482,7 @@ public class TestSegmentAllocators {
     @DataProvider(name = "allocators")
     static Object[][] allocators() {
         return new Object[][] {
-                { SegmentAllocator.nativeAllocator(SegmentScope.global()) },
-                { SegmentAllocator.prefixAllocator(MemorySegment.allocateNative(10, SegmentScope.global())) },
+                { SegmentAllocator.prefixAllocator(Arena.global().allocate(10, 1)) },
         };
     }
 }

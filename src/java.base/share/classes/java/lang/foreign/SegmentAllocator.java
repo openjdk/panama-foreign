@@ -46,8 +46,6 @@ import jdk.internal.javac.PreviewFeature;
  * <p>
  * This interface also defines factories for commonly used allocators:
  * <ul>
- *     <li>{@link #nativeAllocator(SegmentScope)} obtains a simple allocator which can
- *     be used to allocate native segments;</li>
  *     <li>{@link #slicingAllocator(MemorySegment)} obtains an efficient slicing allocator, where memory
  *     is allocated by repeatedly slicing the provided memory segment;</li>
  *     <li>{@link #prefixAllocator(MemorySegment)} obtains an allocator which wraps a segment (either on-heap or off-heap)
@@ -383,32 +381,5 @@ public interface SegmentAllocator {
      */
     static SegmentAllocator prefixAllocator(MemorySegment segment) {
         return (AbstractMemorySegmentImpl)Objects.requireNonNull(segment);
-    }
-
-    /**
-     * Simple allocator used to allocate native segments. The returned allocator responds to an allocation request by
-     * returning a native segment backed by a fresh off-heap region of memory, with given byte size and alignment constraint.
-     * <p>
-     * Each native segment obtained by the returned allocator is associated with the provided scope. As such,
-     * the off-heap region which backs the returned segment is freed when the scope becomes not
-     * {@linkplain SegmentScope#isAlive() alive}.
-     * <p>
-     * The {@link MemorySegment#address()} of the native segments obtained by the returned allocator is the starting address of
-     * the newly allocated off-heap memory region backing the segment. Moreover, the {@linkplain MemorySegment#address() address}
-     * of the native segment will be aligned according the provided alignment constraint.
-     * <p>
-     * The off-heap region of memory backing a native segment obtained by the returned allocator is initialized to zero.
-     * <p>
-     * This is equivalent to the following code:
-     * {@snippet lang = java:
-     * SegmentAllocator nativeAllocator = (byteSize, byteAlignment) ->
-     *     MemorySegment.allocateNative(byteSize, byteAlignment, scope);
-     * }
-     * @param scope the scope associated with the segments returned by the native allocator.
-     * @return a simple allocator used to allocate native segments.
-     */
-    static SegmentAllocator nativeAllocator(SegmentScope scope) {
-        Objects.requireNonNull(scope);
-        return (MemorySessionImpl)scope;
     }
 }

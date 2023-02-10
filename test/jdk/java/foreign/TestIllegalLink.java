@@ -29,11 +29,11 @@
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestIllegalLink
  */
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.SegmentScope;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -73,7 +73,7 @@ public class TestIllegalLink extends NativeTestHelper {
           expectedExceptions = IllegalArgumentException.class,
           expectedExceptionsMessageRegExp = ".*Not supported for upcall.*")
     public void testIllegalUpcallOptions(Linker.Option downcallOnlyOption) {
-        ABI.upcallStub(DUMMY_TARGET_MH, FunctionDescriptor.ofVoid(), SegmentScope.auto(), downcallOnlyOption);
+        ABI.upcallStub(DUMMY_TARGET_MH, FunctionDescriptor.ofVoid(), Arena.ofAuto(), downcallOnlyOption);
     }
 
     @Test(dataProvider = "illegalCaptureState",
