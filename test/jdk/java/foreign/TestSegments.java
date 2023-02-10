@@ -113,6 +113,16 @@ public class TestSegments {
         }
     }
 
+    @Test(dataProvider = "segmentFactories")
+    public void testDerivedScopes(Supplier<MemorySegment> segmentSupplier) {
+        MemorySegment segment = segmentSupplier.get();
+        assertEquals(segment.scope(), segment.scope());
+        assertEquals(segment.asSlice(0).scope(), segment.scope());
+        assertEquals(segment.asReadOnly().scope(), segment.scope());
+        MemorySegment another = segmentSupplier.get();
+        assertNotEquals(segment.scope(), another.scope());
+    }
+
     @Test
     public void testEqualsOffHeap() {
         try (Arena arena = Arena.ofConfined()) {

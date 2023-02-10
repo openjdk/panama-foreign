@@ -356,7 +356,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * In effect, a zero-length memory segment <em>wraps</em> an address, and it cannot be used without explicit intent.
  * <p>
  * Zero-length memory segments obtained when interacting with foreign functions are associated with
- * a scope that is always alive. This is because the Java runtime, in addition to having no insight
+ * a fresh scope that is always alive. This is because the Java runtime, in addition to having no insight
  * into the size of the region of memory backing a pointer returned from a foreign function, also has no insight
  * into the lifetime intended for said region of memory by the foreign function that allocated it. Thus, zero-length
  * memory segments cannot be accessed directly, but can be passed, opaquely, to other pointer-accepting foreign functions.
@@ -368,10 +368,10 @@ import jdk.internal.vm.annotation.ForceInline;
  * This segment can then be resized as needed, so that the resulting segment can then be accessed directly, as follows:
  *
  * {@snippet lang = java:
- * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS, 0); // wrap address into segment (size = 0) *
- * foreign = foreign.asUnbounded() // size = Long.MAX_VALUE
- *                  .asSlice(0, JAVA_INT); // size = 4
- * int x = foreign.get(ValueLayout.JAVA_INT, 0); //ok
+ * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS, 0); // wrap address into segment (size = 0)
+ * foreign = foreign.asUnbounded()                                  // size = Long.MAX_VALUE
+ *                  .asSlice(0, JAVA_INT);                          // size = 4
+ * int x = foreign.get(ValueLayout.JAVA_INT, 0);                    //ok
  *}
  *
  * Alternatively, if the size of the foreign segment is known statically, clients can associate a
@@ -391,8 +391,8 @@ import jdk.internal.vm.annotation.ForceInline;
  * {@snippet lang = java:
  * Arena arena = ... // obtains an arena
  * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS, 0); // wrap address into segment (size = 0)
- * foreign = MemorySegment.ofAddress(foreign.address(), 4, arena); // create new segment (size = 4)
- * int x = foreign.get(ValueLayout.JAVA_INT, 0); //ok
+ * foreign = MemorySegment.ofAddress(foreign.address(), 4, arena);  // create new segment (size = 4)
+ * int x = foreign.get(ValueLayout.JAVA_INT, 0);                    // ok
  *}
  *
  * All of {@link #asUnbounded()}, {@link ValueLayout.OfAddress#withTargetLayout(MemoryLayout)}
@@ -1013,7 +1013,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * <p>
      * If the provided buffer has been obtained by calling {@link #asByteBuffer()} on a memory segment whose
      * {@linkplain Scope scope} is {@code S}, the returned segment will be associated with the
-     * same scope {@code S}.
+     * same scope {@code S}. Otherwise, the scope of the returned segment is a fresh scope that is always alive.
      * <p>
      * The scope associated with the returned segment keeps the provided buffer reachable. As such, if
      * the provided buffer is a direct buffer, its backing memory region will not be deallocated as long as the
@@ -1032,7 +1032,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Creates a heap segment backed by the on-heap region of memory that holds the given byte array.
-     * The scope of the returned segment is always alive, and keeps the given byte array reachable.
+     * The scope of the returned segment is a fresh scope that is always alive, and keeps the given byte array reachable.
      * The returned segment is always accessible, from any thread. Its {@link #address()} is set to zero.
      *
      * @param byteArray the primitive array backing the heap memory segment.
@@ -1044,7 +1044,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Creates a heap segment backed by the on-heap region of memory that holds the given char array.
-     * The scope of the returned segment is always alive, and keeps the given char array reachable.
+     * The scope of the returned segment is a fresh scope that is always alive, and keeps the given byte array reachable.
      * The returned segment is always accessible, from any thread. Its {@link #address()} is set to zero.
      *
      * @param charArray the primitive array backing the heap segment.
@@ -1056,7 +1056,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Creates a heap segment backed by the on-heap region of memory that holds the given short array.
-     * The scope of the returned segment is always alive, and keeps the given short array reachable.
+     * The scope of the returned segment is a fresh scope that is always alive, and keeps the given byte array reachable.
      * The returned segment is always accessible, from any thread. Its {@link #address()} is set to zero.
      *
      * @param shortArray the primitive array backing the heap segment.
@@ -1068,7 +1068,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Creates a heap segment backed by the on-heap region of memory that holds the given int array.
-     * The scope of the returned segment is always alive, and keeps the given int array reachable.
+     * The scope of the returned segment is a fresh scope that is always alive, and keeps the given byte array reachable.
      * The returned segment is always accessible, from any thread. Its {@link #address()} is set to zero.
      *
      * @param intArray the primitive array backing the heap segment.
@@ -1080,7 +1080,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Creates a heap segment backed by the on-heap region of memory that holds the given float array.
-     * The scope of the returned segment is always alive, and keeps the given float array reachable.
+     * The scope of the returned segment is a fresh scope that is always alive, and keeps the given byte array reachable.
      * The returned segment is always accessible, from any thread. Its {@link #address()} is set to zero.
      *
      * @param floatArray the primitive array backing the heap segment.
@@ -1092,7 +1092,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Creates a heap segment backed by the on-heap region of memory that holds the given long array.
-     * The scope of the returned segment is always alive, and keeps the given long array reachable.
+     * The scope of the returned segment is a fresh scope that is always alive, and keeps the given byte array reachable.
      * The returned segment is always accessible, from any thread. Its {@link #address()} is set to zero.
      *
      * @param longArray the primitive array backing the heap segment.
@@ -1104,7 +1104,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Creates a heap segment backed by the on-heap region of memory that holds the given double array.
-     * The scope of the returned segment is always alive, and keeps the given double array reachable.
+     * The scope of the returned segment is a fresh scope that is always alive, and keeps the given byte array reachable.
      * The returned segment is always accessible, from any thread. Its {@link #address()} is set to zero.
      *
      * @param doubleArray the primitive array backing the heap segment.
@@ -1141,12 +1141,13 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Creates a native segment with the given size and {@linkplain #address() address value}.
-     * The returned segment is always accessible, from any thread.
+     * The returned segment is not {@linkplain MemorySegment#isReadOnly()} read-only), and is associated
+     * with a fresh scope that is always alive.
      * <p>
-     * This is equivalent to the following code:
-     * {@snippet lang = java:
-     * ofAddress(address, byteSize, Arena.global());
-     *}
+     * Clients should ensure that the address and bounds refer to a valid region of memory that is accessible for reading and,
+     * if appropriate, writing; an attempt to access an invalid address from Java code will either return an arbitrary value,
+     * have no visible effect, or cause an unspecified exception to be thrown.
+     * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
@@ -1696,7 +1697,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Reads an address from this segment at the given offset, with the given layout. The read address is wrapped in
-     * a native segment, associated with a scope that is always alive. Under normal conditions,
+     * a native segment, associated with a fresh scope that is always alive. Under normal conditions,
      * the size of the returned segment is {@code 0}. However, if the provided address layout has a
      * {@linkplain OfAddress#targetLayout()} {@code T}, then the size of the returned segment
      * is set to {@code T.byteSize()}.
@@ -2038,7 +2039,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Reads an address from this segment at the given at the given index, scaled by the given layout size. The read address is wrapped in
-     * a native segment, associated with a scope that is always alive. Under normal conditions,
+     * a native segment, associated with a fresh scope that is always alive. Under normal conditions,
      * the size of the returned segment is {@code 0}. However, if the provided address layout has a
      * {@linkplain OfAddress#targetLayout()} {@code T}, then the size of the returned segment
      * is set to {@code T.byteSize()}.
@@ -2247,7 +2248,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * are considered {@linkplain #equals(Object)} if they denote the same lifetime.
      */
     @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-    sealed interface Scope permits MemorySessionImpl {
+    sealed interface Scope permits MemorySessionImpl, AbstractMemorySegmentImpl.ScopeImpl {
         /**
          * {@return {@code true}, if the regions of memory backing the memory segments associated with this scope are
          * still valid}

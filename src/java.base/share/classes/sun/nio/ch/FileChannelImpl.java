@@ -1230,7 +1230,7 @@ public class FileChannelImpl
         if (unmapper != null) {
             AbstractMemorySegmentImpl segment =
                 new MappedMemorySegmentImpl(unmapper.address(), unmapper, size,
-                                            readOnly, sessionImpl);
+                                            readOnly, sessionImpl, null);
             MemorySessionImpl.ResourceList.ResourceCleanup resource =
                 new MemorySessionImpl.ResourceList.ResourceCleanup() {
                     @Override

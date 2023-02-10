@@ -668,8 +668,19 @@ public class TestByteBuffer {
             MemorySegment ms = arena.allocate(4, 1);;
             MemorySegment msNoAccess = ms.asReadOnly();
             MemorySegment msRoundTrip = MemorySegment.ofBuffer(msNoAccess.asByteBuffer());
+            assertEquals(msRoundTrip.scope(), ms.scope());
             assertEquals(msNoAccess.isReadOnly(), msRoundTrip.isReadOnly());
         }
+    }
+
+    @Test(dataProvider = "bufferFactories")
+    public void testDerivedBufferScopes(Supplier<Buffer> bufferFactory) {
+        MemorySegment segment = MemorySegment.ofBuffer(bufferFactory.get());
+        assertEquals(segment.scope(), segment.scope());
+        assertEquals(segment.asSlice(0).scope(), segment.scope());
+        assertEquals(segment.asReadOnly().scope(), segment.scope());
+        MemorySegment another = MemorySegment.ofBuffer(bufferFactory.get());
+        assertNotEquals(segment.scope(), another.scope());
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
@@ -980,5 +991,27 @@ public class TestByteBuffer {
         return Stream.of(MappedSegmentOp.values())
                 .map(op -> new Object[] { op })
                 .toArray(Object[][]::new);
+    }
+
+    @DataProvider(name = "bufferFactories")
+    public static Object[][] bufferFactories() {
+        List<Supplier<Buffer>> l = List.of(
+                () -> ByteBuffer.allocate(10),
+                () -> CharBuffer.allocate(10),
+                () -> ShortBuffer.allocate(10),
+                () -> IntBuffer.allocate(10),
+                () -> FloatBuffer.allocate(10),
+                () -> LongBuffer.allocate(10),
+                () -> DoubleBuffer.allocate(10),
+                () -> ByteBuffer.allocateDirect(10),
+                () -> ByteBuffer.allocateDirect(10).asCharBuffer(),
+                () -> ByteBuffer.allocateDirect(10).asShortBuffer(),
+                () -> ByteBuffer.allocateDirect(10).asIntBuffer(),
+                () -> ByteBuffer.allocateDirect(10).asFloatBuffer(),
+                () -> ByteBuffer.allocateDirect(10).asLongBuffer(),
+                () -> ByteBuffer.allocateDirect(10).asDoubleBuffer()
+        );
+        return l.stream().map(s -> new Object[] { s }).toArray(Object[][]::new);
+
     }
 }

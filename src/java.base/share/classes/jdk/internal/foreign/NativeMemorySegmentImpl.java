@@ -26,7 +26,6 @@
 
 package jdk.internal.foreign;
 
-import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.util.Optional;
@@ -52,8 +51,8 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
     final long min;
 
     @ForceInline
-    NativeMemorySegmentImpl(long min, long length, boolean readOnly, MemorySessionImpl scope) {
-        super(length, readOnly, scope);
+    NativeMemorySegmentImpl(long min, long length, boolean readOnly, MemorySessionImpl scope, AbstractMemorySegmentImpl parent) {
+        super(length, readOnly, scope, parent);
         this.min = (Unsafe.getUnsafe().addressSize() == 4)
                 // On 32-bit systems, normalize the upper unused 32-bits to zero
                 ? min & 0x0000_0000_FFFF_FFFFL
@@ -68,7 +67,7 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
      */
     @ForceInline
     public NativeMemorySegmentImpl() {
-        super(0L, false, MemorySessionImpl.GLOBAL);
+        super(0L, false, MemorySessionImpl.GLOBAL, null);
         this.min = 0L;
     }
 
@@ -85,7 +84,7 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
     @ForceInline
     @Override
     NativeMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySessionImpl scope) {
-        return new NativeMemorySegmentImpl(min + offset, size, readOnly, scope);
+        return new NativeMemorySegmentImpl(min + offset, size, readOnly, scope, this);
     }
 
     @Override
@@ -133,7 +132,7 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
         }
         long alignedBuf = Utils.alignUp(buf, byteAlignment);
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(buf, alignedSize,
-                false, sessionImpl);
+                false, sessionImpl, null);
         sessionImpl.addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
             @Override
             public void cleanup() {
@@ -158,17 +157,17 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
         } else {
             sessionImpl.addCloseAction(action);
         }
-        return new NativeMemorySegmentImpl(min, byteSize, false, sessionImpl);
+        return new NativeMemorySegmentImpl(min, byteSize, false, sessionImpl, null);
     }
 
     @ForceInline
     public static MemorySegment makeNativeSegmentUnchecked(long min, long byteSize, MemorySessionImpl sessionImpl) {
         sessionImpl.checkValidState();
-        return new NativeMemorySegmentImpl(min, byteSize, false, sessionImpl);
+        return new NativeMemorySegmentImpl(min, byteSize, false, sessionImpl, null);
     }
 
     @ForceInline
     public static MemorySegment makeNativeSegmentUnchecked(long min, long byteSize) {
-        return new NativeMemorySegmentImpl(min, byteSize, false, MemorySessionImpl.NATIVE);
+        return new NativeMemorySegmentImpl(min, byteSize, false, MemorySessionImpl.EXTERNAL, null);
     }
 }
