@@ -95,7 +95,10 @@ public class TestNulls {
             ValueLayout.OfLong.class,
             ValueLayout.OfDouble.class,
             ValueLayout.OfAddress.class,
+            PaddingLayout.class,
             GroupLayout.class,
+            StructLayout.class,
+            UnionLayout.class,
             Linker.class,
             Linker.Option.class,
             FunctionDescriptor.class,
@@ -173,7 +176,10 @@ public class TestNulls {
         addDefaultMapping(ValueLayout.OfFloat.class, ValueLayout.JAVA_FLOAT);
         addDefaultMapping(ValueLayout.OfLong.class, JAVA_LONG);
         addDefaultMapping(ValueLayout.OfDouble.class, ValueLayout.JAVA_DOUBLE);
+        addDefaultMapping(PaddingLayout.class, MemoryLayout.paddingLayout(32));
         addDefaultMapping(GroupLayout.class, MemoryLayout.structLayout(ValueLayout.JAVA_INT));
+        addDefaultMapping(StructLayout.class, MemoryLayout.structLayout(ValueLayout.JAVA_INT));
+        addDefaultMapping(UnionLayout.class, MemoryLayout.unionLayout(ValueLayout.JAVA_INT));
         addDefaultMapping(SequenceLayout.class, MemoryLayout.sequenceLayout(1, ValueLayout.JAVA_INT));
         addDefaultMapping(SymbolLookup.class, SymbolLookup.loaderLookup());
         addDefaultMapping(MemorySegment.class, MemorySegment.ofArray(new byte[10]));
