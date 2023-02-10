@@ -55,15 +55,19 @@ public class PointerInvoke extends CLayouts {
         System.loadLibrary("Ptr");
     }
 
-    static final MethodHandle F_LONG, F_PTR;
+    static final MethodHandle F_LONG_LONG, F_PTR_LONG, F_LONG_PTR, F_PTR_PTR;
 
     static {
         Linker abi = Linker.nativeLinker();
         SymbolLookup loaderLibs = SymbolLookup.loaderLookup();
-        F_LONG = abi.downcallHandle(loaderLibs.find("func_as_long").get(),
-                FunctionDescriptor.of(C_INT, C_LONG_LONG));
-        F_PTR = abi.downcallHandle(loaderLibs.find("func_as_ptr").get(),
-                FunctionDescriptor.of(C_INT, C_POINTER));
+        F_LONG_LONG = abi.downcallHandle(loaderLibs.find("id_long_long").get(),
+                FunctionDescriptor.of(C_LONG_LONG, C_LONG_LONG));
+        F_PTR_LONG = abi.downcallHandle(loaderLibs.find("id_ptr_long").get(),
+                FunctionDescriptor.of(C_LONG_LONG, C_POINTER));
+        F_LONG_PTR = abi.downcallHandle(loaderLibs.find("id_long_ptr").get(),
+                FunctionDescriptor.of(C_POINTER, C_LONG_LONG));
+        F_PTR_PTR = abi.downcallHandle(loaderLibs.find("id_ptr_ptr").get(),
+                FunctionDescriptor.of(C_POINTER, C_POINTER));
     }
 
     @TearDown
@@ -72,18 +76,34 @@ public class PointerInvoke extends CLayouts {
     }
 
     @Benchmark
-    public int panama_call_as_long() throws Throwable {
-        return (int)F_LONG.invokeExact(segment.address());
+    public long long_to_long() throws Throwable {
+        return (long)F_LONG_LONG.invokeExact(segment.address());
     }
 
     @Benchmark
-    public int panama_call_as_address() throws Throwable {
-        return (int)F_PTR.invokeExact(segment);
+    public long ptr_to_long() throws Throwable {
+        return (long)F_PTR_LONG.invokeExact(segment);
     }
 
     @Benchmark
-    public int panama_call_as_new_segment() throws Throwable {
+    public long ptr_to_long_new_segment() throws Throwable {
         MemorySegment newSegment = MemorySegment.ofAddress(segment.address(), 100, arena);
-        return (int)F_PTR.invokeExact(newSegment);
+        return (long)F_PTR_LONG.invokeExact(newSegment);
+    }
+
+    @Benchmark
+    public MemorySegment long_to_ptr() throws Throwable {
+        return (MemorySegment)F_LONG_PTR.invokeExact(segment.address());
+    }
+
+    @Benchmark
+    public MemorySegment ptr_to_ptr() throws Throwable {
+        return (MemorySegment)F_PTR_PTR.invokeExact(segment);
+    }
+
+    @Benchmark
+    public MemorySegment ptr_to_ptr_new_segment() throws Throwable {
+        MemorySegment newSegment = MemorySegment.ofAddress(segment.address(), 100, arena);
+        return (MemorySegment)F_PTR_PTR.invokeExact(newSegment);
     }
 }
