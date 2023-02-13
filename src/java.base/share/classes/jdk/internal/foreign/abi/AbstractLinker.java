@@ -89,7 +89,6 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
             throw new IllegalArgumentException("Wrong method handle type: " + target.type());
         }
 
-        // FIXME should the returned segment/scope keep reference to UpcallStubFactory?
         UpcallStubFactory factory = UPCALL_CACHE.get(new LinkRequest(function, optionSet), linkRequest ->
             arrangeUpcall(type, linkRequest.descriptor(), linkRequest.options()));
         return factory.makeStub(target, arena);
