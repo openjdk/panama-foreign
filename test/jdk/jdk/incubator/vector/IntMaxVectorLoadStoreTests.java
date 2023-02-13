@@ -487,7 +487,7 @@ public class IntMaxVectorLoadStoreTests extends AbstractVectorLoadStoreTest {
     @Test(dataProvider = "intByteProviderForIOOBE")
     static void loadMemorySegmentIOOBE(IntFunction<int[]> fa, IntFunction<Integer> fi) {
         MemorySegment a = toSegment(fa.apply(SPECIES.length()), i -> Arena.ofAuto().allocate(i, Integer.SIZE));
-        MemorySegment r = , Arena.ofAuto().allocate(a.byteSize(), Integer.SIZE);
+        MemorySegment r = Arena.ofAuto().allocate(a.byteSize(), Integer.SIZE);
 
         int l = (int) a.byteSize();
         int s = SPECIES.vectorByteSize();

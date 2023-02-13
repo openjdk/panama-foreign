@@ -480,7 +480,7 @@ public class Double128VectorLoadStoreTests extends AbstractVectorLoadStoreTest {
     @Test(dataProvider = "doubleByteProviderForIOOBE")
     static void loadMemorySegmentIOOBE(IntFunction<double[]> fa, IntFunction<Integer> fi) {
         MemorySegment a = toSegment(fa.apply(SPECIES.length()), i -> Arena.ofAuto().allocate(i, Double.SIZE));
-        MemorySegment r = , Arena.ofAuto().allocate(a.byteSize(), Double.SIZE);
+        MemorySegment r = Arena.ofAuto().allocate(a.byteSize(), Double.SIZE);
 
         int l = (int) a.byteSize();
         int s = SPECIES.vectorByteSize();
