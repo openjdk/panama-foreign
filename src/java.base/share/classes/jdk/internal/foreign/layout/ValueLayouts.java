@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2023, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -108,15 +108,11 @@ public final class ValueLayouts {
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) {
-                return true;
-            }
-            if (!super.equals(other)) {
-                return false;
-            }
-            return other instanceof AbstractValueLayout<?> otherValue &&
-                    carrier.equals(otherValue.carrier) &&
-                    order.equals(otherValue.order);
+            return this == other ||
+                    other instanceof AbstractValueLayout<?> otherValue &&
+                            super.equals(other) &&
+                            carrier.equals(otherValue.carrier) &&
+                            order.equals(otherValue.order);
         }
 
         public final VarHandle arrayElementVarHandle(int... shape) {

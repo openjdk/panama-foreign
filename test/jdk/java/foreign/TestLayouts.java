@@ -38,10 +38,7 @@ import java.util.stream.Stream;
 
 import org.testng.annotations.*;
 
-import static java.lang.foreign.ValueLayout.JAVA_BYTE;
-import static java.lang.foreign.ValueLayout.JAVA_INT;
-import static java.lang.foreign.ValueLayout.JAVA_LONG;
-import static java.lang.foreign.ValueLayout.JAVA_SHORT;
+import static java.lang.foreign.ValueLayout.*;
 import static org.testng.Assert.*;
 
 public class TestLayouts {
@@ -75,6 +72,28 @@ public class TestLayouts {
     public void testBadBoundSequenceLayoutResize() {
         SequenceLayout seq = MemoryLayout.sequenceLayout(10, ValueLayout.JAVA_INT);
         seq.withElementCount(-1);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testReshape() {
+        SequenceLayout layout = MemoryLayout.sequenceLayout(10, JAVA_INT);
+        layout.reshape();
+    }
+
+    @Test(dataProvider = "groupLayouts")
+    public void testEquals(MemoryLayout layout) {
+        assertFalse(layout.equals(null));
+        assertFalse(layout.equals("A"));
+        assertFalse(layout.equals(JAVA_INT));
+        assertTrue(layout.equals(layout));
+    }
+
+    @Test
+    public void testEqualsPadding() {
+        PaddingLayout paddingLayout = MemoryLayout.paddingLayout(16);
+        testEquals(paddingLayout);
+        PaddingLayout paddingLayout2 = MemoryLayout.paddingLayout(32);
+        assertNotEquals(paddingLayout, paddingLayout2);
     }
 
     @Test
@@ -301,6 +320,18 @@ public class TestLayouts {
             layoutsAndAlignments[i++] = new Object[] { MemoryLayout.unionLayout(l), l.bitAlignment() };
         }
         return layoutsAndAlignments;
+    }
+
+    @DataProvider(name = "groupLayouts")
+    public Object[][] groupLayouts() {
+        return Stream.of(
+                        MemoryLayout.sequenceLayout(10, JAVA_INT),
+                        MemoryLayout.sequenceLayout(JAVA_INT),
+                        MemoryLayout.structLayout(JAVA_INT, JAVA_LONG),
+                        MemoryLayout.unionLayout(JAVA_LONG, JAVA_DOUBLE)
+                )
+                .map(l -> new Object[] { l })
+                .toArray(Object[][]::new);
     }
 
     static MemoryLayout[] basicLayouts = {

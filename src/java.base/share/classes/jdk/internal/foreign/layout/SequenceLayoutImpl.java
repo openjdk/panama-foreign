@@ -183,15 +183,11 @@ public final class SequenceLayoutImpl extends AbstractLayout<SequenceLayoutImpl>
 
     @Override
     public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!super.equals(other)) {
-            return false;
-        }
-        return other instanceof SequenceLayoutImpl otherSeq &&
-                elemCount == otherSeq.elemCount &&
-                elementLayout.equals(otherSeq.elementLayout);
+        return this == other ||
+                other instanceof SequenceLayoutImpl otherSeq &&
+                        super.equals(other) &&
+                        elemCount == otherSeq.elemCount &&
+                        elementLayout.equals(otherSeq.elementLayout);
     }
 
     @Override
