@@ -34,7 +34,9 @@ import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import org.testng.annotations.Test;
 
+import static java.lang.foreign.ValueLayout.ADDRESS;
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static org.testng.Assert.*;
 
 // FYI this test is run on 64-bit platforms only for now,
@@ -59,10 +61,7 @@ public class TestClassLoaderFindNative {
 
     @Test
     public void testVariableSymbolLookup() {
-        MemorySegment segment = MemorySegment.ofAddress(
-                SymbolLookup.loaderLookup().find("c").get().address(),
-                ValueLayout.JAVA_INT.byteSize(),
-                Arena.global());
+        MemorySegment segment = SymbolLookup.loaderLookup().find("c").get().reinterpret(1);
         assertEquals(segment.get(JAVA_BYTE, 0), 42);
     }
 }

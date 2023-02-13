@@ -28,6 +28,7 @@ package java.lang.foreign;
 import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.MemorySessionImpl;
+import jdk.internal.foreign.Utils;
 import jdk.internal.javac.PreviewFeature;
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.NativeLibrary;
@@ -54,7 +55,7 @@ import java.util.function.BiFunction;
  *     <li>It can be passed to an existing {@linkplain Linker#downcallHandle(FunctionDescriptor, Linker.Option...) downcall method handle}, as an argument to the underlying foreign function.</li>
  *     <li>It can be {@linkplain MemorySegment#set(ValueLayout.OfAddress, long, MemorySegment) stored} inside another memory segment.</li>
  *     <li>It can be used to access the region of memory backing a global variable (this might require
- *     {@link MemorySegment#ofAddress(long, long, Arena) resizing} the segment first).</li>
+ *     {@link MemorySegment#reinterpret(long)} () resizing} the segment first).</li>
  * </ul>
  *
  * <h2 id="obtaining">Obtaining a symbol lookup</h2>
@@ -175,7 +176,8 @@ public interface SymbolLookup {
             long addr = javaLangAccess.findNative(loader, name);
             return addr == 0L ?
                     Optional.empty() :
-                    Optional.of(MemorySegment.ofAddress(addr, 0L, loaderScope));
+                    Optional.of(MemorySegment.ofAddress(addr)
+                                    .reinterpret(loaderScope, null));
         };
     }
 
@@ -259,7 +261,8 @@ public interface SymbolLookup {
             long addr = library.find(name);
             return addr == 0L ?
                     Optional.empty() :
-                    Optional.of(MemorySegment.ofAddress(addr, 0, libScope));
+                    Optional.of(MemorySegment.ofAddress(addr)
+                            .reinterpret(libScope, null));
         };
     }
 }

@@ -23,6 +23,7 @@
 
 package org.openjdk.bench.java.lang.foreign;
 
+import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
 
@@ -37,4 +38,6 @@ public class JavaLayouts {
 
     static final VarHandle VH_INT = JAVA_INT.arrayElementVarHandle();
 
+    static final ValueLayout.OfAddress UNBOUNDED_ADDRESS = ValueLayout.ADDRESS.withTargetLayout(
+            MemoryLayout.sequenceLayout(ValueLayout.JAVA_BYTE));
 }

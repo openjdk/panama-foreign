@@ -24,10 +24,13 @@
  */
 package jdk.internal.foreign.abi.fallback;
 
+import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.abi.SharedUtils;
 
 import java.lang.foreign.Arena;
+import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
@@ -58,7 +61,6 @@ class LibFallback {
 
     static final MemorySegment VOID_TYPE = MemorySegment.ofAddress(ffi_type_void());
     static final short STRUCT_TAG = ffi_type_struct();
-
     private static final long SIZEOF_CIF = sizeofCif();
 
     private static final MethodType UPCALL_TARGET_TYPE = MethodType.methodType(void.class, MemorySegment.class, MemorySegment.class);
@@ -136,7 +138,7 @@ class LibFallback {
         long execPtr = ptrs[1];
         long globalTarget = ptrs[2];
 
-        return MemorySegment.ofAddress(execPtr, 0, scope, () -> freeClosure(closurePtr, globalTarget));
+        return MemorySegment.ofAddress(execPtr).reinterpret(scope, unused -> freeClosure(closurePtr, globalTarget));
     }
 
     private record UpcallData(MethodHandle target, Thread.UncaughtExceptionHandler handler) {}

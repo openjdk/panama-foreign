@@ -57,6 +57,6 @@ public final class UpcallStubs {
                 freeUpcallStub(entry);
             }
         });
-        return MemorySegment.ofAddress(entry, 0, scope);
+        return MemorySegment.ofAddress(entry).reinterpret(scope, null);
     }
 }

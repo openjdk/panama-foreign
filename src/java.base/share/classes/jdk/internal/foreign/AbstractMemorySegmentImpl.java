@@ -122,10 +122,34 @@ public abstract sealed class AbstractMemorySegmentImpl
 
     @Override
     @CallerSensitive
-    public final AbstractMemorySegmentImpl asUnbounded() {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "asUnbounded");
+    public MemorySegment reinterpret(long newSize, Arena arena, Consumer<MemorySegment> cleanup) {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "reinterpret");
+        Objects.requireNonNull(arena);
         if (!isNative()) throw new UnsupportedOperationException("Not a native segment");
-        return asSliceNoCheck(0, Long.MAX_VALUE);
+        Runnable action = cleanup != null ?
+                () -> cleanup.accept(MemorySegment.ofAddress(address())) :
+                null;
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address(), newSize, (MemorySessionImpl)arena.scope(), action);
+    }
+
+    @Override
+    @CallerSensitive
+    public MemorySegment reinterpret(long newSize) {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "reinterpret");
+        if (!isNative()) throw new UnsupportedOperationException("Not a native segment");
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address(), newSize);
+    }
+
+    @Override
+    @CallerSensitive
+    public MemorySegment reinterpret(Arena arena, Consumer<MemorySegment> cleanup) {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "reinterpret");
+        Objects.requireNonNull(arena);
+        if (!isNative()) throw new UnsupportedOperationException("Not a native segment");
+        Runnable action = cleanup != null ?
+                () -> cleanup.accept(MemorySegment.ofAddress(address())) :
+                null;
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address(), byteSize(), (MemorySessionImpl)arena.scope(), action);
     }
 
     private AbstractMemorySegmentImpl asSliceNoCheck(long offset, long newSize) {

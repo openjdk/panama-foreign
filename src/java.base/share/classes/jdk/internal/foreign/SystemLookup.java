@@ -26,13 +26,17 @@
 package jdk.internal.foreign;
 
 import java.lang.foreign.Arena;
+import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SymbolLookup;
+import java.lang.foreign.ValueLayout;
+import java.lang.foreign.ValueLayout.OfAddress;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import jdk.internal.loader.NativeLibrary;
 import jdk.internal.loader.RawNativeLibraries;
@@ -48,7 +52,10 @@ public final class SystemLookup implements SymbolLookup {
     private static final SystemLookup INSTANCE = new SystemLookup();
 
     /* A fallback lookup, used when creation of system lookup fails. */
-    private static final SymbolLookup FALLBACK_LOOKUP = name -> Optional.empty();
+    private static final SymbolLookup FALLBACK_LOOKUP = name -> {
+        Objects.requireNonNull(name);
+        return Optional.empty();
+    };
 
     /*
      * On POSIX systems, dlsym will allow us to lookup symbol in library dependencies; the same trick doesn't work
@@ -87,14 +94,17 @@ public final class SystemLookup implements SymbolLookup {
                     libLookup(libs -> libs.load(jdkLibraryPath("syslookup")));
 
             int numSymbols = WindowsFallbackSymbols.values().length;
-            MemorySegment funcs = MemorySegment.ofAddress(fallbackLibLookup.find("funcs").orElseThrow().address(),
-                ADDRESS.byteSize() * numSymbols, Arena.global());
+            MemorySegment funcs = fallbackLibLookup.find("funcs").orElseThrow()
+                    .reinterpret(ADDRESS.byteSize() * numSymbols, Arena.global(), null);
 
             Function<String, Optional<MemorySegment>> fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.valueOfOrNull(name))
-                .map(symbol -> MemorySegment.ofAddress(funcs.getAtIndex(ADDRESS, symbol.ordinal()).address(), 0L, Arena.global()));
+                .map(symbol -> funcs.getAtIndex(ADDRESS, symbol.ordinal()));
 
             final SymbolLookup finalLookup = lookup;
-            lookup = name -> finalLookup.find(name).or(() -> fallbackLookup.apply(name));
+            lookup = name -> {
+                Objects.requireNonNull(name);
+                return finalLookup.find(name).or(() -> fallbackLookup.apply(name));
+            };
         }
 
         return lookup;
@@ -108,7 +118,7 @@ public final class SystemLookup implements SymbolLookup {
                 long addr = lib.lookup(name);
                 return addr == 0 ?
                         Optional.empty() :
-                        Optional.of(MemorySegment.ofAddress(addr, 0, Arena.global()));
+                        Optional.of(MemorySegment.ofAddress(addr));
             } catch (NoSuchMethodException e) {
                 return Optional.empty();
             }

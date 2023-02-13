@@ -29,6 +29,7 @@
  */
 
 import java.lang.foreign.Arena;
+import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 
@@ -46,6 +47,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static java.lang.foreign.ValueLayout.ADDRESS;
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static java.lang.foreign.ValueLayout.JAVA_LONG;
@@ -195,7 +197,7 @@ public class TestScopedOperations {
                     throw new AssertionError(ex);
                 }
             }),
-            UNSAFE(session -> MemorySegment.ofAddress(0, 10, session));
+            UNSAFE(session -> MemorySegment.NULL.reinterpret(10, session, null));
 
             static {
                 try {

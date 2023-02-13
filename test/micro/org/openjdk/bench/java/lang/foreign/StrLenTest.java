@@ -193,8 +193,8 @@ public class StrLenTest extends CLayouts {
             final SegmentAllocator slicing = SegmentAllocator.slicingAllocator(pool);
 
             public MemorySegment allocate(long byteSize, long byteAlignment) {
-                MemorySegment segment = slicing.allocate(byteSize, byteAlignment);
-                return MemorySegment.ofAddress(segment.address(), byteSize, arena);
+                return slicing.allocate(byteSize, byteAlignment)
+                        .reinterpret(arena);
             }
 
             @Override

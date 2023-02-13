@@ -77,6 +77,7 @@ import org.testng.SkipException;
 import org.testng.annotations.*;
 import sun.nio.ch.DirectBuffer;
 
+import static java.lang.foreign.ValueLayout.ADDRESS;
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static java.lang.foreign.ValueLayout.JAVA_CHAR;
 import static java.lang.foreign.ValueLayout.JAVA_DOUBLE;
@@ -486,7 +487,8 @@ public class TestByteBuffer {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testTooBigForByteBuffer() {
-        MemorySegment segment = MemorySegment.ofAddress(0, Integer.MAX_VALUE + 10L, Arena.ofAuto());
+        MemorySegment segment = MemorySegment.NULL.reinterpret(Integer.MAX_VALUE + 10L)
+                .asSlice(0, Integer.MAX_VALUE + 10L);
         segment.asByteBuffer();
     }
 

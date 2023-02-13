@@ -185,7 +185,8 @@ public class TestVarArgs extends CallGeneratorHelper {
         MethodHandle getter = varArg.getter;
         List<Consumer<Object>> checks = varArg.checks;
         try (Arena arena = Arena.ofConfined()) {
-            MemorySegment seg = MemorySegment.ofAddress(ptr.address(), layout.byteSize(), arena);
+            MemorySegment seg = ptr.asSlice(0, layout)
+                    .reinterpret(arena, null);
             Object obj = getter.invoke(seg);
             checks.forEach(check -> check.accept(obj));
         } catch (Throwable e) {
