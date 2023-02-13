@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2023, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -78,7 +78,7 @@ public final class ValueLayouts {
             super(bitSize, bitAlignment, name);
             this.carrier = carrier;
             this.order = order;
-            checkCarrierSize(carrier, bitSize);
+            assertCarrierSize(carrier, bitSize);
         }
 
         /**
@@ -108,13 +108,9 @@ public final class ValueLayouts {
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) {
-                return true;
-            }
-            if (!super.equals(other)) {
-                return false;
-            }
-            return other instanceof AbstractValueLayout<?> otherValue &&
+            return this == other ||
+                    other instanceof AbstractValueLayout<?> otherValue &&
+                    super.equals(other) &&
                     carrier.equals(otherValue.carrier) &&
                     order.equals(otherValue.order);
         }
@@ -149,22 +145,18 @@ public final class ValueLayouts {
         @Override
         abstract V dup(long bitAlignment, Optional<String> name);
 
-        static void checkCarrierSize(Class<?> carrier, long size) {
-            if (!isValidCarrier(carrier)) {
-                throw new IllegalArgumentException("Invalid carrier: " + carrier.getName());
-            }
-            if (carrier == MemorySegment.class && size != ADDRESS_SIZE_BITS) {
-                throw new IllegalArgumentException("Address size mismatch: " + ADDRESS_SIZE_BITS + " != " + size);
-            }
-            if (carrier.isPrimitive()) {
-                int expectedSize = carrier == boolean.class ? 8 : Wrapper.forPrimitiveType(carrier).bitWidth();
-                if (size != expectedSize) {
-                    throw new IllegalArgumentException("Carrier size mismatch: " + carrier.getName() + " != " + size);
-                }
-            }
+        static void assertCarrierSize(Class<?> carrier, long bitSize) {
+            assert isValidCarrier(carrier);
+            assert carrier != MemorySegment.class
+                    // MemorySegment bitSize must always equal ADDRESS_SIZE_BITS
+                    || bitSize == ADDRESS_SIZE_BITS;
+            assert !carrier.isPrimitive() ||
+                    // Primitive class bitSize must always correspond
+                    bitSize == (carrier == boolean.class ? 8 : Wrapper.forPrimitiveType(carrier).bitWidth());
         }
 
         static boolean isValidCarrier(Class<?> carrier) {
+            // void.class is not valid
             return carrier == boolean.class
                     || carrier == byte.class
                     || carrier == short.class
@@ -175,7 +167,6 @@ public final class ValueLayouts {
                     || carrier == double.class
                     || carrier == MemorySegment.class;
         }
-
 
         @ForceInline
         public final VarHandle accessHandle() {
