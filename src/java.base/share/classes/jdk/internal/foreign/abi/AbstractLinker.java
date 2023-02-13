@@ -36,7 +36,7 @@ import jdk.internal.foreign.layout.AbstractLayout;
 
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.SegmentScope;
+import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
@@ -72,8 +72,8 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
     protected abstract MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function, LinkerOptions options);
 
     @Override
-    public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, SegmentScope scope, Linker.Option... options) {
-        Objects.requireNonNull(scope);
+    public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, Arena arena, Linker.Option... options) {
+        Objects.requireNonNull(arena);
         Objects.requireNonNull(target);
         Objects.requireNonNull(function);
         checkHasNaturalAlignment(function);
@@ -84,11 +84,11 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
         if (!type.equals(target.type())) {
             throw new IllegalArgumentException("Wrong method handle type: " + target.type());
         }
-        return arrangeUpcall(target, target.type(), function, scope, optionSet);
+        return arrangeUpcall(target, target.type(), function, arena, optionSet);
     }
 
     protected abstract MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType,
-                                                   FunctionDescriptor function, SegmentScope scope,
+                                                   FunctionDescriptor function, Arena arena,
                                                    LinkerOptions options);
 
     @Override

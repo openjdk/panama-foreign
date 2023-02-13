@@ -68,7 +68,7 @@ public class TestAddressDereference extends UpcallTestHelper {
     @Test(dataProvider = "layoutsAndAlignments")
     public void testGetAddress(long alignment, ValueLayout layout) {
         boolean badAlign = layout.byteAlignment() > alignment;
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             MemorySegment segment = arena.allocate(ValueLayout.ADDRESS);
             segment.set(ValueLayout.ADDRESS, 0, MemorySegment.ofAddress(alignment));
             MemorySegment deref = segment.get(ValueLayout.ADDRESS.withTargetLayout(layout), 0);
@@ -83,7 +83,7 @@ public class TestAddressDereference extends UpcallTestHelper {
     @Test(dataProvider = "layoutsAndAlignments")
     public void testGetAddressIndex(long alignment, ValueLayout layout) {
         boolean badAlign = layout.byteAlignment() > alignment;
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             MemorySegment segment = arena.allocate(ValueLayout.ADDRESS);
             segment.set(ValueLayout.ADDRESS, 0, MemorySegment.ofAddress(alignment));
             MemorySegment deref = segment.getAtIndex(ValueLayout.ADDRESS.withTargetLayout(layout), 0);
@@ -114,10 +114,10 @@ public class TestAddressDereference extends UpcallTestHelper {
     public void testNativeUpcallArgPos(long alignment, ValueLayout layout) throws Throwable {
         boolean badAlign = layout.byteAlignment() > alignment;
         if (badAlign) return; // this will crash the JVM (exception occurs when going into the upcall stub)
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             FunctionDescriptor testDesc = FunctionDescriptor.ofVoid(ValueLayout.ADDRESS.withTargetLayout(layout));
             MethodHandle upcallHandle = MethodHandles.insertArguments(TEST_ARG_HANDLE, 1, layout.byteSize());
-            MemorySegment testStub = LINKER.upcallStub(upcallHandle, testDesc, arena.scope());
+            MemorySegment testStub = LINKER.upcallStub(upcallHandle, testDesc, arena);
             GET_ADDR_CB_HANDLE.invokeExact(MemorySegment.ofAddress(alignment), testStub);
         }
     }
@@ -135,10 +135,10 @@ public class TestAddressDereference extends UpcallTestHelper {
         public static void main(String[] args) throws Throwable {
             long alignment = parseAlignment(args[0]);
             ValueLayout layout = parseLayout(args[1]);
-            try (Arena arena = Arena.openConfined()) {
+            try (Arena arena = Arena.ofConfined()) {
                 FunctionDescriptor testDesc = FunctionDescriptor.ofVoid(ValueLayout.ADDRESS.withTargetLayout(layout));
                 MethodHandle upcallHandle = MethodHandles.insertArguments(TEST_ARG_HANDLE, 1, layout.byteSize());
-                MemorySegment testStub = LINKER.upcallStub(upcallHandle, testDesc, arena.scope());
+                MemorySegment testStub = LINKER.upcallStub(upcallHandle, testDesc, arena);
                 GET_ADDR_CB_HANDLE.invokeExact(MemorySegment.ofAddress(alignment), testStub);
             }
         }

@@ -24,7 +24,7 @@
 package org.openjdk.foreigntest;
 
 import java.lang.foreign.*;
-import java.lang.foreign.SegmentScope;
+import java.lang.foreign.Arena;
 import java.lang.invoke.*;
 
 public class PanamaMainInvoke {
@@ -44,8 +44,8 @@ public class PanamaMainInvoke {
     public static void testInvokeMemorySegment() throws Throwable {
         System.out.println("Trying to get MemorySegment");
         var mh = MethodHandles.lookup().findStatic(MemorySegment.class, "ofAddress",
-                MethodType.methodType(MemorySegment.class, long.class, long.class, SegmentScope.class));
-        var seg = (MemorySegment)mh.invokeExact(0L, 4000L, SegmentScope.global());
+                MethodType.methodType(MemorySegment.class, long.class, long.class, Arena.class));
+        var seg = (MemorySegment)mh.invokeExact(0L, 4000L, Arena.global());
         System.out.println("Got MemorySegment");
     }
 }

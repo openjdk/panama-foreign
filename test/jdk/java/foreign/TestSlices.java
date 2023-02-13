@@ -25,7 +25,6 @@
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentScope;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
@@ -49,8 +48,8 @@ public class TestSlices {
 
     @Test(dataProvider = "slices")
     public void testSlices(VarHandle handle, int lo, int hi, int[] values) {
-        try (Arena arena = Arena.openConfined()) {
-            MemorySegment segment = MemorySegment.allocateNative(LAYOUT, arena.scope());;
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment segment = arena.allocate(LAYOUT);;
             //init
             for (long i = 0 ; i < 2 ; i++) {
                 for (long j = 0 ; j < 5 ; j++) {
@@ -64,8 +63,8 @@ public class TestSlices {
 
     @Test(dataProvider = "slices")
     public void testSliceBadIndex(VarHandle handle, int lo, int hi, int[] values) {
-        try (Arena arena = Arena.openConfined()) {
-            MemorySegment segment = MemorySegment.allocateNative(LAYOUT, arena.scope());;
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment segment = arena.allocate(LAYOUT);;
             assertThrows(() -> handle.get(segment, lo, 0));
             assertThrows(() -> handle.get(segment, 0, hi));
         }
@@ -125,7 +124,7 @@ public class TestSlices {
 
     @Test
     public void testUnboundedSlice() {
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             MemorySegment segment = arena.allocate(MemoryLayout.sequenceLayout(2, ValueLayout.JAVA_INT)); // size = 8
             MemorySegment slice = segment.asSlice(0, ValueLayout.JAVA_INT); // size = 4
             assertThrows(IndexOutOfBoundsException.class, () -> slice.getAtIndex(ValueLayout.JAVA_INT, 1));
@@ -184,7 +183,7 @@ public class TestSlices {
     }
 
     enum SegmentKind {
-        NATIVE(MemorySegment.allocateNative(100, SegmentScope.auto()), 8),
+        NATIVE(Arena.ofAuto().allocate(100), 8),
         BYTE_ARRAY(MemorySegment.ofArray(new byte[100]), 1),
         CHAR_ARRAY(MemorySegment.ofArray(new char[100]), 2),
         SHORT_ARRAY(MemorySegment.ofArray(new short[100]), 2),

@@ -26,10 +26,10 @@
 
 package jdk.internal.foreign;
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.SegmentScope;
 import java.lang.foreign.StructLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
@@ -154,7 +154,7 @@ public final class Utils {
     }
 
     @ForceInline
-    public static MemorySegment longToAddress(long addr, long size, long align, SegmentScope scope) {
+    public static MemorySegment longToAddress(long addr, long size, long align, MemorySessionImpl scope) {
         if (!isAligned(addr, align)) {
             throw new IllegalArgumentException("Invalid alignment constraint for address: " + addr);
         }

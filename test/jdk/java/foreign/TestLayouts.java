@@ -32,7 +32,6 @@ import java.lang.foreign.*;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.List;
-import java.util.function.Function;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
 
@@ -48,11 +47,38 @@ public class TestLayouts {
         layout.withBitAlignment(alignment);
     }
 
+    @Test(dataProvider = "basicLayoutsAndAddress")
+    public void testNotEquals(MemoryLayout layout) {
+
+        // Use another Type
+        MemoryLayout differentType = MemoryLayout.paddingLayout(8);
+        assertFalse(layout.equals(differentType));
+
+        // Use another name
+        MemoryLayout differentName = layout.withName("CustomName");
+        assertFalse(layout.equals(differentName));
+
+        // Swap endian
+        MemoryLayout differentOrder = JAVA_INT.withOrder(JAVA_INT.order() == ByteOrder.BIG_ENDIAN ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
+        assertFalse(layout.equals(differentOrder));
+
+        // Something totally different
+        assertFalse(layout.equals("A"));
+
+        // Null
+        assertFalse(layout.equals(null));
+    }
+
+    public void testTargetLayoutEquals() {
+        MemoryLayout differentTargetLayout = ADDRESS.withTargetLayout(JAVA_CHAR);
+        assertFalse(ADDRESS.equals(differentTargetLayout));
+    }
+
     @Test
     public void testIndexedSequencePath() {
         MemoryLayout seq = MemoryLayout.sequenceLayout(10, ValueLayout.JAVA_INT);
-        try (Arena arena = Arena.openConfined()) {
-            MemorySegment segment = MemorySegment.allocateNative(seq, arena.scope());;
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment segment = arena.allocate(seq);;
             VarHandle indexHandle = seq.varHandle(MemoryLayout.PathElement.sequenceElement());
             // init segment
             for (int i = 0 ; i < 10 ; i++) {
@@ -295,6 +321,13 @@ public class TestLayouts {
     @DataProvider(name = "basicLayouts")
     public Object[][] basicLayouts() {
         return Stream.of(basicLayouts)
+                .map(l -> new Object[] { l })
+                .toArray(Object[][]::new);
+    }
+
+    @DataProvider(name = "basicLayoutsAndAddress")
+    public Object[][] basicLayoutsAndAddress() {
+        return Stream.concat(Stream.of(basicLayouts), Stream.of(ADDRESS))
                 .map(l -> new Object[] { l })
                 .toArray(Object[][]::new);
     }

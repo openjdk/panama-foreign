@@ -25,6 +25,7 @@
  */
 package jdk.internal.foreign.abi.aarch64;
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.Linker;
@@ -44,7 +45,6 @@ import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64CallArranger;
 import jdk.internal.foreign.abi.aarch64.windows.WindowsAArch64CallArranger;
 import jdk.internal.foreign.Utils;
 
-import java.lang.foreign.SegmentScope;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -190,7 +190,7 @@ public abstract class CallArranger {
         return handle;
     }
 
-    public MemorySegment arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, SegmentScope session, LinkerOptions options) {
+    public MemorySegment arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, Arena session, LinkerOptions options) {
         Bindings bindings = getBindings(mt, cDesc, true, options);
 
         if (bindings.isInMemoryReturn) {

@@ -170,7 +170,7 @@ public class VarHandleTestExact {
     @Test(dataProvider = "dataSetMemorySegment")
     public void testExactSegmentSet(Class<?> carrier, Object testValue, SetSegmentX setter) {
         VarHandle vh = MethodHandles.memorySegmentViewVarHandle(MemoryLayout.valueLayout(carrier, ByteOrder.nativeOrder()));
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             MemorySegment seg = arena.allocate(8);
             doTest(vh,
                 tvh -> tvh.set(seg, 0L, testValue),

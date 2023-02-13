@@ -31,7 +31,6 @@ import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.PaddingLayout;
-import java.lang.foreign.SegmentScope;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.StructLayout;
 import java.lang.foreign.UnionLayout;
@@ -72,8 +71,8 @@ class FFIType {
     private static final VarHandle VH_ELEMENTS = LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("elements"));
     private static final VarHandle VH_SIZE_T_ARRAY = SIZE_T.arrayElementVarHandle();
 
-    private static MemorySegment make(List<MemoryLayout> elements, FFIABI abi, SegmentScope scope) {
-        MemorySegment elementsSeg = MemorySegment.allocateNative((elements.size() + 1) * ADDRESS.byteSize(), scope);
+    private static MemorySegment make(List<MemoryLayout> elements, FFIABI abi, Arena scope) {
+        MemorySegment elementsSeg = scope.allocate((elements.size() + 1) * ADDRESS.byteSize());
         int i = 0;
         for (; i < elements.size(); i++) {
             MemoryLayout elementLayout = elements.get(i);
@@ -83,7 +82,7 @@ class FFIType {
         // elements array is null-terminated
         elementsSeg.setAtIndex(ADDRESS, i, MemorySegment.NULL);
 
-        MemorySegment ffiType = MemorySegment.allocateNative(LAYOUT, scope);
+        MemorySegment ffiType = scope.allocate(LAYOUT);
         VH_TYPE.set(ffiType, LibFallback.STRUCT_TAG);
         VH_ELEMENTS.set(ffiType, elementsSeg);
 
@@ -102,7 +101,7 @@ class FFIType {
         MemorySegment.class, LibFallback.POINTER_TYPE
     );
 
-    static MemorySegment toFFIType(MemoryLayout layout, FFIABI abi, SegmentScope scope) {
+    static MemorySegment toFFIType(MemoryLayout layout, FFIABI abi, Arena scope) {
         if (layout instanceof GroupLayout grpl) {
             if (grpl instanceof StructLayout strl) {
                 // libffi doesn't want our padding
@@ -125,7 +124,7 @@ class FFIType {
     // verify layout against what libffi sets
     private static void verifyStructType(StructLayout structLayout, List<MemoryLayout> filteredLayouts, MemorySegment structType,
                                          FFIABI abi) {
-        try (Arena verifyArena = Arena.openConfined()) {
+        try (Arena verifyArena = Arena.ofConfined()) {
             MemorySegment offsetsOut = verifyArena.allocate(SIZE_T.byteSize() * filteredLayouts.size());
             LibFallback.getStructOffsets(structType, offsetsOut, abi);
             long expectedOffset = 0;

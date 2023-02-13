@@ -35,6 +35,7 @@ import jdk.internal.reflect.Reflection;
 
 import java.lang.foreign.ValueLayout.OfAddress;
 import java.lang.invoke.MethodHandle;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -54,7 +55,7 @@ import java.util.stream.Stream;
  * <li>A linker allows Java code to link against foreign functions, via
  * {@linkplain #downcallHandle(MemorySegment, FunctionDescriptor, Option...) downcall method handles}; and</li>
  * <li>A linker allows foreign functions to call Java method handles,
- * via the generation of {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, SegmentScope, Option...) upcall stubs}.</li>
+ * via the generation of {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, Arena, Option...) upcall stubs}.</li>
  * </ul>
  * In addition, a linker provides a way to look up foreign functions in libraries that conform to the ABI. Each linker
  * chooses a set of libraries that are commonly used on the OS and processor combination associated with the ABI.
@@ -85,7 +86,7 @@ import java.util.stream.Stream;
  *
  * <h2 id="upcall-stubs">Upcall stubs</h2>
  *
- * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, SegmentScope, Option...) Creating an upcall stub} requires a method
+ * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, Arena, Option...) Creating an upcall stub} requires a method
  * handle and a function descriptor; in this case, the set of memory layouts in the function descriptor
  * specify the signature of the function pointer associated with the upcall stub.
  * <p>
@@ -93,7 +94,8 @@ import java.util.stream.Stream;
  * which is {@linkplain FunctionDescriptor#toMethodType() derived} from the provided function descriptor.
  * <p>
  * Upcall stubs are modelled by instances of type {@link MemorySegment}; upcall stubs can be passed by reference to other
- * downcall method handles and, they are released via their associated {@linkplain SegmentScope scope}.
+ * downcall method handles. An upcall stub can be released by {@linkplain Arena#close() closing} the arena which was used
+ * to create it.
  *
  * <h2 id="safety">Safety considerations</h2>
  *
@@ -105,15 +107,16 @@ import java.util.stream.Stream;
  * the linker runtime guarantees the following for any argument {@code A} of type {@link MemorySegment} whose corresponding
  * layout is {@link ValueLayout#ADDRESS}:
  * <ul>
- *     <li>The scope of {@code A} is {@linkplain SegmentScope#isAlive() alive}. Otherwise, the invocation throws
- *     {@link IllegalStateException};</li>
- *     <li>The invocation occurs in a thread {@code T} such that {@code A.scope().isAccessibleBy(T) == true}.
+ *     <li>{@code A.scope().isAlive() == true}. Otherwise, the invocation throws {@link IllegalStateException};</li>
+ *     <li>The invocation occurs in a thread {@code T} such that {@code A.isAccessibleBy(T) == true}.
  *     Otherwise, the invocation throws {@link WrongThreadException}; and</li>
- *     <li>The scope of {@code A} is {@linkplain SegmentScope#whileAlive(Runnable) kept alive} during the invocation.</li>
+ *     <li>{@code A} is kept alive during the invocation. For instance, if {@code A} has been obtained using a
+ *     {@linkplain Arena#ofConfined() confined arena}, any attempt to {@linkplain Arena#close() close}
+ *     the confined arena while the downcall method handle is executing will result in a {@link IllegalStateException}.</li>
  *</ul>
  * A downcall method handle created from a function descriptor whose return layout is an
  * {@linkplain ValueLayout.OfAddress address layout} returns a native segment associated with
- * the {@linkplain SegmentScope#global() global scope}. Under normal conditions, the size of the returned segment is {@code 0}.
+ * a fresh scope that is always alive. Under normal conditions, the size of the returned segment is {@code 0}.
  * However, if the return address layout has a {@linkplain OfAddress#targetLayout()} {@code T}, then the size of the returned segment
  * is set to {@code T.byteSize()}.
  * <p>
@@ -126,7 +129,7 @@ import java.util.stream.Stream;
  * and even JVM crashes, since an upcall is typically executed in the context of a downcall method handle invocation.
  * <p>
  * An upcall stub argument whose corresponding layout is an {@linkplain ValueLayout.OfAddress address layout}
- * is a native segment associated with the {@linkplain SegmentScope#global() global scope}.
+ * is a native segment associated with a fresh scope that is always alive.
  * Under normal conditions, the size of this segment argument is {@code 0}.
  * However, if the address layout has a {@linkplain OfAddress#targetLayout()} {@code T}, then the size of the
  * segment argument is set to {@code T.byteSize()}.
@@ -159,7 +162,7 @@ public sealed interface Linker permits AbstractLinker {
      * Any layout not listed above is <em>unsupported</em>; function descriptors containing unsupported layouts
      * will cause an {@link IllegalArgumentException} to be thrown, when used to create a
      * {@link #downcallHandle(MemorySegment, FunctionDescriptor, Option...) downcall method handle} or an
-     * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, SegmentScope, Option...) upcall stub}.
+     * {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, Arena, Option...) upcall stub}.
      * <p>
      * Variadic functions (e.g. a C function declared with a trailing ellipses {@code ...} at the end of the formal parameter
      * list or with an empty formal parameter list) are not supported directly. However, it is possible to link a
@@ -236,12 +239,13 @@ public sealed interface Linker permits AbstractLinker {
 
     /**
      * Creates a stub which can be passed to other foreign functions as a function pointer, associated with the given
-     * scope. Calling such a function pointer from foreign code will result in the execution of the provided
+     * arena. Calling such a function pointer from foreign code will result in the execution of the provided
      * method handle.
      * <p>
      * The returned memory segment's address points to the newly allocated upcall stub, and is associated with
-     * the provided scope. As such, the corresponding upcall stub will be deallocated
-     * when the scope becomes not {@linkplain SegmentScope#isAlive() alive}.
+     * the provided arena. As such, the lifetime of the returned upcall stub segment is controlled by the
+     * provided arena. For instance, if the provided arena is a confined arena, the returned
+     * upcall stub segment will be deallocated when the provided confined arena is {@linkplain Arena#close() closed}.
      * <p>
      * The target method handle should not throw any exceptions. If the target method handle does throw an exception,
      * the VM will exit with a non-zero exit code. To avoid the VM aborting due to an uncaught exception, clients
@@ -251,17 +255,17 @@ public sealed interface Linker permits AbstractLinker {
      *
      * @param target the target method handle.
      * @param function the upcall stub function descriptor.
-     * @param scope the scope associated with the returned upcall stub segment.
+     * @param arena the arena associated with the returned upcall stub segment.
      * @param options  any linker options.
      * @return a zero-length segment whose address is the address of the upcall stub.
      * @throws IllegalArgumentException if the provided function descriptor is not supported by this linker.
      * @throws IllegalArgumentException if it is determined that the target method handle can throw an exception, or if the target method handle
      * has a type that does not match the upcall stub <a href="Linker.html#upcall-stubs"><em>inferred type</em></a>.
-     * @throws IllegalStateException if {@code scope} is not {@linkplain SegmentScope#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread {@code T},
-     * such that {@code scope.isAccessibleBy(T) == false}.
+     * @throws IllegalStateException if {@code arena.scope().isAlive() == false}
+     * @throws WrongThreadException if {@code arena} is a confined arena, and this method is called from a
+     * thread {@code T}, other than the arena's owner thread.
      */
-    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, SegmentScope scope, Linker.Option... options);
+    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, Arena arena, Linker.Option... options);
 
     /**
      * Returns a symbol lookup for symbols in a set of commonly used libraries.
@@ -323,7 +327,7 @@ public sealed interface Linker permits AbstractLinker {
          *
          * StructLayout capturedStateLayout = Linker.Option.capturedStateLayout();
          * VarHandle errnoHandle = capturedStateLayout.varHandle(PathElement.groupElement("errno"));
-         * try (Arena arena = Arena.openConfined()) {
+         * try (Arena arena = Arena.ofConfined()) {
          *     MemorySegment capturedState = arena.allocate(capturedStateLayout);
          *     handle.invoke(capturedState);
          *     int errno = errnoHandle.get(capturedState);
@@ -335,7 +339,8 @@ public sealed interface Linker permits AbstractLinker {
          * @see #captureStateLayout()
          */
         static Option captureCallState(String... capturedState) {
-            Set<CapturableState> set = Stream.of(capturedState)
+            Set<CapturableState> set = Stream.of(Objects.requireNonNull(capturedState))
+                    .map(Objects::requireNonNull)
                     .map(CapturableState::forName)
                     .collect(Collectors.toSet());
             return new LinkerOptions.CaptureCallState(set);
@@ -377,7 +382,7 @@ public sealed interface Linker permits AbstractLinker {
          * @param handler the handler
          */
         static Option uncaughtExceptionHandler(Thread.UncaughtExceptionHandler handler) {
-            return new LinkerOptions.UncaughtExceptionHandler(handler);
+            return new LinkerOptions.UncaughtExceptionHandler(Objects.requireNonNull(handler));
         }
     }
 }
