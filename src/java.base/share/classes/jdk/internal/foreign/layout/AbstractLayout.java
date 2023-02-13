@@ -110,10 +110,6 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
      */
     @Override
     public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-
         return other instanceof AbstractLayout<?> otherLayout &&
                 name.equals(otherLayout.name) &&
                 byteSize == otherLayout.byteSize &&
@@ -132,9 +128,11 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
         if (name().isPresent()) {
             s = String.format("%s(%s)", s, name().get());
         }
+        System.out.println("DEBUG: s=" + s + ", hasNaturalAlignment = " + hasNaturalAlignment() + ", byteSize = " + byteSize + ", byteAlignment=" + byteAlignment);
         if (!hasNaturalAlignment()) {
             s = bitAlignment() + "%" + s;
         }
+        System.out.println("s = " + s);
         return s;
     }
 

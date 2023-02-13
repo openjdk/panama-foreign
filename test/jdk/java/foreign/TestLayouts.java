@@ -58,6 +58,10 @@ public class TestLayouts {
         MemoryLayout differentName = layout.withName("CustomName");
         assertFalse(layout.equals(differentName));
 
+        // Use another alignment
+        MemoryLayout differentAlignment = layout.withBitAlignment(layout.bitAlignment() * 2);
+        assertFalse(layout.equals(differentAlignment));
+
         // Swap endian
         MemoryLayout differentOrder = JAVA_INT.withOrder(JAVA_INT.order() == ByteOrder.BIG_ENDIAN ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
         assertFalse(layout.equals(differentOrder));
@@ -72,6 +76,8 @@ public class TestLayouts {
     public void testTargetLayoutEquals() {
         MemoryLayout differentTargetLayout = ADDRESS.withTargetLayout(JAVA_CHAR);
         assertFalse(ADDRESS.equals(differentTargetLayout));
+        var equalButNotSame = ADDRESS.withTargetLayout(JAVA_INT).withTargetLayout(JAVA_CHAR);
+        assertFalse(ADDRESS.equals(equalButNotSame));
     }
 
     @Test
@@ -111,7 +117,32 @@ public class TestLayouts {
         assertFalse(layout.equals(null));
         assertFalse(layout.equals("A"));
         assertFalse(layout.equals(JAVA_INT));
+        assertFalse(layout.equals(layout.withBitAlignment(layout.bitAlignment() * 2)));
+        assertFalse(layout.equals(layout.withName("OtherName")));
         assertTrue(layout.equals(layout));
+        assertFalse(layout.equals(MemoryLayout.sequenceLayout(13, JAVA_LONG)));
+        MemoryLayout other = MemoryLayout.structLayout(JAVA_INT, JAVA_LONG);
+        if (layout instanceof StructLayout sl) {
+            // Test something that equals but is not an identity
+            assertTrue(layout.equals(other));
+        } else {
+            assertFalse(layout.equals(other));
+        }
+    }
+
+    @Test(dataProvider = "groupLayouts", expectedExceptions = IllegalArgumentException.class)
+    public void testGroupIllegalAlignmentNotPowerOfTwo(MemoryLayout layout) {
+        layout.withBitAlignment(3);
+    }
+
+    @Test(dataProvider = "groupLayouts", expectedExceptions = IllegalArgumentException.class)
+    public void testGroupIllegalAlignmentNotGreaterOrEqualTo8(MemoryLayout layout) {
+        layout.withBitAlignment(4);
+    }
+
+    @Test(dataProvider = "basicLayouts", expectedExceptions = IllegalArgumentException.class)
+    public void testBasicIllegalAlignment(MemoryLayout layout) {
+        layout.withBitAlignment(3);
     }
 
     @Test
@@ -241,6 +272,14 @@ public class TestLayouts {
     @Test
     public void testPaddingZeroBitSize() {
         MemoryLayout.paddingLayout(0);
+    }
+
+    @Test
+    public void testStructToString() {
+        StructLayout padding = MemoryLayout.structLayout(JAVA_INT).withName("struct");
+        assertEquals(padding.toString(), "[i32](struct)");
+        var toStringUnaligned = padding.withBitAlignment(64).toString();
+        assertEquals(toStringUnaligned, "64%[i32](struct)");
     }
 
     @Test(dataProvider = "layoutKinds")
