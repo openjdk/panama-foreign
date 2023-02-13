@@ -47,27 +47,26 @@ public class TestLayouts {
         layout.withBitAlignment(alignment);
     }
 
-    @Test
-    public void testNotEquals() {
-        List<MemoryLayout> basic = Stream.concat(Stream.of(basicLayouts), Stream.of(ADDRESS)).toList();
-        MemoryLayout differentName = JAVA_INT.withName("CustomName");
-        basic.forEach(l ->
-                assertFalse(l.equals(differentName))
-        );
+    @Test(dataProvider = "basicLayoutsAndAddress")
+    public void testNotEquals(MemoryLayout layout) {
+
+        // Use another Type
+        MemoryLayout differentType = MemoryLayout.paddingLayout(8);
+        assertFalse(layout.equals(differentType));
+
+        // Use another name
+        MemoryLayout differentName = layout.withName("CustomName");
+        assertFalse(layout.equals(differentName));
+
         // Swap endian
         MemoryLayout differentOrder = JAVA_INT.withOrder(JAVA_INT.order() == ByteOrder.BIG_ENDIAN ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
-        basic.forEach(l ->
-                assertFalse(l.equals(differentOrder))
-        );
+        assertFalse(layout.equals(differentOrder));
 
         // Something totally different
-        basic.forEach(l ->
-                assertFalse(l.equals("A"))
-        );
+        assertFalse(layout.equals("A"));
+
         // Null
-        basic.forEach(l ->
-                assertFalse(l.equals(null))
-        );
+        assertFalse(layout.equals(null));
     }
 
     public void testTargetLayoutEquals() {
@@ -300,6 +299,13 @@ public class TestLayouts {
     @DataProvider(name = "basicLayouts")
     public Object[][] basicLayouts() {
         return Stream.of(basicLayouts)
+                .map(l -> new Object[] { l })
+                .toArray(Object[][]::new);
+    }
+
+    @DataProvider(name = "basicLayoutsAndAddress")
+    public Object[][] basicLayoutsAndAddress() {
+        return Stream.concat(Stream.of(basicLayouts), Stream.of(ADDRESS))
                 .map(l -> new Object[] { l })
                 .toArray(Object[][]::new);
     }

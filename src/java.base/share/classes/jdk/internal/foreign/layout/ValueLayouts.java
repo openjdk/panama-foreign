@@ -147,16 +147,24 @@ public final class ValueLayouts {
 
         static void assertCarrierSize(Class<?> carrier, long bitSize) {
             assert isValidCarrier(carrier);
-            assert carrier == MemorySegment.class
-                    ? bitSize == ADDRESS_SIZE_BITS
-                    : true;
-            assert carrier.isPrimitive()
-                    ? bitSize == (carrier == boolean.class ? 8 : Wrapper.forPrimitiveType(carrier).bitWidth())
-                    : true;
+            assert carrier != MemorySegment.class
+                    // MemorySegment bitSize must always equal ADDRESS_SIZE_BITS
+                    || bitSize == ADDRESS_SIZE_BITS;
+            assert !carrier.isPrimitive() ||
+                    // Primitive class bitSize must always correspond
+                    bitSize == (carrier == boolean.class ? 8 : Wrapper.forPrimitiveType(carrier).bitWidth());
         }
 
         static boolean isValidCarrier(Class<?> carrier) {
-            return carrier.isPrimitive()
+            // void.class is not valid
+            return carrier == boolean.class
+                    || carrier == byte.class
+                    || carrier == short.class
+                    || carrier == char.class
+                    || carrier == int.class
+                    || carrier == long.class
+                    || carrier == float.class
+                    || carrier == double.class
                     || carrier == MemorySegment.class;
         }
 
