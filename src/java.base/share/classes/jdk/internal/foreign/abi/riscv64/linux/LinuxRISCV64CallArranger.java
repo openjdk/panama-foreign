@@ -31,7 +31,7 @@ import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import jdk.internal.foreign.abi.ABIDescriptor;
-import jdk.internal.foreign.abi.AbstractLinker;
+import jdk.internal.foreign.abi.AbstractLinker.UpcallStubFactory;
 import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
@@ -120,7 +120,7 @@ public class LinuxRISCV64CallArranger {
         return handle;
     }
 
-    public static AbstractLinker.UpcallStubFactory arrangeUpcall(MethodType mt, FunctionDescriptor cDesc, LinkerOptions options) {
+    public static UpcallStubFactory arrangeUpcall(MethodType mt, FunctionDescriptor cDesc, LinkerOptions options) {
         Bindings bindings = getBindings(mt, cDesc, true, options);
 
         MethodType targetType = mt;
@@ -128,13 +128,13 @@ public class LinuxRISCV64CallArranger {
             targetType = SharedUtils.computeUpcallIMRType(mt, true /* drop return, since we don't have bindings for it */);
         }
 
-        AbstractLinker.UpcallStubFactory factory = UpcallLinker.makeFactory(targetType, CLinux, bindings.callingSequence);
+        UpcallStubFactory factory = UpcallLinker.makeFactory(targetType, CLinux, bindings.callingSequence);
 
         return (target, scope) -> {
-           if (bindings.isInMemoryReturn) {
+            if (bindings.isInMemoryReturn) {
                 target = SharedUtils.adaptUpcallForIMR(target, true /* drop return, since we don't have bindings for it */);
             }
-           return factory.makeStub(target, scope);
+            return factory.makeStub(target, scope);
         };
     }
 

@@ -50,7 +50,6 @@ public class TestUpcallScope extends TestUpcallBase {
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testUpcalls(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
-        //if (count != 11917) return;
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         MemorySegment addr = findNativeOrThrow(fName);

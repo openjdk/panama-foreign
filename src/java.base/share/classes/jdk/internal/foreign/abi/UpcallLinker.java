@@ -25,6 +25,7 @@
 
 package jdk.internal.foreign.abi;
 
+import jdk.internal.foreign.abi.AbstractLinker.UpcallStubFactory;
 import sun.security.action.GetPropertyAction;
 
 import java.lang.foreign.MemorySegment;
@@ -61,7 +62,7 @@ public class UpcallLinker {
         }
     }
 
-    public static AbstractLinker.UpcallStubFactory makeFactory(MethodType targetType, ABIDescriptor abi, CallingSequence callingSequence) {
+    public static UpcallStubFactory makeFactory(MethodType targetType, ABIDescriptor abi, CallingSequence callingSequence) {
         assert callingSequence.forUpcall();
         Binding.VMLoad[] argMoves = argMoveBindings(callingSequence);
         Binding.VMStore[] retMoves = retMoveBindings(callingSequence);

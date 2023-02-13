@@ -26,7 +26,7 @@ package jdk.internal.foreign.abi.x64.windows;
 
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.ABIDescriptor;
-import jdk.internal.foreign.abi.AbstractLinker;
+import jdk.internal.foreign.abi.AbstractLinker.UpcallStubFactory;
 import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
@@ -131,7 +131,7 @@ public class CallArranger {
         return handle;
     }
 
-    public static AbstractLinker.UpcallStubFactory arrangeUpcall(MethodType mt, FunctionDescriptor cDesc, LinkerOptions options) {
+    public static UpcallStubFactory arrangeUpcall(MethodType mt, FunctionDescriptor cDesc, LinkerOptions options) {
         Bindings bindings = getBindings(mt, cDesc, true, options);
 
         MethodType targetType = mt;
@@ -139,13 +139,13 @@ public class CallArranger {
             targetType = SharedUtils.computeUpcallIMRType(mt, false /* need the return value as well */);
         }
 
-        AbstractLinker.UpcallStubFactory factory = UpcallLinker.makeFactory(targetType, CWindows, bindings.callingSequence);
+        UpcallStubFactory factory = UpcallLinker.makeFactory(targetType, CWindows, bindings.callingSequence);
 
         return (target, scope) -> {
-           if (bindings.isInMemoryReturn) {
+            if (bindings.isInMemoryReturn) {
                 target = SharedUtils.adaptUpcallForIMR(target, false /* need the return value as well */);
             }
-           return factory.makeStub(target, scope);
+            return factory.makeStub(target, scope);
         };
     }
 
