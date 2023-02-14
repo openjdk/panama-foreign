@@ -137,7 +137,7 @@ public final class SharedUtils {
      * @param target the target handle to adapt
      * @return the adapted handle
      */
-    public static MethodHandle adaptUpcallForIMR(MethodHandle target, boolean dropReturn) {
+    private static MethodHandle adaptUpcallForIMR(MethodHandle target, boolean dropReturn) {
         if (target.type().returnType() != MemorySegment.class)
             throw new IllegalArgumentException("Must return MemorySegment for IMR");
 
@@ -163,7 +163,7 @@ public final class SharedUtils {
     }
 
     // this just computes the adjusted type
-    public static MethodType computeUpcallIMRType(MethodType targetType, boolean dropReturn) {
+    private static MethodType computeUpcallIMRType(MethodType targetType, boolean dropReturn) {
         if (targetType.returnType() != MemorySegment.class)
             throw new IllegalArgumentException("Must return MemorySegment for IMR");
 
