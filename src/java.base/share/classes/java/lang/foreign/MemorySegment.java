@@ -614,7 +614,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * the returned segment can be accessed compatibly with the confinement restrictions associated with the
      * corresponding arena: that is, if the provided scope is the scope of a {@linkplain Arena#ofConfined() confined arena},
      * the returned segment can only be accessed by the arena's owner thread, regardless of the confinement restrictions
-     * associated with this segment.
+     * associated with this segment. In other words, if the provided scope is an arena scope, this method returns a segment
+     * that behaves as if it had been allocated using the arena associated with the provided scope.
      * <p>
      * Clients can specify an optional cleanup action that should be executed when the provided scope becomes
      * invalid. This cleanup action receives a fresh memory segment that is obtained from this segment as follows:
@@ -2195,14 +2196,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * A scope controls access to one or more memory segments. That is, a memory segment cannot be accessed if its
-     * associated scope is not {@linkplain #isAlive() alive}. In other words, a scope models the <em>lifetime</em>
-     * of all the memory segments associated with it.
-     * <p>
-     * A new scope can be created, indirectly, by creating a new {@linkplain Arena arena}. For instance, when a new
-     * {@linkplain Arena#ofConfined() confined} arena is created, a new scope is also created. This scope - the arena scope - is
-     * starts as {@link #isAlive() alive}. When the confined arena is {@linkplain Arena#close() closed},
-     * the arena scope becomes no longer alive.
+     * A scope models the <em>lifetime</em> of all the memory segments associated with it. That is, a memory segment
+     * cannot be accessed if its associated scope is not {@linkplain #isAlive() alive}. A new scope is typically
+     * obtained indirectly, by creating a new {@linkplain Arena arena}.
      * <p>
      * Scope instances can be compared for equality. That is, two scopes
      * are considered {@linkplain #equals(Object)} if they denote the same lifetime.
@@ -2216,12 +2212,13 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
         boolean isAlive();
 
         /**
-         * Returns {@code true}, if the provided object is also a scope, and the lifetime associated with this scope
-         * and that scope are the same. In that case, it is always the case that
+         * Returns {@code true}, if the provided object is also a scope, which models the same lifetime as that
+         * modelled by this scope.
+         * and the provided scope are the same. In that case, it is always the case that
          * {@code this.isAlive() == ((Scope)that).isAlive()}.
          * @param that the object to be tested.
-         * @return {@code true}, if the provided object is also a scope, and the lifetime associated with this scope
-         * and that scope are the same.
+         * @return {@code true}, if the provided object is also a scope, which models the same lifetime as that
+         * modelled by this scope.
          */
         @Override
         boolean equals(Object that);
