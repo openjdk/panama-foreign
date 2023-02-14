@@ -316,7 +316,7 @@ public class TestByteBuffer {
     @Test
     public void testMappedSegmentAsByteBuffer() throws Throwable {
         File f = new File("test4.out");
-        assert f.createNewFile();
+        assertTrue(f.createNewFile());
         f.deleteOnExit();
 
         for (var mapOption : List.of(FileChannel.MapMode.READ_WRITE, FileChannel.MapMode.READ_ONLY, FileChannel.MapMode.PRIVATE)) {

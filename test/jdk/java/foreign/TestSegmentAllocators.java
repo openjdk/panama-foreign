@@ -237,7 +237,7 @@ public class TestSegmentAllocators {
                 assertThrows(UnsupportedOperationException.class, segment::unload);
                 assertThrows(UnsupportedOperationException.class, segment::isLoaded);
                 assertThrows(UnsupportedOperationException.class, segment::force);
-                assertEquals(segment.isMapped(), segment instanceof MappedMemorySegmentImpl);
+                assertFalse(segment.isMapped());
                 assertEquals(segment.isNative(), segment instanceof NativeMemorySegmentImpl);
             }
         }
