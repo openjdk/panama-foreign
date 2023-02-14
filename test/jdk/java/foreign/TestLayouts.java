@@ -86,7 +86,7 @@ public class TestLayouts {
         MemoryLayout differentTargetLayout = ADDRESS.withTargetLayout(JAVA_CHAR);
         assertFalse(ADDRESS.equals(differentTargetLayout));
         var equalButNotSame = ADDRESS.withTargetLayout(JAVA_INT).withTargetLayout(JAVA_CHAR);
-        assertFalse(ADDRESS.equals(equalButNotSame));
+        assertTrue(differentTargetLayout.equals(equalButNotSame));
     }
 
     @Test
