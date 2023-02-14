@@ -1241,7 +1241,7 @@ public class FileChannelImpl
             sessionImpl.addOrCleanupIfFail(resource);
             return segment;
         } else {
-            return new MappedMemorySegmentImpl.EmptyMappedMemorySegmentImpl(readOnly, sessionImpl);
+            return new MappedMemorySegmentImpl(0, null, 0, readOnly, sessionImpl);
         }
     }
 
