@@ -108,7 +108,7 @@ public final class FallbackLinker extends AbstractLinker {
         MemorySegment cif = makeCif(targetType, function, FFIABI.DEFAULT, Arena.ofAuto());
 
         UpcallData invData = new UpcallData(function.returnLayout().orElse(null), function.argumentLayouts(), cif);
-        MethodHandle doUpcallMH = MethodHandles.insertArguments(MH_DO_UPCALL, 2, invData);
+        MethodHandle doUpcallMH = MethodHandles.insertArguments(MH_DO_UPCALL, 3, invData);
 
         return (target, scope) -> {
             target = MethodHandles.insertArguments(doUpcallMH, 0, target);
