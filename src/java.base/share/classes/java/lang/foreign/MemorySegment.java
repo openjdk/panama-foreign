@@ -563,8 +563,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Returns a new memory segment that has the same address and scope as this segment, but the new
-     * provided size.
+     * Returns a new memory segment that has the same address and scope as this segment, but with the provided size.
      * Equivalent to the following code:
      * {@snippet lang=java :
      * reinterpret(newSize, scope(), null);
@@ -586,7 +585,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     MemorySegment reinterpret(long newSize);
 
     /**
-     * Returns a new memory segment that has the same address and size as this segment, but the provided scope.
+     * Returns a new memory segment with the same address and size as this segment, but with the provided scope.
      * Equivalent to the following code:
      * {@snippet lang=java :
      * reinterpret(byteSize(), scope, cleanup);
@@ -609,10 +608,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     MemorySegment reinterpret(Scope newScope, Consumer<MemorySegment> cleanup);
 
     /**
-     * Returns a new segment that has the same address as this segment, but with new size and its scope set to
-     * that of the provided arena. As such, the returned segment cannot be accessed after the provided
+     * Returns a new segment with the same address as this segment, but with the provided size and scope.
+     * As such, the returned segment cannot be accessed after the provided
      * scope has been invalidated. Moreover, if the provided scope is an arena scope,
-     * the returned segment can be accessed compatibly with the confinement restriction associated with the
+     * the returned segment can be accessed compatibly with the confinement restrictions associated with the
      * corresponding arena: that is, if the provided scope is the scope of a {@linkplain Arena#ofConfined() confined arena},
      * the returned segment can only be accessed by the arena's owner thread, regardless of the confinement restrictions
      * associated with this segment.
@@ -623,12 +622,18 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * MemorySegment cleanupSegment = MemorySegment.ofAddress(this.address());
      * }
      * That is, the cleanup action receives a segment that is associated with a fresh scope that is always alive,
-     * and is accessible from any thread. The size of the segment accepted by the cleanup action is <a href="#wrapping-addresses">zero</a>.
+     * and is accessible from any thread. The size of the segment accepted by the cleanup action is {@code newSize}.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
+     *
+     * @apiNote The cleanup action (if present) should take care not to leak the received segment to external
+     * clients which might access the segment after its backing region of memory is no longer available. Furthermore,
+     * if the provided scope is the scope of an {@linkplain Arena#ofAuto() automatic arena}, the cleanup action
+     * must not prevent the scope from becoming <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
+     * A failure to do so will permanently prevent the regions of memory allocated by the automatic arena from being deallocated.
      *
      * @param newSize the size of the returned segment.
      * @param newScope the scope of the returned segment.

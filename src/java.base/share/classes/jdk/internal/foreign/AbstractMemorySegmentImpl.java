@@ -146,7 +146,7 @@ public abstract sealed class AbstractMemorySegmentImpl
         }
         if (!isNative()) throw new UnsupportedOperationException("Not a native segment");
         Runnable action = cleanup != null ?
-                () -> cleanup.accept(MemorySegment.ofAddress(address())) :
+                () -> cleanup.accept(NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address(), newSize)) :
                 null;
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address(), newSize,
                 (MemorySessionImpl)scope, action);
