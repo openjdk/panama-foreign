@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@
 
 package jdk.internal.foreign;
 
-import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.ScopedMemoryAccess;
@@ -71,10 +70,6 @@ public sealed class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     }
 
     // support for mapped segments
-
-    public MemorySegment segment() {
-        return MappedMemorySegmentImpl.this;
-    }
 
     public void load() {
         SCOPED_MEMORY_ACCESS.load(sessionImpl(), min, unmapper.isSync(), length);
