@@ -193,7 +193,7 @@ public class TestScopedOperations {
                     throw new AssertionError(ex);
                 }
             }),
-            UNSAFE(session -> MemorySegment.NULL.reinterpret(10, session, null));
+            UNSAFE(session -> MemorySegment.NULL.reinterpret(10, session.scope(), null));
 
             static {
                 try {

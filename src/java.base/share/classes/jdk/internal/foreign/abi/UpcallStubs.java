@@ -50,13 +50,13 @@ public final class UpcallStubs {
         registerNatives();
     }
 
-    static MemorySegment makeUpcall(long entry, Arena scope) {
-        MemorySessionImpl.toMemorySession(scope).addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
+    static MemorySegment makeUpcall(long entry, Arena arena) {
+        MemorySessionImpl.toMemorySession(arena).addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
             @Override
             public void cleanup() {
                 freeUpcallStub(entry);
             }
         });
-        return MemorySegment.ofAddress(entry).reinterpret(scope, null);
+        return MemorySegment.ofAddress(entry).reinterpret(arena.scope(), null);
     }
 }

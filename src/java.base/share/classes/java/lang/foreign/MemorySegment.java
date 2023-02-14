@@ -375,14 +375,14 @@ import jdk.internal.vm.annotation.ForceInline;
  *}
  * <p>
  * In some cases, a client might additionally want to associate new temporal bounds to a zero-length memory segment.
- * This can be done using the {@link #reinterpret(long, Arena, Consumer)} method, which returns a
+ * This can be done using the {@link #reinterpret(long, Scope, Consumer)} method, which returns a
  * new native segment with the desired size and the same temporal bounds as those in the provided arena:
  *
  * {@snippet lang = java:
  * MemorySegment foreign = null;
  * try (Arena arena = Arena.ofConfined()) {
  *       foreign = someSegment.get(ValueLayout.ADDRESS, 0)   // size = 0, scope = always alive
- *                            .reinterpret(4, arena, null);  // size = 4, scope = arena.scope()
+ *                            .reinterpret(4, arena.scope(), null);  // size = 4, scope = arena.scope()
  *       int x = foreign.get(ValueLayout.JAVA_INT, 0);       // ok
  * }
  * int x = foreign.get(ValueLayout.JAVA_INT, 0); // throws IllegalStateException
@@ -408,7 +408,7 @@ import jdk.internal.vm.annotation.ForceInline;
  *
  *
  * All the methods which can be used to manipulate zero-length memory segments
- * ({@link #reinterpret(long)}, {@link #reinterpret(Arena, Consumer)}, {@link #reinterpret(long, Arena, Consumer)} and
+ * ({@link #reinterpret(long)}, {@link #reinterpret(Scope, Consumer)}, {@link #reinterpret(long, Scope, Consumer)} and
  * {@link ValueLayout.OfAddress#withTargetLayout(MemoryLayout)}) are
  * <a href="package-summary.html#restricted"><em>restricted</em></a> methods, and should be used with caution:
  * assigning a segment incorrect spatial and/or temporal bounds could result in a VM crash when attempting to access
@@ -565,6 +565,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Returns a new memory segment that has the same address and scope as this segment, but the new
      * provided size.
+     * Equivalent to the following code:
+     * {@snippet lang=java :
+     * reinterpret(newSize, scope(), null);
+     * }
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -582,10 +586,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     MemorySegment reinterpret(long newSize);
 
     /**
-     * Returns a new memory segment that has the same address and size as this segment, but the scope
-     * of the provided arena. Equivalent to the following code:
+     * Returns a new memory segment that has the same address and size as this segment, but the provided scope.
+     * Equivalent to the following code:
      * {@snippet lang=java :
-     * reinterpret(byteSize(), arena, cleanup);
+     * reinterpret(byteSize(), scope, cleanup);
      * }
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
@@ -593,28 +597,28 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
-     * @param arena the arena that manages the lifecycle of the returned segment.
+     * @param scope the scope of the returned segment.
      * @param cleanup the cleanup action that should be executed when the provided arena is closed (can be {@code null}).
      * @return a new memory segment with unbounded size.
      * @throws IllegalArgumentException if {@code newSize < 0}.
-     * @throws IllegalStateException if {@code arena.scope().isAlive() == false}.
+     * @throws IllegalStateException if {@code scope.isAlive() == false}.
      * @throws UnsupportedOperationException if this segment is not a {@linkplain #isNative() native} segment.
      * @throws IllegalCallerException If the caller is in a module that does not have native access enabled.
      */
     @CallerSensitive
-    MemorySegment reinterpret(Arena arena, Consumer<MemorySegment> cleanup);
+    MemorySegment reinterpret(Scope scope, Consumer<MemorySegment> cleanup);
 
     /**
      * Returns a new segment that has the same address as this segment, but with new size and its scope set to
-     * that of the provided arena. That is, this method returns a segment that behaves as if it had been
-     * allocated using the provided arena. As such, the returned segment becomes invalid when the provided
-     * arena is {@linkplain Arena#close() closed}. Moreover, the returned segment can be accessed compatibly
-     * with the confinement restriction associated with the provided arena: that is, if the provided arena is a
-     * {@linkplain Arena#ofConfined() confined arena}, the returned segment can only be accessed by the arena's
-     * owner thread, regardless of the confinement restrictions associated with this segment.
+     * that of the provided arena. As such, the returned segment cannot be accessed after the provided
+     * scope has been invalidated. Moreover, if the provided scope is an arena scope,
+     * the returned segment can be accessed compatibly with the confinement restriction associated with the
+     * corresponding arena: that is, if the provided scope is the scope of a {@linkplain Arena#ofConfined() confined arena},
+     * the returned segment can only be accessed by the arena's owner thread, regardless of the confinement restrictions
+     * associated with this segment.
      * <p>
-     * Clients can specify an optional cleanup action that should be executed when the provided arena is closed.
-     * This cleanup action receives a fresh memory segment that is obtained from this segment as follows:
+     * Clients can specify an optional cleanup action that should be executed when the provided scope becomes
+     * invalid. This cleanup action receives a fresh memory segment that is obtained from this segment as follows:
      * {@snippet lang=java :
      * MemorySegment cleanupSegment = MemorySegment.ofAddress(this.address());
      * }
@@ -627,17 +631,17 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param newSize the size of the returned segment.
-     * @param arena the arena that manages the lifecycle of the returned segment.
+     * @param scope the scope of the returned segment.
      * @param cleanup the cleanup action that should be executed when the provided arena is closed (can be {@code null}).
      * @return a new segment that has the same address as this segment, but with new size and its scope set to
      * that of the provided arena.
      * @throws UnsupportedOperationException if this segment is not a {@linkplain #isNative() native} segment.
      * @throws IllegalArgumentException if {@code newSize < 0}.
-     * @throws IllegalStateException if {@code arena.scope().isAlive() == false}.
+     * @throws IllegalStateException if {@code scope.isAlive() == false}.
      * @throws IllegalCallerException If the caller is in a module that does not have native access enabled.
      */
     @CallerSensitive
-    MemorySegment reinterpret(long newSize, Arena arena, Consumer<MemorySegment> cleanup);
+    MemorySegment reinterpret(long newSize, Scope scope, Consumer<MemorySegment> cleanup);
 
     /**
      * {@return {@code true}, if this segment is read-only}

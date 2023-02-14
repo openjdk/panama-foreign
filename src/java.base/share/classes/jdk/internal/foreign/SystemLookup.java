@@ -90,7 +90,7 @@ public final class SystemLookup implements SymbolLookup {
 
             int numSymbols = WindowsFallbackSymbols.values().length;
             MemorySegment funcs = fallbackLibLookup.find("funcs").orElseThrow()
-                    .reinterpret(ADDRESS.byteSize() * numSymbols, Arena.global(), null);
+                    .reinterpret(ADDRESS.byteSize() * numSymbols);
 
             Function<String, Optional<MemorySegment>> fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.valueOfOrNull(name))
                 .map(symbol -> funcs.getAtIndex(ADDRESS, symbol.ordinal()));

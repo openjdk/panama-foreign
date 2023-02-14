@@ -122,28 +122,25 @@ public abstract sealed class AbstractMemorySegmentImpl
 
     @Override
     @CallerSensitive
-    public MemorySegment reinterpret(long newSize, Arena arena, Consumer<MemorySegment> cleanup) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "reinterpret");
-        Objects.requireNonNull(arena);
-        return reinterpretInternal(newSize, arena.scope(), null);
+    public MemorySegment reinterpret(long newSize, Scope scope, Consumer<MemorySegment> cleanup) {
+        return reinterpretInternal(Reflection.getCallerClass(), newSize, scope, null);
     }
 
     @Override
     @CallerSensitive
     public MemorySegment reinterpret(long newSize) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "reinterpret");
-        return reinterpretInternal(newSize, scope, null);
+        return reinterpretInternal(Reflection.getCallerClass(), newSize, scope, null);
     }
 
     @Override
     @CallerSensitive
-    public MemorySegment reinterpret(Arena arena, Consumer<MemorySegment> cleanup) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "reinterpret");
-        Objects.requireNonNull(arena);
-        return reinterpretInternal(byteSize(), arena.scope(), cleanup);
+    public MemorySegment reinterpret(Scope scope, Consumer<MemorySegment> cleanup) {
+        return reinterpretInternal(Reflection.getCallerClass(), byteSize(), scope, cleanup);
     }
 
-    public MemorySegment reinterpretInternal(long newSize, Scope scope, Consumer<MemorySegment> cleanup) {
+    public MemorySegment reinterpretInternal(Class<?> callerClass, long newSize, Scope scope, Consumer<MemorySegment> cleanup) {
+        Reflection.ensureNativeAccess(callerClass, MemorySegment.class, "reinterpret");
+        Objects.requireNonNull(scope);
         if (newSize < 0) {
             throw new IllegalArgumentException("newSize < 0");
         }

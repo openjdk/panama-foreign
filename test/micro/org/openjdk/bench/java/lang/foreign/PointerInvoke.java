@@ -87,7 +87,7 @@ public class PointerInvoke extends CLayouts {
 
     @Benchmark
     public long ptr_to_long_new_segment() throws Throwable {
-        MemorySegment newSegment = segment.reinterpret(100, arena, null);
+        MemorySegment newSegment = segment.reinterpret(100, arena.scope(), null);
         return (long)F_PTR_LONG.invokeExact(newSegment);
     }
 
@@ -103,7 +103,7 @@ public class PointerInvoke extends CLayouts {
 
     @Benchmark
     public long ptr_to_ptr_new_segment() throws Throwable {
-        MemorySegment newSegment = segment.reinterpret(100, arena, null);
+        MemorySegment newSegment = segment.reinterpret(100, arena.scope(), null);
         return ((MemorySegment)F_PTR_PTR.invokeExact(newSegment)).address();
     }
 }

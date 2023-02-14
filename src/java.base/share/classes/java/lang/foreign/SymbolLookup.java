@@ -161,12 +161,12 @@ public interface SymbolLookup {
         ClassLoader loader = caller != null ?
                 caller.getClassLoader() :
                 ClassLoader.getSystemClassLoader();
-        Arena loaderScope;// builtin loaders never go away
+        Arena loaderArena;// builtin loaders never go away
         if ((loader == null || loader instanceof BuiltinClassLoader)) {
-            loaderScope = Arena.global();
+            loaderArena = Arena.global();
         } else {
             MemorySessionImpl session = MemorySessionImpl.heapSession(loader);
-            loaderScope = session.asArena();
+            loaderArena = session.asArena();
         }
         return name -> {
             Objects.requireNonNull(name);
@@ -176,7 +176,7 @@ public interface SymbolLookup {
             return addr == 0L ?
                     Optional.empty() :
                     Optional.of(MemorySegment.ofAddress(addr)
-                                    .reinterpret(loaderScope, null));
+                                    .reinterpret(loaderArena.scope(), null));
         };
     }
 
@@ -239,9 +239,9 @@ public interface SymbolLookup {
         return libraryLookup(path, RawNativeLibraries::load, arena);
     }
 
-    private static <Z> SymbolLookup libraryLookup(Z libDesc, BiFunction<RawNativeLibraries, Z, NativeLibrary> loadLibraryFunc, Arena libScope) {
+    private static <Z> SymbolLookup libraryLookup(Z libDesc, BiFunction<RawNativeLibraries, Z, NativeLibrary> loadLibraryFunc, Arena libArena) {
         Objects.requireNonNull(libDesc);
-        Objects.requireNonNull(libScope);
+        Objects.requireNonNull(libArena);
         // attempt to load native library from path or name
         RawNativeLibraries nativeLibraries = RawNativeLibraries.newInstance(MethodHandles.lookup());
         NativeLibrary library = loadLibraryFunc.apply(nativeLibraries, libDesc);
@@ -249,7 +249,7 @@ public interface SymbolLookup {
             throw new IllegalArgumentException("Cannot open library: " + libDesc);
         }
         // register hook to unload library when 'libScope' becomes not alive
-        MemorySessionImpl.toMemorySession(libScope).addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
+        MemorySessionImpl.toMemorySession(libArena).addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
             @Override
             public void cleanup() {
                 nativeLibraries.unload(library);
@@ -261,7 +261,7 @@ public interface SymbolLookup {
             return addr == 0L ?
                     Optional.empty() :
                     Optional.of(MemorySegment.ofAddress(addr)
-                            .reinterpret(libScope, null));
+                            .reinterpret(libArena.scope(), null));
         };
     }
 }
