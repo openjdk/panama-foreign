@@ -112,10 +112,5 @@ public sealed class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
         public void force() {
             // do nothing
         }
-
-        @Override
-        ByteBuffer makeByteBuffer() {
-            return ByteBuffer.allocateDirect(0);
-        }
     }
 }

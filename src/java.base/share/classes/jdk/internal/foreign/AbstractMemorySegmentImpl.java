@@ -562,6 +562,38 @@ public abstract sealed class AbstractMemorySegmentImpl
     }
 
     @ForceInline
+    public static void copy(MemorySegment srcSegment, ValueLayout srcElementLayout, long srcOffset,
+                            MemorySegment dstSegment, ValueLayout dstElementLayout, long dstOffset,
+                            long elementCount) {
+
+        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
+        AbstractMemorySegmentImpl dstImpl = (AbstractMemorySegmentImpl)dstSegment;
+        if (srcElementLayout.byteSize() != dstElementLayout.byteSize()) {
+            throw new IllegalArgumentException("Source and destination layouts must have same size");
+        }
+        Utils.checkElementAlignment(srcElementLayout, "Source layout alignment greater than its size");
+        Utils.checkElementAlignment(dstElementLayout, "Destination layout alignment greater than its size");
+        if (!srcImpl.isAlignedForElement(srcOffset, srcElementLayout)) {
+            throw new IllegalArgumentException("Source segment incompatible with alignment constraints");
+        }
+        if (!dstImpl.isAlignedForElement(dstOffset, dstElementLayout)) {
+            throw new IllegalArgumentException("Destination segment incompatible with alignment constraints");
+        }
+        long size = elementCount * srcElementLayout.byteSize();
+        srcImpl.checkAccess(srcOffset, size, true);
+        dstImpl.checkAccess(dstOffset, size, false);
+        if (srcElementLayout.byteSize() == 1 || srcElementLayout.order() == dstElementLayout.order()) {
+            ScopedMemoryAccess.getScopedMemoryAccess().copyMemory(srcImpl.sessionImpl(), dstImpl.sessionImpl(),
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size);
+        } else {
+            ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(srcImpl.sessionImpl(), dstImpl.sessionImpl(),
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size, srcElementLayout.byteSize());
+        }
+    }
+
+    @ForceInline
     public static void copy(MemorySegment srcSegment, ValueLayout srcLayout, long srcOffset,
                             Object dstArray, int dstIndex,
                             int elementCount) {

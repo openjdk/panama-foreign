@@ -588,10 +588,6 @@ public class TestByteBuffer {
             segment.load();
             segment.isLoaded();
             segment.unload();
-            ByteBuffer byteBuffer = segment.asByteBuffer();
-            assertEquals(byteBuffer.capacity(), segment.byteSize());
-            assertFalse(byteBuffer.isReadOnly());
-            assertTrue(byteBuffer.isDirect());
         }
         //RO
         try (Arena arena = Arena.ofConfined();
@@ -604,10 +600,6 @@ public class TestByteBuffer {
             segment.load();
             segment.isLoaded();
             segment.unload();
-            ByteBuffer byteBuffer = segment.asByteBuffer();
-            assertEquals(byteBuffer.capacity(), segment.byteSize());
-            assertTrue(byteBuffer.isReadOnly());
-            assertTrue(byteBuffer.isDirect());
         }
     }
 
