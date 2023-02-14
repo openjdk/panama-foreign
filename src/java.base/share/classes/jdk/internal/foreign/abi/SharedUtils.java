@@ -28,6 +28,7 @@ import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.CABI;
+import jdk.internal.foreign.abi.AbstractLinker.UpcallStubFactory;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.windows.WindowsAArch64Linker;
@@ -177,6 +178,25 @@ public final class SharedUtils {
         }
 
         return targetType;
+    }
+
+    public static UpcallStubFactory arrangeUpcallHelper(MethodType targetType, boolean isInMemoryReturn, boolean dropReturn,
+                                                        ABIDescriptor abi, CallingSequence callingSequence) {
+        if (isInMemoryReturn) {
+            targetType = computeUpcallIMRType(targetType, dropReturn);
+        }
+
+        UpcallStubFactory factory = UpcallLinker.makeFactory(targetType, abi, callingSequence);
+
+        if (isInMemoryReturn) {
+            final UpcallStubFactory finalFactory = factory;
+            factory = (target, scope) -> {
+                target = adaptUpcallForIMR(target, dropReturn);
+                return finalFactory.makeStub(target, scope);
+            };
+        }
+
+        return factory;
     }
 
     private static MemorySegment bufferCopy(MemorySegment dest, MemorySegment buffer) {

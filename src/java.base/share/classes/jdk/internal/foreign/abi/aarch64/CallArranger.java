@@ -25,14 +25,11 @@
  */
 package jdk.internal.foreign.abi.aarch64;
 
-import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
-import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import jdk.internal.foreign.abi.ABIDescriptor;
-import jdk.internal.foreign.abi.AbstractLinker;
 import jdk.internal.foreign.abi.AbstractLinker.UpcallStubFactory;
 import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.CallingSequence;
@@ -195,20 +192,9 @@ public abstract class CallArranger {
     public UpcallStubFactory arrangeUpcall(MethodType mt, FunctionDescriptor cDesc,
                                                           LinkerOptions options) {
         Bindings bindings = getBindings(mt, cDesc, true, options);
-
-        MethodType targetType = mt;
-        if (bindings.isInMemoryReturn) {
-            targetType = SharedUtils.computeUpcallIMRType(mt, true /* drop return, since we don't have bindings for it */);
-        }
-
-        UpcallStubFactory factory = UpcallLinker.makeFactory(targetType, abiDescriptor(), bindings.callingSequence);
-
-        return (target, scope) -> {
-            if (bindings.isInMemoryReturn) {
-                target = SharedUtils.adaptUpcallForIMR(target, true /* drop return, since we don't have bindings for it */);
-            }
-            return factory.makeStub(target, scope);
-        };
+        final boolean dropReturn = true; /* drop return, since we don't have bindings for it */
+        return SharedUtils.arrangeUpcallHelper(mt, bindings.isInMemoryReturn, dropReturn, abiDescriptor(),
+                bindings.callingSequence);
     }
 
     private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {

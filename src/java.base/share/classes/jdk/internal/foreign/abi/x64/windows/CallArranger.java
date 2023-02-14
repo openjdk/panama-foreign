@@ -133,20 +133,9 @@ public class CallArranger {
 
     public static UpcallStubFactory arrangeUpcall(MethodType mt, FunctionDescriptor cDesc, LinkerOptions options) {
         Bindings bindings = getBindings(mt, cDesc, true, options);
-
-        MethodType targetType = mt;
-        if (bindings.isInMemoryReturn) {
-            targetType = SharedUtils.computeUpcallIMRType(mt, false /* need the return value as well */);
-        }
-
-        UpcallStubFactory factory = UpcallLinker.makeFactory(targetType, CWindows, bindings.callingSequence);
-
-        return (target, scope) -> {
-            if (bindings.isInMemoryReturn) {
-                target = SharedUtils.adaptUpcallForIMR(target, false /* need the return value as well */);
-            }
-            return factory.makeStub(target, scope);
-        };
+        final boolean dropReturn = false; /* need the return value as well */
+        return SharedUtils.arrangeUpcallHelper(mt, bindings.isInMemoryReturn, dropReturn, CWindows,
+                bindings.callingSequence);
     }
 
     private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
