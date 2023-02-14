@@ -110,9 +110,9 @@ public final class ValueLayouts {
         public boolean equals(Object other) {
             return this == other ||
                     other instanceof AbstractValueLayout<?> otherValue &&
-                    super.equals(other) &&
-                    carrier.equals(otherValue.carrier) &&
-                    order.equals(otherValue.order);
+                            super.equals(other) &&
+                            carrier.equals(otherValue.carrier) &&
+                            order.equals(otherValue.order);
         }
 
         public final VarHandle arrayElementVarHandle(int... shape) {

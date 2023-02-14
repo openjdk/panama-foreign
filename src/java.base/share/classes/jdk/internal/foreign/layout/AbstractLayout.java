@@ -110,10 +110,6 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
      */
     @Override
     public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-
         return other instanceof AbstractLayout<?> otherLayout &&
                 name.equals(otherLayout.name) &&
                 byteSize == otherLayout.byteSize &&

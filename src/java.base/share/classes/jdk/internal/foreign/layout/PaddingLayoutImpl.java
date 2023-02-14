@@ -46,16 +46,10 @@ public final class PaddingLayoutImpl extends AbstractLayout<PaddingLayoutImpl> i
 
     @Override
     public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!super.equals(other)) {
-            return false;
-        }
-        if (!(other instanceof PaddingLayoutImpl p)) {
-            return false;
-        }
-        return bitSize() == p.bitSize();
+        return this == other ||
+                other instanceof PaddingLayoutImpl otherPadding &&
+                super.equals(other) &&
+                bitSize() == otherPadding.bitSize();
     }
 
     @Override
