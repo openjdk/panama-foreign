@@ -122,8 +122,8 @@ public abstract sealed class AbstractMemorySegmentImpl
 
     @Override
     @CallerSensitive
-    public MemorySegment reinterpret(long newSize, Scope scope, Consumer<MemorySegment> cleanup) {
-        return reinterpretInternal(Reflection.getCallerClass(), newSize, scope, null);
+    public MemorySegment reinterpret(long newSize, Scope newScope, Consumer<MemorySegment> cleanup) {
+        return reinterpretInternal(Reflection.getCallerClass(), newSize, newScope, null);
     }
 
     @Override
@@ -134,8 +134,8 @@ public abstract sealed class AbstractMemorySegmentImpl
 
     @Override
     @CallerSensitive
-    public MemorySegment reinterpret(Scope scope, Consumer<MemorySegment> cleanup) {
-        return reinterpretInternal(Reflection.getCallerClass(), byteSize(), scope, cleanup);
+    public MemorySegment reinterpret(Scope newScope, Consumer<MemorySegment> cleanup) {
+        return reinterpretInternal(Reflection.getCallerClass(), byteSize(), newScope, cleanup);
     }
 
     public MemorySegment reinterpretInternal(Class<?> callerClass, long newSize, Scope scope, Consumer<MemorySegment> cleanup) {

@@ -381,9 +381,9 @@ import jdk.internal.vm.annotation.ForceInline;
  * {@snippet lang = java:
  * MemorySegment foreign = null;
  * try (Arena arena = Arena.ofConfined()) {
- *       foreign = someSegment.get(ValueLayout.ADDRESS, 0)   // size = 0, scope = always alive
+ *       foreign = someSegment.get(ValueLayout.ADDRESS, 0)           // size = 0, scope = always alive
  *                            .reinterpret(4, arena.scope(), null);  // size = 4, scope = arena.scope()
- *       int x = foreign.get(ValueLayout.JAVA_INT, 0);       // ok
+ *       int x = foreign.get(ValueLayout.JAVA_INT, 0);               // ok
  * }
  * int x = foreign.get(ValueLayout.JAVA_INT, 0); // throws IllegalStateException
  *}
@@ -395,8 +395,8 @@ import jdk.internal.vm.annotation.ForceInline;
  * with native segments with size set to {@code T.byteSize()}:
  *
  * {@snippet lang = java:
- * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS.withTargetLayout(JAVA_INT), 0); // wrap address into segment (size = 4)
- * int x = foreign.get(ValueLayout.JAVA_INT, 0); //ok
+ * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS.withTargetLayout(JAVA_INT), 0); // size = 4
+ * int x = foreign.get(ValueLayout.JAVA_INT, 0);                                               // ok
  *}
  * <p>
  * Which approach is taken largely depends on the information that a client has available when obtaining a memory segment
@@ -597,7 +597,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
-     * @param scope the scope of the returned segment.
+     * @param newScope the scope of the returned segment.
      * @param cleanup the cleanup action that should be executed when the provided arena is closed (can be {@code null}).
      * @return a new memory segment with unbounded size.
      * @throws IllegalArgumentException if {@code newSize < 0}.
@@ -606,7 +606,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalCallerException If the caller is in a module that does not have native access enabled.
      */
     @CallerSensitive
-    MemorySegment reinterpret(Scope scope, Consumer<MemorySegment> cleanup);
+    MemorySegment reinterpret(Scope newScope, Consumer<MemorySegment> cleanup);
 
     /**
      * Returns a new segment that has the same address as this segment, but with new size and its scope set to
@@ -631,7 +631,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param newSize the size of the returned segment.
-     * @param scope the scope of the returned segment.
+     * @param newScope the scope of the returned segment.
      * @param cleanup the cleanup action that should be executed when the provided arena is closed (can be {@code null}).
      * @return a new segment that has the same address as this segment, but with new size and its scope set to
      * that of the provided arena.
@@ -641,7 +641,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalCallerException If the caller is in a module that does not have native access enabled.
      */
     @CallerSensitive
-    MemorySegment reinterpret(long newSize, Scope scope, Consumer<MemorySegment> cleanup);
+    MemorySegment reinterpret(long newSize, Scope newScope, Consumer<MemorySegment> cleanup);
 
     /**
      * {@return {@code true}, if this segment is read-only}
