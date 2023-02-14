@@ -37,7 +37,4 @@ public class JavaLayouts {
     static final VarHandle VH_INT_UNALIGNED = JAVA_INT_UNALIGNED.arrayElementVarHandle();
 
     static final VarHandle VH_INT = JAVA_INT.arrayElementVarHandle();
-
-    static final ValueLayout.OfAddress UNBOUNDED_ADDRESS = ValueLayout.ADDRESS.withTargetLayout(
-            MemoryLayout.sequenceLayout(ValueLayout.JAVA_BYTE));
 }

@@ -28,15 +28,11 @@
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestClassLoaderFindNative
  */
 
-import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SymbolLookup;
-import java.lang.foreign.ValueLayout;
 import org.testng.annotations.Test;
 
-import static java.lang.foreign.ValueLayout.ADDRESS;
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
-import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static org.testng.Assert.*;
 
 // FYI this test is run on 64-bit platforms only for now,

@@ -125,19 +125,14 @@ public abstract sealed class AbstractMemorySegmentImpl
     public MemorySegment reinterpret(long newSize, Arena arena, Consumer<MemorySegment> cleanup) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "reinterpret");
         Objects.requireNonNull(arena);
-        if (!isNative()) throw new UnsupportedOperationException("Not a native segment");
-        Runnable action = cleanup != null ?
-                () -> cleanup.accept(MemorySegment.ofAddress(address())) :
-                null;
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address(), newSize, (MemorySessionImpl)arena.scope(), action);
+        return reinterpretInternal(newSize, arena.scope(), null);
     }
 
     @Override
     @CallerSensitive
     public MemorySegment reinterpret(long newSize) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "reinterpret");
-        if (!isNative()) throw new UnsupportedOperationException("Not a native segment");
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address(), newSize);
+        return reinterpretInternal(newSize, scope, null);
     }
 
     @Override
@@ -145,11 +140,19 @@ public abstract sealed class AbstractMemorySegmentImpl
     public MemorySegment reinterpret(Arena arena, Consumer<MemorySegment> cleanup) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "reinterpret");
         Objects.requireNonNull(arena);
+        return reinterpretInternal(byteSize(), arena.scope(), cleanup);
+    }
+
+    public MemorySegment reinterpretInternal(long newSize, Scope scope, Consumer<MemorySegment> cleanup) {
+        if (newSize < 0) {
+            throw new IllegalArgumentException("newSize < 0");
+        }
         if (!isNative()) throw new UnsupportedOperationException("Not a native segment");
         Runnable action = cleanup != null ?
                 () -> cleanup.accept(MemorySegment.ofAddress(address())) :
                 null;
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address(), byteSize(), (MemorySessionImpl)arena.scope(), action);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address(), newSize,
+                (MemorySessionImpl)scope, action);
     }
 
     private AbstractMemorySegmentImpl asSliceNoCheck(long offset, long newSize) {

@@ -23,7 +23,6 @@
 package org.openjdk.bench.java.lang.foreign;
 
 import java.lang.foreign.Arena;
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 
 import org.openjdk.jmh.annotations.Benchmark;
@@ -37,7 +36,6 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 
-import java.lang.foreign.ValueLayout;
 import java.util.concurrent.TimeUnit;
 
 @BenchmarkMode(Mode.AverageTime)
@@ -63,8 +61,8 @@ public class LoopOverOfAddress extends JavaLayouts {
     public long segment_loop_addr_size() {
         long res = 0;
         for (int i = 0; i < ITERATIONS; i++) {
-            res += MemorySegment.ofAddress(UNBOUNDED_ADDRESS, i)
-                    .asSlice(0, i % 100).address();
+            res += MemorySegment.ofAddress(i)
+                    .reinterpret(i % 100).address();
         }
         return res;
     }
@@ -73,9 +71,8 @@ public class LoopOverOfAddress extends JavaLayouts {
     public long segment_loop_addr_size_session() {
         long res = 0;
         for (int i = 0; i < ITERATIONS; i++) {
-            res += MemorySegment.ofAddress(UNBOUNDED_ADDRESS, i)
-                    .asSlice(0, i % 100)
-                    .asAllocatedFrom(Arena.global(), null).address();
+            res += MemorySegment.ofAddress(i)
+                    .reinterpret(i % 100, Arena.global(), null).address();
         }
         return res;
     }

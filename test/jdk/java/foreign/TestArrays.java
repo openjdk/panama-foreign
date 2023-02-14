@@ -39,7 +39,6 @@ import java.util.function.Function;
 
 import org.testng.annotations.*;
 
-import static java.lang.foreign.ValueLayout.ADDRESS;
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static java.lang.foreign.ValueLayout.JAVA_CHAR;
 import static java.lang.foreign.ValueLayout.JAVA_DOUBLE;
@@ -117,8 +116,7 @@ public class TestArrays {
     public void testTooBigForArray(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
         MemoryLayout seq = MemoryLayout.sequenceLayout((Integer.MAX_VALUE * layout.byteSize()) + 1, layout);
         //do not really allocate here, as it's way too much memory
-        MemorySegment segment = MemorySegment.NULL.reinterpret(seq.byteSize())
-                .asSlice(0, seq);
+        MemorySegment segment = MemorySegment.NULL.reinterpret(seq.byteSize());
         arrayFactory.apply(segment);
     }
 

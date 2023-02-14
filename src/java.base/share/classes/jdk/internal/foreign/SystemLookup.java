@@ -26,24 +26,19 @@
 package jdk.internal.foreign;
 
 import java.lang.foreign.Arena;
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SymbolLookup;
-import java.lang.foreign.ValueLayout;
-import java.lang.foreign.ValueLayout.OfAddress;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import jdk.internal.loader.NativeLibrary;
 import jdk.internal.loader.RawNativeLibraries;
 import sun.security.action.GetPropertyAction;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
-import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
 public final class SystemLookup implements SymbolLookup {
 

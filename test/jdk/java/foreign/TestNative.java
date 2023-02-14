@@ -192,6 +192,15 @@ public class TestNative extends NativeTestHelper {
         freeMemory(addr);
     }
 
+    @Test
+    public void testBadResize() {
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment segment = arena.allocate(4, 1);
+            assertThrows(IllegalArgumentException.class, () -> segment.reinterpret(-1));
+            assertThrows(IllegalArgumentException.class, () -> segment.reinterpret(-1, Arena.ofAuto(), null));
+        }
+    }
+
     static {
         System.loadLibrary("NativeAccess");
     }
