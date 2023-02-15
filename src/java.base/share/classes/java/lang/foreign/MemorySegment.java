@@ -348,7 +348,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * a pointer to a region containing a single {@code char} value, or to a region containing an array of {@code char} values,
  * where the size of the array might be provided in a separate parameter. The size of the array is not readily apparent
  * to the code calling the foreign function and hoping to use its result. In addition to having no insight
- * into the size of the region of memory backing a pointer returned from a foreign function, also has no insight
+ * into the size of the region of memory backing a pointer returned from a foreign function, it also has no insight
  * into the lifetime intended for said region of memory by the foreign function that allocated it.
  * <p>
  * The {@code MemorySegment} API uses <em>zero-length memory segments</em> to represent:
