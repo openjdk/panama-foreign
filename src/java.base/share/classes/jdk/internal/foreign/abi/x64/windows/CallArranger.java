@@ -41,6 +41,7 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.List;
@@ -276,9 +277,10 @@ public class CallArranger {
                     break;
                 }
                 case POINTER: {
+                    ValueLayout.OfAddress addressLayout = (ValueLayout.OfAddress)layout;
                     VMStorage storage = storageCalculator.nextStorage(StorageType.INTEGER);
                     bindings.vmLoad(storage, long.class)
-                            .boxAddressRaw(Utils.pointeeSize(layout), Utils.pointeeAlign(layout));
+                            .boxAddressRaw(Utils.pointeeByteSize(addressLayout), Utils.pointeeByteAlign(addressLayout));
                     break;
                 }
                 case INTEGER: {

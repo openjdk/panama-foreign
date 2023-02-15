@@ -26,7 +26,6 @@
 
 package jdk.internal.foreign;
 
-import java.lang.foreign.Arena;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
@@ -40,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
+
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.vm.annotation.ForceInline;
@@ -54,16 +53,14 @@ public final class Utils {
 
     public static final boolean IS_WINDOWS = privilegedGetProperty("os.name").startsWith("Windows");
 
+    // Suppresses default constructor, ensuring non-instantiability.
     private Utils() {}
 
     private static final MethodHandle BYTE_TO_BOOL;
     private static final MethodHandle BOOL_TO_BYTE;
     private static final MethodHandle ADDRESS_TO_LONG;
     private static final MethodHandle LONG_TO_ADDRESS;
-    public static final MethodHandle MH_BITS_TO_BYTES_OR_THROW_FOR_OFFSET;
-
-    public static final Supplier<RuntimeException> BITS_TO_BYTES_THROW_OFFSET
-            = () -> new UnsupportedOperationException("Cannot compute byte offset; bit offset is not a multiple of 8");
+    public static final MethodHandle MH_BITS_TO_BYTES_FOR_OFFSET;
 
     static {
         try {
@@ -76,11 +73,9 @@ public final class Utils {
                     MethodType.methodType(long.class, MemorySegment.class));
             LONG_TO_ADDRESS = lookup.findStatic(Utils.class, "longToAddress",
                     MethodType.methodType(MemorySegment.class, long.class, long.class, long.class));
-            MH_BITS_TO_BYTES_OR_THROW_FOR_OFFSET = MethodHandles.insertArguments(
-                    lookup.findStatic(Utils.class, "bitsToBytesOrThrow",
-                            MethodType.methodType(long.class, long.class, Supplier.class)),
-                    1,
-                    BITS_TO_BYTES_THROW_OFFSET);
+            MH_BITS_TO_BYTES_FOR_OFFSET =
+                    lookup.findStatic(Utils.class, "bitsToBytes",
+                            MethodType.methodType(long.class, long.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -95,12 +90,9 @@ public final class Utils {
         return ms.asSlice(alignUp(offset, alignment) - offset);
     }
 
-    public static long bitsToBytesOrThrow(long bits, Supplier<RuntimeException> exFactory) {
-        if (Utils.isAligned(bits, 8)) {
-            return bits / 8;
-        } else {
-            throw exFactory.get();
-        }
+    public static long bitsToBytes(long bits) {
+        // We are always bit-aligned at a byte boundary
+        return bits / Byte.SIZE;
     }
 
     public static VarHandle makeSegmentViewVarHandle(ValueLayout layout) {
@@ -115,8 +107,8 @@ public final class Utils {
         Class<?> baseCarrier = layout.carrier();
         if (layout.carrier() == MemorySegment.class) {
             baseCarrier = switch ((int) ValueLayout.ADDRESS.byteSize()) {
-                case 8 -> long.class;
-                case 4 -> int.class;
+                case Long.BYTES -> long.class;
+                case Integer.BYTES -> int.class;
                 default -> throw new UnsupportedOperationException("Unsupported address layout");
             };
         } else if (layout.carrier() == boolean.class) {
@@ -128,11 +120,11 @@ public final class Utils {
 
         if (layout.carrier() == boolean.class) {
             handle = MethodHandles.filterValue(handle, BOOL_TO_BYTE, BYTE_TO_BOOL);
-        } else if (layout instanceof ValueLayout.OfAddress) {
+        } else if (layout instanceof ValueLayout.OfAddress addressLayout) {
             handle = MethodHandles.filterValue(handle,
                     ADDRESS_TO_LONG,
                     MethodHandles.insertArguments(LONG_TO_ADDRESS, 1,
-                            pointeeSize(layout), pointeeAlign(layout)));
+                            pointeeByteSize(addressLayout), pointeeByteAlign(addressLayout)));
         }
         return VarHandleCache.put(layout, handle);
     }
@@ -180,25 +172,21 @@ public final class Utils {
 
     @ForceInline
     public static void checkElementAlignment(MemoryLayout layout, String msg) {
-        if (layout.bitAlignment() > layout.bitSize()) {
+        if (layout.byteAlignment() > layout.byteSize()) {
             throw new IllegalArgumentException(msg);
         }
     }
 
-    public static long pointeeSize(MemoryLayout layout) {
-        if (layout instanceof ValueLayout.OfAddress addressLayout) {
-            return addressLayout.targetLayout().map(MemoryLayout::byteSize).orElse(0L);
-        } else {
-            throw new UnsupportedOperationException();
-        }
+    public static long pointeeByteSize(ValueLayout.OfAddress addressLayout) {
+        return addressLayout.targetLayout()
+                .map(MemoryLayout::byteSize)
+                .orElse(0L);
     }
 
-    public static long pointeeAlign(MemoryLayout layout) {
-        if (layout instanceof ValueLayout.OfAddress addressLayout) {
-            return addressLayout.targetLayout().map(MemoryLayout::byteAlignment).orElse(1L);
-        } else {
-            throw new UnsupportedOperationException();
-        }
+    public static long pointeeByteAlign(ValueLayout.OfAddress addressLayout) {
+        return addressLayout.targetLayout()
+                .map(MemoryLayout::byteAlignment)
+                .orElse(1L);
     }
 
     public static void checkAllocationSizeAndAlign(long byteSize, long byteAlignment) {
@@ -225,7 +213,8 @@ public final class Utils {
     }
 
     /**
-     * {@return return a struct layout constructed from the given elements, with padding computed automatically}
+     * {@return return a struct layout constructed from the given elements, with padding
+     * computed automatically so that they are naturally aligned}.
      *
      * @param elements the structs' fields
      */

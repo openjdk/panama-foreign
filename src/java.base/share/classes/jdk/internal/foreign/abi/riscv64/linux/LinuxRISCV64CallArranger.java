@@ -42,6 +42,7 @@ import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.VMStorage;
 import jdk.internal.foreign.Utils;
 
+import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.List;
@@ -393,9 +394,10 @@ public class LinuxRISCV64CallArranger {
                     bindings.vmLoad(storage, carrier);
                 }
                 case POINTER -> {
+                    ValueLayout.OfAddress addressLayout = (ValueLayout.OfAddress)layout;
                     VMStorage storage = storageCalculator.getStorage(StorageType.INTEGER);
                     bindings.vmLoad(storage, long.class)
-                            .boxAddressRaw(Utils.pointeeSize(layout), Utils.pointeeAlign(layout));
+                            .boxAddressRaw(Utils.pointeeByteSize(addressLayout), Utils.pointeeByteAlign(addressLayout));
                 }
                 case STRUCT_REGISTER_X -> {
                     assert carrier == MemorySegment.class;
