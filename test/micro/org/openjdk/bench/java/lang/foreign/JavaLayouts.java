@@ -23,7 +23,6 @@
 
 package org.openjdk.bench.java.lang.foreign;
 
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
 
