@@ -49,7 +49,9 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
 
     public final L withName(String name) {
         Objects.requireNonNull(name);
-        return dup(bitAlignment(), Optional.of(name));
+        return name().filter(name::equals).isPresent()
+                ? self()
+                : dup(bitAlignment(), Optional.of(name));
     }
 
     public final Optional<String> name() {
@@ -57,7 +59,9 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
     }
 
     public final L withBitAlignment(long bitAlignment) {
-        return dup(bitAlignment, name);
+        return bitAlignment == bitAlignment()
+                ? self()
+                : dup(bitAlignment, name);
     }
 
     public final long bitAlignment() {
@@ -140,6 +144,11 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
             throw new IllegalArgumentException("Invalid alignment: " + value);
         }
         return value;
+    }
+
+    @SuppressWarnings("unchecked")
+    final L self() {
+        return (L) this;
     }
 
 }
