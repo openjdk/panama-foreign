@@ -198,7 +198,7 @@
  * Some methods in this package are considered <em>restricted</em>. Restricted methods are typically used to bind native
  * foreign data and/or functions to first-class Java API elements which can then be used directly by clients. For instance
  * the restricted method {@link java.lang.foreign.MemorySegment#reinterpret(long)} ()}
- * can be used to create a fresh segment with same address and temporal bounds,
+ * can be used to create a fresh segment with the same address and temporal bounds,
  * but with the provided size. This can be useful to resize memory segments obtained when interacting with native functions.
  * <p>
  * Binding foreign data and/or functions is generally unsafe and, if done incorrectly, can result in VM crashes,
