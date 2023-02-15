@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2023, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -73,9 +73,8 @@ public final class Utils {
                     MethodType.methodType(long.class, MemorySegment.class));
             LONG_TO_ADDRESS = lookup.findStatic(Utils.class, "longToAddress",
                     MethodType.methodType(MemorySegment.class, long.class, long.class, long.class));
-            MH_BITS_TO_BYTES_FOR_OFFSET =
-                    lookup.findStatic(Utils.class, "bitsToBytes",
-                            MethodType.methodType(long.class, long.class));
+            MH_BITS_TO_BYTES_FOR_OFFSET = lookup.findStatic(Utils.class, "bitsToBytes",
+                    MethodType.methodType(long.class, long.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
