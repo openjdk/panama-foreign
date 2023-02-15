@@ -27,7 +27,9 @@
 package java.lang.foreign;
 
 import java.io.UncheckedIOException;
+import java.lang.foreign.Linker.Option;
 import java.lang.foreign.ValueLayout.OfAddress;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -345,22 +347,28 @@ import jdk.internal.vm.annotation.ForceInline;
  * the region, stored in the pointer, is available. For example, a C function with return type {@code char*} might return
  * a pointer to a region containing a single {@code char} value, or to a region containing an array of {@code char} values,
  * where the size of the array might be provided in a separate parameter. The size of the array is not readily apparent
- * to the code calling the foreign function and hoping to use its result.
- * <p>
- * The {@link Linker} represents a pointer returned from a foreign function with a <em>zero-length memory segment</em>.
- * The address of the segment is the address stored in the pointer. The size of the segment is zero. Similarly, when a
- * client reads an <em>address</em> from a memory segment, a zero-length memory segment is returned.
- * <p>
- * Since a zero-length segment features trivial spatial bounds, any attempt to access these segments will fail with
- * {@link IndexOutOfBoundsException}. This is a crucial safety feature: as these segments are associated with a region
- * of memory whose size is not known, any access operations involving these segments cannot be validated.
- * In effect, a zero-length memory segment <em>wraps</em> an address, and it cannot be used without explicit intent.
- * <p>
- * Zero-length memory segments obtained when interacting with foreign functions are associated with
- * a fresh scope that is always alive. This is because the Java runtime, in addition to having no insight
+ * to the code calling the foreign function and hoping to use its result. In addition to having no insight
  * into the size of the region of memory backing a pointer returned from a foreign function, also has no insight
- * into the lifetime intended for said region of memory by the foreign function that allocated it. Thus, zero-length
- * memory segments cannot be accessed directly, but can be passed, opaquely, to other pointer-accepting foreign functions.
+ * into the lifetime intended for said region of memory by the foreign function that allocated it.
+ * <p>
+ * The {@code MemorySegment} API uses <em>zero-length memory segment</em> to represent:
+ * <ul>
+ *     <li>pointers returned from a foreign function;</li>
+ *     <li>pointers passed by a foreign function to an
+ *     {@linkplain Linker#upcallStub(MethodHandle, FunctionDescriptor, Arena, Option...) upcall stub}; and</li>
+ *     <li>pointers {@linkplain MemorySegment#get(OfAddress, long) read} from a memory segment.</li>
+ * </ul>
+ * The address of the zero-length segment is the address stored in the pointer. The spatial and temporal bounds of the
+ * zero-length segment are as follows:
+ * <ul>
+ *     <li>The size of the segment is zero. any attempt to access these segments will fail with {@link IndexOutOfBoundsException}.
+ *     This is a crucial safety feature: as these segments are associated with a region
+ *     of memory whose size is not known, any access operations involving these segments cannot be validated.
+ *     In effect, a zero-length memory segment <em>wraps</em> an address, and it cannot be used without explicit intent
+ *     (see below);</li>
+ *     <li>The segment is associated with a fresh scope that is always alive. Thus, while zero-length
+ *     memory segments cannot be accessed directly, they can be passed, opaquely, to other pointer-accepting foreign functions.</li>
+ * </ul>
  * <p>
  * To work with native zero-length memory segments, clients have several options, all of which are <em>unsafe</em>.
  * <p>
@@ -405,8 +413,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * size is known statically, using an address layout with the correct target layout might be preferable.
  * In other instances, however, there will be no, or little information as to what spatial and/or temporal bounds should
  * be associated with a given native pointer. In these cases using an unbounded address layout might be preferable.
- *
- *
+ * <p>
  * All the methods which can be used to manipulate zero-length memory segments
  * ({@link #reinterpret(long)}, {@link #reinterpret(Scope, Consumer)}, {@link #reinterpret(long, Scope, Consumer)} and
  * {@link ValueLayout.OfAddress#withTargetLayout(MemoryLayout)}) are
@@ -1194,11 +1201,6 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Creates a zero-length native segment from the given {@linkplain #address() address value}.
      * The returned segment is always accessible, from any thread.
-     * <p>
-     * This is equivalent to the following code:
-     * {@snippet lang = java:
-     * ofAddress(address, 0);
-     *}
      * <p>
      * On 32-bit platforms, the given address value will be normalized such that the
      * highest-order ("leftmost") 32 bits of the {@link MemorySegment#address() address}
