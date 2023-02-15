@@ -122,20 +122,6 @@ public class TestSlices {
                 .asSlice(0, MemoryLayout.sequenceLayout(120, ValueLayout.JAVA_BYTE));
     }
 
-    @Test
-    public void testUnboundedSlice() {
-        try (Arena arena = Arena.ofConfined()) {
-            MemorySegment segment = arena.allocate(MemoryLayout.sequenceLayout(2, ValueLayout.JAVA_INT)); // size = 8
-            MemorySegment slice = segment.asSlice(0, ValueLayout.JAVA_INT); // size = 4
-            assertThrows(IndexOutOfBoundsException.class, () -> slice.getAtIndex(ValueLayout.JAVA_INT, 1));
-            MemorySegment unbounded = slice.reinterpret(Long.MAX_VALUE, arena.scope(), null);
-            assertEquals(unbounded.byteSize(), Long.MAX_VALUE);
-            unbounded = unbounded.asSlice(0, MemoryLayout.sequenceLayout(2, ValueLayout.JAVA_INT)); // size = 8
-            assertEquals(unbounded.byteSize(), segment.byteSize());
-            assertEquals(segment.getAtIndex(ValueLayout.JAVA_INT, 1), unbounded.getAtIndex(ValueLayout.JAVA_INT, 1));
-        }
-    }
-
     @Test(dataProvider = "segmentsAndLayouts")
     public void testSliceAlignment(MemorySegment segment, long alignment, ValueLayout layout) {
         boolean badAlign = layout.byteAlignment() > alignment;

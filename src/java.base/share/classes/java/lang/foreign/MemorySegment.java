@@ -382,7 +382,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * int x = foreign.get(ValueLayout.JAVA_INT, 0);                    // ok
  *}
  * <p>
- * In some cases, a client might additionally want to associate new temporal bounds to a zero-length memory segment.
+ * In some cases, a client might additionally want to assign new temporal bounds to a zero-length memory segment.
  * This can be done using the {@link #reinterpret(long, Scope, Consumer)} method, which returns a
  * new native segment with the desired size and the same temporal bounds as those in the provided arena:
  *
@@ -2215,8 +2215,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
         /**
          * Returns {@code true}, if the provided object is also a scope, which models the same lifetime as that
-         * modelled by this scope.
-         * and the provided scope are the same. In that case, it is always the case that
+         * modelled by this scope. In that case, it is always the case that
          * {@code this.isAlive() == ((Scope)that).isAlive()}.
          * @param that the object to be tested.
          * @return {@code true}, if the provided object is also a scope, which models the same lifetime as that

@@ -25,9 +25,7 @@
 
 package jdk.internal.foreign;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SymbolLookup;
+import java.lang.foreign.*;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -88,9 +86,8 @@ public final class SystemLookup implements SymbolLookup {
             SymbolLookup fallbackLibLookup =
                     libLookup(libs -> libs.load(jdkLibraryPath("syslookup")));
 
-            int numSymbols = WindowsFallbackSymbols.values().length;
             MemorySegment funcs = fallbackLibLookup.find("funcs").orElseThrow()
-                    .reinterpret(ADDRESS.byteSize() * numSymbols);
+                    .reinterpret(WindowsFallbackSymbols.LAYOUT.byteSize());
 
             Function<String, Optional<MemorySegment>> fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.valueOfOrNull(name))
                 .map(symbol -> funcs.getAtIndex(ADDRESS, symbol.ordinal()));
@@ -206,5 +203,8 @@ public final class SystemLookup implements SymbolLookup {
                 return null;
             }
         }
+
+        static SequenceLayout LAYOUT = MemoryLayout.sequenceLayout(
+                values().length, ADDRESS);
     }
 }
