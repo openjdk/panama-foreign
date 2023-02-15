@@ -373,7 +373,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * To work with native zero-length memory segments, clients have several options, all of which are <em>unsafe</em>.
  * <p>
  * First, clients can unsafely resize a zero-length memory segment by {@linkplain #reinterpret(long) obtaining} a
- * memory segment with same base address as the zero-length memory segment, but with the desired size,
+ * memory segment with the same base address as the zero-length memory segment, but with the desired size,
  * so that the resulting segment can then be accessed directly, as follows:
  *
  * {@snippet lang = java:
