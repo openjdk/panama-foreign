@@ -58,8 +58,8 @@ import java.util.Optional;
  */
 public final class ValueLayouts {
 
-    // Suppresses default constructor, ensuring non-instantiability.
-    private ValueLayouts() {}
+    private ValueLayouts() {
+    }
 
     abstract sealed static class AbstractValueLayout<V extends AbstractValueLayout<V> & ValueLayout> extends AbstractLayout<V> {
 
