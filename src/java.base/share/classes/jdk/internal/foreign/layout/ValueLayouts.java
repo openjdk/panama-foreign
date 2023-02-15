@@ -70,6 +70,10 @@ public final class ValueLayouts {
         @Stable
         private VarHandle handle;
 
+        AbstractValueLayout(Class<?> carrier, ByteOrder order, long bitSize) {
+            this(carrier, order, bitSize, bitSize, Optional.empty());
+        }
+
         AbstractValueLayout(Class<?> carrier, ByteOrder order, long bitSize, long bitAlignment, Optional<String> name) {
             super(bitSize, bitAlignment, name);
             this.carrier = carrier;
@@ -184,8 +188,12 @@ public final class ValueLayouts {
 
     public static final class OfBooleanImpl extends AbstractValueLayout<OfBooleanImpl> implements ValueLayout.OfBoolean {
 
+        private OfBooleanImpl(ByteOrder order) {
+            super(boolean.class, order, 8);
+        }
+
         private OfBooleanImpl(ByteOrder order, long bitAlignment, Optional<String> name) {
-            super(boolean.class, order, Byte.SIZE, bitAlignment, name);
+            super(boolean.class, order, 8, bitAlignment, name);
         }
 
         @Override
@@ -195,18 +203,23 @@ public final class ValueLayouts {
 
         @Override
         public OfBooleanImpl withOrder0(ByteOrder order) {
+            Objects.requireNonNull(order);
             return new OfBooleanImpl(order, bitAlignment(), name());
         }
 
         public static OfBoolean of(ByteOrder order) {
-            return new OfBooleanImpl(order, Byte.SIZE, Optional.empty());
+            return new OfBooleanImpl(order);
         }
     }
 
     public static final class OfByteImpl extends AbstractValueLayout<OfByteImpl> implements ValueLayout.OfByte {
 
+        private OfByteImpl(ByteOrder order) {
+            super(byte.class, order, 8);
+        }
+
         private OfByteImpl(ByteOrder order, long bitAlignment, Optional<String> name) {
-            super(byte.class, order, Byte.SIZE, bitAlignment, name);
+            super(byte.class, order, 8, bitAlignment, name);
         }
 
         @Override
@@ -216,18 +229,23 @@ public final class ValueLayouts {
 
         @Override
         public OfByteImpl withOrder0(ByteOrder order) {
+            Objects.requireNonNull(order);
             return new OfByteImpl(order, bitAlignment(), name());
         }
 
         public static OfByte of(ByteOrder order) {
-            return new OfByteImpl(order, Byte.SIZE, Optional.empty());
+            return new OfByteImpl(order);
         }
     }
 
     public static final class OfCharImpl extends AbstractValueLayout<OfCharImpl> implements ValueLayout.OfChar {
 
+        private OfCharImpl(ByteOrder order) {
+            super(char.class, order, 16);
+        }
+
         private OfCharImpl(ByteOrder order, long bitAlignment, Optional<String> name) {
-            super(char.class, order, Character.SIZE, bitAlignment, name);
+            super(char.class, order, 16, bitAlignment, name);
         }
 
         @Override
@@ -237,18 +255,23 @@ public final class ValueLayouts {
 
         @Override
         public OfCharImpl withOrder0(ByteOrder order) {
+            Objects.requireNonNull(order);
             return new OfCharImpl(order, bitAlignment(), name());
         }
 
         public static OfChar of(ByteOrder order) {
-            return new OfCharImpl(order, Character.SIZE, Optional.empty());
+            return new OfCharImpl(order);
         }
     }
 
     public static final class OfShortImpl extends AbstractValueLayout<OfShortImpl> implements ValueLayout.OfShort {
 
+        private OfShortImpl(ByteOrder order) {
+            super(short.class, order, 16);
+        }
+
         private OfShortImpl(ByteOrder order, long bitAlignment, Optional<String> name) {
-            super(short.class, order, Short.SIZE, bitAlignment, name);
+            super(short.class, order, 16, bitAlignment, name);
         }
 
         @Override
@@ -258,18 +281,23 @@ public final class ValueLayouts {
 
         @Override
         public OfShortImpl withOrder0(ByteOrder order) {
+            Objects.requireNonNull(order);
             return new OfShortImpl(order, bitAlignment(), name());
         }
 
         public static OfShort of(ByteOrder order) {
-            return new OfShortImpl(order, Short.SIZE, Optional.empty());
+            return new OfShortImpl(order);
         }
     }
 
     public static final class OfIntImpl extends AbstractValueLayout<OfIntImpl> implements ValueLayout.OfInt {
 
+        private OfIntImpl(ByteOrder order) {
+            super(int.class, order, 32);
+        }
+
         private OfIntImpl(ByteOrder order, long bitAlignment, Optional<String> name) {
-            super(int.class, order, Integer.SIZE, bitAlignment, name);
+            super(int.class, order, 32, bitAlignment, name);
         }
 
         @Override
@@ -279,18 +307,23 @@ public final class ValueLayouts {
 
         @Override
         public OfIntImpl withOrder0(ByteOrder order) {
+            Objects.requireNonNull(order);
             return new OfIntImpl(order, bitAlignment(), name());
         }
 
         public static OfInt of(ByteOrder order) {
-            return new OfIntImpl(order, Integer.SIZE, Optional.empty());
+            return new OfIntImpl(order);
         }
     }
 
     public static final class OfFloatImpl extends AbstractValueLayout<OfFloatImpl> implements ValueLayout.OfFloat {
 
+        private OfFloatImpl(ByteOrder order) {
+            super(float.class, order, 32);
+        }
+
         private OfFloatImpl(ByteOrder order, long bitAlignment, Optional<String> name) {
-            super(float.class, order, Float.SIZE, bitAlignment, name);
+            super(float.class, order, 32, bitAlignment, name);
         }
 
         @Override
@@ -300,18 +333,23 @@ public final class ValueLayouts {
 
         @Override
         public OfFloatImpl withOrder0(ByteOrder order) {
+            Objects.requireNonNull(order);
             return new OfFloatImpl(order, bitAlignment(), name());
         }
 
         public static OfFloat of(ByteOrder order) {
-            return new OfFloatImpl(order, Float.SIZE, Optional.empty());
+            return new OfFloatImpl(order);
         }
     }
 
     public static final class OfLongImpl extends AbstractValueLayout<OfLongImpl> implements ValueLayout.OfLong {
 
+        private OfLongImpl(ByteOrder order) {
+            super(long.class, order, 64);
+        }
+
         private OfLongImpl(ByteOrder order, long bitAlignment, Optional<String> name) {
-            super(long.class, order, Long.SIZE, bitAlignment, name);
+            super(long.class, order, 64, bitAlignment, name);
         }
 
         @Override
@@ -321,18 +359,23 @@ public final class ValueLayouts {
 
         @Override
         public OfLongImpl withOrder0(ByteOrder order) {
+            Objects.requireNonNull(order);
             return new OfLongImpl(order, bitAlignment(), name());
         }
 
         public static OfLong of(ByteOrder order) {
-            return new OfLongImpl(order, Long.SIZE, Optional.empty());
+            return new OfLongImpl(order);
         }
     }
 
     public static final class OfDoubleImpl extends AbstractValueLayout<OfDoubleImpl> implements ValueLayout.OfDouble {
 
+        private OfDoubleImpl(ByteOrder order) {
+            super(double.class, order, 64);
+        }
+
         private OfDoubleImpl(ByteOrder order, long bitAlignment, Optional<String> name) {
-            super(double.class, order, Double.SIZE, bitAlignment, name);
+            super(double.class, order, 64, bitAlignment, name);
         }
 
         @Override
@@ -342,11 +385,12 @@ public final class ValueLayouts {
 
         @Override
         public OfDoubleImpl withOrder0(ByteOrder order) {
+            Objects.requireNonNull(order);
             return new OfDoubleImpl(order, bitAlignment(), name());
         }
 
         public static OfDouble of(ByteOrder order) {
-            return new OfDoubleImpl(order, Double.SIZE, Optional.empty());
+            return new OfDoubleImpl(order);
         }
 
     }
@@ -354,6 +398,11 @@ public final class ValueLayouts {
     public static final class OfAddressImpl extends AbstractValueLayout<OfAddressImpl> implements ValueLayout.OfAddress {
 
         private final MemoryLayout targetLayout;
+
+        private OfAddressImpl(ByteOrder order) {
+            super(MemorySegment.class, order, ADDRESS_SIZE_BITS);
+            this.targetLayout = null;
+        }
 
         private OfAddressImpl(ByteOrder order, long size, long bitAlignment, MemoryLayout targetLayout, Optional<String> name) {
             super(MemorySegment.class, order, size, bitAlignment, name);
@@ -367,6 +416,7 @@ public final class ValueLayouts {
 
         @Override
         public OfAddressImpl withOrder0(ByteOrder order) {
+            Objects.requireNonNull(order);
             return new OfAddressImpl(order, bitSize(), bitAlignment(), targetLayout, name());
         }
 
@@ -395,7 +445,7 @@ public final class ValueLayouts {
         }
 
         public static OfAddress of(ByteOrder order) {
-            return new OfAddressImpl(order, ADDRESS_SIZE_BITS, ADDRESS_SIZE_BITS, null, Optional.empty());
+            return new OfAddressImpl(order);
         }
 
         @Override
