@@ -204,7 +204,7 @@ public final class SystemLookup implements SymbolLookup {
             }
         }
 
-        static SequenceLayout LAYOUT = MemoryLayout.sequenceLayout(
+        static final SequenceLayout LAYOUT = MemoryLayout.sequenceLayout(
                 values().length, ADDRESS);
     }
 }
