@@ -351,7 +351,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * into the size of the region of memory backing a pointer returned from a foreign function, also has no insight
  * into the lifetime intended for said region of memory by the foreign function that allocated it.
  * <p>
- * The {@code MemorySegment} API uses <em>zero-length memory segment</em> to represent:
+ * The {@code MemorySegment} API uses <em>zero-length memory segments</em> to represent:
  * <ul>
  *     <li>pointers returned from a foreign function;</li>
  *     <li>pointers passed by a foreign function to an
