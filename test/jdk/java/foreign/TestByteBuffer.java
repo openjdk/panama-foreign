@@ -522,7 +522,7 @@ public class TestByteBuffer {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testTooBigForByteBuffer() {
-        MemorySegment segment = MemorySegment.ofAddress(0, Integer.MAX_VALUE + 10L, Arena.ofAuto());
+        MemorySegment segment = MemorySegment.NULL.reinterpret(Integer.MAX_VALUE + 10L);
         segment.asByteBuffer();
     }
 

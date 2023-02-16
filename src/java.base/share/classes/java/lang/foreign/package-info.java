@@ -197,15 +197,16 @@
  * <h2 id="restricted">Restricted methods</h2>
  * Some methods in this package are considered <em>restricted</em>. Restricted methods are typically used to bind native
  * foreign data and/or functions to first-class Java API elements which can then be used directly by clients. For instance
- * the restricted method {@link java.lang.foreign.MemorySegment#ofAddress(long, long, Arena)}
- * can be used to create a fresh segment with the given spatial bounds out of a native address.
+ * the restricted method {@link java.lang.foreign.MemorySegment#reinterpret(long)} ()}
+ * can be used to create a fresh segment with the same address and temporal bounds,
+ * but with the provided size. This can be useful to resize memory segments obtained when interacting with native functions.
  * <p>
  * Binding foreign data and/or functions is generally unsafe and, if done incorrectly, can result in VM crashes,
- * or memory corruption when the bound Java API element is accessed. For instance, in the case of
- * {@link java.lang.foreign.MemorySegment#ofAddress(long, long, Arena)}, if the provided spatial bounds are
- * incorrect, a client of the segment returned by that method might crash the VM, or corrupt
- * memory when attempting to access said segment. For these reasons, it is crucial for code that calls a restricted method
- * to never pass arguments that might cause incorrect binding of foreign data and/or functions to a Java API.
+ * or memory corruption when the bound Java API element is accessed. For instance, incorrectly resizing a native
+ * memory sgement using {@link java.lang.foreign.MemorySegment#reinterpret(long)} can lead to a JVM crash, or, worse,
+ * lead to silent memory corruption when attempting to access the resized segment. For these reasons, it is crucial for
+ * code that calls a restricted method to never pass arguments that might cause incorrect binding of foreign data and/or
+ * functions to a Java API.
  * <p>
  * Given the potential danger of restricted methods, the Java runtime issues a warning on the standard error stream
  * every time a restricted method is invoked. Such warnings can be disabled by granting access to restricted methods

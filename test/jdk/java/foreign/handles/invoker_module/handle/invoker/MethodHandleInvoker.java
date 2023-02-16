@@ -39,6 +39,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class MethodHandleInvoker {
     public void call(MethodHandle methodHandle) throws Throwable {
@@ -73,6 +74,7 @@ public class MethodHandleInvoker {
         addDefaultMapping(MemoryLayout.class, ValueLayout.JAVA_INT);
         addDefaultMapping(FunctionDescriptor.class, FunctionDescriptor.ofVoid());
         addDefaultMapping(Arena.class, Arena.ofAuto());
+        addDefaultMapping(MemorySegment.Scope.class, Arena.ofAuto().scope());
         addDefaultMapping(SegmentAllocator.class, SegmentAllocator.prefixAllocator(MemorySegment.ofArray(new byte[10])));
         addDefaultMapping(ValueLayout.OfByte.class, ValueLayout.JAVA_BYTE);
         addDefaultMapping(ValueLayout.OfBoolean.class, ValueLayout.JAVA_BOOLEAN);
@@ -84,6 +86,7 @@ public class MethodHandleInvoker {
         addDefaultMapping(ValueLayout.OfDouble.class, ValueLayout.JAVA_DOUBLE);
         addDefaultMapping(ValueLayout.OfAddress.class, ValueLayout.ADDRESS);
         addDefaultMapping(SymbolLookup.class, SymbolLookup.loaderLookup());
+        addDefaultMapping(Consumer.class, (Consumer<Object>)(Object o) -> {});
         addDefaultMapping(byte.class, (byte)0);
         addDefaultMapping(boolean.class, true);
         addDefaultMapping(char.class, (char)0);

@@ -47,8 +47,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
-import static java.lang.foreign.ValueLayout.JAVA_INT;
-import static java.lang.foreign.ValueLayout.JAVA_LONG;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -195,7 +193,7 @@ public class TestScopedOperations {
                     throw new AssertionError(ex);
                 }
             }),
-            UNSAFE(session -> MemorySegment.ofAddress(0, 10, session));
+            UNSAFE(session -> MemorySegment.NULL.reinterpret(10, session.scope(), null));
 
             static {
                 try {

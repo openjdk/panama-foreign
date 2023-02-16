@@ -122,10 +122,34 @@ public abstract sealed class AbstractMemorySegmentImpl
 
     @Override
     @CallerSensitive
-    public final AbstractMemorySegmentImpl asUnbounded() {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "asUnbounded");
+    public MemorySegment reinterpret(long newSize, Scope newScope, Consumer<MemorySegment> cleanup) {
+        return reinterpretInternal(Reflection.getCallerClass(), newSize, newScope, null);
+    }
+
+    @Override
+    @CallerSensitive
+    public MemorySegment reinterpret(long newSize) {
+        return reinterpretInternal(Reflection.getCallerClass(), newSize, scope, null);
+    }
+
+    @Override
+    @CallerSensitive
+    public MemorySegment reinterpret(Scope newScope, Consumer<MemorySegment> cleanup) {
+        return reinterpretInternal(Reflection.getCallerClass(), byteSize(), newScope, cleanup);
+    }
+
+    public MemorySegment reinterpretInternal(Class<?> callerClass, long newSize, Scope scope, Consumer<MemorySegment> cleanup) {
+        Reflection.ensureNativeAccess(callerClass, MemorySegment.class, "reinterpret");
+        Objects.requireNonNull(scope);
+        if (newSize < 0) {
+            throw new IllegalArgumentException("newSize < 0");
+        }
         if (!isNative()) throw new UnsupportedOperationException("Not a native segment");
-        return asSliceNoCheck(0, Long.MAX_VALUE);
+        Runnable action = cleanup != null ?
+                () -> cleanup.accept(NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address(), newSize)) :
+                null;
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address(), newSize,
+                (MemorySessionImpl)scope, action);
     }
 
     private AbstractMemorySegmentImpl asSliceNoCheck(long offset, long newSize) {
