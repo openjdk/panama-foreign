@@ -48,10 +48,7 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
     }
 
     public final L withName(String name) {
-        Objects.requireNonNull(name);
-        return name().filter(name::equals).isPresent()
-                ? self()
-                : dup(bitAlignment(), Optional.of(name));
+        return dup(bitAlignment(), Optional.of(name));
     }
 
     public final Optional<String> name() {

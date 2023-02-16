@@ -203,7 +203,6 @@ public final class ValueLayouts {
 
         @Override
         public OfBooleanImpl withOrder0(ByteOrder order) {
-            Objects.requireNonNull(order);
             return new OfBooleanImpl(order, bitAlignment(), name());
         }
 
@@ -229,7 +228,6 @@ public final class ValueLayouts {
 
         @Override
         public OfByteImpl withOrder0(ByteOrder order) {
-            Objects.requireNonNull(order);
             return new OfByteImpl(order, bitAlignment(), name());
         }
 
@@ -255,7 +253,6 @@ public final class ValueLayouts {
 
         @Override
         public OfCharImpl withOrder0(ByteOrder order) {
-            Objects.requireNonNull(order);
             return new OfCharImpl(order, bitAlignment(), name());
         }
 
@@ -281,7 +278,6 @@ public final class ValueLayouts {
 
         @Override
         public OfShortImpl withOrder0(ByteOrder order) {
-            Objects.requireNonNull(order);
             return new OfShortImpl(order, bitAlignment(), name());
         }
 
@@ -307,7 +303,6 @@ public final class ValueLayouts {
 
         @Override
         public OfIntImpl withOrder0(ByteOrder order) {
-            Objects.requireNonNull(order);
             return new OfIntImpl(order, bitAlignment(), name());
         }
 
@@ -333,7 +328,6 @@ public final class ValueLayouts {
 
         @Override
         public OfFloatImpl withOrder0(ByteOrder order) {
-            Objects.requireNonNull(order);
             return new OfFloatImpl(order, bitAlignment(), name());
         }
 
@@ -359,7 +353,6 @@ public final class ValueLayouts {
 
         @Override
         public OfLongImpl withOrder0(ByteOrder order) {
-            Objects.requireNonNull(order);
             return new OfLongImpl(order, bitAlignment(), name());
         }
 
@@ -385,7 +378,6 @@ public final class ValueLayouts {
 
         @Override
         public OfDoubleImpl withOrder0(ByteOrder order) {
-            Objects.requireNonNull(order);
             return new OfDoubleImpl(order, bitAlignment(), name());
         }
 
@@ -416,7 +408,6 @@ public final class ValueLayouts {
 
         @Override
         public OfAddressImpl withOrder0(ByteOrder order) {
-            Objects.requireNonNull(order);
             return new OfAddressImpl(order, bitSize(), bitAlignment(), targetLayout, name());
         }
 
