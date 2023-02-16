@@ -25,6 +25,7 @@
 /*
  * @test
  * @enablePreview
+ * @compile platform/PlatformLayouts.java
  * @modules java.base/jdk.internal.foreign
  *          java.base/jdk.internal.foreign.abi
  *          java.base/jdk.internal.foreign.abi.x64
@@ -47,10 +48,10 @@ import org.testng.annotations.Test;
 import java.lang.invoke.MethodType;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
-import static jdk.internal.foreign.PlatformLayouts.SysV.*;
 import static jdk.internal.foreign.abi.Binding.*;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.Regs.*;
+import static platform.PlatformLayouts.SysV.*;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
