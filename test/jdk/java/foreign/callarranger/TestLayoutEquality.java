@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,13 +25,14 @@
 /*
  * @test
  * @enablePreview
+ * @compile platform/PlatformLayouts.java
  * @modules java.base/jdk.internal.foreign
  * @run testng TestLayoutEquality
  */
 
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.ValueLayout;
-import jdk.internal.foreign.PlatformLayouts;
+import platform.PlatformLayouts;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 

@@ -50,7 +50,6 @@ import java.lang.invoke.MethodType;
 import java.util.List;
 import java.util.Optional;
 
-import static jdk.internal.foreign.PlatformLayouts.*;
 import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.*;
 import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.Regs.*;
 
@@ -81,7 +80,7 @@ public abstract class CallArranger {
     //
     // Although the AAPCS64 says r0-7 and v0-7 are all valid return
     // registers, it's not possible to generate a C function that uses
-    // r2-7 and v4-7 so they are omitted here.
+    // r2-7 and v4-7 so, they are omitted here.
     protected static final ABIDescriptor C = abiFor(
         new VMStorage[] { r0, r1, r2, r3, r4, r5, r6, r7, INDIRECT_RESULT},
         new VMStorage[] { v0, v1, v2, v3, v4, v5, v6, v7 },
@@ -157,7 +156,7 @@ public abstract class CallArranger {
 
         boolean returnInMemory = isInMemoryReturn(cDesc.returnLayout());
         if (returnInMemory) {
-            csb.addArgumentBindings(MemorySegment.class, AArch64.C_POINTER,
+            csb.addArgumentBindings(MemorySegment.class, SharedUtils.C_POINTER,
                     argCalc.getIndirectBindings());
         } else if (cDesc.returnLayout().isPresent()) {
             Class<?> carrier = mt.returnType();
@@ -429,7 +428,7 @@ public abstract class CallArranger {
                     assert carrier == MemorySegment.class;
                     bindings.copy(layout)
                             .unboxAddress();
-                    VMStorage storage = storageCalculator.nextStorage(StorageType.INTEGER, AArch64.C_POINTER);
+                    VMStorage storage = storageCalculator.nextStorage(StorageType.INTEGER, SharedUtils.C_POINTER);
                     bindings.vmStore(storage, long.class);
                 }
                 case POINTER -> {
@@ -488,7 +487,7 @@ public abstract class CallArranger {
                 }
                 case STRUCT_REFERENCE -> {
                     assert carrier == MemorySegment.class;
-                    VMStorage storage = storageCalculator.nextStorage(StorageType.INTEGER, AArch64.C_POINTER);
+                    VMStorage storage = storageCalculator.nextStorage(StorageType.INTEGER, SharedUtils.C_POINTER);
                     bindings.vmLoad(storage, long.class)
                             .boxAddress(layout);
                 }

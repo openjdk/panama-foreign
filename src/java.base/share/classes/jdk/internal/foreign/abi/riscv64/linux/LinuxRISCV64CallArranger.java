@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2023, Institute of Software, Chinese Academy of Sciences.
  * All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -52,7 +52,6 @@ import java.util.Optional;
 import static jdk.internal.foreign.abi.riscv64.linux.TypeClass.*;
 import static jdk.internal.foreign.abi.riscv64.RISCV64Architecture.*;
 import static jdk.internal.foreign.abi.riscv64.RISCV64Architecture.Regs.*;
-import static jdk.internal.foreign.PlatformLayouts.*;
 
 /**
  * For the RISCV64 C ABI specifically, this class uses CallingSequenceBuilder
@@ -91,7 +90,7 @@ public class LinuxRISCV64CallArranger {
         boolean returnInMemory = isInMemoryReturn(cDesc.returnLayout());
         if (returnInMemory) {
             Class<?> carrier = MemorySegment.class;
-            MemoryLayout layout = RISCV64.C_POINTER;
+            MemoryLayout layout = SharedUtils.C_POINTER;
             csb.addArgumentBindings(carrier, layout, argCalc.getBindings(carrier, layout, false));
         } else if (cDesc.returnLayout().isPresent()) {
             Class<?> carrier = mt.returnType();
