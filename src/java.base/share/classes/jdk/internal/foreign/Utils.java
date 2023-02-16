@@ -60,7 +60,7 @@ public final class Utils {
     private static final MethodHandle BOOL_TO_BYTE;
     private static final MethodHandle ADDRESS_TO_LONG;
     private static final MethodHandle LONG_TO_ADDRESS;
-    public static final MethodHandle MH_BITS_TO_BYTES_FOR_OFFSET;
+    public static final MethodHandle BITS_TO_BYTES;
 
     static {
         try {
@@ -73,7 +73,7 @@ public final class Utils {
                     MethodType.methodType(long.class, MemorySegment.class));
             LONG_TO_ADDRESS = lookup.findStatic(Utils.class, "longToAddress",
                     MethodType.methodType(MemorySegment.class, long.class, long.class, long.class));
-            MH_BITS_TO_BYTES_FOR_OFFSET = lookup.findStatic(Utils.class, "bitsToBytes",
+            BITS_TO_BYTES = lookup.findStatic(Utils.class, "bitsToBytes",
                     MethodType.methodType(long.class, long.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
@@ -90,7 +90,7 @@ public final class Utils {
     }
 
     public static long bitsToBytes(long bits) {
-        // We are always bit-aligned at a byte boundary
+        assert Utils.isAligned(bits, 8);
         return bits / Byte.SIZE;
     }
 

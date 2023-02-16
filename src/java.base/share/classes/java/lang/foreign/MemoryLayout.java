@@ -356,7 +356,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      */
     default MethodHandle byteOffsetHandle(PathElement... elements) {
         MethodHandle mh = bitOffsetHandle(elements);
-        mh = MethodHandles.filterReturnValue(mh, Utils.MH_BITS_TO_BYTES_FOR_OFFSET);
+        mh = MethodHandles.filterReturnValue(mh, Utils.BITS_TO_BYTES);
         return mh;
     }
 
