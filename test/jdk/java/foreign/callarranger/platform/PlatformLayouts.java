@@ -25,6 +25,8 @@
  */
 package platform;
 
+import jdk.internal.foreign.abi.SharedUtils;
+
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.ValueLayout;
 
@@ -84,7 +86,7 @@ public final class PlatformLayouts {
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout.OfAddress C_POINTER = cPointer(C_CHAR);
+        public static final ValueLayout.OfAddress C_POINTER = SharedUtils.C_POINTER;;
 
     }
 
@@ -138,7 +140,7 @@ public final class PlatformLayouts {
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout.OfAddress C_POINTER = cPointer(C_CHAR);
+        public static final ValueLayout.OfAddress C_POINTER = SharedUtils.C_POINTER;
 
     }
 
@@ -193,7 +195,7 @@ public final class PlatformLayouts {
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout.OfAddress C_POINTER = cPointer(C_CHAR);
+        public static final ValueLayout.OfAddress C_POINTER = SharedUtils.C_POINTER;
 
     }
 
@@ -245,14 +247,8 @@ public final class PlatformLayouts {
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout.OfAddress C_POINTER = cPointer(C_CHAR);
+        public static final ValueLayout.OfAddress C_POINTER = SharedUtils.C_POINTER;
 
-    }
-
-    private static ValueLayout.OfAddress cPointer(ValueLayout targetLayoutElementLayout) {
-        return ValueLayout.ADDRESS
-                .withBitAlignment(64)
-                .withTargetLayout(MemoryLayout.sequenceLayout(targetLayoutElementLayout));
     }
 
 }
