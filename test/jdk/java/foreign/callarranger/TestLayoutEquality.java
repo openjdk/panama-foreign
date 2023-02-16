@@ -27,7 +27,7 @@
  * @enablePreview
  * @compile platform/PlatformLayouts.java
  * @modules java.base/jdk.internal.foreign
- * @run testng foreign.callarranger.TestLayoutEquality
+ * @run testng TestLayoutEquality
  */
 
 import java.lang.foreign.MemoryLayout;
