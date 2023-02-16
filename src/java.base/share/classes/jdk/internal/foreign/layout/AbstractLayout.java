@@ -48,7 +48,6 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
     }
 
     public final L withName(String name) {
-        Objects.requireNonNull(name);
         return dup(bitAlignment(), Optional.of(name));
     }
 
@@ -122,7 +121,7 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
     @Override
     public abstract String toString();
 
-    abstract L dup(long alignment, Optional<String> name);
+    abstract L dup(long bitAlignment, Optional<String> name);
 
     String decorateLayoutString(String s) {
         if (name().isPresent()) {
