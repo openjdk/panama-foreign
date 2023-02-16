@@ -93,7 +93,7 @@ public final class ValueLayouts {
          */
         public final V withOrder(ByteOrder order) {
             Objects.requireNonNull(order);
-            return duplicator().dup(order, bitAlignment(), name());
+            return dup(order, bitAlignment(), name());
         }
 
         @Override
@@ -143,15 +143,10 @@ public final class ValueLayouts {
 
         @Override
         final V dup(long bitAlignment, Optional<String> name) {
-            return duplicator().dup(order(), bitAlignment, name);
+            return dup(order(), bitAlignment, name);
         }
 
-        abstract ValueLayoutDuplicator<V> duplicator();
-
-        @FunctionalInterface
-        interface ValueLayoutDuplicator<V> {
-            V dup(ByteOrder order, long bitAlignment, Optional<String> name);
-        }
+        abstract V dup(ByteOrder order, long bitAlignment, Optional<String> name);
 
         static void assertCarrierSize(Class<?> carrier, long bitSize) {
             assert isValidCarrier(carrier);
@@ -198,8 +193,8 @@ public final class ValueLayouts {
         }
 
         @Override
-        ValueLayoutDuplicator<OfBooleanImpl> duplicator() {
-            return OfBooleanImpl::new;
+        OfBooleanImpl dup(ByteOrder order, long bitAlignment, Optional<String> name) {
+            return new OfBooleanImpl(order, bitAlignment, name);
         }
 
         public static OfBoolean of(ByteOrder order) {
@@ -214,8 +209,8 @@ public final class ValueLayouts {
         }
 
         @Override
-        ValueLayoutDuplicator<OfByteImpl> duplicator() {
-            return OfByteImpl::new;
+        OfByteImpl dup(ByteOrder order, long bitAlignment, Optional<String> name) {
+            return new OfByteImpl(order, bitAlignment, name);
         }
 
         public static OfByte of(ByteOrder order) {
@@ -230,8 +225,8 @@ public final class ValueLayouts {
         }
 
         @Override
-        ValueLayoutDuplicator<OfCharImpl> duplicator() {
-            return OfCharImpl::new;
+        OfCharImpl dup(ByteOrder order, long bitAlignment, Optional<String> name) {
+            return new OfCharImpl(order, bitAlignment, name);
         }
 
         public static OfChar of(ByteOrder order) {
@@ -246,8 +241,8 @@ public final class ValueLayouts {
         }
 
         @Override
-        ValueLayoutDuplicator<OfShortImpl> duplicator() {
-            return OfShortImpl::new;
+        OfShortImpl dup(ByteOrder order, long bitAlignment, Optional<String> name) {
+            return new OfShortImpl(order, bitAlignment, name);
         }
 
         public static OfShort of(ByteOrder order) {
@@ -262,8 +257,8 @@ public final class ValueLayouts {
         }
 
         @Override
-        ValueLayoutDuplicator<OfIntImpl> duplicator() {
-            return OfIntImpl::new;
+        OfIntImpl dup(ByteOrder order, long bitAlignment, Optional<String> name) {
+            return new OfIntImpl(order, bitAlignment, name);
         }
 
         public static OfInt of(ByteOrder order) {
@@ -278,8 +273,8 @@ public final class ValueLayouts {
         }
 
         @Override
-        ValueLayoutDuplicator<OfFloatImpl> duplicator() {
-            return OfFloatImpl::new;
+        OfFloatImpl dup(ByteOrder order, long bitAlignment, Optional<String> name) {
+            return new OfFloatImpl(order, bitAlignment, name);
         }
 
         public static OfFloat of(ByteOrder order) {
@@ -294,8 +289,8 @@ public final class ValueLayouts {
         }
 
         @Override
-        ValueLayoutDuplicator<OfLongImpl> duplicator() {
-            return OfLongImpl::new;
+        OfLongImpl dup(ByteOrder order, long bitAlignment, Optional<String> name) {
+            return new OfLongImpl(order, bitAlignment, name);
         }
 
         public static OfLong of(ByteOrder order) {
@@ -310,8 +305,8 @@ public final class ValueLayouts {
         }
 
         @Override
-        ValueLayoutDuplicator<OfDoubleImpl> duplicator() {
-            return OfDoubleImpl::new;
+        OfDoubleImpl dup(ByteOrder order, long bitAlignment, Optional<String> name) {
+            return new OfDoubleImpl(order, bitAlignment, name);
         }
 
         public static OfDouble of(ByteOrder order) {
@@ -330,9 +325,8 @@ public final class ValueLayouts {
         }
 
         @Override
-        ValueLayoutDuplicator<OfAddressImpl> duplicator() {
-            return (order, bitAlignment, name) ->
-                    new OfAddressImpl(order, bitSize(), bitAlignment, targetLayout, name);
+        OfAddressImpl dup(ByteOrder order, long bitAlignment, Optional<String> name) {
+            return new OfAddressImpl(order, bitSize(), bitAlignment,targetLayout, name);
         }
 
         @Override

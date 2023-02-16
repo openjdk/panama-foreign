@@ -48,7 +48,6 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
     }
 
     public final L withName(String name) {
-        Objects.requireNonNull(name);
         return dup(bitAlignment(), Optional.of(name));
     }
 
