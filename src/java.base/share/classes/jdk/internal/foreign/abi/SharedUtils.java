@@ -154,36 +154,12 @@ public final class SharedUtils {
         return target;
     }
 
-    private static MethodType computeCollectArgumentsType(MethodType target, int insertIndex, MethodType collector) {
-        if (collector.returnType() != void.class){
-            // for non-void collector, the returned value is inserted into the argument list passed to the target
-            target = target.dropParameterTypes(insertIndex, insertIndex + 1);
-        }
-        return target.insertParameterTypes(insertIndex, collector.parameterArray()); // insert targetType parameters instead
-    }
-
-    // this just computes the adjusted type
-    private static MethodType computeUpcallIMRType(MethodType targetType, boolean dropReturn) {
-        if (targetType.returnType() != MemorySegment.class)
-            throw new IllegalArgumentException("Must return MemorySegment for IMR");
-
-        targetType = computeCollectArgumentsType(MH_BUFFER_COPY.type(), 1, targetType);
-
-        if (dropReturn) { // no handling for return value, need to drop it
-            targetType = targetType.changeReturnType(void.class);
-        } else {
-            // adjust return type so it matches the inferred type of the effective
-            // function descriptor
-            targetType = targetType.changeReturnType(MemorySegment.class);
-        }
-
-        return targetType;
-    }
-
     public static UpcallStubFactory arrangeUpcallHelper(MethodType targetType, boolean isInMemoryReturn, boolean dropReturn,
                                                         ABIDescriptor abi, CallingSequence callingSequence) {
         if (isInMemoryReturn) {
-            targetType = computeUpcallIMRType(targetType, dropReturn);
+            // simulate the adaptation to get the type
+            MethodHandle fakeTarget = MethodHandles.empty(targetType);
+            targetType = adaptUpcallForIMR(fakeTarget, dropReturn).type();
         }
 
         UpcallStubFactory factory = UpcallLinker.makeFactory(targetType, abi, callingSequence);
