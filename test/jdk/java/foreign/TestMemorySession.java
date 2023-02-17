@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -61,17 +62,17 @@ public class TestMemorySession {
     }
 
     @Test(dataProvider = "sharedSessions")
-    public void testSharedSingleThread(SessionSupplier sessionSupplier) {
+    public void testSharedSingleThread(ArenaSupplier arenaSupplier) {
         AtomicInteger acc = new AtomicInteger();
-        Arena session = sessionSupplier.get();
+        Arena session = arenaSupplier.get();
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
             addCloseAction(session, () -> acc.addAndGet(delta));
         }
         assertEquals(acc.get(), 0);
 
-        if (!SessionSupplier.isImplicit(session)) {
-            SessionSupplier.close(session);
+        if (!TestMemorySession.ArenaSupplier.isImplicit(session)) {
+            TestMemorySession.ArenaSupplier.close(session);
             assertEquals(acc.get(), IntStream.range(0, N_THREADS).sum());
         } else {
             session = null;
@@ -83,10 +84,10 @@ public class TestMemorySession {
     }
 
     @Test(dataProvider = "sharedSessions")
-    public void testSharedMultiThread(SessionSupplier sessionSupplier) {
+    public void testSharedMultiThread(ArenaSupplier arenaSupplier) {
         AtomicInteger acc = new AtomicInteger();
         List<Thread> threads = new ArrayList<>();
-        Arena session = sessionSupplier.get();
+        Arena session = arenaSupplier.get();
         AtomicReference<Arena> sessionRef = new AtomicReference<>(session);
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
@@ -107,10 +108,10 @@ public class TestMemorySession {
 
         // if no cleaner, close - not all segments might have been added to the session!
         // if cleaner, don't unset the session - after all, the session is kept alive by threads
-        if (!SessionSupplier.isImplicit(session)) {
+        if (!TestMemorySession.ArenaSupplier.isImplicit(session)) {
             while (true) {
                 try {
-                    SessionSupplier.close(session);
+                    TestMemorySession.ArenaSupplier.close(session);
                     break;
                 } catch (IllegalStateException ise) {
                     // session is acquired (by add) - wait some more
@@ -126,7 +127,7 @@ public class TestMemorySession {
             }
         });
 
-        if (!SessionSupplier.isImplicit(session)) {
+        if (!TestMemorySession.ArenaSupplier.isImplicit(session)) {
             assertEquals(acc.get(), IntStream.range(0, N_THREADS).sum());
         } else {
             session = null;
@@ -223,11 +224,11 @@ public class TestMemorySession {
     }
 
     @Test(dataProvider = "allSessions")
-    public void testSessionAcquires(SessionSupplier sessionSupplier) {
-        Arena session = sessionSupplier.get();
+    public void testSessionAcquires(ArenaSupplier ArenaSupplier) {
+        Arena session = ArenaSupplier.get();
         acquireRecursive(session, 5);
-        if (!SessionSupplier.isImplicit(session))
-            SessionSupplier.close(session);
+        if (!TestMemorySession.ArenaSupplier.isImplicit(session))
+            TestMemorySession.ArenaSupplier.close(session);
     }
 
     private void acquireRecursive(Arena session, int acquireCount) {
@@ -237,8 +238,8 @@ public class TestMemorySession {
                 // recursive acquire
                 acquireRecursive(session, acquireCount - 1);
             }
-            if (!SessionSupplier.isImplicit(session)) {
-                assertThrows(IllegalStateException.class, () -> SessionSupplier.close(session));
+            if (!ArenaSupplier.isImplicit(session)) {
+                assertThrows(IllegalStateException.class, () -> ArenaSupplier.close(session));
             }
         }
     }
@@ -300,6 +301,25 @@ public class TestMemorySession {
         root.close();
     }
 
+    @Test(dataProvider = "nonCloseableSessions")
+    public void testNonCloseableSessions(ArenaSupplier arenaSupplier) {
+        var arena = arenaSupplier.get();
+        var sessionImpl = ((MemorySessionImpl) arena.scope());
+        assertFalse(sessionImpl.isCloseable());
+        assertThrows(UnsupportedOperationException.class, () ->
+                sessionImpl.close());
+    }
+
+    @Test(dataProvider = "allSessionsAndGlobal")
+    public void testIsCloseableBy(ArenaSupplier arenaSupplier) {
+        var arena = arenaSupplier.get();
+        var sessionImpl = ((MemorySessionImpl) arena.scope());
+        assertEquals(sessionImpl.isCloseableBy(Thread.currentThread()), sessionImpl.isCloseable());
+        Thread otherThread = new Thread();
+        boolean isCloseableByOther = sessionImpl.isCloseable() && !"ConfinedSession".equals(sessionImpl.getClass().getSimpleName());
+        assertEquals(sessionImpl.isCloseableBy(otherThread), isCloseableByOther);
+    }
+
     private void waitSomeTime() {
         try {
             Thread.sleep(10);
@@ -335,39 +355,62 @@ public class TestMemorySession {
         sessionImpl.addCloseAction(action);
     }
 
-    interface SessionSupplier extends Supplier<Arena> {
+    interface ArenaSupplier extends Supplier<Arena> {
 
-        static void close(Arena session) {
-            MemorySessionImpl.toMemorySession(session).close();
+        static void close(Arena arena) {
+            MemorySessionImpl.toMemorySession(arena).close();
         }
 
-        static boolean isImplicit(Arena session) {
-            return !MemorySessionImpl.toMemorySession(session).isCloseable();
+        static boolean isImplicit(Arena arena) {
+            return !MemorySessionImpl.toMemorySession(arena).isCloseable();
         }
 
-        static SessionSupplier ofImplicit() {
+        static ArenaSupplier ofAuto() {
             return Arena::ofAuto;
         }
 
-        static SessionSupplier ofArena(Supplier<Arena> arenaSupplier) {
-            return () -> arenaSupplier.get();
+        static ArenaSupplier ofGlobal() {
+            return Arena::global;
+        }
+
+        static ArenaSupplier ofArena(Supplier<Arena> arenaSupplier) {
+            return arenaSupplier::get;
         }
     }
 
     @DataProvider(name = "sharedSessions")
     static Object[][] sharedSessions() {
         return new Object[][] {
-                { SessionSupplier.ofArena(Arena::ofShared) },
-                { SessionSupplier.ofImplicit() },
+                { ArenaSupplier.ofArena(Arena::ofShared) },
+                { ArenaSupplier.ofAuto() },
         };
     }
 
     @DataProvider(name = "allSessions")
     static Object[][] allSessions() {
         return new Object[][] {
-                { SessionSupplier.ofArena(Arena::ofConfined) },
-                { SessionSupplier.ofArena(Arena::ofShared) },
-                { SessionSupplier.ofImplicit() },
+                { ArenaSupplier.ofArena(Arena::ofConfined) },
+                { ArenaSupplier.ofArena(Arena::ofShared) },
+                { ArenaSupplier.ofAuto() },
         };
     }
+
+    @DataProvider(name = "nonCloseableSessions")
+    static Object[][] nonCloseableSessions() {
+        return new Object[][] {
+                { ArenaSupplier.ofGlobal() },
+                { ArenaSupplier.ofAuto() }
+        };
+    }
+
+    @DataProvider(name = "allSessionsAndGlobal")
+    static Object[][] allSessionsAndGlobal() {
+        return new Object[][] {
+                { ArenaSupplier.ofArena(Arena::ofConfined) },
+                { ArenaSupplier.ofArena(Arena::ofShared) },
+                { ArenaSupplier.ofAuto() },
+                { ArenaSupplier.ofGlobal() },
+        };
+    }
+
 }
