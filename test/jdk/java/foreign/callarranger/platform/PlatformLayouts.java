@@ -27,7 +27,6 @@ package platform;
 
 import jdk.internal.foreign.abi.SharedUtils;
 
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.ValueLayout;
 
 public final class PlatformLayouts {

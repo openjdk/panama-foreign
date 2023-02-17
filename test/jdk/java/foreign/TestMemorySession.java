@@ -24,7 +24,7 @@
 /*
  * @test
  * @enablePreview
- * @modules java.base/jdk.internal.ref java.base/jdk.internal.foreign
+ * @modules java.base/jdk.internal.foreign
  * @run testng/othervm TestMemorySession
  */
 
