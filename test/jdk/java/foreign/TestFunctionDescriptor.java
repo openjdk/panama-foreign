@@ -101,6 +101,12 @@ public class TestFunctionDescriptor extends NativeTestHelper {
     public void testEquals() {
         FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT);
         assertEquals(fd, fd);
+        FunctionDescriptor fdReturnSomethingElse = FunctionDescriptor.of(C_LONG_LONG, C_INT, C_INT);
+        FunctionDescriptor fdOtherArguments = FunctionDescriptor.of(C_INT, C_INT);
+        assertFalse(fd.equals(fdReturnSomethingElse));
+        assertFalse(fd.equals(fdOtherArguments));
+        assertFalse(fd.equals(null));
+        assertFalse(fd.equals("A"));
     }
 
     @Test
@@ -121,4 +127,17 @@ public class TestFunctionDescriptor extends NativeTestHelper {
                 MemoryLayout.paddingLayout(32));
         fd.toMethodType(); // should throw
     }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testIllegalInsertArgNegIndex() {
+        FunctionDescriptor fd = FunctionDescriptor.of(C_INT);
+        fd.insertArgumentLayouts(-1, C_INT);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testIllegalInsertArgOutOfBounds() {
+        FunctionDescriptor fd = FunctionDescriptor.of(C_INT);
+        fd.insertArgumentLayouts(2, C_INT);
+    }
+
 }
