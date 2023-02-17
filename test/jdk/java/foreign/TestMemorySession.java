@@ -30,12 +30,12 @@
 
 import java.lang.foreign.Arena;
 
-import jdk.internal.foreign.ConfinedSession;
 import jdk.internal.foreign.MemorySessionImpl;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -311,12 +311,13 @@ public class TestMemorySession {
     }
 
     @Test(dataProvider = "allSessionsAndGlobal")
-    public void testisCloseableBy(ArenaSupplier arenaSupplier) {
+    public void testIsCloseableBy(ArenaSupplier arenaSupplier) {
         var arena = arenaSupplier.get();
         var sessionImpl = ((MemorySessionImpl) arena.scope());
         assertEquals(sessionImpl.isCloseableBy(Thread.currentThread()), sessionImpl.isCloseable());
         Thread otherThread = new Thread();
-        assertEquals(sessionImpl.isCloseableBy(otherThread), sessionImpl instanceof ConfinedSession);
+        boolean isCloseableByOther = sessionImpl.isCloseable() && !"ConfinedSession".equals(sessionImpl.getClass().getSimpleName());
+        assertEquals(sessionImpl.isCloseableBy(otherThread), isCloseableByOther);
     }
 
     private void waitSomeTime() {
