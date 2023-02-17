@@ -54,7 +54,7 @@ import java.util.function.BiFunction;
  *     <li>It can be passed to an existing {@linkplain Linker#downcallHandle(FunctionDescriptor, Linker.Option...) downcall method handle}, as an argument to the underlying foreign function.</li>
  *     <li>It can be {@linkplain MemorySegment#set(ValueLayout.OfAddress, long, MemorySegment) stored} inside another memory segment.</li>
  *     <li>It can be used to access the region of memory backing a global variable (this might require
- *     {@link MemorySegment#ofAddress(long, long, Arena) resizing} the segment first).</li>
+ *     {@link MemorySegment#reinterpret(long)} () resizing} the segment first).</li>
  * </ul>
  *
  * <h2 id="obtaining">Obtaining a symbol lookup</h2>
@@ -161,12 +161,12 @@ public interface SymbolLookup {
         ClassLoader loader = caller != null ?
                 caller.getClassLoader() :
                 ClassLoader.getSystemClassLoader();
-        Arena loaderScope;// builtin loaders never go away
+        Arena loaderArena;// builtin loaders never go away
         if ((loader == null || loader instanceof BuiltinClassLoader)) {
-            loaderScope = Arena.global();
+            loaderArena = Arena.global();
         } else {
             MemorySessionImpl session = MemorySessionImpl.heapSession(loader);
-            loaderScope = session.asArena();
+            loaderArena = session.asArena();
         }
         return name -> {
             Objects.requireNonNull(name);
@@ -175,7 +175,8 @@ public interface SymbolLookup {
             long addr = javaLangAccess.findNative(loader, name);
             return addr == 0L ?
                     Optional.empty() :
-                    Optional.of(MemorySegment.ofAddress(addr, 0L, loaderScope));
+                    Optional.of(MemorySegment.ofAddress(addr)
+                                    .reinterpret(loaderArena.scope(), null));
         };
     }
 
@@ -238,9 +239,9 @@ public interface SymbolLookup {
         return libraryLookup(path, RawNativeLibraries::load, arena);
     }
 
-    private static <Z> SymbolLookup libraryLookup(Z libDesc, BiFunction<RawNativeLibraries, Z, NativeLibrary> loadLibraryFunc, Arena libScope) {
+    private static <Z> SymbolLookup libraryLookup(Z libDesc, BiFunction<RawNativeLibraries, Z, NativeLibrary> loadLibraryFunc, Arena libArena) {
         Objects.requireNonNull(libDesc);
-        Objects.requireNonNull(libScope);
+        Objects.requireNonNull(libArena);
         // attempt to load native library from path or name
         RawNativeLibraries nativeLibraries = RawNativeLibraries.newInstance(MethodHandles.lookup());
         NativeLibrary library = loadLibraryFunc.apply(nativeLibraries, libDesc);
@@ -248,7 +249,7 @@ public interface SymbolLookup {
             throw new IllegalArgumentException("Cannot open library: " + libDesc);
         }
         // register hook to unload library when 'libScope' becomes not alive
-        MemorySessionImpl.toMemorySession(libScope).addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
+        MemorySessionImpl.toMemorySession(libArena).addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
             @Override
             public void cleanup() {
                 nativeLibraries.unload(library);
@@ -259,7 +260,8 @@ public interface SymbolLookup {
             long addr = library.find(name);
             return addr == 0L ?
                     Optional.empty() :
-                    Optional.of(MemorySegment.ofAddress(addr, 0, libScope));
+                    Optional.of(MemorySegment.ofAddress(addr)
+                            .reinterpret(libArena.scope(), null));
         };
     }
 }

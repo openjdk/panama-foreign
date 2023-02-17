@@ -487,7 +487,7 @@ public class ShortMaxVectorLoadStoreTests extends AbstractVectorLoadStoreTest {
     @Test(dataProvider = "shortByteProviderForIOOBE")
     static void loadMemorySegmentIOOBE(IntFunction<short[]> fa, IntFunction<Integer> fi) {
         MemorySegment a = toSegment(fa.apply(SPECIES.length()), i -> Arena.ofAuto().allocate(i, Short.SIZE));
-        MemorySegment r = , Arena.ofAuto().allocate(a.byteSize(), Short.SIZE);
+        MemorySegment r = Arena.ofAuto().allocate(a.byteSize(), Short.SIZE);
 
         int l = (int) a.byteSize();
         int s = SPECIES.vectorByteSize();

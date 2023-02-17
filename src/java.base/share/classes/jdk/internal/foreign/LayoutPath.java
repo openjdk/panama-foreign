@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2023, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -196,14 +196,14 @@ public class LayoutPath {
         VarHandle handle = Utils.makeSegmentViewVarHandle(valueLayout);
         for (int i = strides.length - 1; i >= 0; i--) {
             MethodHandle collector = MethodHandles.insertArguments(MH_ADD_SCALED_OFFSET, 2,
-                    Utils.bitsToBytesOrThrow(strides[i], IllegalArgumentException::new),
+                    Utils.bitsToBytes(strides[i]),
                     bounds[i]);
             // (J, ...) -> J to (J, J, ...) -> J
             // i.e. new coord is prefixed. Last coord will correspond to innermost layout
             handle = MethodHandles.collectCoordinates(handle, 1, collector);
         }
         handle = MethodHandles.insertCoordinates(handle, 1,
-                Utils.bitsToBytesOrThrow(offset, IllegalArgumentException::new));
+                Utils.bitsToBytes(offset));
 
         if (adapt) {
             for (int i = derefAdapters.length; i > 0; i--) {
@@ -232,13 +232,8 @@ public class LayoutPath {
     }
 
     public MethodHandle sliceHandle() {
-        if (strides.length == 0) {
-            // trigger checks eagerly
-            Utils.bitsToBytesOrThrow(offset, Utils.BITS_TO_BYTES_THROW_OFFSET);
-        }
-
         MethodHandle offsetHandle = offsetHandle(); // bit offset
-        offsetHandle = MethodHandles.filterReturnValue(offsetHandle, Utils.MH_BITS_TO_BYTES_OR_THROW_FOR_OFFSET); // byte offset
+        offsetHandle = MethodHandles.filterReturnValue(offsetHandle, Utils.BITS_TO_BYTES); // byte offset
 
         MethodHandle sliceHandle = MH_SLICE; // (MS, long, long) -> MS
         sliceHandle = MethodHandles.insertArguments(sliceHandle, 2, layout.byteSize()); // (MS, long) -> MS

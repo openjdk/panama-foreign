@@ -67,8 +67,10 @@ public class UnrolledAccess extends JavaLayouts {
             this.outputArray = new double[SIZE];
             this.inputAddress = U.allocateMemory(8 * SIZE);
             this.outputAddress = U.allocateMemory(8 * SIZE);
-            this.inputSegment = MemorySegment.ofAddress(inputAddress, 8*SIZE, Arena.global());
-            this.outputSegment = MemorySegment.ofAddress(outputAddress, 8*SIZE, Arena.global());
+            this.inputSegment = MemorySegment.ofAddress(inputAddress)
+                    .reinterpret(8*SIZE);
+            this.outputSegment = MemorySegment.ofAddress(outputAddress)
+                    .reinterpret(8*SIZE);
         }
     }
 

@@ -27,7 +27,9 @@
 package java.lang.foreign;
 
 import java.io.UncheckedIOException;
+import java.lang.foreign.Linker.Option;
 import java.lang.foreign.ValueLayout.OfAddress;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -40,6 +42,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Spliterator;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.HeapMemorySegmentImpl;
@@ -344,34 +347,53 @@ import jdk.internal.vm.annotation.ForceInline;
  * the region, stored in the pointer, is available. For example, a C function with return type {@code char*} might return
  * a pointer to a region containing a single {@code char} value, or to a region containing an array of {@code char} values,
  * where the size of the array might be provided in a separate parameter. The size of the array is not readily apparent
- * to the code calling the foreign function and hoping to use its result.
+ * to the code calling the foreign function and hoping to use its result. In addition to having no insight
+ * into the size of the region of memory backing a pointer returned from a foreign function, it also has no insight
+ * into the lifetime intended for said region of memory by the foreign function that allocated it.
  * <p>
- * The {@link Linker} represents a pointer returned from a foreign function with a <em>zero-length memory segment</em>.
- * The address of the segment is the address stored in the pointer. The size of the segment is zero. Similarly, when a
- * client reads an <em>address</em> from a memory segment, a zero-length memory segment is returned.
+ * The {@code MemorySegment} API uses <em>zero-length memory segments</em> to represent:
+ * <ul>
+ *     <li>pointers returned from a foreign function;</li>
+ *     <li>pointers passed by a foreign function to an
+ *     {@linkplain Linker#upcallStub(MethodHandle, FunctionDescriptor, Arena, Option...) upcall stub}; and</li>
+ *     <li>pointers {@linkplain MemorySegment#get(OfAddress, long) read} from a memory segment.</li>
+ * </ul>
+ * The address of the zero-length segment is the address stored in the pointer. The spatial and temporal bounds of the
+ * zero-length segment are as follows:
+ * <ul>
+ *     <li>The size of the segment is zero. any attempt to access these segments will fail with {@link IndexOutOfBoundsException}.
+ *     This is a crucial safety feature: as these segments are associated with a region
+ *     of memory whose size is not known, any access operations involving these segments cannot be validated.
+ *     In effect, a zero-length memory segment <em>wraps</em> an address, and it cannot be used without explicit intent
+ *     (see below);</li>
+ *     <li>The segment is associated with a fresh scope that is always alive. Thus, while zero-length
+ *     memory segments cannot be accessed directly, they can be passed, opaquely, to other pointer-accepting foreign functions.</li>
+ * </ul>
  * <p>
- * Since a zero-length segment features trivial spatial bounds, any attempt to access these segments will fail with
- * {@link IndexOutOfBoundsException}. This is a crucial safety feature: as these segments are associated with a region
- * of memory whose size is not known, any access operations involving these segments cannot be validated.
- * In effect, a zero-length memory segment <em>wraps</em> an address, and it cannot be used without explicit intent.
+ * To work with native zero-length memory segments, clients have several options, all of which are <em>unsafe</em>.
  * <p>
- * Zero-length memory segments obtained when interacting with foreign functions are associated with
- * a fresh scope that is always alive. This is because the Java runtime, in addition to having no insight
- * into the size of the region of memory backing a pointer returned from a foreign function, also has no insight
- * into the lifetime intended for said region of memory by the foreign function that allocated it. Thus, zero-length
- * memory segments cannot be accessed directly, but can be passed, opaquely, to other pointer-accepting foreign functions.
- * <p>
- * To access native zero-length memory segments, clients have several options, all of which are <em>unsafe</em>.
- * <p>
- * First, clients can unsafely resize a zero-length memory segment by {@linkplain #asUnbounded() obtaining} a
- * memory segment with same base address as the zero-length memory segment, but with maximal size (i.e. {@link Long#MAX_VALUE}).
- * This segment can then be resized as needed, so that the resulting segment can then be accessed directly, as follows:
+ * First, clients can unsafely resize a zero-length memory segment by {@linkplain #reinterpret(long) obtaining} a
+ * memory segment with the same base address as the zero-length memory segment, but with the desired size,
+ * so that the resulting segment can then be accessed directly, as follows:
  *
  * {@snippet lang = java:
- * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS, 0); // wrap address into segment (size = 0)
- * foreign = foreign.asUnbounded()                                  // size = Long.MAX_VALUE
- *                  .asSlice(0, JAVA_INT);                          // size = 4
- * int x = foreign.get(ValueLayout.JAVA_INT, 0);                    //ok
+ * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS, 0); // size = 0
+ *                                    .reinterpret(4)               // size = 4
+ * int x = foreign.get(ValueLayout.JAVA_INT, 0);                    // ok
+ *}
+ * <p>
+ * In some cases, a client might additionally want to assign new temporal bounds to a zero-length memory segment.
+ * This can be done using the {@link #reinterpret(long, Scope, Consumer)} method, which returns a
+ * new native segment with the desired size and the same temporal bounds as those in the provided arena:
+ *
+ * {@snippet lang = java:
+ * MemorySegment foreign = null;
+ * try (Arena arena = Arena.ofConfined()) {
+ *       foreign = someSegment.get(ValueLayout.ADDRESS, 0)           // size = 0, scope = always alive
+ *                            .reinterpret(4, arena.scope(), null);  // size = 4, scope = arena.scope()
+ *       int x = foreign.get(ValueLayout.JAVA_INT, 0);               // ok
+ * }
+ * int x = foreign.get(ValueLayout.JAVA_INT, 0); // throws IllegalStateException
  *}
  *
  * Alternatively, if the size of the foreign segment is known statically, clients can associate a
@@ -381,24 +403,9 @@ import jdk.internal.vm.annotation.ForceInline;
  * with native segments with size set to {@code T.byteSize()}:
  *
  * {@snippet lang = java:
- * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS.withTargetLayout(JAVA_INT), 0); // wrap address into segment (size = 4)
- * int x = foreign.get(ValueLayout.JAVA_INT, 0); //ok
+ * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS.withTargetLayout(JAVA_INT), 0); // size = 4
+ * int x = foreign.get(ValueLayout.JAVA_INT, 0);                                               // ok
  *}
- *
- * Finally, clients can {@linkplain java.lang.foreign.MemorySegment#ofAddress(long, long, Arena) obtain}
- * a <em>new</em> native segment, with new spatial and temporal bounds, as follows:
- *
- * {@snippet lang = java:
- * Arena arena = ... // obtains an arena
- * MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS, 0); // wrap address into segment (size = 0)
- * foreign = MemorySegment.ofAddress(foreign.address(), 4, arena);  // create new segment (size = 4)
- * int x = foreign.get(ValueLayout.JAVA_INT, 0);                    // ok
- *}
- *
- * All of {@link #asUnbounded()}, {@link ValueLayout.OfAddress#withTargetLayout(MemoryLayout)}
- * and {@link #ofAddress(long, long, Arena)} are
- * <a href="package-summary.html#restricted"><em>restricted</em></a> methods, and should be used with caution:
- * for instance, resizing a segment incorrectly could result in a VM crash when attempting to access the memory segment.
  * <p>
  * Which approach is taken largely depends on the information that a client has available when obtaining a memory segment
  * wrapping a native pointer. For instance, if such pointer points to a C struct, the client might prefer to resize the
@@ -406,6 +413,13 @@ import jdk.internal.vm.annotation.ForceInline;
  * size is known statically, using an address layout with the correct target layout might be preferable.
  * In other instances, however, there will be no, or little information as to what spatial and/or temporal bounds should
  * be associated with a given native pointer. In these cases using an unbounded address layout might be preferable.
+ * <p>
+ * All the methods which can be used to manipulate zero-length memory segments
+ * ({@link #reinterpret(long)}, {@link #reinterpret(Scope, Consumer)}, {@link #reinterpret(long, Scope, Consumer)} and
+ * {@link ValueLayout.OfAddress#withTargetLayout(MemoryLayout)}) are
+ * <a href="package-summary.html#restricted"><em>restricted</em></a> methods, and should be used with caution:
+ * assigning a segment incorrect spatial and/or temporal bounds could result in a VM crash when attempting to access
+ * the memory segment.
  *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
@@ -556,13 +570,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Returns a new memory segment that has the same address and lifecycle as this segment, but with <em>unbounded</em> size.
-     * That is, the byte size of the returned segment is set to {@link Long#MAX_VALUE}. This method
-     * can be used, in combination with other slicing methods, to resize zero-length memory segments:
+     * Returns a new memory segment that has the same address and scope as this segment, but with the provided size.
+     * Equivalent to the following code:
      * {@snippet lang=java :
-     * MemorySegment zeroLengthSegment = ... // (size = 0)
-     * MemorySegment intSegment = zeroLengthSegment.asUnbounded() // (size = Long.MAX_VALUE)
-     *                                             .asSlice(0, ValueLayout.JAVA_INT) // (size = 0)
+     * reinterpret(newSize, scope(), null);
      * }
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
@@ -570,12 +581,80 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
-     * @return a new memory segment with unbounded size.
+     * @param newSize the size of the returned segment.
+     * @return a new memory segment that has the same address and scope as this segment, but the new
+     * provided size.
+     * @throws IllegalArgumentException if {@code newSize < 0}.
      * @throws UnsupportedOperationException if this segment is not a {@linkplain #isNative() native} segment.
      * @throws IllegalCallerException If the caller is in a module that does not have native access enabled.
      */
     @CallerSensitive
-    MemorySegment asUnbounded();
+    MemorySegment reinterpret(long newSize);
+
+    /**
+     * Returns a new memory segment with the same address and size as this segment, but with the provided scope.
+     * Equivalent to the following code:
+     * {@snippet lang=java :
+     * reinterpret(byteSize(), scope, cleanup);
+     * }
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     *
+     * @param newScope the scope of the returned segment.
+     * @param cleanup the cleanup action that should be executed when the provided arena is closed (can be {@code null}).
+     * @return a new memory segment with unbounded size.
+     * @throws IllegalArgumentException if {@code newSize < 0}.
+     * @throws IllegalStateException if {@code scope.isAlive() == false}.
+     * @throws UnsupportedOperationException if this segment is not a {@linkplain #isNative() native} segment.
+     * @throws IllegalCallerException If the caller is in a module that does not have native access enabled.
+     */
+    @CallerSensitive
+    MemorySegment reinterpret(Scope newScope, Consumer<MemorySegment> cleanup);
+
+    /**
+     * Returns a new segment with the same address as this segment, but with the provided size and scope.
+     * As such, the returned segment cannot be accessed after the provided
+     * scope has been invalidated. Moreover, if the provided scope is an arena scope,
+     * the returned segment can be accessed compatibly with the confinement restrictions associated with the
+     * corresponding arena: that is, if the provided scope is the scope of a {@linkplain Arena#ofConfined() confined arena},
+     * the returned segment can only be accessed by the arena's owner thread, regardless of the confinement restrictions
+     * associated with this segment. In other words, if the provided scope is an arena scope, this method returns a segment
+     * that behaves as if it had been allocated using the arena associated with the provided scope.
+     * <p>
+     * Clients can specify an optional cleanup action that should be executed when the provided scope becomes
+     * invalid. This cleanup action receives a fresh memory segment that is obtained from this segment as follows:
+     * {@snippet lang=java :
+     * MemorySegment cleanupSegment = MemorySegment.ofAddress(this.address());
+     * }
+     * That is, the cleanup action receives a segment that is associated with a fresh scope that is always alive,
+     * and is accessible from any thread. The size of the segment accepted by the cleanup action is {@code newSize}.
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     *
+     * @apiNote The cleanup action (if present) should take care not to leak the received segment to external
+     * clients which might access the segment after its backing region of memory is no longer available. Furthermore,
+     * if the provided scope is the scope of an {@linkplain Arena#ofAuto() automatic arena}, the cleanup action
+     * must not prevent the scope from becoming <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
+     * A failure to do so will permanently prevent the regions of memory allocated by the automatic arena from being deallocated.
+     *
+     * @param newSize the size of the returned segment.
+     * @param newScope the scope of the returned segment.
+     * @param cleanup the cleanup action that should be executed when the provided arena is closed (can be {@code null}).
+     * @return a new segment that has the same address as this segment, but with new size and its scope set to
+     * that of the provided arena.
+     * @throws UnsupportedOperationException if this segment is not a {@linkplain #isNative() native} segment.
+     * @throws IllegalArgumentException if {@code newSize < 0}.
+     * @throws IllegalStateException if {@code scope.isAlive() == false}.
+     * @throws IllegalCallerException If the caller is in a module that does not have native access enabled.
+     */
+    @CallerSensitive
+    MemorySegment reinterpret(long newSize, Scope newScope, Consumer<MemorySegment> cleanup);
 
     /**
      * {@return {@code true}, if this segment is read-only}
@@ -1123,11 +1202,6 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Creates a zero-length native segment from the given {@linkplain #address() address value}.
      * The returned segment is always accessible, from any thread.
      * <p>
-     * This is equivalent to the following code:
-     * {@snippet lang = java:
-     * ofAddress(address, 0);
-     *}
-     * <p>
      * On 32-bit platforms, the given address value will be normalized such that the
      * highest-order ("leftmost") 32 bits of the {@link MemorySegment#address() address}
      * of the returned memory segment are set to zero.
@@ -1137,117 +1211,6 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     static MemorySegment ofAddress(long address) {
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, 0);
-    }
-
-    /**
-     * Creates a native segment with the given size and {@linkplain #address() address value}.
-     * The returned segment is not {@linkplain MemorySegment#isReadOnly()} read-only), and is associated
-     * with a fresh scope that is always alive.
-     * <p>
-     * Clients should ensure that the address and bounds refer to a valid region of memory that is accessible for reading and,
-     * if appropriate, writing; an attempt to access an invalid address from Java code will either return an arbitrary value,
-     * have no visible effect, or cause an unspecified exception to be thrown.
-     * <p>
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
-     * <p>
-     * On 32-bit platforms, the given address value will be normalized such that the
-     * highest-order ("leftmost") 32 bits of the {@link MemorySegment#address() address}
-     * of the returned memory segment are set to zero.
-     *
-     * @param address the address of the returned native segment.
-     * @param byteSize the size (in bytes) of the returned native segment.
-     * @return a zero-length native segment with the given address and size.
-     * @throws IllegalArgumentException if {@code byteSize < 0}.
-     * @throws IllegalCallerException If the caller is in a module that does not have native access enabled.
-     */
-    @CallerSensitive
-    static MemorySegment ofAddress(long address, long byteSize) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddress");
-        return MemorySegment.ofAddress(address, byteSize, Arena.global());
-    }
-
-    /**
-     * Creates a native segment with the given size, {@linkplain #address() address value} and arena.
-     * The returned segment is always accessible, from any thread.
-     * <p>
-     * This is equivalent to the following code:
-     * {@snippet lang = java:
-     * ofAddress(address, byteSize, arena, null);
-     *}
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
-     * <p>
-     * On 32-bit platforms, the given address value will be normalized such that the
-     * highest-order ("leftmost") 32 bits of the {@link MemorySegment#address() address}
-     * of the returned memory segment are set to zero.
-     *
-     * @param address the returned segment's address.
-     * @param byteSize the desired size.
-     * @param arena the arena associated with the returned native segment.
-     * @return a native segment with the given address, size and arena.
-     * @throws IllegalArgumentException if {@code byteSize < 0}.
-     * @throws IllegalStateException if {@code arena.scope().isAlive() == false}
-     * @throws WrongThreadException if {@code arena} is a confined arena, and this method is called from a
-     * thread {@code T}, other than the arena's owner thread.
-     * @throws IllegalCallerException If the caller is in a module that does not have native access enabled.
-     */
-    @CallerSensitive
-    @ForceInline
-    static MemorySegment ofAddress(long address, long byteSize, Arena arena) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddress");
-        Objects.requireNonNull(arena);
-        Utils.checkAllocationSizeAndAlign(byteSize, 1);
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, byteSize,
-                MemorySessionImpl.toMemorySession(arena), null);
-    }
-
-    /**
-     * Creates a native segment with the given size, {@linkplain #address() address value}, and arena.
-     * This method can be useful when interacting with custom memory sources (e.g. custom allocators),
-     * where an address to some underlying region of memory is typically obtained from foreign code
-     * (often as a plain {@code long} value).
-     * <p>
-     * The returned segment is not {@linkplain MemorySegment#isReadOnly()} read-only), and its lifetime is controlled
-     * by the provided arena. For instance, if the provided arena is a confined arena, the returned
-     * native segment will be invalidated - and the provided cleanup action invoked - when the provided confined arena
-     * is {@linkplain Arena#close() closed}.
-     * <p>
-     * Clients should ensure that the address and bounds refer to a valid region of memory that is accessible for reading and,
-     * if appropriate, writing; an attempt to access an invalid address from Java code will either return an arbitrary value,
-     * have no visible effect, or cause an unspecified exception to be thrown.
-     * <p>
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
-     * <p>
-     * On 32-bit platforms, the given address value will be normalized such that the
-     * highest-order ("leftmost") 32 bits of the {@link MemorySegment#address() address}
-     * of the returned memory segment are set to zero.
-     *
-     * @param address the returned segment's address.
-     * @param byteSize the desired size.
-     * @param arena the arena associated with the returned native segment.
-     * @param cleanupAction the custom cleanup action to be associated to the returned segment (can be null).
-     * @return a native segment with the given address, size and arena.
-     * @throws IllegalArgumentException if {@code byteSize < 0}.
-     * @throws IllegalStateException if {@code arena.scope().isAlive() == false}
-     * @throws WrongThreadException if {@code arena} is a confined arena, and this method is called from a
-     * thread {@code T}, other than the arena's owner thread.
-     * @throws IllegalCallerException If the caller is in a module that does not have native access enabled.
-     */
-    @CallerSensitive
-    static MemorySegment ofAddress(long address, long byteSize, Arena arena, Runnable cleanupAction) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass(), MemorySegment.class, "ofAddress");
-        Objects.requireNonNull(arena);
-        Utils.checkAllocationSizeAndAlign(byteSize, 1);
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, byteSize,
-                MemorySessionImpl.toMemorySession(arena), cleanupAction);
     }
 
     /**
@@ -1287,7 +1250,8 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
      */
     @ForceInline
-    static void copy(MemorySegment srcSegment, long srcOffset, MemorySegment dstSegment, long dstOffset, long bytes) {
+    static void copy(MemorySegment srcSegment, long srcOffset,
+                     MemorySegment dstSegment, long dstOffset, long bytes) {
         copy(srcSegment, ValueLayout.JAVA_BYTE, srcOffset, dstSegment, ValueLayout.JAVA_BYTE, dstOffset, bytes);
     }
 
@@ -1334,37 +1298,14 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
      */
     @ForceInline
-    static void copy(MemorySegment srcSegment, ValueLayout srcElementLayout, long srcOffset, MemorySegment dstSegment,
-                     ValueLayout dstElementLayout, long dstOffset, long elementCount) {
+    static void copy(MemorySegment srcSegment, ValueLayout srcElementLayout, long srcOffset,
+                     MemorySegment dstSegment, ValueLayout dstElementLayout, long dstOffset,
+                     long elementCount) {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(srcElementLayout);
         Objects.requireNonNull(dstSegment);
         Objects.requireNonNull(dstElementLayout);
-        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        AbstractMemorySegmentImpl dstImpl = (AbstractMemorySegmentImpl)dstSegment;
-        if (srcElementLayout.byteSize() != dstElementLayout.byteSize()) {
-            throw new IllegalArgumentException("Source and destination layouts must have same size");
-        }
-        Utils.checkElementAlignment(srcElementLayout, "Source layout alignment greater than its size");
-        Utils.checkElementAlignment(dstElementLayout, "Destination layout alignment greater than its size");
-        if (!srcImpl.isAlignedForElement(srcOffset, srcElementLayout)) {
-            throw new IllegalArgumentException("Source segment incompatible with alignment constraints");
-        }
-        if (!dstImpl.isAlignedForElement(dstOffset, dstElementLayout)) {
-            throw new IllegalArgumentException("Destination segment incompatible with alignment constraints");
-        }
-        long size = elementCount * srcElementLayout.byteSize();
-        srcImpl.checkAccess(srcOffset, size, true);
-        dstImpl.checkAccess(dstOffset, size, false);
-        if (srcElementLayout.byteSize() == 1 || srcElementLayout.order() == dstElementLayout.order()) {
-            ScopedMemoryAccess.getScopedMemoryAccess().copyMemory(srcImpl.sessionImpl(), dstImpl.sessionImpl(),
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
-                    dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size);
-        } else {
-            ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(srcImpl.sessionImpl(), dstImpl.sessionImpl(),
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
-                    dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size, srcElementLayout.byteSize());
-        }
+        AbstractMemorySegmentImpl.copy(srcSegment, srcElementLayout, srcOffset, dstSegment, dstElementLayout, dstOffset, elementCount);
     }
 
     /**
@@ -2235,14 +2176,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * A scope controls access to one or more memory segments. That is, a memory segment cannot be accessed if its
-     * associated scope is not {@linkplain #isAlive() alive}. In other words, a scope models the <em>lifetime</em>
-     * of all the memory segments associated with it.
-     * <p>
-     * A new scope can be created, indirectly, by creating a new {@linkplain Arena arena}. For instance, when a new
-     * {@linkplain Arena#ofConfined() confined} arena is created, a new scope is also created. This scope - the arena scope - is
-     * starts as {@link #isAlive() alive}. When the confined arena is {@linkplain Arena#close() closed},
-     * the arena scope becomes no longer alive.
+     * A scope models the <em>lifetime</em> of all the memory segments associated with it. That is, a memory segment
+     * cannot be accessed if its associated scope is not {@linkplain #isAlive() alive}. A new scope is typically
+     * obtained indirectly, by creating a new {@linkplain Arena arena}.
      * <p>
      * Scope instances can be compared for equality. That is, two scopes
      * are considered {@linkplain #equals(Object)} if they denote the same lifetime.
@@ -2256,12 +2192,12 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
         boolean isAlive();
 
         /**
-         * Returns {@code true}, if the provided object is also a scope, and the lifetime associated with this scope
-         * and that scope are the same. In that case, it is always the case that
+         * Returns {@code true}, if the provided object is also a scope, which models the same lifetime as that
+         * modelled by this scope. In that case, it is always the case that
          * {@code this.isAlive() == ((Scope)that).isAlive()}.
          * @param that the object to be tested.
-         * @return {@code true}, if the provided object is also a scope, and the lifetime associated with this scope
-         * and that scope are the same.
+         * @return {@code true}, if the provided object is also a scope, which models the same lifetime as that
+         * modelled by this scope.
          */
         @Override
         boolean equals(Object that);

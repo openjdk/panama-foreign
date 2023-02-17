@@ -165,8 +165,8 @@ public class TestLoadStoreShorts {
   @Benchmark
   public void segmentNativeConfined() {
     try (final var arena = Arena.ofConfined()) {
-      final var srcSegmentConfined = MemorySegment.ofAddress(srcSegment.address(), size, arena);
-      final var dstSegmentConfined = MemorySegment.ofAddress(dstSegment.address(), size, arena);
+      final var srcSegmentConfined = srcSegment.reinterpret(arena.scope(), null);
+      final var dstSegmentConfined = dstSegment.reinterpret(arena.scope(), null);
 
       for (long i = 0; i < SPECIES.loopBound(srcArray.length); i += SPECIES.length()) {
         var v = ShortVector.fromMemorySegment(SPECIES, srcSegmentConfined, i, ByteOrder.nativeOrder());

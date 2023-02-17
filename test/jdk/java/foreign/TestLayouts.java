@@ -47,8 +47,8 @@ public class TestLayouts {
         layout.withBitAlignment(alignment);
     }
 
-    @Test(dataProvider = "basicLayoutsAndAddress")
-    public void testNotEquals(MemoryLayout layout) {
+    @Test(dataProvider = "basicLayoutsAndAddressAndGroups")
+    public void testEqualities(MemoryLayout layout) {
 
         // Use another Type
         MemoryLayout differentType = MemoryLayout.paddingLayout(8);
@@ -57,6 +57,10 @@ public class TestLayouts {
         // Use another name
         MemoryLayout differentName = layout.withName("CustomName");
         assertFalse(layout.equals(differentName));
+
+        // Use another alignment
+        MemoryLayout differentAlignment = layout.withBitAlignment(layout.bitAlignment() * 2);
+        assertFalse(layout.equals(differentAlignment));
 
         // Swap endian
         MemoryLayout differentOrder = JAVA_INT.withOrder(JAVA_INT.order() == ByteOrder.BIG_ENDIAN ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
@@ -67,11 +71,22 @@ public class TestLayouts {
 
         // Null
         assertFalse(layout.equals(null));
+
+        // Identity
+        assertTrue(layout.equals(layout));
+
+        assertFalse(layout.equals(MemoryLayout.sequenceLayout(13, JAVA_LONG)));
+
+        MemoryLayout other = layout.withBitAlignment(128).withBitAlignment(layout.bitAlignment());
+        assertTrue(layout.equals(other));
+
     }
 
     public void testTargetLayoutEquals() {
         MemoryLayout differentTargetLayout = ADDRESS.withTargetLayout(JAVA_CHAR);
         assertFalse(ADDRESS.equals(differentTargetLayout));
+        var equalButNotSame = ADDRESS.withTargetLayout(JAVA_INT).withTargetLayout(JAVA_CHAR);
+        assertTrue(differentTargetLayout.equals(equalButNotSame));
     }
 
     @Test
@@ -98,6 +113,30 @@ public class TestLayouts {
     public void testBadBoundSequenceLayoutResize() {
         SequenceLayout seq = MemoryLayout.sequenceLayout(10, ValueLayout.JAVA_INT);
         seq.withElementCount(-1);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testReshape() {
+        SequenceLayout layout = MemoryLayout.sequenceLayout(10, JAVA_INT);
+        layout.reshape();
+    }
+
+    @Test(dataProvider = "basicLayoutsAndAddressAndGroups", expectedExceptions = IllegalArgumentException.class)
+    public void testGroupIllegalAlignmentNotPowerOfTwo(MemoryLayout layout) {
+        layout.withBitAlignment(3);
+    }
+
+    @Test(dataProvider = "basicLayoutsAndAddressAndGroups", expectedExceptions = IllegalArgumentException.class)
+    public void testGroupIllegalAlignmentNotGreaterOrEqualTo8(MemoryLayout layout) {
+        layout.withBitAlignment(4);
+    }
+
+    @Test
+    public void testEqualsPadding() {
+        PaddingLayout paddingLayout = MemoryLayout.paddingLayout(16);
+        testEqualities(paddingLayout);
+        PaddingLayout paddingLayout2 = MemoryLayout.paddingLayout(32);
+        assertNotEquals(paddingLayout, paddingLayout2);
     }
 
     @Test
@@ -221,6 +260,14 @@ public class TestLayouts {
         MemoryLayout.paddingLayout(0);
     }
 
+    @Test
+    public void testStructToString() {
+        StructLayout padding = MemoryLayout.structLayout(JAVA_INT).withName("struct");
+        assertEquals(padding.toString(), "[i32](struct)");
+        var toStringUnaligned = padding.withBitAlignment(64).toString();
+        assertEquals(toStringUnaligned, "64%[i32](struct)");
+    }
+
     @Test(dataProvider = "layoutKinds")
     public void testPadding(LayoutKind kind) {
         assertEquals(kind == LayoutKind.PADDING, kind.layout instanceof PaddingLayout);
@@ -310,6 +357,13 @@ public class TestLayouts {
                 .toArray(Object[][]::new);
     }
 
+    @DataProvider(name = "basicLayoutsAndAddressAndGroups")
+    public Object[][] basicLayoutsAndAddressAndGroups() {
+        return Stream.concat(Stream.concat(Stream.of(basicLayouts), Stream.of(ADDRESS)), groupLayoutStream())
+                .map(l -> new Object[] { l })
+                .toArray(Object[][]::new);
+    }
+
     @DataProvider(name = "layoutsAndAlignments")
     public Object[][] layoutsAndAlignments() {
         Object[][] layoutsAndAlignments = new Object[basicLayouts.length * 4][];
@@ -331,6 +385,22 @@ public class TestLayouts {
             layoutsAndAlignments[i++] = new Object[] { MemoryLayout.unionLayout(l), l.bitAlignment() };
         }
         return layoutsAndAlignments;
+    }
+
+    @DataProvider(name = "groupLayouts")
+    public Object[][] groupLayouts() {
+        return groupLayoutStream()
+                .map(l -> new Object[] { l })
+                .toArray(Object[][]::new);
+    }
+
+    static Stream<MemoryLayout> groupLayoutStream() {
+        return Stream.of(
+                MemoryLayout.sequenceLayout(10, JAVA_INT),
+                MemoryLayout.sequenceLayout(JAVA_INT),
+                MemoryLayout.structLayout(JAVA_INT, JAVA_LONG),
+                MemoryLayout.unionLayout(JAVA_LONG, JAVA_DOUBLE)
+        );
     }
 
     static MemoryLayout[] basicLayouts = {

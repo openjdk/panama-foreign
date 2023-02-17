@@ -88,15 +88,11 @@ public sealed abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L
      */
     @Override
     public final boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!super.equals(other)) {
-            return false;
-        }
-        return other instanceof AbstractGroupLayout<?> otherGroup &&
-                kind == otherGroup.kind &&
-                elements.equals(otherGroup.elements);
+        return this == other ||
+                other instanceof AbstractGroupLayout<?> otherGroup &&
+                        super.equals(other) &&
+                        kind == otherGroup.kind &&
+                        elements.equals(otherGroup.elements);
     }
 
     /**

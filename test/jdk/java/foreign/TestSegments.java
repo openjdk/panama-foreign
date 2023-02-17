@@ -63,7 +63,7 @@ public class TestSegments {
             segment = session.allocate(0, 4);
             assertEquals(segment.byteSize(), 0);
             assertEquals(segment.address() % 4, 0);
-            MemorySegment rawAddress = MemorySegment.ofAddress(segment.address(), 0, session);
+            MemorySegment rawAddress = MemorySegment.ofAddress(segment.address());
             assertEquals(rawAddress.byteSize(), 0);
             assertEquals(rawAddress.address() % 4, 0);
         }
@@ -137,7 +137,7 @@ public class TestSegments {
             assertEquals(segment, segment.asSlice(0, 100));
             assertNotEquals(segment, segment.asSlice(10, 90));
             assertEquals(segment, segment.asSlice(0, 90));
-            assertEquals(segment, MemorySegment.ofAddress(segment.address(), 100, Arena.global()));
+            assertEquals(segment, MemorySegment.ofAddress(segment.address()));
             MemorySegment segment2 = arena.allocate(100, 1);
             assertNotEquals(segment, segment2);
         }
@@ -161,7 +161,7 @@ public class TestSegments {
             assertEquals(segment.hashCode(), segment.asReadOnly().hashCode());
             assertEquals(segment.hashCode(), segment.asSlice(0, 100).hashCode());
             assertEquals(segment.hashCode(), segment.asSlice(0, 90).hashCode());
-            assertEquals(segment.hashCode(), MemorySegment.ofAddress(segment.address(), 100, Arena.global()).hashCode());
+            assertEquals(segment.hashCode(), MemorySegment.ofAddress(segment.address()).hashCode());
         }
     }
 
@@ -218,8 +218,8 @@ public class TestSegments {
     }
 
     @Test(dataProvider = "scopes")
-    public void testIsAccessibleBy(Arena scope, boolean isConfined) {
-        MemorySegment segment = MemorySegment.ofAddress(0, 0, scope);
+    public void testIsAccessibleBy(Arena arena, boolean isConfined) {
+        MemorySegment segment = MemorySegment.NULL.reinterpret(arena.scope(), null);
         assertTrue(segment.isAccessibleBy(Thread.currentThread()));
         assertTrue(segment.isAccessibleBy(new Thread()) != isConfined);
     }

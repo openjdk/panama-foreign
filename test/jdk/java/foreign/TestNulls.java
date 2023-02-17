@@ -108,7 +108,8 @@ public class TestNulls {
     };
 
     static final Set<String> EXCLUDE_LIST = Set.of(
-            "java.lang.foreign.MemorySegment/ofAddress(long,long,java.lang.foreign.Arena,java.lang.Runnable)/3/0"
+            "java.lang.foreign.MemorySegment/reinterpret(java.lang.foreign.MemorySegment$Scope,java.util.function.Consumer)/1/0",
+            "java.lang.foreign.MemorySegment/reinterpret(long,java.lang.foreign.MemorySegment$Scope,java.util.function.Consumer)/2/0"
     );
 
     static final Set<String> OBJECT_METHODS = Stream.of(Object.class.getMethods())

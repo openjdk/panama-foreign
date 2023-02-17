@@ -500,7 +500,7 @@ public class $vectorteststype$ extends AbstractVectorLoadStoreTest {
     @Test(dataProvider = "$type$ByteProviderForIOOBE")
     static void loadMemorySegmentIOOBE(IntFunction<$type$[]> fa, IntFunction<Integer> fi) {
         MemorySegment a = toSegment(fa.apply(SPECIES.length()), i -> Arena.ofAuto().allocate(i, $Boxtype$.SIZE));
-        MemorySegment r = , Arena.ofAuto().allocate(a.byteSize(), $Boxtype$.SIZE);
+        MemorySegment r = Arena.ofAuto().allocate(a.byteSize(), $Boxtype$.SIZE);
 
         int l = (int) a.byteSize();
         int s = SPECIES.vectorByteSize();

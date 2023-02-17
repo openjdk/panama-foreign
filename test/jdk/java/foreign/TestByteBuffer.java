@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -305,6 +305,42 @@ public class TestByteBuffer {
         }
     }
 
+    @Test(dataProvider = "fromArrays")
+    public void testAsByteBufferFromNonByteArray(MemorySegment segment) {
+        if (!segment.array().map(a -> a instanceof byte[]).get()) {
+            // This should not work as the segment is not backed by a byte array
+            assertThrows(UnsupportedOperationException.class, segment::asByteBuffer);
+        }
+    }
+
+    @Test
+    public void testMappedSegmentAsByteBuffer() throws Throwable {
+        File f = new File("test4.out");
+        assertTrue(f.createNewFile());
+        f.deleteOnExit();
+
+        for (var mapOption : List.of(FileChannel.MapMode.READ_WRITE, FileChannel.MapMode.READ_ONLY, FileChannel.MapMode.PRIVATE)) {
+            for (var arena : List.of(Arena.ofConfined(), Arena.global())) {
+                try (FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+                    //write to channel
+                    MemorySegment segment = fileChannel.map(mapOption, 0L, 32L, arena);
+                    segment.force();
+                    segment.load();
+                    segment.isLoaded();
+                    segment.unload();
+                    ByteBuffer byteBuffer = segment.asByteBuffer();
+                    assertEquals(byteBuffer.capacity(), segment.byteSize());
+                    assertEquals(byteBuffer.isReadOnly(), segment.isReadOnly());
+                    assertTrue(byteBuffer.isDirect());
+                } finally {
+                    if (arena.scope() != Arena.global().scope()) {
+                        arena.close();
+                    }
+                }
+            }
+        }
+    }
+
     static final long LARGE_SIZE = 3L * 1024L * 1024L * 1024L; // 3GB
 
     @Test
@@ -486,7 +522,7 @@ public class TestByteBuffer {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testTooBigForByteBuffer() {
-        MemorySegment segment = MemorySegment.ofAddress(0, Integer.MAX_VALUE + 10L, Arena.ofAuto());
+        MemorySegment segment = MemorySegment.NULL.reinterpret(Integer.MAX_VALUE + 10L);
         segment.asByteBuffer();
     }
 
@@ -552,6 +588,9 @@ public class TestByteBuffer {
             segment.load();
             segment.isLoaded();
             segment.unload();
+            ByteBuffer byteBuffer = segment.asByteBuffer();
+            assertEquals(byteBuffer.capacity(), 0);
+            assertFalse(byteBuffer.isReadOnly());
         }
         //RO
         try (Arena arena = Arena.ofConfined();
@@ -564,6 +603,9 @@ public class TestByteBuffer {
             segment.load();
             segment.isLoaded();
             segment.unload();
+            ByteBuffer byteBuffer = segment.asByteBuffer();
+            assertEquals(byteBuffer.capacity(), 0);
+            assertTrue(byteBuffer.isReadOnly());
         }
     }
 
@@ -980,7 +1022,7 @@ public class TestByteBuffer {
         BUFFER_FORCE(m -> ((MappedByteBuffer)m.asByteBuffer()).force());
 
 
-        private Consumer<MemorySegment> segmentOp;
+        private final Consumer<MemorySegment> segmentOp;
 
         MappedSegmentOp(Consumer<MemorySegment> segmentOp) {
             this.segmentOp = segmentOp;
@@ -1018,5 +1060,20 @@ public class TestByteBuffer {
         );
         return l.stream().map(s -> new Object[] { s }).toArray(Object[][]::new);
 
+    }
+    @DataProvider(name = "fromArrays")
+    public static Object[][] fromArrays() {
+        int len = 16;
+        return Stream.of(
+                        MemorySegment.ofArray(new byte[len]),
+                        MemorySegment.ofArray(new short[len]),
+                        MemorySegment.ofArray(new char[len]),
+                        MemorySegment.ofArray(new int[len]),
+                        MemorySegment.ofArray(new long[len]),
+                        MemorySegment.ofArray(new float[len]),
+                        MemorySegment.ofArray(new double[len])
+                )
+                .map(s -> new Object[] { s })
+                .toArray(Object[][]::new);
     }
 }

@@ -61,7 +61,8 @@ public class LoopOverOfAddress extends JavaLayouts {
     public long segment_loop_addr_size() {
         long res = 0;
         for (int i = 0; i < ITERATIONS; i++) {
-            res += MemorySegment.ofAddress(i, i % 100).address();
+            res += MemorySegment.ofAddress(i)
+                    .reinterpret(i % 100).address();
         }
         return res;
     }
@@ -70,7 +71,8 @@ public class LoopOverOfAddress extends JavaLayouts {
     public long segment_loop_addr_size_session() {
         long res = 0;
         for (int i = 0; i < ITERATIONS; i++) {
-            res += MemorySegment.ofAddress(i, i % 100, Arena.global()).address();
+            res += MemorySegment.ofAddress(i)
+                    .reinterpret(i % 100, Arena.global().scope(), null).address();
         }
         return res;
     }

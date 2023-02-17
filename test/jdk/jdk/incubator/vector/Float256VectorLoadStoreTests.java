@@ -480,7 +480,7 @@ public class Float256VectorLoadStoreTests extends AbstractVectorLoadStoreTest {
     @Test(dataProvider = "floatByteProviderForIOOBE")
     static void loadMemorySegmentIOOBE(IntFunction<float[]> fa, IntFunction<Integer> fi) {
         MemorySegment a = toSegment(fa.apply(SPECIES.length()), i -> Arena.ofAuto().allocate(i, Float.SIZE));
-        MemorySegment r = , Arena.ofAuto().allocate(a.byteSize(), Float.SIZE);
+        MemorySegment r = Arena.ofAuto().allocate(a.byteSize(), Float.SIZE);
 
         int l = (int) a.byteSize();
         int s = SPECIES.vectorByteSize();

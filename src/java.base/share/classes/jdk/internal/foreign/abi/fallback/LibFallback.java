@@ -58,7 +58,6 @@ class LibFallback {
 
     static final MemorySegment VOID_TYPE = MemorySegment.ofAddress(ffi_type_void());
     static final short STRUCT_TAG = ffi_type_struct();
-
     private static final long SIZEOF_CIF = sizeofCif();
 
     private static final MethodType UPCALL_TARGET_TYPE = MethodType.methodType(void.class, MemorySegment.class, MemorySegment.class);
@@ -116,14 +115,14 @@ class LibFallback {
      *
      * @param cif a pointer to a {@code ffi_cif} struct
      * @param target a method handle that points to the target function
-     * @param scope the scope to which to attach the created upcall stub
+     * @param arena the scope to which to attach the created upcall stub
      * @return the created upcall stub
      *
      * @throws IllegalStateException if the call to {@code ffi_prep_closure_loc} returns a non-zero status code
      * @throws IllegalArgumentException if {@code target} does not have the right type
      */
     static MemorySegment createClosure(MemorySegment cif, MethodHandle target,
-                                       Thread.UncaughtExceptionHandler handler, Arena scope)
+                                       Thread.UncaughtExceptionHandler handler, Arena arena)
             throws IllegalStateException, IllegalArgumentException {
         if (target.type() != UPCALL_TARGET_TYPE) {
             throw new IllegalArgumentException("Target handle has wrong type: " + target.type() + " != " + UPCALL_TARGET_TYPE);
@@ -136,7 +135,7 @@ class LibFallback {
         long execPtr = ptrs[1];
         long globalTarget = ptrs[2];
 
-        return MemorySegment.ofAddress(execPtr, 0, scope, () -> freeClosure(closurePtr, globalTarget));
+        return MemorySegment.ofAddress(execPtr).reinterpret(arena.scope(), unused -> freeClosure(closurePtr, globalTarget));
     }
 
     private record UpcallData(MethodHandle target, Thread.UncaughtExceptionHandler handler) {}

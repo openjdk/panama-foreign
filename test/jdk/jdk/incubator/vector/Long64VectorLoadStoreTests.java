@@ -480,7 +480,7 @@ public class Long64VectorLoadStoreTests extends AbstractVectorLoadStoreTest {
     @Test(dataProvider = "longByteProviderForIOOBE")
     static void loadMemorySegmentIOOBE(IntFunction<long[]> fa, IntFunction<Integer> fi) {
         MemorySegment a = toSegment(fa.apply(SPECIES.length()), i -> Arena.ofAuto().allocate(i, Long.SIZE));
-        MemorySegment r = , Arena.ofAuto().allocate(a.byteSize(), Long.SIZE);
+        MemorySegment r = Arena.ofAuto().allocate(a.byteSize(), Long.SIZE);
 
         int l = (int) a.byteSize();
         int s = SPECIES.vectorByteSize();

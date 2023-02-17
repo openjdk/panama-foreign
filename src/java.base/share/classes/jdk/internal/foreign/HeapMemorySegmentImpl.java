@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2020, 2023, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -82,11 +82,11 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
 
     @Override
     ByteBuffer makeByteBuffer() {
-        if (!(base instanceof byte[])) {
+        if (!(base instanceof byte[] baseByte)) {
             throw new UnsupportedOperationException("Not an address to an heap-allocated byte array");
         }
         JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
-        return nioAccess.newHeapByteBuffer((byte[])base, (int)offset - BYTE_ARR_BASE, (int) byteSize(), null);
+        return nioAccess.newHeapByteBuffer(baseByte, (int)offset - BYTE_ARR_BASE, (int) byteSize(), null);
     }
 
     // factories
