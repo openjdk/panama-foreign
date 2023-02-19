@@ -29,9 +29,7 @@ package jdk.internal.foreign.abi.riscv64.linux;
 import jdk.internal.foreign.abi.AbstractLinker;
 import jdk.internal.foreign.abi.LinkerOptions;
 
-import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
@@ -55,7 +53,7 @@ public final class LinuxRISCV64Linker extends AbstractLinker {
     }
 
     @Override
-    protected MemorySegment arrangeUpcall(MethodHandle target, MethodType targetType, FunctionDescriptor function, Arena scope, LinkerOptions options) {
-        return LinuxRISCV64CallArranger.arrangeUpcall(target, targetType, function, scope, options);
+    protected UpcallStubFactory arrangeUpcall(MethodType targetType, FunctionDescriptor function, LinkerOptions options) {
+        return LinuxRISCV64CallArranger.arrangeUpcall(targetType, function, options);
     }
 }
