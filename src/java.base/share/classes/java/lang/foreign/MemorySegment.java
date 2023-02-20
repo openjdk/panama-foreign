@@ -565,9 +565,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @return a slice of this memory segment.
      * @throws IndexOutOfBoundsException if {@code offset < 0}, or {@code offset > byteSize()}.
      */
-    default MemorySegment asSlice(long offset) {
-        return asSlice(offset, byteSize() - offset);
-    }
+    MemorySegment asSlice(long offset);
 
     /**
      * Returns a new memory segment that has the same address and scope as this segment, but with the provided size.
