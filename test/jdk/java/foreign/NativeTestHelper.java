@@ -42,6 +42,7 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
@@ -55,6 +56,7 @@ public class NativeTestHelper {
     public static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
     private static final MethodHandle MH_SAVER;
+    private static final RandomGenerator THREAD_LOCAL_RANDOM = ThreadLocalRandom.current();
 
     static {
         try {
@@ -115,7 +117,7 @@ public class NativeTestHelper {
     public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS.withBitAlignment(64)
             .withTargetLayout(MemoryLayout.sequenceLayout(C_CHAR));
 
-    private static final Linker LINKER = Linker.nativeLinker();
+    public static final Linker LINKER = Linker.nativeLinker();
 
     private static final MethodHandle FREE = LINKER.downcallHandle(
             LINKER.defaultLookup().find("free").get(), FunctionDescriptor.ofVoid(C_POINTER));
@@ -157,6 +159,10 @@ public class NativeTestHelper {
     }
 
     public record TestValue (Object value, Consumer<Object> check) {}
+
+    public static TestValue genTestValue(MemoryLayout layout, SegmentAllocator allocator) {
+        return genTestValue(THREAD_LOCAL_RANDOM, layout, allocator);
+    }
 
     public static TestValue genTestValue(RandomGenerator random, MemoryLayout layout, SegmentAllocator allocator) {
         if (layout instanceof StructLayout struct) {
