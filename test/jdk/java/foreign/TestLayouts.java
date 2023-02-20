@@ -292,7 +292,7 @@ public class TestLayouts {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void test() {
+    public void testBadValueCarrier() {
         // Strings have no value layout
         MemoryLayout.valueLayout(String.class, ByteOrder.LITTLE_ENDIAN);
     }
