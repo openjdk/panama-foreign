@@ -413,7 +413,7 @@ public class TestLayouts {
                 .toArray(Object[][]::new);
     }
 
-    @DataProvider(name = "valueCarriers")
+    @DataProvider(name = "validCarriers")
     public Object[][] validCarriers() {
         return Stream.of(
                         boolean.class,
