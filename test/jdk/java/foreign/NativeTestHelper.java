@@ -42,6 +42,7 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -56,9 +57,14 @@ public class NativeTestHelper {
     public static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
     private static final MethodHandle MH_SAVER;
-    private static final RandomGenerator THREAD_LOCAL_RANDOM = ThreadLocalRandom.current();
+    private static final RandomGenerator DEFAULT_RANDOM;
 
     static {
+        int seed = Integer.getInteger("NativeTestHelper.DEFAULT_RANDOM.seed", ThreadLocalRandom.current().nextInt());
+        System.out.println("NativeTestHelper::DEFAULT_RANDOM.seed = " + seed);
+        System.out.println("Re-run with '-DNativeTestHelper.DEFAULT_RANDOM.seed=" + seed + "' to reproduce");
+        DEFAULT_RANDOM = new Random(seed);
+
         try {
             MH_SAVER = MethodHandles.lookup().findStatic(NativeTestHelper.class, "saver",
                     MethodType.methodType(Object.class, Object[].class, List.class, AtomicReference.class, SegmentAllocator.class, int.class));
@@ -161,7 +167,7 @@ public class NativeTestHelper {
     public record TestValue (Object value, Consumer<Object> check) {}
 
     public static TestValue genTestValue(MemoryLayout layout, SegmentAllocator allocator) {
-        return genTestValue(THREAD_LOCAL_RANDOM, layout, allocator);
+        return genTestValue(DEFAULT_RANDOM, layout, allocator);
     }
 
     public static TestValue genTestValue(RandomGenerator random, MemoryLayout layout, SegmentAllocator allocator) {
