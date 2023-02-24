@@ -49,18 +49,15 @@ public class TestOOB extends NativeTestHelper {
 
     @Test
     public void testOOB() throws Throwable {
-        FunctionDescriptor upcallDesc = FunctionDescriptor.of(
-            S5, C_LONG_LONG, C_POINTER, S3, C_SHORT, C_POINTER, C_CHAR, S1, C_POINTER,
-            S4, C_CHAR, C_LONG_LONG, C_CHAR, C_LONG_LONG, C_CHAR, C_SHORT, S5,
-            C_LONG_LONG, S6, C_FLOAT, C_FLOAT, U2, C_DOUBLE, C_LONG_LONG, C_DOUBLE, C_FLOAT);
+        FunctionDescriptor upcallDesc = FunctionDescriptor.of(S, S);
         FunctionDescriptor downcallDesc = upcallDesc.insertArgumentLayouts(0, C_POINTER); // CB
         try (Arena arena = Arena.ofConfined()) {
             TestValue[] testArgs = genTestArgs(upcallDesc, arena);
 
-            MethodHandle downcallHandle = downcallHandle("F85", downcallDesc);
+            MethodHandle downcallHandle = downcallHandle("F", downcallDesc);
             Object[] args = new Object[downcallDesc.argumentLayouts().size() + 1]; // +1 for return allocator
             AtomicReference<Object[]> returnBox = new AtomicReference<>();
-            int returnIdx = 15;
+            int returnIdx = 0;
             int argIdx = 0;
             args[argIdx++] = arena;
             args[argIdx++] = makeArgSaverCB(upcallDesc, arena, returnBox, returnIdx);
@@ -79,43 +76,7 @@ public class TestOOB extends NativeTestHelper {
         }
     }
 
-    static final StructLayout S1 = MemoryLayout.structLayout(
-        MemoryLayout.sequenceLayout(3, C_FLOAT).withName("f0")
-    ).withName("S1");
-    static final UnionLayout U2 = MemoryLayout.unionLayout(
-        C_INT.withName("f0"),
-        MemoryLayout.sequenceLayout(4, C_POINTER).withName("f1"),
-        C_POINTER.withName("f2")
-    ).withName("U2");
-    static final UnionLayout U1 = MemoryLayout.unionLayout(
-        C_CHAR.withName("f0")
-    ).withName("U1");
-    static final StructLayout S2 = MemoryLayout.structLayout(
-        MemoryLayout.sequenceLayout(3, MemoryLayout.sequenceLayout(3, C_CHAR)).withName("f0")
-    ).withName("S2");
-    static final StructLayout S3 = MemoryLayout.structLayout(
-        S2,
-        MemoryLayout.paddingLayout(56),
-        C_LONG_LONG.withName("f1"),
-        U1,
-        MemoryLayout.paddingLayout(8),
-        MemoryLayout.sequenceLayout(2, C_SHORT).withName("f3"),
-        MemoryLayout.paddingLayout(16)
-    ).withName("S3");
-    static final StructLayout S4 = MemoryLayout.structLayout(
+    static final StructLayout S = MemoryLayout.structLayout(
         MemoryLayout.sequenceLayout(3, C_SHORT).withName("f0")
-    ).withName("S4");
-    static final StructLayout S5 = MemoryLayout.structLayout(
-        C_INT.withName("f0"),
-        C_FLOAT.withName("f1"),
-        C_SHORT.withName("f2"),
-        C_SHORT.withName("f3")
-    ).withName("S5");
-    static final StructLayout S6 = MemoryLayout.structLayout(
-        C_DOUBLE.withName("f0"),
-        C_INT.withName("f1"),
-        C_FLOAT.withName("f2"),
-        C_LONG_LONG.withName("f3")
-    ).withName("S6");
-
+    ).withName("S");
 }

@@ -339,6 +339,30 @@ public final class SharedUtils {
         }
     }
 
+    public static boolean isPowerOfTwo(long width) {
+        return Long.bitCount(width) == 1;
+    }
+
+    public static int byteWidthOfPrimitive(Class<?> type) {
+        if (type == byte.class) {
+            return Byte.BYTES;
+        } else if (type == short.class) {
+            return Short.BYTES;
+        } else if (type == char.class) {
+            return Character.BYTES;
+        } else if (type == int.class) {
+            return Integer.BYTES;
+        } else if (type == long.class) {
+            return Long.BYTES;
+        } else if (type == float.class) {
+            return Float.BYTES;
+        } else if (type == double.class) {
+            return Double.BYTES;
+        }
+
+        throw new IllegalArgumentException("Unknown primitive: " + type);
+    }
+
     public static final class SimpleVaArg {
         public final MemoryLayout layout;
         public final Object value;
