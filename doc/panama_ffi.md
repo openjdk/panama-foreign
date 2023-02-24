@@ -182,9 +182,9 @@ This time, in order to invoke the `qsort` downcall handle, we need a *function p
 
 ```java
 class Qsort {
-	static int qsortCompare(MemorySegment elem1, MemorySegmet elem2) {
-		return elem1.get(JAVA_INT, 0) - elem2.get(JAVA_INT, 0);
-	}
+    static int qsortCompare(MemorySegment elem1, MemorySegmet elem2) {
+        return elem1.get(JAVA_INT, 0) - elem2.get(JAVA_INT, 0);
+    }
 }
 ```
 

@@ -179,11 +179,12 @@ We have been able to derive, from a basic memory access var handle, a new var ha
 
 Memory allocation is often a bottleneck when clients use off-heap memory. The FFM API therefore includes a `SegmentAllocator` interface to define operations to allocate and initialize memory segments. As a convenience, the `Arena` interface extends the `SegmentAllocator` interface so that arenas can be used to allocate native segments. In other words, `Arena` is a "one stop shop" for flexible allocation and timely deallocation of off-heap memory:
 
-```
+```java
 FileChannel channel = ...
 try (Arena offHeap = Arena.ofConfined()) {
     MemorySegment nativeArray   = offHeap.allocateArray(ValueLayout.JAVA_INT, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
-    MemorySegment nativeString  = offHeap.allocateUtf8String("Hello!");    
+    MemorySegment nativeString  = offHeap.allocateUtf8String("Hello!");   
+
     MemorySegment mappedSegment = channel.map(MapMode.READ_WRITE, 0, 1000, arena);
    ...
 } // memory released here
@@ -213,10 +214,10 @@ class SlicingArena {
          slicingAllocator = SegmentAllocator.slicingAllocator(arena.allocate(size));
      }
 
-     public void allocate(long byteSize, long byteAlignment) {
+public void allocate(long byteSize, long byteAlignment) {
          return slicingAllocator.allocate(byteSize, byteAlignment);
      }
-     
+
      public MemorySegment.Scope scope() {
          return arena.scope();
      }
