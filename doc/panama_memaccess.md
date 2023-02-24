@@ -183,7 +183,7 @@ Memory allocation is often a bottleneck when clients use off-heap memory. The FF
 FileChannel channel = ...
 try (Arena offHeap = Arena.ofConfined()) {
     MemorySegment nativeArray   = offHeap.allocateArray(ValueLayout.JAVA_INT, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
-    MemorySegment nativeString  = offHeap.allocateUtf8String("Hello!");   
+    MemorySegment nativeString  = offHeap.allocateUtf8String("Hello!");
 
     MemorySegment mappedSegment = channel.map(MapMode.READ_WRITE, 0, 1000, arena);
    ...
@@ -228,7 +228,7 @@ public void allocate(long byteSize, long byteAlignment) {
 }
 ```
 
-The earlier code which used a slicing allocator directly can now be written more succinctly, as follows: 
+The earlier code which used a slicing allocator directly can now be written more succinctly, as follows:
 
 ```
 try (Arena slicingArena = new SlicingArena(1000)) {
