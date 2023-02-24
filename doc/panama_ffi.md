@@ -1,6 +1,6 @@
 ## State of foreign function support
 
-**January 2023**
+**February 2023**
 
 **Maurizio Cimadamore**
 
@@ -12,75 +12,35 @@ Before we dive into the specifics of the foreign function support, it would be u
 
 Now, in the case of memory segments, the above properties (spatial bounds, temporal bounds and confinement) can be known *in full* when the segment is created. But when we interact with native libraries we often receive *raw* pointers; such pointers have no spatial bounds (does a `char*` in C refer to one `char`, or a `char` array of a given size?), no notion of temporal bounds, nor thread-confinement. Raw addresses in the FFM API are modelled using *zero-length memory segments*.
 
-If clients want to dereference a zero-length memory segment, they can do so *unsafely* in two ways. First, the client can create a new memory segment from the zero-length memory segment *unsafely*, using the `MemorySegment::ofAddress` factory. This method is *restricted* and will generate runtime warnings if called without specifying the `--enable-native-access` command-line flag. By calling `MemorySegment::ofAddress` a client inject extra knowledge about spatial bounds which might be available in the native library the client is interacting with:
+To work with native zero-length memory segments, clients have several options, all of which are <em>unsafe</em>. First, clients can unsafely resize a zero-length memory segment by obtaining a memory segment with the same base address as the zero-length memory segment, but with the desired size, so that the resulting segment can then be accessed directly, as follows:
 
 ```java
-MemorySegment raw = ... //obtain address from native code
-try (Arena arena = Arena.openConfined()) {
-    MemorySegment segment = MemorySegment.ofAddress(raw.address(), 100, arena.scope());
-    int x = segment.get(JAVA_INT, 0);
+MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS, 0); // size = 0
+                                   .reinterpret(4)               // size = 4
+int x = foreign.get(ValueLayout.JAVA_INT, 0);                    // ok
+```
+
+In some cases, a client might additionally want to assign new temporal bounds to a zero-length memory segment. This can be done using another variant of the `MemorySegment::reinterpret` method, which returns a new native segment with the desired size and temporal bounds:
+
+```java
+MemorySegment foreign = null;
+try (Arena arena = Arena.ofConfined()) {
+      foreign = someSegment.get(ValueLayout.ADDRESS, 0)           // size = 0, scope = always alive
+                           .reinterpret(4, arena.scope(), null);  // size = 4, scope = arena.scope()
+      int x = foreign.get(ValueLayout.JAVA_INT, 0);               // ok
 }
+int x = foreign.get(ValueLayout.JAVA_INT, 0); // throws IllegalStateException
 ```
 
-Alternatively, clients can obtain an *unbounded* address value layout. This is done using the `ValueLayout.OfAddress::asUnbounded` method (which is also a restricted method). When an access operation uses an unbounded address value layouts, the runtime will wrap any corresponding raw addresses with native segments with <em>maximal</em> size (i.e. `Long.MAX_VALUE`). As such, these segments can be accessed directly, as follows:
-
+Alternatively, if the size of the foreign segment is known statically, clients can associate a *target layout*  with the address layout used to obtain the segment. When an access operation, or a function descriptor that is passed to a downcall method handle (see below), uses an address value layout with target layout `T`, the runtime will wrap any corresponding raw addresses as segments with size set to `T.byteSize()`:
 ```java
-MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS.asUnbounded(), 0); // wrap address into segment (size = Long.MAX_VALUE)
-int x = foreign.get(ValueLayout.JAVA_INT, 0); //ok
+MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS.withTargetLayout(JAVA_INT), 0); // size = 4
+int x = foreign.get(ValueLayout.JAVA_INT, 0);                                               // ok
 ```
 
-Which approach is taken largely depends on the information that a client has available when obtaining a memory segment wrapping a native pointer. For instance, if such pointer points to a C struct, the client might prefer to resize the segment unsafely, to match the size of the struct (so that out-of-bounds access will be detected by the API). In other instances, however, there will be no, or little information as to what spatial and/or temporal bounds should be associated with a given native pointer. In these cases using an unbounded address layout might be preferable.
-### Segment allocators
+Which approach is taken largely depends on the information that a client has available when obtaining a memory segment wrapping a native pointer. For instance, if such pointer points to a C struct, the client might prefer to resize the segment unsafely, to match the size of the struct (so that out-of-bounds access will be detected by the API). If the size is known statically, using an address layout with the correct target layout might be preferable. In other instances, however, there will be no, or little information as to what spatial and/or temporal bounds should be associated with a given native pointer. In these cases using an unbounded address layout might be preferable.
 
-Idiomatic C code implicitly relies on stack allocation to allow for concise variable declarations; consider this example:
-
-```c
-int arr[] = { 0, 1, 2, 3, 4 };
-```
-
-A variable initializer such as the one above can be implemented as follows, using the Foreign Memory Access API:
-
-```java
-try (Arena arena = Arena openConfined()) {
-    MemorySegment arr = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(5, JAVA_INT), arena.scope());
-    for (int i = 0 ; i < 5 ; i++) {
-        arr.setAtIndex(JAVA_INT, i, i);
-    }
-}
-```
-
-There are a number of issues with the above code snippet:
-
-* compared to the C code, it is more verbose — the native array has to be initialized *element by element*
-* allocation is very slow compared to C; allocating the `arr` variable now takes a full `malloc`, while in C the variable was simply stack-allocated
-* when having multiple declarations like the one above, it might become increasingly harder to manage the lifecycle of the various segments
-
-To address these problems, the FFM API provides a `SegmentAllocator` abstraction, a functional interface which provides methods to allocate commonly used values. Since `Arena` implements the `SegmentAllocator` interface, the above code can be rewritten conveniently as follows:
-
-```java
-try (Arena arena = Arena.openConfined()) {
-    MemorySegment arr = arena.allocateArray(JAVA_INT, 0, 1, 2, 3, 4);
-} // 'arr' is released here
-```
-
-In the above code, the arena acts as a *native* allocator (that is, an allocator built on top of `MemorySegment::allocateNative`). The arena is then used to create a native array, initialized to the values `0, 1, 2, 3, 4`.  The array initialization is more efficient, compared to the previous snippet, as the Java array is copied *in bulk* into the memory region associated with the newly allocated memory segment. The returned segment is associated with the scope of the arena which performed the allocation, meaning that the segment will no longer be accessible after the try-with-resource construct.
-
-Custom segment allocators are also critical to achieve optimal allocation performance; for this reason, a number of predefined allocators are available via factories in the `SegmentAllocator` interface. For example, the following code creates a *slicing* allocator and uses it to allocate a segment whose content is initialized from a Java `int` array:
-
-```java
-try (Arena arena = Arena.openConfined()) {
-    SegmentAllocator allocator = SegmentAllocator.slicingAllocator(arena.allocate(1024));
-    for (int i = 0 ; i < 10 ; i++) {
-        MemorySegment s = allocator.allocateArray(JAVA_INT,  new int[] { 1, 2, 3, 4, 5 });
-        ...
-    }
-    ...
- } // all memory allocated is released here
-```
-
-This code creates a native segment whose size is 1024 bytes. The segment is then used to create a slicing allocator, which responds to  allocation requests by returning slices of that pre-allocated segment.  If the current segment does not have sufficient space to accommodate an  allocation request, an exception is thrown. All of the memory associated with the segments created by the allocator (i.e., in the body of the  for loop) is deallocated atomically when the arena is closed. This  technique combines the advantages of deterministic deallocation,  provided by the `Arena` abstraction, with a more flexible and scalable allocation scheme. It can be very useful when writing code  which manages a large number of off-heap segments.
-
-All the methods in the FFM API which *produce* memory segments (see `VaList::nextVarg` and downcall method handles), allow for an allocator parameter to be provided — this is key in ensuring that an application using the FFM API achieves optimal allocation performances, especially in non-trivial use cases.
+> Note: Memory segments created using `MemorySegment::reinterpret`, or `OfAddress::withTargetLayout` are completely *unsafe*. There is no way for the runtime to verify that the provided address indeed points to a valid memory location, or that the size and temporal bounds of the memory region pointed by the address indeed conforms to the parameters provided by the client. For these reasons, these methods are *restricted method* in the FFM API. The first time a restricted method is invoked, a runtime warning is generated. Developers can get rid of warnings by specifying the set of modules that are allowed to call restricted methods. This is done by specifying the option `--enable-native-access=M`, where `M` is a module name. Multiple module names can be specified in a comma-separated list, where the special name `ALL-UNNAMED` is used to enable restricted access for all code on the class path. If the `--enable-native-access` option is specified, any attempt to call restricted operations from a module not listed in the option will fail with a runtime exception.
 
 ### Symbol lookups
 
@@ -95,8 +55,8 @@ Once a lookup has been obtained, a client can use it to retrieve handles to libr
 For instance, the following code can be used to look up the `clang_getClangVersion` function provided by the `clang` library; it does so by creating a *library lookup* whose lifecycle is associated to that of a confined arena.
 
 ```java
-try (Arena arena = Arena.openConfined()) {
-    SymbolLookup libclang = SymbolLookup.libraryLookup("libclang.so", arena.scope());
+try (Arena arena = Arena.ofConfined()) {
+    SymbolLookup libclang = SymbolLookup.libraryLookup("libclang.so", arena);
     MemorySegment clangVersion = libclang.find("clang_getClangVersion").get();
 }
 ```
@@ -169,7 +129,7 @@ Note that, since the function `strlen` is part of the standard C library, which 
 Once we have obtained the downcall method handle, we can just use it as any other method handle<a href="#2"><sup>1</sup></a>:
 
 ```java
-try (Arena arena = Arena.openConfined()) {
+try (Arena arena = Arena.ofConfined()) {
     long len = strlen.invoke(arena.allocateUtf8String("Hello")); // 5
 }
 ```
@@ -183,7 +143,7 @@ MethodHandle strlen_virtual = linker.downcallHandle( // address parameter missin
 		FunctionDescriptor.of(JAVA_LONG, ADDRESS)
 );
 
-try (Arena arena = Arena openConfined()) {
+try (Arena arena = Arena.ofConfined()) {
     long len = strlen_virtual.invoke(
         linker.defaultLookup().find("strlen").get() // address provided here!
         arena.allocateUtf8String("Hello")
@@ -222,8 +182,8 @@ This time, in order to invoke the `qsort` downcall handle, we need a *function p
 
 ```java
 class Qsort {
-	static int qsortCompare(MemoryAddress addr1, MemoryAddress addr2) {
-		return addr1.get(JAVA_INT, 0) - addr2.get(JAVA_INT, 0);
+	static int qsortCompare(MemorySegment elem1, MemorySegmet elem2) {
+		return elem1.get(JAVA_INT, 0) - elem2.get(JAVA_INT, 0);
 	}
 }
 ```
@@ -233,17 +193,19 @@ Here we can see that the function is performing some *unsafe* dereference of the
 Now let's create a method handle pointing to the comparator function above:
 
 ```java
-FunctionDescriptor comparDesc = FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS);
+FunctionDescriptor comparDesc = FunctionDescriptor.of(JAVA_INT,
+                                                      ADDRESS.withTargetLayout(JAVA_INT),
+                                                      ADDRESS.withTargetLayout(JAVA_INT));
 MethodHandle comparHandle = MethodHandles.lookup()
                                          .findStatic(Qsort.class, "qsortCompare",
-                                                     CLinker.upcallType(comparDesc));
+                                                     comparDesc.toMethodType());
 ```
 
-To do that, we first create a function descriptor for the function pointer type, and then we use the `CLinker::upcallType` to turn that function descriptor into a suitable `MethodType` instance to be used in a method handle lookup. Now that we have a method handle for our Java comparator function, we finally have all the ingredients to create an upcall stub, and pass it to the `qsort` downcall handle:
+To do that, we first create a function descriptor for the function pointer type. This descriptor uses address layouts that have a `JAVA_INT` target layout, so as to allow dereference operations inside the upcall method handle. We use the `CLinker::upcallType` to turn that function descriptor into a suitable `MethodType` instance to be used in a method handle lookup. Now that we have a method handle for our Java comparator function, we finally have all the ingredients to create an upcall stub, and pass it to the `qsort` downcall handle:
 
 ```java
-try (Arena arena = Arena.openConfined()) {
-    MemorySegment comparFunc = linker.upcallStub(comparHandle, comparDesc, session);
+try (Arena arena = Arena.ofConfined()) {
+    MemorySegment comparFunc = linker.upcallStub(comparHandle, comparDesc, arena);
     MemorySegment array = session.allocateArray(0, 9, 3, 4, 6, 5, 1, 8, 2, 7);
     qsort.invoke(array, 10L, 4L, comparFunc);
     int[] sorted = array.toArray(JAVA_INT); // [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
@@ -254,7 +216,7 @@ The above code creates an upcall stub — `comparFunc` — a function pointer th
 
 The snippet then creates an off-heap array from a Java array, which is then passed to the `qsort` handle, along with the comparator function we obtained from the foreign linker.  As a side effect, after the call, the contents of the off-heap array will be sorted (as instructed by our comparator function, written in Java). We can than extract a new Java array from the segment, which contains the sorted elements. This is a more advanced example, but one that shows how powerful the native interop support provided by the foreign linker abstraction is, allowing full bidirectional interop support between Java and native.
 
-### Varargs
+### Variadic calls
 
 Some C functions are *variadic* and can take an arbitrary number of arguments. Perhaps the most common example of this is the `printf` function, defined in the C standard library:
 
@@ -284,7 +246,7 @@ MethodHandle printf = linker.downcallHandle(
 Then we can call the specialized downcall handle as usual:
 
 ```java
-try (Arena arena = Arena.openConfined()) {
+try (Arena arena = Arena.ofConfined()) {
     printf.invoke(arena.allocateUtf8String("%d plus %d equals %d"), 2, 2, 4); //prints "2 plus 2 equals 4"
 }
 ```
@@ -304,7 +266,6 @@ import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.VaList;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -330,7 +291,7 @@ public class Examples {
                 FunctionDescriptor.of(JAVA_LONG, ADDRESS)
         );
 
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             MemorySegment hello = arena.allocateUtf8String("Hello");
             long len = (long) strlen.invoke(hello); // 5
             System.out.println(len);
@@ -342,7 +303,7 @@ public class Examples {
                 FunctionDescriptor.of(JAVA_LONG, ADDRESS)
         );
 
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             MemorySegment hello = arena.allocateUtf8String("Hello");
             long len = (long) strlen_virtual.invoke(
                 STDLIB.find("strlen").get(),
@@ -362,14 +323,16 @@ public class Examples {
                 STDLIB.find("qsort").get(),
                 FunctionDescriptor.ofVoid(ADDRESS, JAVA_LONG, JAVA_LONG, ADDRESS)
         );
-        FunctionDescriptor comparDesc = FunctionDescriptor.of(JAVA_INT, ADDRESS.asUnbounded(), ADDRESS.asUnbounded());
+        FunctionDescriptor comparDesc = FunctionDescriptor.of(JAVA_INT,
+                                                              ADDRESS.withTargetLayout(JAVA_INT),
+                                                              ADDRESS.withTargetLayout(JAVA_INT));
         MethodHandle comparHandle = MethodHandles.lookup()
                                          .findStatic(Qsort.class, "qsortCompare",
                                                      comparDesc.toMethodType());
 
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             MemorySegment comparFunc = LINKER.upcallStub(
-                comparHandle, comparDesc, arena.scope());
+                comparHandle, comparDesc, arena);
 
             MemorySegment array = arena.allocateArray(JAVA_INT, 0, 9, 3, 4, 6, 5, 1, 8, 2, 7);
             qsort.invoke(array, 10L, 4L, comparFunc);
@@ -384,7 +347,7 @@ public class Examples {
                 FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT),
                 Linker.Option.firstVariadicArg(1) // first int is variadic
         );
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             MemorySegment s = arena.allocateUtf8String("%d plus %d equals %d\n");
             printf.invoke(s, 2, 2, 4);
         }
