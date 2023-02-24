@@ -67,7 +67,7 @@ At the core of the FFM API's foreign function support we find the `Linker` abstr
 
 ```java
 interface Linker {
-    MethodHandle downcallHandle(Addressable symbol, FunctionDescriptor function);
+    MethodHandle downcallHandle(MemorySegment symbol, FunctionDescriptor function);
     MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, SegmentScope scope);
     ... // some overloads omitted here
 
@@ -124,13 +124,13 @@ MethodHandle strlen = linker.downcallHandle(
 );
 ```
 
-Note that, since the function `strlen` is part of the standard C library, which is loaded with the VM, we can just use the default lookup of the native linker to look it up. The rest is pretty straightforward — the only tricky detail is how to model `size_t`: typically this type has the size of a pointer, so we can use `JAVA_LONG` both Linux and Windows. On the Java side, we model the `size_t` using a `long` and the pointer is modelled using an `Addressable` parameter.
+Note that, since the function `strlen` is part of the standard C library, which is loaded with the VM, we can just use the default lookup of the native linker to look it up. The rest is pretty straightforward — the only tricky detail is how to model `size_t`: typically this type has the size of a pointer, so we can use `JAVA_LONG` both Linux and Windows. On the Java side, we model the `size_t` using a `long` and the pointer is modelled using an `MemorySegment` parameter.
 
-Once we have obtained the downcall method handle, we can just use it as any other method handle<a href="#2"><sup>1</sup></a>:
+Once we have obtained the downcall method handle, we can just use it as any other method handle:
 
 ```java
 try (Arena arena = Arena.ofConfined()) {
-    long len = strlen.invoke(arena.allocateUtf8String("Hello")); // 5
+    long len = strlen.invokeExact(arena.allocateUtf8String("Hello")); // 5
 }
 ```
 
@@ -144,16 +144,16 @@ MethodHandle strlen_virtual = linker.downcallHandle( // address parameter missin
 );
 
 try (Arena arena = Arena.ofConfined()) {
-    long len = strlen_virtual.invoke(
+    long len = strlen_virtual.invokeExact(
         linker.defaultLookup().find("strlen").get() // address provided here!
         arena.allocateUtf8String("Hello")
     ); // 5
 }
 ```
 
-It is important to note that, albeit the interop code is written in Java, the above code can *not* be considered 100% safe. There are many arbitrary decisions to be made when setting up downcall method handles such as the one above, some of which might be obvious to us (e.g. how many parameters does the function take), but which cannot ultimately be verified by the Java runtime. After all, a symbol in a dynamic library is nothing but a numeric offset and, unless we are using a shared library with debugging information, no type information is attached to a given library symbol. This means that the Java runtime has to *trust* the function descriptor passed in<a href="#2"><sup>2</sup></a>; for this reason, the `Linker::nativeLinker` factory is also a restricted method.
+It is important to note that, albeit the interop code is written in Java, the above code can *not* be considered 100% safe. There are many arbitrary decisions to be made when setting up downcall method handles such as the one above, some of which might be obvious to us (e.g. how many parameters does the function take), but which cannot ultimately be verified by the Java runtime. After all, a symbol in a dynamic library is nothing but a numeric offset and, unless we are using a shared library with debugging information, no type information is attached to a given library symbol. This means that the Java runtime has to *trust* the function descriptor passed in<a href="#1"><sup>1</sup></a>; for this reason, the `Linker::nativeLinker` factory is also a restricted method.
 
-When working with shared arenas, it is always possible for the arena associated with a memory segment passed *by reference* to a native function to be closed (by another thread) *while* the native function is executing. When this happens, the native code is at risk of dereferencing already-freed memory, which might trigger a JVM crash, or even result in silent memory corruption. For this reason, the `Linker` API provides some basic temporal safety guarantees: any `MemorySegment` instance passed by reference to a downcall method handle will be *kept alive* for the entire duration of the call. In other words, it's as if the call to the downcall method handle occurred inside an invisible call to `SegmentScope::whileAlive`.
+When working with shared arenas, it is always possible for the arena associated with a memory segment passed *by reference* to a native function to be closed (by another thread) *while* the native function is executing. When this happens, the native code is at risk of dereferencing already-freed memory, which might trigger a JVM crash, or even result in silent memory corruption. For this reason, the `Linker` API provides some basic temporal safety guarantees: any `MemorySegment` instance passed by reference to a downcall method handle will be *kept alive* for the entire duration of the call.
 
 Performance-wise, the reader might ask how efficient calling a foreign function using a native method handle is; the answer is *very*. The JVM comes with some special support for native method handles, so that, if a give method handle is invoked many times (e.g, inside a *hot* loop), the JIT compiler might decide to generate a snippet of assembly code required to call the native function, and execute that directly. In most cases, invoking native function this way is as efficient as doing so through JNI.
 
@@ -207,7 +207,7 @@ To do that, we first create a function descriptor for the function pointer type.
 try (Arena arena = Arena.ofConfined()) {
     MemorySegment comparFunc = linker.upcallStub(comparHandle, comparDesc, arena);
     MemorySegment array = session.allocateArray(0, 9, 3, 4, 6, 5, 1, 8, 2, 7);
-    qsort.invoke(array, 10L, 4L, comparFunc);
+    qsort.invokeExact(array, 10L, 4L, comparFunc);
     int[] sorted = array.toArray(JAVA_INT); // [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
 }
 ```
@@ -247,11 +247,11 @@ Then we can call the specialized downcall handle as usual:
 
 ```java
 try (Arena arena = Arena.ofConfined()) {
-    printf.invoke(arena.allocateUtf8String("%d plus %d equals %d"), 2, 2, 4); //prints "2 plus 2 equals 4"
+    int res = (int)printf.invokeExact(arena.allocateUtf8String("%d plus %d equals %d"), 2, 2, 4); //prints "2 plus 2 equals 4"
 }
 ```
 
-While this works, and provides optimal performance, it has some limitations<a href="#3"><sup>3</sup></a>:
+While this works, and provides optimal performance, it has some limitations<a href="#2"><sup>2</sup></a>:
 
 * If the variadic function needs to be called with many shapes, we have to create many downcall handles
 * while this approach works for downcalls (since the Java code is in charge of determining which and how many arguments should be passed) it fails to scale to upcalls; in that case, the call comes from native code, so we have no way to guarantee that the shape of the upcall stub we have created will match that required by the native function.
@@ -293,7 +293,7 @@ public class Examples {
 
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment hello = arena.allocateUtf8String("Hello");
-            long len = (long) strlen.invoke(hello); // 5
+            long len = (long) strlen.invokeExact(hello); // 5
             System.out.println(len);
         }
     }
@@ -305,7 +305,7 @@ public class Examples {
 
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment hello = arena.allocateUtf8String("Hello");
-            long len = (long) strlen_virtual.invoke(
+            long len = (long) strlen_virtual.invokeExact(
                 STDLIB.find("strlen").get(),
                 hello); // 5
             System.out.println(len);
@@ -335,7 +335,7 @@ public class Examples {
                 comparHandle, comparDesc, arena);
 
             MemorySegment array = arena.allocateArray(JAVA_INT, 0, 9, 3, 4, 6, 5, 1, 8, 2, 7);
-            qsort.invoke(array, 10L, 4L, comparFunc);
+            qsort.invokeExact(array, 10L, 4L, comparFunc);
             int[] sorted = array.toArray(JAVA_INT); // [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
             System.out.println(Arrays.toString(sorted));
         }
@@ -349,7 +349,7 @@ public class Examples {
         );
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment s = arena.allocateUtf8String("%d plus %d equals %d\n");
-            printf.invoke(s, 2, 2, 4);
+            int res = (int)printf.invokeExact(s, 2, 2, 4);
         }
     }
 }
@@ -357,6 +357,5 @@ public class Examples {
 
 
 
-* <a id="1"/>(<sup>1</sup>):<small> For simplicity, the examples shown in this document use `MethodHandle::invoke` rather than `MethodHandle::invokeExact`; by doing so we avoid having to cast by-reference arguments back to `Addressable`. With `invokeExact` the method handle invocation should be rewritten as `strlen.invokeExact((Addressable)session.allocateUtf8String("Hello"));`</small>
-* <a id="2"/>(<sup>2</sup>):<small> In reality this is not entirely new; even in JNI, when you call a `native` method the VM trusts that the corresponding implementing function in C will feature compatible parameter types and return values; if not a crash might occur.</small>
-* <a id="3"/>(<sup>3</sup>):<small> Previous iterations of the FFM API provided a `VaList` class that could be used to model a C `va_list`. This class was later dropped from the FFM API as too implementation specific. It is possible that a future version of the `jextract` tool might provide higher-level bindings for variadic calls. </small>
+* <a id="1"/>(<sup>1</sup>):<small> In reality this is not entirely new; even in JNI, when you call a `native` method the VM trusts that the corresponding implementing function in C will feature compatible parameter types and return values; if not a crash might occur.</small>
+* <a id="2"/>(<sup>2</sup>):<small> Previous iterations of the FFM API provided a `VaList` class that could be used to model a C `va_list`. This class was later dropped from the FFM API as too implementation specific. It is possible that a future version of the `jextract` tool might provide higher-level bindings for variadic calls. </small>
