@@ -69,6 +69,7 @@ public class TestArrayStructs extends NativeTestHelper {
         System.loadLibrary("ArrayStructs");
     }
 
+    // Test if structs of various different sizes, including non-powers of two, work correctly
     @Test(dataProvider = "arrayStructs")
     public void testArrayStruct(String functionName, FunctionDescriptor upcallDesc, int numPrefixArgs) throws Throwable {
         FunctionDescriptor downcallDesc = upcallDesc.insertArgumentLayouts(0, C_POINTER); // CB

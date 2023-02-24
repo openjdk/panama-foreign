@@ -339,8 +339,8 @@ public final class SharedUtils {
         }
     }
 
-    public static boolean isPowerOfTwo(long width) {
-        return Long.bitCount(width) == 1;
+    public static boolean isPowerOfTwo(int width) {
+        return Integer.bitCount(width) == 1;
     }
 
     public static int byteWidthOfPrimitive(Class<?> type) {

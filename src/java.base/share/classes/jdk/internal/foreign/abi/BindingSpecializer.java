@@ -626,7 +626,7 @@ public class BindingSpecializer {
             int writeAddrIdx = newLocal(MemorySegment.class);
             emitStore(MemorySegment.class, writeAddrIdx);
 
-            int remaining = (int) bufferStore.byteWidth();
+            int remaining = bufferStore.byteWidth();
             int shiftAmount = 0;
             do {
                 int chunkSize = Integer.highestOneBit(remaining); // next power of 2, in bytes
@@ -787,7 +787,7 @@ public class BindingSpecializer {
             int resultIdx = newLocal(long.class);
             emitStore(long.class, resultIdx);
 
-            int remaining = (int) bufferLoad.byteWidth();
+            int remaining = bufferLoad.byteWidth();
             int shiftAmount = 0;
 
             do {

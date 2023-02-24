@@ -332,7 +332,7 @@ public interface Binding {
         return bufferStore(offset, type, SharedUtils.byteWidthOfPrimitive(type));
     }
 
-    static BufferStore bufferStore(long offset, Class<?> type, long byteWidth) {
+    static BufferStore bufferStore(long offset, Class<?> type, int byteWidth) {
         checkType(type);
         checkOffset(offset);
         return new BufferStore(offset, type, byteWidth);
@@ -342,7 +342,7 @@ public interface Binding {
         return Binding.bufferLoad(offset, type, SharedUtils.byteWidthOfPrimitive(type));
     }
 
-    static BufferLoad bufferLoad(long offset, Class<?> type, long byteWidth) {
+    static BufferLoad bufferLoad(long offset, Class<?> type, int byteWidth) {
         checkType(type);
         checkOffset(offset);
         return new BufferLoad(offset, type, byteWidth);
@@ -442,7 +442,7 @@ public interface Binding {
             return this;
         }
 
-        public Binding.Builder bufferStore(long offset, Class<?> type, long byteWidth) {
+        public Binding.Builder bufferStore(long offset, Class<?> type, int byteWidth) {
             bindings.add(Binding.bufferStore(offset, type, byteWidth));
             return this;
         }
@@ -452,7 +452,7 @@ public interface Binding {
             return this;
         }
 
-        public Binding.Builder bufferLoad(long offset, Class<?> type, long byteWidth) {
+        public Binding.Builder bufferLoad(long offset, Class<?> type, int byteWidth) {
             bindings.add(Binding.bufferLoad(offset, type, byteWidth));
             return this;
         }
@@ -556,7 +556,7 @@ public interface Binding {
      * Stores the [type] to [offset into memory region].
      * The [type] must be one of byte, short, char, int, long, float, or double
      */
-    record BufferStore(long offset, Class<?> type, long byteWidth) implements Dereference {
+    record BufferStore(long offset, Class<?> type, int byteWidth) implements Dereference {
         @Override
         public Tag tag() {
             return Tag.BUFFER_STORE;
@@ -616,7 +616,7 @@ public interface Binding {
      * and then stores [type] to [offset into memory region] of the MemorySegment.
      * The [type] must be one of byte, short, char, int, long, float, or double
      */
-    record BufferLoad(long offset, Class<?> type, long byteWidth) implements Dereference {
+    record BufferLoad(long offset, Class<?> type, int byteWidth) implements Dereference {
         @Override
         public Tag tag() {
             return Tag.BUFFER_LOAD;
