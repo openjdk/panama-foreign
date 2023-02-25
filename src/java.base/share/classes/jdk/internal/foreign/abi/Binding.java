@@ -318,6 +318,11 @@ public interface Binding {
             throw new IllegalArgumentException("Negative offset: " + offset);
     }
 
+    private static void checkByteWidth(long byteWidth, Class<?> type) {
+        if (byteWidth < 0 || byteWidth > SharedUtils.byteWidthOfPrimitive(type))
+            throw new IllegalArgumentException("Illegal byteWidth: " + byteWidth);
+    }
+
     static VMStore vmStore(VMStorage storage, Class<?> type) {
         checkType(type);
         return new VMStore(storage, type);
@@ -345,6 +350,7 @@ public interface Binding {
     static BufferLoad bufferLoad(long offset, Class<?> type, int byteWidth) {
         checkType(type);
         checkOffset(offset);
+        checkByteWidth(byteWidth, type);
         return new BufferLoad(offset, type, byteWidth);
     }
 
