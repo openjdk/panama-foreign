@@ -482,7 +482,7 @@ public abstract class CallArranger {
                     for (StorageCalculator.StructStorage structStorage : structStorages) {
                         bindings.dup();
                         bindings.vmLoad(structStorage.storage(), structStorage.carrier())
-                                .bufferStore(structStorage.offset(), structStorage.carrier());
+                                .bufferStore(structStorage.offset(), structStorage.carrier(), structStorage.byteWidth());
                     }
                 }
                 case STRUCT_REFERENCE -> {
