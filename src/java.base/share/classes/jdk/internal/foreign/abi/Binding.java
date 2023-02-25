@@ -31,6 +31,7 @@ import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
@@ -556,6 +557,12 @@ public interface Binding {
         Class<?> type();
     }
 
+    private static long pickChunkOffset(long chunkOffset, int byteWidth, int chunkWidth) {
+        return ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN
+                ? byteWidth - chunkWidth - chunkOffset
+                : chunkOffset;
+    }
+
     /**
      * BUFFER_STORE([offset into memory region], [type])
      * Pops a [type] from the operand stack, then pops a MemorySegment from the operand stack.
@@ -580,37 +587,37 @@ public interface Binding {
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
                               BindingInterpreter.LoadFunc loadFunc, Context context) {
             Object value = stack.pop();
-            MemorySegment operand = (MemorySegment) stack.pop();
-            MemorySegment writeAddress = operand.asSlice(offset());
+            MemorySegment writeAddress = (MemorySegment) stack.pop();
             if (SharedUtils.isPowerOfTwo(byteWidth())) {
                 // exact size match
-                SharedUtils.write(writeAddress, type(), value);
+                SharedUtils.write(writeAddress, offset(), type(), value);
             } else {
                 // non-exact match, need to do chunked load
                 long longValue = ((Number) value).longValue();
-                long remaining = byteWidth();
-                long offset = 0;
+                int remaining = byteWidth();
+                int chunkOffset = 0;
                 do {
-                    long chunkSize = Long.highestOneBit(remaining); // next power of 2, in bytes
-                    long shiftAmount = (offset * Byte.SIZE);
-                    switch ((int) chunkSize) {
+                    int chunkSize = Integer.highestOneBit(remaining); // next power of 2, in bytes
+                    long writeOffset = offset() + pickChunkOffset(chunkOffset, byteWidth(), chunkSize);
+                    int shiftAmount = chunkOffset * Byte.SIZE;
+                    switch (chunkSize) {
                         case 4 -> {
                             int writeChunk = (int) (((0xFFFF_FFFFL << shiftAmount) & longValue) >>> shiftAmount);
-                            writeAddress.set(JAVA_INT_UNALIGNED, offset, writeChunk);
+                            writeAddress.set(JAVA_INT_UNALIGNED, writeOffset, writeChunk);
                         }
                         case 2 -> {
                             short writeChunk = (short) (((0xFFFFL << shiftAmount) & longValue) >>> shiftAmount);
-                            writeAddress.set(JAVA_SHORT_UNALIGNED, offset, writeChunk);
+                            writeAddress.set(JAVA_SHORT_UNALIGNED, writeOffset, writeChunk);
                         }
                         case 1 -> {
                             byte writeChunk = (byte) (((0xFFL << shiftAmount) & longValue) >>> shiftAmount);
-                            writeAddress.set(JAVA_BYTE, offset, writeChunk);
+                            writeAddress.set(JAVA_BYTE, writeOffset, writeChunk);
                         }
                         default ->
                            throw new IllegalStateException("Unexpected chunk size for chunked write: " + chunkSize);
                     }
                     remaining -= chunkSize;
-                    offset += chunkSize;
+                    chunkOffset += chunkSize;
                 } while (remaining != 0);
             }
         }
@@ -639,28 +646,28 @@ public interface Binding {
         @Override
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
                               BindingInterpreter.LoadFunc loadFunc, Context context) {
-            MemorySegment operand = (MemorySegment) stack.pop();
-            MemorySegment readAddress = operand.asSlice(offset());
+            MemorySegment readAddress = (MemorySegment) stack.pop();
             if (SharedUtils.isPowerOfTwo(byteWidth())) {
                 // exact size match
-                stack.push(SharedUtils.read(readAddress, type()));
+                stack.push(SharedUtils.read(readAddress, offset(), type()));
             } else {
                 // non-exact match, need to do chunked load
                 long result = 0;
-                long remaining = byteWidth();
-                long offset = 0;
+                int remaining = byteWidth();
+                int chunkOffset = 0;
                 do {
-                    long chunkSize = Long.highestOneBit(remaining); // next power of 2
-                    long readChunk = switch ((int) chunkSize) {
-                        case 4 -> Integer.toUnsignedLong(readAddress.get(JAVA_INT_UNALIGNED, offset));
-                        case 2 -> Short.toUnsignedLong(readAddress.get(JAVA_SHORT_UNALIGNED, offset));
-                        case 1 -> Byte.toUnsignedLong(readAddress.get(JAVA_BYTE, offset));
+                    int chunkSize = Integer.highestOneBit(remaining); // next power of 2
+                    long readOffset = offset() + pickChunkOffset(chunkOffset, byteWidth(), chunkSize);
+                    long readChunk = switch (chunkSize) {
+                        case 4 -> Integer.toUnsignedLong(readAddress.get(JAVA_INT_UNALIGNED, readOffset));
+                        case 2 -> Short.toUnsignedLong(readAddress.get(JAVA_SHORT_UNALIGNED, readOffset));
+                        case 1 -> Byte.toUnsignedLong(readAddress.get(JAVA_BYTE, readOffset));
                         default ->
                             throw new IllegalStateException("Unexpected chunk size for chunked write: " + chunkSize);
                     };
-                    result |= readChunk << (offset * Byte.SIZE);
+                    result |= readChunk << (chunkOffset * Byte.SIZE);
                     remaining -= chunkSize;
-                    offset += chunkSize;
+                    chunkOffset += chunkSize;
                 } while (remaining != 0);
 
                 if (type() == int.class) { // 3 byte write

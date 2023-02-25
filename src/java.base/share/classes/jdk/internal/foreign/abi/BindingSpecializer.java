@@ -47,6 +47,7 @@ import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
@@ -55,9 +56,6 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 
-import static java.lang.foreign.ValueLayout.JAVA_BYTE;
-import static java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED;
-import static java.lang.foreign.ValueLayout.JAVA_SHORT_UNALIGNED;
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
@@ -598,14 +596,21 @@ public class BindingSpecializer {
         pushType(MemorySegment.class);
     }
 
+    private static long pickChunkOffset(long chunkOffset, long byteWidth, int chunkWidth) {
+        return ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN
+                ? byteWidth - chunkWidth - chunkOffset
+                : chunkOffset;
+    }
+
     private void emitBufferStore(Binding.BufferStore bufferStore) {
         Class<?> storeType = bufferStore.type();
         long offset = bufferStore.offset();
+        int byteWidth = bufferStore.byteWidth();
 
         popType(storeType);
         popType(MemorySegment.class);
 
-        if (SharedUtils.isPowerOfTwo(bufferStore.byteWidth())) {
+        if (SharedUtils.isPowerOfTwo(byteWidth)) {
             int valueIdx = newLocal(storeType);
             emitStore(storeType, valueIdx);
 
@@ -626,8 +631,8 @@ public class BindingSpecializer {
             int writeAddrIdx = newLocal(MemorySegment.class);
             emitStore(MemorySegment.class, writeAddrIdx);
 
-            int remaining = bufferStore.byteWidth();
-            int shiftAmount = 0;
+            int remaining = byteWidth;
+            int chunkOffset = 0;
             do {
                 int chunkSize = Integer.highestOneBit(remaining); // next power of 2, in bytes
                 Class<?> chunkStoreType;
@@ -649,6 +654,7 @@ public class BindingSpecializer {
                        throw new IllegalStateException("Unexpected chunk size for chunked write: " + chunkSize);
                 }
                 //int writeChunk = (int) (((0xFFFF_FFFFL << shiftAmount) & longValue) >>> shiftAmount);
+                int shiftAmount = chunkOffset * Byte.SIZE;
                 mask = mask << shiftAmount;
                 emitLoad(long.class, longValueIdx);
                 emitConst(mask);
@@ -665,14 +671,14 @@ public class BindingSpecializer {
                 //writeAddress.set(JAVA_SHORT_UNALIGNED, offset, writeChunk);
                 emitLoad(MemorySegment.class, writeAddrIdx);
                 Class<?> valueLayoutType = emitLoadLayoutConstant(chunkStoreType);
-                emitConst(offset);
+                long writeOffset = offset + pickChunkOffset(chunkOffset, byteWidth, chunkSize);
+                emitConst(writeOffset);
                 emitLoad(chunkStoreType, chunkIdx);
                 String descriptor = methodType(void.class, valueLayoutType, long.class, chunkStoreType).descriptorString();
                 emitInvokeInterface(MemorySegment.class, "set", descriptor);
 
                 remaining -= chunkSize;
-                offset += chunkSize;
-                shiftAmount += chunkSize * Byte.SIZE;
+                chunkOffset += chunkSize;
             } while (remaining != 0);
         }
     }
@@ -770,10 +776,11 @@ public class BindingSpecializer {
     private void emitBufferLoad(Binding.BufferLoad bufferLoad) {
         Class<?> loadType = bufferLoad.type();
         long offset = bufferLoad.offset();
+        int byteWidth = bufferLoad.byteWidth();
 
         popType(MemorySegment.class);
 
-        if (SharedUtils.isPowerOfTwo(bufferLoad.byteWidth())) {
+        if (SharedUtils.isPowerOfTwo(byteWidth)) {
             Class<?> valueLayoutType = emitLoadLayoutConstant(loadType);
             emitConst(offset);
             String descriptor = methodType(loadType, valueLayoutType, long.class).descriptorString();
@@ -787,9 +794,8 @@ public class BindingSpecializer {
             int resultIdx = newLocal(long.class);
             emitStore(long.class, resultIdx);
 
-            int remaining = bufferLoad.byteWidth();
-            int shiftAmount = 0;
-
+            int remaining = byteWidth;
+            int chunkOffset = 0;
             do {
                 int chunkSize = Integer.highestOneBit(remaining); // next power of 2
                 Class<?> chunkType;
@@ -818,11 +824,13 @@ public class BindingSpecializer {
                 emitLoad(MemorySegment.class, readAddrIdx);
                 Class<?> valueLayoutType = emitLoadLayoutConstant(chunkType);
                 String descriptor = methodType(chunkType, valueLayoutType, long.class).descriptorString();
-                emitConst(offset);
+                long readOffset = offset + pickChunkOffset(chunkOffset, byteWidth, chunkSize);
+                emitConst(readOffset);
                 emitInvokeInterface(MemorySegment.class, "get", descriptor);
                 emitInvokeStatic(toULongHolder, "toUnsignedLong", toULongDescriptor);
 
                 // shift to right offset
+                int shiftAmount = chunkOffset * Byte.SIZE;
                 if (shiftAmount != 0) {
                     emitConst(shiftAmount);
                     mv.visitInsn(LSHL);
@@ -833,8 +841,7 @@ public class BindingSpecializer {
                 emitStore(long.class, resultIdx);
 
                 remaining -= chunkSize;
-                offset += chunkSize;
-                shiftAmount += chunkSize * Byte.SIZE;
+                chunkOffset += chunkSize;
             } while (remaining != 0);
 
             emitLoad(long.class, resultIdx);
