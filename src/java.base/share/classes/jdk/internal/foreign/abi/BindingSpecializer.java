@@ -47,7 +47,6 @@ import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
@@ -596,12 +595,6 @@ public class BindingSpecializer {
         pushType(MemorySegment.class);
     }
 
-    private static long pickChunkOffset(long chunkOffset, long byteWidth, int chunkWidth) {
-        return ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN
-                ? byteWidth - chunkWidth - chunkOffset
-                : chunkOffset;
-    }
-
     private void emitBufferStore(Binding.BufferStore bufferStore) {
         Class<?> storeType = bufferStore.type();
         long offset = bufferStore.offset();
@@ -671,7 +664,7 @@ public class BindingSpecializer {
                 //writeAddress.set(JAVA_SHORT_UNALIGNED, offset, writeChunk);
                 emitLoad(MemorySegment.class, writeAddrIdx);
                 Class<?> valueLayoutType = emitLoadLayoutConstant(chunkStoreType);
-                long writeOffset = offset + pickChunkOffset(chunkOffset, byteWidth, chunkSize);
+                long writeOffset = offset + SharedUtils.pickChunkOffset(chunkOffset, byteWidth, chunkSize);
                 emitConst(writeOffset);
                 emitLoad(chunkStoreType, chunkIdx);
                 String descriptor = methodType(void.class, valueLayoutType, long.class, chunkStoreType).descriptorString();
@@ -824,7 +817,7 @@ public class BindingSpecializer {
                 emitLoad(MemorySegment.class, readAddrIdx);
                 Class<?> valueLayoutType = emitLoadLayoutConstant(chunkType);
                 String descriptor = methodType(chunkType, valueLayoutType, long.class).descriptorString();
-                long readOffset = offset + pickChunkOffset(chunkOffset, byteWidth, chunkSize);
+                long readOffset = offset + SharedUtils.pickChunkOffset(chunkOffset, byteWidth, chunkSize);
                 emitConst(readOffset);
                 emitInvokeInterface(MemorySegment.class, "get", descriptor);
                 emitInvokeStatic(toULongHolder, "toUnsignedLong", toULongDescriptor);

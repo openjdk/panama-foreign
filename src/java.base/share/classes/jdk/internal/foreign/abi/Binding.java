@@ -557,12 +557,6 @@ public interface Binding {
         Class<?> type();
     }
 
-    private static long pickChunkOffset(long chunkOffset, int byteWidth, int chunkWidth) {
-        return ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN
-                ? byteWidth - chunkWidth - chunkOffset
-                : chunkOffset;
-    }
-
     /**
      * BUFFER_STORE([offset into memory region], [type])
      * Pops a [type] from the operand stack, then pops a MemorySegment from the operand stack.
@@ -598,7 +592,7 @@ public interface Binding {
                 int chunkOffset = 0;
                 do {
                     int chunkSize = Integer.highestOneBit(remaining); // next power of 2, in bytes
-                    long writeOffset = offset() + pickChunkOffset(chunkOffset, byteWidth(), chunkSize);
+                    long writeOffset = offset() + SharedUtils.pickChunkOffset(chunkOffset, byteWidth(), chunkSize);
                     int shiftAmount = chunkOffset * Byte.SIZE;
                     switch (chunkSize) {
                         case 4 -> {
@@ -657,7 +651,7 @@ public interface Binding {
                 int chunkOffset = 0;
                 do {
                     int chunkSize = Integer.highestOneBit(remaining); // next power of 2
-                    long readOffset = offset() + pickChunkOffset(chunkOffset, byteWidth(), chunkSize);
+                    long readOffset = offset() + SharedUtils.pickChunkOffset(chunkOffset, byteWidth(), chunkSize);
                     long readChunk = switch (chunkSize) {
                         case 4 -> Integer.toUnsignedLong(readAddress.get(JAVA_INT_UNALIGNED, readOffset));
                         case 2 -> Short.toUnsignedLong(readAddress.get(JAVA_SHORT_UNALIGNED, readOffset));

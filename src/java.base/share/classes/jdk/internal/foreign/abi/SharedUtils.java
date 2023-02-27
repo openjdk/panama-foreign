@@ -50,6 +50,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Reference;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
@@ -361,6 +362,12 @@ public final class SharedUtils {
         }
 
         throw new IllegalArgumentException("Unknown primitive: " + type);
+    }
+
+    static long pickChunkOffset(long chunkOffset, long byteWidth, int chunkWidth) {
+        return ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN
+                ? byteWidth - chunkWidth - chunkOffset
+                : chunkOffset;
     }
 
     public static final class SimpleVaArg {
