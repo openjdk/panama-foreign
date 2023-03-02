@@ -43,6 +43,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.vm.annotation.ForceInline;
+import sun.invoke.util.Wrapper;
+
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
@@ -236,5 +238,9 @@ public final class Utils {
             layouts.add(MemoryLayout.paddingLayout(padding));
         }
         return MemoryLayout.structLayout(layouts.toArray(MemoryLayout[]::new));
+    }
+
+    public static int byteWidthOfPrimitive(Class<?> primitive) {
+        return Wrapper.forPrimitiveType(primitive).bitWidth() / 8;
     }
 }
