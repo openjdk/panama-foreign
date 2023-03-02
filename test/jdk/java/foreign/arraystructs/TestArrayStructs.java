@@ -57,8 +57,10 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.StructLayout;
 import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static java.lang.foreign.MemoryLayout.sequenceLayout;
@@ -71,10 +73,12 @@ public class TestArrayStructs extends NativeTestHelper {
 
     // Test if structs of various different sizes, including non-powers of two, work correctly
     @Test(dataProvider = "arrayStructs")
-    public void testArrayStruct(String functionName, FunctionDescriptor upcallDesc, int numPrefixArgs) throws Throwable {
-        FunctionDescriptor downcallDesc = upcallDesc.insertArgumentLayouts(0, C_POINTER); // CB
+    public void testArrayStruct(String functionName, FunctionDescriptor baseDesc, int numPrefixArgs, int numElements) throws Throwable {
+        FunctionDescriptor downcallDesc = baseDesc.insertArgumentLayouts(0, C_POINTER); // CB
+        MemoryLayout[] elementLayouts = Collections.nCopies(numElements, C_CHAR).toArray(MemoryLayout[]::new);
+        FunctionDescriptor upcallDesc = baseDesc.appendArgumentLayouts(elementLayouts);
         try (Arena arena = Arena.ofConfined()) {
-            TestValue[] testArgs = genTestArgs(upcallDesc, arena);
+            TestValue[] testArgs = genTestArgs(baseDesc, arena);
 
             MethodHandle downcallHandle = downcallHandle(functionName, downcallDesc);
             Object[] args = new Object[downcallDesc.argumentLayouts().size() + 1]; // +1 for return allocator
@@ -88,13 +92,22 @@ public class TestArrayStructs extends NativeTestHelper {
             }
 
             MemorySegment returned = (MemorySegment) downcallHandle.invokeWithArguments(args);
+            Consumer<Object> structCheck = testArgs[returnIdx].check();
 
-            testArgs[returnIdx].check().accept(returned);
+            structCheck.accept(returned);
 
             Object[] capturedArgs = returnBox.get();
-            for (int i = numPrefixArgs; i < testArgs.length; i++) {
-                testArgs[i].check().accept(capturedArgs[i]);
+            int capturedArgIdx;
+            for (capturedArgIdx = numPrefixArgs; capturedArgIdx < testArgs.length; capturedArgIdx++) {
+                testArgs[capturedArgIdx].check().accept(capturedArgs[capturedArgIdx]);
             }
+
+            byte[] elements = new byte[numElements];
+            for (int elIdx = 0; elIdx < numElements; elIdx++, capturedArgIdx++) {
+                elements[elIdx] = (byte) capturedArgs[capturedArgIdx];
+            }
+
+            structCheck.accept(MemorySegment.ofArray(elements)); // reuse the check for the struct
         }
     }
 
@@ -103,12 +116,14 @@ public class TestArrayStructs extends NativeTestHelper {
         List<Object[]> cases = new ArrayList<>();
         for (int i = 0; i < layouts.size(); i++) {
             StructLayout layout = layouts.get(i);
-            cases.add(new Object[]{"F" + (i + 1), FunctionDescriptor.of(layout, layout), 0});
+            int numElements = i + 1;
+            cases.add(new Object[]{"F" + numElements, FunctionDescriptor.of(layout, layout), 0, numElements});
         }
         for (int i = 0; i < layouts.size(); i++) {
             StructLayout layout = layouts.get(i);
             MemoryLayout[] argLayouts = Stream.concat(PREFIX_LAYOUTS.stream(), Stream.of(layout)).toArray(MemoryLayout[]::new);
-            cases.add(new Object[]{"F" + (i + 1) + "_stack", FunctionDescriptor.of(layout, argLayouts), PREFIX_LAYOUTS.size()});
+            int numElements = i + 1;
+            cases.add(new Object[]{"F" + numElements + "_stack", FunctionDescriptor.of(layout, argLayouts), PREFIX_LAYOUTS.size(), numElements});
         }
 
         return cases.toArray(Object[][]::new);
