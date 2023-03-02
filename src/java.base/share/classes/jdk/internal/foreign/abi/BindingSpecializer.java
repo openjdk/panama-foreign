@@ -72,11 +72,10 @@ public class BindingSpecializer {
 
     private static final String VOID_DESC = methodType(void.class).descriptorString();
 
-    private static final String BINDING_CONTEXT_DESC = Binding.Context.class.descriptorString();
-    private static final String OF_BOUNDED_ALLOCATOR_DESC = methodType(Binding.Context.class, long.class).descriptorString();
-    private static final String OF_SCOPE_DESC = methodType(Binding.Context.class).descriptorString();
-    private static final String ALLOCATOR_DESC = methodType(SegmentAllocator.class).descriptorString();
-    private static final String SCOPE_DESC = methodType(MemorySessionImpl.class).descriptorString();
+    private static final String ARENA_DESC = Arena.class.descriptorString();
+    private static final String NEW_BOUNDED_ARENA_DESC = methodType(Arena.class, long.class).descriptorString();
+    private static final String NEW_EMPTY_ARENA_DESC = methodType(Arena.class).descriptorString();
+    private static final String SCOPE_DESC = methodType(MemorySegment.Scope.class).descriptorString();
     private static final String SESSION_IMPL_DESC = methodType(MemorySessionImpl.class).descriptorString();
     private static final String CLOSE_DESC = VOID_DESC;
     private static final String UNBOX_SEGMENT_DESC = methodType(long.class, MemorySegment.class).descriptorString();
@@ -279,11 +278,11 @@ public class BindingSpecializer {
         // create a Binding.Context for this call
         if (callingSequence.allocationSize() != 0) {
             emitConst(callingSequence.allocationSize());
-            emitInvokeStatic(Binding.Context.class, "ofBoundedAllocator", OF_BOUNDED_ALLOCATOR_DESC);
+            emitInvokeStatic(SharedUtils.class, "newBoundedArena", NEW_BOUNDED_ARENA_DESC);
         } else if (callingSequence.forUpcall() && needsSession()) {
-            emitInvokeStatic(Binding.Context.class, "ofScope", OF_SCOPE_DESC);
+            emitInvokeStatic(SharedUtils.class, "newEmptyArena", NEW_EMPTY_ARENA_DESC);
         } else {
-            emitGetStatic(Binding.Context.class, "DUMMY", BINDING_CONTEXT_DESC);
+            emitGetStatic(SharedUtils.class, "DUMMY_ARENA", ARENA_DESC);
         }
         contextIdx = newLocal(Object.class);
         emitStore(Object.class, contextIdx);
@@ -553,19 +552,21 @@ public class BindingSpecializer {
     private void emitLoadInternalSession() {
         assert contextIdx != -1;
         emitLoad(Object.class, contextIdx);
-        emitInvokeVirtual(Binding.Context.class, "scope", SCOPE_DESC);
+        emitCheckCast(Arena.class);
+        emitInvokeInterface(Arena.class, "scope", SCOPE_DESC);
+        emitCheckCast(MemorySessionImpl.class);
     }
 
     private void emitLoadInternalAllocator() {
         assert contextIdx != -1;
         emitLoad(Object.class, contextIdx);
-        emitInvokeVirtual(Binding.Context.class, "allocator", ALLOCATOR_DESC);
     }
 
     private void emitCloseContext() {
         assert contextIdx != -1;
         emitLoad(Object.class, contextIdx);
-        emitInvokeVirtual(Binding.Context.class, "close", CLOSE_DESC);
+        emitCheckCast(Arena.class);
+        emitInvokeInterface(Arena.class, "close", CLOSE_DESC);
     }
 
     private void emitBoxAddress(Binding.BoxAddress boxAddress) {
