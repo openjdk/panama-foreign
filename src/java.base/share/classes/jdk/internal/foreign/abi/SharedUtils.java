@@ -38,11 +38,13 @@ import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 import jdk.internal.vm.annotation.ForceInline;
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySegment.Scope;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
@@ -78,6 +80,23 @@ public final class SharedUtils {
     public static final ValueLayout.OfAddress C_POINTER = ADDRESS
             .withBitAlignment(64)
             .withTargetLayout(MemoryLayout.sequenceLayout(JAVA_BYTE));
+
+    public static final Arena DUMMY_ARENA = new Arena() {
+        @Override
+        public Scope scope() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public MemorySegment allocate(long byteSize) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void close() {
+            // do nothing
+        }
+    };
 
     static {
         try {
@@ -348,6 +367,49 @@ public final class SharedUtils {
         return ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN
                 ? byteWidth - chunkWidth - chunkOffset
                 : chunkOffset;
+    }
+
+    public static Arena newBoundedArena(long size) {
+        return new Arena() {
+            final Arena arena = Arena.ofConfined();
+            final SegmentAllocator slicingAllocator = SegmentAllocator.slicingAllocator(arena.allocate(size));
+
+            @Override
+            public Scope scope() {
+                return arena.scope();
+            }
+
+            @Override
+            public void close() {
+                arena.close();
+            }
+
+            @Override
+            public MemorySegment allocate(long byteSize, long byteAlignment) {
+                return slicingAllocator.allocate(byteSize, byteAlignment);
+            }
+        };
+    }
+
+    public static Arena newEmptyArena() {
+        return new Arena() {
+            final Arena arena = Arena.ofConfined();
+
+            @Override
+            public Scope scope() {
+                return arena.scope();
+            }
+
+            @Override
+            public void close() {
+                arena.close();
+            }
+
+            @Override
+            public MemorySegment allocate(long byteSize, long byteAlignment) {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     public static final class SimpleVaArg {
