@@ -306,7 +306,7 @@ public abstract class CallArranger {
                 if (isFieldWise) {
                     // We should only get here for HFAs, which can't have padding
                     copyLayout = (ValueLayout) scalarLayouts.get(i);
-                    copySize = SharedUtils.byteWidthOfPrimitive(copyLayout.carrier());
+                    copySize = Utils.byteWidthOfPrimitive(copyLayout.carrier());
                 } else {
                     // chunk-wise copy
                     copySize = Math.min(layout.byteSize() - offset, MAX_COPY_SIZE);

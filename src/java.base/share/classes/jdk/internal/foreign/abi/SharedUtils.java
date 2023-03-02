@@ -344,26 +344,6 @@ public final class SharedUtils {
         return Integer.bitCount(width) == 1;
     }
 
-    public static int byteWidthOfPrimitive(Class<?> type) {
-        if (type == byte.class) {
-            return Byte.BYTES;
-        } else if (type == short.class) {
-            return Short.BYTES;
-        } else if (type == char.class) {
-            return Character.BYTES;
-        } else if (type == int.class) {
-            return Integer.BYTES;
-        } else if (type == long.class) {
-            return Long.BYTES;
-        } else if (type == float.class) {
-            return Float.BYTES;
-        } else if (type == double.class) {
-            return Double.BYTES;
-        }
-
-        throw new IllegalArgumentException("Unknown primitive: " + type);
-    }
-
     static long pickChunkOffset(long chunkOffset, long byteWidth, int chunkWidth) {
         return ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN
                 ? byteWidth - chunkWidth - chunkOffset

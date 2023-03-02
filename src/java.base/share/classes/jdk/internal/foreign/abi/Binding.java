@@ -319,8 +319,8 @@ public interface Binding {
             throw new IllegalArgumentException("Negative offset: " + offset);
     }
 
-    private static void checkByteWidth(long byteWidth, Class<?> type) {
-        if (byteWidth < 0 || byteWidth > SharedUtils.byteWidthOfPrimitive(type))
+    private static void checkByteWidth(int byteWidth, Class<?> type) {
+        if (byteWidth < 0 || byteWidth > Utils.byteWidthOfPrimitive(type))
             throw new IllegalArgumentException("Illegal byteWidth: " + byteWidth);
     }
 
@@ -335,17 +335,18 @@ public interface Binding {
     }
 
     static BufferStore bufferStore(long offset, Class<?> type) {
-        return bufferStore(offset, type, SharedUtils.byteWidthOfPrimitive(type));
+        return bufferStore(offset, type, Utils.byteWidthOfPrimitive(type));
     }
 
     static BufferStore bufferStore(long offset, Class<?> type, int byteWidth) {
         checkType(type);
         checkOffset(offset);
+        checkByteWidth(byteWidth, type);
         return new BufferStore(offset, type, byteWidth);
     }
 
     static BufferLoad bufferLoad(long offset, Class<?> type) {
-        return Binding.bufferLoad(offset, type, SharedUtils.byteWidthOfPrimitive(type));
+        return Binding.bufferLoad(offset, type, Utils.byteWidthOfPrimitive(type));
     }
 
     static BufferLoad bufferLoad(long offset, Class<?> type, int byteWidth) {
@@ -558,9 +559,9 @@ public interface Binding {
     }
 
     /**
-     * BUFFER_STORE([offset into memory region], [type])
+     * BUFFER_STORE([offset into memory region], [type], [width])
      * Pops a [type] from the operand stack, then pops a MemorySegment from the operand stack.
-     * Stores the [type] to [offset into memory region].
+     * Stores [width] bytes of the value contained in the [type] to [offset into memory region].
      * The [type] must be one of byte, short, char, int, long, float, or double
      */
     record BufferStore(long offset, Class<?> type, int byteWidth) implements Dereference {
@@ -588,6 +589,7 @@ public interface Binding {
             } else {
                 // non-exact match, need to do chunked load
                 long longValue = ((Number) value).longValue();
+                // byteWidth is smaller than the width of 'type', so it will always be < 8 here
                 int remaining = byteWidth();
                 int chunkOffset = 0;
                 do {
@@ -618,9 +620,9 @@ public interface Binding {
     }
 
     /**
-     * BUFFER_LOAD([offset into memory region], [type])
-     * Pops a [type], and then a MemorySegment from the operand stack,
-     * and then stores [type] to [offset into memory region] of the MemorySegment.
+     * BUFFER_LOAD([offset into memory region], [type], [width])
+     * Pops a MemorySegment from the operand stack,
+     * and then loads [width] bytes from it at [offset into memory region], into a [type].
      * The [type] must be one of byte, short, char, int, long, float, or double
      */
     record BufferLoad(long offset, Class<?> type, int byteWidth) implements Dereference {
@@ -647,6 +649,7 @@ public interface Binding {
             } else {
                 // non-exact match, need to do chunked load
                 long result = 0;
+                // byteWidth is smaller than the width of 'type', so it will always be < 8 here
                 int remaining = byteWidth();
                 int chunkOffset = 0;
                 do {
