@@ -33,8 +33,11 @@
 import java.lang.foreign.Arena;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.PaddingLayout;
+import java.lang.foreign.ValueLayout;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -47,6 +50,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.lang.foreign.MemoryLayout.PathElement.*;
+import static org.testng.Assert.*;
 
 public class TestVarArgs extends CallGeneratorHelper {
 
