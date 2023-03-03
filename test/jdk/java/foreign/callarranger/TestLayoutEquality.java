@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,13 +25,14 @@
 /*
  * @test
  * @enablePreview
- * @modules java.base/jdk.internal.foreign
+ * @compile platform/PlatformLayouts.java
+ * @modules java.base/jdk.internal.foreign.abi
  * @run testng TestLayoutEquality
  */
 
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.ValueLayout;
-import jdk.internal.foreign.PlatformLayouts;
+import platform.PlatformLayouts;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -47,8 +48,8 @@ public class TestLayoutEquality {
     public void testReconstructedEquality(ValueLayout layout) {
         ValueLayout newLayout = MemoryLayout.valueLayout(layout.carrier(), layout.order());
         newLayout = newLayout.withBitAlignment(layout.bitAlignment());
-        if (layout instanceof ValueLayout.OfAddress addressLayout && addressLayout.isUnbounded()) {
-            newLayout = ((ValueLayout.OfAddress)newLayout).asUnbounded();
+        if (layout instanceof ValueLayout.OfAddress addressLayout && addressLayout.targetLayout().isPresent()) {
+            newLayout = ((ValueLayout.OfAddress)newLayout).withTargetLayout(addressLayout.targetLayout().get());
         }
 
         // properties should be equal

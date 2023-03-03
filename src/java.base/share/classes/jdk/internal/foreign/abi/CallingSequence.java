@@ -191,6 +191,14 @@ public class CallingSequence {
                 .reduce(0, (a, b) -> a | b);
     }
 
+    public boolean needsTransition() {
+        return !linkerOptions.isTrivial();
+    }
+
+    public Thread.UncaughtExceptionHandler uncaughtExceptionHandler() {
+        return linkerOptions.uncaughtExceptionHandler();
+    }
+
     public int numLeadingParams() {
         return 2 + (linkerOptions.hasCapturedCallState() ? 1 : 0); // 2 for addr, allocator
     }

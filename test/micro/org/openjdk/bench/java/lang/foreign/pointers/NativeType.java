@@ -38,7 +38,8 @@ public sealed abstract class NativeType<X> {
         public abstract ValueLayout.OfDouble layout();
     }
 
-    private static final ValueLayout.OfAddress UNSAFE_ADDRESS = ValueLayout.ADDRESS.asUnbounded();
+    private static final ValueLayout.OfAddress UNSAFE_ADDRESS = ValueLayout.ADDRESS
+            .withTargetLayout(MemoryLayout.sequenceLayout(ValueLayout.JAVA_BYTE));
 
     public final static class OfPointer<X> extends NativeType<X> {
         public ValueLayout.OfAddress layout() {
