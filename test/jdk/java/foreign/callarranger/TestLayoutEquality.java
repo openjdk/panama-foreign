@@ -30,6 +30,7 @@
  * @run testng TestLayoutEquality
  */
 
+import java.lang.foreign.AddressLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.ValueLayout;
 import platform.PlatformLayouts;
@@ -48,8 +49,8 @@ public class TestLayoutEquality {
     public void testReconstructedEquality(ValueLayout layout) {
         ValueLayout newLayout = MemoryLayout.valueLayout(layout.carrier(), layout.order());
         newLayout = newLayout.withBitAlignment(layout.bitAlignment());
-        if (layout instanceof ValueLayout.OfAddress addressLayout && addressLayout.targetLayout().isPresent()) {
-            newLayout = ((ValueLayout.OfAddress)newLayout).withTargetLayout(addressLayout.targetLayout().get());
+        if (layout instanceof AddressLayout addressLayout && addressLayout.targetLayout().isPresent()) {
+            newLayout = ((AddressLayout)newLayout).withTargetLayout(addressLayout.targetLayout().get());
         }
 
         // properties should be equal

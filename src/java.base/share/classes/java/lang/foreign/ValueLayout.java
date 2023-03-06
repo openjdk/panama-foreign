@@ -28,11 +28,9 @@ package java.lang.foreign;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
-import java.util.Optional;
 
 import jdk.internal.foreign.layout.ValueLayouts;
 import jdk.internal.javac.PreviewFeature;
-import jdk.internal.reflect.CallerSensitive;
 
 /**
  * A layout that models values of basic data types. Examples of values modelled by a value layout are
@@ -54,7 +52,9 @@ import jdk.internal.reflect.CallerSensitive;
  * @since 19
  */
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
-public sealed interface ValueLayout extends MemoryLayout {
+public sealed interface ValueLayout extends MemoryLayout permits
+        ValueLayout.OfBoolean, ValueLayout.OfByte, ValueLayout.OfChar, ValueLayout.OfShort, ValueLayout.OfInt,
+        ValueLayout.OfFloat, ValueLayout.OfLong, ValueLayout.OfDouble, AddressLayout {
 
     /**
      * {@return the value's byte order}
@@ -387,72 +387,6 @@ public sealed interface ValueLayout extends MemoryLayout {
     }
 
     /**
-     * A value layout whose carrier is {@code MemorySegment.class}. An address layout may optionally feature
-     * a {@linkplain #targetLayout() target layout}. The target layout indicates the layout of the region
-     * of memory pointed to by the address described by this layout.
-     *
-     * @see #ADDRESS
-     * @see #ADDRESS_UNALIGNED
-     * @since 19
-     */
-    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
-    sealed interface OfAddress extends ValueLayout permits ValueLayouts.OfAddressImpl {
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        OfAddress withName(String name);
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        OfAddress withBitAlignment(long bitAlignment);
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        OfAddress withOrder(ByteOrder order);
-
-        /**
-         * Returns an address layout with the same carrier, alignment constraint, name and order as this address layout,
-         * but associated with the specified target layout. The returned address layout allows raw addresses to be accessed
-         * as {@linkplain MemorySegment memory segments} whose size is set to the size of the specified layout. Moreover,
-         * if the accessed raw address is not compatible with the alignment constraint in the provided layout,
-         * {@linkplain IllegalArgumentException} will be thrown.
-         * @apiNote
-         * This method can also be used to create an address layout which, when used, creates native memory
-         * segments with maximal size (e.g. {@linkplain Long#MAX_VALUE}. This can be done by using a target sequence
-         * layout with unspecified size, as follows:
-         * {@snippet lang=java :
-         * ValueLayout.OfAddress addressLayout = ...
-         * ValueLayout.OfAddress unboundedLayout = addressLayout.withTargetLayout(
-         *         MemoryLayout.sequenceLayout(ValueLayout.JAVA_BYTE));
-         * }
-         * <p>
-         * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-         * Restricted methods are unsafe, and, if used incorrectly, their use might crash
-         * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-         * restricted methods, and use safe and supported functionalities, where possible.
-         *
-         * @param layout the target layout.
-         * @return an address layout with same characteristics as this layout, but with the provided target layout.
-         * @throws IllegalCallerException If the caller is in a module that does not have native access enabled.
-         * @see #targetLayout()
-         */
-        @CallerSensitive
-        OfAddress withTargetLayout(MemoryLayout layout);
-
-        /**
-         * {@return the target layout associated with this address layout (if any)}.
-         */
-        Optional<MemoryLayout> targetLayout();
-
-    }
-
-    /**
      * A value layout constant whose size is the same as that of a machine address ({@code size_t}),
      * bit alignment set to {@code sizeof(size_t) * 8}, byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
@@ -460,7 +394,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * MemoryLayout.valueLayout(MemorySegment.class, ByteOrder.nativeOrder());
      * }
      */
-    OfAddress ADDRESS = ValueLayouts.OfAddressImpl.of(ByteOrder.nativeOrder());
+    AddressLayout ADDRESS = ValueLayouts.OfAddressImpl.of(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code byte},
@@ -552,7 +486,7 @@ public sealed interface ValueLayout extends MemoryLayout {
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
      */
-    OfAddress ADDRESS_UNALIGNED = ADDRESS.withBitAlignment(8);
+    AddressLayout ADDRESS_UNALIGNED = ADDRESS.withBitAlignment(8);
 
     /**
      * An unaligned value layout constant whose size is the same as that of a Java {@code char}

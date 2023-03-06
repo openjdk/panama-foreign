@@ -25,6 +25,7 @@
 
 package jdk.internal.foreign;
 
+import java.lang.foreign.AddressLayout;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
@@ -103,7 +104,7 @@ final class MemoryInspectionUtil {
             action.accept(renderValueLayout(state, ofChar, renderer.apply(ofChar, segment.get(ofChar, state.indexAndAdd(ofChar))), suffix));
             return;
         }
-        if (layout instanceof ValueLayout.OfAddress ofAddress) {
+        if (layout instanceof AddressLayout ofAddress) {
             action.accept(renderValueLayout(state, ofAddress, renderer.apply(ofAddress, segment.get(ofAddress, state.indexAndAdd(ofAddress))), suffix));
             return;
         }
@@ -252,7 +253,7 @@ final class MemoryInspectionUtil {
             if (layout instanceof ValueLayout.OfChar ofChar && o instanceof Character c) {
                 return Character.toString(c);
             }
-            if (layout instanceof ValueLayout.OfAddress ofAddress && o instanceof MemorySegment m) {
+            if (layout instanceof AddressLayout ofAddress && o instanceof MemorySegment m) {
                 return String.format("0x%0" + (ValueLayout.ADDRESS.byteSize() * 2) + "X", m.address());
             }
             throw new UnsupportedOperationException("layout " + layout + " for " + o.getClass().getName() + " not supported");

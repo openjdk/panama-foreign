@@ -27,6 +27,7 @@ package platform;
 
 import jdk.internal.foreign.abi.SharedUtils;
 
+import java.lang.foreign.AddressLayout;
 import java.lang.foreign.ValueLayout;
 
 public final class PlatformLayouts {
@@ -85,7 +86,7 @@ public final class PlatformLayouts {
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout.OfAddress C_POINTER = SharedUtils.C_POINTER;;
+        public static final AddressLayout C_POINTER = SharedUtils.C_POINTER;;
 
     }
 
@@ -139,7 +140,7 @@ public final class PlatformLayouts {
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout.OfAddress C_POINTER = SharedUtils.C_POINTER;
+        public static final AddressLayout C_POINTER = SharedUtils.C_POINTER;
 
     }
 
@@ -194,7 +195,7 @@ public final class PlatformLayouts {
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout.OfAddress C_POINTER = SharedUtils.C_POINTER;
+        public static final AddressLayout C_POINTER = SharedUtils.C_POINTER;
 
     }
 
@@ -246,7 +247,7 @@ public final class PlatformLayouts {
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout.OfAddress C_POINTER = SharedUtils.C_POINTER;
+        public static final AddressLayout C_POINTER = SharedUtils.C_POINTER;
 
     }
 

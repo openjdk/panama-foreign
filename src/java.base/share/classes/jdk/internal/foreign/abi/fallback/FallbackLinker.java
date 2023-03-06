@@ -31,6 +31,7 @@ import jdk.internal.foreign.abi.CapturableState;
 import jdk.internal.foreign.abi.LinkerOptions;
 import jdk.internal.foreign.abi.SharedUtils;
 
+import java.lang.foreign.AddressLayout;
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
@@ -232,7 +233,7 @@ public final class FallbackLinker extends AbstractLinker {
             argSeg.set(fl, 0, (Float) arg);
         } else if (layout instanceof ValueLayout.OfDouble dl) {
             argSeg.set(dl, 0, (Double) arg);
-        } else if (layout instanceof ValueLayout.OfAddress al) {
+        } else if (layout instanceof AddressLayout al) {
             MemorySegment addrArg = (MemorySegment) arg;
             acquireCallback.accept(addrArg);
             argSeg.set(al, 0, addrArg);
@@ -260,7 +261,7 @@ public final class FallbackLinker extends AbstractLinker {
             return seg.get(fl, 0);
         } else if (layout instanceof ValueLayout.OfDouble dl) {
             return seg.get(dl, 0);
-        } else if (layout instanceof ValueLayout.OfAddress al) {
+        } else if (layout instanceof AddressLayout al) {
             return seg.get(al, 0);
         } else if (layout instanceof GroupLayout) {
             return seg;

@@ -25,6 +25,7 @@
  */
 package jdk.internal.foreign.abi.aarch64;
 
+import java.lang.foreign.AddressLayout;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
@@ -492,7 +493,7 @@ public abstract class CallArranger {
                             .boxAddress(layout);
                 }
                 case POINTER -> {
-                    ValueLayout.OfAddress addressLayout = (ValueLayout.OfAddress)layout;
+                    AddressLayout addressLayout = (AddressLayout) layout;
                     VMStorage storage = storageCalculator.nextStorage(StorageType.INTEGER, addressLayout);
                     bindings.vmLoad(storage, long.class)
                             .boxAddressRaw(Utils.pointeeByteSize(addressLayout), Utils.pointeeByteAlign(addressLayout));

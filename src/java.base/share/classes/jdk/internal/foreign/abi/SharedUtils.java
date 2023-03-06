@@ -38,6 +38,7 @@ import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 import jdk.internal.vm.annotation.ForceInline;
 
+import java.lang.foreign.AddressLayout;
 import java.lang.foreign.Arena;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
@@ -77,7 +78,7 @@ public final class SharedUtils {
     private static final MethodHandle MH_REACHABILITY_FENCE;
     public static final MethodHandle MH_CHECK_SYMBOL;
 
-    public static final ValueLayout.OfAddress C_POINTER = ADDRESS
+    public static final AddressLayout C_POINTER = ADDRESS
             .withBitAlignment(64)
             .withTargetLayout(MemoryLayout.sequenceLayout(JAVA_BYTE));
 

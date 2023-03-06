@@ -27,6 +27,7 @@ package jdk.internal.foreign;
 
 import jdk.internal.vm.annotation.ForceInline;
 
+import java.lang.foreign.AddressLayout;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
@@ -162,7 +163,7 @@ public class LayoutPath {
     }
 
     public LayoutPath derefElement() {
-        if (!(layout instanceof ValueLayout.OfAddress addressLayout) ||
+        if (!(layout instanceof AddressLayout addressLayout) ||
                 addressLayout.targetLayout().isEmpty()) {
             throw badLayoutPath("Cannot dereference layout: " + layout);
         }

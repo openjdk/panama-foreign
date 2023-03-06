@@ -26,6 +26,7 @@
 
 package jdk.internal.foreign;
 
+import java.lang.foreign.AddressLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
@@ -121,7 +122,7 @@ public final class Utils {
 
         if (layout.carrier() == boolean.class) {
             handle = MethodHandles.filterValue(handle, BOOL_TO_BYTE, BYTE_TO_BOOL);
-        } else if (layout instanceof ValueLayout.OfAddress addressLayout) {
+        } else if (layout instanceof AddressLayout addressLayout) {
             handle = MethodHandles.filterValue(handle,
                     ADDRESS_TO_LONG,
                     MethodHandles.insertArguments(LONG_TO_ADDRESS, 1,
@@ -178,13 +179,13 @@ public final class Utils {
         }
     }
 
-    public static long pointeeByteSize(ValueLayout.OfAddress addressLayout) {
+    public static long pointeeByteSize(AddressLayout addressLayout) {
         return addressLayout.targetLayout()
                 .map(MemoryLayout::byteSize)
                 .orElse(0L);
     }
 
-    public static long pointeeByteAlign(ValueLayout.OfAddress addressLayout) {
+    public static long pointeeByteAlign(AddressLayout addressLayout) {
         return addressLayout.targetLayout()
                 .map(MemoryLayout::byteAlignment)
                 .orElse(1L);

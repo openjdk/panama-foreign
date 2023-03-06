@@ -23,6 +23,7 @@
 
 package org.openjdk.bench.java.lang.foreign;
 
+import java.lang.foreign.AddressLayout;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
@@ -67,7 +68,7 @@ public class CLayouts {
     /**
      * The {@code T*} native type.
      */
-    public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS
+    public static final AddressLayout C_POINTER = ValueLayout.ADDRESS
             .withTargetLayout(MemoryLayout.sequenceLayout(C_CHAR));
 
     private static Linker LINKER = Linker.nativeLinker();
