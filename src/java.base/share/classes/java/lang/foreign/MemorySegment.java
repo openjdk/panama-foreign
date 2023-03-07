@@ -601,7 +601,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * MemorySegment cleanupSegment = MemorySegment.ofAddress(this.address());
      * }
      * That is, the cleanup action receives a segment that is associated with a fresh scope that is always alive,
-     * and is accessible from any thread. The size of the segment accepted by the cleanup action is {@code newSize}.
+     * and is accessible from any thread. The size of the segment accepted by the cleanup action is {@link #byteSize()}.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted methods are unsafe, and, if used incorrectly, their use might crash
