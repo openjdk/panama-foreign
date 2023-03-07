@@ -176,7 +176,7 @@ public interface SymbolLookup {
             return addr == 0L ?
                     Optional.empty() :
                     Optional.of(MemorySegment.ofAddress(addr)
-                                    .reinterpret(loaderArena.scope(), null));
+                                    .reinterpret(loaderArena, null));
         };
     }
 
@@ -261,7 +261,7 @@ public interface SymbolLookup {
             return addr == 0L ?
                     Optional.empty() :
                     Optional.of(MemorySegment.ofAddress(addr)
-                            .reinterpret(libArena.scope(), null));
+                            .reinterpret(libArena, null));
         };
     }
 }

@@ -57,6 +57,6 @@ public final class UpcallStubs {
                 freeUpcallStub(entry);
             }
         });
-        return MemorySegment.ofAddress(entry).reinterpret(arena.scope(), null);
+        return MemorySegment.ofAddress(entry).reinterpret(arena, null);
     }
 }

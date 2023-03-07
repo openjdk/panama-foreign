@@ -166,7 +166,7 @@ public class TestNative extends NativeTestHelper {
         MemorySegment addr = allocateMemory(12);
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment mallocSegment = addr.asSlice(0, 12)
-                    .reinterpret(arena.scope(), TestNative::freeMemory);
+                    .reinterpret(arena, TestNative::freeMemory);
             assertFalse(mallocSegment.isReadOnly());
         }
     }
@@ -177,7 +177,7 @@ public class TestNative extends NativeTestHelper {
         MemorySegment mallocSegment = null;
         try (Arena arena = Arena.ofConfined()) {
             mallocSegment = addr.asSlice(0, 12)
-                    .reinterpret(arena.scope(), TestNative::freeMemory);
+                    .reinterpret(arena, TestNative::freeMemory);
             assertEquals(mallocSegment.byteSize(), 12);
             //free here
         }
@@ -197,7 +197,7 @@ public class TestNative extends NativeTestHelper {
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment segment = arena.allocate(4, 1);
             assertThrows(IllegalArgumentException.class, () -> segment.reinterpret(-1));
-            assertThrows(IllegalArgumentException.class, () -> segment.reinterpret(-1, Arena.ofAuto().scope(), null));
+            assertThrows(IllegalArgumentException.class, () -> segment.reinterpret(-1, Arena.ofAuto(), null));
         }
     }
 
