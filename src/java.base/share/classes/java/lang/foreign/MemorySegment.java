@@ -589,7 +589,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     /**
      * Returns a new memory segment with the same address and size as this segment, but with the provided scope.
      * As such, the returned segment cannot be accessed after the provided arena has been closed.
-     * Moreover, if the returned segment can be accessed compatibly with the confinement restrictions associated with the
+     * Moreover, the returned segment can be accessed compatibly with the confinement restrictions associated with the
      * provided arena: that is, if the provided arena is a {@linkplain Arena#ofConfined() confined arena},
      * the returned segment can only be accessed by the arena's owner thread, regardless of the confinement restrictions
      * associated with this segment. In other words, this method returns a segment that behaves as if it had been allocated
