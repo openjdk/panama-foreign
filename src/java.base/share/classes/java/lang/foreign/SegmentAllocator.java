@@ -32,7 +32,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.function.Function;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
-import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.SlicingAllocator;
 import jdk.internal.foreign.Utils;
 import jdk.internal.javac.PreviewFeature;
@@ -199,7 +198,7 @@ public interface SegmentAllocator {
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
      */
-    default MemorySegment allocate(ValueLayout.OfAddress layout, MemorySegment value) {
+    default MemorySegment allocate(AddressLayout layout, MemorySegment value) {
         Objects.requireNonNull(value);
         Objects.requireNonNull(layout);
         MemorySegment segment = allocate(layout);

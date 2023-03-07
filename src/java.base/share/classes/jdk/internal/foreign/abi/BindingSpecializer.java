@@ -446,7 +446,7 @@ public class BindingSpecializer {
                                               .get(paramIndex - offset);
 
         // is this an address layout?
-        return paramLayout instanceof ValueLayout.OfAddress;
+        return paramLayout instanceof AddressLayout;
     }
 
     private void emitCleanup() {
@@ -929,7 +929,7 @@ public class BindingSpecializer {
         } else if (type == double.class) {
             return ValueLayout.OfDouble.class;
         } else if (type == MemorySegment.class) {
-            return ValueLayout.OfAddress.class;
+            return AddressLayout.class;
         } else {
             throw new IllegalStateException("Unknown type: " + type);
         }

@@ -22,6 +22,7 @@
  *
  */
 
+import java.lang.foreign.AddressLayout;
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
@@ -120,7 +121,7 @@ public class NativeTestHelper {
     /**
      * The {@code T*} native type.
      */
-    public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS.withBitAlignment(64)
+    public static final AddressLayout C_POINTER = ValueLayout.ADDRESS.withBitAlignment(64)
             .withTargetLayout(MemoryLayout.sequenceLayout(C_CHAR));
 
     public static final Linker LINKER = Linker.nativeLinker();
@@ -209,7 +210,7 @@ public class NativeTestHelper {
                 elementChecks.add(initField(random, segment, array, array.elementLayout(), sequenceElement(i), allocator));
             }
             return new TestValue(segment, actual -> elementChecks.forEach(check -> check.accept(actual)));
-        } else if (layout instanceof ValueLayout.OfAddress) {
+        } else if (layout instanceof AddressLayout) {
             MemorySegment value = MemorySegment.ofAddress(random.nextLong());
             return new TestValue(value, actual -> assertEquals(actual, value));
         }else if (layout instanceof ValueLayout.OfByte) {

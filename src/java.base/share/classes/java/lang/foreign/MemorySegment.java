@@ -28,7 +28,6 @@ package java.lang.foreign;
 
 import java.io.UncheckedIOException;
 import java.lang.foreign.Linker.Option;
-import java.lang.foreign.ValueLayout.OfAddress;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.nio.Buffer;
@@ -354,7 +353,7 @@ import jdk.internal.vm.annotation.ForceInline;
  *     <li>pointers returned from a foreign function;</li>
  *     <li>pointers passed by a foreign function to an
  *     {@linkplain Linker#upcallStub(MethodHandle, FunctionDescriptor, Arena, Option...) upcall stub}; and</li>
- *     <li>pointers {@linkplain MemorySegment#get(OfAddress, long) read} from a memory segment.</li>
+ *     <li>pointers {@linkplain MemorySegment#get(AddressLayout, long) read} from a memory segment.</li>
  * </ul>
  * The address of the zero-length segment is the address stored in the pointer. The spatial and temporal bounds of the
  * zero-length segment are as follows:
@@ -395,7 +394,7 @@ import jdk.internal.vm.annotation.ForceInline;
  *}
  *
  * Alternatively, if the size of the foreign segment is known statically, clients can associate a
- * {@linkplain OfAddress#withTargetLayout(MemoryLayout) target layout} with the address layout used to obtain the
+ * {@linkplain AddressLayout#withTargetLayout(MemoryLayout) target layout} with the address layout used to obtain the
  * segment. When an access operation, or a function descriptor that is passed to a downcall method handle,
  * uses an address value layout with target layout {@code T}, the runtime will wrap any corresponding raw addresses
  * with native segments with size set to {@code T.byteSize()}:
@@ -414,7 +413,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * <p>
  * All the methods which can be used to manipulate zero-length memory segments
  * ({@link #reinterpret(long)}, {@link #reinterpret(Scope, Consumer)}, {@link #reinterpret(long, Scope, Consumer)} and
- * {@link ValueLayout.OfAddress#withTargetLayout(MemoryLayout)}) are
+ * {@link AddressLayout#withTargetLayout(MemoryLayout)}) are
  * <a href="package-summary.html#restricted"><em>restricted</em></a> methods, and should be used with caution:
  * assigning a segment incorrect spatial and/or temporal bounds could result in a VM crash when attempting to access
  * the memory segment.
@@ -1640,7 +1639,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Reads an address from this segment at the given offset, with the given layout. The read address is wrapped in
      * a native segment, associated with a fresh scope that is always alive. Under normal conditions,
      * the size of the returned segment is {@code 0}. However, if the provided address layout has a
-     * {@linkplain OfAddress#targetLayout()} {@code T}, then the size of the returned segment
+     * {@linkplain AddressLayout#targetLayout()} {@code T}, then the size of the returned segment
      * is set to {@code T.byteSize()}.
      * @param layout the layout of the region of memory to be read.
      * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
@@ -1651,14 +1650,14 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * such that {@code isAccessibleBy(T) == false}.
      * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a> in the provided layout.
-     * @throws IllegalArgumentException if provided address layout has a {@linkplain OfAddress#targetLayout() target layout}
+     * @throws IllegalArgumentException if provided address layout has a {@linkplain AddressLayout#targetLayout() target layout}
      * {@code T}, and the address of the returned segment
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a> in {@code T}.
      * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
-    default MemorySegment get(ValueLayout.OfAddress layout, long offset) {
+    default MemorySegment get(AddressLayout layout, long offset) {
         return (MemorySegment) ((ValueLayouts.OfAddressImpl) layout).accessHandle().get(this, offset);
     }
 
@@ -1680,7 +1679,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws UnsupportedOperationException if {@code value} is not a {@linkplain #isNative() native} segment.
      */
     @ForceInline
-    default void set(ValueLayout.OfAddress layout, long offset, MemorySegment value) {
+    default void set(AddressLayout layout, long offset, MemorySegment value) {
         ((ValueLayouts.OfAddressImpl) layout).accessHandle().set(this, offset, value);
     }
 
@@ -1982,7 +1981,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Reads an address from this segment at the given at the given index, scaled by the given layout size. The read address is wrapped in
      * a native segment, associated with a fresh scope that is always alive. Under normal conditions,
      * the size of the returned segment is {@code 0}. However, if the provided address layout has a
-     * {@linkplain OfAddress#targetLayout()} {@code T}, then the size of the returned segment
+     * {@linkplain AddressLayout#targetLayout()} {@code T}, then the size of the returned segment
      * is set to {@code T.byteSize()}.
      * @param layout the layout of the region of memory to be read.
      * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
@@ -1995,14 +1994,14 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws IllegalArgumentException if the access operation is
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a> in the provided layout,
      * or if the layout alignment is greater than its size.
-     * @throws IllegalArgumentException if provided address layout has a {@linkplain OfAddress#targetLayout() target layout}
+     * @throws IllegalArgumentException if provided address layout has a {@linkplain AddressLayout#targetLayout() target layout}
      * {@code T}, and the address of the returned segment
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a> in {@code T}.
      * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
      * memory segment.
      */
     @ForceInline
-    default MemorySegment getAtIndex(ValueLayout.OfAddress layout, long index) {
+    default MemorySegment getAtIndex(AddressLayout layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
         return (MemorySegment) ((ValueLayouts.OfAddressImpl) layout).accessHandle().get(this, index * layout.byteSize());
@@ -2028,7 +2027,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @throws UnsupportedOperationException if {@code value} is not a {@linkplain #isNative() native} segment.
      */
     @ForceInline
-    default void setAtIndex(ValueLayout.OfAddress layout, long index, MemorySegment value) {
+    default void setAtIndex(AddressLayout layout, long index, MemorySegment value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
         ((ValueLayouts.OfAddressImpl) layout).accessHandle().set(this, index * layout.byteSize(), value);

@@ -94,7 +94,7 @@ public class TestNulls {
             ValueLayout.OfFloat.class,
             ValueLayout.OfLong.class,
             ValueLayout.OfDouble.class,
-            ValueLayout.OfAddress.class,
+            AddressLayout.class,
             PaddingLayout.class,
             GroupLayout.class,
             StructLayout.class,
@@ -152,7 +152,7 @@ public class TestNulls {
         addDefaultMapping(MethodType.class, MethodType.methodType(void.class));
         addDefaultMapping(MemoryLayout.class, ValueLayout.JAVA_INT);
         addDefaultMapping(ValueLayout.class, ValueLayout.JAVA_INT);
-        addDefaultMapping(ValueLayout.OfAddress.class, ValueLayout.ADDRESS);
+        addDefaultMapping(AddressLayout.class, ValueLayout.ADDRESS);
         addDefaultMapping(ValueLayout.OfByte.class, ValueLayout.JAVA_BYTE);
         addDefaultMapping(ValueLayout.OfBoolean.class, ValueLayout.JAVA_BOOLEAN);
         addDefaultMapping(ValueLayout.OfChar.class, ValueLayout.JAVA_CHAR);

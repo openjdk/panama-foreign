@@ -360,7 +360,7 @@ public class TestSegmentAllocators {
         interface OfFloat extends AllocationFunction<Float, ValueLayout.OfFloat> { }
         interface OfLong extends AllocationFunction<Long, ValueLayout.OfLong> { }
         interface OfDouble extends AllocationFunction<Double, ValueLayout.OfDouble> { }
-        interface OfAddress extends AllocationFunction<MemorySegment, ValueLayout.OfAddress> { }
+        interface OfAddress extends AllocationFunction<MemorySegment, AddressLayout> { }
 
         interface OfByteArray extends AllocationFunction<byte[], ValueLayout.OfByte> { }
         interface OfCharArray extends AllocationFunction<char[], ValueLayout.OfChar> { }

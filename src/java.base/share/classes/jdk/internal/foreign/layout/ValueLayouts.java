@@ -35,6 +35,7 @@ import sun.invoke.util.Wrapper;
 
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.AddressLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
@@ -315,7 +316,7 @@ public final class ValueLayouts {
 
     }
 
-    public static final class OfAddressImpl extends AbstractValueLayout<OfAddressImpl> implements ValueLayout.OfAddress {
+    public static final class OfAddressImpl extends AbstractValueLayout<OfAddressImpl> implements AddressLayout {
 
         private final MemoryLayout targetLayout;
 
@@ -342,8 +343,8 @@ public final class ValueLayouts {
 
         @Override
         @CallerSensitive
-        public OfAddress withTargetLayout(MemoryLayout layout) {
-            Reflection.ensureNativeAccess(Reflection.getCallerClass(), OfAddress.class, "withTargetLayout");
+        public AddressLayout withTargetLayout(MemoryLayout layout) {
+            Reflection.ensureNativeAccess(Reflection.getCallerClass(), AddressLayout.class, "withTargetLayout");
             Objects.requireNonNull(layout);
             return new OfAddressImpl(order(), bitSize(), bitAlignment(), layout, name());
         }
@@ -353,7 +354,7 @@ public final class ValueLayouts {
             return Optional.ofNullable(targetLayout);
         }
 
-        public static OfAddress of(ByteOrder order) {
+        public static AddressLayout of(ByteOrder order) {
             return new OfAddressImpl(order, ADDRESS_SIZE_BITS, ADDRESS_SIZE_BITS, null, Optional.empty());
         }
 

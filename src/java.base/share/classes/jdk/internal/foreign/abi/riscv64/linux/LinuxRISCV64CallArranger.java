@@ -26,6 +26,7 @@
 
 package jdk.internal.foreign.abi.riscv64.linux;
 
+import java.lang.foreign.AddressLayout;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
@@ -390,7 +391,7 @@ public class LinuxRISCV64CallArranger {
                     bindings.vmLoad(storage, carrier);
                 }
                 case POINTER -> {
-                    ValueLayout.OfAddress addressLayout = (ValueLayout.OfAddress)layout;
+                    AddressLayout addressLayout = (AddressLayout) layout;
                     VMStorage storage = storageCalculator.getStorage(StorageType.INTEGER);
                     bindings.vmLoad(storage, long.class)
                             .boxAddressRaw(Utils.pointeeByteSize(addressLayout), Utils.pointeeByteAlign(addressLayout));

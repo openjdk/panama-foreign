@@ -25,7 +25,6 @@
  */
 package java.lang.foreign;
 
-import java.lang.foreign.ValueLayout.OfAddress;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
@@ -418,7 +417,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * @throws UnsupportedOperationException if the layout path has one or more elements with incompatible alignment constraint.
      * @throws IllegalArgumentException if the layout path in {@code elements} does not select a value layout (see {@link ValueLayout}).
      * @throws IllegalArgumentException if the layout path in {@code elements} contains a {@linkplain PathElement#dereferenceElement()
-     * dereference path element} for an address layout that has no {@linkplain OfAddress#targetLayout() target layout}.
+     * dereference path element} for an address layout that has no {@linkplain AddressLayout#targetLayout() target layout}.
      * @see MethodHandles#memorySegmentViewVarHandle(ValueLayout)
      */
     default VarHandle varHandle(PathElement... elements) {
@@ -634,7 +633,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
 
         /**
          * Returns a path element which dereferences an address layout as its
-         * {@linkplain OfAddress#targetLayout() target layout} (where set).
+         * {@linkplain AddressLayout#targetLayout() target layout} (where set).
          * The path element returned by this method does not alter the number of free dimensions of any path
          * that is combined with such element. Using this path layout to dereference an address layout
          * that has no target layout results in an {@link IllegalArgumentException} (e.g. when
