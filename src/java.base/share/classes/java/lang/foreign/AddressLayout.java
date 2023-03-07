@@ -40,10 +40,10 @@ import java.util.Optional;
  * {@code MemorySegment.class}. The size and alignment of an address layout are platform dependent
  * (e.g. on a 64-bit platform, the size and alignment of an address layout are set to 64 bits).
  * <p>
- * An address layout may optionally feature a {@linkplain #targetLayout() target layout}. The target layout of an address
- * layout is used to model the layout of the region of memory whose address is described by that address layout.
- * For instance, if an address layout has target layout {@link ValueLayout#JAVA_INT}, the region of memory pointed to by the address
- * described by the address layout is 4 bytes long. Specifying a target layout can be useful in the following situations:
+ * An address layout may optionally feature a {@linkplain #targetLayout() target layout}. An address layout with
+ * target layout {@code T} can be used to model the address of a region of memory whose layout is {@code T}.
+ * For instance, an address layout with target layout {@link ValueLayout#JAVA_INT} can be used to model the address
+ * of a region of memory that is 4 bytes long. Specifying a target layout can be useful in the following situations:
  * <ul>
  *     <li>When accessing a memory segment that has been obtained by reading an address from another
  *     memory segment, e.g. using {@link MemorySegment#getAtIndex(AddressLayout, long)};</li>
