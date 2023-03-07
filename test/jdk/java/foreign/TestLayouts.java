@@ -291,18 +291,6 @@ public class TestLayouts {
         PathElement.sequenceElement(3, 0);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testBadValueCarrier() {
-        // Strings have no value layout
-        MemoryLayout.valueLayout(String.class, ByteOrder.LITTLE_ENDIAN);
-    }
-
-    @Test(dataProvider = "validCarriers")
-    public void testValueLayout(Class<?> carrier) {
-        ValueLayout layout = MemoryLayout.valueLayout(carrier, ByteOrder.nativeOrder());
-        assertEquals(layout.carrier(), carrier);
-    }
-
     @DataProvider(name = "badAlignments")
     public Object[][] layoutsAndBadAlignments() {
         LayoutKind[] layoutKinds = LayoutKind.values();

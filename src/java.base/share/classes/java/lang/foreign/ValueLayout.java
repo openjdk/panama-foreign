@@ -455,90 +455,54 @@ public sealed interface ValueLayout extends MemoryLayout {
     /**
      * A value layout constant whose size is the same as that of a machine address ({@code size_t}),
      * bit alignment set to {@code sizeof(size_t) * 8}, byte order set to {@link ByteOrder#nativeOrder()}.
-     * Equivalent to the following code:
-     * {@snippet lang=java :
-     * MemoryLayout.valueLayout(MemorySegment.class, ByteOrder.nativeOrder());
-     * }
      */
     OfAddress ADDRESS = ValueLayouts.OfAddressImpl.of(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code byte},
      * bit alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
-     * Equivalent to the following code:
-     * {@snippet lang=java :
-     * MemoryLayout.valueLayout(byte.class, ByteOrder.nativeOrder());
-     * }
      */
     OfByte JAVA_BYTE = ValueLayouts.OfByteImpl.of(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code boolean},
      * bit alignment set to 8, and byte order set to {@link ByteOrder#nativeOrder()}.
-     * Equivalent to the following code:
-     * {@snippet lang=java :
-     * MemoryLayout.valueLayout(boolean.class, ByteOrder.nativeOrder());
-     * }
      */
     OfBoolean JAVA_BOOLEAN = ValueLayouts.OfBooleanImpl.of(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code char},
      * bit alignment set to 16, and byte order set to {@link ByteOrder#nativeOrder()}.
-     * Equivalent to the following code:
-     * {@snippet lang=java :
-     * MemoryLayout.valueLayout(char.class, ByteOrder.nativeOrder());
-     * }
      */
     OfChar JAVA_CHAR = ValueLayouts.OfCharImpl.of(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code short},
      * bit alignment set to 16, and byte order set to {@link ByteOrder#nativeOrder()}.
-     * Equivalent to the following code:
-     * {@snippet lang=java :
-     * MemoryLayout.valueLayout(short.class, ByteOrder.nativeOrder());
-     * }
      */
     OfShort JAVA_SHORT = ValueLayouts.OfShortImpl.of(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code int},
      * bit alignment set to 32, and byte order set to {@link ByteOrder#nativeOrder()}.
-     * Equivalent to the following code:
-     * {@snippet lang=java :
-     * MemoryLayout.valueLayout(int.class, ByteOrder.nativeOrder());
-     * }
      */
     OfInt JAVA_INT = ValueLayouts.OfIntImpl.of(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code long},
      * bit alignment set to 64, and byte order set to {@link ByteOrder#nativeOrder()}.
-     * Equivalent to the following code:
-     * {@snippet lang=java :
-     * MemoryLayout.valueLayout(long.class, ByteOrder.nativeOrder());
-     * }
      */
     OfLong JAVA_LONG = ValueLayouts.OfLongImpl.of(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code float},
      * bit alignment set to 32, and byte order set to {@link ByteOrder#nativeOrder()}.
-     * Equivalent to the following code:
-     * {@snippet lang=java :
-     * MemoryLayout.valueLayout(float.class, ByteOrder.nativeOrder()).withBitAlignment(32);
-     * }
      */
     OfFloat JAVA_FLOAT = ValueLayouts.OfFloatImpl.of(ByteOrder.nativeOrder());
 
     /**
      * A value layout constant whose size is the same as that of a Java {@code double},
      * bit alignment set to 64, and byte order set to {@link ByteOrder#nativeOrder()}.
-     * Equivalent to the following code:
-     * {@snippet lang=java :
-     * MemoryLayout.valueLayout(double.class, ByteOrder.nativeOrder());
-     * }
      */
     OfDouble JAVA_DOUBLE = ValueLayouts.OfDoubleImpl.of(ByteOrder.nativeOrder());
 
