@@ -500,7 +500,7 @@ public abstract sealed class AbstractMemorySegmentImpl
 
     @Override
     public String toString() {
-        return "MemorySegment{ array: " + array() + " address:" + address() + " limit: " + length + " }";
+        return "MemorySegment{ heapBase: " + heapBase() + " address:" + address() + " limit: " + length + " }";
     }
 
     @Override

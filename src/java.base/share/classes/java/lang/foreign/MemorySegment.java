@@ -52,9 +52,7 @@ import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.layout.ValueLayouts;
 import jdk.internal.javac.PreviewFeature;
-import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.reflect.CallerSensitive;
-import jdk.internal.reflect.Reflection;
 import jdk.internal.vm.annotation.ForceInline;
 
 /**
@@ -435,9 +433,13 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     long address();
 
     /**
-     * {@return the Java array associated with this memory segment, if any}
+     * Returns the Java object stored in the on-heap memory region backing this memory segment, if any. For instance, if this
+     * memory segment is a heap segment created with the {@link #ofArray(byte[])} factory method, this method will return the
+     * {@code byte[]} object which was used to obtain the segment. This method returns an empty {@code Optional} value
+     * if either this segment is a {@linkplain #isNative() native} segment, or if this segment is {@linkplain #isReadOnly() read-only}.
+     * @return the Java object associated with this memory segment, if any.
      */
-    Optional<Object> array();
+    Optional<Object> heapBase();
 
     /**
      * Returns a spliterator for this memory segment. The returned spliterator reports {@link Spliterator#SIZED},
