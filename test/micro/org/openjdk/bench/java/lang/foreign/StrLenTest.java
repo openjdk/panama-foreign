@@ -194,7 +194,7 @@ public class StrLenTest extends CLayouts {
 
             public MemorySegment allocate(long byteSize, long byteAlignment) {
                 return slicing.allocate(byteSize, byteAlignment)
-                        .reinterpret(arena.scope(), null);
+                        .reinterpret(arena, null);
             }
 
             @Override

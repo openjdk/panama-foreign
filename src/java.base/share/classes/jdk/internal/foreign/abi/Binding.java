@@ -695,7 +695,7 @@ public interface Binding {
                               LoadFunc loadFunc, SegmentAllocator allocator) {
             MemorySegment segment = Utils.longToAddress((long) stack.pop(), size, align);
             if (needsScope) {
-                segment = segment.reinterpret(((Arena) allocator).scope(), null);
+                segment = segment.reinterpret((Arena) allocator, null);
             }
             stack.push(segment);
         }

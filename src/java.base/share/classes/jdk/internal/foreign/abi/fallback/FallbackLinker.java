@@ -191,16 +191,16 @@ public final class FallbackLinker extends AbstractLinker {
         int numArgs = argLayouts.size();
         MemoryLayout retLayout = data.returnLayout();
         try (Arena upcallArena = Arena.ofConfined()) {
-            MemorySegment argsSeg = argPtrs.reinterpret(numArgs * ADDRESS.byteSize(), upcallArena.scope(), null);
+            MemorySegment argsSeg = argPtrs.reinterpret(numArgs * ADDRESS.byteSize(), upcallArena, null);
             MemorySegment retSeg = retLayout != null
-                ? retPtr.reinterpret(retLayout.byteSize(), upcallArena.scope(), null)
+                ? retPtr.reinterpret(retLayout.byteSize(), upcallArena, null)
                 : null;
 
             Object[] args = new Object[numArgs];
             for (int i = 0; i < numArgs; i++) {
                 MemoryLayout argLayout = argLayouts.get(i);
                 MemorySegment argPtr = argsSeg.getAtIndex(ADDRESS, i)
-                        .reinterpret(argLayout.byteSize(), upcallArena.scope(), null);
+                        .reinterpret(argLayout.byteSize(), upcallArena, null);
                 args[i] = readValue(argPtr, argLayout);
             }
 

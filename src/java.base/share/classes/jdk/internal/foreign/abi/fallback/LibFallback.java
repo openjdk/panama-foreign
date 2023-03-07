@@ -135,7 +135,7 @@ class LibFallback {
         long execPtr = ptrs[1];
         long globalTarget = ptrs[2];
 
-        return MemorySegment.ofAddress(execPtr).reinterpret(arena.scope(), unused -> freeClosure(closurePtr, globalTarget));
+        return MemorySegment.ofAddress(execPtr).reinterpret(arena, unused -> freeClosure(closurePtr, globalTarget));
     }
 
     private record UpcallData(MethodHandle target, Thread.UncaughtExceptionHandler handler) {}

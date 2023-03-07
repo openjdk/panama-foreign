@@ -184,7 +184,7 @@ public class TestVarArgs extends CallGeneratorHelper {
         MethodHandle getter = varArg.getter;
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment seg = ptr.asSlice(0, layout)
-                    .reinterpret(arena.scope(), null);
+                    .reinterpret(arena, null);
             Object obj = getter.invoke(seg);
             varArg.check(obj);
         } catch (Throwable e) {

@@ -219,7 +219,7 @@ public class TestSegments {
 
     @Test(dataProvider = "scopes")
     public void testIsAccessibleBy(Arena arena, boolean isConfined) {
-        MemorySegment segment = MemorySegment.NULL.reinterpret(arena.scope(), null);
+        MemorySegment segment = MemorySegment.NULL.reinterpret(arena, null);
         assertTrue(segment.isAccessibleBy(Thread.currentThread()));
         assertTrue(segment.isAccessibleBy(new Thread()) != isConfined);
     }
