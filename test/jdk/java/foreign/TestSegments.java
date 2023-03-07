@@ -271,9 +271,11 @@ public class TestSegments {
     }
 
     @Test(dataProvider = "segmentFactories")
-    public void testNativeSegments(Supplier<MemorySegment> segmentSupplier) {
+    public void testHeapBase(Supplier<MemorySegment> segmentSupplier) {
         MemorySegment segment = segmentSupplier.get();
-        assertEquals(segment.isNative(), !segment.array().isPresent());
+        assertEquals(segment.isNative(), !segment.heapBase().isPresent());
+        segment = segment.asReadOnly();
+        assertTrue(segment.heapBase().isEmpty());
     }
 
     @Test

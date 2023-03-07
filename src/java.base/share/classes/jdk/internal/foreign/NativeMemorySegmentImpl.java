@@ -77,7 +77,7 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
     }
 
     @Override
-    public Optional<Object> array() {
+    public Optional<Object> heapBase() {
         return Optional.empty();
     }
 

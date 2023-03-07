@@ -61,8 +61,10 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
     final Object base;
 
     @Override
-    public Optional<Object> array() {
-        return Optional.of(base);
+    public Optional<Object> heapBase() {
+        return readOnly ?
+                Optional.empty() :
+                Optional.of(base);
     }
 
     @ForceInline

@@ -307,7 +307,7 @@ public class TestByteBuffer {
 
     @Test(dataProvider = "fromArrays")
     public void testAsByteBufferFromNonByteArray(MemorySegment segment) {
-        if (!segment.array().map(a -> a instanceof byte[]).get()) {
+        if (!segment.heapBase().map(a -> a instanceof byte[]).get()) {
             // This should not work as the segment is not backed by a byte array
             assertThrows(UnsupportedOperationException.class, segment::asByteBuffer);
         }
