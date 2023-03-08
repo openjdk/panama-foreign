@@ -203,7 +203,7 @@ public class UpcallLinker {
                 return null;
             }
         } catch(Throwable t) {
-            SharedUtils.handleUncaughtException(t, invData.callingSequence().uncaughtExceptionHandler());
+            SharedUtils.handleUncaughtException(t);
             return null;
         }
     }

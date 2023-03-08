@@ -309,18 +309,11 @@ public final class SharedUtils {
         return MH_REACHABILITY_FENCE.asType(MethodType.methodType(void.class, type));
     }
 
-    public static void handleUncaughtException(Throwable t, Thread.UncaughtExceptionHandler handler) {
+    public static void handleUncaughtException(Throwable t) {
         if (t != null) {
-            try {
-                Thread currentThread = Thread.currentThread();
-                if (handler == null) {
-                     handler = currentThread.getUncaughtExceptionHandler();
-                }
-                handler.uncaughtException(currentThread, t);
-            } finally {
-                System.err.println("Unrecoverable uncaught exception encountered. The VM will now exit");
-                JLA.exit(1);
-            }
+            t.printStackTrace();
+            System.err.println("Unrecoverable uncaught exception encountered. The VM will now exit");
+            JLA.exit(1);
         }
     }
 

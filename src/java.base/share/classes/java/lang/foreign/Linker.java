@@ -370,18 +370,5 @@ public sealed interface Linker permits AbstractLinker {
         static Option isTrivial() {
             return LinkerOptions.IsTrivial.INSTANCE;
         }
-
-        /**
-         * {@return a linker option that can be used to specify the uncaught exception handler that should be executed
-         *          if an exception is thrown, but not caught, during an upcall}
-         *
-         * @apiNote using a custom exception handler will not prevent the VM from exiting in the case of an uncaught
-         * exception during an upcall.
-         *
-         * @param handler the handler
-         */
-        static Option uncaughtExceptionHandler(Thread.UncaughtExceptionHandler handler) {
-            return new LinkerOptions.UncaughtExceptionHandler(Objects.requireNonNull(handler));
-        }
     }
 }
