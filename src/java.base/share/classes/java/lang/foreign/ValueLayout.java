@@ -167,6 +167,12 @@ public sealed interface ValueLayout extends MemoryLayout permits
          * {@inheritDoc}
          */
         @Override
+        OfBoolean withoutName();
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
         OfBoolean withBitAlignment(long bitAlignment);
 
         /**
@@ -191,6 +197,12 @@ public sealed interface ValueLayout extends MemoryLayout permits
          */
         @Override
         OfByte withName(String name);
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        OfByte withoutName();
 
         /**
          * {@inheritDoc}
@@ -226,6 +238,12 @@ public sealed interface ValueLayout extends MemoryLayout permits
          * {@inheritDoc}
          */
         @Override
+        OfChar withoutName();
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
         OfChar withBitAlignment(long bitAlignment);
 
         /**
@@ -251,6 +269,12 @@ public sealed interface ValueLayout extends MemoryLayout permits
          */
         @Override
         OfShort withName(String name);
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        OfShort withoutName();
 
         /**
          * {@inheritDoc}
@@ -286,6 +310,12 @@ public sealed interface ValueLayout extends MemoryLayout permits
          * {@inheritDoc}
          */
         @Override
+        OfInt withoutName();
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
         OfInt withBitAlignment(long bitAlignment);
 
         /**
@@ -311,6 +341,12 @@ public sealed interface ValueLayout extends MemoryLayout permits
          */
         @Override
         OfFloat withName(String name);
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        OfFloat withoutName();
 
         /**
          * {@inheritDoc}
@@ -346,6 +382,12 @@ public sealed interface ValueLayout extends MemoryLayout permits
          * {@inheritDoc}
          */
         @Override
+        OfLong withoutName();
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
         OfLong withBitAlignment(long bitAlignment);
 
         /**
@@ -371,6 +413,12 @@ public sealed interface ValueLayout extends MemoryLayout permits
          */
         @Override
         OfDouble withName(String name);
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        OfDouble withoutName();
 
         /**
          * {@inheritDoc}
