@@ -49,7 +49,7 @@ public sealed interface UnionLayout extends GroupLayout permits UnionLayoutImpl 
      * {@inheritDoc}
      */
     @Override
-    UnionLayout withNoName();
+    UnionLayout withoutName();
 
     /**
      * {@inheritDoc}

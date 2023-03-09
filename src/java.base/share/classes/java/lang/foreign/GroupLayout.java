@@ -63,7 +63,7 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      * {@inheritDoc}
      */
     @Override
-    GroupLayout withNoName();
+    GroupLayout withoutName();
 
     /**
      * {@inheritDoc}

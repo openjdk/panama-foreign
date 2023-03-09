@@ -50,7 +50,7 @@ public sealed interface PaddingLayout extends MemoryLayout permits PaddingLayout
      * {@inheritDoc}
      */
     @Override
-    PaddingLayout withNoName();
+    PaddingLayout withoutName();
 
     /**
      * {@inheritDoc}

@@ -167,7 +167,7 @@ public sealed interface ValueLayout extends MemoryLayout permits
          * {@inheritDoc}
          */
         @Override
-        OfBoolean withNoName();
+        OfBoolean withoutName();
 
         /**
          * {@inheritDoc}
@@ -202,7 +202,7 @@ public sealed interface ValueLayout extends MemoryLayout permits
          * {@inheritDoc}
          */
         @Override
-        OfByte withNoName();
+        OfByte withoutName();
 
         /**
          * {@inheritDoc}
@@ -238,7 +238,7 @@ public sealed interface ValueLayout extends MemoryLayout permits
          * {@inheritDoc}
          */
         @Override
-        OfChar withNoName();
+        OfChar withoutName();
 
         /**
          * {@inheritDoc}
@@ -274,7 +274,7 @@ public sealed interface ValueLayout extends MemoryLayout permits
          * {@inheritDoc}
          */
         @Override
-        OfShort withNoName();
+        OfShort withoutName();
 
         /**
          * {@inheritDoc}
@@ -310,7 +310,7 @@ public sealed interface ValueLayout extends MemoryLayout permits
          * {@inheritDoc}
          */
         @Override
-        OfInt withNoName();
+        OfInt withoutName();
 
         /**
          * {@inheritDoc}
@@ -346,7 +346,7 @@ public sealed interface ValueLayout extends MemoryLayout permits
          * {@inheritDoc}
          */
         @Override
-        OfFloat withNoName();
+        OfFloat withoutName();
 
         /**
          * {@inheritDoc}
@@ -382,7 +382,7 @@ public sealed interface ValueLayout extends MemoryLayout permits
          * {@inheritDoc}
          */
         @Override
-        OfLong withNoName();
+        OfLong withoutName();
 
         /**
          * {@inheritDoc}
@@ -418,7 +418,7 @@ public sealed interface ValueLayout extends MemoryLayout permits
          * {@inheritDoc}
          */
         @Override
-        OfDouble withNoName();
+        OfDouble withoutName();
 
         /**
          * {@inheritDoc}

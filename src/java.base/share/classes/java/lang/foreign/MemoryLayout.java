@@ -28,7 +28,6 @@ package java.lang.foreign;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -45,7 +44,6 @@ import jdk.internal.foreign.layout.PaddingLayoutImpl;
 import jdk.internal.foreign.layout.SequenceLayoutImpl;
 import jdk.internal.foreign.layout.StructLayoutImpl;
 import jdk.internal.foreign.layout.UnionLayoutImpl;
-import jdk.internal.foreign.layout.ValueLayouts;
 import jdk.internal.javac.PreviewFeature;
 
 /**
@@ -203,14 +201,14 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
 
     /**
      * Returns a memory layout of the same type with the same size and alignment constraint as this layout,
-     * but with no name.
+     * but without a name.
      * <p>
      * Nameless layouts can be checked for equality to see if they are otherwise equal.
      *
-     * @return a memory layout with no name.
+     * @return a memory layout without a name.
      * @see MemoryLayout#name()
      */
-    MemoryLayout withNoName();
+    MemoryLayout withoutName();
 
     /**
      * Returns the alignment constraint associated with this layout, expressed in bits. Layout alignment defines a power

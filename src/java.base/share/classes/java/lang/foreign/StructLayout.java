@@ -49,7 +49,7 @@ public sealed interface StructLayout extends GroupLayout permits StructLayoutImp
      * {@inheritDoc}
      */
     @Override
-    StructLayout withNoName();
+    StructLayout withoutName();
 
     /**
      * {@inheritDoc}

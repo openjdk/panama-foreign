@@ -138,7 +138,7 @@ public sealed interface SequenceLayout extends MemoryLayout permits SequenceLayo
      * {@inheritDoc}
      */
     @Override
-    MemoryLayout withNoName();
+    MemoryLayout withoutName();
 
     /**
      * {@inheritDoc}
