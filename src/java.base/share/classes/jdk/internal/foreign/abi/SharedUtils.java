@@ -311,9 +311,12 @@ public final class SharedUtils {
 
     public static void handleUncaughtException(Throwable t) {
         if (t != null) {
-            t.printStackTrace();
-            System.err.println("Unrecoverable uncaught exception encountered. The VM will now exit");
-            JLA.exit(1);
+            try {
+                t.printStackTrace();
+                System.err.println("Unrecoverable uncaught exception encountered. The VM will now exit");
+            } finally {
+                JLA.exit(1);
+            }
         }
     }
 
