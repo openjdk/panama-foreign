@@ -121,12 +121,14 @@ public class MemoryLayoutTypeRetentionTest {
         AddressLayout v = ADDRESS
                 .withBitAlignment(BIT_ALIGNMENT)
                 .withName(NAME)
+                .withoutTargetLayout()
                 .withOrder(BYTE_ORDER);
         check(v);
         assertFalse(v.targetLayout().isPresent());
         AddressLayout v2 = v.withTargetLayout(JAVA_INT);
         assertTrue(v2.targetLayout().isPresent());
         assertEquals(v2.targetLayout().get(), JAVA_INT);
+        assertTrue(v2.withoutTargetLayout().targetLayout().isEmpty());
     }
 
     @Test

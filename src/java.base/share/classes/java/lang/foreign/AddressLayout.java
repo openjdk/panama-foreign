@@ -106,6 +106,15 @@ sealed public interface AddressLayout extends ValueLayout permits ValueLayouts.O
     AddressLayout withTargetLayout(MemoryLayout layout);
 
     /**
+     * Returns an address layout with the same carrier, alignment constraint, name and order as this address layout,
+     * but without any specified target layout. Thus, the returned address is a raw address.
+     *
+     * @return an address layout with same characteristics as this layout, but with no target layout.
+     * @see #targetLayout()
+     */
+    AddressLayout withoutTargetLayout();
+
+    /**
      * {@return the target layout associated with this address layout (if any)}.
      */
     Optional<MemoryLayout> targetLayout();

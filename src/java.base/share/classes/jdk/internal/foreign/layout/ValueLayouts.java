@@ -350,6 +350,11 @@ public final class ValueLayouts {
         }
 
         @Override
+        public AddressLayout withoutTargetLayout() {
+            return new OfAddressImpl(order(), bitSize(), bitAlignment(), null, name());
+        }
+
+        @Override
         public Optional<MemoryLayout> targetLayout() {
             return Optional.ofNullable(targetLayout);
         }
