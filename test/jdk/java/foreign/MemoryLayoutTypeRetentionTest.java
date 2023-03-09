@@ -182,17 +182,12 @@ public class MemoryLayoutTypeRetentionTest {
         check((MemoryLayout) v);
         assertEquals(v.order(), BYTE_ORDER);
     }
-    public void check(MemoryLayout v) {
-        check(v, false);
-        check(v.withNoName(), true);
-    }
 
-    private void check(MemoryLayout v, boolean nameless) {
-        if (nameless) {
-            assertTrue(v.name().isEmpty());
-        } else {
-            assertEquals(v.name().orElseThrow(), NAME);
-        }
+    public void check(MemoryLayout v) {
+        // Check name properties
+        assertEquals(v.name().orElseThrow(), NAME);
+        assertTrue(v.withNoName().name().isEmpty());
+
         assertEquals(v.bitAlignment(), BIT_ALIGNMENT);
         assertEquals(v.byteSize() * 8, v.bitSize());
     }
