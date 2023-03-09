@@ -50,5 +50,11 @@ public sealed interface PaddingLayout extends MemoryLayout permits PaddingLayout
      * {@inheritDoc}
      */
     @Override
+    PaddingLayout withNoName();
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     PaddingLayout withBitAlignment(long bitAlignment);
 }

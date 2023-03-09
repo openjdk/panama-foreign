@@ -68,6 +68,12 @@ sealed public interface AddressLayout extends ValueLayout permits ValueLayouts.O
      * {@inheritDoc}
      */
     @Override
+    AddressLayout withNoName();
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     AddressLayout withBitAlignment(long bitAlignment);
 
     /**

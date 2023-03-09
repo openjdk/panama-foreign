@@ -51,6 +51,10 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
         return dup(bitAlignment(), Optional.of(name));
     }
 
+    public final L withNoName() {
+        return dup(bitAlignment(), Optional.empty());
+    }
+
     public final Optional<String> name() {
         return name;
     }

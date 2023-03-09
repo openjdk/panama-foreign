@@ -202,6 +202,17 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
     MemoryLayout withName(String name);
 
     /**
+     * Returns a memory layout of the same type with the same size and alignment constraint as this layout,
+     * but with no name.
+     * <p>
+     * Nameless layouts can be checked for equality to see if they are otherwise equal.
+     *
+     * @return a memory layout with no name.
+     * @see MemoryLayout#name()
+     */
+    MemoryLayout withNoName();
+
+    /**
      * Returns the alignment constraint associated with this layout, expressed in bits. Layout alignment defines a power
      * of two {@code A} which is the bit-wise alignment of the layout. If {@code A <= 8} then {@code A/8} is the number of
      * bytes that must be aligned for any pointer that correctly points to this layout. Thus:
