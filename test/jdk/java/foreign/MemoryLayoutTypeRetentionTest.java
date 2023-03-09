@@ -132,6 +132,7 @@ public class MemoryLayoutTypeRetentionTest {
                 .withBitAlignment(BIT_ALIGNMENT)
                 .withoutName()
                 .withName(NAME)
+                .withoutTargetLayout()
                 .withOrder(BYTE_ORDER);
         check(v);
         assertEquals(v.order(), BYTE_ORDER);
@@ -140,6 +141,7 @@ public class MemoryLayoutTypeRetentionTest {
         AddressLayout v2 = v.withTargetLayout(JAVA_INT);
         assertTrue(v2.targetLayout().isPresent());
         assertEquals(v2.targetLayout().get(), JAVA_INT);
+        assertTrue(v2.withoutTargetLayout().targetLayout().isEmpty());
     }
 
     @Test
