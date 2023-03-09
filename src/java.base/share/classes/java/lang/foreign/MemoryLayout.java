@@ -203,7 +203,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * Returns a memory layout of the same type with the same size and alignment constraint as this layout,
      * but without a name.
      * <p>
-     * Nameless layouts can be checked for equality to see if they are otherwise equal.
+     * This can be useful to compare two layouts that have different names, but are otherwise equal.
      *
      * @return a memory layout without a name.
      * @see MemoryLayout#name()
