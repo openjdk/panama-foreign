@@ -127,6 +127,16 @@ public class MemoryLayoutTypeRetentionTest {
     }
 
     @Test
+    public void testValueLayout() {
+        ValueLayout v = ((ValueLayout) JAVA_INT)
+                .withBitAlignment(BIT_ALIGNMENT)
+                .withoutName()
+                .withName(NAME)
+                .withOrder(BYTE_ORDER);
+        check(v);
+    }
+
+    @Test
     public void testAddressLayout() {
         AddressLayout v = ADDRESS
                 .withBitAlignment(BIT_ALIGNMENT)
