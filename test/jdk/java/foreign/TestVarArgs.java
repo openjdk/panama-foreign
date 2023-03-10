@@ -33,11 +33,8 @@
 import java.lang.foreign.Arena;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.PaddingLayout;
-import java.lang.foreign.ValueLayout;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -50,7 +47,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.lang.foreign.MemoryLayout.PathElement.*;
-import static org.testng.Assert.*;
 
 public class TestVarArgs extends CallGeneratorHelper {
 
@@ -73,17 +69,13 @@ public class TestVarArgs extends CallGeneratorHelper {
     @Test(dataProvider = "variadicFunctions")
     public void testVarArgs(int count, String fName, Ret ret, // ignore this stuff
                             List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
-        List<Arg> args = makeArgs(paramTypes, fields);
-
         try (Arena arena = Arena.ofConfined()) {
+            List<Arg> args = makeArgs(arena, paramTypes, fields);
             MethodHandle checker = MethodHandles.insertArguments(MH_CHECK, 2, args);
             MemorySegment writeBack = LINKER.upcallStub(checker, FunctionDescriptor.ofVoid(C_INT, C_POINTER), arena);
-            Arena scope1 = arena;
-            MemorySegment callInfo = scope1.allocate(CallInfo.LAYOUT);;
+            MemorySegment callInfo = arena.allocate(CallInfo.LAYOUT);
             MemoryLayout layout = MemoryLayout.sequenceLayout(args.size(), C_INT);
-            MemorySegment argIDs = arena.allocate(layout);;
-
-            MemorySegment callInfoPtr = callInfo;
+            MemorySegment argIDs = arena.allocate(layout);
 
             CallInfo.writeback(callInfo, writeBack);
             CallInfo.argIDs(callInfo, argIDs);
@@ -103,7 +95,7 @@ public class TestVarArgs extends CallGeneratorHelper {
             MethodHandle downcallHandle = LINKER.downcallHandle(VARARGS_ADDR, desc, varargIndex);
 
             List<Object> argValues = new ArrayList<>();
-            argValues.add(callInfoPtr); // call info
+            argValues.add(callInfo); // call info
             argValues.add(args.size());  // size
             args.forEach(a -> argValues.add(a.value()));
 
@@ -165,11 +157,11 @@ public class TestVarArgs extends CallGeneratorHelper {
         return downcalls.toArray(new Object[0][]);
     }
 
-    private static List<Arg> makeArgs(List<ParamType> paramTypes, List<StructFieldType> fields) throws ReflectiveOperationException {
+    private static List<Arg> makeArgs(Arena arena, List<ParamType> paramTypes, List<StructFieldType> fields) {
         List<Arg> args = new ArrayList<>();
         for (ParamType pType : paramTypes) {
             MemoryLayout layout = pType.layout(fields);
-            TestValue testValue = genTestValue(layout, Arena.ofAuto());
+            TestValue testValue = genTestValue(layout, arena);
             Arg.NativeType type = Arg.NativeType.of(pType.type(fields));
             args.add(pType == ParamType.STRUCT
                 ? Arg.structArg(type, layout, testValue)
