@@ -39,8 +39,6 @@ import java.lang.foreign.MemorySegment;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.SegmentScope;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -71,13 +69,14 @@ public class TestVarArgs extends CallGeneratorHelper {
     @Test(dataProvider = "variadicFunctions")
     public void testVarArgs(int count, String fName, Ret ret, // ignore this stuff
                             List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
-        try (Arena arena = Arena.openConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             List<Arg> args = makeArgs(arena, paramTypes, fields);
             MethodHandle checker = MethodHandles.insertArguments(MH_CHECK, 2, args);
-            MemorySegment writeBack = LINKER.upcallStub(checker, FunctionDescriptor.ofVoid(C_INT, C_POINTER), arena.scope());
-            MemorySegment callInfo = arena.allocate(CallInfo.LAYOUT);
+            MemorySegment writeBack = LINKER.upcallStub(checker, FunctionDescriptor.ofVoid(C_INT, C_POINTER), arena);
+            Arena scope1 = arena;
+            MemorySegment callInfo = scope1.allocate(CallInfo.LAYOUT);;
             MemoryLayout layout = MemoryLayout.sequenceLayout(args.size(), C_INT);
-            MemorySegment argIDs = arena.allocate(layout);
+            MemorySegment argIDs = arena.allocate(layout);;
 
             MemorySegment callInfoPtr = callInfo;
 
@@ -165,7 +164,7 @@ public class TestVarArgs extends CallGeneratorHelper {
         List<Arg> args = new ArrayList<>();
         for (ParamType pType : paramTypes) {
             MemoryLayout layout = pType.layout(fields);
-            TestValue testValue = genTestValue(layout, arena);
+            TestValue testValue = genTestValue(layout, Arena.ofAuto());
             Arg.NativeType type = Arg.NativeType.of(pType.type(fields));
             args.add(pType == ParamType.STRUCT
                 ? Arg.structArg(type, layout, testValue)
@@ -178,8 +177,9 @@ public class TestVarArgs extends CallGeneratorHelper {
         Arg varArg = args.get(index);
         MemoryLayout layout = varArg.layout;
         MethodHandle getter = varArg.getter;
-        try (Arena arena = Arena.openConfined()) {
-            MemorySegment seg = MemorySegment.ofAddress(ptr.address(), layout.byteSize(), arena.scope());
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment seg = ptr.asSlice(0, layout)
+                    .reinterpret(arena, null);
             Object obj = getter.invoke(seg);
             varArg.check(obj);
         } catch (Throwable e) {
