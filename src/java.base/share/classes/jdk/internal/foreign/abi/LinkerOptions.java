@@ -98,11 +98,6 @@ public class LinkerOptions {
         return it != null;
     }
 
-    public Thread.UncaughtExceptionHandler uncaughtExceptionHandler() {
-        UncaughtExceptionHandler ueh = getOption(UncaughtExceptionHandler.class);
-        return ueh != null ? ueh.handler() : null;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -116,7 +111,7 @@ public class LinkerOptions {
     }
 
     public sealed interface LinkerOptionImpl extends Linker.Option
-            permits CaptureCallState, FirstVariadicArg, IsTrivial, UncaughtExceptionHandler {
+            permits CaptureCallState, FirstVariadicArg, IsTrivial {
         default void validateForDowncall(FunctionDescriptor descriptor) {
             throw new IllegalArgumentException("Not supported for downcall: " + this);
         }
@@ -147,13 +142,6 @@ public class LinkerOptions {
 
         @Override
         public void validateForDowncall(FunctionDescriptor descriptor) {
-            // always allowed
-        }
-    }
-
-    public record UncaughtExceptionHandler(Thread.UncaughtExceptionHandler handler) implements LinkerOptionImpl {
-        @Override
-        public void validateForUpcall(FunctionDescriptor descriptor) {
             // always allowed
         }
     }

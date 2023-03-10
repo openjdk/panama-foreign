@@ -195,10 +195,6 @@ public class CallingSequence {
         return !linkerOptions.isTrivial();
     }
 
-    public Thread.UncaughtExceptionHandler uncaughtExceptionHandler() {
-        return linkerOptions.uncaughtExceptionHandler();
-    }
-
     public int numLeadingParams() {
         return 2 + (linkerOptions.hasCapturedCallState() ? 1 : 0); // 2 for addr, allocator
     }

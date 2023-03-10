@@ -121,16 +121,14 @@ class LibFallback {
      * @throws IllegalStateException if the call to {@code ffi_prep_closure_loc} returns a non-zero status code
      * @throws IllegalArgumentException if {@code target} does not have the right type
      */
-    static MemorySegment createClosure(MemorySegment cif, MethodHandle target,
-                                       Thread.UncaughtExceptionHandler handler, Arena arena)
+    static MemorySegment createClosure(MemorySegment cif, MethodHandle target, Arena arena)
             throws IllegalStateException, IllegalArgumentException {
         if (target.type() != UPCALL_TARGET_TYPE) {
             throw new IllegalArgumentException("Target handle has wrong type: " + target.type() + " != " + UPCALL_TARGET_TYPE);
         }
 
         long[] ptrs = new long[3];
-        UpcallData upcallData = new UpcallData(target, handler);
-        checkStatus(createClosure(cif.address(), upcallData, ptrs));
+        checkStatus(createClosure(cif.address(), target, ptrs));
         long closurePtr = ptrs[0];
         long execPtr = ptrs[1];
         long globalTarget = ptrs[2];
@@ -138,14 +136,12 @@ class LibFallback {
         return MemorySegment.ofAddress(execPtr).reinterpret(arena, unused -> freeClosure(closurePtr, globalTarget));
     }
 
-    private record UpcallData(MethodHandle target, Thread.UncaughtExceptionHandler handler) {}
-
     // the target function for a closure call
-    private static void doUpcall(long retPtr, long argPtrs, UpcallData data) {
+    private static void doUpcall(long retPtr, long argPtrs, MethodHandle target) {
         try {
-            data.target().invokeExact(MemorySegment.ofAddress(retPtr), MemorySegment.ofAddress(argPtrs));
+            target.invokeExact(MemorySegment.ofAddress(retPtr), MemorySegment.ofAddress(argPtrs));
         } catch (Throwable t) {
-            SharedUtils.handleUncaughtException(t, data.handler());
+            SharedUtils.handleUncaughtException(t);
         }
     }
 

@@ -63,13 +63,6 @@ public class TestIllegalLink extends NativeTestHelper {
         }
     }
 
-    @Test(dataProvider = "upcallOnlyOptions",
-          expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = ".*Not supported for downcall.*")
-    public void testIllegalDowncallOptions(Linker.Option upcallOnlyOption) {
-        ABI.downcallHandle(DUMMY_TARGET, FunctionDescriptor.ofVoid(), upcallOnlyOption);
-    }
-
     @Test(dataProvider = "downcallOnlyOptions",
           expectedExceptions = IllegalArgumentException.class,
           expectedExceptionsMessageRegExp = ".*Not supported for upcall.*")
@@ -95,13 +88,6 @@ public class TestIllegalLink extends NativeTestHelper {
             };
         }
         return new Object[][]{};
-    }
-
-    @DataProvider
-    public static Object[][] upcallOnlyOptions() {
-        return new Object[][]{
-            { Linker.Option.uncaughtExceptionHandler((thread, ex) -> {}) }
-        };
     }
 
     @DataProvider

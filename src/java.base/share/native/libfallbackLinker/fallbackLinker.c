@@ -38,7 +38,7 @@
 static JavaVM* VM;
 static jclass LibFallback_class;
 static jmethodID LibFallback_doUpcall_ID;
-static const char* LibFallback_doUpcall_sig = "(JJLjdk/internal/foreign/abi/fallback/LibFallback$UpcallData;)V";
+static const char* LibFallback_doUpcall_sig = "(JJLjava/lang/invoke/MethodHandle;)V";
 
 JNIEXPORT void JNICALL
 Java_jdk_internal_foreign_abi_fallback_LibFallback_init(JNIEnv* env, jclass cls) {

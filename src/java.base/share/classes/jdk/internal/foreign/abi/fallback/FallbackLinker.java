@@ -113,7 +113,7 @@ public final class FallbackLinker extends AbstractLinker {
 
         return (target, scope) -> {
             target = MethodHandles.insertArguments(doUpcallMH, 0, target);
-            return LibFallback.createClosure(cif, target, options.uncaughtExceptionHandler(), scope);
+            return LibFallback.createClosure(cif, target, scope);
         };
     }
 
