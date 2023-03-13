@@ -1700,6 +1700,54 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
+     * Reads a byte from this segment at the given index, scaled by the given layout size.
+     *
+     * @param layout the layout of the region of memory to be read.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
+     * @return a byte value read from this segment.
+     * @throws IllegalStateException if the {@linkplain #scope() scope} associated with this segment is not
+     * {@linkplain Scope#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread {@code T},
+     * such that {@code isAccessibleBy(T) == false}.
+     * @throws IllegalArgumentException if the access operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
+     * memory segment.
+     */
+    @ForceInline
+    default byte getAtIndex(ValueLayout.OfByte layout, long index) {
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        return (byte) ((ValueLayouts.OfByteImpl) layout).accessHandle().get(this, index * layout.byteSize());
+    }
+
+    /**
+     * Reads a boolean from this segment at the given index, scaled by the given layout size.
+     *
+     * @param layout the layout of the region of memory to be read.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
+     * @return a boolean value read from this segment.
+     * @throws IllegalStateException if the {@linkplain #scope() scope} associated with this segment is not
+     * {@linkplain Scope#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread {@code T},
+     * such that {@code isAccessibleBy(T) == false}.
+     * @throws IllegalArgumentException if the access operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
+     * memory segment.
+     */
+    @ForceInline
+    default boolean getAtIndex(ValueLayout.OfBoolean layout, long index) {
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        return (boolean) ((ValueLayouts.OfBooleanImpl) layout).accessHandle().get(this, index * layout.byteSize());
+    }
+
+    /**
      * Reads a char from this segment at the given index, scaled by the given layout size.
      *
      * @param layout the layout of the region of memory to be read.
@@ -1770,6 +1818,57 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
         return (short) ((ValueLayouts.OfShortImpl) layout).accessHandle().get(this, index * layout.byteSize());
+    }
+
+    /**
+     * Writes a byte into this segment at the given index, scaled by the given layout size.
+     *
+     * @param layout the layout of the region of memory to be written.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
+     * @param value the short value to be written.
+     * @throws IllegalStateException if the {@linkplain #scope() scope} associated with this segment is not
+     * {@linkplain Scope#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread {@code T},
+     * such that {@code isAccessibleBy(T) == false}.
+     * @throws IllegalArgumentException if the access operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
+     * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
+     */
+    @ForceInline
+    default void setAtIndex(ValueLayout.OfByte layout, long index, byte value) {
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        ((ValueLayouts.OfByteImpl) layout).accessHandle().set(this, index * layout.byteSize(), value);
+
+    }
+
+    /**
+     * Writes a boolean into this segment at the given index, scaled by the given layout size.
+     *
+     * @param layout the layout of the region of memory to be written.
+     * @param index a logical index. The offset in bytes (relative to this segment address) at which the access operation
+     *              will occur can be expressed as {@code (index * layout.byteSize())}.
+     * @param value the short value to be written.
+     * @throws IllegalStateException if the {@linkplain #scope() scope} associated with this segment is not
+     * {@linkplain Scope#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread {@code T},
+     * such that {@code isAccessibleBy(T) == false}.
+     * @throws IllegalArgumentException if the access operation is
+     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a> in the provided layout,
+     * or if the layout alignment is greater than its size.
+     * @throws IndexOutOfBoundsException when the access operation falls outside the <em>spatial bounds</em> of the
+     * memory segment.
+     * @throws UnsupportedOperationException if this segment is {@linkplain #isReadOnly() read-only}.
+     */
+    @ForceInline
+    default void setAtIndex(ValueLayout.OfBoolean layout, long index, boolean value) {
+        Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
+        // note: we know size is a small value (as it comes from ValueLayout::byteSize())
+        ((ValueLayouts.OfBooleanImpl) layout).accessHandle().set(this, index * layout.byteSize(), value);
     }
 
     /**

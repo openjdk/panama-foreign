@@ -162,13 +162,17 @@ public class TestMemoryAccessInstance {
                         MemorySegment::get, MemorySegment::set,
                         ByteBuffer::get, ByteBuffer::put)
                 },
-                {"bool", Accessor.ofSegment(ValueLayout.JAVA_BOOLEAN, false,
+                {"boolean", Accessor.ofSegment(ValueLayout.JAVA_BOOLEAN, false,
                         MemorySegment::get, MemorySegment::set,
                         (bb, pos) -> bb.get(pos) != 0, (bb, pos, v) -> bb.put(pos, v ? (byte)1 : (byte)0))
                 },
                 {"char", Accessor.ofSegment(ValueLayout.JAVA_CHAR, (char) 42,
                         MemorySegment::get, MemorySegment::set,
                         (bb, pos) -> bb.order(NE).getChar(pos), (bb, pos, v) -> bb.order(NE).putChar(pos, v))
+                },
+                {"short", Accessor.ofSegment(ValueLayout.JAVA_SHORT, (short) 42,
+                        MemorySegment::get, MemorySegment::set,
+                        (bb, pos) -> bb.order(NE).getShort(pos), (bb, pos, v) -> bb.order(NE).putShort(pos, v))
                 },
                 {"int", Accessor.ofSegment(ValueLayout.JAVA_INT, 42,
                         MemorySegment::get, MemorySegment::set,
@@ -204,9 +208,21 @@ public class TestMemoryAccessInstance {
                         })
                 },
 
+                {"byte/index", Accessor.ofSegment(ValueLayout.JAVA_BYTE, (byte) 42,
+                        MemorySegment::getAtIndex, MemorySegment::setAtIndex,
+                        (bb, pos) -> bb.order(NE).get(pos), (bb, pos, v) -> bb.order(NE).put(pos, v))
+                },
+                {"boolean/index", Accessor.ofSegment(ValueLayout.JAVA_BOOLEAN, true,
+                        MemorySegment::getAtIndex, MemorySegment::setAtIndex,
+                        (bb, pos) -> bb.order(NE).get(pos) != 0, (bb, pos, v) -> bb.order(NE).put(pos, (byte) (v ? 1 : 0)))
+                },
                 {"char/index", Accessor.ofSegment(ValueLayout.JAVA_CHAR, (char) 42,
                         MemorySegment::getAtIndex, MemorySegment::setAtIndex,
                         (bb, pos) -> bb.order(NE).getChar(pos * 2), (bb, pos, v) -> bb.order(NE).putChar(pos * 2, v))
+                },
+                {"short/index", Accessor.ofSegment(ValueLayout.JAVA_SHORT, (short) 42,
+                        MemorySegment::getAtIndex, MemorySegment::setAtIndex,
+                        (bb, pos) -> bb.order(NE).getShort(pos * 2), (bb, pos, v) -> bb.order(NE).putShort(pos * 2, v))
                 },
                 {"int/index", Accessor.ofSegment(ValueLayout.JAVA_INT, 42,
                         MemorySegment::getAtIndex, MemorySegment::setAtIndex,
