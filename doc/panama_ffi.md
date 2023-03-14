@@ -26,13 +26,15 @@ In some cases, a client might additionally want to assign new temporal bounds to
 MemorySegment foreign = null;
 try (Arena arena = Arena.ofConfined()) {
       foreign = someSegment.get(ValueLayout.ADDRESS, 0)           // size = 0, scope = always alive
-                           .reinterpret(4, arena.scope(), null);  // size = 4, scope = arena.scope()
+                           .reinterpret(4, arena, null);          // size = 4, scope = arena.scope()
       int x = foreign.get(ValueLayout.JAVA_INT, 0);               // ok
 }
 int x = foreign.get(ValueLayout.JAVA_INT, 0); // throws IllegalStateException
 ```
 
-Alternatively, if the size of the foreign segment is known statically, clients can associate a *target layout*  with the address layout used to obtain the segment. When an access operation, or a function descriptor that is passed to a downcall method handle (see below), uses an address value layout with target layout `T`, the runtime will wrap any corresponding raw addresses as segments with size set to `T.byteSize()`:
+Note how the new segment will behave as if it was allocated in the provided arena: when the arena is closed, the new segment is no longer accessible.
+
+Alternatively, if the size of the foreign segment is known statically, clients can associate a *target layout* with the address layout used to obtain the segment. When an access operation, or a function descriptor that is passed to a downcall method handle (see below), uses an address value layout with target layout `T`, the runtime will wrap any corresponding raw addresses as segments with size set to `T.byteSize()`:
 ```java
 MemorySegment foreign = someSegment.get(ValueLayout.ADDRESS.withTargetLayout(JAVA_INT), 0); // size = 4
 int x = foreign.get(ValueLayout.JAVA_INT, 0);                                               // ok
@@ -46,7 +48,7 @@ Which approach is taken largely depends on the information that a client has ava
 
 The first ingredient of any foreign function support is a mechanism to lookup symbols in native libraries. In traditional Java/JNI, this is done via the `System::loadLibrary` and `System::load` methods. Unfortunately, these methods do not provide a way for clients to obtain the *address* associated with a given library symbol. For this reason, the Foreign Linker API introduces a new abstraction, namely `SymbolLookup` (similar in spirit to a method handle lookup), which provides capabilities to lookup named symbols; we can obtain a symbol lookup in 3 different ways:
 
-* `SymbolLookup::libraryLookup(String, SegmentScope)` — creates a symbol lookup which can be used to search symbol in a library with the given name. The provided segment scope parameter controls the library lifecycle: that is, when the scope is not longer alive, the library referred to by the lookup will also be closed;
+* `SymbolLookup::libraryLookup(String, SegmentScope)` — creates a symbol lookup which can be used to search symbol in a library with the given name. The provided segment scope parameter controls the library lifecycle: that is, when the scope is no longer alive, the library referred to by the lookup will also be closed;
 * `SymbolLookup::loaderLookup` — creates a symbol lookup which can be used to search symbols in all the libraries loaded by the caller's classloader (e.g. using `System::loadLibrary` or `System::load`)
 * `Linker::defaultLookup` — returns the default symbol lookup associated with a `Linker` instance. For instance, the default lookup of the native linker (see `Linker::nativeLinker`) can be used to look up platform-specific symbols in the standard C library (such as `strlen`, or `getpid`).
 
@@ -75,7 +77,7 @@ interface Linker {
 }
 ```
 
-Both functions take a `FunctionDescriptor` instance — essentially an aggregate of memory layouts which is used to describe the argument and return types of a foreign function in full. Supported layouts are *value layouts* (for scalars and pointers) and *group layouts* (for structs/unions). Each layout in a function descriptor is associated with a carrier Java type (see table below); together, all the carrier types associated with layouts in a function descriptor will determine a unique Java `MethodType`  — that is, the Java signature that clients will be using when interacting with said downcall handles, or upcall stubs.
+Both functions take a `FunctionDescriptor` instance — essentially an aggregate of memory layouts which is used to describe the argument and return types of a foreign function in full. Supported layouts are *value layouts* (for scalars and pointers) and *group layouts* (for structs/unions). Each layout in a function descriptor is associated with a carrier Java type (see table below); together, all the carrier types associated with layouts in a function descriptor will determine a unique Java `MethodType` — that is, the Java signature that clients will be using when interacting with said downcall handles, or upcall stubs.
 
 The `Linker::nativeLinker` factory is used to obtain a `Linker` implementation for the ABI associated with the OS and processor where the Java runtime is currently executing. As such, the native linker can be used to call C functions. The following table shows the mapping between C types, layouts and Java carriers under the Linux/macOS native linker implementation; note that the mappings can be platform dependent: on Windows/x64, the C type `long` is 32-bit, so the `JAVA_INT` layout (and the Java carrier `int.class`) would have to be used instead:
 
@@ -201,7 +203,7 @@ MethodHandle comparHandle = MethodHandles.lookup()
                                                      comparDesc.toMethodType());
 ```
 
-To do that, we first create a function descriptor for the function pointer type. This descriptor uses address layouts that have a `JAVA_INT` target layout, so as to allow dereference operations inside the upcall method handle. We use the `CLinker::upcallType` to turn that function descriptor into a suitable `MethodType` instance to be used in a method handle lookup. Now that we have a method handle for our Java comparator function, we finally have all the ingredients to create an upcall stub, and pass it to the `qsort` downcall handle:
+To do that, we first create a function descriptor for the function pointer type. This descriptor uses address layouts that have a `JAVA_INT` target layout, to allow access operations inside the upcall method handle. We use the `CLinker::upcallType` to turn that function descriptor into a suitable `MethodType` instance to be used in a method handle lookup. Now that we have a method handle for our Java comparator function, we finally have all the ingredients to create an upcall stub, and pass it to the `qsort` downcall handle:
 
 ```java
 try (Arena arena = Arena.ofConfined()) {
@@ -228,7 +230,7 @@ This function takes a format string, which features zero or more *holes*, and th
 
 The foreign function support can support variadic calls, but with a caveat: the client must provide a specialized Java signature, and a specialized description of the C signature. For instance, let's say we wanted to model the following C call:
 
-```C
+```c
 printf("%d plus %d equals %d", 2, 2, 4);
 ```
 

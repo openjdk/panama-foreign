@@ -20,7 +20,7 @@ The above code allocates a 100-bytes long memory segment, using an *arena*. The 
 
 > Note: the lifetime of a memory segment is modelled by a *scope* (see `MemorySegment.Scope`). A memory segment can be accessed as long as its associated scope is *alive* (see `Scope::isAlive`). In most cases, the scope of a memory segment is the scope of the arena which allocated that segment. Accessing the scope of a segment can be useful to perform lifetime queries (e.g. asking whether a segment has the same lifetime as that of another segment), creating custom arenas and unsafely assigning new temporal bounds to an existing native memory segments (these topics are explored in more details below).
 
-Most programs, though, require off-heap memory to be deallocated  while the program is running, and thus need memory segments with *bounded* lifetimes. The simplest way to obtain a segment with bounded lifetime is to use an *automatic arena*:
+Most programs, though, require off-heap memory to be deallocated while the program is running, and thus need memory segments with *bounded* lifetimes. The simplest way to obtain a segment with bounded lifetime is to use an *automatic arena*:
 
 ```java
 MemorySegment segment = Arena.ofAuto().allocate(100);
@@ -32,7 +32,7 @@ There are cases, however, where automatic deallocation is not enough: consider t
 
 A *confined* arena allocates segment featuring a bounded *and* deterministic lifetime. A memory segment allocated with a confined arena is alive from the time when the arena is opened, until the time when the arena is closed (at which point the segments become inaccessible). Multiple segments allocated with the same arena enjoy the *same* bounded lifetime and can safely contain mutual references. For example, this code opens an arena and uses it to allocate several native segments:
 
-```
+```java
 try (Arena arena = Arena.ofConfined()) {
     MemorySegment segment1 = arena.allocate(100);
     MemorySegment segment2 = arena.allocate(100);
@@ -43,9 +43,9 @@ try (Arena arena = Arena.ofConfined()) {
 
 When the arena is closed (above, this is done with the *try-with-resources* construct) the arena is no longer alive, all the segments associated with it are invalidated atomically, and the regions of memory backing the segments are deallocated.
 
-A confined arena's deterministic lifetime comes at a price: only one  thread can access the memory segments allocated in a confined arena. If  multiple threads need access to a segment, then a *shared* arena can be used (`Arena::ofShared`). The memory segments allocated in a shared arena can be accessed by  multiple threads, and any thread (whether or not involved in access) can close the shared arena to deallocate the segments. The closure will  atomically invalidate the segments, though deallocation of the regions  of memory backing the segments might not occur immediately: an expensive synchronization operation<a href="#1"><sup>1</sup></a>  is needed to detect and cancel pending  concurrent access operations on the segments.
+A confined arena's deterministic lifetime comes at a price: only one thread can access the memory segments allocated in a confined arena. If multiple threads need access to a segment, then a *shared* arena can be used (`Arena::ofShared`). The memory segments allocated in a shared arena can be accessed by multiple threads, and any thread (regardless of whether it was involved in access) can close the shared arena to deallocate the segments. The closure will atomically invalidate the segments, though deallocation of the regions of memory backing the segments might not occur immediately: an expensive synchronization operation<a href="#1"><sup>1</sup></a> is needed to detect and cancel pending concurrent access operations on the segments.
 
-In summary, an arena controls *which* threads can access a memory segment and *when*, in order to provide both strong temporal safety and a predictable  performance model. The FFM API offers a choice of arenas so that a  client can trade off breadth-of-access against timeliness of  deallocation.
+In summary, an arena controls *which* threads can access a memory segment and *when*, in order to provide both strong temporal safety and a predictable performance model. The FFM API offers a choice of arenas so that a client can trade off breadth-of-access against timeliness of deallocation.
 
 ### Slicing segments
 
@@ -105,7 +105,7 @@ The above snippet allocates a flat array of 80 bytes using an automatic arena. T
 
 ### Structured access
 
-Expressing byte offsets (as in the example above) can lead to code that is hard to read, and very fragile — as memory layout invariants are captured, implicitly, in the constants used to scale offsets. To address this issue, clients can use a `MemoryLayout` to to describe the contents of a memory segment *programmatically*. For instance, the layout of the array used in the above example can be expressed using the following code <a href="#2"><sup>2</sup></a>:
+Expressing byte offsets (as in the example above) can lead to code that is hard to read, and very fragile — as memory layout invariants are captured, implicitly, in the constants used to scale offsets. To address this issue, clients can use a `MemoryLayout` to describe the contents of a memory segment *programmatically*. For instance, the layout of the array used in the above example can be expressed using the following code <a href="#2"><sup>2</sup></a>:
 
 ```java
 MemoryLayout points = MemoryLayout.sequenceLayout(10,
@@ -177,7 +177,7 @@ We have been able to derive, from a basic memory access var handle, a new var ha
 
 ### Segment allocators and custom arenas
 
-Memory allocation is often a bottleneck when clients use off-heap memory. The FFM API therefore includes a `SegmentAllocator` interface to define operations to allocate and initialize memory segments. As a convenience, the `Arena` interface extends the `SegmentAllocator` interface so that arenas can be used to allocate native segments. In other words, `Arena` is a "one stop shop" for flexible allocation and timely deallocation of off-heap memory:
+Memory allocation is often a bottleneck when clients use off-heap memory. The FFM API therefore includes a `SegmentAllocator` interface to define operations to allocate and initialize memory segments. As a convenience, the `Arena` interface extends the `SegmentAllocator` interface so that arenas can be used to allocate native segments. In other words, `Arena` is a "one-stop shop" for flexible allocation and timely deallocation of off-heap memory:
 
 ```java
 FileChannel channel = ...
@@ -190,9 +190,9 @@ try (Arena offHeap = Arena.ofConfined()) {
 } // memory released here
 ```
 
-Segment allocators can also be obtained via factories in the `SegmentAllocator` interface. For example, one factory creates a *slicing allocator* that responds to allocation requests by returning memory segments which are part of a previously allocated segment; thus, many requests can be  satisfied without physically allocating more memory. The following code  obtains a slicing allocator over an existing segment, then uses it to  allocate a segment initialized from a Java array:
+Segment allocators can also be obtained via factories in the `SegmentAllocator` interface. For example, one factory creates a *slicing allocator* that responds to allocation requests by returning memory segments which are part of a previously allocated segment; thus, many requests can be satisfied without physically allocating more memory. The following code obtains a slicing allocator over an existing segment, then uses it to allocate a segment initialized from a Java array:
 
-```
+```java
 MemorySegment segment = ...
 SegmentAllocator allocator = SegmentAllocator.slicingAllocator(segment);
 for (int i = 0 ; i < 10 ; i++) {
@@ -201,11 +201,11 @@ for (int i = 0 ; i < 10 ; i++) {
 }
 ```
 
-A segment allocator can be used as a building block to create an  arena that supports a custom allocation strategy. For example, if a  large number of native segments will share the same bounded lifetime,  then an arena could use a slicing allocator to allocate the segments  efficiently. This lets clients enjoy both scalable allocation (thanks to slicing) and deterministic deallocation (thanks to the arena).
+A segment allocator can be used as a building block to create an arena that supports a custom allocation strategy. For example, if many segments share the same bounded lifetime, then an arena could use a slicing allocator to allocate the segments efficiently. This lets clients enjoy both scalable allocation (thanks to slicing) and deterministic deallocation (thanks to the arena).
 
-As an example, the following code defines a *slicing arena*  that behaves like a confined arena (i.e., single-threaded access), but  internally uses a slicing allocator to respond to allocation requests.  When the slicing arena is closed, the underlying confined arena is also  closed; this will invalidate all segments allocated with the slicing arena:
+As an example, the following code defines a *slicing arena* that behaves like a confined arena (i.e., single-threaded access), but internally uses a slicing allocator to respond to allocation requests.  When the slicing arena is closed, the underlying confined arena is also closed; this will invalidate all segments allocated with the slicing arena:
 
-```
+```java
 class SlicingArena {
      final Arena arena = Arena.ofConfined();
      final SegmentAllocator slicingAllocator;
@@ -230,7 +230,7 @@ public void allocate(long byteSize, long byteAlignment) {
 
 The earlier code which used a slicing allocator directly can now be written more succinctly, as follows:
 
-```
+```java
 try (Arena slicingArena = new SlicingArena(1000)) {
      for (int i = 0 ; i < 10 ; i++) {
          MemorySegment s = arena.allocateArray(JAVA_INT, new int[] { 1, 2, 3, 4, 5 });
