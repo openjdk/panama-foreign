@@ -1,6 +1,6 @@
 ## State of foreign function support
 
-**February 2023**
+**March 2023**
 
 **Maurizio Cimadamore**
 
