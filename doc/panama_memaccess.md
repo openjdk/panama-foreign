@@ -1,61 +1,58 @@
 ## State of foreign memory support
 
-**December 2022**
+**March 2023**
 
 **Maurizio Cimadamore**
 
 A crucial part of any native interop story lies in the ability of accessing off-heap memory efficiently and safely. Java achieves this goal through the Foreign Function & Memory API (FFM API in short), parts of which have been available as an [incubating](https://openjdk.java.net/jeps/11) API since Java [14](https://openjdk.java.net/jeps/370). The FFM API introduces abstractions to allocate and access flat memory regions (whether on- or off-heap), to manage the lifecycle of memory resources and to model native memory addresses.
 
-### Memory segments and lifetimes
+### Memory segments and arenas
 
 Memory segments are abstractions which can be used to model contiguous memory regions, located either on-heap (i.e. *heap segments*) or off- the Java heap (i.e. *native segments*). Memory segments provide *strong* spatial, temporal and thread-confinement guarantees which make memory dereference operation *safe* (more on that later), although in most simple cases some properties of memory segments can safely be ignored.
 
 For instance, the following snippet allocates 100 bytes off-heap:
 
 ```java
-MemorySegment segment = MemorySegment.allocateNative(100, SegmentScope.global());
+MemorySegment segment = Arena.global().allocate(100);
 ```
 
-The above code allocates a 100-bytes long memory segment. The lifecycle of a memory segment is controlled by an abstraction called `SegmentScope`. In this example, the segment is associated with the simplest scope, called the *global* scope. Memory segments associated with this scope are always *alive* and their backing region of memory are never deallocated. In other words, we say that the above segment has an *unbounded* lifetime.
+The above code allocates a 100-bytes long memory segment, using an *arena*. The FFM API provides several kinds of arena, which can be used to control the lifecycle of the allocated native segments in different ways. In this example, the segment is allocated with the *global* arena. Memory segments allocated with this arena are always *alive* and their backing regions of memory are never deallocated. In other words, we say that the above segment has an *unbounded* lifetime.
 
-Most programs, though, require off-heap memory to be deallocated  while the program is running, and thus need memory segments with *bounded* lifetimes. The simplest way to obtain a segment with bounded lifetime is to use an *automatic scope*:
+> Note: the lifetime of a memory segment is modelled by a *scope* (see `MemorySegment.Scope`). A memory segment can be accessed as long as its associated scope is *alive* (see `Scope::isAlive`). In most cases, the scope of a memory segment is the scope of the arena which allocated that segment. Accessing the scope of a segment can be useful to perform lifetime queries (e.g. asking whether a segment has the same lifetime as that of another segment), creating custom arenas and unsafely assigning new temporal bounds to an existing native memory segments (these topics are explored in more details below).
+
+Most programs, though, require off-heap memory to be deallocated while the program is running, and thus need memory segments with *bounded* lifetimes. The simplest way to obtain a segment with bounded lifetime is to use an *automatic arena*:
 
 ```java
-MemorySegment segment = MemorySegment.allocateNative(100, SegmentScope.auto());
+MemorySegment segment = Arena.ofAuto().allocate(100);
 ```
 
-Segments associated with an automatic scope are alive as long as they are determined to be reachable by the garbage collector. In other words, the above snippet creates a native segment whose behavior closely matches that of a `ByteBuffer` allocated with the `allocateDirect` factory.
+Segments allocated with an automatic arena are alive as long as they are determined to be reachable by the garbage collector. In other words, the above snippet creates a native segment whose behavior closely matches that of a `ByteBuffer` allocated with the `allocateDirect` factory.
 
-There are cases, however, where automatic deallocation is not enough: consider the case where a large memory segment is mapped from a file (this is possible using `MemorySegment::map`); in this case, an application would probably prefer to release (e.g. `unmap`) the memory associated with this segment in a *deterministic* fashion, to ensure that memory doesn't remain available for longer than it needs to.
+There are cases, however, where automatic deallocation is not enough: consider the case where a large memory segment is mapped from a file (this is possible using `FileChannel::map`); in this case, an application would probably prefer to release (e.g. `unmap`) the memory associated with this segment in a *deterministic* fashion, to ensure that memory doesn't remain available for longer than it needs to.
 
-An `Arena` provides a scope - the arena scope - which features a bounded and deterministic lifetime. The arena scope is alive from the time when the arena is opened, until the time when the arena is closed. Multiple segments allocated with the same arena scope  enjoy the same bounded lifetime and can safely contain mutual references. For example, this code opens an arena and uses the arena's scope to specify the lifetime of two segments:
+A *confined* arena allocates segment featuring a bounded *and* deterministic lifetime. A memory segment allocated with a confined arena is alive from the time when the arena is opened, until the time when the arena is closed (at which point the segments become inaccessible). Multiple segments allocated with the same arena enjoy the *same* bounded lifetime and can safely contain mutual references. For example, this code opens an arena and uses it to allocate several native segments:
 
-```
-try (Arena arena = Arena.openConfined()) {
-    MemorySegment segment1 = MemorySegment.allocateNative(100, arena.scope());
-    MemorySegment segment2 = MemorySegment.allocateNative(100, arena.scope());
+```java
+try (Arena arena = Arena.ofConfined()) {
+    MemorySegment segment1 = arena.allocate(100);
+    MemorySegment segment2 = arena.allocate(100);
     ...
-    MemorySegment segmentN = MemorySegment.allocateNative(100, arena.scope());
+    MemorySegment segmentN = arena.allocate(100);
 } // all segments are deallocated here
 ```
 
-When the arena is closed (above, this is done with the *try-with-resources* construct) the arena scope is no longer alive, all the segments associated with it are invalidated atomically, and the regions of memory backing the segments are deallocated.
+When the arena is closed (above, this is done with the *try-with-resources* construct) the arena is no longer alive, all the segments associated with it are invalidated atomically, and the regions of memory backing the segments are deallocated.
 
-### Thread-confinement
+A confined arena's deterministic lifetime comes at a price: only one thread can access the memory segments allocated in a confined arena. If multiple threads need access to a segment, then a *shared* arena can be used (`Arena::ofShared`). The memory segments allocated in a shared arena can be accessed by multiple threads, and any thread (regardless of whether it was involved in access) can close the shared arena to deallocate the segments. The closure will atomically invalidate the segments, though deallocation of the regions of memory backing the segments might not occur immediately: an expensive synchronization operation<a href="#1"><sup>1</sup></a> is needed to detect and cancel pending concurrent access operations on the segments.
 
-Arenas provide a strong temporal safety guarantee: memory segments associated with an arena scope cannot be accessed after the arena is closed, since the arena scope is no longer alive. If an arena is opened and closed by the same thread, and all memory segments allocated with the arena's scope are accessed only  by that thread, then ensuring correctness is straightforward. However, if memory segments allocated with the arena scope are accessed by  multiple threads then ensuring correctness is complex. For example, a segment allocated with an arena scope might be accessed by one thread while another thread attempts to close the arena. To guarantee temporal safety without making single-threaded clients pay undue cost, there are  two kinds of arenas: *confined* and *shared*.
-
-- A confined arena (`Arena::openConfined`) supports strong thread-confinement guarantees. A confined arena has an *owner thread*, typically the thread which opened it. The memory segments allocated in a confined arena (i.e., with the confined arena's scope) can be accessed  only by the owner thread. Any attempt to close the confined arena from a thread other than the owner thread will fail with an exception.
-- A shared arena (`Arena::openShared`) has no owner thread.  The memory segments allocated in a shared arena can be accessed by  multiple threads. Moreover, a shared arena can be closed by any thread,  and the closure is guaranteed to be safe and atomic even under races<a href="#1"><sup>1</sup></a>.
-
-In summary, a segment scope controls which threads can access a  memory segment, and when. A memory segment with global scope or  automatic scope can be accessed by any thread. Conversely, arena scopes  restrict access to specific threads in order to provide both strong  temporal safety and a predictable performance model.
+In summary, an arena controls *which* threads can access a memory segment and *when*, in order to provide both strong temporal safety and a predictable performance model. The FFM API offers a choice of arenas so that a client can trade off breadth-of-access against timeliness of deallocation.
 
 ### Slicing segments
 
 Memory segments support *slicing* — that is, given a segment, it is possible to create a new segment whose spatial bounds are stricter than that of the original segment:
 
 ```java
-MemorySegment segment = MemorySement.allocateNative(10, SegmentScope.auto());
+MemorySegment segment = Arena.ofAuto().allocate(10);
 MemorySegment slice = segment.asSlice(4, 4);
 ```
 
@@ -67,8 +64,8 @@ To process the contents of a memory segment in bulk, a memory segment can be tur
 SequenceLayout seq = MemoryLayout.sequenceLayout(1_000_000, JAVA_INT);
 SequenceLayout bulk_element = MemoryLayout.sequenceLayout(100, JAVA_INT);
 
-try (Arena arena = Arena.openShared()) {
-    MemorySegment segment = MemorySegment.allocateNative(seq, arena.scope());
+try (Arena arena = Arena.ofShared()) {
+    MemorySegment segment = arena.allocate(seq);
     int sum = segment.elements(bulk_element).parallel()
                        .mapToInt(slice -> {
                            int res = 0;
@@ -95,7 +92,7 @@ For instance, the layout constant `ValueLayout.JAVA_INT` is four bytes wide, has
 
 ```java
 record Point(int x, int y);
-MemorySegment segment = MemorySement.allocateNative(10 * 4 * 2, SegmentScope.auto());
+MemorySegment segment = Arena.ofAuto().allocate(10 * 4 * 2);
 Point[] values = new Point[10];
 for (int i = 0 ; i < values.length ; i++) {
     int x = segment.getAtIndex(JAVA_INT, i * 2);
@@ -104,11 +101,11 @@ for (int i = 0 ; i < values.length ; i++) {
 }
 ```
 
-The above snippet allocates a flat array of 80 bytes using `MemorySegment::allocateNative`. Then, inside the loop, elements in the array are accessed using the `MemorySegment::getAtIndex` method, which accesses `int` elements in a segment at a certain *logical* index (under the hood, the segment offset being accessed is obtained by multiplying the logical index by 4, which is the stride of a Java `int` array). Thus, all coordinates `x` and `y` are collected into instances of a `Point` record.
+The above snippet allocates a flat array of 80 bytes using an automatic arena. Then, inside the loop, elements in the array are accessed using the `MemorySegment::getAtIndex` method, which accesses `int` elements in a segment at a certain *logical* index (under the hood, the segment offset being accessed is obtained by multiplying the logical index by 4, which is the stride of a Java `int` array). Thus, all coordinates `x` and `y` are collected into instances of a `Point` record.
 
 ### Structured access
 
-Expressing byte offsets (as in the example above) can lead to code that is hard to read, and very fragile — as memory layout invariants are captured, implicitly, in the constants used to scale offsets. To address this issue, clients can use a `MemoryLayout` to to describe the contents of a memory segment *programmatically*. For instance, the layout of the array used in the above example can be expressed using the following code <a href="#2"><sup>2</sup></a>:
+Expressing byte offsets (as in the example above) can lead to code that is hard to read, and very fragile — as memory layout invariants are captured, implicitly, in the constants used to scale offsets. To address this issue, clients can use a `MemoryLayout` to describe the contents of a memory segment *programmatically*. For instance, the layout of the array used in the above example can be expressed using the following code <a href="#2"><sup>2</sup></a>:
 
 ```java
 MemoryLayout points = MemoryLayout.sequenceLayout(10,
@@ -130,7 +127,7 @@ To specify which nested layout element should be used for the offset calculation
 One of the things that can be derived from a layout is a *memory access var handle*. A memory access var handle is a special kind of var handle which takes a memory segment access coordinate, together with a byte offset — the offset, relative to the segment's base address at which the dereference operation should occur. With memory access var handles we can rewrite our example above as follows:
 
 ```java
-MemorySegment segment = MemorySegment.allocateNative(points, SegmentScope.auto());
+MemorySegment segment = Arena.ofAuto().allocate(points);
 VarHandle xHandle = points.varHandle(PathElement.sequenceElement(), PathElement.groupElement("x"));
 VarHandle yHandle = points.varHandle(PathElement.sequenceElement(), PathElement.groupElement("y"));
 Point[] values = new Point[10];
@@ -178,29 +175,69 @@ VarHandle valueHandle = MethodHandles.insertCoordinates(intHandle, 1, offsetOfVa
 
 We have been able to derive, from a basic memory access var handle, a new var handle that dereferences a segment at a given fixed offset. It is easy to see how other, richer, var handles obtained using a memory layout can also be constructed manually using the var handle combinators provided by the FFM API.
 
-### Unsafe segments
+### Segment allocators and custom arenas
 
-The FFM API provides basic safety guarantees for all memory segments created using the API. More specifically, a memory dereference operation should either succeed, or result in a runtime exception — but, crucially, should never result in a VM crash, or, more subtly, in memory corruption occurring *outside* the region of memory associated with a memory segment. This is indeed the case, as all memory segments feature immutable *spatial bounds*, and, as we have seen, are associated with a segment scope which make sure that segments cannot be dereferenced after their backing regions of memory have been deallocated.
-
-That said, it is sometimes necessary to create a segment out of an existing memory source, which might be managed by native code. This is the case, for instance, if we want to create a segment out of a memory region managed by a *custom allocator*.
-
-The `ByteBuffer` API allows such a move, through a JNI [method](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/spec/functions.html#NewDirectByteBuffer), namely `NewDirectByteBuffer`. This native method can be used to wrap a long address in a fresh direct byte buffer instance which is then returned to unsuspecting Java code.
-
-Memory segments provide a similar capability — that is, given an address (which might have been obtained through some native calls), it is possible to wrap a segment around it, with given spatial bounds and segment scope, as follows:
+Memory allocation is often a bottleneck when clients use off-heap memory. The FFM API therefore includes a `SegmentAllocator` interface to define operations to allocate and initialize memory segments. As a convenience, the `Arena` interface extends the `SegmentAllocator` interface so that arenas can be used to allocate native segments. In other words, `Arena` is a "one-stop shop" for flexible allocation and timely deallocation of off-heap memory:
 
 ```java
-try (Arena arena = Arena.openShared()) {
-    long addr = ...
-    var unsafeSegment = MemorySegment.ofAddress(addr, 10, arena.scope());
+FileChannel channel = ...
+try (Arena offHeap = Arena.ofConfined()) {
+    MemorySegment nativeArray   = offHeap.allocateArray(ValueLayout.JAVA_INT, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+    MemorySegment nativeString  = offHeap.allocateUtf8String("Hello!");
+
+    MemorySegment mappedSegment = channel.map(MapMode.READ_WRITE, 0, 1000, arena);
+   ...
+} // memory released here
+```
+
+Segment allocators can also be obtained via factories in the `SegmentAllocator` interface. For example, one factory creates a *slicing allocator* that responds to allocation requests by returning memory segments which are part of a previously allocated segment; thus, many requests can be satisfied without physically allocating more memory. The following code obtains a slicing allocator over an existing segment, then uses it to allocate a segment initialized from a Java array:
+
+```java
+MemorySegment segment = ...
+SegmentAllocator allocator = SegmentAllocator.slicingAllocator(segment);
+for (int i = 0 ; i < 10 ; i++) {
+    MemorySegment s = allocator.allocateArray(JAVA_INT, new int[] { 1, 2, 3, 4, 5 });
     ...
 }
 ```
 
-The above code creates a shared arena and then, inside the *try-with-resources* it creates a *new* unsafe segment from a given address; the size of the segment is 10 bytes, and the unsafe segment is associated with the current shared arena. This means that the unsafe segment cannot be dereferenced after the shared arena has been closed.
+A segment allocator can be used as a building block to create an arena that supports a custom allocation strategy. For example, if many segments share the same bounded lifetime, then an arena could use a slicing allocator to allocate the segments efficiently. This lets clients enjoy both scalable allocation (thanks to slicing) and deterministic deallocation (thanks to the arena).
 
-Of course, segments created this way are completely *unsafe*. There is no way for the runtime to verify that the provided address indeed points to a valid memory location, or that the size of the memory region pointed to by `addr` is indeed 10 bytes. Similarly, there are no guarantees that the underlying memory region associated with `addr` will not be deallocated *prior* to the call to `Arena::close`.
+As an example, the following code defines a *slicing arena* that behaves like a confined arena (i.e., single-threaded access), but internally uses a slicing allocator to respond to allocation requests.  When the slicing arena is closed, the underlying confined arena is also closed; this will invalidate all segments allocated with the slicing arena:
 
-For these reasons, `MemorySegment::ofAddress` is a *restricted method* in the FFM API. The first time a restricted method is invoked, a runtime warning is generated. Developers can get rid of warnings by specifying the set of modules that are allowed to call restricted methods. This is done by specifying the option `--enable-native-access=M`, where `M` is a module name. Multiple module names can be specified in a comma-separated list, where the special name `ALL-UNNAMED` is used to enable restricted access for all code on the class path. If the `--enable-native-access` option is specified, any attempt to call restricted operations from a module not listed in the option will fail with a runtime exception.
+```java
+class SlicingArena {
+     final Arena arena = Arena.ofConfined();
+     final SegmentAllocator slicingAllocator;
+
+     SlicingArena(long size) {
+         slicingAllocator = SegmentAllocator.slicingAllocator(arena.allocate(size));
+     }
+
+public void allocate(long byteSize, long byteAlignment) {
+         return slicingAllocator.allocate(byteSize, byteAlignment);
+     }
+
+     public MemorySegment.Scope scope() {
+         return arena.scope();
+     }
+
+     public void close() {
+         return arena.close();
+     }
+}
+```
+
+The earlier code which used a slicing allocator directly can now be written more succinctly, as follows:
+
+```java
+try (Arena slicingArena = new SlicingArena(1000)) {
+     for (int i = 0 ; i < 10 ; i++) {
+         MemorySegment s = arena.allocateArray(JAVA_INT, new int[] { 1, 2, 3, 4, 5 });
+         ...
+     }
+} // all memory allocated is released here
+```
 
 * <a id="1"/>(<sup>1</sup>):<small> Shared arenas rely on VM thread-local handshakes (JEP [312](https://openjdk.java.net/jeps/312)) to implement lock-free, safe, shared memory access; that is, when it comes to memory access, there should be no difference in performance between a shared segment and a confined segment. On the other hand, `Arena::close` might be slower on shared arenas than on confined ones.</small>
 * <a id="2"/>(<sup>2</sup>):<small> In general, deriving a complete layout from a C `struct` declaration is no trivial matter, and it's one of those areas where tooling can help greatly.</small>
