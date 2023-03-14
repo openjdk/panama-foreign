@@ -32,7 +32,7 @@ try (Arena arena = Arena.ofConfined()) {
 int x = foreign.get(ValueLayout.JAVA_INT, 0); // throws IllegalStateException
 ```
 
-Note how the new segment will behave as if it was allocated in the provided arena: when the arena is closed, the new segment is no longer accessible.
+Note how the new segment behaves as if it was allocated in the provided arena: when the arena is closed, the new segment is no longer accessible.
 
 Alternatively, if the size of the foreign segment is known statically, clients can associate a *target layout* with the address layout used to obtain the segment. When an access operation, or a function descriptor that is passed to a downcall method handle (see below), uses an address value layout with target layout `T`, the runtime will wrap any corresponding raw addresses as segments with size set to `T.byteSize()`:
 ```java
@@ -203,7 +203,7 @@ MethodHandle comparHandle = MethodHandles.lookup()
                                                      comparDesc.toMethodType());
 ```
 
-To do that, we first create a function descriptor for the function pointer type. This descriptor uses address layouts that have a `JAVA_INT` target layout, to allow access operations inside the upcall method handle. We use the `CLinker::upcallType` to turn that function descriptor into a suitable `MethodType` instance to be used in a method handle lookup. Now that we have a method handle for our Java comparator function, we finally have all the ingredients to create an upcall stub, and pass it to the `qsort` downcall handle:
+To do that, we first create a function descriptor for the function pointer type. This descriptor uses address layouts that have a `JAVA_INT` target layout, to allow access operations inside the upcall method handle. We use the `FunctionDescriptor::toMethodType` to turn that function descriptor into a suitable `MethodType` instance to be used in a method handle lookup. Now that we have a method handle for our Java comparator function, we finally have all the ingredients to create an upcall stub, and pass it to the `qsort` downcall handle:
 
 ```java
 try (Arena arena = Arena.ofConfined()) {
