@@ -109,8 +109,10 @@ import java.util.stream.Stream;
  * <p>
  * Composite types are modelled as {@linkplain GroupLayout group layouts}. More specifically, a C {@code struct} type
  * maps to a {@linkplain StructLayout struct layout}, whereas a C {@code union} type maps to a {@link UnionLayout union
- * layout}. Depending on the ABI implemented by the native linker, additional {@linkplain MemoryLayout#paddingLayout(long) padding}
- * member layouts might be required to conform to the size and alignment constraint of a composite type definition in C.
+ * layout}. When defining a struct or union layout, clients must pay attention to the size and alignment constraint
+ * of the corresponding composite type definition in C. For instance, padding between two struct fields
+ * must be modelled explicitly, by adding an adequately sized {@linkplain PaddingLayout padding layout} member
+ * to the resulting struct layout.
  * <p>
  * Finally, pointer types such as {@code int**} and {@code int(*)(size_t*, size_t*)} are modelled as
  * {@linkplain AddressLayout address layouts}. When the spatial bounds of the pointer type are known statically,
