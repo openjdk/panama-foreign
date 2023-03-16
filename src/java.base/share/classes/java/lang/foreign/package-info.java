@@ -67,10 +67,12 @@
  * in other words, access to memory segments is bounds-checked, in the same way as array access is, as described in
  * Section {@jls 15.10.4} of <cite>The Java Language Specification</cite>.
  * <p>
- * Since memory segments created with an arena become invalid (see above) when the arena is closed, segments are also
- * validated (upon access) to make sure that the arena from which the segment has been obtained has not been closed.
- * We call this guarantee <em>temporal safety</em>. Together, spatial and temporal safety ensure that each memory access
- * operation either succeeds - and accesses a valid location within the region of memory backing the memory segment - or fails.
+ * Additionally, to prevent a region of memory from being accessed <em>after</em> it has been deallocated
+ * (i.e. <em>use-after-free</em>), a segment is also validated (upon access) to make sure that the arena from which it
+ * has been obtained has not been closed. We call this guarantee <em>temporal safety</em>.
+ * <p>
+ * Together, spatial and temporal safety ensure that each memory access operation either succeeds - and accesses a valid
+ * location within the region of memory backing the memory segment - or fails.
  *
  * <h2 id="ffa">Foreign function access</h2>
  * The key abstractions introduced to support foreign function access are {@link java.lang.foreign.SymbolLookup},
@@ -80,7 +82,7 @@
  * so that clients can perform foreign function calls directly in Java, without the need for intermediate layers of C/C++
  * code (as is the case with the <a href="{@docRoot}/../specs/jni/index.html">Java Native Interface (JNI)</a>).
  * <p>
- * For example, to compute the length of a string using the C standard library function {@code strlen} on a Linux x64 platform,
+ * For example, to compute the length of a string using the C standard library function {@code strlen} on a Linux/x64 platform,
  * we can use the following code:
  *
  * {@snippet lang = java:
@@ -93,18 +95,18 @@
  *
  * try (Arena arena = Arena.ofConfined()) {
  *     MemorySegment cString = arena.allocateUtf8String("Hello");
- *     long len = (long)strlen.invoke(cString); // 5
+ *     long len = (long)strlen.invokeExact(cString); // 5
  * }
  *}
  *
  * Here, we obtain a {@linkplain java.lang.foreign.Linker#nativeLinker() native linker} and we use it
- * to {@linkplain java.lang.foreign.SymbolLookup#find(java.lang.String) look up} the {@code strlen} symbol in the
- * standard C library; a <em>downcall method handle</em> targeting said symbol is subsequently
+ * to {@linkplain java.lang.foreign.SymbolLookup#find(java.lang.String) look up} the {@code strlen} function in the
+ * standard C library; a <em>downcall method handle</em> targeting said function is subsequently
  * {@linkplain java.lang.foreign.Linker#downcallHandle(FunctionDescriptor, Linker.Option...) obtained}.
  * To complete the linking successfully, we must provide a {@link java.lang.foreign.FunctionDescriptor} instance,
  * describing the signature of the {@code strlen} function.
  * From this information, the linker will uniquely determine the sequence of steps which will turn
- * the method handle invocation (here performed using {@link java.lang.invoke.MethodHandle#invoke(java.lang.Object...)})
+ * the method handle invocation (here performed using {@link java.lang.invoke.MethodHandle#invokeExact(java.lang.Object...)})
  * into a foreign function call, according to the rules specified by the ABI of the underlying platform.
  * The {@link java.lang.foreign.Arena} class also provides many useful methods for
  * interacting with foreign code, such as
