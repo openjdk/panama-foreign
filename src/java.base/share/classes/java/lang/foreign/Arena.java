@@ -145,6 +145,50 @@ import java.lang.foreign.MemorySegment.Scope;
  * multiple threads need to access the same memory segment concurrently (e.g. in the case of parallel processing).
  * Moreover, a shared arena can be closed by any thread.
  *
+ * <h2 id = "custom-arenas">Custom arenas</h2>
+ *
+ * Clients can define custom arenas to implement more efficient allocation strategies, or to have better control over
+ * when (and by whom) an arena can be closed. As an example, the following code defines a <em>slicing arena</em> that behaves
+ * like a confined arena (i.e., single-threaded access), but internally uses a
+ * {@linkplain SegmentAllocator#slicingAllocator(MemorySegment) slicing allocator} to respond to allocation requests.
+ * When the slicing arena is closed, the underlying confined arena is also closed; this will invalidate all segments
+ * allocated with the slicing arena (since the scope of the slicing arena is the same as that of the underlying
+ * confined arena):
+ *
+ * {@snippet lang = java:
+ * class SlicingArena {
+ *      final Arena arena = Arena.ofConfined();
+ *      final SegmentAllocator slicingAllocator;
+ *
+ *      SlicingArena(long size) {
+ *          slicingAllocator = SegmentAllocator.slicingAllocator(arena.allocate(size));
+ *      }
+ *
+ *      public void allocate(long byteSize, long byteAlignment) {
+ *          return slicingAllocator.allocate(byteSize, byteAlignment);
+ *      }
+ *
+ *      public MemorySegment.Scope scope() {
+ *          return arena.scope();
+ *      }
+ *
+ *      public void close() {
+ *          return arena.close();
+ *      }
+ * }
+ * }
+ *
+ * In other words, a slicing arena provides a vastly more efficient and scalable allocation strategy, while still retaining
+ * the timely deallocation guarantee provided by the underlying confined arena:
+ *
+ * {@snippet lang = java:
+ * try (Arena slicingArena = new SlicingArena(1000)) {
+ *      for (int i = 0 ; i < 10 ; i++) {
+ *          MemorySegment s = arena.allocateArray(JAVA_INT, new int[] { 1, 2, 3, 4, 5 });
+ *          ...
+ *      }
+ * } // all memory allocated is released here
+ * }
  *
  * @implSpec
  * Implementations of this interface are thread-safe.
