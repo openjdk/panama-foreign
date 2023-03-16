@@ -320,7 +320,7 @@ import java.util.stream.Stream;
  *
  * {@snippet lang = java:
  * MemorySegment allocateMemory(long byteSize, Arena arena) {
- *     MemorySegment segment = (MemorySegment)malloc.invokeExact(byteSize);   // size = byteSize, scope = always alive
+ *     MemorySegment segment = (MemorySegment)malloc.invokeExact(byteSize);   // size = 0, scope = always alive
  *     return segment.reinterpret(size, arena, s -> free.invokeExact(s));     // size = byteSize, scope = arena.scope()
  * }
  * }
