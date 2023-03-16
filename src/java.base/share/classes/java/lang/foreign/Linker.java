@@ -211,7 +211,7 @@ import java.util.stream.Stream;
  * {@snippet lang = java:
  * Linker linker = Linker.nativeLinker();
  * MethodHandle qsort = linker.downcallHandle(
- * 		linker.defaultLookup().find("qsort").get(),
+ *     linker.defaultLookup().find("qsort").get(),
  *         FunctionDescriptor.ofVoid(ADDRESS, JAVA_LONG, JAVA_LONG, ADDRESS)
  * );
  * }
@@ -374,8 +374,8 @@ import java.util.stream.Stream;
  * {@snippet lang = java:
  * Linker linker = Linker.nativeLinker();
  * MethodHandle printf = linker.downcallHandle(
- * 		linker.defaultLookup().lookup("printf").get(),
- *         FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT)
+ *     linker.defaultLookup().lookup("printf").get(),
+ *         FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT),
  *         Linker.Option.firstVariadicArg(1) // first int is variadic
  * );
  * }
