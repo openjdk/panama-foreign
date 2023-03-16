@@ -415,6 +415,11 @@ public sealed interface Linker permits AbstractLinker {
     /**
      * Returns a linker for the ABI associated with the underlying native platform. The underlying native platform
      * is the combination of OS and processor where the Java runtime is currently executing.
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @apiNote It is not currently possible to obtain a linker for a different combination of OS and processor.
      * @implNote The libraries exposed by the {@linkplain #defaultLookup() default lookup} associated with the returned
