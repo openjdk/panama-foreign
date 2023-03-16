@@ -205,7 +205,7 @@ import java.util.stream.Stream;
  * }
  *
  * The {@code qsort} function can be used to sort the contents of an array, using a custom comparator function which is
- * passed as a function pointer (the {@code compar} parameter). To be able to call {@code qsort} function from Java,
+ * passed as a function pointer (the {@code compar} parameter). To be able to call the {@code qsort} function from Java,
  * we must first create a downcall method handle for it, as follows:
  *
  * {@snippet lang = java:
