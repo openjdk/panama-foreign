@@ -156,7 +156,7 @@ import java.lang.foreign.MemorySegment.Scope;
  * confined arena):
  *
  * {@snippet lang = java:
- * class SlicingArena {
+ * class SlicingArena implements Arena {
  *      final Arena arena = Arena.ofConfined();
  *      final SegmentAllocator slicingAllocator;
  *
@@ -184,7 +184,7 @@ import java.lang.foreign.MemorySegment.Scope;
  * {@snippet lang = java:
  * try (Arena slicingArena = new SlicingArena(1000)) {
  *      for (int i = 0 ; i < 10 ; i++) {
- *          MemorySegment s = arena.allocateArray(JAVA_INT, new int[] { 1, 2, 3, 4, 5 });
+ *          MemorySegment s = slicingArena.allocateArray(JAVA_INT, 1, 2, 3, 4, 5);
  *          ...
  *      }
  * } // all memory allocated is released here
