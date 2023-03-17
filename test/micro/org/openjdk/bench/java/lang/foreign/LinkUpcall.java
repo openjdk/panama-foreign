@@ -32,11 +32,10 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentScope;
-import java.lang.foreign.Arena;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.concurrent.TimeUnit;
