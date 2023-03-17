@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,16 @@ package jdk.internal.foreign.abi;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.Utils;
+import jdk.internal.foreign.abi.Binding.Allocate;
+import jdk.internal.foreign.abi.Binding.BoxAddress;
+import jdk.internal.foreign.abi.Binding.BufferLoad;
+import jdk.internal.foreign.abi.Binding.BufferStore;
+import jdk.internal.foreign.abi.Binding.Cast;
+import jdk.internal.foreign.abi.Binding.Copy;
+import jdk.internal.foreign.abi.Binding.Dup;
+import jdk.internal.foreign.abi.Binding.UnboxAddress;
+import jdk.internal.foreign.abi.Binding.VMLoad;
+import jdk.internal.foreign.abi.Binding.VMStore;
 import jdk.internal.misc.VM;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -420,9 +430,9 @@ public class BindingSpecializer {
 
     private boolean needsSession() {
         return callingSequence.argumentBindings()
-                .filter(Binding.BoxAddress.class::isInstance)
-                .map(Binding.BoxAddress.class::cast)
-                .anyMatch(Binding.BoxAddress::needsScope);
+                .filter(BoxAddress.class::isInstance)
+                .map(BoxAddress.class::cast)
+                .anyMatch(BoxAddress::needsScope);
     }
 
     private boolean shouldAcquire(int paramIndex) {
@@ -450,17 +460,17 @@ public class BindingSpecializer {
 
     private void doBindings(List<Binding> bindings) {
         for (Binding binding : bindings) {
-            switch (binding.tag()) {
-                case VM_STORE -> emitVMStore((Binding.VMStore) binding);
-                case VM_LOAD -> emitVMLoad((Binding.VMLoad) binding);
-                case BUFFER_STORE -> emitBufferStore((Binding.BufferStore) binding);
-                case BUFFER_LOAD -> emitBufferLoad((Binding.BufferLoad) binding);
-                case COPY_BUFFER -> emitCopyBuffer((Binding.Copy) binding);
-                case ALLOC_BUFFER -> emitAllocBuffer((Binding.Allocate) binding);
-                case BOX_ADDRESS -> emitBoxAddress((Binding.BoxAddress) binding);
-                case UNBOX_ADDRESS -> emitUnboxAddress();
-                case DUP -> emitDupBinding();
-                case CAST -> emitCast((Binding.Cast) binding);
+            switch (binding) {
+                case VMStore vmStore         -> emitVMStore(vmStore);
+                case VMLoad vmLoad           -> emitVMLoad(vmLoad);
+                case BufferStore bufferStore -> emitBufferStore(bufferStore);
+                case BufferLoad bufferLoad   -> emitBufferLoad(bufferLoad);
+                case Copy copy               -> emitCopyBuffer(copy);
+                case Allocate allocate       -> emitAllocBuffer(allocate);
+                case BoxAddress boxAddress   -> emitBoxAddress(boxAddress);
+                case UnboxAddress unused     -> emitUnboxAddress();
+                case Dup unused              -> emitDupBinding();
+                case Cast cast               -> emitCast(cast);
             }
         }
     }
@@ -564,7 +574,7 @@ public class BindingSpecializer {
         emitInvokeInterface(Arena.class, "close", CLOSE_DESC);
     }
 
-    private void emitBoxAddress(Binding.BoxAddress boxAddress) {
+    private void emitBoxAddress(BoxAddress boxAddress) {
         popType(long.class);
         emitConst(boxAddress.size());
         emitConst(boxAddress.align());
@@ -577,7 +587,7 @@ public class BindingSpecializer {
         pushType(MemorySegment.class);
     }
 
-    private void emitAllocBuffer(Binding.Allocate binding) {
+    private void emitAllocBuffer(Allocate binding) {
         if (callingSequence.forDowncall()) {
             assert returnAllocatorIdx != -1;
             emitLoad(Object.class, returnAllocatorIdx);
@@ -588,7 +598,7 @@ public class BindingSpecializer {
         pushType(MemorySegment.class);
     }
 
-    private void emitBufferStore(Binding.BufferStore bufferStore) {
+    private void emitBufferStore(BufferStore bufferStore) {
         Class<?> storeType = bufferStore.type();
         long offset = bufferStore.offset();
         int byteWidth = bufferStore.byteWidth();
@@ -624,15 +634,15 @@ public class BindingSpecializer {
                 Class<?> chunkStoreType;
                 long mask;
                 switch (chunkSize) {
-                    case 4 -> {
+                    case Integer.BYTES -> {
                         chunkStoreType = int.class;
                         mask = 0xFFFF_FFFFL;
                     }
-                    case 2 -> {
+                    case Short.BYTES -> {
                         chunkStoreType = short.class;
                         mask = 0xFFFFL;
                     }
-                    case 1 -> {
+                    case Byte.BYTES -> {
                         chunkStoreType = byte.class;
                         mask = 0xFFL;
                     }
@@ -670,7 +680,7 @@ public class BindingSpecializer {
     }
 
     // VM_STORE and VM_LOAD are emulated, which is different for down/upcalls
-    private void emitVMStore(Binding.VMStore vmStore) {
+    private void emitVMStore(VMStore vmStore) {
         Class<?> storeType = vmStore.type();
         popType(storeType);
 
@@ -697,7 +707,7 @@ public class BindingSpecializer {
         }
     }
 
-    private void emitVMLoad(Binding.VMLoad vmLoad) {
+    private void emitVMLoad(VMLoad vmLoad) {
         Class<?> loadType = vmLoad.type();
 
         if (callingSequence.forDowncall()) {
@@ -726,7 +736,7 @@ public class BindingSpecializer {
         pushType(dupType);
     }
 
-    private void emitCast(Binding.Cast cast) {
+    private void emitCast(Cast cast) {
         Class<?> fromType = cast.fromType();
         Class<?> toType = cast.toType();
 
@@ -759,7 +769,7 @@ public class BindingSpecializer {
         pushType(long.class);
     }
 
-    private void emitBufferLoad(Binding.BufferLoad bufferLoad) {
+    private void emitBufferLoad(BufferLoad bufferLoad) {
         Class<?> loadType = bufferLoad.type();
         long offset = bufferLoad.offset();
         int byteWidth = bufferLoad.byteWidth();
@@ -788,17 +798,17 @@ public class BindingSpecializer {
                 Class<?> toULongHolder;
                 String toULongDescriptor;
                 switch (chunkSize) {
-                    case 4 -> {
+                    case Integer.BYTES -> {
                         chunkType = int.class;
                         toULongHolder = Integer.class;
                         toULongDescriptor = INTEGER_TO_UNSIGNED_LONG_DESC;
                     }
-                    case 2 -> {
+                    case Short.BYTES -> {
                         chunkType = short.class;
                         toULongHolder = Short.class;
                         toULongDescriptor = SHORT_TO_UNSIGNED_LONG_DESC;
                     }
-                    case 1 -> {
+                    case Byte.BYTES -> {
                         chunkType = byte.class;
                         toULongHolder = Byte.class;
                         toULongDescriptor = BYTE_TO_UNSIGNED_LONG_DESC;
@@ -841,7 +851,7 @@ public class BindingSpecializer {
         pushType(loadType);
     }
 
-    private void emitCopyBuffer(Binding.Copy copy) {
+    private void emitCopyBuffer(Copy copy) {
         long size = copy.size();
         long alignment = copy.alignment();
 

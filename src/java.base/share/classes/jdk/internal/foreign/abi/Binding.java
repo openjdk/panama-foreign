@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -194,22 +194,7 @@ import static java.lang.foreign.ValueLayout.JAVA_SHORT_UNALIGNED;
  *
  * --------------------
  */
-public interface Binding {
-
-    enum Tag {
-        VM_STORE,
-        VM_LOAD,
-        BUFFER_STORE,
-        BUFFER_LOAD,
-        COPY_BUFFER,
-        ALLOC_BUFFER,
-        BOX_ADDRESS,
-        UNBOX_ADDRESS,
-        DUP,
-        CAST
-    }
-
-    Tag tag();
+public sealed interface Binding {
 
     void verify(Deque<Class<?>> stack);
 
@@ -407,7 +392,7 @@ public interface Binding {
         }
     }
 
-    interface Move extends Binding {
+    sealed interface Move extends Binding {
         VMStorage storage();
         Class<?> type();
     }
@@ -418,10 +403,6 @@ public interface Binding {
      * The [type] must be one of byte, short, char, int, long, float, or double
      */
     record VMStore(VMStorage storage, Class<?> type) implements Move {
-        @Override
-        public Tag tag() {
-            return Tag.VM_STORE;
-        }
 
         @Override
         public void verify(Deque<Class<?>> stack) {
@@ -443,10 +424,6 @@ public interface Binding {
      * The [type] must be one of byte, short, char, int, long, float, or double
      */
     record VMLoad(VMStorage storage, Class<?> type) implements Move {
-        @Override
-        public Tag tag() {
-            return Tag.VM_LOAD;
-        }
 
         @Override
         public void verify(Deque<Class<?>> stack) {
@@ -460,7 +437,7 @@ public interface Binding {
         }
     }
 
-    interface Dereference extends Binding {
+    sealed interface Dereference extends Binding {
         long offset();
         Class<?> type();
     }
@@ -472,10 +449,6 @@ public interface Binding {
      * The [type] must be one of byte, short, char, int, long, float, or double
      */
     record BufferStore(long offset, Class<?> type, int byteWidth) implements Dereference {
-        @Override
-        public Tag tag() {
-            return Tag.BUFFER_STORE;
-        }
 
         @Override
         public void verify(Deque<Class<?>> stack) {
@@ -533,10 +506,6 @@ public interface Binding {
      * The [type] must be one of byte, short, char, int, long, float, or double
      */
     record BufferLoad(long offset, Class<?> type, int byteWidth) implements Dereference {
-        @Override
-        public Tag tag() {
-            return Tag.BUFFER_LOAD;
-        }
 
         @Override
         public void verify(Deque<Class<?>> stack) {
@@ -598,11 +567,6 @@ public interface Binding {
         }
 
         @Override
-        public Tag tag() {
-            return Tag.COPY_BUFFER;
-        }
-
-        @Override
         public void verify(Deque<Class<?>> stack) {
             Class<?> actualType = stack.pop();
             SharedUtils.checkType(actualType, MemorySegment.class);
@@ -628,11 +592,6 @@ public interface Binding {
         }
 
         @Override
-        public Tag tag() {
-            return Tag.ALLOC_BUFFER;
-        }
-
-        @Override
         public void verify(Deque<Class<?>> stack) {
             stack.push(MemorySegment.class);
         }
@@ -651,11 +610,6 @@ public interface Binding {
      */
     record UnboxAddress() implements Binding {
         static final UnboxAddress INSTANCE = new UnboxAddress();
-
-        @Override
-        public Tag tag() {
-            return Tag.UNBOX_ADDRESS;
-        }
 
         @Override
         public void verify(Deque<Class<?>> stack) {
@@ -677,11 +631,6 @@ public interface Binding {
      * (either the context scope, or the global scope), and pushes that onto the operand stack.
      */
     record BoxAddress(long size, long align, boolean needsScope) implements Binding {
-
-        @Override
-        public Tag tag() {
-            return Tag.BOX_ADDRESS;
-        }
 
         @Override
         public void verify(Deque<Class<?>> stack) {
@@ -708,11 +657,6 @@ public interface Binding {
      */
     record Dup() implements Binding {
         static final Dup INSTANCE = new Dup();
-
-        @Override
-        public Tag tag() {
-            return Tag.DUP;
-        }
 
         @Override
         public void verify(Deque<Class<?>> stack) {
@@ -765,11 +709,6 @@ public interface Binding {
 
         public Class<?> toType() {
             return toType;
-        }
-
-        @Override
-        public Tag tag() {
-            return Tag.CAST;
         }
 
         @Override
