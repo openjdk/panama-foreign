@@ -64,8 +64,8 @@ public class LinkUpcall extends CLayouts {
 
     @Benchmark
     public MemorySegment link_blank() {
-        try (Arena arena = Arena.openConfined()) {
-            return LINKER.upcallStub(BLANK, BLANK_DESC, arena.scope());
+        try (Arena arena = Arena.ofConfined()) {
+            return LINKER.upcallStub(BLANK, BLANK_DESC, arena);
         }
     }
 
