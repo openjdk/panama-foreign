@@ -83,6 +83,14 @@ public sealed abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L
                 .collect(Collectors.joining(kind.delimTag, "[", "]")));
     }
 
+    @Override
+    public L withBitAlignment(long bitAlignment) {
+        if (bitAlignment < kind.alignof(elements)) {
+            throw new IllegalArgumentException("Invalid alignment constraint");
+        }
+        return super.withBitAlignment(bitAlignment);
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -132,6 +140,9 @@ public sealed abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L
         long sizeof(List<MemoryLayout> elems) {
             long size = 0;
             for (MemoryLayout elem : elems) {
+                if (this == STRUCT && (size % elem.bitAlignment() != 0)) {
+                    throw new IllegalArgumentException("Invalid alignment constraint for member layout: " + elem);
+                }
                 size = sizeOp.applyAsLong(size, elem.bitSize());
             }
             return size;
