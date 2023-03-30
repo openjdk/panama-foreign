@@ -26,7 +26,6 @@
 package jdk.internal.foreign.layout;
 
 import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.StructLayout;
 import java.lang.foreign.UnionLayout;
 import java.util.List;
 import java.util.Optional;
