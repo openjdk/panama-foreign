@@ -397,7 +397,7 @@ import jdk.internal.vm.annotation.ForceInline;
  *       ptr = z.reinterpret(16, arena, null);                       // size = 4, scope = arena.scope()
  *       int x = ptr.getAtIndex(ValueLayout.JAVA_INT, 3);            // ok
  * }
- * int x = ptr.getAtIndex(ValueLayout.JAVA_INT, 3);                         // throws IllegalStateException
+ * int x = ptr.getAtIndex(ValueLayout.JAVA_INT, 3);                  // throws IllegalStateException
  *}
  *
  * Alternatively, if the size of the region of memory backing the zero-length memory segment is known statically,
