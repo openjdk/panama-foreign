@@ -391,13 +391,13 @@ import jdk.internal.vm.annotation.ForceInline;
  * new native segment with the desired size and the same temporal bounds as those of the provided arena:
  *
  * {@snippet lang = java:
- * MemorySegment pointer = null;
+ * MemorySegment ptr = null;
  * try (Arena arena = Arena.ofConfined()) {
- *       MemorySegment z   = segment.get(ValueLayout.ADDRESS, ...);  // size = 0, scope = always alive
- *       MemorySegment ptr = z.reinterpret(16, arena, null);         // size = 4, scope = arena.scope()
+ *       MemorySegment z = segment.get(ValueLayout.ADDRESS, ...);    // size = 0, scope = always alive
+ *       ptr = z.reinterpret(16, arena, null);                       // size = 4, scope = arena.scope()
  *       int x = ptr.getAtIndex(ValueLayout.JAVA_INT, 3);            // ok
  * }
- * int x = pointer.get(ValueLayout.JAVA_INT, 3);                     // throws IllegalStateException
+ * int x = ptr.get(ValueLayout.JAVA_INT, 3);                         // throws IllegalStateException
  *}
  *
  * Alternatively, if the size of the region of memory backing the zero-length memory segment is known statically,
@@ -411,7 +411,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * AddressLayout intArrPtrLayout = ValueLayout.ADDRESS.withTargetLayout(
  *         MemoryLayout.sequenceLayout(4, ValueLayout.JAVA_INT)); // layout for int (*ptr)[4]
  * MemorySegment ptr = segment.get(intArrPtrLayout, ...);         // size = 16
- * int x = pointer.getAtIndex(ValueLayout.JAVA_INT, 3);           // ok
+ * int x = ptr.getAtIndex(ValueLayout.JAVA_INT, 3);               // ok
  *}
  * <p>
  * All the methods which can be used to manipulate zero-length memory segments
