@@ -381,9 +381,9 @@ import jdk.internal.vm.annotation.ForceInline;
  * {@link #reinterpret(long)} method, as follows:
  *
  * {@snippet lang = java:
- * MemorySegment z   =    segment.get(ValueLayout.ADDRESS, ...);   // size = 0
- * MemorySegment ptr =    z.reinterpret(16);                       // size = 16
- * int x = ptr.getAtIndex(ValueLayout.JAVA_INT, 3);                // ok
+ * MemorySegment z = segment.get(ValueLayout.ADDRESS, ...);   // size = 0
+ * MemorySegment ptr = z.reinterpret(16);                     // size = 16
+ * int x = ptr.getAtIndex(ValueLayout.JAVA_INT, 3);           // ok
  *}
  * <p>
  * In some cases, the client might additionally want to assign new temporal bounds to a zero-length memory segment.
