@@ -46,27 +46,24 @@ import static org.testng.Assert.*;
 
 public class TestSegmentCopy {
 
-    static final int BYTE_SIZE = 16;
+    static final int TEST_BYTE_SIZE = 16;
 
     @Test(dataProvider = "segmentKinds")
     public void testByteCopy(SegmentKind kind1, SegmentKind kind2) {
-        MemorySegment s1 = kind1.makeSegment(BYTE_SIZE);
-        MemorySegment s2 = kind2.makeSegment(BYTE_SIZE);
+        MemorySegment s1 = kind1.makeSegment(TEST_BYTE_SIZE);
+        MemorySegment s2 = kind2.makeSegment(TEST_BYTE_SIZE);
 
         // for all offsets
-        for (int s1Offset = 0; s1Offset < BYTE_SIZE; s1Offset++) {
-            for (int s2Offset = 0; s2Offset < BYTE_SIZE; s2Offset++) {
+        for (int s1Offset = 0; s1Offset < s1.byteSize(); s1Offset++) {
+            for (int s2Offset = 0; s2Offset < s2.byteSize(); s2Offset++) {
                 long slice1ByteSize = s1.byteSize() - s1Offset;
                 long slice2ByteSize = s2.byteSize() - s2Offset;
 
                 long copySize = Math.min(slice1ByteSize, slice2ByteSize);
 
-                //prepare source and target segments
+                //prepare source slice
                 for (int i = 0 ; i < copySize; i++) {
                     Type.BYTE.set(s1, s1Offset, i, i);
-                }
-                for (int i = 0 ; i < copySize; i++) {
-                    Type.BYTE.set(s2, s2Offset, i, 0);
                 }
                 //perform copy
                 MemorySegment.copy(s1, Type.BYTE.layout, s1Offset, s2, Type.BYTE.layout, s2Offset, copySize);
@@ -80,12 +77,12 @@ public class TestSegmentCopy {
 
     @Test(dataProvider = "segmentKindsAndTypes")
     public void testElementCopy(SegmentKind kind1, SegmentKind kind2, Type type1, Type type2) {
-        MemorySegment s1 = kind1.makeSegment(BYTE_SIZE);
-        MemorySegment s2 = kind2.makeSegment(BYTE_SIZE);
+        MemorySegment s1 = kind1.makeSegment(TEST_BYTE_SIZE);
+        MemorySegment s2 = kind2.makeSegment(TEST_BYTE_SIZE);
 
         // for all offsets
-        for (int s1Offset = 0; s1Offset < BYTE_SIZE; s1Offset++) {
-            for (int s2Offset = 0; s2Offset < BYTE_SIZE; s2Offset++) {
+        for (int s1Offset = 0; s1Offset < s1.byteSize(); s1Offset++) {
+            for (int s2Offset = 0; s2Offset < s2.byteSize(); s2Offset++) {
                 long slice1ByteSize = s1.byteSize() - s1Offset;
                 long slice2ByteSize = s2.byteSize() - s2Offset;
 
@@ -94,12 +91,9 @@ public class TestSegmentCopy {
 
                 long copySize = Math.min(slice1ElementSize, slice2ElementSize);
 
-                //prepare source and target segments
+                //prepare source slice
                 for (int i = 0 ; i < copySize; i++) {
                     type1.set(s1, s1Offset, i, i);
-                }
-                for (int i = 0 ; i < copySize; i++) {
-                    type2.set(s2, s2Offset, i, 0);
                 }
                 //perform copy
                 MemorySegment.copy(s1, type1.layout, s1Offset, s2, type2.layout, s2Offset, copySize);
