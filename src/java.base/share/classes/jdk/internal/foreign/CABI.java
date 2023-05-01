@@ -30,6 +30,9 @@ import jdk.internal.vm.ForeignLinkerSupport;
 import jdk.internal.util.OperatingSystem;
 import jdk.internal.util.StaticProperty;
 
+import jdk.internal.foreign.abi.fallback.FallbackLinker;
+import jdk.internal.vm.ForeignLinkerSupport;
+
 import static java.lang.foreign.ValueLayout.ADDRESS;
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
