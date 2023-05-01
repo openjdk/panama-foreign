@@ -35,6 +35,7 @@ import jdk.internal.reflect.Reflection;
 
 import java.lang.invoke.MethodHandle;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -322,8 +323,8 @@ import java.util.stream.Stream;
  *
  * {@snippet lang = java:
  * MemorySegment allocateMemory(long byteSize, Arena arena) {
- *     MemorySegment segment = (MemorySegment)malloc.invokeExact(byteSize);   // size = 0, scope = always alive
- *     return segment.reinterpret(size, arena, s -> free.invokeExact(s));     // size = byteSize, scope = arena.scope()
+ *     MemorySegment segment = (MemorySegment)malloc.invokeExact(byteSize);    // size = 0, scope = always alive
+ *     return segment.reinterpret(byteSize, arena, s -> free.invokeExact(s));  // size = byteSize, scope = arena.scope()
  * }
  * }
  *
@@ -476,8 +477,8 @@ public sealed interface Linker permits AbstractLinker {
      *     <li>The invocation occurs in a thread {@code T} such that {@code A.isAccessibleBy(T) == true}.
      *     Otherwise, the invocation throws {@link WrongThreadException}; and</li>
      *     <li>{@code A} is kept alive during the invocation. For instance, if {@code A} has been obtained using a
-     *     {@linkplain Arena#ofConfined() confined arena}, any attempt to {@linkplain Arena#close() close}
-     *     the confined arena while the downcall method handle is executing will result in a {@link IllegalStateException}.</li>
+     *     {@linkplain Arena#ofShared()} shared arena}, any attempt to {@linkplain Arena#close() close}
+     *     the shared arena while the downcall method handle is executing will result in an {@link IllegalStateException}.</li>
      *</ul>
      * <p>
      * Moreover, if the provided function descriptor's return layout is an {@linkplain AddressLayout address layout},
@@ -486,9 +487,9 @@ public sealed interface Linker permits AbstractLinker {
      * However, if the function descriptor's return layout has a {@linkplain AddressLayout#targetLayout()} {@code T},
      * then the size of the returned segment is set to {@code T.byteSize()}.
      * <p>
-     * Finally, the returned method handle will throw an {@link IllegalArgumentException} if the {@link MemorySegment}
-     * parameter passed to it is associated with the {@link MemorySegment#NULL} address, or a {@link NullPointerException}
-     * if that parameter is {@code null}.
+     * The returned method handle will throw an {@link IllegalArgumentException} if the {@link MemorySegment}
+     * representing the target address of the foreign function is the {@link MemorySegment#NULL} address.
+     * The returned method handle will additionally throw {@link NullPointerException} if any argument passed to it is {@code null}.
      *
      * @param function the function descriptor of the target function.
      * @param options  any linker options.
@@ -575,7 +576,7 @@ public sealed interface Linker permits AbstractLinker {
          * <p>
          * Execution state is captured by a downcall method handle on invocation, by writing it
          * to a native segment provided by the user to the downcall method handle.
-         * For this purpose, a downcall method handle linked with the this
+         * For this purpose, a downcall method handle linked with this
          * option will feature an additional {@link MemorySegment} parameter directly
          * following the target address, and optional {@link SegmentAllocator} parameters.
          * This parameter, called the 'capture state segment', represents the native segment into which
@@ -604,6 +605,8 @@ public sealed interface Linker permits AbstractLinker {
          * }
          *
          * @param capturedState the names of the values to save.
+         * @throws IllegalArgumentException if at least one of the provided {@code capturedState} names
+         *                                  is unsupported on the current platform.
          * @see #captureStateLayout()
          */
         static Option captureCallState(String... capturedState) {
@@ -616,7 +619,25 @@ public sealed interface Linker permits AbstractLinker {
 
          /**
          * {@return A struct layout that represents the layout of the capture state segment that is passed
-         *          to a downcall handle linked with {@link #captureCallState(String...)}}
+         *          to a downcall handle linked with {@link #captureCallState(String...)}}.
+         * <p>
+         * The capture state layout is <em>platform dependent</em> but is guaranteed to be
+         * a {@linkplain StructLayout struct layout} containing only {@linkplain ValueLayout value layouts}
+         * and possibly {@linkplain PaddingLayout padding layouts}.
+         * As an example, on Windows, the returned layout might contain three value layouts named:
+         * <ul>
+         *     <li>GetLastError</li>
+         *     <li>WSAGetLastError</li>
+         *     <li>errno</li>
+         * </ul>
+         * The following snipet shows how to obtain the names of the supported captured value layouts:
+         * {@snippet lang = java:
+         *    String capturedNames = Linker.Option.captureStateLayout().memberLayouts().stream()
+         *        .map(MemoryLayout::name)
+         *        .flatMap(Optional::stream)
+         *        .map(Objects::toString)
+         *        .collect(Collectors.joining(", "));
+         * }
          *
          * @see #captureCallState(String...)
          */

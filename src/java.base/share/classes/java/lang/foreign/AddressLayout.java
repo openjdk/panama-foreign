@@ -56,7 +56,7 @@ import java.util.Optional;
  * @since 19
  */
 @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
-sealed public interface AddressLayout extends ValueLayout permits ValueLayouts.OfAddressImpl {
+public sealed interface AddressLayout extends ValueLayout permits ValueLayouts.OfAddressImpl {
 
     /**
      * {@inheritDoc}
@@ -90,7 +90,7 @@ sealed public interface AddressLayout extends ValueLayout permits ValueLayouts.O
      * {@linkplain IllegalArgumentException} will be thrown.
      * @apiNote
      * This method can also be used to create an address layout which, when used, creates native memory
-     * segments with maximal size (e.g. {@linkplain Long#MAX_VALUE}. This can be done by using a target sequence
+     * segments with maximal size (e.g. {@linkplain Long#MAX_VALUE}). This can be done by using a target sequence
      * layout with unspecified size, as follows:
      * {@snippet lang = java:
      * AddressLayout addressLayout   = ...
