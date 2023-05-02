@@ -173,7 +173,7 @@ public class StdLibTest extends NativeTestHelper {
             try {
                 //qsort upcall handle
                 qsortCompar = MethodHandles.lookup().findStatic(StdLibTest.StdLibHelper.class, "qsortCompare",
-                        qsortComparFunction.toMethodType());
+                        LINKER.toMethodType(qsortComparFunction));
             } catch (ReflectiveOperationException ex) {
                 throw new IllegalStateException(ex);
             }

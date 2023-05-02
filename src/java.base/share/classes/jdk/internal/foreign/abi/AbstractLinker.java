@@ -34,13 +34,7 @@ import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 import jdk.internal.foreign.layout.AbstractLayout;
 
-import java.lang.foreign.GroupLayout;
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.Arena;
-import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.Linker;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SequenceLayout;
+import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.Objects;
@@ -58,6 +52,28 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
     private final SoftReferenceCache<LinkRequest, MethodHandle> DOWNCALL_CACHE = new SoftReferenceCache<>();
     private final SoftReferenceCache<LinkRequest, UpcallStubFactory> UPCALL_CACHE = new SoftReferenceCache<>();
 
+    private static Class<?> carrierTypeFor(MemoryLayout layout) {
+        if (layout instanceof ValueLayout valueLayout) {
+            return valueLayout.carrier();
+        } else if (layout instanceof GroupLayout) {
+            return MemorySegment.class;
+        } else {
+            throw new IllegalArgumentException("Unsupported layout: " + layout);
+        }
+    }
+
+    @Override
+    public MethodType toMethodType(FunctionDescriptor desc) {
+        Class<?> returnValue = desc.returnLayout()
+                .map(AbstractLinker::carrierTypeFor)
+                .orElse(void.class);
+        Class<?>[] argCarriers = new Class<?>[desc.argumentLayouts().size()];
+        for (int i = 0; i < argCarriers.length; i++) {
+            argCarriers[i] = carrierTypeFor(desc.argumentLayouts().get(i));
+        }
+        return MethodType.methodType(returnValue, argCarriers);
+    }
+
     @Override
     public MethodHandle downcallHandle(FunctionDescriptor function, Option... options) {
         Objects.requireNonNull(function);
@@ -67,7 +83,7 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
 
         return DOWNCALL_CACHE.get(new LinkRequest(function, optionSet), linkRequest ->  {
             FunctionDescriptor fd = linkRequest.descriptor();
-            MethodType type = fd.toMethodType();
+            MethodType type = toMethodType(fd);
             MethodHandle handle = arrangeDowncall(type, fd, linkRequest.options());
             handle = SharedUtils.maybeInsertAllocator(fd, handle);
             return handle;
@@ -84,7 +100,7 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
         SharedUtils.checkExceptions(target);
         LinkerOptions optionSet = LinkerOptions.forUpcall(function, options);
 
-        MethodType type = function.toMethodType();
+        MethodType type = toMethodType(function);
         if (!type.equals(target.type())) {
             throw new IllegalArgumentException("Wrong method handle type: " + target.type());
         }

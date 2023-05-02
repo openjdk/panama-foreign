@@ -34,6 +34,7 @@ import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -242,13 +243,13 @@ import java.util.stream.Stream;
  *                                                       ADDRESS.withTargetLayout(JAVA_INT));
  * MethodHandle comparHandle = MethodHandles.lookup()
  *                                          .findStatic(Qsort.class, "qsortCompare",
- *                                                      comparDesc.toMethodType());
+ *                                                      linker.toMethodType(comparDesc));
  * }
  *
  * First, we create a function descriptor for the function pointer type. Since we know that the parameters passed to
  * the comparator method will be pointers to elements of a C {@code int[]} array, we can specify {@link ValueLayout#JAVA_INT}
  * as the target layout for the address layouts of both parameters. This will allow the comparator method to access
- * the contents of the array elements to be compared. We then {@linkplain FunctionDescriptor#toMethodType() turn}
+ * the contents of the array elements to be compared. We then {@linkplain #toMethodType(FunctionDescriptor) turn}
  * that function descriptor into a suitable {@linkplain java.lang.invoke.MethodType method type} which we then use to look up
  * the comparator method handle. We can now create an upcall stub which points to that method, and pass it, as a function
  * pointer, to the {@code qsort} downcall handle, as follows:
@@ -464,7 +465,7 @@ public sealed interface Linker permits AbstractLinker {
      * Creates a method handle which is used to call a foreign function with the given signature.
      * <p>
      * The Java {@linkplain java.lang.invoke.MethodType method type} associated with the returned method handle is
-     * {@linkplain FunctionDescriptor#toMethodType() derived} from the argument and return layouts in the function descriptor,
+     * {@linkplain #toMethodType(FunctionDescriptor) derived} from the argument and return layouts in the function descriptor,
      * but features an additional leading parameter of type {@link MemorySegment}, from which the address of the target
      * foreign function is derived. Moreover, if the function descriptor's return layout is a group layout, the resulting
      * downcall method handle accepts an additional leading parameter of type {@link SegmentAllocator}, which is used by
@@ -550,6 +551,24 @@ public sealed interface Linker permits AbstractLinker {
      * @return a symbol lookup for symbols in a set of commonly used libraries.
      */
     SymbolLookup defaultLookup();
+
+    /**
+     * Returns the method type associated with the provided function descriptor. The mapping between
+     * the layouts in the function descriptor and the carrier types in the resulting method type instance
+     * is linker-specific. For instance, in the case of the {@linkplain #nativeLinker() native linker} carrier types
+     * are determined from layouts as follows:
+     * <ul>
+     * <li>If the layout is a {@link ValueLayout} the carrier type is determined through {@link ValueLayout#carrier()}.</li>
+     * <li>If the layout is a {@link GroupLayout} the carrier type is {@link MemorySegment}.</li>
+     * <li>If the layout is a {@link PaddingLayout}, or {@link SequenceLayout} an {@link IllegalArgumentException} is thrown.</li>
+     * </ul>
+     *
+     * @param desc the function descriptor.
+     * @return the method type consisting of the carrier types of the layouts in this function descriptor
+     * @throws IllegalArgumentException if one or more layouts in the function descriptor can not be mapped to carrier
+     *                                  types by this linker instance.
+     */
+    MethodType toMethodType(FunctionDescriptor desc);
 
     /**
      * A linker option is used to indicate additional linking requirements to the linker,
