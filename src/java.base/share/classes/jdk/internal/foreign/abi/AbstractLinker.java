@@ -34,7 +34,14 @@ import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 import jdk.internal.foreign.layout.AbstractLayout;
 
-import java.lang.foreign.*;
+import java.lang.foreign.GroupLayout;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.Arena;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.PaddingLayout;
+import java.lang.foreign.SequenceLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.Objects;
@@ -52,38 +59,16 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
     private final SoftReferenceCache<LinkRequest, MethodHandle> DOWNCALL_CACHE = new SoftReferenceCache<>();
     private final SoftReferenceCache<LinkRequest, UpcallStubFactory> UPCALL_CACHE = new SoftReferenceCache<>();
 
-    private static Class<?> carrierTypeFor(MemoryLayout layout) {
-        if (layout instanceof ValueLayout valueLayout) {
-            return valueLayout.carrier();
-        } else if (layout instanceof GroupLayout) {
-            return MemorySegment.class;
-        } else {
-            throw new IllegalArgumentException("Unsupported layout: " + layout);
-        }
-    }
-
-    @Override
-    public MethodType toMethodType(FunctionDescriptor desc) {
-        Class<?> returnValue = desc.returnLayout()
-                .map(AbstractLinker::carrierTypeFor)
-                .orElse(void.class);
-        Class<?>[] argCarriers = new Class<?>[desc.argumentLayouts().size()];
-        for (int i = 0; i < argCarriers.length; i++) {
-            argCarriers[i] = carrierTypeFor(desc.argumentLayouts().get(i));
-        }
-        return MethodType.methodType(returnValue, argCarriers);
-    }
-
     @Override
     public MethodHandle downcallHandle(FunctionDescriptor function, Option... options) {
         Objects.requireNonNull(function);
         Objects.requireNonNull(options);
-        checkHasNaturalAlignment(function);
+        checkIsSupportedDescriptor(function);
         LinkerOptions optionSet = LinkerOptions.forDowncall(function, options);
 
         return DOWNCALL_CACHE.get(new LinkRequest(function, optionSet), linkRequest ->  {
             FunctionDescriptor fd = linkRequest.descriptor();
-            MethodType type = toMethodType(fd);
+            MethodType type = fd.toMethodType();
             MethodHandle handle = arrangeDowncall(type, fd, linkRequest.options());
             handle = SharedUtils.maybeInsertAllocator(fd, handle);
             return handle;
@@ -96,11 +81,11 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
         Objects.requireNonNull(arena);
         Objects.requireNonNull(target);
         Objects.requireNonNull(function);
-        checkHasNaturalAlignment(function);
+        checkIsSupportedDescriptor(function);
         SharedUtils.checkExceptions(target);
         LinkerOptions optionSet = LinkerOptions.forUpcall(function, options);
 
-        MethodType type = toMethodType(function);
+        MethodType type = function.toMethodType();
         if (!type.equals(target.type())) {
             throw new IllegalArgumentException("Wrong method handle type: " + target.type());
         }
@@ -117,12 +102,19 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
         return SystemLookup.getInstance();
     }
 
-    // Current limitation of the implementation:
-    // We don't support packed structs on some platforms,
-    // so reject them here explicitly
-    private static void checkHasNaturalAlignment(FunctionDescriptor descriptor) {
-        descriptor.returnLayout().ifPresent(AbstractLinker::checkHasNaturalAlignmentRecursive);
-        descriptor.argumentLayouts().forEach(AbstractLinker::checkHasNaturalAlignmentRecursive);
+    // Native linkers do not support sequence or padding layouts. They also do not support "packed" struct layouts, or
+    // struct layouts containing additional padding. Such illegal layouts are ruled out here.
+    private static void checkIsSupportedDescriptor(FunctionDescriptor descriptor) {
+        descriptor.returnLayout().ifPresent(AbstractLinker::checkIsSupportedLayout);
+        descriptor.argumentLayouts().forEach(AbstractLinker::checkIsSupportedLayout);
+    }
+
+    private static void checkIsSupportedLayout(MemoryLayout layout) {
+        if (layout instanceof SequenceLayout || layout instanceof PaddingLayout) {
+            throw new IllegalArgumentException("Unsupported layout: " + layout);
+        } else {
+            checkHasNaturalAlignmentRecursive(layout);
+        }
     }
 
     private static void checkHasNaturalAlignmentRecursive(MemoryLayout layout) {

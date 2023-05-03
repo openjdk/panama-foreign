@@ -158,7 +158,7 @@ public class NativeTestHelper {
 
     public static MemorySegment upcallStub(Class<?> holder, String name, FunctionDescriptor descriptor) {
         try {
-            MethodHandle target = MethodHandles.lookup().findStatic(holder, name, LINKER.toMethodType(descriptor));
+            MethodHandle target = MethodHandles.lookup().findStatic(holder, name, descriptor.toMethodType());
             return LINKER.upcallStub(target, descriptor, Arena.ofAuto());
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
@@ -287,7 +287,7 @@ public class NativeTestHelper {
                                                AtomicReference<Object[]> capturedArgs, int retIdx) {
         MethodHandle target = MethodHandles.insertArguments(MH_SAVER, 1, fd.argumentLayouts(), capturedArgs, arena, retIdx);
         target = target.asCollector(Object[].class, fd.argumentLayouts().size());
-        target = target.asType(LINKER.toMethodType(fd));
+        target = target.asType(fd.toMethodType());
         return LINKER.upcallStub(target, fd, arena);
     }
 

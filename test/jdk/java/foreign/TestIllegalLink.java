@@ -43,7 +43,8 @@ import java.nio.ByteOrder;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class TestIllegalLink extends NativeTestHelper {
 
@@ -74,25 +75,6 @@ public class TestIllegalLink extends NativeTestHelper {
           expectedExceptionsMessageRegExp = ".*Unknown name.*")
     public void testIllegalCaptureState(String name) {
         Linker.Option.captureCallState(name);
-    }
-
-    @Test
-    public void testCarrierMethodType() {
-        FunctionDescriptor fd = FunctionDescriptor.of(C_INT,
-                C_INT,
-                MemoryLayout.structLayout(C_INT, C_INT));
-        MethodType cmt = LINKER.toMethodType(fd);
-        assertEquals(cmt, MethodType.methodType(int.class, int.class, MemorySegment.class));
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testBadCarrierMethodType() {
-        FunctionDescriptor fd = FunctionDescriptor.of(C_INT,
-                C_INT,
-                MemoryLayout.structLayout(C_INT, C_INT),
-                MemoryLayout.sequenceLayout(3, C_INT),
-                MemoryLayout.paddingLayout(32));
-        LINKER.toMethodType(fd); // should throw
     }
 
     // where
