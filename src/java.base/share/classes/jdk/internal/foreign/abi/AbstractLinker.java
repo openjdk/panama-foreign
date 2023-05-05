@@ -134,7 +134,8 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
     }
 
     private void checkLayout(MemoryLayout layout) {
-        if (layout instanceof SequenceLayout || layout instanceof PaddingLayout) {
+        // Note: we should not worry about padding layouts, as they cannot be present in a function descriptor
+        if (layout instanceof SequenceLayout) {
             throw new IllegalArgumentException("Unsupported layout: " + layout);
         } else {
             checkLayoutRecursive(layout);

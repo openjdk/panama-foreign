@@ -141,4 +141,29 @@ public class TestFunctionDescriptor extends NativeTestHelper {
         fd.insertArgumentLayouts(2, C_INT);
     }
 
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadPaddingInVoidFunction() {
+        FunctionDescriptor.ofVoid(MemoryLayout.paddingLayout(8));
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadPaddingInNonVoidFunction() {
+        FunctionDescriptor.ofVoid(MemoryLayout.paddingLayout(8));
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadPaddingInAppendArgLayouts() {
+        FunctionDescriptor.ofVoid().appendArgumentLayouts(MemoryLayout.paddingLayout(8));
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadPaddingInInsertArgLayouts() {
+        FunctionDescriptor.ofVoid().insertArgumentLayouts(0, MemoryLayout.paddingLayout(8));
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadPaddingInChangeRetLayout() {
+        FunctionDescriptor.ofVoid().changeReturnLayout(MemoryLayout.paddingLayout(8));
+    }
+
 }

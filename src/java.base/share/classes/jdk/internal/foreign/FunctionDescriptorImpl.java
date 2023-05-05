@@ -28,6 +28,7 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.PaddingLayout;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodType;
@@ -48,6 +49,13 @@ public final class FunctionDescriptorImpl implements FunctionDescriptor {
     private final List<MemoryLayout> argLayouts;
 
     private FunctionDescriptorImpl(MemoryLayout resLayout, List<MemoryLayout> argLayouts) {
+        if (resLayout instanceof PaddingLayout) {
+            throw new IllegalArgumentException("Unsupported padding layout return in function descriptor: " + resLayout);
+        }
+        Optional<MemoryLayout> paddingLayout = argLayouts.stream().filter(l -> l instanceof PaddingLayout).findAny();
+        if (paddingLayout.isPresent()) {
+            throw new IllegalArgumentException("Unsupported padding layout argument in function descriptor: " + paddingLayout.get());
+        }
         this.resLayout = resLayout;
         this.argLayouts = List.copyOf(argLayouts);
     }
@@ -124,7 +132,8 @@ public final class FunctionDescriptorImpl implements FunctionDescriptor {
         } else if (layout instanceof GroupLayout || layout instanceof SequenceLayout) {
             return MemorySegment.class;
         } else {
-            throw new IllegalArgumentException("Unsupported layout: " + layout);
+            // Note: we should not worry about padding layouts, as they cannot be present in a function descriptor
+            throw new AssertionError("Cannot get here");
         }
     }
 
