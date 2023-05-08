@@ -148,7 +148,7 @@ public class TestFunctionDescriptor extends NativeTestHelper {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadPaddingInNonVoidFunction() {
-        FunctionDescriptor.ofVoid(MemoryLayout.paddingLayout(8));
+        FunctionDescriptor.of(MemoryLayout.paddingLayout(8));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
