@@ -87,8 +87,9 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      * <p>
      * Unmatched elements in this group layout will be ignored.
      * <p>
-     * The returned Function may throw an {@link IllegalStateException} if it, for some reason, fails
-     * to extract a record.
+     * The returned Function may throw an {@link IllegalStateException} if it, for any reason, fails
+     * to extract a record. An example of such a failure is if the record class is not accessible
+     * (e.g. has private or package access).
      * <p>
      * The example below shows how to extract an instance of a Point record class from a MemorySegment:
      * {@snippet lang = java:
@@ -112,6 +113,7 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      * @throws IllegalArgumentException if the provided record {@code type} contains components for which
      *                                  there are no exact mapping (of names and types) in this group layout
      *                                  or if the provided {@code type} contains no components.
+     * @since 21
      */
     <R extends Record> Function<MemorySegment, R> recordMapper(Class<R> type);
 

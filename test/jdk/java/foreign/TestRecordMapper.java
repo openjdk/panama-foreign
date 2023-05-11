@@ -24,7 +24,7 @@
 /*
  * @test
  * @enablePreview
- * @run junit/othervm --enable-native-access=ALL-UNNAMED TestRecordAccessor
+ * @run junit/othervm --enable-native-access=ALL-UNNAMED TestRecordMapper
  */
 
 import org.junit.jupiter.api.*;
@@ -33,13 +33,16 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.StructLayout;
+import java.lang.foreign.ValueLayout;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
 import static java.lang.foreign.ValueLayout.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TestRecordAccessor {
+public class TestRecordMapper {
 
     private static final GroupLayout POINT_LAYOUT = MemoryLayout.structLayout(
             JAVA_INT.withName("x"),
@@ -250,6 +253,174 @@ public class TestRecordAccessor {
         assertTrue(toString.contains("type=" + Point.class.getName()));
         assertTrue(toString.contains("layout=" + POINT_LAYOUT));
     }
+
+    public record BytePoint(byte x, byte y) {}
+    @Test
+    public void testByte() {
+        testPointType(new BytePoint((byte)3, (byte)4), new byte[]{3, 4}, JAVA_BYTE);
+    }
+
+    public record BooleanPoint(boolean x, boolean y) {}
+    @Test
+    public void testBoolean() {
+        testPointType(new BooleanPoint(false, true), new byte[]{0, 1}, JAVA_BOOLEAN);
+    }
+
+    public record ShortPoint(short x, short y) {}
+    @Test
+    public void testShort() {
+        testPointType(new ShortPoint((short)3, (short)4), new short[]{3, 4}, JAVA_SHORT);
+    }
+
+    public record CharPoint(char x, char y) {}
+    @Test
+    public void testChar() {
+        testPointType(new CharPoint('d', 'e'), new char[]{'d', 'e'}, JAVA_CHAR);
+    }
+
+    public record IntPoint(int x, int y) {}
+    @Test
+    public void testInt() {
+        testPointType(new IntPoint(3, 4), new int[]{3, 4}, JAVA_INT);
+    }
+
+    @Test
+    public void testLong() {
+        testPointType(new LongPoint(3L, 4L), new long[]{3L, 4L}, JAVA_LONG);
+    }
+
+    public record FloatPoint(float x, float y) {}
+    @Test
+    public void testFloat() {
+        testPointType(new FloatPoint(3.0f, 4.0f), new float[]{3.0f, 4.0f}, JAVA_FLOAT);
+    }
+
+    public record DoublePoint(double x, double y){}
+    @Test
+    public void testDouble() {
+        testPointType(new DoublePoint(3.0d, 4.0d), new double[]{3.0d, 4.0d}, JAVA_DOUBLE);
+    }
+
+
+    public record SequenceBox(int before, int[] ints, int after) {
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof SequenceBox other &&
+                    before == other.before &&
+                    Arrays.equals(ints, other.ints) &&
+                    after == other.after;
+        }
+
+        @Override
+        public String toString() {
+            return "SequenceBox{before=" + before + ", ints=" + Arrays.toString(ints) + ", after=" + after;
+        }
+    }
+
+    @Test
+    public void testSequenceBox() {
+
+        var segment = MemorySegment.ofArray(new int[]{0, 2, 3, 4});
+
+        var layout = MemoryLayout.structLayout(
+                JAVA_INT.withName("before"),
+                MemoryLayout.sequenceLayout(2, JAVA_INT).withName("ints"),
+                JAVA_INT.withName("after")
+        );
+
+        var mapper = layout.recordMapper(SequenceBox.class);
+
+        SequenceBox sequenceBox = mapper.apply(segment);
+
+        assertEquals(new SequenceBox(0, new int[]{2, 3}, 4), sequenceBox);
+    }
+
+    public record SequenceOfPoints(int before, Point[] points, int after) {
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof SequenceOfPoints other &&
+                    before == other.before &&
+                    Arrays.equals(points, other.points) &&
+                    after == other.after;
+        }
+
+        @Override
+        public String toString() {
+            return "SequenceOfPoints{before=" + before + ", ints=" + Arrays.toString(points) + ", after=" + after;
+        }
+
+    }
+
+    @Test
+    public void reproduce() {
+        System.out.println("### Reproduce");
+        var segment = MemorySegment.ofArray(new int[]{-1, 2, 3, 4, 5, -2});
+        var s2 = segment.asSlice(4, 16);
+        var mapper = POINT_LAYOUT.recordMapper(Point.class);
+        s2.elements(POINT_LAYOUT)
+                .forEach(System.out::println);
+
+        var list = s2.elements(POINT_LAYOUT)
+                .map(mapper)
+                .toList();
+
+        System.out.println("list = " + list);
+    }
+
+    @Test
+    public void testPointSequence() {
+
+        var segment = MemorySegment.ofArray(new int[]{-1, 2, 3, 4, 5, -2});
+
+        var layout = MemoryLayout.structLayout(
+                JAVA_INT.withName("before"),
+                MemoryLayout.sequenceLayout(2, POINT_LAYOUT).withName("points"),
+                JAVA_INT.withName("after")
+        );
+
+        var mapper = layout.recordMapper(SequenceOfPoints.class);
+
+        SequenceOfPoints sequenceOfPoints = mapper.apply(segment);
+
+        System.out.println("pointSequence = " + sequenceOfPoints);
+        assertEquals(new SequenceOfPoints(-1, new Point[]{new Point(2, 3), new Point(4, 5)}, -2), sequenceOfPoints);
+    }
+
+    static public <R extends Record> void testPointType(R expected,
+                                                 Object array,
+                                                 ValueLayout valueLayout) {
+        testType(expected, array, valueLayout, "x", "y");
+    }
+
+        @SuppressWarnings("unchecked")
+    static public <R extends Record> void testType(R expected,
+                                            Object array,
+                                            ValueLayout valueLayout,
+                                            String... names) {
+
+        MemorySegment segment = switch (array) {
+            case byte[] a -> MemorySegment.ofArray(a);
+            case short[] a -> MemorySegment.ofArray(a);
+            case char[] a -> MemorySegment.ofArray(a);
+            case int[] a -> MemorySegment.ofArray(a);
+            case long[] a -> MemorySegment.ofArray(a);
+            case float[] a -> MemorySegment.ofArray(a);
+            case double[] a -> MemorySegment.ofArray(a);
+            default -> throw new IllegalArgumentException("Unknown array type: " + array);
+        };
+
+        StructLayout layout = MemoryLayout.structLayout(Arrays.stream(names)
+                .map(valueLayout::withName)
+                .toArray(MemoryLayout[]::new));
+
+        Class<R> type = (Class<R>) expected.getClass();
+        Function<MemorySegment, R> mapper = layout.recordMapper(type);
+        R actual = mapper.apply(segment);
+        assertEquals(expected, actual);
+    }
+
 
     public <T> void test(MemorySegment segment,
                          Function<MemorySegment, T> mapper,
