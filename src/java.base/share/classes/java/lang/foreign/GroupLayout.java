@@ -26,6 +26,9 @@
 package java.lang.foreign;
 
 import java.util.List;
+import java.util.function.Function;
+
+import jdk.internal.foreign.LayoutRecordMapper;
 import jdk.internal.javac.PreviewFeature;
 
 /**
@@ -73,4 +76,43 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      */
     @Override
     GroupLayout withBitAlignment(long bitAlignment);
+
+    /**
+     * {@return a {@linkplain Function function} that can extract instances of the provided
+     * {@code type} from a {@linkplain MemorySegment } by means of matching the names of the
+     * record components with the names of the elements in this group layout}
+     * <p>
+     * The returned function will apply the byte order and alignment constraints of this
+     * group layout.
+     * <p>
+     * Unmatched elements in this group layout will be ignored.
+     * <p>
+     * The returned Function may throw an {@link IllegalStateException} if it, for some reason, fails
+     * to extract a record.
+     * <p>
+     * The example below shows how to extract an instance of a Point record class from a MemorySegment:
+     * {@snippet lang = java:
+     *     MemorySegment segment = MemorySegment.ofArray(new int[]{3, 4});
+     *
+     *     record Point(int x, int y){}
+     *
+     *     var pointLayout = MemoryLayout.structLayout(
+     *         JAVA_INT.withName("x"),
+     *         JAVA_INT.withName("y")
+     *     );
+     *
+     *     Function<MemorySegment, Point> pointExtractor = pointLayout.recordMapper(Point.class);
+     *
+     *     // Extracts a new Point from the provided MemorySegment
+     *     Point point = pointExtractor.apply(segment); // Point{x=3, y=4}
+     * }
+     *
+     * @param <R> record type
+     * @param type the type (Class) of the record
+     * @throws IllegalArgumentException if the provided record {@code type} contains components for which
+     *                                  there are no exact mapping (of names and types) in this group layout
+     *                                  or if the provided {@code type} contains no components.
+     */
+    <R extends Record> Function<MemorySegment, R> recordMapper(Class<R> type);
+
 }
