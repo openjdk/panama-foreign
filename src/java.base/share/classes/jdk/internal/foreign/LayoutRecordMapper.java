@@ -62,8 +62,7 @@ public final class LayoutRecordMapper<T extends Record>
     private final GroupLayout layout;
     @Stable
     private final LayoutRecordMapper.MethodHandleAndOffset[] handles;
-
-    private final ObjLongFunction<MemorySegment, T> getter;
+    private final Constructor<T> canonicalConstructor;
 
     public LayoutRecordMapper(Class<T> type,
                               GroupLayout layout) {
@@ -109,7 +108,7 @@ public final class LayoutRecordMapper<T extends Record>
                 .toArray(Class<?>[]::new);
 
         try {
-            Constructor<T> canonicalConstructor = type.getDeclaredConstructor(ctorParameterTypes);
+            canonicalConstructor = type.getDeclaredConstructor(ctorParameterTypes);
 
             this.handles = componentLayoutMap.values().stream()
                     .map(cl -> {
@@ -199,37 +198,6 @@ public final class LayoutRecordMapper<T extends Record>
                     .filter(Objects::nonNull) // Remove ignored items
                     .toArray(MethodHandleAndOffset[]::new);
 
-            Function<MemorySegment, Object[]> extractor = ms -> {
-
-                Object[] parameters = new Object[handles.length];
-                for (int i = 0; i < handles.length; i++) {
-                    try {
-                        MethodHandleAndOffset mho = handles[i];
-                        parameters[i] = mho.handle().invoke(ms, mho.offset());
-                    } catch (Throwable e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-                return parameters;
-            };
-
-            getter = (ms, o) -> {
-                Object[] args;
-                try {
-                    args = extractor.apply(ms);
-                } catch (Exception e) {
-                    throw new IllegalStateException("Unable to extract values for the canonical constructor", e);
-                }
-                try {
-                    // Todo: Use a MethodHandle instead
-                    return canonicalConstructor.newInstance(args);
-                } catch (Exception e) {
-                    throw new IllegalStateException("Unable to invoke the canonical constructor for "
-                            + type.getName() + " (" + canonicalConstructor + ") using " +
-                            Arrays.toString(args), e);
-                }
-            };
-
         } catch (NoSuchMethodException e) {
             throw new IllegalArgumentException("There is no constructor in " + type.getName() +
                     " for " + Arrays.toString(ctorParameterTypes), e);
@@ -239,15 +207,33 @@ public final class LayoutRecordMapper<T extends Record>
 
     @Override
     public T apply(MemorySegment segment) {
-        
-
-
-        return getter.apply(segment, 0);
+        return get(segment, 0);
     }
 
     // Reflectively used
     public T get(MemorySegment segment, long offset) {
-        return getter.apply(segment, offset);
+        Object[] parameters;
+        try {
+            parameters = new Object[handles.length];
+            for (int i = 0; i < handles.length; i++) {
+                try {
+                    MethodHandleAndOffset mho = handles[i];
+                    parameters[i] = mho.handle().invoke(segment, mho.offset());
+                } catch (Throwable e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable to extract values for the canonical constructor", e);
+        }
+        try {
+            // Todo: Use a MethodHandle instead
+            return canonicalConstructor.newInstance(parameters);
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable to invoke the canonical constructor for "
+                    + type.getName() + " (" + canonicalConstructor + ") using " +
+                    Arrays.toString(parameters), e);
+        }
     }
 
     @Override
