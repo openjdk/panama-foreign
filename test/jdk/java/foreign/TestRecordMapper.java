@@ -359,6 +359,7 @@ public class TestRecordMapper {
         var segment = MemorySegment.ofArray(new int[]{-1, 2, 3, 4, 5, -2});
         var s2 = segment.asSlice(4, 16);
         var mapper = POINT_LAYOUT.recordMapper(Point.class);
+        System.out.println("mapper = " + mapper);
         s2.elements(POINT_LAYOUT)
                 .forEach(System.out::println);
 

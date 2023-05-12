@@ -27,6 +27,7 @@
 package jdk.internal.foreign;
 
 import jdk.internal.util.ArraysSupport;
+import jdk.internal.vm.annotation.Stable;
 
 import java.lang.foreign.AddressLayout;
 import java.lang.foreign.GroupLayout;
@@ -37,6 +38,7 @@ import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.RecordComponent;
@@ -58,7 +60,8 @@ public final class LayoutRecordMapper<T extends Record>
 
     private final Class<T> type;
     private final GroupLayout layout;
-    private final long offset;
+    @Stable
+    private final LayoutRecordMapper.MethodHandleAndOffset[] handles;
 
     private final ObjLongFunction<MemorySegment, T> getter;
 
@@ -73,14 +76,6 @@ public final class LayoutRecordMapper<T extends Record>
                               long offset) {
         this.type = type;
         this.layout = layout;
-        this.offset = offset;
-
-        /*
-         * The MethodHandle shall have the coordinates of (MemorySegment, long)
-         */
-        record MethodHandleAndOffset(MethodHandle handle,
-                                     long offset) {
-        }
 
         // Todo: Compose a single MethodHandle(MemorySegment, long) that returns T, to use as a getter
 
@@ -116,7 +111,7 @@ public final class LayoutRecordMapper<T extends Record>
         try {
             Constructor<T> canonicalConstructor = type.getDeclaredConstructor(ctorParameterTypes);
 
-            var handles = componentLayoutMap.values().stream()
+            this.handles = componentLayoutMap.values().stream()
                     .map(cl -> {
                         var name = cl.layout().name().orElseThrow();
                         var pathElement = MemoryLayout.PathElement.groupElement(name);
@@ -168,10 +163,11 @@ public final class LayoutRecordMapper<T extends Record>
                                         }
                                         case GroupLayout gl -> {
                                             var arrayComponentType = (Class<T>) cl.component().getType().componentType();
-                                            var componentMapper = recordMapper(arrayComponentType, gl, byteOffset);
+                                            // The "local" byteOffset for the record component mapper is zero
+                                            var componentMapper = recordMapper(arrayComponentType, gl, 0);
                                             try {
                                                 var mh = LOOKUP.unreflect(
-                                                        LayoutRecordMapper.class.getDeclaredMethod("toArray", MemorySegment.class, GroupLayout.class, long.class, long.class, Function.class));
+                                                        LayoutRecordMapper.class.getDeclaredMethod("toArray", MemorySegment.class, GroupLayout.class, long.class, long.class, LayoutRecordMapper.class));
                                                 // (MemorySegment, GroupLayout, long offset, long count, Function) ->
                                                 // (MemorySegment, GroupLayout, long offset, long count)
                                                 var mh2 = MethodHandles.insertArguments(mh, 4, componentMapper);
@@ -187,7 +183,7 @@ public final class LayoutRecordMapper<T extends Record>
                                             }
                                         }
                                         case SequenceLayout __ -> {
-                                            throw new UnsupportedOperationException("Sequence layout of sequence layout: " + sl);
+                                            throw new UnsupportedOperationException("Sequence layout of sequence layout is not supported: " + sl);
                                         }
                                         case PaddingLayout __ -> {
                                             yield null;
@@ -203,7 +199,6 @@ public final class LayoutRecordMapper<T extends Record>
                     .filter(Objects::nonNull) // Remove ignored items
                     .toArray(MethodHandleAndOffset[]::new);
 
-            // Todo: Use LazyArray here
             Function<MemorySegment, Object[]> extractor = ms -> {
 
                 Object[] parameters = new Object[handles.length];
@@ -244,6 +239,9 @@ public final class LayoutRecordMapper<T extends Record>
 
     @Override
     public T apply(MemorySegment segment) {
+        
+
+
         return getter.apply(segment, 0);
     }
 
@@ -256,8 +254,7 @@ public final class LayoutRecordMapper<T extends Record>
     public String toString() {
         return getClass().getSimpleName() + "{" +
                 "type=" + type.getName() + ", " +
-                "layout=" + layout + ", " +
-                "offset=" + offset + "}";
+                "layout=" + layout + "}";
     }
 
     private static <T, K, U>
@@ -318,6 +315,13 @@ public final class LayoutRecordMapper<T extends Record>
                               MemoryLayout layout) {
     }
 
+    /*
+     * The MethodHandle shall have the coordinates of (MemorySegment, long)
+     */
+    record MethodHandleAndOffset(MethodHandle handle,
+                                 long offset) {
+    }
+
     // Wrapper to create an array of Records
 
     @SuppressWarnings("unchecked")
@@ -325,32 +329,12 @@ public final class LayoutRecordMapper<T extends Record>
                                           GroupLayout elementLayout,
                                           long offset,
                                           long count,
-                                          Function<MemorySegment, R> mapper) {
+                                          LayoutRecordMapper<R> mapper) {
 
-        System.out.println("segment = " + segment);
-        System.out.println("elementLayout = " + elementLayout);
-        System.out.println("elementLayout.byteSize() = " + elementLayout.byteSize());
-        System.out.println("offset = " + offset);
-        System.out.println("count = " + count);
-        System.out.println("mapper = " + mapper);
-        var segmentCarveOut = slice(segment, elementLayout, offset, count);
-        System.out.println("segmentCarveOut = " + segmentCarveOut);
-
-        System.out.println("Preview of segment stream:");
-        segmentCarveOut.elements(elementLayout)
-                .forEach(System.out::println);
-
-        return (R[]) segmentCarveOut
-                .elements(elementLayout)
-                .peek(System.out::println)
-                .map(mapper)
-                .peek(System.out::println)
-                .toArray();
-
-/*        return (R[]) slice(segment, elementLayout, offset, count)
+        return slice(segment, elementLayout, offset, count)
                 .elements(elementLayout)
                 .map(mapper)
-                .toArray();*/
+                .toArray(l -> (R[]) Array.newInstance(mapper.type, l));
     }
 
     // Below are `MemorySegment::toArray` wrapper methods that is also taking an offset
