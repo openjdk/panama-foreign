@@ -73,13 +73,17 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
     public final MethodHandle downcallHandle(MemorySegment symbol, FunctionDescriptor function, Option... options) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), Linker.class, "downcallHandle");
         SharedUtils.checkSymbol(symbol);
-        return downcallHandle(function, options).bindTo(symbol);
+        return downcallHandle0(function, options).bindTo(symbol);
     }
 
     @Override
     @CallerSensitive
     public final MethodHandle downcallHandle(FunctionDescriptor function, Option... options) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass(), Linker.class, "downcallHandle");
+        return downcallHandle0(function, options);
+    }
+
+    private final MethodHandle downcallHandle0(FunctionDescriptor function, Option... options) {
         Objects.requireNonNull(function);
         Objects.requireNonNull(options);
         checkLayouts(function);
@@ -94,6 +98,7 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
             return handle;
         });
     }
+
     protected abstract MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function, LinkerOptions options);
 
     @Override
