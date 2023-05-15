@@ -38,6 +38,7 @@ import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -108,7 +109,7 @@ public final class LayoutRecordMapper<T extends Record>
                 .toArray(Class<?>[]::new);
 
         try {
-            canonicalConstructor = type.getDeclaredConstructor(ctorParameterTypes);
+            this.canonicalConstructor = type.getDeclaredConstructor(ctorParameterTypes);
 
             this.handles = componentLayoutMap.values().stream()
                     .map(cl -> {
@@ -120,8 +121,8 @@ public final class LayoutRecordMapper<T extends Record>
                             case ValueLayout vl -> {
                                 try {
                                     assertExactMatch(cl, type, vl, layout);
-                                    MethodHandle mh = LOOKUP.unreflect(
-                                            MemorySegment.class.getMethod("get", valueLayoutType(vl), long.class));
+                                    var mt = MethodType.methodType(vl.carrier(), valueLayoutType(vl), long.class);
+                                    var mh = LOOKUP.findVirtual(MemorySegment.class, "get", mt);
                                     // (MemorySegment, OfX, long ) -> (MemorySegment, long)
                                     yield new MethodHandleAndOffset(MethodHandles.insertArguments(mh, 1, vl), byteOffset);
                                 } catch (NoSuchMethodException | IllegalAccessException e) {
@@ -132,9 +133,8 @@ public final class LayoutRecordMapper<T extends Record>
                                 var componentType = (Class<T>) cl.component().getType();
                                 var componentMapper = recordMapper(componentType, gl, byteOffset);
                                 try {
-                                    var mh = LOOKUP.unreflect(
-                                            LayoutRecordMapper.class.getDeclaredMethod("get", MemorySegment.class, long.class));
-
+                                    var mt = MethodType.methodType(Record.class, MemorySegment.class, long.class);
+                                    var mh = LOOKUP.findVirtual(LayoutRecordMapper.class, "applyIgnoringOffset", mt);
                                     // (LayoutRecordAccessor, MemorySegment, long) -> (MemorySegment, long)
                                     yield new MethodHandleAndOffset(MethodHandles.insertArguments(mh, 0, componentMapper), byteOffset);
                                 } catch (NoSuchMethodException | IllegalAccessException e) {
@@ -150,11 +150,8 @@ public final class LayoutRecordMapper<T extends Record>
                                     switch (sl.elementLayout()) {
                                         case ValueLayout vl -> {
                                             assertExactMatch(cl, type, vl, layout);
-
-                                            Method method = LayoutRecordMapper.class.getDeclaredMethod("toArray", MemorySegment.class, valueLayoutType(vl), long.class, long.class);
-                                            // Declared as package private
-                                            method.setAccessible(true);
-                                            MethodHandle mh = LOOKUP.unreflect(method);
+                                            var mt = MethodType.methodType(vl.carrier().arrayType(), MemorySegment.class, valueLayoutType(vl), long.class, long.class);
+                                            var mh = LOOKUP.findStatic(LayoutRecordMapper.class, "toArray", mt);
                                             // (MemorySegment, OfX, long offset, long count) -> (MemorySegment, OfX, long offset)
                                             MethodHandle mh2 = MethodHandles.insertArguments(mh, 3, count);
                                             // (MemorySegment, OfX, long offset) -> (MemorySegment, long offset)
@@ -165,8 +162,10 @@ public final class LayoutRecordMapper<T extends Record>
                                             // The "local" byteOffset for the record component mapper is zero
                                             var componentMapper = recordMapper(arrayComponentType, gl, 0);
                                             try {
-                                                var mh = LOOKUP.unreflect(
-                                                        LayoutRecordMapper.class.getDeclaredMethod("toArray", MemorySegment.class, GroupLayout.class, long.class, long.class, LayoutRecordMapper.class));
+                                                var mt = MethodType.methodType(Record.class.arrayType(), MemorySegment.class, GroupLayout.class, long.class, long.class, LayoutRecordMapper.class);
+                                                var mh = LOOKUP.findStatic(LayoutRecordMapper.class, "toArray", mt);
+/*                                                var mh = LOOKUP.unreflect(
+                                                        LayoutRecordMapper.class.getDeclaredMethod("toArray", MemorySegment.class, GroupLayout.class, long.class, long.class, LayoutRecordMapper.class));*/
                                                 // (MemorySegment, GroupLayout, long offset, long count, Function) ->
                                                 // (MemorySegment, GroupLayout, long offset, long count)
                                                 var mh2 = MethodHandles.insertArguments(mh, 4, componentMapper);
@@ -185,14 +184,14 @@ public final class LayoutRecordMapper<T extends Record>
                                             throw new UnsupportedOperationException("Sequence layout of sequence layout is not supported: " + sl);
                                         }
                                         case PaddingLayout __ -> {
-                                            yield null;
+                                            yield null; // Ignore
                                         }
                                     }
                                 } catch (NoSuchMethodException | IllegalAccessException e) {
                                     throw new InternalError(e);
                                 }
                             }
-                            case PaddingLayout __ -> null; // Just ignore
+                            case PaddingLayout __ -> null; // Ignore
                         };
                     })
                     .filter(Objects::nonNull) // Remove ignored items
@@ -211,6 +210,11 @@ public final class LayoutRecordMapper<T extends Record>
     }
 
     // Reflectively used
+    public T applyIgnoringOffset(MemorySegment segment, long offset) {
+        return get(segment, 0);
+    }
+
+    // Reflectively used
     public T get(MemorySegment segment, long offset) {
         Object[] parameters;
         try {
@@ -218,7 +222,7 @@ public final class LayoutRecordMapper<T extends Record>
             for (int i = 0; i < handles.length; i++) {
                 try {
                     MethodHandleAndOffset mho = handles[i];
-                    parameters[i] = mho.handle().invoke(segment, mho.offset());
+                    parameters[i] = mho.handle().invoke(segment, mho.offset() + offset);
                 } catch (Throwable e) {
                     throw new RuntimeException(e);
                 }
@@ -261,9 +265,21 @@ public final class LayoutRecordMapper<T extends Record>
             case ValueLayout.OfLong __ -> ValueLayout.OfLong.class;
             case ValueLayout.OfFloat __ -> ValueLayout.OfFloat.class;
             case ValueLayout.OfDouble __ -> ValueLayout.OfDouble.class;
-            case AddressLayout __ -> throw new IllegalStateException("No type for: " + vl.toString());
+            case AddressLayout __ -> throw new IllegalStateException("No type for: " + vl);
         };
     }
+
+    static MethodHandle findStaticToArray(Class<?> rType,
+                                          Class<?> layoutType,
+                                          Class<?> extra) throws NoSuchMethodException, IllegalAccessException {
+
+        var pTypes = Stream.of(MemorySegment.class, layoutType, long.class, long.class, extra)
+                .filter(Objects::nonNull)
+                .toArray(Class<?>[]::new);
+        var mt = MethodType.methodType(rType, pTypes);
+        return LOOKUP.findStatic(LayoutRecordMapper.class, "toArray", mt);
+    }
+
 
     static void assertExactMatch(ComponentAndLayout cl,
                                  Class<? extends Record> type,
