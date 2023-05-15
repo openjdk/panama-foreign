@@ -41,7 +41,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.lang.reflect.RecordComponent;
 import java.util.Arrays;
 import java.util.Map;
@@ -150,8 +149,7 @@ public final class LayoutRecordMapper<T extends Record>
                                     switch (sl.elementLayout()) {
                                         case ValueLayout vl -> {
                                             assertExactMatch(cl, type, vl, layout);
-                                            var mt = MethodType.methodType(vl.carrier().arrayType(), MemorySegment.class, valueLayoutType(vl), long.class, long.class);
-                                            var mh = LOOKUP.findStatic(LayoutRecordMapper.class, "toArray", mt);
+                                            var mh = findStaticToArray(vl.carrier().arrayType(), valueLayoutType(vl), null);
                                             // (MemorySegment, OfX, long offset, long count) -> (MemorySegment, OfX, long offset)
                                             MethodHandle mh2 = MethodHandles.insertArguments(mh, 3, count);
                                             // (MemorySegment, OfX, long offset) -> (MemorySegment, long offset)
@@ -162,10 +160,7 @@ public final class LayoutRecordMapper<T extends Record>
                                             // The "local" byteOffset for the record component mapper is zero
                                             var componentMapper = recordMapper(arrayComponentType, gl, 0);
                                             try {
-                                                var mt = MethodType.methodType(Record.class.arrayType(), MemorySegment.class, GroupLayout.class, long.class, long.class, LayoutRecordMapper.class);
-                                                var mh = LOOKUP.findStatic(LayoutRecordMapper.class, "toArray", mt);
-/*                                                var mh = LOOKUP.unreflect(
-                                                        LayoutRecordMapper.class.getDeclaredMethod("toArray", MemorySegment.class, GroupLayout.class, long.class, long.class, LayoutRecordMapper.class));*/
+                                                var mh = findStaticToArray(Record.class.arrayType(), GroupLayout.class, LayoutRecordMapper.class);
                                                 // (MemorySegment, GroupLayout, long offset, long count, Function) ->
                                                 // (MemorySegment, GroupLayout, long offset, long count)
                                                 var mh2 = MethodHandles.insertArguments(mh, 4, componentMapper);
@@ -209,13 +204,13 @@ public final class LayoutRecordMapper<T extends Record>
         return get(segment, 0);
     }
 
-    // Reflectively used
-    public T applyIgnoringOffset(MemorySegment segment, long offset) {
+    // Reflectively used to provide a method that ignores the offset
+    // for "local" memory segments.
+    private T applyIgnoringOffset(MemorySegment segment, long __) {
         return get(segment, 0);
     }
 
-    // Reflectively used
-    public T get(MemorySegment segment, long offset) {
+    private T get(MemorySegment segment, long offset) {
         Object[] parameters;
         try {
             parameters = new Object[handles.length];
@@ -306,11 +301,6 @@ public final class LayoutRecordMapper<T extends Record>
             throw new IllegalArgumentException(componentType + " is not a Record");
         }
         return new LayoutRecordMapper<>(componentType, gl, byteOffset);
-    }
-
-    @FunctionalInterface
-    interface ObjLongFunction<T, R> {
-        R apply(T t, long l);
     }
 
     record ComponentAndLayout(RecordComponent component,
