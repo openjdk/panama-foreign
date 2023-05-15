@@ -35,6 +35,9 @@ import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.StructLayout;
 import java.lang.foreign.ValueLayout;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
@@ -382,11 +385,9 @@ public class TestRecordMapper {
 
     @Test
     public void reproduce() {
-        System.out.println("### Reproduce");
         var segment = MemorySegment.ofArray(new int[]{-1, 2, 3, 4, 5, -2});
         var s2 = segment.asSlice(4, 16);
         var mapper = POINT_LAYOUT.recordMapper(Point.class);
-        System.out.println("mapper = " + mapper);
         s2.elements(POINT_LAYOUT)
                 .forEach(System.out::println);
 
@@ -394,7 +395,7 @@ public class TestRecordMapper {
                 .map(mapper)
                 .toList();
 
-        System.out.println("list = " + list);
+        assertEquals(List.of(new Point(2, 3), new Point(4, 5)), list);
     }
 
     @Test
@@ -422,6 +423,47 @@ public class TestRecordMapper {
         assertThrows(IllegalArgumentException.class, () ->
                 POINT_LAYOUT.recordMapper(Foo.class)
         );
+    }
+
+    @Test
+    public void testMhComposition() throws Throwable {
+        var lookup = MethodHandles.lookup();
+        var ctor = lookup.findConstructor(Point.class, MethodType.methodType(void.class, int.class, int.class));
+
+        var extractorType = MethodType.methodType(int.class, ValueLayout.OfInt.class, long.class);
+
+        var xVh = lookup.findVirtual(MemorySegment.class, "get", extractorType);
+        // (MemorySegment, OfInt, long) -> (MemorySegment, long)
+        var xVh2 = MethodHandles.insertArguments(xVh, 1, JAVA_INT);
+        // (MemorySegment, long) -> (MemorySegment)
+        var xVh3 = MethodHandles.insertArguments(xVh2, 1, 0L);
+
+        var yVh = lookup.findVirtual(MemorySegment.class, "get", extractorType);
+        // (MemorySegment, OfInt, long) -> (MemorySegment, long)
+        var yVh2 = MethodHandles.insertArguments(yVh, 1, JAVA_INT);
+        // (MemorySegment, long) -> (MemorySegment)
+        var yVh3 = MethodHandles.insertArguments(yVh2, 1, 4L);
+
+        assertEquals(3, (int) xVh3.invokeExact(POINT_SEGMENT));
+        assertEquals(4, (int) yVh3.invokeExact(POINT_SEGMENT));
+
+        var expected = new Point(3, 4);
+
+        var p = ctor.invokeWithArguments((int) xVh3.invokeExact(POINT_SEGMENT), (int) yVh3.invokeExact(POINT_SEGMENT));
+        assertEquals(expected, p);
+
+        var ctorFilter = MethodHandles.filterArguments(ctor, 0, xVh3);
+        var ctorFilter2 = MethodHandles.filterArguments(ctorFilter, 1, yVh3);
+
+        var pf = (Point) ctorFilter2.invokeExact(POINT_SEGMENT, POINT_SEGMENT);
+        assertEquals(expected, pf);
+
+        var mt = MethodType.methodType(Point.class, MemorySegment.class);
+        var mh = MethodHandles.permuteArguments(ctorFilter2, mt, 0, 0);
+
+        // Finally, we have a MethodHandle MemorySegment -> Point
+        Point point = (Point) mh.invokeExact(POINT_SEGMENT);
+        assertEquals(expected, point);
     }
 
     static public <R extends Record> void testPointType(R expected,

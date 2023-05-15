@@ -239,7 +239,7 @@ public final class LayoutRecordMapper<T extends Record>
         try {
             // Todo: Use a MethodHandle instead
             return canonicalConstructor.newInstance(parameters);
-            //return (T) canonicalConstructorMH.invokeWithArguments(parameters);
+            // return (T) canonicalConstructorMH.invokeWithArguments(parameters);
         } catch (Throwable e) {
             throw new IllegalStateException("Unable to invoke the canonical constructor for "
                     + type.getName() + " (" + canonicalConstructor + ") using " +

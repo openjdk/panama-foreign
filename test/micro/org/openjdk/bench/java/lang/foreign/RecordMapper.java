@@ -29,6 +29,10 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -53,6 +57,7 @@ public class RecordMapper {
     private static final Function<MemorySegment, Point> MAPPER = POINT_LAYOUT.recordMapper(Point.class);
     private static final Function<MemorySegment, Point> EXPLICIT_MAPPER = ms ->
             new Point(ms.get(JAVA_INT, 0L), ms.get(JAVA_INT, 4));
+    private static final MethodHandle MH = methodHandle();
 
     Arena arena;
     MemorySegment segment;
@@ -79,6 +84,45 @@ public class RecordMapper {
     @Benchmark
     public void explicitMapper(Blackhole bh) {
         bh.consume(EXPLICIT_MAPPER.apply(segment));
+    }
+
+    @Benchmark
+    public void mhMapper(Blackhole bh) {
+        try {
+            bh.consume((Point) MH.invokeExact(segment));
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static MethodHandle methodHandle() {
+        try {
+            var lookup = MethodHandles.lookup();
+            var ctor = lookup.findConstructor(Point.class, MethodType.methodType(void.class, int.class, int.class));
+
+            var extractorType = MethodType.methodType(int.class, ValueLayout.OfInt.class, long.class);
+
+            var xVh = lookup.findVirtual(MemorySegment.class, "get", extractorType);
+            // (MemorySegment, OfInt, long) -> (MemorySegment, long)
+            var xVh2 = MethodHandles.insertArguments(xVh, 1, JAVA_INT);
+            // (MemorySegment, long) -> (MemorySegment)
+            var xVh3 = MethodHandles.insertArguments(xVh2, 1, 0L);
+
+            var yVh = lookup.findVirtual(MemorySegment.class, "get", extractorType);
+            // (MemorySegment, OfInt, long) -> (MemorySegment, long)
+            var yVh2 = MethodHandles.insertArguments(yVh, 1, JAVA_INT);
+            // (MemorySegment, long) -> (MemorySegment)
+            var yVh3 = MethodHandles.insertArguments(yVh2, 1, 4L);
+
+            var ctorFilter = MethodHandles.filterArguments(ctor, 0, xVh3);
+            var ctorFilter2 = MethodHandles.filterArguments(ctorFilter, 1, yVh3);
+
+            var mt = MethodType.methodType(Point.class, MemorySegment.class);
+
+            return MethodHandles.permuteArguments(ctorFilter2, mt, 0, 0);
+        } catch (ReflectiveOperationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
     }
 
 }
