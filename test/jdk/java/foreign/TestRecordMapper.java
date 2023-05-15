@@ -44,6 +44,33 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class TestRecordMapper {
 
+    class Gist {
+
+        private static final GroupLayout POINT_LAYOUT =
+                MemoryLayout.structLayout(
+                        JAVA_INT.withName("x"),
+                        JAVA_INT.withName("y"));
+
+        public static void main(String[] args) {
+
+            var segment = MemorySegment.ofArray(new int[]{
+                    3, 4,
+                    6, 0});
+
+            record Point(int x, int y){}
+
+            var mapper = POINT_LAYOUT.recordMapper(Point.class);
+
+            Point point = mapper.apply(segment); // Point{x=3, y=4}
+
+            List<Point> points = segment.elements(POINT_LAYOUT)
+                    .map(mapper)
+                    .toList(); // [Point{x=3, y=4}, Point{x=6, y=0}]
+
+        }
+
+    }
+
     private static final GroupLayout POINT_LAYOUT = MemoryLayout.structLayout(
             JAVA_INT.withName("x"),
             JAVA_INT.withName("y"));
@@ -387,6 +414,14 @@ public class TestRecordMapper {
 
         System.out.println("pointSequence = " + sequenceOfPoints);
         assertEquals(new SequenceOfPoints(-1, new Point[]{new Point(2, 3), new Point(4, 5)}, -2), sequenceOfPoints);
+    }
+
+    private record Foo(int x){}
+    @Test
+    public void testConstructorAccessibility() {
+        assertThrows(IllegalArgumentException.class, () ->
+                POINT_LAYOUT.recordMapper(Foo.class)
+        );
     }
 
     static public <R extends Record> void testPointType(R expected,

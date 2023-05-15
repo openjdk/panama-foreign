@@ -109,6 +109,11 @@ public final class LayoutRecordMapper<T extends Record>
 
         try {
             this.canonicalConstructor = type.getDeclaredConstructor(ctorParameterTypes);
+            if (!canonicalConstructor.canAccess(null)) {
+                throw new IllegalArgumentException("This mapper cannot create instances of type " +
+                        type + " using the constructor: " + canonicalConstructor +
+                        ". Make sure the record is declared public.");
+            }
 
             this.handles = componentLayoutMap.values().stream()
                     .map(cl -> {
