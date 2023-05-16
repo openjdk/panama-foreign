@@ -51,7 +51,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Collectors.toUnmodifiableSet;
 
 /**
  * A record mapper that is matching a GroupLayout to match the components of a record.
@@ -60,6 +59,10 @@ import static java.util.stream.Collectors.toUnmodifiableSet;
  */
 public final class LayoutRecordMapper<T extends Record>
         implements Function<MemorySegment, T> {
+
+    enum Allow {EXACT, BOXING, BOXING_NARROWING_AND_WIDENING}
+
+    public static final Allow ALLOW = Allow.EXACT;
 
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
     private static final MethodHandles.Lookup PUBLIC_LOOKUP = MethodHandles.publicLookup();
@@ -186,7 +189,7 @@ public final class LayoutRecordMapper<T extends Record>
                                         }
                                     }
                                     case SequenceLayout __ -> {
-                                        throw new UnsupportedOperationException("Sequence layout of sequence layout is not supported: " + sl);
+                                        throw new UnsupportedOperationException("Multidimensional arrays are not supported: " + sl);
                                     }
                                     case PaddingLayout __ -> {
                                         yield null; // Ignore
@@ -278,10 +281,18 @@ public final class LayoutRecordMapper<T extends Record>
             recordComponentType = Objects.requireNonNull(recordComponentType.componentType());
         }
 
-        // Accept boxing: e.g. Integer.isInstance(int.class) -> true
-        if (recordComponentType.isInstance(vl.carrier())) {
-            throw new IllegalArgumentException("The return type of '" + cl.component().getName() + "()' (in " +
-                    type.getName() + ") is '" + cl.component().getType() +
+        boolean match = switch (ALLOW) {
+            // Require types to be identical only: e.g. Integer.class != int.class
+            case EXACT -> recordComponentType == vl.carrier();
+            // Accept boxing: e.g. Integer.class.isInstance(int.class) -> true
+            case BOXING -> recordComponentType.isInstance(vl.carrier());
+            // Accept anything for now and signal errors later when composing VHs
+            case BOXING_NARROWING_AND_WIDENING -> true;
+        };
+
+        if (!match) {
+            throw new IllegalArgumentException("Unable to match types because the return type of '" +
+                    cl.component().getName() + "()' (in " + type.getName() + ") is '" + cl.component().getType() +
                     "' but the layout type is '" + vl.carrier() + "' (in " + originalLayout + ")");
         }
     }

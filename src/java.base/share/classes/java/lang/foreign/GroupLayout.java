@@ -85,6 +85,8 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      * The returned function will apply the byte order and alignment constraints of this
      * group layout.
      * <p>
+     * Arrays of one dimension are supported but multidimensional arrays are not.
+     * <p>
      * Unmatched elements in this group layout will be ignored.
      * <p>
      * The returned Function may throw an {@link IllegalStateException} if it, for any reason, fails
@@ -112,7 +114,8 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      * @param type the type (Class) of the record
      * @throws IllegalArgumentException if the provided record {@code type} contains components for which
      *                                  there are no exact mapping (of names and types) in this group layout
-     *                                  or if the provided {@code type} is not public.
+     *                                  or if the provided {@code type} is not public or if a multidimensional
+     *                                  array is specified.
      * @since 21
      */
     <R extends Record> Function<MemorySegment, R> recordMapper(Class<R> type);
