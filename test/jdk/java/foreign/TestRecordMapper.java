@@ -47,6 +47,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class TestRecordMapper {
 
+    // Todo: Test boxing
+
     class Gist {
 
         private static final GroupLayout POINT_LAYOUT =
