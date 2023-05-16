@@ -41,14 +41,15 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Array;
 import java.lang.reflect.RecordComponent;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
-import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toMap;
 
 /**
  * A record mapper that is matching a GroupLayout to match the components of a record.
@@ -70,42 +71,41 @@ public final class LayoutRecordMapper<T extends Record>
         this(type, layout, 0);
     }
 
-    public LayoutRecordMapper(Class<T> type,
-                              GroupLayout layout,
-                              long offset) {
+    private LayoutRecordMapper(Class<T> type,
+                               GroupLayout layout,
+                               long offset) {
         this.type = type;
         this.layout = layout;
 
-        Map<String, RecordComponent> components = Stream.of(type.getRecordComponents())
-                .collect(toLinkedHashMap(RecordComponent::getName, Function.identity()));
+        var recordComponents = Arrays.asList(type.getRecordComponents());
 
-        if (components.isEmpty()) {
-            throw new IllegalArgumentException("The provided Record type did not contain any components.");
-        }
+        var nameToLayoutMap = layout.memberLayouts().stream()
+                .filter(l -> l.name().isPresent())
+                .collect(toMap(l -> l.name().orElseThrow(), Function.identity()));
 
-        Map<String, MemoryLayout> layouts = layout.memberLayouts().stream()
-                .collect(toLinkedHashMap(l -> l.name().orElseThrow(), Function.identity()));
-
-        var missingComponents = components.keySet().stream()
-                .filter(l -> !layouts.containsKey(l))
+        var missingComponents = recordComponents.stream()
+                .map(RecordComponent::getName)
+                .filter(l -> !nameToLayoutMap.containsKey(l))
                 .toList();
 
         if (!missingComponents.isEmpty()) {
             throw new IllegalArgumentException("There is no mapping for " +
                     missingComponents + " in " + type.getName() +
-                    "(" + String.join(", ", components.keySet()) + ")" +
+                    "(" + String.join(", ", recordComponents.stream().map(RecordComponent::getName).collect(Collectors.joining(", "))) + ")" +
                     " provided by the layout " + layout);
         }
 
-        Map<String, ComponentAndLayout> componentLayoutMap = components.entrySet().stream()
-                .map(e -> new ComponentAndLayout(e.getValue(), layouts.get(e.getKey())))
-                .collect(toLinkedHashMap(cl -> cl.component().getName(), Function.identity()));
+        var componentAndLayoutList = recordComponents.stream()
+                .map(c -> new ComponentAndLayout(c, nameToLayoutMap.get(c.getName())))
+                .toList();
 
-        Class<?>[] ctorParameterTypes = components.values().stream()
+        Class<?>[] ctorParameterTypes = recordComponents.stream()
                 .map(RecordComponent::getType)
                 .toArray(Class<?>[]::new);
 
-        MethodHandle[] handles = componentLayoutMap.values().stream()
+        // An array of the record component MethodHandle extractors, each of type (MemorySegment)X
+        // where X is the component type.
+        MethodHandle[] handles = componentAndLayoutList.stream()
                 .map(cl -> {
                     var name = cl.layout().name().orElseThrow();
                     var pathElement = MemoryLayout.PathElement.groupElement(name);
@@ -126,7 +126,8 @@ public final class LayoutRecordMapper<T extends Record>
                             }
                         }
                         case GroupLayout gl -> {
-                            var componentType = (Class<T>) cl.component().getType();
+                            @SuppressWarnings("unchecked")
+                            var componentType = (Class<? extends Record>) cl.component().getType();
                             var componentMapper = recordMapper(componentType, gl, byteOffset);
                             try {
                                 var mt = MethodType.methodType(Record.class, MemorySegment.class);
@@ -158,7 +159,7 @@ public final class LayoutRecordMapper<T extends Record>
                                     }
                                     case GroupLayout gl -> {
                                         @SuppressWarnings("unchecked")
-                                        var arrayComponentType = Objects.requireNonNull((Class<T>) cl.component()
+                                        var arrayComponentType = (Class<? extends Record>) Objects.requireNonNull(cl.component()
                                                 .getType()
                                                 .componentType());
                                         // The "local" byteOffset for the record component mapper is zero
@@ -207,11 +208,12 @@ public final class LayoutRecordMapper<T extends Record>
             }
 
             var mt = MethodType.methodType(type, MemorySegment.class);
-            // De-duplicate the many identical MemorySegment arguments to a single argument
+            // Fold the many identical MemorySegment arguments into a single argument
             ctor = MethodHandles.permuteArguments(ctor, mt, IntStream.range(0, handles.length)
                     .map(i -> 0)
                     .toArray());
 
+            // The constructor MethodHandle is now of type (MemorySegment)T
             this.ctor = ctor;
         } catch (IllegalAccessException | NoSuchMethodException e) {
             throw new IllegalArgumentException("There is no public constructor in " + type.getName() +
@@ -237,14 +239,7 @@ public final class LayoutRecordMapper<T extends Record>
                 "layout=" + layout + "}";
     }
 
-    private static <T, K, U>
-    Collector<T, ?, Map<K, U>> toLinkedHashMap(Function<? super T, ? extends K> keyMapper,
-                                               Function<? super T, ? extends U> valueMapper) {
-        return Collectors.toMap(keyMapper, valueMapper, (a, b) -> {
-            throw new InternalError("Should not reach here");
-        }, LinkedHashMap::new);
-    }
-
+    // The parameter is of type ValueLayouts.OfByteImpl and the likes.
     static Class<? extends ValueLayout> valueLayoutType(ValueLayout vl) {
         return switch (vl) {
             case ValueLayout.OfBoolean __ -> ValueLayout.OfBoolean.class;

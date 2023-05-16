@@ -45,7 +45,7 @@ import java.util.function.Function;
 import static java.lang.foreign.ValueLayout.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TestRecordMapper {
+public final class TestRecordMapper {
 
     // Todo: Test boxing
 
@@ -140,11 +140,27 @@ public class TestRecordMapper {
     }
 
     @Test
-    public void testLongPointMapper() {
+    public void testPointMapperUnderflow() {
+        assertThrows(IllegalStateException.class, () ->
+                POINT_LAYOUT.recordMapper(Point.class)
+                        .apply(MemorySegment.ofArray(new int[]{1})));
+    }
+
+    @Test
+    public void testLongPointTypeMismatch() {
         // This should fail as the types `int` and `long` differ
         assertThrows(IllegalArgumentException.class, () ->
                 POINT_LAYOUT.recordMapper(LongPoint.class)
         );
+    }
+
+    public record Empty() {}
+
+    @Test
+    public void testEmptyRecord() {
+        var mapper = POINT_LAYOUT.recordMapper(Empty.class);
+        Empty empty = mapper.apply(POINT_SEGMENT);
+        assertEquals(new Empty(), empty);
     }
 
     @Test
