@@ -28,7 +28,6 @@ package java.lang.foreign;
 import java.util.List;
 import java.util.function.Function;
 
-import jdk.internal.foreign.LayoutRecordMapper;
 import jdk.internal.javac.PreviewFeature;
 
 /**
