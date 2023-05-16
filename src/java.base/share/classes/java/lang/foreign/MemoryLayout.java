@@ -163,6 +163,30 @@ import jdk.internal.javac.PreviewFeature;
  * long offset2 = (long) offsetHandle.invokeExact(2L); // 16
  * }
  *
+ * <h2 id="record-mapping">Record mapping</h2>
+ * <p>A {@linkplain GroupLayout group layout} can provide mapping capabilities from memory segments to Java
+ * {@linkplain Record Records} by means of matching named elements in the group layout with component names
+ * in a record class.
+ * For instance:
+ *
+ * {@snippet lang=java:
+ *     MemorySegment segment = MemorySegment.ofArray(new int[]{3, 4});
+ *
+ *     public record Point(int x, int y){}
+ *
+ *     var pointLayout = MemoryLayout.structLayout(
+ *         JAVA_INT.withName("x"),
+ *         JAVA_INT.withName("y")
+ *     );
+ *
+ *     Function<MemorySegment, Point> pointExtractor = pointLayout.recordMapper(Point.class);
+ *
+ *     // Extracts a new Point from the provided MemorySegment
+ *     Point point = pointExtractor.apply(segment); // Point{x=3, y=4}
+ * }
+ *
+ * The mapping capability provides an easy-to-use bridge from native memory to Java objects.
+ *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
