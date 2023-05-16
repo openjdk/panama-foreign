@@ -146,11 +146,14 @@ public final class TestRecordMapper {
                         .apply(MemorySegment.ofArray(new int[]{1})));
     }
 
+    public record StringPoint(String x, String y){}
+
     @Test
     public void testLongPointTypeMismatch() {
-        // This should fail as the types `int` and `long` differ
-        assertThrows(IllegalArgumentException.class, () ->
-                POINT_LAYOUT.recordMapper(LongPoint.class)
+        // This should fail as the types `int` and `String` cannot be bridged
+        assertThrows(IllegalArgumentException.class, () -> {
+                    POINT_LAYOUT.recordMapper(StringPoint.class);
+                }
         );
     }
 
@@ -402,12 +405,10 @@ public final class TestRecordMapper {
     }
 
     @Test
-    public void reproduce() {
+    public void streaming() {
         var segment = MemorySegment.ofArray(new int[]{-1, 2, 3, 4, 5, -2});
         var s2 = segment.asSlice(4, 16);
         var mapper = POINT_LAYOUT.recordMapper(Point.class);
-        s2.elements(POINT_LAYOUT)
-                .forEach(System.out::println);
 
         var list = s2.elements(POINT_LAYOUT)
                 .map(mapper)
@@ -431,7 +432,6 @@ public final class TestRecordMapper {
 
         SequenceOfPoints sequenceOfPoints = mapper.apply(segment);
 
-        System.out.println("pointSequence = " + sequenceOfPoints);
         assertEquals(new SequenceOfPoints(-1, new Point[]{new Point(2, 3), new Point(4, 5)}, -2), sequenceOfPoints);
     }
 
@@ -482,6 +482,34 @@ public final class TestRecordMapper {
         // Finally, we have a MethodHandle MemorySegment -> Point
         Point point = (Point) mh.invokeExact(POINT_SEGMENT);
         assertEquals(expected, point);
+    }
+
+
+    public record BoxedPoint(Integer x, Integer y) {}
+
+    @Test
+    public void testIntegerBoxing() {
+        var mapper = POINT_LAYOUT.recordMapper(BoxedPoint.class);
+        var boxedPoint = mapper.apply(POINT_SEGMENT);
+        assertEquals(new BoxedPoint(3, 4), boxedPoint);
+    }
+
+    public record WidenedPoint(long x, long y) {}
+
+    @Test
+    public void testWidening() {
+        var mapper = POINT_LAYOUT.recordMapper(WidenedPoint.class);
+        var widenedPoint = mapper.apply(POINT_SEGMENT);
+        assertEquals(new WidenedPoint(3, 4L), widenedPoint);
+    }
+
+    public record NarrowedPoint(byte x, byte y) {}
+
+    @Test
+    public void testNarrowing() {
+        var mapper = POINT_LAYOUT.recordMapper(NarrowedPoint.class);
+        var narrowedPoint = mapper.apply(POINT_SEGMENT);
+        assertEquals(new NarrowedPoint((byte) 3, (byte) 4), narrowedPoint);
     }
 
     static public <R extends Record> void testPointType(R expected,

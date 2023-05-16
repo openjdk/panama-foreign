@@ -41,15 +41,17 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Array;
 import java.lang.reflect.RecordComponent;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toUnmodifiableSet;
 
 /**
  * A record mapper that is matching a GroupLayout to match the components of a record.
@@ -114,13 +116,13 @@ public final class LayoutRecordMapper<T extends Record>
                     return switch (cl.layout()) {
                         case ValueLayout vl -> {
                             try {
-                                assertExactMatch(cl, type, vl, layout);
+                                assertTypesMatch(cl, type, vl, layout);
                                 var mt = MethodType.methodType(vl.carrier(), valueLayoutType(vl), long.class);
                                 var mh = PUBLIC_LOOKUP.findVirtual(MemorySegment.class, "get", mt);
                                 // (MemorySegment, OfX, long ) -> (MemorySegment, long)
                                 mh = MethodHandles.insertArguments(mh, 1, vl);
                                 // (MemorySegment, long ) -> (MemorySegment)
-                                yield MethodHandles.insertArguments(mh, 1, byteOffset);
+                                yield castReturnType(MethodHandles.insertArguments(mh, 1, byteOffset), cl.component().getType());
                             } catch (NoSuchMethodException | IllegalAccessException e) {
                                 throw new InternalError(e);
                             }
@@ -148,14 +150,14 @@ public final class LayoutRecordMapper<T extends Record>
                                 }
                                 switch (sl.elementLayout()) {
                                     case ValueLayout vl -> {
-                                        assertExactMatch(cl, type, vl, layout);
+                                        assertTypesMatch(cl, type, vl, layout);
                                         var mh = findStaticToArray(vl.carrier().arrayType(), valueLayoutType(vl), null);
                                         // (MemorySegment, OfX, long offset, long count) -> (MemorySegment, OfX, long offset)
                                         mh = MethodHandles.insertArguments(mh, 3, count);
                                         // (MemorySegment, OfX, long offset) -> (MemorySegment, long offset)
                                         mh = MethodHandles.insertArguments(mh, 1, vl);
                                         // (MemorySegment, long offset) -> (MemorySegment)
-                                        yield MethodHandles.insertArguments(mh, 1, byteOffset);
+                                        yield castReturnType(MethodHandles.insertArguments(mh, 1, byteOffset), cl.component().getType());
                                     }
                                     case GroupLayout gl -> {
                                         @SuppressWarnings("unchecked")
@@ -266,17 +268,18 @@ public final class LayoutRecordMapper<T extends Record>
         return LOOKUP.findStatic(LayoutRecordMapper.class, "toArray", mt);
     }
 
-    static void assertExactMatch(ComponentAndLayout cl,
+    static void assertTypesMatch(ComponentAndLayout cl,
                                  Class<? extends Record> type,
                                  ValueLayout vl,
                                  MemoryLayout originalLayout) {
 
         Class<?> recordComponentType = cl.component().getType();
         if (recordComponentType.isArray() && cl.layout() instanceof SequenceLayout) {
-            recordComponentType = recordComponentType.componentType();
+            recordComponentType = Objects.requireNonNull(recordComponentType.componentType());
         }
 
-        if (recordComponentType != vl.carrier()) {
+        // Accept boxing: e.g. Integer.isInstance(int.class) -> true
+        if (recordComponentType.isInstance(vl.carrier())) {
             throw new IllegalArgumentException("The return type of '" + cl.component().getName() + "()' (in " +
                     type.getName() + ") is '" + cl.component().getType() +
                     "' but the layout type is '" + vl.carrier() + "' (in " + originalLayout + ")");
@@ -295,6 +298,36 @@ public final class LayoutRecordMapper<T extends Record>
 
     record ComponentAndLayout(RecordComponent component,
                               MemoryLayout layout) {
+    }
+
+    // Provide widening and boxing magic
+    static MethodHandle castReturnType(MethodHandle mh,
+                                       Class<?> to) {
+        var from = mh.type().returnType();
+        if (from == to) {
+            // We are done as it is
+            return mh;
+        }
+
+        if (!to.isPrimitive() && !isWrapperClass(to)) {
+            throw new IllegalArgumentException("Cannot convert '" + from + "' to '" + to.getName() +
+                    "' because '" + to.getName() + "' is not a wrapper class: [" + WRAPPER_CLASSES.stream()
+                    .map(Class::getSimpleName)
+                    .collect(Collectors.joining(", "))+"]");
+        }
+
+        return MethodHandles.explicitCastArguments(mh, MethodType.methodType(to, MemorySegment.class));
+    }
+
+    private static final Set<Class<?>> WRAPPER_CLASSES = Stream.of(
+            Byte.class, Boolean.class, Short.class, Character.class,
+            Integer.class, Long.class, Float.class, Double.class
+    ).collect(Collectors.collectingAndThen(
+            Collectors.toCollection(LinkedHashSet::new),
+            Collections::unmodifiableSet));
+
+    static boolean isWrapperClass(Class<?> type) {
+        return WRAPPER_CLASSES.contains(type);
     }
 
     // Wrapper to create an array of Records
