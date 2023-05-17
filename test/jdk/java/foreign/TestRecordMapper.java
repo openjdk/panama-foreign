@@ -507,6 +507,17 @@ public final class TestRecordMapper {
     public record NarrowedPoint(byte x, byte y) {}
 
     @Test
+    public void testNarrowingExplicit() {
+
+        Function<MemorySegment, NarrowedPoint> narrowingMapper =
+                POINT_LAYOUT.recordMapper(Point.class)
+                        .andThen(p -> new NarrowedPoint((byte) p.x, (byte) p.y));
+
+        NarrowedPoint narrowedPoint = narrowingMapper.apply(POINT_SEGMENT);
+        assertEquals(new NarrowedPoint((byte) 3, (byte) 4), narrowedPoint);
+    }
+
+    @Test
     public void testNarrowing() {
         if (EXACT) return;
         var mapper = POINT_LAYOUT.recordMapper(NarrowedPoint.class);
@@ -514,13 +525,6 @@ public final class TestRecordMapper {
         assertEquals(new NarrowedPoint((byte) 3, (byte) 4), narrowedPoint);
     }
 
-    @Test
-    public void testNarrowingExplicit() {
-        var mapper = POINT_LAYOUT.recordMapper(Point.class)
-                .andThen(p -> new NarrowedPoint((byte) p.x, (byte) p.y));
-        var narrowedPoint = mapper.apply(POINT_SEGMENT);
-        assertEquals(new NarrowedPoint((byte) 3, (byte) 4), narrowedPoint);
-    }
 
     static public <R extends Record> void testPointType(R expected,
                                                  Object array,
