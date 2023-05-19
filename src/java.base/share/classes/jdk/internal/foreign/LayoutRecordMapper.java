@@ -40,9 +40,11 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Array;
 import java.lang.reflect.RecordComponent;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -147,16 +149,38 @@ public final class LayoutRecordMapper<T extends Record>
                         }
                         case SequenceLayout sl -> {
                             try {
-                                long count = sl.elementCount();
-                                if (count > ArraysSupport.SOFT_MAX_ARRAY_LENGTH) {
-                                    throw new IllegalArgumentException("Unable to accommodate " + sl + " in an array.");
+                                var componentType = cl.component().getType();
+                                if (!componentType.isArray()) {
+                                    throw new IllegalArgumentException("Unable to map '" + sl +
+                                            "' because the component '" + componentType.getName() + " " + name + "' is not an array");
                                 }
-                                switch (sl.elementLayout()) {
+
+                                MultidimensionalSequenceLayoutInfo info = MultidimensionalSequenceLayoutInfo.of(sl);
+
+                                if (dimensionOf(componentType) != info.sequences().size()) {
+                                    throw new IllegalArgumentException("Unable to map '" + sl + "'" +
+                                            " of dimension " + info.sequences().size() +
+                                            " because the component '" + componentType.getName() + " " + name + "'" +
+                                            " has a dimension of " + dimensionOf(componentType));
+                                }
+
+                                if (info.sequences().size() > 1) {
+                                    var mh = LOOKUP.findStatic(LayoutRecordMapper.class, "toMultiArrayFunction",
+                                            MethodType.methodType(Object.class, MemorySegment.class, MultidimensionalSequenceLayoutInfo.class, long.class));
+                                    // (MemorySegment, MultidimensionalSequenceLayoutInfo, long offset) ->
+                                    // (MemorySegment, long offset)
+                                    mh = MethodHandles.insertArguments(mh, 1, info);
+                                    // (MemorySegment, long offset) -> (MemorySegment)
+                                    mh = MethodHandles.insertArguments(mh, 1, byteOffset);
+                                    yield castReturnType(mh, cl.component().getType());
+                                }
+
+                                switch (info.elementLayout()) {
                                     case ValueLayout vl -> {
                                         assertTypesMatch(cl, type, vl, layout);
                                         var mh = findStaticToArray(vl.carrier().arrayType(), valueLayoutType(vl), null);
                                         // (MemorySegment, OfX, long offset, long count) -> (MemorySegment, OfX, long offset)
-                                        mh = MethodHandles.insertArguments(mh, 3, count);
+                                        mh = MethodHandles.insertArguments(mh, 3, info.sequences().getFirst().elementCount());
                                         // (MemorySegment, OfX, long offset) -> (MemorySegment, long offset)
                                         mh = MethodHandles.insertArguments(mh, 1, vl);
                                         // (MemorySegment, long offset) -> (MemorySegment)
@@ -176,7 +200,7 @@ public final class LayoutRecordMapper<T extends Record>
                                             mh = MethodHandles.insertArguments(mh, 4, componentMapper);
                                             // (MemorySegment, GroupLayout, long offset, long count) ->
                                             // (MemorySegment, GroupLayout, long offset)
-                                            mh = MethodHandles.insertArguments(mh, 3, count);
+                                            mh = MethodHandles.insertArguments(mh, 3, info.sequences().getFirst().elementCount());
                                             // (MemorySegment, GroupLayout, long offset) ->
                                             // (MemorySegment, long offset)
                                             mh = MethodHandles.insertArguments(mh, 1, gl);
@@ -189,7 +213,7 @@ public final class LayoutRecordMapper<T extends Record>
                                         }
                                     }
                                     case SequenceLayout __ -> {
-                                        throw new UnsupportedOperationException("Multidimensional arrays are not supported: " + sl);
+                                        throw new InternalError("Should not reach here");
                                     }
                                     case PaddingLayout __ -> {
                                         yield null; // Ignore
@@ -221,8 +245,8 @@ public final class LayoutRecordMapper<T extends Record>
             // The constructor MethodHandle is now of type (MemorySegment)T
             this.ctor = ctor;
         } catch (IllegalAccessException | NoSuchMethodException e) {
-            throw new IllegalArgumentException("There is no public constructor in " + type.getName() +
-                    " for " + Arrays.toString(ctorParameterTypes), e);
+            throw new IllegalArgumentException("There is no public constructor in '" + type.getName() +
+                    "' for " + Arrays.toString(ctorParameterTypes), e);
         }
     }
 
@@ -278,7 +302,9 @@ public final class LayoutRecordMapper<T extends Record>
 
         Class<?> recordComponentType = cl.component().getType();
         if (recordComponentType.isArray() && cl.layout() instanceof SequenceLayout) {
-            recordComponentType = Objects.requireNonNull(recordComponentType.componentType());
+            while (recordComponentType.isArray()) {
+                recordComponentType = Objects.requireNonNull(recordComponentType.componentType());
+            }
         }
 
         boolean match = switch (ALLOW) {
@@ -291,8 +317,8 @@ public final class LayoutRecordMapper<T extends Record>
         };
 
         if (!match) {
-            throw new IllegalArgumentException("Unable to match types because the return type of '" +
-                    cl.component().getName() + "()' (in " + type.getName() + ") is '" + cl.component().getType() +
+            throw new IllegalArgumentException("Unable to match types because the component '" +
+                    cl.component().getName() + "' (in " + type.getName() + ") has the type of '" + cl.component().getType() +
                     "' but the layout type is '" + vl.carrier() + "' (in " + originalLayout + ")");
         }
     }
@@ -311,6 +337,34 @@ public final class LayoutRecordMapper<T extends Record>
                               MemoryLayout layout) {
     }
 
+    record MultidimensionalSequenceLayoutInfo(List<SequenceLayout> sequences,
+                                              MemoryLayout elementLayout){
+
+        MultidimensionalSequenceLayoutInfo removeFirst() {
+            var removed = new ArrayList<>(sequences);
+            removed.removeFirst();
+            return new MultidimensionalSequenceLayoutInfo(removed, elementLayout);
+        }
+
+        static MultidimensionalSequenceLayoutInfo of(SequenceLayout sequenceLayout) {
+            MemoryLayout current = sequenceLayout;
+            List<SequenceLayout> sequences = new ArrayList<>();
+            while(true) {
+                if (current instanceof SequenceLayout element) {
+                    long count = element.elementCount();
+                    if (count > ArraysSupport.SOFT_MAX_ARRAY_LENGTH) {
+                        throw new IllegalArgumentException("Unable to accommodate '" + element + "' in an array.");
+                    }
+                    current = element.elementLayout();
+                    sequences.add(element);
+                } else {
+                    return new MultidimensionalSequenceLayoutInfo(List.copyOf(sequences), current);
+                }
+            }
+        }
+
+    }
+
     // Provide widening and boxing magic
     static MethodHandle castReturnType(MethodHandle mh,
                                        Class<?> to) {
@@ -320,7 +374,7 @@ public final class LayoutRecordMapper<T extends Record>
             return mh;
         }
 
-        if (!to.isPrimitive() && !isWrapperClass(to)) {
+        if (!to.isPrimitive() && !isWrapperClass(to) && !to.isArray()) {
             throw new IllegalArgumentException("Cannot convert '" + from + "' to '" + to.getName() +
                     "' because '" + to.getName() + "' is not a wrapper class: [" + WRAPPER_CLASSES.stream()
                     .map(Class::getSimpleName)
@@ -339,6 +393,11 @@ public final class LayoutRecordMapper<T extends Record>
 
     static boolean isWrapperClass(Class<?> type) {
         return WRAPPER_CLASSES.contains(type);
+    }
+
+    static int dimensionOf(Class<?> arrayClass) {
+        return (int) Stream.<Class<?>>iterate(arrayClass, Class::isArray, Class::componentType)
+                .count();
     }
 
     // Wrapper to create an array of Records
@@ -423,6 +482,76 @@ public final class LayoutRecordMapper<T extends Record>
                                        long count) {
 
         return segment.asSlice(offset, elementLayout.byteSize() * count);
+    }
+
+/*    // todo: There must be a better way...
+    @SuppressWarnings("unckecked")
+    static <T> T functionWrapper(MemorySegment segment,
+                                 MethodHandle mh *//* Function<MemorySegment, T> mapper*//* ) {
+        try {
+            return (T) mh.invokeExact(segment);
+        } catch (Throwable e) {
+            throw new IllegalStateException("Unable to wrap method handle", e);
+        }
+    }*/
+
+    static Object toMultiArrayFunction(MemorySegment segment,
+                                       MultidimensionalSequenceLayoutInfo info,
+                                       long offset) {
+        return switch (info.elementLayout()) {
+            case ValueLayout.OfInt __ -> toMultiIntArrayFunctionNew(segment, info, offset);
+            default -> throw new UnsupportedOperationException();
+        };
+    }
+
+    // Todo: Recursively apply this method for smaller and smaller Lists
+
+    static Object toMultiIntArrayFunction(MemorySegment segment,
+                                          MultidimensionalSequenceLayoutInfo info,
+                                          long offset) {
+        ValueLayout.OfInt layout = (ValueLayout.OfInt) info.elementLayout();
+        int size0 = (int) info.sequences().getFirst().elementCount();
+        int[][] result = new int[size0][];
+        int size1 = (int) info.sequences().getLast().elementCount();
+        for (int i = 0; i < result.length; i++) {
+            int[] part = slice(segment, layout, offset + i * layout.byteSize() * size0, size1).toArray(layout);
+            result[i] = part;
+        }
+        return result;
+    }
+
+    static Object toMultiIntArrayFunctionNew(MemorySegment segment,
+                                             MultidimensionalSequenceLayoutInfo info,
+                                             long offset) {
+        int[] dimensions = info.sequences().stream()
+                .mapToLong(SequenceLayout::elementCount)
+                .mapToInt(Math::toIntExact)
+                .toArray();
+
+        ValueLayout.OfInt layout = (ValueLayout.OfInt) info.elementLayout();
+        int size0 = (int) info.sequences().getFirst().elementCount();
+        Object result = Array.newInstance(int.class, dimensions);
+
+        var infoFirstRemoved = info.removeFirst();
+        int size1 = (int) infoFirstRemoved.sequences().getFirst().elementCount();
+
+        long chunkByteSize = infoFirstRemoved.sequences()
+                .getFirst()
+                .byteSize();
+
+        for (int i = 0; i < size0; i++) {
+            Object part;
+            if (dimensions.length == 2) {
+                // Trivial case: Just extract the array from the memory segment
+                var slice = slice(segment, layout, offset + i * chunkByteSize, size1);
+                part = slice.toArray(layout);
+            } else {
+                // Recursively convert to arrays of (dimension - 1)
+                part = toMultiIntArrayFunctionNew(segment.asSlice(i * chunkByteSize), infoFirstRemoved, offset);
+            }
+            Array.set(result, i, part);
+        }
+        return result;
     }
 
 }

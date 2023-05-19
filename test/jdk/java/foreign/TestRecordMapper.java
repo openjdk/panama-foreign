@@ -40,6 +40,7 @@ import java.lang.invoke.MethodType;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 
 import static java.lang.foreign.ValueLayout.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -371,7 +372,7 @@ public final class TestRecordMapper {
     @Test
     public void testSequenceBox() {
 
-        var segment = MemorySegment.ofArray(new int[]{0, 2, 3, 4});
+        var segment = MemorySegment.ofArray(IntStream.rangeClosed(0, 3).toArray());
 
         var layout = MemoryLayout.structLayout(
                 JAVA_INT.withName("before"),
@@ -383,7 +384,102 @@ public final class TestRecordMapper {
 
         SequenceBox sequenceBox = mapper.apply(segment);
 
-        assertEquals(new SequenceBox(0, new int[]{2, 3}, 4), sequenceBox);
+        assertEquals(new SequenceBox(0, new int[]{1, 2}, 3), sequenceBox);
+    }
+
+    public record SequenceBox2(int before, int[][] ints, int after) {
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof SequenceBox2 other &&
+                    before == other.before &&
+                    Arrays.deepEquals(ints, other.ints) &&
+                    after == other.after;
+        }
+
+        @Override
+        public String toString() {
+            return "SequenceBox2{before=" + before + ", ints=" + Arrays.deepToString(ints) + ", after=" + after;
+        }
+    }
+
+    @Test
+    public void testSequenceBox2WrongDimension() {
+
+        var layout = MemoryLayout.structLayout(
+                JAVA_INT.withName("before"),
+                MemoryLayout.sequenceLayout(2,
+                                MemoryLayout.sequenceLayout(2, JAVA_INT).withName("whatever"))
+                        .withName("ints"),
+                JAVA_INT.withName("after")
+        );
+
+        assertThrows(IllegalArgumentException.class, () ->
+                // SequenceBox.ints is of dimension 1 whereas the layout is of dimension 2
+            layout.recordMapper(SequenceBox.class)
+        );
+    }
+
+    @Test
+    public void testSequenceBox2() {
+
+        var segment = MemorySegment.ofArray(IntStream.rangeClosed(0, 7).toArray());
+
+        var layout = MemoryLayout.structLayout(
+                JAVA_INT.withName("before"),
+                MemoryLayout.sequenceLayout(2,
+                                MemoryLayout.sequenceLayout(3, JAVA_INT).withName("whatever"))
+                        .withName("ints"),
+                JAVA_INT.withName("after")
+        );
+
+        var mapper = layout.recordMapper(SequenceBox2.class);
+
+        SequenceBox2 sequenceBox2 = mapper.apply(segment);
+
+        assertEquals(new SequenceBox2(0, new int[][]{{1, 2, 3}, {4, 5, 6}}, 7), sequenceBox2);
+    }
+
+    public record SequenceBox3(int before, int[][][] ints, int after) {
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof SequenceBox3 other &&
+                    before == other.before &&
+                    Arrays.deepEquals(ints, other.ints) &&
+                    after == other.after;
+        }
+
+        @Override
+        public String toString() {
+            return "SequenceBox2{before=" + before + ", ints=" + Arrays.deepToString(ints) + ", after=" + after;
+        }
+    }
+
+    @Test
+    public void testSequenceBox3() {
+
+        var segment = MemorySegment.ofArray(IntStream.rangeClosed(0, 2 + (2 * 3 * 4)).toArray());
+
+        var layout = MemoryLayout.structLayout(
+                JAVA_INT.withName("before"),
+                MemoryLayout.sequenceLayout(2,
+                                MemoryLayout.sequenceLayout(3,
+                                        MemoryLayout.sequenceLayout(4, JAVA_INT).withName("whatever2")
+                                ).withName("whatever")
+                        )
+                        .withName("ints"),
+                JAVA_INT.withName("after")
+        );
+
+        var mapper = layout.recordMapper(SequenceBox3.class);
+
+        SequenceBox3 sequenceBox3 = mapper.apply(segment);
+
+        assertEquals(new SequenceBox3(0, new int[][][]{
+                {{1, 2, 3, 4}, {5, 6, 7, 8}, {9, 10, 11, 12}},
+                {{13, 14, 15, 16}, {17, 18, 19, 20}, {21, 22, 23, 24}}
+        }, 25), sequenceBox3);
     }
 
     public record SequenceOfPoints(int before, Point[] points, int after) {
@@ -524,7 +620,6 @@ public final class TestRecordMapper {
         var narrowedPoint = mapper.apply(POINT_SEGMENT);
         assertEquals(new NarrowedPoint((byte) 3, (byte) 4), narrowedPoint);
     }
-
 
     static public <R extends Record> void testPointType(R expected,
                                                  Object array,
