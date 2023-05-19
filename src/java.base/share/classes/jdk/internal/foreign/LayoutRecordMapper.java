@@ -501,37 +501,26 @@ public final class LayoutRecordMapper<T extends Record>
         return segment.asSlice(offset, elementLayout.byteSize() * count);
     }
 
-/*    // todo: There must be a better way...
-    @SuppressWarnings("unckecked")
-    static <T> T functionWrapper(MemorySegment segment,
-                                 MethodHandle mh *//* Function<MemorySegment, T> mapper*//* ) {
-        try {
-            return (T) mh.invokeExact(segment);
-        } catch (Throwable e) {
-            throw new IllegalStateException("Unable to wrap method handle", e);
-        }
-    }*/
-
     static Object toMultiArrayFunction(MemorySegment segment,
                                        MultidimensionalSequenceLayoutInfo info,
                                        long offset) {
         return switch (info.elementLayout()) {
             case ValueLayout.OfByte ofByte ->
-                    toMultiIntArrayFunctionNew(segment, info, offset, byte.class, s -> s.toArray(ofByte));
+                    toMultiIntArrayFunction(segment, info, offset, byte.class, s -> s.toArray(ofByte));
             case ValueLayout.OfBoolean ofBoolean ->
                     throw new UnsupportedOperationException(ofBoolean + " arrays not supported");
             case ValueLayout.OfShort ofShort ->
-                    toMultiIntArrayFunctionNew(segment, info, offset, short.class, s -> s.toArray(ofShort));
+                    toMultiIntArrayFunction(segment, info, offset, short.class, s -> s.toArray(ofShort));
             case ValueLayout.OfChar ofChar ->
-                    toMultiIntArrayFunctionNew(segment, info, offset, char.class, s -> s.toArray(ofChar));
+                    toMultiIntArrayFunction(segment, info, offset, char.class, s -> s.toArray(ofChar));
             case ValueLayout.OfInt ofInt ->
-                    toMultiIntArrayFunctionNew(segment, info, offset, int.class, s -> s.toArray(ofInt));
+                    toMultiIntArrayFunction(segment, info, offset, int.class, s -> s.toArray(ofInt));
             case ValueLayout.OfLong ofLong ->
-                    toMultiIntArrayFunctionNew(segment, info, offset, long.class, s -> s.toArray(ofLong));
+                    toMultiIntArrayFunction(segment, info, offset, long.class, s -> s.toArray(ofLong));
             case ValueLayout.OfFloat ofFloat ->
-                    toMultiIntArrayFunctionNew(segment, info, offset, float.class, s -> s.toArray(ofFloat));
+                    toMultiIntArrayFunction(segment, info, offset, float.class, s -> s.toArray(ofFloat));
             case ValueLayout.OfDouble ofDouble ->
-                    toMultiIntArrayFunctionNew(segment, info, offset, double.class, s -> s.toArray(ofDouble));
+                    toMultiIntArrayFunction(segment, info, offset, double.class, s -> s.toArray(ofDouble));
             case AddressLayout addressLayout ->
                     throw new UnsupportedOperationException(addressLayout + " arrays not supported");
             case GroupLayout groupLayout ->
@@ -541,27 +530,11 @@ public final class LayoutRecordMapper<T extends Record>
         };
     }
 
-    // Todo: Recursively apply this method for smaller and smaller Lists
-
     static Object toMultiIntArrayFunction(MemorySegment segment,
                                           MultidimensionalSequenceLayoutInfo info,
-                                          long offset) {
-        ValueLayout.OfInt layout = (ValueLayout.OfInt) info.elementLayout();
-        int size0 = (int) info.sequences().getFirst().elementCount();
-        int[][] result = new int[size0][];
-        int size1 = (int) info.sequences().getLast().elementCount();
-        for (int i = 0; i < result.length; i++) {
-            int[] part = slice(segment, layout, offset + i * layout.byteSize() * size0, size1).toArray(layout);
-            result[i] = part;
-        }
-        return result;
-    }
-
-    static Object toMultiIntArrayFunctionNew(MemorySegment segment,
-                                             MultidimensionalSequenceLayoutInfo info,
-                                             long offset,
-                                             Class<?> leafType,
-                                             Function<MemorySegment, Object> leafArrayConstructor) {
+                                          long offset,
+                                          Class<?> leafType,
+                                          Function<MemorySegment, Object> leafArrayConstructor) {
 
         int[] dimensions = info.dimensions();
         // Create the array to return
@@ -582,7 +555,7 @@ public final class LayoutRecordMapper<T extends Record>
             } else {
                 // Recursively convert to arrays of (dimension - 1)
                 var slice = segment.asSlice(i * chunkByteSize);
-                part = toMultiIntArrayFunctionNew(slice, infoFirstRemoved, offset, leafType, leafArrayConstructor);
+                part = toMultiIntArrayFunction(slice, infoFirstRemoved, offset, leafType, leafArrayConstructor);
             }
             Array.set(result, i, part);
         }
