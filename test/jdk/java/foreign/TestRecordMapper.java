@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 import static java.lang.foreign.ValueLayout.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -452,7 +453,7 @@ public final class TestRecordMapper {
 
         @Override
         public String toString() {
-            return "SequenceBox2{before=" + before + ", ints=" + Arrays.deepToString(ints) + ", after=" + after;
+            return "SequenceBox3{before=" + before + ", ints=" + Arrays.deepToString(ints) + ", after=" + after;
         }
     }
 
@@ -477,6 +478,48 @@ public final class TestRecordMapper {
         SequenceBox3 sequenceBox3 = mapper.apply(segment);
 
         assertEquals(new SequenceBox3(0, new int[][][]{
+                {{1, 2, 3, 4}, {5, 6, 7, 8}, {9, 10, 11, 12}},
+                {{13, 14, 15, 16}, {17, 18, 19, 20}, {21, 22, 23, 24}}
+        }, 25), sequenceBox3);
+    }
+
+    public record LongSequenceBox3(long before, long[][][] longs, long after) {
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof LongSequenceBox3 other &&
+                    before == other.before &&
+                    Arrays.deepEquals(longs, other.longs) &&
+                    after == other.after;
+        }
+
+        @Override
+        public String toString() {
+            return "LongSequenceBox3{before=" + before + ", longs=" + Arrays.deepToString(longs) + ", after=" + after;
+        }
+    }
+
+    @Test
+    public void testLongSequenceBox3() {
+
+        var segment = MemorySegment.ofArray(LongStream.rangeClosed(0, 2 + (2 * 3 * 4)).toArray());
+
+        var layout = MemoryLayout.structLayout(
+                JAVA_LONG.withName("before"),
+                MemoryLayout.sequenceLayout(2,
+                                MemoryLayout.sequenceLayout(3,
+                                        MemoryLayout.sequenceLayout(4, JAVA_LONG).withName("whatever2")
+                                ).withName("whatever")
+                        )
+                        .withName("longs"),
+                JAVA_LONG.withName("after")
+        );
+
+        var mapper = layout.recordMapper(LongSequenceBox3.class);
+
+        LongSequenceBox3 sequenceBox3 = mapper.apply(segment);
+
+        assertEquals(new LongSequenceBox3(0, new long[][][]{
                 {{1, 2, 3, 4}, {5, 6, 7, 8}, {9, 10, 11, 12}},
                 {{13, 14, 15, 16}, {17, 18, 19, 20}, {21, 22, 23, 24}}
         }, 25), sequenceBox3);

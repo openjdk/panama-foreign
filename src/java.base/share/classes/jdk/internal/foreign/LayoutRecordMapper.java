@@ -340,6 +340,23 @@ public final class LayoutRecordMapper<T extends Record>
     record MultidimensionalSequenceLayoutInfo(List<SequenceLayout> sequences,
                                               MemoryLayout elementLayout){
 
+        int[] dimensions() {
+            return sequences().stream()
+                    .mapToLong(SequenceLayout::elementCount)
+                    .mapToInt(Math::toIntExact)
+                    .toArray();
+        }
+
+        int firstDimension() {
+           return (int) sequences().getFirst().elementCount();
+        }
+
+        long layoutByteSize() {
+            return sequences()
+                    .getFirst()
+                    .byteSize();
+        }
+
         MultidimensionalSequenceLayoutInfo removeFirst() {
             var removed = new ArrayList<>(sequences);
             removed.removeFirst();
@@ -499,8 +516,28 @@ public final class LayoutRecordMapper<T extends Record>
                                        MultidimensionalSequenceLayoutInfo info,
                                        long offset) {
         return switch (info.elementLayout()) {
-            case ValueLayout.OfInt __ -> toMultiIntArrayFunctionNew(segment, info, offset);
-            default -> throw new UnsupportedOperationException();
+            case ValueLayout.OfByte ofByte ->
+                    toMultiIntArrayFunctionNew(segment, info, offset, byte.class, s -> s.toArray(ofByte));
+            case ValueLayout.OfBoolean ofBoolean ->
+                    throw new UnsupportedOperationException(ofBoolean + " arrays not supported");
+            case ValueLayout.OfShort ofShort ->
+                    toMultiIntArrayFunctionNew(segment, info, offset, short.class, s -> s.toArray(ofShort));
+            case ValueLayout.OfChar ofChar ->
+                    toMultiIntArrayFunctionNew(segment, info, offset, char.class, s -> s.toArray(ofChar));
+            case ValueLayout.OfInt ofInt ->
+                    toMultiIntArrayFunctionNew(segment, info, offset, int.class, s -> s.toArray(ofInt));
+            case ValueLayout.OfLong ofLong ->
+                    toMultiIntArrayFunctionNew(segment, info, offset, long.class, s -> s.toArray(ofLong));
+            case ValueLayout.OfFloat ofFloat ->
+                    toMultiIntArrayFunctionNew(segment, info, offset, float.class, s -> s.toArray(ofFloat));
+            case ValueLayout.OfDouble ofDouble ->
+                    toMultiIntArrayFunctionNew(segment, info, offset, double.class, s -> s.toArray(ofDouble));
+            case AddressLayout addressLayout ->
+                    throw new UnsupportedOperationException(addressLayout + " arrays not supported");
+            case GroupLayout groupLayout ->
+                    // Todo: Fix this
+                    throw new UnsupportedOperationException(groupLayout + " not supported");
+            default -> throw new UnsupportedOperationException(info.elementLayout + " arrays not supported");
         };
     }
 
@@ -522,32 +559,30 @@ public final class LayoutRecordMapper<T extends Record>
 
     static Object toMultiIntArrayFunctionNew(MemorySegment segment,
                                              MultidimensionalSequenceLayoutInfo info,
-                                             long offset) {
-        int[] dimensions = info.sequences().stream()
-                .mapToLong(SequenceLayout::elementCount)
-                .mapToInt(Math::toIntExact)
-                .toArray();
+                                             long offset,
+                                             Class<?> leafType,
+                                             Function<MemorySegment, Object> leafArrayConstructor) {
 
-        ValueLayout.OfInt layout = (ValueLayout.OfInt) info.elementLayout();
-        int size0 = (int) info.sequences().getFirst().elementCount();
-        Object result = Array.newInstance(int.class, dimensions);
+        int[] dimensions = info.dimensions();
+        // Create the array to return
+        Object result = Array.newInstance(leafType, dimensions);
+
+        int firstDimension = info.firstDimension();
 
         var infoFirstRemoved = info.removeFirst();
-        int size1 = (int) infoFirstRemoved.sequences().getFirst().elementCount();
+        int secondDimension = infoFirstRemoved.firstDimension();
+        long chunkByteSize = infoFirstRemoved.layoutByteSize();
 
-        long chunkByteSize = infoFirstRemoved.sequences()
-                .getFirst()
-                .byteSize();
-
-        for (int i = 0; i < size0; i++) {
+        for (int i = 0; i < firstDimension; i++) {
             Object part;
             if (dimensions.length == 2) {
                 // Trivial case: Just extract the array from the memory segment
-                var slice = slice(segment, layout, offset + i * chunkByteSize, size1);
-                part = slice.toArray(layout);
+                var slice = slice(segment, info.elementLayout(), offset + i * chunkByteSize, secondDimension);
+                part = leafArrayConstructor.apply(slice);
             } else {
                 // Recursively convert to arrays of (dimension - 1)
-                part = toMultiIntArrayFunctionNew(segment.asSlice(i * chunkByteSize), infoFirstRemoved, offset);
+                var slice = segment.asSlice(i * chunkByteSize);
+                part = toMultiIntArrayFunctionNew(slice, infoFirstRemoved, offset, leafType, leafArrayConstructor);
             }
             Array.set(result, i, part);
         }
