@@ -52,23 +52,43 @@ public class RecordMapper {
                     JAVA_INT.withName("x"),
                     JAVA_INT.withName("y"));
 
+    private static final int ARRAY_SIZE = 8;
+
+    private static final GroupLayout ARRAY_LAYOUT =
+            MemoryLayout.structLayout(
+                    MemoryLayout.sequenceLayout(ARRAY_SIZE, JAVA_INT)
+                            .withName("ints"));
+
     public record Point(int x, int y){}
 
-    private static final Function<MemorySegment, Point> MAPPER = POINT_LAYOUT.recordMapper(Point.class);
-    private static final Function<MemorySegment, Point> EXPLICIT_MAPPER = ms ->
+    public record Array(int[] ints) {}
+
+    private static final Function<MemorySegment, Point> POINT_MAPPER = POINT_LAYOUT.recordMapper(Point.class);
+    private static final Function<MemorySegment, Point> POINT_EXPLICIT_MAPPER = ms ->
             new Point(ms.get(JAVA_INT, 0L), ms.get(JAVA_INT, 4));
-    private static final MethodHandle MH = methodHandle();
+    private static final MethodHandle POINT_MH = methodHandle();
+
+    private static final Function<MemorySegment, Array> ARRAY_MAPPER = ARRAY_LAYOUT.recordMapper(Array.class);
+    private static final Function<MemorySegment, Array> ARRAY_EXPLICIT_MAPPER = ms -> new Array(ms.toArray(JAVA_INT));
 
     Arena arena;
-    MemorySegment segment;
+    MemorySegment pointSegment;
+    MemorySegment arraySegment;
 
     @Setup
     public void setup() {
         arena = Arena.ofConfined();
-        segment = arena.allocate(POINT_LAYOUT);
+        pointSegment = arena.allocate(POINT_LAYOUT);
         var rnd = new Random();
-        segment.set(JAVA_INT, 0, rnd.nextInt(10));
-        segment.set(JAVA_INT, 4, rnd.nextInt(10));
+        pointSegment.set(JAVA_INT, 0, rnd.nextInt(10));
+        pointSegment.set(JAVA_INT, 4, rnd.nextInt(10));
+
+        int[] ints = rnd.ints(ARRAY_SIZE).toArray();
+        // Use native memory
+        arraySegment = arena.allocate(ARRAY_LAYOUT);
+        for (int i = 0; i < ARRAY_SIZE; i++) {
+            arraySegment.setAtIndex(JAVA_INT, i, ints[i]);
+        }
     }
 
     @TearDown
@@ -77,22 +97,32 @@ public class RecordMapper {
     }
 
     @Benchmark
-    public void mapper(Blackhole bh) {
-        bh.consume(MAPPER.apply(segment));
+    public void pointMapper(Blackhole bh) {
+        bh.consume(POINT_MAPPER.apply(pointSegment));
     }
 
     @Benchmark
-    public void explicitMapper(Blackhole bh) {
-        bh.consume(EXPLICIT_MAPPER.apply(segment));
+    public void pointExplicitMapper(Blackhole bh) {
+        bh.consume(POINT_EXPLICIT_MAPPER.apply(pointSegment));
     }
 
     @Benchmark
-    public void mhMapper(Blackhole bh) {
+    public void pointMhMapper(Blackhole bh) {
         try {
-            bh.consume((Point) MH.invokeExact(segment));
+            bh.consume((Point) POINT_MH.invokeExact(pointSegment));
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Benchmark
+    public void arrayMapper(Blackhole bh) {
+        bh.consume(ARRAY_MAPPER.apply(arraySegment));
+    }
+
+    @Benchmark
+    public void arrayExplicitMapper(Blackhole bh) {
+        bh.consume(ARRAY_EXPLICIT_MAPPER.apply(arraySegment));
     }
 
     static MethodHandle methodHandle() {

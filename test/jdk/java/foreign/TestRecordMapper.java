@@ -525,6 +525,36 @@ public final class TestRecordMapper {
         }, 25), sequenceBox3);
     }
 
+    public record PureArray(int[] ints) {
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof PureArray other &&
+                    Arrays.equals(ints, other.ints);
+        }
+
+        @Override
+        public String toString() {
+            return "PureArray{ints=" + Arrays.toString(ints) + "}";
+        }
+    }
+
+    @Test
+    public void testPureArray() {
+        GroupLayout layout =
+                MemoryLayout.structLayout(
+                        MemoryLayout.sequenceLayout(8, JAVA_INT)
+                                .withName("ints"));
+
+        var segment = MemorySegment.ofArray(IntStream.range(0, 8).toArray());
+
+        var mapper = layout.recordMapper(PureArray.class);
+
+        PureArray pureArray = mapper.apply(segment);
+
+        assertEquals(new PureArray(new int[]{0, 1, 2, 3, 4, 5, 6, 7}), pureArray);
+    }
+
     public record SequenceOfPoints(int before, Point[] points, int after) {
 
         @Override
@@ -537,8 +567,75 @@ public final class TestRecordMapper {
 
         @Override
         public String toString() {
-            return "SequenceOfPoints{before=" + before + ", ints=" + Arrays.toString(points) + ", after=" + after;
+            return "SequenceOfPoints{before=" + before + ", points=" + Arrays.toString(points) + ", after=" + after;
         }
+
+    }
+
+    @Test
+    public void testSequenceOfPoints() {
+
+        var segment = MemorySegment.ofArray(IntStream.rangeClosed(0, 5).toArray());
+
+        var layout = MemoryLayout.structLayout(
+                JAVA_INT.withName("before"),
+                MemoryLayout.sequenceLayout(2, POINT_LAYOUT).withName("points"),
+                JAVA_INT.withName("after")
+        );
+
+        var mapper = layout.recordMapper(SequenceOfPoints.class);
+
+        SequenceOfPoints sequenceOfPoints = mapper.apply(segment);
+
+        assertEquals(new SequenceOfPoints(0, new Point[]{new Point(1, 2), new Point(3,4)}, 5), sequenceOfPoints);
+
+    }
+
+    public record MultiSequenceOfPoints(int before, Point[][] points, int after) {
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof MultiSequenceOfPoints other &&
+                    before == other.before &&
+                    Arrays.deepEquals(points, other.points) &&
+                    after == other.after;
+        }
+
+        @Override
+        public String toString() {
+            return "MultiSequenceOfPoints{before=" + before + ", points=" + Arrays.deepToString(points) + ", after=" + after;
+        }
+
+    }
+
+    @Test
+    public void testMultiSequenceOfPoints() {
+
+        var segment = MemorySegment.ofArray(IntStream.rangeClosed(0, 13).toArray());
+
+        var layout = MemoryLayout.structLayout(
+                JAVA_INT.withName("before"),
+                MemoryLayout.sequenceLayout(2,
+                                MemoryLayout.sequenceLayout(3, POINT_LAYOUT))
+                        .withName("points"),
+                JAVA_INT.withName("after")
+        );
+
+        var mapper = layout.recordMapper(MultiSequenceOfPoints.class);
+
+        MultiSequenceOfPoints actual = mapper.apply(segment);
+
+        var expected = new MultiSequenceOfPoints(0,
+                new Point[][]{
+                        {new Point(1, 2), new Point(3, 4), new Point(5, 6)},
+                        {new Point(7, 8), new Point(9, 10), new Point(11, 12)}},
+                13);
+
+        assertEquals(expected.before(), actual.before());
+        assertEquals(expected.after(), actual.after());
+        assertTrue(Arrays.deepEquals(expected.points(), actual.points()));
+
+        assertEquals(expected, actual);
 
     }
 
