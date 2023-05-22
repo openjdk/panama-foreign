@@ -631,12 +631,7 @@ public final class TestRecordMapper {
                         {new Point(7, 8), new Point(9, 10), new Point(11, 12)}},
                 13);
 
-        assertEquals(expected.before(), actual.before());
-        assertEquals(expected.after(), actual.after());
-        assertTrue(Arrays.deepEquals(expected.points(), actual.points()));
-
         assertEquals(expected, actual);
-
     }
 
     @Test

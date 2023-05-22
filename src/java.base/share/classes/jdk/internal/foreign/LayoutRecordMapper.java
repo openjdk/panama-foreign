@@ -171,15 +171,44 @@ public final class LayoutRecordMapper<T extends Record>
 
                                 // Handle multi-dimensional arrays
                                 if (info.sequences().size() > 1) {
+                                    var mh = LOOKUP.findStatic(LayoutRecordMapper.class, "toMultiArrayFunction",
+                                            MethodType.methodType(Object.class, MemorySegment.class, MultidimensionalSequenceLayoutInfo.class, long.class, Class.class, Function.class));
+                                    // (MemorySegment, MultidimensionalSequenceLayoutInfo, long offset, Class leafType, Function mapper) ->
+                                    // (MemorySegment, long offset, Class leafType, Function mapper)
+                                    mh = MethodHandles.insertArguments(mh, 1, info);
+                                    // (MemorySegment, long offset, Class leafType, Function mapper) ->
+                                    // (MemorySegment, Class leafType, Function mapper)
+                                    mh = MethodHandles.insertArguments(mh, 1, byteOffset);
+
                                     switch (info.elementLayout()) {
                                         case ValueLayout vl -> {
-                                            var mh = LOOKUP.findStatic(LayoutRecordMapper.class, "toMultiArrayFunction",
-                                                    MethodType.methodType(Object.class, MemorySegment.class, MultidimensionalSequenceLayoutInfo.class, long.class));
-                                            // (MemorySegment, MultidimensionalSequenceLayoutInfo, long offset) ->
-                                            // (MemorySegment, long offset)
-                                            mh = MethodHandles.insertArguments(mh, 1, info);
-                                            // (MemorySegment, long offset) -> (MemorySegment)
-                                            mh = MethodHandles.insertArguments(mh, 1, byteOffset);
+                                            // (MemorySegment, Class leafType, Function mapper) ->
+                                            // (MemorySegment, Function mapper)
+                                            mh = MethodHandles.insertArguments(mh, 1, vl.carrier());
+                                            Function<MemorySegment, Object> leafArrayMapper =
+                                            switch (vl) {
+                                                case ValueLayout.OfByte ofByte ->
+                                                        (MemorySegment ms) -> ms.toArray(ofByte);
+                                                case ValueLayout.OfBoolean ofBoolean ->
+                                                        throw new UnsupportedOperationException("boolean arrays not supported: " + ofBoolean);
+                                                case ValueLayout.OfShort ofShort ->
+                                                        (MemorySegment ms) -> ms.toArray(ofShort);
+                                                case ValueLayout.OfChar ofChar ->
+                                                        (MemorySegment ms) -> ms.toArray(ofChar);
+                                                case ValueLayout.OfInt ofInt ->
+                                                        (MemorySegment ms) -> ms.toArray(ofInt);
+                                                case ValueLayout.OfLong ofLong ->
+                                                        (MemorySegment ms) -> ms.toArray(ofLong);
+                                                case ValueLayout.OfFloat ofFloat ->
+                                                        (MemorySegment ms) -> ms.toArray(ofFloat);
+                                                case ValueLayout.OfDouble ofDouble ->
+                                                        (MemorySegment ms) -> ms.toArray(ofDouble);
+                                                case AddressLayout addressLayout ->
+                                                        throw new UnsupportedOperationException("AddressLayout arrays not supported: " + addressLayout);
+                                            };
+                                            // (MemorySegment, Function mapper) ->
+                                            // (MemorySegment)
+                                            mh = MethodHandles.insertArguments(mh, 1, leafArrayMapper);
                                             yield castReturnType(mh, cl.component().getType());
                                         }
                                         case GroupLayout gl -> {
@@ -197,14 +226,6 @@ public final class LayoutRecordMapper<T extends Record>
                                                 return leafArray;
                                             };
 
-                                            var mh = LOOKUP.findStatic(LayoutRecordMapper.class, "toMultiArrayFunction",
-                                                    MethodType.methodType(Object.class, MemorySegment.class, MultidimensionalSequenceLayoutInfo.class, long.class, Class.class, Function.class));
-                                            // (MemorySegment, MultidimensionalSequenceLayoutInfo, long offset, Class leafType, Function mapper) ->
-                                            // (MemorySegment, long offset, Class leafType, Function mapper)
-                                            mh = MethodHandles.insertArguments(mh, 1, info);
-                                            // (MemorySegment, long offset, Class leafType, Function mapper) ->
-                                            // (MemorySegment, Class leafType, Function mapper)
-                                            mh = MethodHandles.insertArguments(mh, 1, byteOffset);
                                             // (MemorySegment, Class leafType, Function mapper) ->
                                             // (MemorySegment, Function mapper)
                                             mh = MethodHandles.insertArguments(mh, 1, arrayComponentType);
@@ -560,82 +581,9 @@ public final class LayoutRecordMapper<T extends Record>
 
     static Object toMultiArrayFunction(MemorySegment segment,
                                        MultidimensionalSequenceLayoutInfo info,
-                                       long offset) {
-        return switch (info.elementLayout()) {
-            case ValueLayout.OfByte ofByte ->
-                    toMultiArrayFunction(segment, info, offset, byte.class, s -> s.toArray(ofByte));
-            case ValueLayout.OfBoolean ofBoolean ->
-                    throw new UnsupportedOperationException(ofBoolean + " arrays not supported");
-            case ValueLayout.OfShort ofShort ->
-                    toMultiArrayFunction(segment, info, offset, short.class, s -> s.toArray(ofShort));
-            case ValueLayout.OfChar ofChar ->
-                    toMultiArrayFunction(segment, info, offset, char.class, s -> s.toArray(ofChar));
-            case ValueLayout.OfInt ofInt ->
-                    toMultiArrayFunction(segment, info, offset, int.class, s -> s.toArray(ofInt));
-            case ValueLayout.OfLong ofLong ->
-                    toMultiArrayFunction(segment, info, offset, long.class, s -> s.toArray(ofLong));
-            case ValueLayout.OfFloat ofFloat ->
-                    toMultiArrayFunction(segment, info, offset, float.class, s -> s.toArray(ofFloat));
-            case ValueLayout.OfDouble ofDouble ->
-                    toMultiArrayFunction(segment, info, offset, double.class, s -> s.toArray(ofDouble));
-            case AddressLayout addressLayout ->
-                    throw new UnsupportedOperationException(addressLayout + " arrays not supported");
-            case GroupLayout groupLayout ->
-                    // Taken care of earlier.
-                    throw new InternalError("Should not reach here");
-            default -> throw new UnsupportedOperationException(info.elementLayout + " arrays not supported");
-        };
-    }
-
-    static Object toMultiArrayFunction(MemorySegment segment,
-                                       MultidimensionalSequenceLayoutInfo info,
                                        long offset,
                                        Class<?> leafType,
                                        Function<MemorySegment, Object> leafArrayConstructor) {
-
-        int[] dimensions = info.dimensions();
-        // Create the array to return
-        Object result = Array.newInstance(leafType, dimensions);
-
-        int firstDimension = info.firstDimension();
-
-        var infoFirstRemoved = info.removeFirst();
-        int secondDimension = infoFirstRemoved.firstDimension();
-        long chunkByteSize = infoFirstRemoved.layoutByteSize();
-
-        for (int i = 0; i < firstDimension; i++) {
-            Object part;
-            if (dimensions.length == 2) {
-                // Trivial case: Just extract the array from the memory segment
-                var slice = slice(segment, info.elementLayout(), offset + i * chunkByteSize, secondDimension);
-                part = leafArrayConstructor.apply(slice);
-            } else {
-                // Recursively convert to arrays of (dimension - 1)
-                var slice = segment.asSlice(i * chunkByteSize);
-                part = toMultiArrayFunction(slice, infoFirstRemoved, offset, leafType, leafArrayConstructor);
-            }
-            try {
-                Array.set(result, i, part);
-            } catch (IllegalArgumentException iae) {
-                System.out.println("result.getClass() = " + result.getClass());
-                System.out.println("Arrays.toString(dimensions) = " + Arrays.toString(dimensions));
-                System.out.println("part = " + part);
-                System.out.println("segment = " + segment);
-                System.out.println("info = " + info);
-                System.out.println("offset = " + offset);
-                System.out.println("leafType = " + leafType);
-                System.out.println("leafArrayConstructor = " + leafArrayConstructor);
-                throw iae;
-            }
-        }
-        return result;
-    }
-
-    static Object toMultiRecordArrayFunction(MemorySegment segment,
-                                             MultidimensionalSequenceLayoutInfo info,
-                                             long offset,
-                                             Class<?> leafType,
-                                             Function<MemorySegment, Object> leafArrayConstructor) {
 
         int[] dimensions = info.dimensions();
         // Create the array to return
