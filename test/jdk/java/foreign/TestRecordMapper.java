@@ -38,8 +38,10 @@ import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
@@ -754,6 +756,29 @@ public final class TestRecordMapper {
         var mapper = POINT_LAYOUT.recordMapper(NarrowedPoint.class);
         var narrowedPoint = mapper.apply(POINT_SEGMENT);
         assertEquals(new NarrowedPoint((byte) 3, (byte) 4), narrowedPoint);
+    }
+
+    @Test
+    public void inspectPoint() {
+        String view = POINT_LAYOUT
+                .recordMapper(Point.class)
+                .apply(POINT_SEGMENT)
+                .toString();
+
+        assertEquals("Point[x=3, y=4]", view);
+    }
+
+    @Test
+    public void inspectMemory() {
+        try (var arena = Arena.ofConfined()) {
+            MemorySegment memorySegment = arena.allocate(64 + 4);
+            memorySegment.setUtf8String(0, "The quick brown fox jumped over the lazy dog\nSecond line\t:here");
+            HexFormat format = HexFormat.ofDelimiter(" ").withUpperCase();
+            String hex = format.formatHex(memorySegment.toArray(JAVA_BYTE));
+
+            String expected = "54 68 65 20 71 75 69 63 6B 20 62 72 6F 77 6E 20 66 6F 78 20 6A 75 6D 70 65 64 20 6F 76 65 72 20 74 68 65 20 6C 61 7A 79 20 64 6F 67 0A 53 65 63 6F 6E 64 20 6C 69 6E 65 09 3A 68 65 72 65 00 00 00 00 00 00";
+            assertEquals(expected, hex);
+        }
     }
 
     static public <R extends Record> void testPointType(R expected,
