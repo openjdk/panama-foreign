@@ -323,7 +323,7 @@ public final class LayoutRecordMapper<T extends Record>
         try {
             return (T) (ctor.invoke(segment));
         } catch (Throwable e) {
-            throw new IllegalStateException(
+            throw new IllegalArgumentException(
                     "Unable to invoke the canonical constructor for " + type.getName(), e);
         }
     }

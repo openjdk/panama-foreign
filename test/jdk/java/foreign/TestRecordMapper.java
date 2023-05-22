@@ -144,7 +144,7 @@ public final class TestRecordMapper {
 
     @Test
     public void testPointMapperUnderflow() {
-        assertThrows(IllegalStateException.class, () ->
+        assertThrows(IllegalArgumentException.class, () ->
                 POINT_LAYOUT.recordMapper(Point.class)
                         .apply(MemorySegment.ofArray(new int[]{1})));
     }

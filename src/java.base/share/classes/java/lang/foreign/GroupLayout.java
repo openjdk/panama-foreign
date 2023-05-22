@@ -77,22 +77,20 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
     GroupLayout withBitAlignment(long bitAlignment);
 
     /**
-     * {@return a {@linkplain Function function} that can extract instances of the provided
+     * {@return a {@link Function} that can extract instances of the provided
      * {@code type} from a {@linkplain MemorySegment } by means of matching the names of the
-     * record components with the names of the elements in this group layout}
+     * {@link Record} components with the names of the elements in this group layout}
      * <p>
      * The returned function will apply the byte order and alignment constraints of this
      * group layout.
      * <p>
-     * Arrays of one dimension are supported but multidimensional arrays are not.
-     * <p>
      * Unmatched elements in this group layout will be ignored.
      * <p>
-     * The returned Function may throw an {@link IllegalStateException} if it, for any reason, fails
-     * to extract a record. An example of such a failure is if the applied memory segment is too
+     * The returned Function may throw an {@link IllegalArgumentException} if it, for any reason, fails
+     * to extract a {@link Record}. An example of such a failure is if the applied memory segment is too
      * small for the layout at hand.
      * <p>
-     * The example below shows how to extract an instance of a Point record class from a MemorySegment:
+     * The example below shows how to extract an instance of a public Point record class from a MemorySegment:
      * {@snippet lang = java:
      *     MemorySegment segment = MemorySegment.ofArray(new int[]{3, 4});
      *
@@ -106,7 +104,7 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      *     Function<MemorySegment, Point> pointExtractor = pointLayout.recordMapper(Point.class);
      *
      *     // Extracts a new Point from the provided MemorySegment
-     *     Point point = pointExtractor.apply(segment); // Point{x=3, y=4}
+     *     Point point = pointExtractor.apply(segment); // Point[x=3, y=4]
      * }
      *
      * @param <R> record type
