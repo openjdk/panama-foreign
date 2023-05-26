@@ -179,7 +179,7 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      * }
      * <p>
      * Boxing, widening and narrowing must be explicitly handled by user code. In the following example, the above
-     * {@code Point} (using primitive {@code int x} and {@code int x} coordinates) are explicitly mapped to
+     * {@code Point} (using primitive {@code int x} and {@code int y} coordinates) are explicitly mapped to
      * a narrowed point type (instead using primitive {@code byte x} and {@code byte y} coordinates):
      * <p>
      * {@snippet lang = java:
