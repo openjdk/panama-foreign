@@ -42,6 +42,7 @@ import java.lang.invoke.VarHandle;
 import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -342,7 +343,9 @@ public final class TestRecordMapper {
 
         @Override
         public String toString() {
-            return "SequenceBox{before=" + before + ", ints=" + Arrays.toString(ints) + ", after=" + after;
+            return "SequenceBox[before=" + before +
+                    ", ints=" + Arrays.toString(ints) +
+                    ", after=" + after + "]";
         }
     }
 
@@ -376,7 +379,9 @@ public final class TestRecordMapper {
 
         @Override
         public String toString() {
-            return "SequenceBox2{before=" + before + ", ints=" + Arrays.deepToString(ints) + ", after=" + after;
+            return "SequenceBox2[before=" + before +
+                    ", ints=" + Arrays.deepToString(ints) +
+                    ", after=" + after + "]";
         }
     }
 
@@ -429,7 +434,9 @@ public final class TestRecordMapper {
 
         @Override
         public String toString() {
-            return "SequenceBox3{before=" + before + ", ints=" + Arrays.deepToString(ints) + ", after=" + after;
+            return "SequenceBox3[before=" + before +
+                    ", ints=" + Arrays.deepToString(ints) +
+                    ", after=" + after + "]";
         }
     }
 
@@ -471,7 +478,9 @@ public final class TestRecordMapper {
 
         @Override
         public String toString() {
-            return "LongSequenceBox3{before=" + before + ", longs=" + Arrays.deepToString(longs) + ", after=" + after;
+            return "LongSequenceBox3[before=" + before +
+                    ", longs=" + Arrays.deepToString(longs) +
+                    ", after=" + after+ "]";
         }
     }
 
@@ -511,7 +520,7 @@ public final class TestRecordMapper {
 
         @Override
         public String toString() {
-            return "PureArray{ints=" + Arrays.toString(ints) + "}";
+            return "PureArray[ints=" + Arrays.toString(ints) + "]";
         }
     }
 
@@ -543,7 +552,9 @@ public final class TestRecordMapper {
 
         @Override
         public String toString() {
-            return "SequenceOfPoints{before=" + before + ", points=" + Arrays.toString(points) + ", after=" + after;
+            return "SequenceOfPoints[before=" + before +
+                    ", points=" + Arrays.toString(points) +
+                    ", after=" + after + "]";
         }
 
     }
@@ -579,7 +590,9 @@ public final class TestRecordMapper {
 
         @Override
         public String toString() {
-            return "MultiSequenceOfPoints{before=" + before + ", points=" + Arrays.deepToString(points) + ", after=" + after;
+            return "MultiSequenceOfPoints[before=" + before +
+                    ", points=" + Arrays.deepToString(points) +
+                    ", after=" + after + "]";
         }
 
     }
@@ -756,7 +769,21 @@ public final class TestRecordMapper {
     }
 
 
-    public record LinkedNode(MemorySegment next, int value){}
+    public record LinkedNode(MemorySegment next, int value){
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof LinkedNode(var next, var value) &&
+                    this.next == next &&
+                    this.value == value;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(next, value);
+        }
+
+    }
 
     @Test
     public void linkedNode() {
@@ -797,9 +824,9 @@ public final class TestRecordMapper {
 
         @Override
         public boolean equals(Object obj) {
-            return obj instanceof TreeNode(var otherChildren, var otherValue) &&
-                    Arrays.equals(children, otherChildren) &&
-                    value == otherValue;
+            return obj instanceof TreeNode(var children, var value) &&
+                    Arrays.equals(this.children, children) &&
+                    this.value == value;
         }
 
         @Override
@@ -809,7 +836,7 @@ public final class TestRecordMapper {
 
         @Override
         public String toString() {
-            return "TreeNode{children=" + Arrays.toString(children) + ", value=" + value + "}";
+            return "TreeNode[children=" + Arrays.toString(children) + ", value=" + value + "]";
         }
     }
 
@@ -858,13 +885,13 @@ public final class TestRecordMapper {
             assertEquals(MemorySegment.NULL, actualRoot.children()[2]);
 
             assertEquals(41, actualFirstChild.value());
-            assertEquals(MemorySegment.NULL, actualFirstChild.children()[0]);
-            assertEquals(MemorySegment.NULL, actualFirstChild.children()[1]);
-            assertEquals(MemorySegment.NULL, actualFirstChild.children()[2]);
+            for (int i = 0; i < 3; i++) {
+                assertEquals(MemorySegment.NULL, actualFirstChild.children()[i]);
+            }
             assertEquals(42, actualSecondChild.value());
-            assertEquals(MemorySegment.NULL, actualSecondChild.children()[0]);
-            assertEquals(MemorySegment.NULL, actualSecondChild.children()[1]);
-            assertEquals(MemorySegment.NULL, actualSecondChild.children()[2]);
+            for (int i = 0; i < 3; i++) {
+                assertEquals(MemorySegment.NULL, actualSecondChild.children()[i]);
+            }
         }
 
     }
