@@ -38,7 +38,6 @@ import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.invoke.VarHandle;
 import java.lang.reflect.Array;
 import java.lang.reflect.RecordComponent;
 import java.util.ArrayList;
@@ -48,6 +47,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -86,10 +86,16 @@ public final class LayoutRecordMapper<T extends Record>
         this.layout = layout;
 
         var recordComponents = Arrays.asList(type.getRecordComponents());
+        var recordComponentNames = recordComponents.stream()
+                .map(RecordComponent::getName)
+                .collect(Collectors.toSet());
 
         var nameToLayoutMap = layout.memberLayouts().stream()
+                // Only consider named layouts
                 .filter(l -> l.name().isPresent())
-                .collect(toMap(l -> l.name().orElseThrow(), Function.identity()));
+                // Only look at the relevant layouts which could ever be matched with a record component
+                .filter(l -> recordComponentNames.contains(l.name().orElseThrow()))
+                .collect(toMap(l -> l.name().orElseThrow(), Function.identity(), throwingMerger()));
 
         var missingComponents = recordComponents.stream()
                 .map(RecordComponent::getName)
@@ -158,9 +164,8 @@ public final class LayoutRecordMapper<T extends Record>
 
                                 MultidimensionalSequenceLayoutInfo info = MultidimensionalSequenceLayoutInfo.of(sl);
 
-                                if (info.elementLayout() instanceof ValueLayout.OfBoolean ||
-                                        info.elementLayout() instanceof AddressLayout) {
-                                    throw new IllegalArgumentException("Arrays of " + info.elementLayout() + " are not supported");
+                                if (info.elementLayout() instanceof ValueLayout.OfBoolean) {
+                                    throw new IllegalArgumentException("Arrays of booleans (" + info.elementLayout() + ") are not supported");
                                 }
 
                                 if (dimensionOf(componentType) != info.sequences().size()) {
@@ -206,6 +211,7 @@ public final class LayoutRecordMapper<T extends Record>
                                                         ms -> ms.toArray(ofDouble);
                                                 case AddressLayout addressLayout ->
                                                         ms -> ms.elements(addressLayout)
+                                                                .map(s -> s.get(addressLayout, 0))
                                                                 .toArray(MemorySegment[]::new);
                                             };
                                             // (MemorySegment, Function mapper) ->
@@ -315,6 +321,12 @@ public final class LayoutRecordMapper<T extends Record>
         }
     }
 
+    private static <U> BinaryOperator<U> throwingMerger() {
+        return (a, b) -> {
+            throw new IllegalArgumentException("Duplicate keys: " + a);
+        };
+    }
+
     private IllegalArgumentException fail(ComponentAndLayout cl) {
         throw new IllegalArgumentException(
                 "Unable to map " + cl.layout() + " to " + type.getName() + "." + cl.component().getName());
@@ -327,7 +339,8 @@ public final class LayoutRecordMapper<T extends Record>
             return (T) (ctor.invoke(segment));
         } catch (Throwable e) {
             throw new IllegalArgumentException(
-                    "Unable to invoke the canonical constructor for " + type.getName(), e);
+                    "Unable to invoke the canonical constructor for " + type.getName() +
+                            " using " + segment, e);
         }
     }
 
@@ -570,6 +583,17 @@ public final class LayoutRecordMapper<T extends Record>
                             long count) {
 
         return slice(segment, elementLayout, offset, count).toArray(elementLayout);
+    }
+
+    static MemorySegment[] toArray(MemorySegment segment,
+                                   AddressLayout elementLayout,
+                                   long offset,
+                                   long count) {
+
+        return slice(segment, elementLayout, offset, count)
+                .elements(elementLayout)
+                .map(s -> s.get(elementLayout, 0))
+                .toArray(MemorySegment[]::new);
     }
 
     // End: Reflectively used methods

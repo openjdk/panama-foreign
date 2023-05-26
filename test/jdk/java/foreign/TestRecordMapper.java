@@ -33,10 +33,12 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.StructLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
 import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
@@ -125,7 +127,7 @@ public final class TestRecordMapper {
 
     @Test
     public void testLongPointTypeMismatch() {
-        // This should fail as the types `int` and `String` cannot be bridged
+        // This should fail as the types `int` and `String` cannot be mapped
         assertThrows(IllegalArgumentException.class, () -> {
                     POINT_LAYOUT.recordMapper(StringPoint.class);
                 }
@@ -754,9 +756,164 @@ public final class TestRecordMapper {
     }
 
 
-    // Todo: Test MemorySegment and array of MemorySegment
-    // Todo: Test PaddingLayout with name x
-    // Todo: Test mapping with the same name in the layout
+    public record LinkedNode(MemorySegment next, int value){}
+
+    @Test
+    public void linkedNode() {
+
+        var rawLayout = MemoryLayout.structLayout(ADDRESS, JAVA_INT);
+
+        var layout = MemoryLayout.structLayout(
+                ADDRESS.withName("next").withTargetLayout(rawLayout),
+                JAVA_INT.withName("value")
+        );
+
+        VarHandle next = layout.varHandle(PathElement.groupElement("next"));
+        VarHandle value = layout.varHandle(PathElement.groupElement("value"));
+
+        MemorySegment first;
+        MemorySegment second;
+        try (var arena = Arena.ofConfined()) {
+            first = arena.allocate(layout);
+            value.set(first, 41);
+            second = arena.allocate(layout);
+            value.set(second, 42);
+            next.set(first, second);
+
+            var mapper = layout.recordMapper(LinkedNode.class);
+
+            LinkedNode actualFirst = mapper.apply(first);
+            assertEquals(41, actualFirst.value());
+            assertEquals(second, actualFirst.next());
+
+            LinkedNode actualSecond = mapper.apply(actualFirst.next());
+            assertEquals(42, actualSecond.value());
+            assertEquals(MemorySegment.NULL, actualSecond.next());
+        }
+
+    }
+
+    public record TreeNode(MemorySegment[] children, int value){
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof TreeNode(var otherChildren, var otherValue) &&
+                    Arrays.equals(children, otherChildren) &&
+                    value == otherValue;
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(children) + value;
+        }
+
+        @Override
+        public String toString() {
+            return "TreeNode{children=" + Arrays.toString(children) + ", value=" + value + "}";
+        }
+    }
+
+    @Test
+    public void TreeNode() {
+
+        var rawLayout = MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(3, ADDRESS),
+                JAVA_INT
+        );
+
+        var layout = MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(
+                        3,
+                        ADDRESS.withTargetLayout(rawLayout)
+                ).withName("children"),
+                JAVA_INT.withName("value")
+        );
+
+        VarHandle child = layout.varHandle(PathElement.groupElement("children"), PathElement.sequenceElement());
+        VarHandle value = layout.varHandle(PathElement.groupElement("value"));
+
+        MemorySegment root;
+        MemorySegment firstChild;
+        MemorySegment secondChild;
+        try (var arena = Arena.ofConfined()) {
+            root = arena.allocate(layout);
+            value.set(root, 100);
+            firstChild = arena.allocate(layout);
+            value.set(firstChild, 41);
+            secondChild = arena.allocate(layout);
+            value.set(secondChild, 42);
+            child.set(root, 0, firstChild);
+            child.set(root, 1, secondChild);
+
+            var mapper = layout.recordMapper(TreeNode.class);
+
+            TreeNode actualRoot = mapper.apply(root);
+            assertEquals(100, actualRoot.value());
+
+            TreeNode actualFirstChild = mapper.apply(actualRoot.children()[0]);
+            TreeNode actualSecondChild = mapper.apply(actualRoot.children()[1]);
+
+            assertEquals(firstChild, actualRoot.children()[0]);
+            assertEquals(secondChild, actualRoot.children()[1]);
+            assertEquals(MemorySegment.NULL, actualRoot.children()[2]);
+
+            assertEquals(41, actualFirstChild.value());
+            assertEquals(MemorySegment.NULL, actualFirstChild.children()[0]);
+            assertEquals(MemorySegment.NULL, actualFirstChild.children()[1]);
+            assertEquals(MemorySegment.NULL, actualFirstChild.children()[2]);
+            assertEquals(42, actualSecondChild.value());
+            assertEquals(MemorySegment.NULL, actualSecondChild.children()[0]);
+            assertEquals(MemorySegment.NULL, actualSecondChild.children()[1]);
+            assertEquals(MemorySegment.NULL, actualSecondChild.children()[2]);
+        }
+
+    }
+
+    @Test
+    public void paddingLayout() {
+        var layout = MemoryLayout.structLayout(
+                JAVA_INT.withName("x"),
+                MemoryLayout.paddingLayout(Integer.SIZE).withName("y")
+        );
+
+        assertThrows(IllegalArgumentException.class, () ->
+                layout.recordMapper(Point.class)
+        );
+
+    }
+
+    public record SingleValue(int x) {}
+
+    @Test
+    public void nonDistinctUnusedNames() {
+        // Tests that a name must not be unique in the MemoryLayout if it is unused
+        // by any record component
+        var layout = MemoryLayout.structLayout(
+                JAVA_INT.withName("z"), // Not used
+                JAVA_INT.withName("z"), // Not used
+                JAVA_INT.withName("x"), // Used
+                JAVA_INT.withName("y")  // Used
+        );
+
+        var mapper = layout.recordMapper(Point.class);
+
+        Point point = mapper.apply(POINT_SEGMENT);
+        assertEquals(new Point(6, 0), point);
+    }
+
+    @Test
+    public void nonDistinctUsedNames() {
+        // Tests that a name must be unique in the MemoryLayout if it is used
+        // by a record component
+        var layout = MemoryLayout.structLayout(
+                JAVA_INT.withName("x"), // Used
+                JAVA_INT.withName("x")  // Used
+        );
+
+        assertThrows(IllegalArgumentException.class, () ->
+                layout.recordMapper(SingleValue.class)
+        );
+    }
 
     static public <R extends Record> void testPointType(R expected,
                                                  Object array,

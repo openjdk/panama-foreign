@@ -88,54 +88,67 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      * <em>C<sub>0</sub></em>, ..., <em>C<sub>N-1</sub></em>, where <em>N</em> is non-negative.
      * <p>
      * Let <em>L</em> be this group layout with the elements <em>E<sub>0</sub></em>, ..., <em>E<sub>M-1</sub></em>
-     * , where <em>M</em> is {@code >= N}.
+     * , where <em>M</em> {@code >=} <em>N</em>.
      * <p>
-     * Then, for each <em>C<sub>a</sub></em> {@code (a < N)}, there must be a corresponding distinct
+     * Then, for each <em>C<sub>a</sub></em> (<em>a</em> {@code <} <em>N</em>), there must be a corresponding distinct
      * <em>E<sub>b</sub></em> such that the {@link MemoryLayout#name() name} of <em>C<sub>a</sub></em>
      * {@link Object#equals(Object) equals} the {@link RecordComponent#getName() name} of the <em>E<sub>b</sub></em> and:
      * <ul>
      *    <li>
-     *        <h4>If <em>E<sub>b</sub></em> is a {@link ValueLayout };</h4><br>
-     *        then <em>C<sub>a</sub></em> must be of the exact type of <em>E<sub>b</sub>'s</em> {@link ValueLayout#carrier() carrier}<br>
-     *        whereby C<sub>a</sub> = f<sub>a</sub>(MemorySegment ms) = ms.get(E<sub>b</sub>, long) at the appropriate offset.<br>
+     *        <h4>If <em>E<sub>b</sub></em> is a {@link ValueLayout };</h4>
+     *        then <em>C<sub>a</sub></em> must be of the exact type of <em>E<sub>b</sub>'s</em> {@link ValueLayout#carrier() carrier()}<br>
+     *        whereby C<sub>a</sub> = f<sub>a</sub>(MemorySegment ms) = ms.get(E<sub>b</sub>, offset) at the appropriate offset.<br>
      *    </li>
      *    <li>
-     *        <h4>If <em>E<sub>b</sub></em> is a {@link GroupLayout };</h4><br>
-     *        then <em>C<sub>a</sub></em> must be of another {@link Record} type <em>R2</em> ({@code R2 != R}) that
-     *        can be mapped to <em>E<sub>b</sub></em> via a resulting mapper <em>M2</em> obtained via
+     *        <h4>If <em>E<sub>b</sub></em> is a {@link GroupLayout };</h4>
+     *        then <em>C<sub>a</sub></em> must be of another {@link Record} type <em>R2</em>
+     *        (such that <em>R2</em> {@code !=} <em>R</em>) that can be mapped to <em>E<sub>b</sub></em> via
+     *        a resulting mapper <em>M2</em> =
      *        {@link #recordMapper(Class) E<sub>b</sub>.recordMapper(C<sub>a</sub>.type())}<br>
-     *        whereby <em>C<sub>a</sub></em> = f<sub>a</sub>(MemorySegment ms) = M2.apply(ms) recursively
+     *        whereby <em>C<sub>a</sub></em> = f<sub>a</sub>(MemorySegment ms) = <em>M2</em>.apply(ms) recursively
      *        at the appropriate offset.<br>
      *    </li>
      *    <li>
-     *        <h4>If <em>E<sub>b</sub></em> is a {@link SequenceLayout };</h4><br>
+     *        <h4>If <em>E<sub>b</sub></em> is a {@link SequenceLayout };</h4>
      *        then <em>C<sub>a</sub></em> must be an array <em>C[]<sup>D</sup></em> (of depth <em>D</em>
      *        and with an array component type <em>C</em>) that can be mapped to <em>E<sub>b</sub></em> via a resulting
      *        "array mapper" <em>A2</em> obtained via recursively pealing off nested sequence layouts in <em>E<sub>b</sub></em>
      *        and then (after <em>D</em> pealing operations)
      *        finally determining the leaf element layout <em>LL</em> = {@link SequenceLayout#elementLayout() elementLayout()}
-     *        and subsequently obtaining a leaf record mapper <em>LM</em> = {@link #recordMapper(Class) LL.recordMapper(C.type())}<br>
+     *        and subsequently obtaining a leaf record mapper:
+     *        <ul>
+     *            <li>
+     *            if <em>LL</em> is a {@link ValueLayout}:
+     *            <em>LM</em> = {@link MemorySegment#get(ValueLayout.OfInt, long) ms -> ms.get(LL, offset)}
+     *            </li>
+     *
+     *            <li>
+     *            if <em>LL</em> is a {@link GroupLayout}:
+     *            <em>LM</em> = {@link #recordMapper(Class) LL.recordMapper(C.type())}
+     *            </li>
+     *        </ul>
      *        whereby <em>C<sub>a</sub></em> = f<sub>a</sub>(MemorySegment ms) will be extracted by
-     *        applying {@code A2} which, in turn, will apply {@code LM} at the appropriate offset(s).<br>
+     *        applying {@code A2} which, in turn, will apply {@code LM} recursively at the appropriate offset(s).<br>
      *        Note: boolean arrays are not supported despite the above and if an attempt is made to map
      *        a boolean array, an {@link IllegalArgumentException} will be thrown.
      *    </li>
      *    <li>
-     *        <h4>If <em>E<sub>b</sub></em> is a {@link PaddingLayout };</h4><br>
-     *        the method will throw an {@link IllegalArgumentException} as a padding layout cannot
+     *        <h4>If <em>E<sub>b</sub></em> is a {@link PaddingLayout };</h4>
+     *        then the method will throw an {@link IllegalArgumentException} as a padding layout cannot
      *        be projected to any record component.<br>
      *    </li>
      *    <li>
-     *        <h4>Otherwise;</h4><br>
+     *        <h4>Otherwise;</h4>
      *        the method will throw an {@link IllegalArgumentException} as <em>E<sub>b</sub></em> cannot
      *        be projected onto <em>C<sub>a</sub></em>. An example of this is trying to match a record component
      *        of type {@link String}.<br>
      *    </li>
      * </ul>
-     *
+     * <p>
      * If the above is true, the returned mapper will, when invoked, subsequently invoke the record type's
      * canonical constructor using a composition of the above mapping functions:
-     *     <em>ms -> R(f<sub>0</sub>(ms), ..., C<sub>N-1</sub>(ms))</em>
+     * <p>
+     * <em>ms -> R(f<sub>0</sub>(ms), ..., f<sub>N-1</sub>(ms))</em>
      * <p>
      * Unnamed elements in this group will be ignored.
      * Unmatched elements (with respect to the name) in this group layout will be ignored.
@@ -166,15 +179,20 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      * }
      * <p>
      * Boxing, widening and narrowing must be explicitly handled by user code. In the following example, the above
-     * {@code Point} (that is using primitive {@code int} x and y coordinates) are explicitly mapped to a narrowed
-     * point type (that is instead using primitive {@code byte} x and y coordinates):
+     * {@code Point} (using primitive {@code int x} and {@code int x} coordinates) are explicitly mapped to
+     * a narrowed point type (instead using primitive {@code byte x} and {@code byte y} coordinates):
      * <p>
      * {@snippet lang = java:
-     *     public record NarrowedPoint(byte x, byte y) {}
+     *     public record NarrowedPoint(byte x, byte y) {
+     *
+     *         static NarrowedPoint fromPoint(Point p) {
+     *             return new NarrowedPoint((byte) p.x, (byte) p.y);
+     *         }
+     *     }
      *
      *     Function<MemorySegment, NarrowedPoint> narrowedPointExtractor =
      *             pointLayout.recordMapper(Point.class)
-     *                     .andThen(p -> new NarrowedPoint((byte) p.x, (byte) p.y));
+     *                     .andThen(NarrowedPoint::fromPoint);
      *
      *     // Extracts a new NarrowedPoint from the provided MemorySegment
      *     NarrowedPoint narrowedPoint = narrowedPointExtractor.apply(segment); // NarrowedPoint[x=3, y=4]
