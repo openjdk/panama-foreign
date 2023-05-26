@@ -38,6 +38,7 @@ import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Array;
 import java.lang.reflect.RecordComponent;
 import java.util.ArrayList;
@@ -124,9 +125,9 @@ public final class LayoutRecordMapper<T extends Record>
                                 assertTypesMatch(cl, type, vl, layout);
                                 var mt = MethodType.methodType(vl.carrier(), valueLayoutType(vl), long.class);
                                 var mh = PUBLIC_LOOKUP.findVirtual(MemorySegment.class, "get", mt);
-                                // (MemorySegment, OfX, long ) -> (MemorySegment, long)
+                                // (MemorySegment, OfX, long) -> (MemorySegment, long)
                                 mh = MethodHandles.insertArguments(mh, 1, vl);
-                                // (MemorySegment, long ) -> (MemorySegment)
+                                // (MemorySegment, long) -> (MemorySegment)
                                 yield castReturnType(MethodHandles.insertArguments(mh, 1, byteOffset), cl.component().getType());
                             } catch (NoSuchMethodException | IllegalAccessException e) {
                                 throw new InternalError(e);
@@ -188,23 +189,24 @@ public final class LayoutRecordMapper<T extends Record>
                                             Function<MemorySegment, Object> leafArrayMapper =
                                             switch (vl) {
                                                 case ValueLayout.OfByte ofByte ->
-                                                        (MemorySegment ms) -> ms.toArray(ofByte);
+                                                        ms -> ms.toArray(ofByte);
                                                 case ValueLayout.OfBoolean ofBoolean ->
                                                         throw new UnsupportedOperationException("boolean arrays not supported: " + ofBoolean);
                                                 case ValueLayout.OfShort ofShort ->
-                                                        (MemorySegment ms) -> ms.toArray(ofShort);
+                                                         ms -> ms.toArray(ofShort);
                                                 case ValueLayout.OfChar ofChar ->
-                                                        (MemorySegment ms) -> ms.toArray(ofChar);
+                                                        ms -> ms.toArray(ofChar);
                                                 case ValueLayout.OfInt ofInt ->
-                                                        (MemorySegment ms) -> ms.toArray(ofInt);
+                                                        ms -> ms.toArray(ofInt);
                                                 case ValueLayout.OfLong ofLong ->
-                                                        (MemorySegment ms) -> ms.toArray(ofLong);
+                                                        ms -> ms.toArray(ofLong);
                                                 case ValueLayout.OfFloat ofFloat ->
-                                                        (MemorySegment ms) -> ms.toArray(ofFloat);
+                                                        ms -> ms.toArray(ofFloat);
                                                 case ValueLayout.OfDouble ofDouble ->
-                                                        (MemorySegment ms) -> ms.toArray(ofDouble);
+                                                        ms -> ms.toArray(ofDouble);
                                                 case AddressLayout addressLayout ->
-                                                        throw new UnsupportedOperationException("AddressLayout arrays not supported: " + addressLayout);
+                                                        ms -> ms.elements(addressLayout)
+                                                                .toArray(MemorySegment[]::new);
                                             };
                                             // (MemorySegment, Function mapper) ->
                                             // (MemorySegment)
@@ -237,9 +239,7 @@ public final class LayoutRecordMapper<T extends Record>
                                         case SequenceLayout __ -> {
                                             throw new InternalError("Should not reach here");
                                         }
-                                        case PaddingLayout __ -> {
-                                            yield null; // Ignore
-                                        }
+                                        case PaddingLayout __ -> throw fail(cl);
                                     }
                                 }
 
@@ -282,15 +282,13 @@ public final class LayoutRecordMapper<T extends Record>
                                     case SequenceLayout __ -> {
                                         throw new InternalError("Should not reach here");
                                     }
-                                    case PaddingLayout __ -> {
-                                        yield null; // Ignore
-                                    }
+                                    case PaddingLayout __ -> throw fail(cl);
                                 }
                             } catch (NoSuchMethodException | IllegalAccessException e) {
                                 throw new InternalError(e);
                             }
                         }
-                        case PaddingLayout __ -> null; // Ignore
+                        case PaddingLayout __ -> throw fail(cl); // Ignore
                     };
                 })
                 .filter(Objects::nonNull) // Remove ignored items
@@ -315,6 +313,11 @@ public final class LayoutRecordMapper<T extends Record>
             throw new IllegalArgumentException("There is no public constructor in '" + type.getName() +
                     "' for " + Arrays.toString(ctorParameterTypes), e);
         }
+    }
+
+    private IllegalArgumentException fail(ComponentAndLayout cl) {
+        throw new IllegalArgumentException(
+                "Unable to map " + cl.layout() + " to " + type.getName() + "." + cl.component().getName());
     }
 
     @SuppressWarnings("unchecked")

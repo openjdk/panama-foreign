@@ -41,7 +41,6 @@ import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
@@ -51,33 +50,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public final class TestRecordMapper {
 
     private static final boolean EXACT = true;
-
-    class Gist {
-
-        private static final GroupLayout POINT_LAYOUT =
-                MemoryLayout.structLayout(
-                        JAVA_INT.withName("x"),
-                        JAVA_INT.withName("y"));
-
-        public static void main(String[] args) {
-
-            var segment = MemorySegment.ofArray(new int[]{
-                    3, 4,
-                    6, 0});
-
-            record Point(int x, int y){}
-
-            var mapper = POINT_LAYOUT.recordMapper(Point.class);
-
-            Point point = mapper.apply(segment); // Point{x=3, y=4}
-
-            List<Point> points = segment.elements(POINT_LAYOUT)
-                    .map(mapper)
-                    .toList(); // [Point{x=3, y=4}, Point{x=6, y=0}]
-
-        }
-
-    }
 
     private static final GroupLayout POINT_LAYOUT = MemoryLayout.structLayout(
             JAVA_INT.withName("x"),
@@ -780,6 +752,11 @@ public final class TestRecordMapper {
             assertEquals(expected, hex);
         }
     }
+
+
+    // Todo: Test MemorySegment and array of MemorySegment
+    // Todo: Test PaddingLayout with name x
+    // Todo: Test mapping with the same name in the layout
 
     static public <R extends Record> void testPointType(R expected,
                                                  Object array,
