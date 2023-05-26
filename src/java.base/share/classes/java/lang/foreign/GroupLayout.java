@@ -200,10 +200,10 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      *
      * @param <R> record type
      * @param type the type (Class) of the record
-     * @throws IllegalArgumentException if the provided record {@code type} contains components for which
-     *                                  there are no exact mapping (of names and types) in this group layout
-     *                                  or if the provided {@code type} is not public or if the method is otherwise
-     *                                  unable to create a record mapper as specified above.
+     * @throws IllegalArgumentException if the provided record {@code type} is the class {@link Record} or contains
+     *                                  components for which there are no exact mapping (of names and types) in
+     *                                  this group layout or if the provided {@code type} is not public or
+     *                                  if the method is otherwise unable to create a record mapper as specified above.
      * @since 21
      */
     <R extends Record> Function<MemorySegment, R> recordMapper(Class<R> type);

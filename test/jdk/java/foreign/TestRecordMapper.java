@@ -183,7 +183,7 @@ public final class TestRecordMapper {
     @Test
     public void testPadding() {
         GroupLayout paddedPointLayout = MemoryLayout.structLayout(
-                MemoryLayout.paddingLayout(Integer.SIZE * 2).withName("padding"),
+                MemoryLayout.paddingLayout(Integer.BYTES * 2).withName("padding"),
                 JAVA_INT.withName("x"),
                 JAVA_INT.withName("y"));
         test(POINT_SEGMENT, paddedPointLayout.recordMapper(Point.class), new Point(6, 0));
@@ -767,6 +767,12 @@ public final class TestRecordMapper {
         }
     }
 
+    @Test
+    public void recordClassItself() {
+        assertThrows(IllegalArgumentException.class, () ->
+                POINT_LAYOUT.recordMapper(Record.class)
+        );
+    }
 
     public record LinkedNode(MemorySegment next, int value){
 
