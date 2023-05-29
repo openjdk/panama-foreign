@@ -257,7 +257,9 @@ public final class LayoutRecordMapper<T extends Record>
         switch (info.elementLayout()) {
             case ValueLayout vl -> {
                 assertTypesMatch(component, sl, vl);
-                var mh = findStaticToArray(vl.carrier().arrayType(), valueLayoutType(vl), null);
+                var mt = MethodType.methodType(vl.carrier().arrayType(),
+                        MemorySegment.class, valueLayoutType(vl), long.class, long.class);
+                var mh = LOOKUP.findStatic(LayoutRecordMapper.class, "toArray", mt);
                 // (MemorySegment, OfX, long offset, long count) -> (MemorySegment, OfX, long offset)
                 mh = MethodHandles.insertArguments(mh, 3, info.sequences().getFirst().elementCount());
                 // (MemorySegment, OfX, long offset) -> (MemorySegment, long offset)
@@ -270,7 +272,9 @@ public final class LayoutRecordMapper<T extends Record>
                 // The "local" byteOffset for the record component mapper is zero
                 var componentMapper = recordMapper(arrayComponentType, gl, 0);
                 try {
-                    var mh = findStaticToArray(Record.class.arrayType(), GroupLayout.class, LayoutRecordMapper.class);
+                    var mt = MethodType.methodType(Record.class.arrayType(),
+                            MemorySegment.class, GroupLayout.class, long.class, long.class, LayoutRecordMapper.class);
+                    var mh = LOOKUP.findStatic(LayoutRecordMapper.class, "toArray", mt);
                     // (MemorySegment, GroupLayout, long offset, long count, Function) ->
                     // (MemorySegment, GroupLayout, long offset, long count)
                     mh = MethodHandles.insertArguments(mh, 4, componentMapper);
@@ -332,18 +336,6 @@ public final class LayoutRecordMapper<T extends Record>
             case ValueLayout.OfDouble __ -> ValueLayout.OfDouble.class;
             case AddressLayout __ -> AddressLayout.class;
         };
-    }
-
-    static MethodHandle findStaticToArray(Class<?> rType,
-                                          Class<?> layoutType,
-                                          Class<?> extra) throws NoSuchMethodException, IllegalAccessException {
-
-        var pTypes = Stream.of(MemorySegment.class, layoutType, long.class, long.class, extra)
-                .filter(Objects::nonNull)
-                .toArray(Class<?>[]::new);
-
-        var mt = MethodType.methodType(rType, pTypes);
-        return LOOKUP.findStatic(LayoutRecordMapper.class, "toArray", mt);
     }
 
     void assertTypesMatch(RecordComponent component,
