@@ -120,9 +120,6 @@ public sealed abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L
 
     public final <R extends Record> Function<MemorySegment, R> recordMapper(Class<R> recordType) {
         Objects.requireNonNull(recordType);
-        if (Record.class.equals(recordType)) {
-            throw new IllegalArgumentException("The common base class java.lang.Record is not a record in itself");
-        }
         return new LayoutRecordMapper<>(recordType, (GroupLayout) this);
     }
 

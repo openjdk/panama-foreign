@@ -46,11 +46,10 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
@@ -68,6 +67,7 @@ public final class LayoutRecordMapper<T extends Record>
 
     private final Class<T> type;
     private final GroupLayout layout;
+    private final long offset;
     private final MethodHandle ctor;
 
     public LayoutRecordMapper(Class<T> type,
@@ -78,229 +78,36 @@ public final class LayoutRecordMapper<T extends Record>
     private LayoutRecordMapper(Class<T> type,
                                GroupLayout layout,
                                long offset) {
-        this.type = type;
-        this.layout = layout;
 
-        var recordComponents = Arrays.asList(type.getRecordComponents());
-        var recordComponentNames = recordComponents.stream()
-                .map(RecordComponent::getName)
-                .collect(Collectors.toSet());
-
-        var nameToLayoutMap = layout.memberLayouts().stream()
-                // Only consider named layouts
-                .filter(l -> l.name().isPresent())
-                // Only look at the relevant layouts which could ever be matched with a record component
-                .filter(l -> recordComponentNames.contains(l.name().orElseThrow()))
-                .collect(toMap(l -> l.name().orElseThrow(), Function.identity(), throwingMerger()));
-
-        var missingComponents = recordComponents.stream()
-                .map(RecordComponent::getName)
-                .filter(l -> !nameToLayoutMap.containsKey(l))
-                .toList();
-
-        if (!missingComponents.isEmpty()) {
-            throw new IllegalArgumentException("No mapping for " +
-                    type.getName() + missingComponents +
-                    " in layout " + layout);
+        if (Record.class.equals(type)) {
+            throw new IllegalArgumentException("The common base class java.lang.Record is not a record in itself");
         }
 
-        var componentAndLayoutList = recordComponents.stream()
-                .map(c -> new ComponentAndLayout(c, nameToLayoutMap.get(c.getName())))
+        this.type = type;
+        this.layout = layout;
+        this.offset = offset;
+
+        assertMappingsCorrect();
+
+        // For each component, find an f(a) = MethodHandle(MemorySegment) that returns the component type
+        var handles = Arrays.stream(type.getRecordComponents())
+                .map(this::methodHandle)
                 .toList();
 
-        Class<?>[] ctorParameterTypes = recordComponents.stream()
+        Class<?>[] ctorParameterTypes = Arrays.stream(type.getRecordComponents())
                 .map(RecordComponent::getType)
                 .toArray(Class<?>[]::new);
 
-        // An array of the record component MethodHandle extractors, each of type (MemorySegment)X
-        // where X is the component type.
-        MethodHandle[] handles = componentAndLayoutList.stream()
-                .map(cl -> {
-                    var name = cl.layout().name().orElseThrow();
-                    var pathElement = MemoryLayout.PathElement.groupElement(name);
-                    long byteOffset = layout.byteOffset(pathElement) + offset;
-
-                    return switch (cl.layout()) {
-                        case ValueLayout vl -> {
-                            try {
-                                assertTypesMatch(cl, type, vl, layout);
-                                var mt = MethodType.methodType(vl.carrier(), valueLayoutType(vl), long.class);
-                                var mh = PUBLIC_LOOKUP.findVirtual(MemorySegment.class, "get", mt);
-                                // (MemorySegment, OfX, long) -> (MemorySegment, long)
-                                mh = MethodHandles.insertArguments(mh, 1, vl);
-                                // (MemorySegment, long) -> (MemorySegment)
-                                yield castReturnType(MethodHandles.insertArguments(mh, 1, byteOffset), cl.component().getType());
-                            } catch (NoSuchMethodException | IllegalAccessException e) {
-                                throw new InternalError(e);
-                            }
-                        }
-                        case GroupLayout gl -> {
-                            var componentType = cl.component().getType().asSubclass(Record.class);
-                            var componentMapper = recordMapper(componentType, gl, byteOffset);
-                            try {
-                                var mt = MethodType.methodType(Record.class, MemorySegment.class);
-                                var mh = LOOKUP.findVirtual(LayoutRecordMapper.class, "apply", mt);
-                                // (LayoutRecordAccessor, MemorySegment)Record -> (MemorySegment)Record
-                                mh = MethodHandles.insertArguments(mh, 0, componentMapper);
-                                // (MemorySegment)Record -> (MemorySegment)componentType
-                                yield MethodHandles.explicitCastArguments(mh, MethodType.methodType(componentType, MemorySegment.class));
-                            } catch (NoSuchMethodException | IllegalAccessException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-                        case SequenceLayout sl -> {
-                            try {
-                                var componentType = cl.component().getType();
-                                if (!componentType.isArray()) {
-                                    throw new IllegalArgumentException("Unable to map '" + sl +
-                                            "' because the component '" + componentType.getName() + " " + name + "' is not an array");
-                                }
-
-                                MultidimensionalSequenceLayoutInfo info = MultidimensionalSequenceLayoutInfo.of(sl);
-
-                                if (info.elementLayout() instanceof ValueLayout.OfBoolean) {
-                                    throw new IllegalArgumentException("Arrays of booleans (" + info.elementLayout() + ") are not supported");
-                                }
-
-                                if (dimensionOf(componentType) != info.sequences().size()) {
-                                    throw new IllegalArgumentException("Unable to map '" + sl + "'" +
-                                            " of dimension " + info.sequences().size() +
-                                            " because the component '" + componentType.getName() + " " + name + "'" +
-                                            " has a dimension of " + dimensionOf(componentType));
-                                }
-
-                                // Handle multi-dimensional arrays
-                                if (info.sequences().size() > 1) {
-                                    var mh = LOOKUP.findStatic(LayoutRecordMapper.class, "toMultiArrayFunction",
-                                            MethodType.methodType(Object.class, MemorySegment.class, MultidimensionalSequenceLayoutInfo.class, long.class, Class.class, Function.class));
-                                    // (MemorySegment, MultidimensionalSequenceLayoutInfo, long offset, Class leafType, Function mapper) ->
-                                    // (MemorySegment, long offset, Class leafType, Function mapper)
-                                    mh = MethodHandles.insertArguments(mh, 1, info);
-                                    // (MemorySegment, long offset, Class leafType, Function mapper) ->
-                                    // (MemorySegment, Class leafType, Function mapper)
-                                    mh = MethodHandles.insertArguments(mh, 1, byteOffset);
-
-                                    switch (info.elementLayout()) {
-                                        case ValueLayout vl -> {
-                                            // (MemorySegment, Class leafType, Function mapper) ->
-                                            // (MemorySegment, Function mapper)
-                                            mh = MethodHandles.insertArguments(mh, 1, vl.carrier());
-                                            Function<MemorySegment, Object> leafArrayMapper =
-                                            switch (vl) {
-                                                case ValueLayout.OfByte ofByte ->
-                                                        ms -> ms.toArray(ofByte);
-                                                case ValueLayout.OfBoolean ofBoolean ->
-                                                        throw new UnsupportedOperationException("boolean arrays not supported: " + ofBoolean);
-                                                case ValueLayout.OfShort ofShort ->
-                                                         ms -> ms.toArray(ofShort);
-                                                case ValueLayout.OfChar ofChar ->
-                                                        ms -> ms.toArray(ofChar);
-                                                case ValueLayout.OfInt ofInt ->
-                                                        ms -> ms.toArray(ofInt);
-                                                case ValueLayout.OfLong ofLong ->
-                                                        ms -> ms.toArray(ofLong);
-                                                case ValueLayout.OfFloat ofFloat ->
-                                                        ms -> ms.toArray(ofFloat);
-                                                case ValueLayout.OfDouble ofDouble ->
-                                                        ms -> ms.toArray(ofDouble);
-                                                case AddressLayout addressLayout ->
-                                                        ms -> ms.elements(addressLayout)
-                                                                .map(s -> s.get(addressLayout, 0))
-                                                                .toArray(MemorySegment[]::new);
-                                            };
-                                            // (MemorySegment, Function mapper) ->
-                                            // (MemorySegment)
-                                            mh = MethodHandles.insertArguments(mh, 1, leafArrayMapper);
-                                            yield castReturnType(mh, cl.component().getType());
-                                        }
-                                        case GroupLayout gl -> {
-                                            var arrayComponentType = deepArrayComponentType(cl.component.getType()).asSubclass(Record.class);
-                                            // The "local" byteOffset for the record component mapper is zero
-                                            var componentMapper = recordMapper(arrayComponentType, gl, 0);
-                                            Function<MemorySegment, Object> leafArrayMapper = ms -> {
-                                                Object leafArray = Array.newInstance(arrayComponentType, info.lastDimension());
-
-                                                int[] i = new int[]{0};
-                                                ms.elements(info.elementLayout())
-                                                        .map(componentMapper)
-                                                        .forEachOrdered(r -> Array.set(leafArray, i[0]++, r));
-                                                return leafArray;
-                                            };
-
-                                            // (MemorySegment, Class leafType, Function mapper) ->
-                                            // (MemorySegment, Function mapper)
-                                            mh = MethodHandles.insertArguments(mh, 1, arrayComponentType);
-                                            // (MemorySegment, Function mapper) ->
-                                            // (MemorySegment)
-                                            mh = MethodHandles.insertArguments(mh, 1, leafArrayMapper);
-                                            yield castReturnType(mh, cl.component().getType());
-                                        }
-                                        case SequenceLayout __ -> {
-                                            throw new InternalError("Should not reach here");
-                                        }
-                                        case PaddingLayout __ -> throw fail(cl);
-                                    }
-                                }
-
-                                // Faster single-dimensional arrays
-                                switch (info.elementLayout()) {
-                                    case ValueLayout vl -> {
-                                        assertTypesMatch(cl, type, vl, layout);
-                                        var mh = findStaticToArray(vl.carrier().arrayType(), valueLayoutType(vl), null);
-                                        // (MemorySegment, OfX, long offset, long count) -> (MemorySegment, OfX, long offset)
-                                        mh = MethodHandles.insertArguments(mh, 3, info.sequences().getFirst().elementCount());
-                                        // (MemorySegment, OfX, long offset) -> (MemorySegment, long offset)
-                                        mh = MethodHandles.insertArguments(mh, 1, vl);
-                                        // (MemorySegment, long offset) -> (MemorySegment)
-                                        yield castReturnType(MethodHandles.insertArguments(mh, 1, byteOffset), cl.component().getType());
-                                    }
-                                    case GroupLayout gl -> {
-                                        var arrayComponentType = deepArrayComponentType(cl.component().getType()).asSubclass(Record.class);
-                                        // The "local" byteOffset for the record component mapper is zero
-                                        var componentMapper = recordMapper(arrayComponentType, gl, 0);
-                                        try {
-                                            var mh = findStaticToArray(Record.class.arrayType(), GroupLayout.class, LayoutRecordMapper.class);
-                                            // (MemorySegment, GroupLayout, long offset, long count, Function) ->
-                                            // (MemorySegment, GroupLayout, long offset, long count)
-                                            mh = MethodHandles.insertArguments(mh, 4, componentMapper);
-                                            // (MemorySegment, GroupLayout, long offset, long count) ->
-                                            // (MemorySegment, GroupLayout, long offset)
-                                            mh = MethodHandles.insertArguments(mh, 3, info.sequences().getFirst().elementCount());
-                                            // (MemorySegment, GroupLayout, long offset) ->
-                                            // (MemorySegment, long offset)
-                                            mh = MethodHandles.insertArguments(mh, 1, gl);
-                                            // (MemorySegment, long offset) -> (MemorySegment)Record[]
-                                            mh = MethodHandles.insertArguments(mh, 1, byteOffset);
-                                            // (MemorySegment, long offset)Record[] -> (MemorySegment)componentType
-                                            yield MethodHandles.explicitCastArguments(mh, MethodType.methodType(cl.component().getType(), MemorySegment.class));
-                                        } catch (NoSuchMethodException | IllegalAccessException e) {
-                                            throw new RuntimeException(e);
-                                        }
-                                    }
-                                    case SequenceLayout __ -> {
-                                        throw new InternalError("Should not reach here");
-                                    }
-                                    case PaddingLayout __ -> throw fail(cl);
-                                }
-                            } catch (NoSuchMethodException | IllegalAccessException e) {
-                                throw new InternalError(e);
-                            }
-                        }
-                        case PaddingLayout __ -> throw fail(cl); // Ignore
-                    };
-                })
-                .toArray(MethodHandle[]::new);
-
         try {
             var ctor = PUBLIC_LOOKUP.findConstructor(type, MethodType.methodType(void.class, ctorParameterTypes));
-            for (int i = 0; i < handles.length; i++) {
+            for (int i = 0; i < handles.size(); i++) {
                 // Insert the respective handler for the constructor
-                ctor = MethodHandles.filterArguments(ctor, i, handles[i]);
+                ctor = MethodHandles.filterArguments(ctor, i, handles.get(i));
             }
 
             var mt = MethodType.methodType(type, MemorySegment.class);
             // Fold the many identical MemorySegment arguments into a single argument
-            ctor = MethodHandles.permuteArguments(ctor, mt, new int[handles.length]);
+            ctor = MethodHandles.permuteArguments(ctor, mt, new int[handles.size()]);
 
             // The constructor MethodHandle is now of type (MemorySegment)T
             this.ctor = ctor;
@@ -310,15 +117,183 @@ public final class LayoutRecordMapper<T extends Record>
         }
     }
 
-    private static <U> BinaryOperator<U> throwingMerger() {
-        return (a, b) -> {
-            throw new IllegalArgumentException("Duplicate keys: " + a);
-        };
+    private MethodHandle methodHandle(RecordComponent component) {
+
+        var pathElement = MemoryLayout.PathElement.groupElement(component.getName());
+        var componentLayout = layout.select(pathElement);
+        var byteOffset = layout.byteOffset(pathElement) + offset;
+        try {
+            return switch (componentLayout) {
+                case ValueLayout vl -> methodHandle(vl, component, byteOffset);
+                case GroupLayout gl -> methodHandle(gl, component, byteOffset);
+                case SequenceLayout sl -> methodHandle(sl, component, byteOffset);
+                case PaddingLayout __ -> throw fail(component, componentLayout);
+            };
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new InternalError(e);
+        }
     }
 
-    private IllegalArgumentException fail(ComponentAndLayout cl) {
+    private MethodHandle methodHandle(ValueLayout vl,
+                                      RecordComponent component,
+                                      long byteOffset) throws NoSuchMethodException, IllegalAccessException {
+
+        assertTypesMatch(component, null, vl);
+        var mt = MethodType.methodType(vl.carrier(), valueLayoutType(vl), long.class);
+        var mh = PUBLIC_LOOKUP.findVirtual(MemorySegment.class, "get", mt);
+        // (MemorySegment, OfX, long) -> (MemorySegment, long)
+        mh = MethodHandles.insertArguments(mh, 1, vl);
+        // (MemorySegment, long) -> (MemorySegment)
+        return castReturnType(MethodHandles.insertArguments(mh, 1, byteOffset), component.getType());
+    }
+
+    private MethodHandle methodHandle(GroupLayout gl,
+                                      RecordComponent component,
+                                      long byteOffset) throws NoSuchMethodException, IllegalAccessException {
+
+        var componentType = component.getType().asSubclass(Record.class);
+        var componentMapper = recordMapper(componentType, gl, byteOffset);
+        var mt = MethodType.methodType(Record.class, MemorySegment.class);
+        var mh = LOOKUP.findVirtual(LayoutRecordMapper.class, "apply", mt);
+        // (LayoutRecordAccessor, MemorySegment)Record -> (MemorySegment)Record
+        mh = MethodHandles.insertArguments(mh, 0, componentMapper);
+        // (MemorySegment)Record -> (MemorySegment)componentType
+        return MethodHandles.explicitCastArguments(mh, MethodType.methodType(componentType, MemorySegment.class));
+    }
+
+    private MethodHandle methodHandle(SequenceLayout sl,
+                                      RecordComponent component,
+                                      long byteOffset) throws NoSuchMethodException, IllegalAccessException {
+
+        String name = component.getName();
+        var componentType = component.getType();
+        if (!componentType.isArray()) {
+            throw new IllegalArgumentException("Unable to map '" + sl +
+                    "' because the component '" + componentType.getName() + " " + name + "' is not an array");
+        }
+
+        MultidimensionalSequenceLayoutInfo info = MultidimensionalSequenceLayoutInfo.of(sl);
+
+        if (info.elementLayout() instanceof ValueLayout.OfBoolean) {
+            throw new IllegalArgumentException("Arrays of booleans (" + info.elementLayout() + ") are not supported");
+        }
+
+        if (dimensionOf(componentType) != info.sequences().size()) {
+            throw new IllegalArgumentException("Unable to map '" + sl + "'" +
+                    " of dimension " + info.sequences().size() +
+                    " because the component '" + componentType.getName() + " " + name + "'" +
+                    " has a dimension of " + dimensionOf(componentType));
+        }
+
+        // Handle multi-dimensional arrays
+        if (info.sequences().size() > 1) {
+            var mh = LOOKUP.findStatic(LayoutRecordMapper.class, "toMultiArrayFunction",
+                    MethodType.methodType(Object.class, MemorySegment.class, MultidimensionalSequenceLayoutInfo.class, long.class, Class.class, Function.class));
+            // (MemorySegment, MultidimensionalSequenceLayoutInfo, long offset, Class leafType, Function mapper) ->
+            // (MemorySegment, long offset, Class leafType, Function mapper)
+            mh = MethodHandles.insertArguments(mh, 1, info);
+            // (MemorySegment, long offset, Class leafType, Function mapper) ->
+            // (MemorySegment, Class leafType, Function mapper)
+            mh = MethodHandles.insertArguments(mh, 1, byteOffset);
+
+            switch (info.elementLayout()) {
+                case ValueLayout vl -> {
+                    // (MemorySegment, Class leafType, Function mapper) ->
+                    // (MemorySegment, Function mapper)
+                    mh = MethodHandles.insertArguments(mh, 1, vl.carrier());
+                    Function<MemorySegment, Object> leafArrayMapper =
+                            switch (vl) {
+                                case ValueLayout.OfByte ofByte -> ms -> ms.toArray(ofByte);
+                                case ValueLayout.OfBoolean ofBoolean ->
+                                        throw new UnsupportedOperationException("boolean arrays not supported: " + ofBoolean);
+                                case ValueLayout.OfShort ofShort -> ms -> ms.toArray(ofShort);
+                                case ValueLayout.OfChar ofChar -> ms -> ms.toArray(ofChar);
+                                case ValueLayout.OfInt ofInt -> ms -> ms.toArray(ofInt);
+                                case ValueLayout.OfLong ofLong -> ms -> ms.toArray(ofLong);
+                                case ValueLayout.OfFloat ofFloat -> ms -> ms.toArray(ofFloat);
+                                case ValueLayout.OfDouble ofDouble -> ms -> ms.toArray(ofDouble);
+                                case AddressLayout addressLayout -> ms -> ms.elements(addressLayout)
+                                        .map(s -> s.get(addressLayout, 0))
+                                        .toArray(MemorySegment[]::new);
+                            };
+                    // (MemorySegment, Function mapper) ->
+                    // (MemorySegment)
+                    mh = MethodHandles.insertArguments(mh, 1, leafArrayMapper);
+                    return castReturnType(mh, component.getType());
+                }
+                case GroupLayout gl -> {
+                    var arrayComponentType = deepArrayComponentType(component.getType()).asSubclass(Record.class);
+                    // The "local" byteOffset for the record component mapper is zero
+                    var componentMapper = recordMapper(arrayComponentType, gl, 0);
+                    Function<MemorySegment, Object> leafArrayMapper = ms -> {
+                        Object leafArray = Array.newInstance(arrayComponentType, info.lastDimension());
+
+                        int[] i = new int[]{0};
+                        ms.elements(info.elementLayout())
+                                .map(componentMapper)
+                                .forEachOrdered(r -> Array.set(leafArray, i[0]++, r));
+                        return leafArray;
+                    };
+
+                    // (MemorySegment, Class leafType, Function mapper) ->
+                    // (MemorySegment, Function mapper)
+                    mh = MethodHandles.insertArguments(mh, 1, arrayComponentType);
+                    // (MemorySegment, Function mapper) ->
+                    // (MemorySegment)
+                    mh = MethodHandles.insertArguments(mh, 1, leafArrayMapper);
+                    return castReturnType(mh, component.getType());
+                }
+                case SequenceLayout __ -> {
+                    throw new InternalError("Should not reach here");
+                }
+                case PaddingLayout __ -> throw fail(component, sl);
+            }
+        }
+
+        // Faster single-dimensional arrays
+        switch (info.elementLayout()) {
+            case ValueLayout vl -> {
+                assertTypesMatch(component, sl, vl);
+                var mh = findStaticToArray(vl.carrier().arrayType(), valueLayoutType(vl), null);
+                // (MemorySegment, OfX, long offset, long count) -> (MemorySegment, OfX, long offset)
+                mh = MethodHandles.insertArguments(mh, 3, info.sequences().getFirst().elementCount());
+                // (MemorySegment, OfX, long offset) -> (MemorySegment, long offset)
+                mh = MethodHandles.insertArguments(mh, 1, vl);
+                // (MemorySegment, long offset) -> (MemorySegment)
+                return castReturnType(MethodHandles.insertArguments(mh, 1, byteOffset), component.getType());
+            }
+            case GroupLayout gl -> {
+                var arrayComponentType = deepArrayComponentType(component.getType()).asSubclass(Record.class);
+                // The "local" byteOffset for the record component mapper is zero
+                var componentMapper = recordMapper(arrayComponentType, gl, 0);
+                try {
+                    var mh = findStaticToArray(Record.class.arrayType(), GroupLayout.class, LayoutRecordMapper.class);
+                    // (MemorySegment, GroupLayout, long offset, long count, Function) ->
+                    // (MemorySegment, GroupLayout, long offset, long count)
+                    mh = MethodHandles.insertArguments(mh, 4, componentMapper);
+                    // (MemorySegment, GroupLayout, long offset, long count) ->
+                    // (MemorySegment, GroupLayout, long offset)
+                    mh = MethodHandles.insertArguments(mh, 3, info.sequences().getFirst().elementCount());
+                    // (MemorySegment, GroupLayout, long offset) ->
+                    // (MemorySegment, long offset)
+                    mh = MethodHandles.insertArguments(mh, 1, gl);
+                    // (MemorySegment, long offset) -> (MemorySegment)Record[]
+                    mh = MethodHandles.insertArguments(mh, 1, byteOffset);
+                    // (MemorySegment, long offset)Record[] -> (MemorySegment)componentType
+                    return MethodHandles.explicitCastArguments(mh, MethodType.methodType(component.getType(), MemorySegment.class));
+                } catch (NoSuchMethodException | IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            case SequenceLayout __ ->  throw new InternalError("Should not reach here");
+            case PaddingLayout __ -> throw fail(component, sl);
+        }
+    }
+
+    private IllegalArgumentException fail(RecordComponent component,
+                                          MemoryLayout layout) {
         throw new IllegalArgumentException(
-                "Unable to map " + cl.layout() + " to " + type.getName() + "." + cl.component().getName());
+                "Unable to map " + layout + " to " + type.getName() + "." + component.getName());
     }
 
     @SuppressWarnings("unchecked")
@@ -337,7 +312,8 @@ public final class LayoutRecordMapper<T extends Record>
     public String toString() {
         return "LayoutRecordMapper{" +
                 "type=" + type.getName() + ", " +
-                "layout=" + layout + "}";
+                "layout=" + layout + ", " +
+                "offset=" + offset + "}";
     }
 
     // The parameter is of type ValueLayouts.OfByteImpl and the likes.
@@ -367,20 +343,19 @@ public final class LayoutRecordMapper<T extends Record>
         return LOOKUP.findStatic(LayoutRecordMapper.class, "toArray", mt);
     }
 
-    static void assertTypesMatch(ComponentAndLayout cl,
-                                 Class<? extends Record> type,
-                                 ValueLayout vl,
-                                 MemoryLayout originalLayout) {
+    void assertTypesMatch(RecordComponent component,
+                          MemoryLayout sequenceLayout,
+                          ValueLayout vl) {
 
-        Class<?> recordComponentType = cl.component().getType();
-        if (recordComponentType.isArray() && cl.layout() instanceof SequenceLayout) {
+        Class<?> recordComponentType = component.getType();
+        if (recordComponentType.isArray() && sequenceLayout instanceof SequenceLayout) {
             recordComponentType = deepArrayComponentType(recordComponentType);
         }
 
         if (!(recordComponentType == vl.carrier())) {
             throw new IllegalArgumentException("Unable to match types because the component '" +
-                    cl.component().getName() + "' (in " + type.getName() + ") has the type of '" + cl.component().getType() +
-                    "' but the layout carrier is '" + vl.carrier() + "' (in " + originalLayout + ")");
+                    component.getName() + "' (in " + type.getName() + ") has the type of '" + component.getType() +
+                    "' but the layout carrier is '" + vl.carrier() + "' (in " + layout + ")");
         }
     }
 
@@ -392,6 +367,26 @@ public final class LayoutRecordMapper<T extends Record>
         return recordComponentType;
     }
 
+    void assertMappingsCorrect() {
+        var nameMappingCounts = layout.memberLayouts().stream()
+                .map(MemoryLayout::name)
+                .flatMap(Optional::stream)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+        // Make sure we have all components distinctly mapped
+        for (RecordComponent component : type.getRecordComponents()) {
+            String name = component.getName();
+            switch (nameMappingCounts.get(name).intValue()) {
+                case 0 -> throw new IllegalArgumentException("No mapping for " +
+                        type.getName() + "." + component.getName() +
+                        " in layout " + layout);
+                case 1 -> { /* Happy path */ }
+                default -> throw new IllegalArgumentException("Duplicate mappings for " +
+                        type.getName() + "." + component.getName() +
+                        " in layout " + layout);
+            }
+        }
+    }
 
     private <R extends Record> LayoutRecordMapper<R> recordMapper(Class<R> componentType,
                                                                   GroupLayout gl,
@@ -401,10 +396,6 @@ public final class LayoutRecordMapper<T extends Record>
             throw new IllegalArgumentException(componentType + " is not a Record");
         }
         return new LayoutRecordMapper<>(componentType, gl, byteOffset);
-    }
-
-    record ComponentAndLayout(RecordComponent component,
-                              MemoryLayout layout) {
     }
 
     record MultidimensionalSequenceLayoutInfo(List<SequenceLayout> sequences,
