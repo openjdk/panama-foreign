@@ -309,9 +309,7 @@ public final class LayoutRecordMapper<T extends Record>
 
             var mt = MethodType.methodType(type, MemorySegment.class);
             // Fold the many identical MemorySegment arguments into a single argument
-            ctor = MethodHandles.permuteArguments(ctor, mt, IntStream.range(0, handles.length)
-                    .map(i -> 0)
-                    .toArray());
+            ctor = MethodHandles.permuteArguments(ctor, mt, new int[handles.length]);
 
             // The constructor MethodHandle is now of type (MemorySegment)T
             this.ctor = ctor;
