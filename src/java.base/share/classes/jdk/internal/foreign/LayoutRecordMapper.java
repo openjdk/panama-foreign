@@ -68,16 +68,18 @@ public final class LayoutRecordMapper<T extends Record>
     private final Class<T> type;
     private final GroupLayout layout;
     private final long offset;
+    private final MethodHandles.Lookup lookup;
     private final MethodHandle ctor;
 
     public LayoutRecordMapper(Class<T> type,
                               GroupLayout layout) {
-        this(type, layout, 0);
+        this(type, layout, 0L, PUBLIC_LOOKUP);
     }
 
-    private LayoutRecordMapper(Class<T> type,
-                               GroupLayout layout,
-                               long offset) {
+    public LayoutRecordMapper(Class<T> type,
+                              GroupLayout layout,
+                              long offset,
+                              MethodHandles.Lookup lookup) {
 
         if (Record.class.equals(type)) {
             throw new IllegalArgumentException("The common base class java.lang.Record is not a record in itself");
@@ -86,6 +88,7 @@ public final class LayoutRecordMapper<T extends Record>
         this.type = type;
         this.layout = layout;
         this.offset = offset;
+        this.lookup = lookup;
 
         assertMappingsCorrect();
 
@@ -99,7 +102,7 @@ public final class LayoutRecordMapper<T extends Record>
                 .toArray(Class<?>[]::new);
 
         try {
-            var ctor = PUBLIC_LOOKUP.findConstructor(type, MethodType.methodType(void.class, ctorParameterTypes));
+            var ctor = lookup.findConstructor(type, MethodType.methodType(void.class, ctorParameterTypes));
             for (int i = 0; i < handles.size(); i++) {
                 // Insert the respective handler for the constructor
                 ctor = MethodHandles.filterArguments(ctor, i, handles.get(i));
@@ -113,7 +116,7 @@ public final class LayoutRecordMapper<T extends Record>
             this.ctor = ctor;
         } catch (IllegalAccessException | NoSuchMethodException e) {
             throw new IllegalArgumentException("There is no public constructor in '" + type.getName() +
-                    "' for " + Arrays.toString(ctorParameterTypes), e);
+                    "' for " + Arrays.toString(ctorParameterTypes) + " using lookup " + lookup, e);
         }
     }
 
@@ -140,7 +143,7 @@ public final class LayoutRecordMapper<T extends Record>
 
         assertTypesMatch(component, null, vl);
         var mt = MethodType.methodType(vl.carrier(), valueLayoutType(vl), long.class);
-        var mh = PUBLIC_LOOKUP.findVirtual(MemorySegment.class, "get", mt);
+        var mh = LOOKUP.findVirtual(MemorySegment.class, "get", mt);
         // (MemorySegment, OfX, long) -> (MemorySegment, long)
         mh = MethodHandles.insertArguments(mh, 1, vl);
         // (MemorySegment, long) -> (MemorySegment)
@@ -395,7 +398,7 @@ public final class LayoutRecordMapper<T extends Record>
         if (!componentType.isRecord()) {
             throw new IllegalArgumentException(componentType + " is not a Record");
         }
-        return new LayoutRecordMapper<>(componentType, gl, byteOffset);
+        return new LayoutRecordMapper<>(componentType, gl, byteOffset, lookup);
     }
 
     record MultidimensionalSequenceLayoutInfo(List<SequenceLayout> sequences,
