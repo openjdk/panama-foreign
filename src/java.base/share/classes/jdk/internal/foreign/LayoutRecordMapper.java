@@ -296,7 +296,6 @@ public final class LayoutRecordMapper<T extends Record>
                         case PaddingLayout __ -> throw fail(cl); // Ignore
                     };
                 })
-                .filter(Objects::nonNull) // Remove ignored items
                 .toArray(MethodHandle[]::new);
 
         try {
