@@ -139,8 +139,7 @@ public final class LayoutRecordMapper<T extends Record>
                             }
                         }
                         case GroupLayout gl -> {
-                            @SuppressWarnings("unchecked")
-                            var componentType = (Class<? extends Record>) cl.component().getType();
+                            var componentType = cl.component().getType().asSubclass(Record.class);
                             var componentMapper = recordMapper(componentType, gl, byteOffset);
                             try {
                                 var mt = MethodType.methodType(Record.class, MemorySegment.class);
@@ -219,8 +218,7 @@ public final class LayoutRecordMapper<T extends Record>
                                             yield castReturnType(mh, cl.component().getType());
                                         }
                                         case GroupLayout gl -> {
-                                            @SuppressWarnings("unchecked")
-                                            var arrayComponentType = (Class<? extends Record>) deepArrayComponentType(cl.component.getType());
+                                            var arrayComponentType = deepArrayComponentType(cl.component.getType()).asSubclass(Record.class);
                                             // The "local" byteOffset for the record component mapper is zero
                                             var componentMapper = recordMapper(arrayComponentType, gl, 0);
                                             Function<MemorySegment, Object> leafArrayMapper = ms -> {
@@ -261,8 +259,7 @@ public final class LayoutRecordMapper<T extends Record>
                                         yield castReturnType(MethodHandles.insertArguments(mh, 1, byteOffset), cl.component().getType());
                                     }
                                     case GroupLayout gl -> {
-                                        @SuppressWarnings("unchecked")
-                                        var arrayComponentType = (Class<? extends Record>) deepArrayComponentType(cl.component().getType());
+                                        var arrayComponentType = deepArrayComponentType(cl.component().getType()).asSubclass(Record.class);
                                         // The "local" byteOffset for the record component mapper is zero
                                         var componentMapper = recordMapper(arrayComponentType, gl, 0);
                                         try {
