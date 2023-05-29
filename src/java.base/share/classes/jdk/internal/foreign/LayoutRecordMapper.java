@@ -103,10 +103,9 @@ public final class LayoutRecordMapper<T extends Record>
                 .toList();
 
         if (!missingComponents.isEmpty()) {
-            throw new IllegalArgumentException("There is no mapping for " +
-                    missingComponents + " in " + type.getName() +
-                    "(" + String.join(", ", recordComponents.stream().map(RecordComponent::getName).collect(Collectors.joining(", "))) + ")" +
-                    " provided by the layout " + layout);
+            throw new IllegalArgumentException("No mapping for " +
+                    type.getName() + missingComponents +
+                    " in layout " + layout);
         }
 
         var componentAndLayoutList = recordComponents.stream()
