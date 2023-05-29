@@ -63,10 +63,6 @@ import static java.util.stream.Collectors.toMap;
 public final class LayoutRecordMapper<T extends Record>
         implements Function<MemorySegment, T> {
 
-    enum Allow {EXACT, BOXING, BOXING_NARROWING_AND_WIDENING}
-
-    public static final Allow ALLOW = Allow.EXACT;
-
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
     private static final MethodHandles.Lookup PUBLIC_LOOKUP = MethodHandles.publicLookup();
 
@@ -381,19 +377,10 @@ public final class LayoutRecordMapper<T extends Record>
             recordComponentType = deepArrayComponentType(recordComponentType);
         }
 
-        boolean match = switch (ALLOW) {
-            // Require types to be identical only: e.g. Integer.class != int.class
-            case EXACT -> recordComponentType == vl.carrier();
-            // Accept boxing: e.g. Integer.class.isInstance(int.class) -> true
-            case BOXING -> recordComponentType.isInstance(vl.carrier());
-            // Accept anything for now and signal errors later when composing VHs
-            case BOXING_NARROWING_AND_WIDENING -> true;
-        };
-
-        if (!match) {
+        if (!(recordComponentType == vl.carrier())) {
             throw new IllegalArgumentException("Unable to match types because the component '" +
                     cl.component().getName() + "' (in " + type.getName() + ") has the type of '" + cl.component().getType() +
-                    "' but the layout type is '" + vl.carrier() + "' (in " + originalLayout + ")");
+                    "' but the layout carrier is '" + vl.carrier() + "' (in " + originalLayout + ")");
         }
     }
 
