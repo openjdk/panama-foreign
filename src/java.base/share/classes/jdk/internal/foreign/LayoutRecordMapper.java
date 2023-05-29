@@ -141,7 +141,7 @@ public final class LayoutRecordMapper<T extends Record>
                                       RecordComponent component,
                                       long byteOffset) throws NoSuchMethodException, IllegalAccessException {
 
-        assertTypesMatch(component, null, vl);
+        assertTypesMatch(component, component.getType(), vl);
         var mt = MethodType.methodType(vl.carrier(), valueLayoutType(vl), long.class);
         var mh = LOOKUP.findVirtual(MemorySegment.class, "get", mt);
         // (MemorySegment, OfX, long) -> (MemorySegment, long)
@@ -175,7 +175,7 @@ public final class LayoutRecordMapper<T extends Record>
                     "' because the component '" + componentType.getName() + " " + name + "' is not an array");
         }
 
-        MultidimensionalSequenceLayoutInfo info = MultidimensionalSequenceLayoutInfo.of(sl);
+        MultidimensionalSequenceLayoutInfo info = MultidimensionalSequenceLayoutInfo.of(sl, componentType);
 
         if (info.elementLayout() instanceof ValueLayout.OfBoolean) {
             throw new IllegalArgumentException("Arrays of booleans (" + info.elementLayout() + ") are not supported");
@@ -225,7 +225,7 @@ public final class LayoutRecordMapper<T extends Record>
                     return castReturnType(mh, component.getType());
                 }
                 case GroupLayout gl -> {
-                    var arrayComponentType = deepArrayComponentType(component.getType()).asSubclass(Record.class);
+                    var arrayComponentType = info.type().asSubclass(Record.class);
                     // The "local" byteOffset for the record component mapper is zero
                     var componentMapper = recordMapper(arrayComponentType, gl, 0);
                     Function<MemorySegment, Object> leafArrayMapper = ms -> {
@@ -256,7 +256,7 @@ public final class LayoutRecordMapper<T extends Record>
         // Faster single-dimensional arrays
         switch (info.elementLayout()) {
             case ValueLayout vl -> {
-                assertTypesMatch(component, sl, vl);
+                assertTypesMatch(component, info.type(), vl);
                 var mt = MethodType.methodType(vl.carrier().arrayType(),
                         MemorySegment.class, valueLayoutType(vl), long.class, long.class);
                 var mh = LOOKUP.findStatic(LayoutRecordMapper.class, "toArray", mt);
@@ -268,7 +268,7 @@ public final class LayoutRecordMapper<T extends Record>
                 return castReturnType(MethodHandles.insertArguments(mh, 1, byteOffset), component.getType());
             }
             case GroupLayout gl -> {
-                var arrayComponentType = deepArrayComponentType(component.getType()).asSubclass(Record.class);
+                var arrayComponentType = info.type().asSubclass(Record.class);
                 // The "local" byteOffset for the record component mapper is zero
                 var componentMapper = recordMapper(arrayComponentType, gl, 0);
                 try {
@@ -339,27 +339,14 @@ public final class LayoutRecordMapper<T extends Record>
     }
 
     void assertTypesMatch(RecordComponent component,
-                          MemoryLayout sequenceLayout,
+                          Class<?> recordComponentType,
                           ValueLayout vl) {
-
-        Class<?> recordComponentType = component.getType();
-        if (recordComponentType.isArray() && sequenceLayout instanceof SequenceLayout) {
-            recordComponentType = deepArrayComponentType(recordComponentType);
-        }
 
         if (!(recordComponentType == vl.carrier())) {
             throw new IllegalArgumentException("Unable to match types because the component '" +
                     component.getName() + "' (in " + type.getName() + ") has the type of '" + component.getType() +
                     "' but the layout carrier is '" + vl.carrier() + "' (in " + layout + ")");
         }
-    }
-
-    static Class<?> deepArrayComponentType(Class<?> arrayType) {
-        Class<?> recordComponentType = arrayType;
-        while (recordComponentType.isArray()) {
-            recordComponentType = Objects.requireNonNull(recordComponentType.componentType());
-        }
-        return recordComponentType;
     }
 
     void assertMappingsCorrect() {
@@ -394,7 +381,8 @@ public final class LayoutRecordMapper<T extends Record>
     }
 
     record MultidimensionalSequenceLayoutInfo(List<SequenceLayout> sequences,
-                                              MemoryLayout elementLayout){
+                                              MemoryLayout elementLayout,
+                                              Class<?> type){
 
         int[] dimensions() {
             return sequences().stream()
@@ -420,10 +408,11 @@ public final class LayoutRecordMapper<T extends Record>
         MultidimensionalSequenceLayoutInfo removeFirst() {
             var removed = new ArrayList<>(sequences);
             removed.removeFirst();
-            return new MultidimensionalSequenceLayoutInfo(removed, elementLayout);
+            return new MultidimensionalSequenceLayoutInfo(removed, elementLayout, type);
         }
 
-        static MultidimensionalSequenceLayoutInfo of(SequenceLayout sequenceLayout) {
+        static MultidimensionalSequenceLayoutInfo of(SequenceLayout sequenceLayout,
+                                                     Class<?> arrayComponent) {
             MemoryLayout current = sequenceLayout;
             List<SequenceLayout> sequences = new ArrayList<>();
             while(true) {
@@ -435,9 +424,18 @@ public final class LayoutRecordMapper<T extends Record>
                     current = element.elementLayout();
                     sequences.add(element);
                 } else {
-                    return new MultidimensionalSequenceLayoutInfo(List.copyOf(sequences), current);
+                    return new MultidimensionalSequenceLayoutInfo(
+                            List.copyOf(sequences), current, deepArrayComponentType(arrayComponent));
                 }
             }
+        }
+
+        private static Class<?> deepArrayComponentType(Class<?> arrayType) {
+            Class<?> recordComponentType = arrayType;
+            while (recordComponentType.isArray()) {
+                recordComponentType = Objects.requireNonNull(recordComponentType.componentType());
+            }
+            return recordComponentType;
         }
 
     }
@@ -451,25 +449,11 @@ public final class LayoutRecordMapper<T extends Record>
             return mh;
         }
 
-        if (!to.isPrimitive() && !isWrapperClass(to) && !to.isArray()) {
-            throw new IllegalArgumentException("Cannot convert '" + from + "' to '" + to.getName() +
-                    "' because '" + to.getName() + "' is not a wrapper class: [" + WRAPPER_CLASSES.stream()
-                    .map(Class::getSimpleName)
-                    .collect(Collectors.joining(", "))+"]");
+        if (!to.isPrimitive() && !to.isArray()) {
+            throw new IllegalArgumentException("Cannot convert '" + from + "' to '" + to.getName());
         }
 
         return MethodHandles.explicitCastArguments(mh, MethodType.methodType(to, MemorySegment.class));
-    }
-
-    private static final Set<Class<?>> WRAPPER_CLASSES = Stream.of(
-            Byte.class, Boolean.class, Short.class, Character.class,
-            Integer.class, Long.class, Float.class, Double.class
-    ).collect(Collectors.collectingAndThen(
-            Collectors.toCollection(LinkedHashSet::new),
-            Collections::unmodifiableSet));
-
-    static boolean isWrapperClass(Class<?> type) {
-        return WRAPPER_CLASSES.contains(type);
     }
 
     static int dimensionOf(Class<?> arrayClass) {
