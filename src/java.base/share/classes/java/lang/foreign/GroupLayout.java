@@ -82,37 +82,36 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      * of the provided {@link Record} {@code type} by means of matching the names of the
      * record components with the names of the elements in this group layout}
      * <p>
-     * The mapping between the record type and this memory layout is defined as follows;
+     * A mapper {@code M} between a record type {@code R}, a memory layout {@code L} and an {@code offset}
+     * (which is zero for the initial invocation of this method) is defined as follows {@code M(type, layout, offset)};
      * <p>
-     * Let {@code R} be the provided record {@code type} with the constituent components
-     * {@code c_1}, {@code c_2}, ..., {@code c_N}, where <em>N</em> is the (non-negative) number of components.
+     * Let {@code R} comprise its the constituent components
+     * {@code c_1, c_2}, ..., c_N}, where {@code N} is the (non-negative) number of components of {@code R}.
      * <p>
      * Let {@code f_a(MemorySegment ms)} be a function that takes
      * a {@link MemorySegment} {@code ms} and produces a value for {@code c_a}.
      * <p>
-     * Let {@code L} be this group layout with the elements {@code e_1}, {@code e_2}, ..., {@code e_M}
-     * , where {@code M >= N}.
+     * Let {@code L} be a group layout with the elements {@code e_1, e_2, ..., e_M}, where {@code M >= N}.
      * <p>
-     * Let {@code offsetBetween(GroupLayout rootLayout, MemoryLayout target)} be a pseudo function that, via
-     * the method {@link MemoryLayout#byteOffset(PathElement...)}, can compute the offset from the initial root
-     * layout (from which this method was first invoked) to a sub-layout of the root layout.
+     * Let {@code offsetBetween(GroupLayout layout, MemoryLayout target)} be a function that, via
+     * the method {@link MemoryLayout#byteOffset(PathElement...)}, can compute the offset from the
+     * {@code layout L} to a sub-layout of {@code L}.
      * <p>
-     * Then, for each {@code c_a} ({@code a <= N}, there must be a corresponding distinct
+     * Then, for each {@code c_a, a <= N}, there must be a corresponding distinct
      * {@code e_b} such that the {@link MemoryLayout#name() name} of {@code c_a}
      * {@link Object#equals(Object) equals} the {@link RecordComponent#getName() name} of {@code e_b} and:
      * <ul>
      *    <li>
      *        <h4>If {@code e_b} is a {@link ValueLayout };</h4>
      *        then {@code c_a} must be of the exact type of {@code e_b}'s {@link ValueLayout#carrier() carrier()}<br>
-     *        whereby {@code c_a} = {@code f_a(MemorySegment ms) = ms.get({@code e_b}, offsetBetween(root, e_b))}.<br>
+     *        whereby {@code c_a = f_a(MemorySegment ms) = ms.get(e_b, offset + offsetBetween(layout, e_b))}.<br>
      *    </li>
      *    <li>
      *        <h4>If {@code e_b} is a {@link GroupLayout };</h4>
      *        then {@code e_a} must be of another {@link Record} type {@code R2}
      *        (such that {@code R2 != R}) that can be mapped to {@code e_b} via
-     *        a resulting mapper {@code M2} = {@link #recordMapper(Class) e_b.recordMapper(c_a.type())}<br>
-     *        whereby {@code c_a} = {@code f_a(MemorySegment ms) =
-     *        M2.apply(ms.asSlice(offsetBetween(root, e_b)))} recursively.<br>
+     *        another resulting mapper {@code M2 = M(R2, e_b, offset + offsetBetween(layout, e_b))} recursively
+     *        whereby {@code c_a} = {@code f_a(MemorySegment ms) = M2.apply(ms)}<br>
      *    </li>
      *    <li>
      *        <h4>If {@code e_b} is a {@link SequenceLayout };</h4>
@@ -121,21 +120,21 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      *        "array mapper" {@code A2} obtained via recursively pealing off nested sequence layouts in {@code e_b}
      *        and then (after {@code D} pealing operations)
      *        finally determining the leaf element layout {@code LL = } {@link SequenceLayout#elementLayout() elementLayout()}
-     *        and subsequently obtaining a leaf record mapper:
+     *        and subsequently obtaining a leaf mapper {@code (MemorySegment ms, long componentOffset)}:
      *        <ul>
      *            <li>
      *            if {@code LL} is a {@link ValueLayout}:
-     *            {@code LM} = {@link MemorySegment#get(ValueLayout.OfInt, long) ms -> ms.get(LL, offset)}
+     *            {@code LM} = {@link MemorySegment#get(ValueLayout.OfInt, long) ms -> ms.get(LL, offset + offsetBetween(layout, e_b))}
      *            </li>
      *
      *            <li>
      *            if {@code LL} is a {@link GroupLayout}:
-     *            {@code LM} = {@link #recordMapper(Class) LL.recordMapper(C.type())}
+     *            {@code LM} = recursively M(C.type, LL, offset + offsetBetween(layout, e_b)}
      *            </li>
      *        </ul>
      *        whereby {@code c_a} = {@code f_a(MemorySegment ms)} will be extracted by
-     *        applying {@code A2} which, in turn, will apply {@code LM} recursively at base offset
-     *        offsetBetween(root, e_b) plus applicable multidimensional array offsets.<br>
+     *        applying {@code A2} which, in turn, will apply {@code LM} recursively at
+     *        a memory segment slice at the applicable multidimensional array offsets.<br>
      *        Note: boolean arrays are not supported despite the above and if an attempt is made to map
      *        a boolean array, an {@link IllegalArgumentException} will be thrown.
      *    </li>
@@ -152,10 +151,11 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      *    </li>
      * </ul>
      * <p>
-     * If the above is true, the returned mapper will, when invoked, subsequently invoke the record type's
-     * canonical constructor {@code R::new} using a composition of the above mapping functions:
+     * If the above is true, the returned mapper {@code M(type, this, 0L)} will, when invoked,
+     * subsequently invoke the record type's canonical constructor {@code R::new} using a composition
+     * of the above mapping functions:
      * <p>
-     * <em>ms -> new R(f_1(ms), f_2(ms), ..., f_N(ms))</em>
+     * {@code ms -> new R(f_1(ms), f_2(ms), ..., f_N(ms))}
      * <p>
      * Unnamed elements in this group will be ignored.
      * Unmatched elements (with respect to the name) in this group layout will be ignored.
