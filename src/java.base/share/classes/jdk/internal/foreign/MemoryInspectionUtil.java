@@ -109,7 +109,7 @@ final class MemoryInspectionUtil {
             return;
         }
         if (layout instanceof PaddingLayout paddingLayout) {
-            action.accept(state.indentSpaces() + paddingLayout.bitSize() + " padding bits");
+            action.accept(state.indentSpaces() + paddingLayout.byteSize() + " padding bytes");
             state.indexAndAdd(paddingLayout);
             return;
         }
