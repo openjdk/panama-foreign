@@ -213,7 +213,7 @@ public class TestMemoryInspection {
         var u0 = MemoryLayout.structLayout(
                 ValueLayout.JAVA_INT.withName("x"),
                 ValueLayout.JAVA_INT.withName("y"),
-                MemoryLayout.paddingLayout(Integer.BYTES)
+                MemoryLayout.paddingLayout(Integer.SIZE)
         ).withName("Point");
 
         var u1 = MemoryLayout.structLayout(
@@ -229,7 +229,7 @@ public class TestMemoryInspection {
                     Point {
                         x=1,
                         y=2,
-                        4 padding bytes
+                        32 padding bits
                     }|
                     3D-Point {
                         x=1,
