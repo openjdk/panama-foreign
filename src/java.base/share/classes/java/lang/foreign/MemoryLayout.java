@@ -165,10 +165,12 @@ import jdk.internal.javac.PreviewFeature;
  *
  * <h2 id="record-mapping">Record mapping</h2>
  * <p>A {@linkplain GroupLayout group layout} can provide mapping capabilities from memory segments to Java
- * {@linkplain Record Records} by means of matching named elements in the group layout with component names
- * in a record class.
+ * {@linkplain Record Records} (Record Classes being specified in Section {@jls 8.10} of
+ * <cite>The Java Language Specification</cite>) by means of matching named elements in the group layout
+ * with component names in a record class.
+ * <p>
  * For instance:
- *
+ * <p>
  * {@snippet lang=java:
  *     MemorySegment segment = MemorySegment.ofArray(new int[]{3, 4});
  *
@@ -182,7 +184,7 @@ import jdk.internal.javac.PreviewFeature;
  *     Function<MemorySegment, Point> pointExtractor = pointLayout.recordMapper(Point.class);
  *
  *     // Extracts a new Point from the provided MemorySegment
- *     Point point = pointExtractor.apply(segment); // Point{x=3, y=4}
+ *     Point point = pointExtractor.apply(segment); // Point[x=3, y=4]
  * }
  *
  * The mapping capability provides an easy-to-use bridge from native memory to Java objects.
