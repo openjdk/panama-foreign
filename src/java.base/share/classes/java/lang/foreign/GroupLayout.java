@@ -120,7 +120,8 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      *        "array mapper" {@code A2} obtained via recursively pealing off nested sequence layouts in {@code e_b}
      *        and then (after {@code D} pealing operations)
      *        finally determining the leaf element layout {@code LL = } {@link SequenceLayout#elementLayout() elementLayout()}
-     *        and subsequently obtaining a leaf mapper {@code (MemorySegment ms, long componentOffset)}:
+     *        and subsequently obtaining an array mapper {@code AM(MemorySegment ms, long componentOffset)} with
+     *        a leaf mapper {@code LM}:
      *        <ul>
      *            <li>
      *            if {@code LL} is a {@link ValueLayout}:
@@ -129,12 +130,12 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      *
      *            <li>
      *            if {@code LL} is a {@link GroupLayout}:
-     *            {@code LM} = recursively M(C.type, LL, offset + offsetBetween(layout, e_b)}
+     *            {@code LM} = M(C.type, LL, offset + offsetBetween(layout, e_b)} recursively.
      *            </li>
      *        </ul>
      *        whereby {@code c_a} = {@code f_a(MemorySegment ms)} will be extracted by
-     *        applying {@code A2} which, in turn, will apply {@code LM} recursively at
-     *        a memory segment slice at the applicable multidimensional array offsets.<br>
+     *        applying {@code AM} which, in turn, will apply {@code LM} recursively at
+     *        a memory segment slice at the applicable multidimensional array offset(s).<br>
      *        Note: boolean arrays are not supported despite the above and if an attempt is made to map
      *        a boolean array, an {@link IllegalArgumentException} will be thrown.
      *    </li>
