@@ -95,15 +95,12 @@ public final class LayoutRecordMapper<T>
                 .map(this::methodHandle)
                 .toList();
 
-        System.out.println("handles for " + type + " are " + handles);
-
         Class<?>[] ctorParameterTypes = Arrays.stream(type.getRecordComponents())
                 .map(RecordComponent::getType)
                 .toArray(Class<?>[]::new);
 
         try {
             var ctor = lookup.findConstructor(type, MethodType.methodType(void.class, ctorParameterTypes));
-            System.out.println("ctor0 = " + ctor);
             for (int i = 0; i < handles.size(); i++) {
                 // Insert the respective handler for the constructor
                 ctor = MethodHandles.filterArguments(ctor, i, handles.get(i));
@@ -112,15 +109,13 @@ public final class LayoutRecordMapper<T>
             var mt = MethodType.methodType(type, MemorySegment.class);
             // Fold the many identical MemorySegment arguments into a single argument
             ctor = MethodHandles.permuteArguments(ctor, mt, new int[handles.size()]);
-            // ctor = ctor.asType(mt);
-            System.out.println("ctor1 = " + ctor);
             if (depth == 0) {
                 // This is the base level mh so, we need to cast to Object as the final
                 // apply() method will do the final cast
                 ctor = ctor.asType(MethodType.methodType(Object.class, MemorySegment.class));
             }
-            System.out.println("ctor2 = " + ctor);
-            // The constructor MethodHandle is now of type (MemorySegment)T
+            // The constructor MethodHandle is now of type (MemorySegment)T unless it is the one
+            // of depth zero when it is (MemorySegment)Object
             this.ctor = ctor;
         } catch (IllegalAccessException | NoSuchMethodException e) {
             throw new IllegalArgumentException("There is no public constructor in '" + type.getName() +
