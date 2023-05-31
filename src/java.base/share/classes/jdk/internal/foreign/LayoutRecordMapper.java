@@ -45,6 +45,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Spliterator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -145,7 +146,7 @@ public final class LayoutRecordMapper<T>
                                       long byteOffset) throws NoSuchMethodException, IllegalAccessException {
 
         assertTypesMatch(component, component.getType(), vl);
-        var mt = MethodType.methodType(vl.carrier(), valueLayoutType(vl), long.class);
+        var mt = MethodType.methodType(vl.carrier(), topValueLayoutType(vl), long.class);
         var mh = LOOKUP.findVirtual(MemorySegment.class, "get", mt);
         // (MemorySegment, OfX, long) -> (MemorySegment, long)
         mh = MethodHandles.insertArguments(mh, 1, vl);
@@ -228,23 +229,8 @@ public final class LayoutRecordMapper<T>
                     var mapperCtor = componentMapper.ctor
                             .asType(MethodType.methodType(Object.class, MemorySegment.class));
 
-                    // Todo: Investigate the performance of the Function below
-                    // Todo: Use the existing method further below for this.
-                    Function<MemorySegment, Object> leafArrayMapper = ms -> {
-                        Object leafArray = Array.newInstance(arrayComponentType, info.lastDimension());
-
-                        int[] i = new int[]{0};
-                        ms.elements(info.elementLayout())
-                                .map(s -> {
-                                    try {
-                                        return mapperCtor.invokeExact(s);
-                                    } catch (Throwable t) {
-                                        throw new IllegalArgumentException(t);
-                                    }
-                                })
-                                .forEachOrdered(r -> Array.set(leafArray, i[0]++, r));
-                        return leafArray;
-                    };
+                    Function<MemorySegment, Object> leafArrayMapper = ms ->
+                            toArray(ms, gl, info.lastDimension(), arrayComponentType, mapperCtor);
 
                     // (MemorySegment, Class leafType, Function mapper) ->
                     // (MemorySegment, Function mapper)
@@ -266,7 +252,7 @@ public final class LayoutRecordMapper<T>
             case ValueLayout vl -> {
                 assertTypesMatch(component, info.type(), vl);
                 var mt = MethodType.methodType(vl.carrier().arrayType(),
-                        MemorySegment.class, valueLayoutType(vl), long.class, long.class);
+                        MemorySegment.class, topValueLayoutType(vl), long.class, long.class);
                 var mh = LOOKUP.findStatic(LayoutRecordMapper.class, "toArray", mt);
                 // (MemorySegment, OfX, long offset, long count) -> (MemorySegment, OfX, long offset)
                 mh = MethodHandles.insertArguments(mh, 3, info.sequences().getFirst().elementCount());
@@ -335,19 +321,10 @@ public final class LayoutRecordMapper<T>
                 "offset=" + offset + "}";
     }
 
-    // The parameter is of type ValueLayouts.OfByteImpl and the likes.
-    static Class<? extends ValueLayout> valueLayoutType(ValueLayout vl) {
-        return switch (vl) {
-            case ValueLayout.OfBoolean __ -> ValueLayout.OfBoolean.class;
-            case ValueLayout.OfByte __ -> ValueLayout.OfByte.class;
-            case ValueLayout.OfShort __ -> ValueLayout.OfShort.class;
-            case ValueLayout.OfChar __ -> ValueLayout.OfChar.class;
-            case ValueLayout.OfInt __ -> ValueLayout.OfInt.class;
-            case ValueLayout.OfLong __ -> ValueLayout.OfLong.class;
-            case ValueLayout.OfFloat __ -> ValueLayout.OfFloat.class;
-            case ValueLayout.OfDouble __ -> ValueLayout.OfDouble.class;
-            case AddressLayout __ -> AddressLayout.class;
-        };
+    static Class<? extends ValueLayout> topValueLayoutType(ValueLayout vl) {
+        // All the permitted implementations OfXImpl of the ValueLayout interfaces declare
+        // its main top interface OfX as the sole interface (e.g. OfIntImpl implements only OfInt directly)
+        return vl.getClass().getInterfaces()[0].asSubclass(ValueLayout.class);
     }
 
     void assertTypesMatch(RecordComponent component,
@@ -472,24 +449,35 @@ public final class LayoutRecordMapper<T>
 
     // Wrapper to create an array of Records
 
-    @SuppressWarnings("unchecked")
     static <R> R[] toArray(MemorySegment segment,
                            GroupLayout elementLayout,
                            long offset,
                            long count,
-                           Class<?> type,
+                           Class<R> type,
                            MethodHandle mapper) {
 
-        return slice(segment, elementLayout, offset, count)
-                .elements(elementLayout)
-                .map(s -> {
-                    try {
-                        return mapper.invokeExact(s);
-                    } catch (Throwable t) {
-                        throw new IllegalArgumentException(t);
-                    }
-                })
-                .toArray(l -> (R[]) Array.newInstance(type, l));
+        var slice = slice(segment, elementLayout, offset, count);
+        return toArray(slice, elementLayout, count, type, mapper);
+    }
+
+    @SuppressWarnings("unchecked")
+    static <R> R[] toArray(MemorySegment segment,
+                           GroupLayout elementLayout,
+                           long count,
+                           Class<R> type,
+                           MethodHandle mapper) {
+
+        R[] result = (R[]) Array.newInstance(type, Math.toIntExact(count));
+        Spliterator<MemorySegment> spliterator = segment.spliterator(elementLayout);
+        int[] cnt = new int[]{0};
+        spliterator.forEachRemaining(s -> {
+            try {
+                result[cnt[0]++] = (R) mapper.invokeExact(s);
+            } catch (Throwable t) {
+                throw new IllegalArgumentException(t);
+            }
+        });
+        return result;
     }
 
     // Below are `MemorySegment::toArray` wrapper methods that is also taking an offset
