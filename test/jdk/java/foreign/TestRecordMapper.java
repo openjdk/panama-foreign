@@ -143,6 +143,15 @@ public final class TestRecordMapper {
         assertEquals(new Empty(), empty);
     }
 
+    public record Unmatched(int foo){}
+
+    @Test
+    public void noMapping() {
+        assertThrows(IllegalArgumentException.class, () ->
+                POINT_LAYOUT.recordMapper(Unmatched.class)
+        );
+    }
+
     @Test
     public void testFlippedPointMapper() {
         test(POINT_SEGMENT, POINT_LAYOUT.recordMapper(FlippedPoint.class), new FlippedPoint(4, 3));
