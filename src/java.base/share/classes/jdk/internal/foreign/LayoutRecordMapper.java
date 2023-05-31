@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * A record mapper that is matching a GroupLayout to match the components of a record.
+ * A record mapper that is matching components of a record with elements in a GroupLayout.
  *
  * @param <T> the Record type
  */
