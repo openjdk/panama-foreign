@@ -151,7 +151,7 @@ public final class LayoutRecordMapper<T>
         // (MemorySegment, OfX, long) -> (MemorySegment, long)
         mh = MethodHandles.insertArguments(mh, 1, vl);
         // (MemorySegment, long) -> (MemorySegment)
-        return castReturnType(MethodHandles.insertArguments(mh, 1, byteOffset), component.getType());
+        return MethodHandles.insertArguments(mh, 1, byteOffset);
     }
 
     private MethodHandle methodHandle(GroupLayout gl,
@@ -262,9 +262,8 @@ public final class LayoutRecordMapper<T>
                 return castReturnType(MethodHandles.insertArguments(mh, 1, byteOffset), component.getType());
             }
             case GroupLayout gl -> {
-                var arrayComponentType = info.type().asSubclass(Record.class);
                 // The "local" byteOffset for the record component mapper is zero
-                var componentMapper = recordMapper(arrayComponentType, gl, 0);
+                var componentMapper = recordMapper(info.type(), gl, 0);
                 try {
                     var mt = MethodType.methodType(Object.class.arrayType(),
                             MemorySegment.class, GroupLayout.class, long.class, long.class, Class.class, MethodHandle.class);
@@ -308,7 +307,7 @@ public final class LayoutRecordMapper<T>
             return (T) ctor.invokeExact(segment);
         } catch (Throwable e) {
             throw new IllegalArgumentException(
-                    "Unable to invoke the canonical constructor for " + type.getName() +
+                    "Unable to invoke the canonical constructor of " + type.getName() +
                             " using " + segment, e);
         }
     }
