@@ -1079,7 +1079,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default String getString(long offset) {
-        return StringSupport.read(this, offset, Charset.defaultCharset());
+        return getString(Charset.defaultCharset(), offset);
     }
 
     /**
@@ -1130,7 +1130,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     @ForceInline
     default void setString(long offset, String str) {
         Objects.requireNonNull(str);
-        StringSupport.write(this, offset, Charset.defaultCharset(), str);
+        setString(Charset.defaultCharset(), offset, str);
     }
 
     /**

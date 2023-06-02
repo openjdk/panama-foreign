@@ -1,7 +1,6 @@
 package jdk.internal.foreign;
 
 import jdk.internal.vm.annotation.ForceInline;
-import sun.nio.cs.UTF_8;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
@@ -18,18 +17,18 @@ public class StringSupport {
 
     @ForceInline
     public static String read(MemorySegment segment, long offset, Charset charset) {
-        return switch (terminatorCharSize(charset)) {
-            case 1 -> readFast_byte(segment, offset, charset);
-            case 2 -> readFast_short(segment, offset, charset);
+        return switch (CharsetKind.of(charset)) {
+            case SINGLE_BYTE -> readFast_byte(segment, offset, charset);
+            case DOUBLE_BYTE -> readFast_short(segment, offset, charset);
             default -> throw new UnsupportedOperationException("Unsupported charset: " + charset);
         };
     }
 
     @ForceInline
     public static void write(MemorySegment segment, long offset, Charset charset, String string) {
-        switch (terminatorCharSize(charset)) {
-            case 1 -> writeFast_byte(segment, offset, charset, string);
-            case 2 -> writeFast_short(segment, offset, charset, string);
+        switch (CharsetKind.of(charset)) {
+            case SINGLE_BYTE -> writeFast_byte(segment, offset, charset, string);
+            case DOUBLE_BYTE -> writeFast_short(segment, offset, charset, string);
             default -> throw new UnsupportedOperationException("Unsupported charset: " + charset);
         }
     }
@@ -88,18 +87,28 @@ public class StringSupport {
         throw new IllegalArgumentException("String too large");
     }
 
-    public static int terminatorCharSize(Charset charset) {
-        if (charset == StandardCharsets.UTF_8 || charset == StandardCharsets.ISO_8859_1 || charset == StandardCharsets.US_ASCII) {
-            return 1;
-        } else if (charset == StandardCharsets.UTF_16LE || charset == StandardCharsets.UTF_16BE || charset == StandardCharsets.UTF_16) {
-            return 2;
-        } else {
-            return -1;
-        }
-    }
+    public enum CharsetKind {
+        SINGLE_BYTE(1),
+        DOUBLE_BYTE(2);
 
-    public static int prefixSize(Charset charset) {
-        return (charset == StandardCharsets.UTF_16) ?
-                2 : 0;
+        final int terminatorCharSize;
+
+        CharsetKind(int terminatorCharSize) {
+            this.terminatorCharSize = terminatorCharSize;
+        }
+
+        public int getTerminatorCharSize() {
+            return terminatorCharSize;
+        }
+
+        public static CharsetKind of(Charset charset) {
+            if (charset == StandardCharsets.UTF_8 || charset == StandardCharsets.ISO_8859_1 || charset == StandardCharsets.US_ASCII) {
+                return CharsetKind.SINGLE_BYTE;
+            } else if (charset == StandardCharsets.UTF_16LE || charset == StandardCharsets.UTF_16BE || charset == StandardCharsets.UTF_16) {
+                return CharsetKind.DOUBLE_BYTE;
+            } else {
+                throw new UnsupportedOperationException("Unsupported charset: " + charset);
+            }
+        }
     }
 }

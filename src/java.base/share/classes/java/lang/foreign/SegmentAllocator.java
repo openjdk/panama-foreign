@@ -37,6 +37,7 @@ import jdk.internal.foreign.SlicingAllocator;
 import jdk.internal.foreign.StringSupport;
 import jdk.internal.foreign.Utils;
 import jdk.internal.javac.PreviewFeature;
+import jdk.internal.vm.annotation.ForceInline;
 
 /**
  * An object that may be used to allocate {@linkplain MemorySegment memory segments}. Clients implementing this interface
@@ -76,9 +77,10 @@ public interface SegmentAllocator {
      * @return a new native segment containing the converted C string.
      * @throws UnsupportedOperationException if the default charset is not a {@linkplain StandardCharsets standard charset}.
      */
+    @ForceInline
     default MemorySegment allocateString(String str) {
         Objects.requireNonNull(str);
-        return Utils.toCString(str.getBytes(StandardCharsets.UTF_8), this);
+        return allocateString(Charset.defaultCharset(), str);
     }
 
     /**
@@ -108,10 +110,11 @@ public interface SegmentAllocator {
      * @param str the Java string to be converted into a C string.
      * @return a new native segment containing the converted C string.
      */
+    @ForceInline
     default MemorySegment allocateString(Charset charset, String str) {
         Objects.requireNonNull(charset);
         Objects.requireNonNull(str);
-        int termCharSize = StringSupport.terminatorCharSize(charset);
+        int termCharSize = StringSupport.CharsetKind.of(charset).getTerminatorCharSize();
         if (termCharSize == -1) {
             throw new UnsupportedOperationException("Unsupported charset: " + charset);
         }
