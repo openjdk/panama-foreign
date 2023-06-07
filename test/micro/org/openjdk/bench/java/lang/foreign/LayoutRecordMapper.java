@@ -33,7 +33,6 @@ import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -45,7 +44,7 @@ import static java.lang.foreign.ValueLayout.JAVA_INT;
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Fork(value = 3, jvmArgsAppend = { "--enable-preview", "--enable-native-access=ALL-UNNAMED" })
-public class RecordMapper {
+public class LayoutRecordMapper {
 
     private static final GroupLayout POINT_LAYOUT =
             MemoryLayout.structLayout(
@@ -79,15 +78,13 @@ public class RecordMapper {
     public void setup() {
         arena = Arena.ofConfined();
         pointSegment = arena.allocate(POINT_LAYOUT);
-        var rnd = new Random();
-        pointSegment.set(JAVA_INT, 0, rnd.nextInt(10));
-        pointSegment.set(JAVA_INT, 4, rnd.nextInt(10));
+        pointSegment.set(JAVA_INT, 0, 3);
+        pointSegment.set(JAVA_INT, 4, 4);
 
-        int[] ints = rnd.ints(ARRAY_SIZE).toArray();
         // Use native memory
         arraySegment = arena.allocate(ARRAY_LAYOUT);
         for (int i = 0; i < ARRAY_SIZE; i++) {
-            arraySegment.setAtIndex(JAVA_INT, i, ints[i]);
+            arraySegment.setAtIndex(JAVA_INT, i, i);
         }
     }
 
