@@ -35,7 +35,6 @@ import java.util.function.Function;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.SlicingAllocator;
 import jdk.internal.foreign.StringSupport;
-import jdk.internal.foreign.Utils;
 import jdk.internal.javac.PreviewFeature;
 import jdk.internal.vm.annotation.ForceInline;
 
@@ -102,22 +101,20 @@ public interface SegmentAllocator {
      * <ul>
      *     <li>{@code B} is the size, in bytes, of the string encoded using the provided charset
      *     (e.g. {@code str.getBytes(charset).length});</li>
-     *     <li>{@code P} is the size (in bytes) of the terminator char according to the provided charset. For instance,
+     *     <li>{@code N} is the size (in bytes) of the terminator char according to the provided charset. For instance,
      *     this is 1 for {@link StandardCharsets#US_ASCII} and 2 for {@link StandardCharsets#UTF_16}.</li>
      * </ul>
      *
      * @param charset the charset used to {@linkplain Charset#newEncoder() encode} the string bytes.
      * @param str the Java string to be converted into a C string.
      * @return a new native segment containing the converted C string.
+     * @throws UnsupportedOperationException if {@code charset} is not a {@linkplain StandardCharsets standard charset}.
      */
     @ForceInline
     default MemorySegment allocateString(Charset charset, String str) {
         Objects.requireNonNull(charset);
         Objects.requireNonNull(str);
-        int termCharSize = StringSupport.CharsetKind.of(charset).getTerminatorCharSize();
-        if (termCharSize == -1) {
-            throw new UnsupportedOperationException("Unsupported charset: " + charset);
-        }
+        int termCharSize = StringSupport.CharsetKind.of(charset).terminatorCharSize();
         byte[] bytes = str.getBytes(charset);
         MemorySegment segment = allocate(bytes.length + termCharSize);
         MemorySegment.copy(bytes, 0, segment, ValueLayout.JAVA_BYTE, 0, bytes.length);
