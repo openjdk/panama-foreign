@@ -157,6 +157,10 @@ public final class LayoutRecordMapper<T>
     private MethodHandle methodHandle(GroupLayout gl,
                                       RecordComponent component,
                                       long byteOffset) throws NoSuchMethodException, IllegalAccessException {
+        if (type.equals(component.getType())) {
+            throw new IllegalArgumentException(
+                    "A type may not use a component of the same type: " + type + " in " + gl);
+        }
         // Simply return the raw MethodHandle of the recursively computed record mapper
         return recordMapper(component.getType(), gl, byteOffset).ctor;
     }

@@ -956,6 +956,25 @@ public final class TestRecordMapper {
         );
     }
 
+    public record Recurse(Recurse recurse){}
+    @Test
+    public void recursiveDefinition() {
+        var layout = MemoryLayout.structLayout(
+                MemoryLayout.structLayout(
+                        MemoryLayout.structLayout(
+                                MemoryLayout.structLayout(JAVA_INT)
+                        ).withName("recurse")
+                ).withName("recurse")
+        );
+
+        try {
+            layout.recordMapper(Recurse.class);
+            fail("No IllegalArgumentException detected");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("same type"));
+        }
+    }
+
     static public <R extends Record> void testPointType(R expected,
                                                  Object array,
                                                  ValueLayout valueLayout) {
