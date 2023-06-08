@@ -27,8 +27,12 @@
  * @run testng TestArrayCopy
  */
 
+import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -288,9 +292,27 @@ public class TestArrayCopy {
         return MemorySegment.ofArray(arr);
     }
 
+    private static VarHandle arrayVarHandle(ValueLayout layout) {
+        class Holder {
+            static final MethodHandle MH_SCALE;
+            static {
+                try {
+                    MH_SCALE = MethodHandles.lookup().findVirtual(MemoryLayout.class, "scale",
+                            MethodType.methodType(long.class, long.class, long.class));
+                } catch (ReflectiveOperationException e) {
+                    throw new ExceptionInInitializerError(e);
+                }
+            }
+        }
+        MethodHandle scaleHandle = Holder.MH_SCALE.bindTo(layout);
+        scaleHandle = MethodHandles.insertArguments(scaleHandle, 0, 0L);
+
+        return MethodHandles.collectCoordinates(layout.varHandle(), 1, scaleHandle);
+    }
+
     public static MemorySegment truthSegment(MemorySegment srcSeg, CopyHelper<?, ?> helper, int indexShifts, CopyMode mode) {
-        VarHandle indexedHandleNO = helper.elementLayout.withOrder(NATIVE_ORDER).arrayElementVarHandle();
-        VarHandle indexedHandleNNO = helper.elementLayout.withOrder(NON_NATIVE_ORDER).arrayElementVarHandle();
+        VarHandle indexedHandleNO = arrayVarHandle(helper.elementLayout.withOrder(NATIVE_ORDER));
+        VarHandle indexedHandleNNO = arrayVarHandle(helper.elementLayout.withOrder(NON_NATIVE_ORDER));
         MemorySegment dstSeg = MemorySegment.ofArray(srcSeg.toArray(JAVA_BYTE));
         int indexLength = (int) dstSeg.byteSize() / (int)helper.elementLayout.byteSize();
         if (mode.direction) {

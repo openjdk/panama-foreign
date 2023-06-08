@@ -197,8 +197,8 @@ public class TestMemoryInspection {
                 ]""");
         var actual = testWithFreshMemorySegment(Integer.BYTES * 2 * arraySize, segment -> {
             for (long i = 0; i < sequenceLayout.elementCount(); i++) {
-                xh.set(segment, i, 1);
-                yh.set(segment, i, (int) i);
+                xh.set(segment, 0L, i, 1);
+                yh.set(segment, 0L, i, (int) i);
             }
 
             return jdk.internal.foreign.MemoryInspection.inspect(segment, sequenceLayout, jdk.internal.foreign.MemoryInspection.standardRenderer())
@@ -238,9 +238,9 @@ public class TestMemoryInspection {
                     }
                 }""");
         var actual = testWithFreshMemorySegment(Integer.BYTES * 3, segment -> {
-            u0.varHandle(PathElement.groupElement("x")).set(segment, 1);
-            u1.varHandle(PathElement.groupElement("y")).set(segment, 2);
-            u1.varHandle(PathElement.groupElement("z")).set(segment, 3);
+            u0.varHandle(PathElement.groupElement("x")).set(segment, 0L, 1);
+            u1.varHandle(PathElement.groupElement("y")).set(segment, 0L, 2);
+            u1.varHandle(PathElement.groupElement("z")).set(segment, 0L, 3);
             return jdk.internal.foreign.MemoryInspection.inspect(segment, union, jdk.internal.foreign.MemoryInspection.standardRenderer())
                     .collect(joining(System.lineSeparator()));
         });
@@ -265,19 +265,19 @@ public class TestMemoryInspection {
         }
 
         int x() {
-            return (int) xVH.get(memorySegment);
+            return (int) xVH.get(memorySegment, 0L);
         }
 
         int y() {
-            return (int) yVH.get(memorySegment);
+            return (int) yVH.get(memorySegment, 0L);
         }
 
         void x(int x) {
-            xVH.set(memorySegment, x);
+            xVH.set(memorySegment, 0L, x);
         }
 
         void y(int y) {
-            yVH.set(memorySegment, y);
+            yVH.set(memorySegment, 0L, y);
         }
 
         @Override
