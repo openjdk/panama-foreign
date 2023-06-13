@@ -234,7 +234,7 @@ public final class LayoutRecordMapper<T>
                             .asType(MethodType.methodType(Object.class, MemorySegment.class));
 
                     Function<MemorySegment, Object> leafArrayMapper = ms ->
-                            toArray(ms, gl, info.lastDimension(), arrayComponentType, mapperCtor);
+                            toArray(ms, gl, arrayComponentType, mapperCtor);
 
                     // (MemorySegment, Class leafType, Function mapper) ->
                     // (MemorySegment, Function mapper)
@@ -460,27 +460,25 @@ public final class LayoutRecordMapper<T>
                            MethodHandle mapper) {
 
         var slice = slice(segment, elementLayout, offset, count);
-        return toArray(slice, elementLayout, count, type, mapper);
+        return toArray(slice, elementLayout, type, mapper);
     }
 
     @SuppressWarnings("unchecked")
     static <R> R[] toArray(MemorySegment segment,
                            GroupLayout elementLayout,
-                           long count,
                            Class<R> type,
                            MethodHandle mapper) {
 
-        R[] result = (R[]) Array.newInstance(type, Math.toIntExact(count));
-        Spliterator<MemorySegment> spliterator = segment.spliterator(elementLayout);
-        int[] cnt = new int[]{0};
-        spliterator.forEachRemaining(s -> {
-            try {
-                result[cnt[0]++] = (R) mapper.invokeExact(s);
-            } catch (Throwable t) {
-                throw new IllegalArgumentException(t);
-            }
-        });
-        return result;
+        return segment.elements(elementLayout)
+                .map(s -> {
+                    try {
+                     return (R) mapper.invokeExact(s);
+                    } catch (Throwable t) {
+                        throw new IllegalArgumentException(t);
+                    }
+
+                })
+                .toArray(s -> (R[]) Array.newInstance(type, Math.toIntExact(s)));
     }
 
     // Below are `MemorySegment::toArray` wrapper methods that is also taking an offset
