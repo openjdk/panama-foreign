@@ -64,22 +64,21 @@ import jdk.internal.vm.annotation.ForceInline;
 public interface SegmentAllocator {
 
     /**
-     * Converts a Java string into a null-terminated C string using the {@linkplain Charset#defaultCharset() default charset},
+     * Converts a Java string into a null-terminated C string using the {@linkplain StandardCharsets#UTF_8 UTF-8} charset,
      * storing the result into a memory segment.
      * <p>
      * Calling this method is equivalent to the following code:
      * {@snippet lang = java:
-     * allocateString(Charset.defaultCharset(), str);
+     * allocateString(str, StandardCharsets.UTF_8 );
      *}
      *
      * @param str the Java string to be converted into a C string.
      * @return a new native segment containing the converted C string.
-     * @throws UnsupportedOperationException if the default charset is not a {@linkplain StandardCharsets standard charset}.
      */
     @ForceInline
     default MemorySegment allocateString(String str) {
         Objects.requireNonNull(str);
-        return allocateString(Charset.defaultCharset(), str);
+        return allocateString(str, StandardCharsets.UTF_8);
     }
 
     /**
@@ -96,6 +95,10 @@ public interface SegmentAllocator {
      * the string, such as {@link MemorySegment#getString(long)}, the string
      * will appear truncated when read again.
      *
+     * @param str     the Java string to be converted into a C string.
+     * @param charset the charset used to {@linkplain Charset#newEncoder() encode} the string bytes.
+     * @return a new native segment containing the converted C string.
+     * @throws UnsupportedOperationException if {@code charset} is not a {@linkplain StandardCharsets standard charset}.
      * @implSpec the default implementation for this method copies the contents of the provided Java string
      * into a new memory segment obtained by calling {@code this.allocate(B + N)}, where:
      * <ul>
@@ -104,14 +107,9 @@ public interface SegmentAllocator {
      *     <li>{@code N} is the size (in bytes) of the terminator char according to the provided charset. For instance,
      *     this is 1 for {@link StandardCharsets#US_ASCII} and 2 for {@link StandardCharsets#UTF_16}.</li>
      * </ul>
-     *
-     * @param charset the charset used to {@linkplain Charset#newEncoder() encode} the string bytes.
-     * @param str the Java string to be converted into a C string.
-     * @return a new native segment containing the converted C string.
-     * @throws UnsupportedOperationException if {@code charset} is not a {@linkplain StandardCharsets standard charset}.
      */
     @ForceInline
-    default MemorySegment allocateString(Charset charset, String str) {
+    default MemorySegment allocateString(String str, Charset charset) {
         Objects.requireNonNull(charset);
         Objects.requireNonNull(str);
         int termCharSize = StringSupport.CharsetKind.of(charset).terminatorCharSize();

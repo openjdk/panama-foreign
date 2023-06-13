@@ -1058,11 +1058,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     double[] toArray(ValueLayout.OfDouble elementLayout);
 
     /**
-     * Reads a null-terminated string from this segment at the given offset, using the {@linkplain Charset#defaultCharset() default charset}.
+     * Reads a null-terminated string from this segment at the given offset, using the {@linkplain StandardCharsets#UTF_8 UTF-8} charset.
      * <p>
      * Calling this method is equivalent to the following code:
      * {@snippet lang = java:
-     * getString(Charset.defaultCharset(), offset);
+     * getString(offset, StandardCharsets.UTF_8 );
      *}
      *
      * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
@@ -1075,11 +1075,10 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain Scope#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread {@code T},
      * such that {@code isAccessibleBy(T) == false}.
-     * @throws UnsupportedOperationException if the default charset is not a {@linkplain StandardCharsets standard charset}.
      */
     @ForceInline
     default String getString(long offset) {
-        return getString(Charset.defaultCharset(), offset);
+        return getString(offset, StandardCharsets.UTF_8);
     }
 
     /**
@@ -1090,32 +1089,32 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * java.nio.charset.CharsetDecoder} class should be used when more control
      * over the decoding process is required.
      *
+     * @param offset  offset in bytes (relative to this segment address) at which this access operation will occur.
      * @param charset the charset used to {@linkplain Charset#newDecoder() decode} the string bytes.
-     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @return a Java string constructed from the bytes read from the given starting address up to (but not including)
      * the first {@code '\0'} terminator character (assuming one is found).
-     * @throws IllegalArgumentException if the size of the string is greater than the largest string supported by the platform.
-     * @throws IndexOutOfBoundsException if {@code offset < 0} or {@code S + offset > byteSize()}, where {@code S} is the size of the
-     * string (including the terminator character).
-     * @throws IllegalStateException if the {@linkplain #scope() scope} associated with this segment is not
-     * {@linkplain Scope#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread {@code T},
-     * such that {@code isAccessibleBy(T) == false}.
+     * @throws IllegalArgumentException      if the size of the string is greater than the largest string supported by the platform.
+     * @throws IndexOutOfBoundsException     if {@code offset < 0} or {@code S + offset > byteSize()}, where {@code S} is the size of the
+     *                                       string (including the terminator character).
+     * @throws IllegalStateException         if the {@linkplain #scope() scope} associated with this segment is not
+     *                                       {@linkplain Scope#isAlive() alive}.
+     * @throws WrongThreadException          if this method is called from a thread {@code T},
+     *                                       such that {@code isAccessibleBy(T) == false}.
      * @throws UnsupportedOperationException if {@code charset} is not a {@linkplain StandardCharsets standard charset}.
      */
     @ForceInline
-    default String getString(Charset charset, long offset) {
+    default String getString(long offset, Charset charset) {
         Objects.requireNonNull(charset);
         return StringSupport.read(this, offset, charset);
     }
 
     /**
      * Writes the given string into this segment at the given offset, converting it to a null-terminated byte sequence using
-     * the {@linkplain Charset#defaultCharset() default charset}.
+     * the {@linkplain StandardCharsets#UTF_8 UTF-8} charset.
      * <p>
      * Calling this method is equivalent to the following code:
      * {@snippet lang = java:
-     * setString(Charset.defaultCharset(), offset, str);
+     * setString(offset, str, StandardCharsets.UTF_8  );
      *}
      * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      *               the final address of this write operation can be expressed as {@code address() + offset}.
@@ -1125,12 +1124,11 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain Scope#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread {@code T},
      * such that {@code isAccessibleBy(T) == false}.
-     * @throws UnsupportedOperationException if the default charset is not a {@linkplain StandardCharsets standard charset}.
      */
     @ForceInline
     default void setString(long offset, String str) {
         Objects.requireNonNull(str);
-        setString(Charset.defaultCharset(), offset, str);
+        setString(offset, str, StandardCharsets.UTF_8);
     }
 
     /**
@@ -1147,19 +1145,19 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * the string, such as {@link MemorySegment#getString(long)}, the string
      * will appear truncated when read again.
      *
+     * @param offset  offset in bytes (relative to this segment address) at which this access operation will occur.
+     *                the final address of this write operation can be expressed as {@code address() + offset}.
+     * @param str     the Java string to be written into this segment.
      * @param charset the charset used to {@linkplain Charset#newEncoder() encode} the string bytes.
-     * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
-     *               the final address of this write operation can be expressed as {@code address() + offset}.
-     * @param str the Java string to be written into this segment.
-     * @throws IndexOutOfBoundsException if {@code offset < 0} or {@code str.getBytes().length() + offset >= byteSize()}.
-     * @throws IllegalStateException if the {@linkplain #scope() scope} associated with this segment is not
-     * {@linkplain Scope#isAlive() alive}.
-     * @throws WrongThreadException if this method is called from a thread {@code T},
-     * such that {@code isAccessibleBy(T) == false}.
+     * @throws IndexOutOfBoundsException     if {@code offset < 0} or {@code str.getBytes().length() + offset >= byteSize()}.
+     * @throws IllegalStateException         if the {@linkplain #scope() scope} associated with this segment is not
+     *                                       {@linkplain Scope#isAlive() alive}.
+     * @throws WrongThreadException          if this method is called from a thread {@code T},
+     *                                       such that {@code isAccessibleBy(T) == false}.
      * @throws UnsupportedOperationException if {@code charset} is not a {@linkplain StandardCharsets standard charset}.
      */
     @ForceInline
-    default void setString(Charset charset, long offset, String str) {
+    default void setString(long offset, String str, Charset charset) {
         Objects.requireNonNull(charset);
         Objects.requireNonNull(str);
         StringSupport.write(this, offset, charset, str);
