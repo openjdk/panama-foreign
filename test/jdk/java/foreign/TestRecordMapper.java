@@ -97,11 +97,11 @@ public final class TestRecordMapper {
 
     // Manually declared function
 
-    static class PointMapper implements Function<MemorySegment, Point> {
+    static class PointMapper implements GroupLayout.TypeMapper<Point> {
 
         @Override
-        public Point apply(MemorySegment segment) {
-            return new Point(segment.get(JAVA_INT, 0), segment.get(JAVA_INT, 4));
+        public Point apply(MemorySegment segment, long offset) {
+            return new Point(segment.get(JAVA_INT, offset), segment.get(JAVA_INT, offset + 4L));
         }
 
     }
@@ -982,10 +982,10 @@ public final class TestRecordMapper {
     }
 
         @SuppressWarnings("unchecked")
-    static public <R extends Record> void testType(R expected,
-                                            Object array,
-                                            ValueLayout valueLayout,
-                                            String... names) {
+        static public <R extends Record> void testType(R expected,
+                                                       Object array,
+                                                       ValueLayout valueLayout,
+                                                       String... names) {
 
         MemorySegment segment = switch (array) {
             case byte[] a -> MemorySegment.ofArray(a);
@@ -1003,14 +1003,14 @@ public final class TestRecordMapper {
                 .toArray(MemoryLayout[]::new));
 
         Class<R> type = (Class<R>) expected.getClass();
-        Function<MemorySegment, R> mapper = layout.recordMapper(type);
+        GroupLayout.TypeMapper<R> mapper = layout.recordMapper(type);
         R actual = mapper.apply(segment);
         assertEquals(expected, actual);
     }
 
 
     public <T> void test(MemorySegment segment,
-                         Function<MemorySegment, T> mapper,
+                         GroupLayout.TypeMapper<T> mapper,
                          T expected) {
 
         T actual = mapper.apply(segment);

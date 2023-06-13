@@ -26,6 +26,7 @@
 
 package jdk.internal.foreign;
 
+import jdk.internal.ValueBased;
 import jdk.internal.util.ArraysSupport;
 
 import java.lang.foreign.AddressLayout;
@@ -45,7 +46,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Spliterator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -55,8 +55,9 @@ import java.util.stream.Stream;
  *
  * @param <T> the Record type
  */
+@ValueBased
 public final class LayoutRecordMapper<T>
-        implements Function<MemorySegment, T> {
+        implements GroupLayout.TypeMapper<T> {
 
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
     private static final MethodHandles.Lookup PUBLIC_LOOKUP = MethodHandles.publicLookup();
@@ -68,16 +69,21 @@ public final class LayoutRecordMapper<T>
     private final MethodHandles.Lookup lookup;
     private final MethodHandle ctor;
 
-    public LayoutRecordMapper(Class<T> type,
+    public static <T> LayoutRecordMapper<T> create(Class<T> type,
+                                                   GroupLayout layout) {
+        return new LayoutRecordMapper<>(type, layout);
+    }
+
+    private LayoutRecordMapper(Class<T> type,
                               GroupLayout layout) {
         this(type, layout, 0L, 0, PUBLIC_LOOKUP);
     }
 
-    public LayoutRecordMapper(Class<T> type,
-                              GroupLayout layout,
-                              long offset,
-                              int depth,
-                              MethodHandles.Lookup lookup) {
+    private LayoutRecordMapper(Class<T> type,
+                               GroupLayout layout,
+                               long offset,
+                               int depth,
+                               MethodHandles.Lookup lookup) {
 
         if (!type.isRecord() || Record.class.equals(type)) {
             throw new IllegalArgumentException(type + " is not a Record");
@@ -317,11 +323,32 @@ public final class LayoutRecordMapper<T>
     }
 
     @Override
+    public T apply(MemorySegment segment, long offset) {
+        return offset == 0
+                ? apply(segment)
+                : apply(segment.asSlice(offset));
+    }
+
+    @Override
     public String toString() {
         return "LayoutRecordMapper{" +
                 "type=" + type.getName() + ", " +
                 "layout=" + layout + ", " +
                 "offset=" + offset + "}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof LayoutRecordMapper<?> that &&
+                offset == that.offset &&
+                depth == that.depth &&
+                Objects.equals(type, that.type) &&
+                Objects.equals(layout, that.layout);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, layout, offset, depth);
     }
 
     static Class<? extends ValueLayout> topValueLayoutType(ValueLayout vl) {

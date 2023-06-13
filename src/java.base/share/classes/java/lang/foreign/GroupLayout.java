@@ -78,6 +78,41 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
     GroupLayout withByteAlignment(long byteAlignment);
 
     /**
+     * A mapper that can produce instances of type {@code T} given
+     * a MemorySegment and an offset in the segment.
+     *
+     * @param <T> the type of instances produced
+     * @since 22
+     */
+    @FunctionalInterface
+    interface TypeMapper<T> extends Function<MemorySegment, T> {
+
+        /**
+         * {@return an instance of type {@code T} that takes its state from the
+         * provided {@code segment} at the provided {@code offset}}
+         *
+         * @param segment from which the state shall be retrieved
+         * @param offset  in the segment (non-negative)
+         * @throws IllegalArgumentException if the provided offset is negative or if an instance
+         *                                  cannot be produced, for example, if the provided segment
+         *                                  is too small or the provided offset is too large.
+         */
+        T apply(MemorySegment segment, long offset);
+
+        /**
+         * {@return an instance of type T that takes its state from the
+         * provided {@code segment} at the offset zero}
+         *
+         * @param segment from which the state shall be retrieved
+         * @throws IllegalArgumentException if an instance cannot be produced, for
+         *                                  example, if the provided segment is too small.
+         */
+        default T apply(MemorySegment segment) {
+            return apply(segment, 0L);
+        }
+    }
+
+    /**
      * {@return a {@link Function} that can project {@linkplain MemorySegment MemorySegments} into new
      * instances of the provided {@link Record} {@code type} by means of matching the names of the
      * record components with the names of the member layouts in this group layout}
@@ -220,8 +255,8 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      *                                  components for which there are no exact mapping (of names and types) in
      *                                  this group layout or if the provided {@code type} is not public or
      *                                  if the method is otherwise unable to create a record mapper as specified above.
-     * @since 21
+     * @since 22
      */
-    <R extends Record> Function<MemorySegment, R> recordMapper(Class<R> type);
+    <R extends Record> TypeMapper<R> recordMapper(Class<R> type);
 
 }

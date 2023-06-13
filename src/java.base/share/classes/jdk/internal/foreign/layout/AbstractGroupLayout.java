@@ -118,9 +118,9 @@ public sealed abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L
         return byteAlignment() == minByteAlignment;
     }
 
-    public final <R extends Record> Function<MemorySegment, R> recordMapper(Class<R> recordType) {
+    public final <R extends Record> GroupLayout.TypeMapper<R> recordMapper(Class<R> recordType) {
         Objects.requireNonNull(recordType);
-        return new LayoutRecordMapper<>(recordType, (GroupLayout) this);
+        return LayoutRecordMapper.create(recordType, (GroupLayout) this);
     }
 
     /**
