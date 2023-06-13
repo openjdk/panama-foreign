@@ -78,46 +78,59 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
     GroupLayout withByteAlignment(long byteAlignment);
 
     /**
-     * {@return a {@link Function} that can project {@linkplain MemorySegment MemorySegments} onto new instances
-     * of the provided {@link Record} {@code type} by means of matching the names of the
-     * record components with the names of the elements in this group layout}
+     * {@return a {@link Function} that can project {@linkplain MemorySegment MemorySegments} into new
+     * instances of the provided {@link Record} {@code type} by means of matching the names of the
+     * record components with the names of the member layouts in this group layout}
      * <p>
+     * In short, the method finds, for each record component, a corresponding member layout with the same
+     * name in this group layout. There are some restrictions on the record component type and the
+     * corresponding member layout type (e.g. a record component of type {@code int} can only be matched
+     * with a member layout having a carrier type of {@code int.class} (such as {@link ValueLayout#JAVA_INT}).
+     * <p>
+     * Using the member layouts (e.g. observing offsets and {@link java.nio.ByteOrder byte ordering}, a
+     * number of extraction methods are then identified for all the record components and are stored
+     * internally in the returned function.
+     * <p>
+     * Upon invoking the function, the canonical constructor of the record is invoked with the result of all
+     * the extraction methods.
+     * <p>
+     * More formally:
      * A mapper {@code M} between a record type {@code R}, a memory layout {@code L} and an {@code offset}
      * (which is zero for the initial invocation of this method) is defined as follows {@code M(type, layout, offset)};
      * <p>
-     * Let {@code R} comprise its the constituent components
-     * {@code c_1, c_2}, ..., c_N}, where {@code N} is the (non-negative) number of components of {@code R}.
+     * Let {@code R} be a record type with its constituent components:
+     * {@code C1, C2}, ..., CN}, where {@code N} is the (non-negative) number of components of {@code R}.
      * <p>
-     * Let {@code f_a(MemorySegment ms)} be a function that takes
-     * a {@link MemorySegment} {@code ms} and produces a value for {@code c_a}.
+     * Let {@code Fa(MemorySegment ms)} be a function that takes
+     * a {@link MemorySegment} {@code ms} and produces a value for {@code Ca}.
      * <p>
-     * Let {@code L} be a group layout with the elements {@code e_1, e_2, ..., e_M}, where {@code M >= N}.
+     * Let {@code L} be a group layout with the member layouts {@code ML1, ML2, ..., MLM}, where {@code M >= N}.
      * <p>
-     * Let {@code offsetBetween(GroupLayout layout, MemoryLayout target)} be a function that, via
+     * Let {@code offsetOf(GroupLayout L, MemoryLayout LL)} be a function that, via
      * the method {@link MemoryLayout#byteOffset(PathElement...)}, can compute the offset from the
-     * {@code layout L} to a sub-layout of {@code L}.
+     * {@code layout L} to the sub-layout {@code LL}.
      * <p>
-     * Then, for each {@code c_a, a <= N}, there must be a corresponding distinct
-     * {@code e_b} such that the {@link MemoryLayout#name() name} of {@code c_a}
-     * {@link Object#equals(Object) equals} the {@link RecordComponent#getName() name} of {@code e_b} and:
+     * Then, for each {@code Ca, a <= N}, there must be a corresponding distinct
+     * {@code MLb} such that the {@link RecordComponent#getName()} () name} of {@code Ca}
+     * and the {@link MemoryLayout#name() name} of {@code MLb} are the same, and:
      * <ul>
      *    <li>
-     *        <h4>If {@code e_b} is a {@link ValueLayout };</h4>
-     *        then {@code c_a} must be of the exact type of {@code e_b}'s {@link ValueLayout#carrier() carrier()}<br>
-     *        whereby {@code c_a = f_a(MemorySegment ms) = ms.get(e_b, offset + offsetBetween(layout, e_b))}.<br>
+     *        <h4>If {@code MLb} is a {@link ValueLayout };</h4>
+     *        then {@code Ca} must be of the exact type of {@code MLb}'s {@link ValueLayout#carrier() carrier()}<br>
+     *        whereby {@code Ca = Fa(MemorySegment ms) = ms.get(MLb, offset + offsetOf(layout, MLb))}.<br>
      *    </li>
      *    <li>
-     *        <h4>If {@code e_b} is a {@link GroupLayout };</h4>
-     *        then {@code e_a} must be of another {@link Record} type {@code R2}
-     *        (such that {@code R2 != R}) that can be mapped to {@code e_b} via
-     *        another resulting mapper {@code M2 = M(R2, e_b, offset + offsetBetween(layout, e_b))} recursively
-     *        whereby {@code c_a} = {@code f_a(MemorySegment ms) = M2.apply(ms)}<br>
+     *        <h4>If {@code MLb} is a {@link GroupLayout };</h4>
+     *        then {@code Ca} must be of another {@link Record} type {@code R2}
+     *        (such that {@code R2 != R}) that can be mapped to {@code Ca} via
+     *        another resulting mapper {@code M2 = M(R2, MLb, offset + offsetOf(layout, MLb))} recursively
+     *        whereby {@code Ca} = {@code Fa(MemorySegment ms) = M2.apply(ms)}<br>
      *    </li>
      *    <li>
-     *        <h4>If {@code e_b} is a {@link SequenceLayout };</h4>
-     *        then {@code c_a} must be an array {@code C[]^D} (an array of depth {@code D}
-     *        and with an array component type {@code C}) that can be mapped to {@code e_b} via a resulting
-     *        "array mapper" {@code A2} obtained via recursively pealing off nested sequence layouts in {@code e_b}
+     *        <h4>If {@code MLb} is a {@link SequenceLayout };</h4>
+     *        then {@code Ca} must be an array {@code C[]^D} (an array of depth {@code D}
+     *        and with an array component type {@code C}) that can be mapped to {@code Cb} via a resulting
+     *        "array mapper" {@code A2} obtained via recursively pealing off nested sequence layouts in {@code MLb}
      *        and then (after {@code D} pealing operations)
      *        finally determining the leaf element layout {@code LL = } {@link SequenceLayout#elementLayout() elementLayout()}
      *        and subsequently obtaining an array mapper {@code AM(MemorySegment ms, long componentOffset)} with
@@ -125,30 +138,25 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      *        <ul>
      *            <li>
      *            if {@code LL} is a {@link ValueLayout}:
-     *            {@code LM} = {@link MemorySegment#get(ValueLayout.OfInt, long) ms -> ms.get(LL, offset + offsetBetween(layout, e_b))}
+     *            {@code LM} = {@link MemorySegment#get(ValueLayout.OfInt, long) ms -> ms.get(LL, offset + offsetOf(layout, MLb))}
      *            </li>
      *
      *            <li>
      *            if {@code LL} is a {@link GroupLayout}:
-     *            {@code LM} = M(C.type, LL, offset + offsetBetween(layout, e_b)} recursively.
+     *            {@code LM} = M(C.type, LL, offset + offsetOf(layout, MLb)} recursively.
      *            </li>
      *        </ul>
-     *        whereby {@code c_a} = {@code f_a(MemorySegment ms)} will be extracted by
+     *        whereby {@code Ca} = {@code Fa(MemorySegment ms)} will be extracted by
      *        applying {@code AM} which, in turn, will apply {@code LM} recursively at
      *        a memory segment slice at the applicable multidimensional array offset(s).<br>
      *        Note: boolean arrays are not supported despite the above and if an attempt is made to map
      *        a boolean array, an {@link IllegalArgumentException} will be thrown.
      *    </li>
      *    <li>
-     *        <h4>If {@code e_b} is a {@link PaddingLayout };</h4>
-     *        then the method will throw an {@link IllegalArgumentException} as a padding layout cannot
-     *        be projected to any record component.<br>
-     *    </li>
-     *    <li>
      *        <h4>Otherwise;</h4>
-     *        the method will throw an {@link IllegalArgumentException} as {@code e_b} cannot
-     *        be projected onto {@code c_a}.  An example of this is trying to match a record component
-     *        of type {@link String}.<br>
+     *        the method will throw an {@link IllegalArgumentException} as {@code MLb} cannot
+     *        be projected onto {@code Ca}.  An example of this is trying to match a record component
+     *        of type {@link String} or trying to map a {@link PaddingLayout} element.<br>
      *    </li>
      * </ul>
      * <p>
@@ -156,7 +164,7 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      * subsequently invoke the record type's canonical constructor {@code R::new} using a composition
      * of the above mapping functions:
      * <p>
-     * {@code ms -> new R(f_1(ms), f_2(ms), ..., f_N(ms))}
+     * {@code ms -> new R(F1(ms), F2(ms), ..., FN(ms))}
      * <p>
      * Unnamed elements in this group will be ignored.
      * Unmatched elements (with respect to the name) in this group layout will be ignored.
