@@ -69,7 +69,7 @@ public interface SegmentAllocator {
      * <p>
      * Calling this method is equivalent to the following code:
      * {@snippet lang = java:
-     * allocateString(str, StandardCharsets.UTF_8 );
+     * allocateString(str, StandardCharsets.UTF_8);
      *}
      *
      * @param str the Java string to be converted into a C string.

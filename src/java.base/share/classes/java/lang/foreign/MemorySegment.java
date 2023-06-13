@@ -1058,19 +1058,21 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     double[] toArray(ValueLayout.OfDouble elementLayout);
 
     /**
-     * Reads a null-terminated string from this segment at the given offset, using the {@linkplain StandardCharsets#UTF_8 UTF-8} charset.
+     * Reads a null-terminated string from this segment at the given offset, using the
+     * {@linkplain StandardCharsets#UTF_8 UTF-8} charset.
      * <p>
      * Calling this method is equivalent to the following code:
      * {@snippet lang = java:
-     * getString(offset, StandardCharsets.UTF_8 );
+     * getString(offset, StandardCharsets.UTF_8);
      *}
      *
      * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      * @return a Java string constructed from the bytes read from the given starting address up to (but not including)
      * the first {@code '\0'} terminator character (assuming one is found).
      * @throws IllegalArgumentException if the size of the string is greater than the largest string supported by the platform.
-     * @throws IndexOutOfBoundsException if {@code offset < 0} or {@code S + offset > byteSize()}, where {@code S} is the size of the
-     * string (including the terminator character).
+     * @throws IndexOutOfBoundsException     if {@code offset < 0}.
+     * @throws IndexOutOfBoundsException     if {@code offset} > byteSize() - (B + 1)}, where {@code B} is the size,
+     * in bytes, of the string encoded using UTF-8 charset {@code str.getBytes(StandardCharsets.UTF_8).length}).
      * @throws IllegalStateException if the {@linkplain #scope() scope} associated with this segment is not
      * {@linkplain Scope#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread {@code T},
@@ -1094,8 +1096,14 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * @return a Java string constructed from the bytes read from the given starting address up to (but not including)
      * the first {@code '\0'} terminator character (assuming one is found).
      * @throws IllegalArgumentException      if the size of the string is greater than the largest string supported by the platform.
-     * @throws IndexOutOfBoundsException     if {@code offset < 0} or {@code S + offset > byteSize()}, where {@code S} is the size of the
-     *                                       string (including the terminator character).
+     * @throws IndexOutOfBoundsException     if {@code offset < 0}.
+     * @throws IndexOutOfBoundsException     if {@code offset} > byteSize() - (B + N)}, where:
+     * <ul>
+     *     <li>{@code B} is the size, in bytes, of the string encoded using the provided charset
+     *     (e.g. {@code str.getBytes(charset).length});</li>
+     *     <li>{@code N} is the size (in bytes) of the terminator char according to the provided charset. For instance,
+     *     this is 1 for {@link StandardCharsets#US_ASCII} and 2 for {@link StandardCharsets#UTF_16}.</li>
+     * </ul>
      * @throws IllegalStateException         if the {@linkplain #scope() scope} associated with this segment is not
      *                                       {@linkplain Scope#isAlive() alive}.
      * @throws WrongThreadException          if this method is called from a thread {@code T},
@@ -1109,17 +1117,19 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     }
 
     /**
-     * Writes the given string into this segment at the given offset, converting it to a null-terminated byte sequence using
-     * the {@linkplain StandardCharsets#UTF_8 UTF-8} charset.
+     * Writes the given string into this segment at the given offset, converting it to a null-terminated byte sequence
+     * using the {@linkplain StandardCharsets#UTF_8 UTF-8} charset.
      * <p>
      * Calling this method is equivalent to the following code:
      * {@snippet lang = java:
-     * setString(offset, str, StandardCharsets.UTF_8  );
+     * setString(offset, str, StandardCharsets.UTF_8);
      *}
      * @param offset offset in bytes (relative to this segment address) at which this access operation will occur.
      *               the final address of this write operation can be expressed as {@code address() + offset}.
      * @param str the Java string to be written into this segment.
-     * @throws IndexOutOfBoundsException if {@code offset < 0} or {@code str.getBytes().length() + offset >= byteSize()}.
+     * @throws IndexOutOfBoundsException     if {@code offset < 0}.
+     * @throws IndexOutOfBoundsException     if {@code offset} > byteSize() - (B + 1}, where {@code B} is the size,
+     * in bytes, of the string encoded using UTF-8 charset {@code str.getBytes(StandardCharsets.UTF_8).length}).
      * @throws IllegalStateException if the {@linkplain #scope() scope} associated with this segment is not
      * {@linkplain Scope#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread {@code T},
@@ -1149,7 +1159,14 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      *                the final address of this write operation can be expressed as {@code address() + offset}.
      * @param str     the Java string to be written into this segment.
      * @param charset the charset used to {@linkplain Charset#newEncoder() encode} the string bytes.
-     * @throws IndexOutOfBoundsException     if {@code offset < 0} or {@code str.getBytes().length() + offset >= byteSize()}.
+     * @throws IndexOutOfBoundsException     if {@code offset < 0}.
+     * @throws IndexOutOfBoundsException     if {@code offset} > byteSize() - (B + N)}, where:
+     * <ul>
+     *     <li>{@code B} is the size, in bytes, of the string encoded using the provided charset
+     *     (e.g. {@code str.getBytes(charset).length});</li>
+     *     <li>{@code N} is the size (in bytes) of the terminator char according to the provided charset. For instance,
+     *     this is 1 for {@link StandardCharsets#US_ASCII} and 2 for {@link StandardCharsets#UTF_16}.</li>
+     * </ul>
      * @throws IllegalStateException         if the {@linkplain #scope() scope} associated with this segment is not
      *                                       {@linkplain Scope#isAlive() alive}.
      * @throws WrongThreadException          if this method is called from a thread {@code T},
