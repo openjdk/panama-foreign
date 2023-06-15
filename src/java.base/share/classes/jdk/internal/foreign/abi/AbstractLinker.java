@@ -24,6 +24,7 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.SystemLookup;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
@@ -52,8 +53,10 @@ import java.lang.foreign.UnionLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.util.HashSet;
 import java.util.List;
 import java.nio.ByteOrder;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -132,6 +135,11 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
     @Override
     public SystemLookup defaultLookup() {
         return SystemLookup.getInstance();
+    }
+
+    @Override
+    public Map<String, MemoryLayout> canonicalLayouts() {
+        return CANONICAL_LAYOUTS_MAP;
     }
 
     /** {@return byte order used by this linker} */
@@ -233,7 +241,7 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
         if (valueLayout instanceof AddressLayout addressLayout) {
             valueLayout = addressLayout.withoutTargetLayout();
         }
-        if (!SUPPORTED_LAYOUTS.contains(valueLayout.withoutName())) {
+        if (!CANONICAL_LAYOUTS.contains(valueLayout.withoutName())) {
             throw new IllegalArgumentException("Unsupported layout: " + valueLayout);
         }
     }
@@ -270,15 +278,33 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
                 .orElseGet(() -> FunctionDescriptor.ofVoid(stripNames(function.argumentLayouts())));
     }
 
-    private static final Set<MemoryLayout> SUPPORTED_LAYOUTS = Set.of(
-            ValueLayout.JAVA_BOOLEAN,
-            ValueLayout.JAVA_BYTE,
-            ValueLayout.JAVA_CHAR,
-            ValueLayout.JAVA_SHORT,
-            ValueLayout.JAVA_INT,
-            ValueLayout.JAVA_FLOAT,
-            ValueLayout.JAVA_LONG,
-            ValueLayout.JAVA_DOUBLE,
-            ValueLayout.ADDRESS
+    private static final Map<String, MemoryLayout> CANONICAL_LAYOUTS_MAP = Map.ofEntries(
+            // specified canonical layouts
+            Map.entry("bool", ValueLayout.JAVA_BOOLEAN),
+            Map.entry("char", ValueLayout.JAVA_BYTE),
+            Map.entry("short", ValueLayout.JAVA_SHORT),
+            Map.entry("int", ValueLayout.JAVA_INT),
+            Map.entry("float", ValueLayout.JAVA_FLOAT),
+            Map.entry("long", CABI.current() == CABI.WIN_64 ? ValueLayout.JAVA_INT : ValueLayout.JAVA_LONG),
+            Map.entry("long long", ValueLayout.JAVA_LONG),
+            Map.entry("double", ValueLayout.JAVA_DOUBLE),
+            Map.entry("void*", ValueLayout.ADDRESS),
+            Map.entry("size_t", ValueLayout.ADDRESS.byteSize() == Integer.BYTES ? ValueLayout.JAVA_INT : ValueLayout.JAVA_LONG),
+            // unspecified size-dependent layouts
+            Map.entry("int8_t", ValueLayout.JAVA_BYTE),
+            Map.entry("int16_t", ValueLayout.JAVA_SHORT),
+            Map.entry("int32_t", ValueLayout.JAVA_INT),
+            Map.entry("int64_t", ValueLayout.JAVA_LONG),
+            // unspecified JNI layouts
+            Map.entry("jboolean", ValueLayout.JAVA_BOOLEAN),
+            Map.entry("jchar", ValueLayout.JAVA_CHAR),
+            Map.entry("jbyte", ValueLayout.JAVA_BYTE),
+            Map.entry("jshort", ValueLayout.JAVA_SHORT),
+            Map.entry("jint", ValueLayout.JAVA_INT),
+            Map.entry("jlong", ValueLayout.JAVA_LONG),
+            Map.entry("jfloat", ValueLayout.JAVA_FLOAT),
+            Map.entry("jdouble", ValueLayout.JAVA_DOUBLE)
     );
+
+    private static final Set<MemoryLayout> CANONICAL_LAYOUTS = new HashSet<>(CANONICAL_LAYOUTS_MAP.values());
 }
