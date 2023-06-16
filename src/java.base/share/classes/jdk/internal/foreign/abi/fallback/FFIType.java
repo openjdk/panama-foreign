@@ -44,6 +44,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static java.lang.foreign.ValueLayout.JAVA_LONG;
 import static java.lang.foreign.ValueLayout.JAVA_SHORT;
@@ -58,7 +59,7 @@ import static java.lang.foreign.ValueLayout.JAVA_SHORT;
  * } ffi_type;
  */
 class FFIType {
-    private static final ValueLayout SIZE_T = switch ((int) ADDRESS.byteSize()) {
+    static final ValueLayout SIZE_T = switch ((int) ADDRESS.byteSize()) {
             case 8 -> JAVA_LONG;
             case 4 -> JAVA_INT;
             default -> throw new IllegalStateException("Address size not supported: " + ADDRESS.byteSize());
@@ -141,6 +142,20 @@ class FFIType {
                 }
                 expectedOffset += element.byteSize();
             }
+        }
+    }
+
+    static ValueLayout layoutFor(MemorySegment ffiType) {
+        if (ffiType.equals(LibFallback.sint8Type())) {
+            return JAVA_BYTE;
+        } else if (ffiType.equals(LibFallback.sint16Type())) {
+            return JAVA_SHORT;
+        } else if (ffiType.equals(LibFallback.sint32Type())) {
+            return JAVA_INT;
+        } else if (ffiType.equals(LibFallback.sint64Type())) {
+            return JAVA_LONG;
+        } else {
+            throw new IllegalStateException("FFI type cannot be mapped to a canonical type");
         }
     }
 }

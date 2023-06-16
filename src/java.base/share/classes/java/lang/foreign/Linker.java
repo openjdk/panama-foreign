@@ -58,11 +58,11 @@ import java.util.stream.Stream;
  * <li>A linker allows foreign functions to call Java method handles,
  * via the generation of {@linkplain #upcallStub(MethodHandle, FunctionDescriptor, Arena, Option...) upcall stubs}.</li>
  * </ul>
- * A linker provides a way to lookup up the <em>canonical layouts</em> associated with the data types used by the ABI.
+ * A linker provides a way to look up the <em>canonical layouts</em> associated with the data types used by the ABI.
  * For example, a linker implementing the C ABI might choose to provide a canonical layout for the C {@code size_t}
  * type. On 64-bit platforms, this canonical layout might be equal to {@link ValueLayout#JAVA_LONG}. The canonical
  * layouts supported by a linker are exposed via the {@link #canonicalLayouts()} method, which returns a map from
- * ABI type names to canonical layouts.
+ * type names to canonical layouts.
  * <p>
  * In addition, a linker provides a way to look up foreign functions in libraries that conform to the ABI. Each linker
  * chooses a set of libraries that are commonly used on the OS and processor combination associated with the ABI.

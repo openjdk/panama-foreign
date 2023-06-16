@@ -206,3 +206,18 @@ JNIEXPORT jlong JNICALL
 Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1pointer(JNIEnv* env, jclass cls) {
   return ptr_to_jlong(&ffi_type_pointer);
 }
+
+JNIEXPORT jlong JNICALL
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1short(JNIEnv* env, jclass cls) {
+  return ptr_to_jlong(&ffi_type_sshort);
+}
+
+JNIEXPORT jlong JNICALL
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1int(JNIEnv* env, jclass cls) {
+  return ptr_to_jlong(&ffi_type_sint);
+}
+
+JNIEXPORT jlong JNICALL
+Java_jdk_internal_foreign_abi_fallback_LibFallback_ffi_1type_1long(JNIEnv* env, jclass cls) {
+  return ptr_to_jlong(&ffi_type_slong);
+}

@@ -24,7 +24,6 @@
  */
 package jdk.internal.foreign.abi;
 
-import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.SystemLookup;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
@@ -56,7 +55,6 @@ import java.lang.invoke.MethodType;
 import java.util.HashSet;
 import java.util.List;
 import java.nio.ByteOrder;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -72,6 +70,7 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
     private record LinkRequest(FunctionDescriptor descriptor, LinkerOptions options) {}
     private final SoftReferenceCache<LinkRequest, MethodHandle> DOWNCALL_CACHE = new SoftReferenceCache<>();
     private final SoftReferenceCache<LinkRequest, UpcallStubFactory> UPCALL_CACHE = new SoftReferenceCache<>();
+    private final Set<MemoryLayout> CANONICAL_LAYOUTS_CACHE = new HashSet<>(canonicalLayouts().values());
 
     @Override
     @CallerSensitive
@@ -135,11 +134,6 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
     @Override
     public SystemLookup defaultLookup() {
         return SystemLookup.getInstance();
-    }
-
-    @Override
-    public Map<String, MemoryLayout> canonicalLayouts() {
-        return CANONICAL_LAYOUTS_MAP;
     }
 
     /** {@return byte order used by this linker} */
@@ -217,7 +211,7 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
     }
 
     // check for trailing padding
-    private static void checkGroupSize(GroupLayout gl, long maxUnpaddedOffset) {
+    private void checkGroupSize(GroupLayout gl, long maxUnpaddedOffset) {
         long expectedSize = Utils.alignUp(maxUnpaddedOffset, gl.byteAlignment());
         if (gl.byteSize() != expectedSize) {
             throw new IllegalArgumentException("Layout '" + gl + "' has unexpected size: "
@@ -227,7 +221,7 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
 
     // checks both that there is no excess padding between 'memberLayout' and
     // the previous layout
-    private static void checkMemberOffset(StructLayout parent, MemoryLayout memberLayout,
+    private void checkMemberOffset(StructLayout parent, MemoryLayout memberLayout,
                                           long lastUnpaddedOffset, long offset) {
         long expectedOffset = Utils.alignUp(lastUnpaddedOffset, memberLayout.byteAlignment());
         if (expectedOffset != offset) {
@@ -236,17 +230,17 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
         }
     }
 
-    private static void checkSupported(ValueLayout valueLayout) {
+    private void checkSupported(ValueLayout valueLayout) {
         valueLayout = valueLayout.withoutName();
         if (valueLayout instanceof AddressLayout addressLayout) {
             valueLayout = addressLayout.withoutTargetLayout();
         }
-        if (!CANONICAL_LAYOUTS.contains(valueLayout.withoutName())) {
+        if (!CANONICAL_LAYOUTS_CACHE.contains(valueLayout.withoutName())) {
             throw new IllegalArgumentException("Unsupported layout: " + valueLayout);
         }
     }
 
-    private static void checkHasNaturalAlignment(MemoryLayout layout) {
+    private void checkHasNaturalAlignment(MemoryLayout layout) {
         if (!((AbstractLayout<?>) layout).hasNaturalAlignment()) {
             throw new IllegalArgumentException("Layout alignment must be natural alignment: " + layout);
         }
@@ -277,34 +271,4 @@ public abstract sealed class AbstractLinker implements Linker permits LinuxAArch
                 .map(rl -> FunctionDescriptor.of(stripNames(rl), stripNames(function.argumentLayouts())))
                 .orElseGet(() -> FunctionDescriptor.ofVoid(stripNames(function.argumentLayouts())));
     }
-
-    private static final Map<String, MemoryLayout> CANONICAL_LAYOUTS_MAP = Map.ofEntries(
-            // specified canonical layouts
-            Map.entry("bool", ValueLayout.JAVA_BOOLEAN),
-            Map.entry("char", ValueLayout.JAVA_BYTE),
-            Map.entry("short", ValueLayout.JAVA_SHORT),
-            Map.entry("int", ValueLayout.JAVA_INT),
-            Map.entry("float", ValueLayout.JAVA_FLOAT),
-            Map.entry("long", CABI.current() == CABI.WIN_64 ? ValueLayout.JAVA_INT : ValueLayout.JAVA_LONG),
-            Map.entry("long long", ValueLayout.JAVA_LONG),
-            Map.entry("double", ValueLayout.JAVA_DOUBLE),
-            Map.entry("void*", ValueLayout.ADDRESS),
-            Map.entry("size_t", ValueLayout.ADDRESS.byteSize() == Integer.BYTES ? ValueLayout.JAVA_INT : ValueLayout.JAVA_LONG),
-            // unspecified size-dependent layouts
-            Map.entry("int8_t", ValueLayout.JAVA_BYTE),
-            Map.entry("int16_t", ValueLayout.JAVA_SHORT),
-            Map.entry("int32_t", ValueLayout.JAVA_INT),
-            Map.entry("int64_t", ValueLayout.JAVA_LONG),
-            // unspecified JNI layouts
-            Map.entry("jboolean", ValueLayout.JAVA_BOOLEAN),
-            Map.entry("jchar", ValueLayout.JAVA_CHAR),
-            Map.entry("jbyte", ValueLayout.JAVA_BYTE),
-            Map.entry("jshort", ValueLayout.JAVA_SHORT),
-            Map.entry("jint", ValueLayout.JAVA_INT),
-            Map.entry("jlong", ValueLayout.JAVA_LONG),
-            Map.entry("jfloat", ValueLayout.JAVA_FLOAT),
-            Map.entry("jdouble", ValueLayout.JAVA_DOUBLE)
-    );
-
-    private static final Set<MemoryLayout> CANONICAL_LAYOUTS = new HashSet<>(CANONICAL_LAYOUTS_MAP.values());
 }

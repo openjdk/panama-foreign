@@ -59,6 +59,11 @@ final class LibFallback {
     static MemorySegment pointerType() { return NativeConstants.POINTER_TYPE; }
     static MemorySegment voidType() { return NativeConstants.VOID_TYPE; }
 
+    // platform-dependent types
+    static MemorySegment shortType() { return NativeConstants.SHORT_TYPE; }
+    static MemorySegment intType() { return NativeConstants.INT_TYPE; }
+    static MemorySegment longType() { return NativeConstants.LONG_TYPE; }
+
     static short structTag() { return NativeConstants.STRUCT_TAG; }
 
     private static final MethodType UPCALL_TARGET_TYPE = MethodType.methodType(void.class, MemorySegment.class, MemorySegment.class);
@@ -216,6 +221,9 @@ final class LibFallback {
     private static native long ffi_type_float();
     private static native long ffi_type_double();
     private static native long ffi_type_pointer();
+    private static native long ffi_type_short();
+    private static native long ffi_type_int();
+    private static native long ffi_type_long();
 
     // put these in a separate class to avoid an UnsatisfiedLinkError
     // when LibFallback is initialized but the library is not present
@@ -233,6 +241,10 @@ final class LibFallback {
         static final MemorySegment FLOAT_TYPE = MemorySegment.ofAddress(ffi_type_float());
         static final MemorySegment DOUBLE_TYPE = MemorySegment.ofAddress(ffi_type_double());
         static final MemorySegment POINTER_TYPE = MemorySegment.ofAddress(ffi_type_pointer());
+        static final MemorySegment SHORT_TYPE = MemorySegment.ofAddress(ffi_type_short());
+        static final MemorySegment INT_TYPE = MemorySegment.ofAddress(ffi_type_int());
+        static final MemorySegment LONG_TYPE = MemorySegment.ofAddress(ffi_type_long());
+
 
         static final MemorySegment VOID_TYPE = MemorySegment.ofAddress(ffi_type_void());
         static final short STRUCT_TAG = ffi_type_struct();
