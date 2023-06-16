@@ -40,7 +40,8 @@ import java.util.Map;
 
 public final class LinuxRISCV64Linker extends AbstractLinker {
 
-    static final Map<String, MemoryLayout> CANONICAL_LAYOUTS = SharedUtils.canonicalLayouts(ValueLayout.JAVA_LONG, ValueLayout.JAVA_LONG);
+    static final Map<String, MemoryLayout> CANONICAL_LAYOUTS =
+            SharedUtils.canonicalLayouts(ValueLayout.JAVA_LONG, ValueLayout.JAVA_LONG, ValueLayout.JAVA_INT);
 
     public static LinuxRISCV64Linker getInstance() {
         final class Holder {

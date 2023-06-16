@@ -60,9 +60,10 @@ final class LibFallback {
     static MemorySegment voidType() { return NativeConstants.VOID_TYPE; }
 
     // platform-dependent types
-    static MemorySegment shortType() { return NativeConstants.SHORT_TYPE; }
-    static MemorySegment intType() { return NativeConstants.INT_TYPE; }
-    static MemorySegment longType() { return NativeConstants.LONG_TYPE; }
+    static int shortSize() { return NativeConstants.SIZEOF_SHORT; }
+    static int intSize() { return NativeConstants.SIZEOF_INT; }
+    static int longSize() {return NativeConstants.SIZEOF_LONG; }
+    static int wcharSize() {return NativeConstants.SIZEOF_WCHAR; }
 
     static short structTag() { return NativeConstants.STRUCT_TAG; }
 
@@ -221,9 +222,10 @@ final class LibFallback {
     private static native long ffi_type_float();
     private static native long ffi_type_double();
     private static native long ffi_type_pointer();
-    private static native long ffi_type_short();
-    private static native long ffi_type_int();
-    private static native long ffi_type_long();
+    private static native int ffi_sizeof_short();
+    private static native int ffi_sizeof_int();
+    private static native int ffi_sizeof_long();
+    private static native int ffi_sizeof_wchar();
 
     // put these in a separate class to avoid an UnsatisfiedLinkError
     // when LibFallback is initialized but the library is not present
@@ -241,9 +243,10 @@ final class LibFallback {
         static final MemorySegment FLOAT_TYPE = MemorySegment.ofAddress(ffi_type_float());
         static final MemorySegment DOUBLE_TYPE = MemorySegment.ofAddress(ffi_type_double());
         static final MemorySegment POINTER_TYPE = MemorySegment.ofAddress(ffi_type_pointer());
-        static final MemorySegment SHORT_TYPE = MemorySegment.ofAddress(ffi_type_short());
-        static final MemorySegment INT_TYPE = MemorySegment.ofAddress(ffi_type_int());
-        static final MemorySegment LONG_TYPE = MemorySegment.ofAddress(ffi_type_long());
+        static final int SIZEOF_SHORT = ffi_sizeof_short();
+        static final int SIZEOF_INT = ffi_sizeof_int();
+        static final int SIZEOF_LONG = ffi_sizeof_long();
+        static final int SIZEOF_WCHAR = ffi_sizeof_wchar();
 
 
         static final MemorySegment VOID_TYPE = MemorySegment.ofAddress(ffi_type_void());

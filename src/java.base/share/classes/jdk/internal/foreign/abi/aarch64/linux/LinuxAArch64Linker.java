@@ -44,7 +44,8 @@ import java.util.Map;
  */
 public final class LinuxAArch64Linker extends AbstractLinker {
 
-    static final Map<String, MemoryLayout> CANONICAL_LAYOUTS = SharedUtils.canonicalLayouts(ValueLayout.JAVA_LONG, ValueLayout.JAVA_LONG);
+    static final Map<String, MemoryLayout> CANONICAL_LAYOUTS =
+            SharedUtils.canonicalLayouts(ValueLayout.JAVA_LONG, ValueLayout.JAVA_LONG, ValueLayout.JAVA_INT);
 
     public static LinuxAArch64Linker getInstance() {
         final class Holder {

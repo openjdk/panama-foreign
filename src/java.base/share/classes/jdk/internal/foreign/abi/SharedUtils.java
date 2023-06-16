@@ -494,7 +494,7 @@ public final class SharedUtils {
         }
     }
 
-    public static Map<String, MemoryLayout> canonicalLayouts(ValueLayout longLayout, ValueLayout sizetLayout) {
+    public static Map<String, MemoryLayout> canonicalLayouts(ValueLayout longLayout, ValueLayout sizetLayout, ValueLayout wchartLayout) {
         return Map.ofEntries(
                 // specified canonical layouts
                 Map.entry("bool", ValueLayout.JAVA_BOOLEAN),
@@ -507,6 +507,7 @@ public final class SharedUtils {
                 Map.entry("double", ValueLayout.JAVA_DOUBLE),
                 Map.entry("void*", ValueLayout.ADDRESS),
                 Map.entry("size_t", sizetLayout),
+                Map.entry("wchar_t", wchartLayout),
                 // unspecified size-dependent layouts
                 Map.entry("int8_t", ValueLayout.JAVA_BYTE),
                 Map.entry("int16_t", ValueLayout.JAVA_SHORT),

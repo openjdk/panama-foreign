@@ -310,9 +310,16 @@ public final class FallbackLinker extends AbstractLinker {
         CANONICAL_LAYOUTS.put("void*", ADDRESS);
         // platform-dependent sizes
         CANONICAL_LAYOUTS.put("size_t", FFIType.SIZE_T);
-        CANONICAL_LAYOUTS.put("short", FFIType.layoutFor(LibFallback.shortType()));
-        CANONICAL_LAYOUTS.put("int", FFIType.layoutFor(LibFallback.intType()));
-        CANONICAL_LAYOUTS.put("long", FFIType.layoutFor(LibFallback.longType()));
+        CANONICAL_LAYOUTS.put("short", FFIType.layoutFor(LibFallback.shortSize()));
+        CANONICAL_LAYOUTS.put("int", FFIType.layoutFor(LibFallback.intSize()));
+        CANONICAL_LAYOUTS.put("long", FFIType.layoutFor(LibFallback.longSize()));
+        int wchar_size = LibFallback.wcharSize();
+        if (wchar_size == 2) {
+            // prefer JAVA_CHAR
+            CANONICAL_LAYOUTS.put("wchar_t", JAVA_CHAR);
+        } else {
+            CANONICAL_LAYOUTS.put("wchar_t", FFIType.layoutFor(wchar_size));
+        }
         // JNI types
         CANONICAL_LAYOUTS.put("jboolean", JAVA_BOOLEAN);
         CANONICAL_LAYOUTS.put("jchar", JAVA_CHAR);

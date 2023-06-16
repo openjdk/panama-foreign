@@ -135,6 +135,7 @@ import java.util.stream.Stream;
  *     <li>{@code float}</li>
  *     <li>{@code double}</li>
  *     <li>{@code size_t}</li>
+ *     <li>{@code wchar_t}</li>
  *     <li>{@code void*}</li>
  * </ul>
  * As noted above, the specific canonical layout associated with each type can vary, depending on the data model

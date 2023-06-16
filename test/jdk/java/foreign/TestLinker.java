@@ -162,6 +162,7 @@ public class TestLinker extends NativeTestHelper {
                 { "double" },
                 { "void*" },
                 { "size_t" },
+                { "wchar_t" },
         };
     }
 }
