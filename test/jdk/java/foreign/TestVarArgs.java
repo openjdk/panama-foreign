@@ -181,7 +181,7 @@ public class TestVarArgs extends CallGeneratorHelper {
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment seg = ptr.asSlice(0, layout)
                     .reinterpret(arena, null);
-            Object obj = getter.invoke(seg, 0L);
+            Object obj = getter.invoke(seg);
             varArg.check(obj);
         } catch (Throwable e) {
             throw new RuntimeException(e);
@@ -219,11 +219,13 @@ public class TestVarArgs extends CallGeneratorHelper {
         }
 
         private static Arg primitiveArg(NativeType id, MemoryLayout layout, TestValue value) {
-            return new Arg(id, layout, value, layout.varHandle().toMethodHandle(VarHandle.AccessMode.GET));
+            MethodHandle getterHandle = layout.varHandle().toMethodHandle(VarHandle.AccessMode.GET);
+            getterHandle = MethodHandles.insertArguments(getterHandle, 1, 0L); // align signature with getter for structs
+            return new Arg(id, layout, value, getterHandle);
         }
 
         private static Arg structArg(NativeType id, MemoryLayout layout, TestValue value) {
-            return new Arg(id, layout, value, MethodHandles.dropArguments(MethodHandles.identity(MemorySegment.class), 1, long.class));
+            return new Arg(id, layout, value, MethodHandles.identity(MemorySegment.class));
         }
 
         public void check(Object actual) {

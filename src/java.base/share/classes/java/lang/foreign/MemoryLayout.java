@@ -431,7 +431,9 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      *     layout path.
      * </ul>
      * <p>
-     * The final address accessed by the returned var handle can be computed as follows:
+     * A layout path consists of zero or more <em>path sections</em> delimited by
+     * <a href=#deref-path-elements>dereference path elements</a>. For each section of the layout path, the  final
+     * accessed address can be computed as follows:
      *
      * <blockquote><pre>{@code
      * address = base(segment) + offset
@@ -441,7 +443,8 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * For native segments, this function just returns the native segment's {@linkplain MemorySegment#address() address}.
      * For heap segments, this function is more complex, as the address of heap segments is virtualized. The {@code offset}
      * is obtained as if by a call to a {@linkplain #byteOffsetHandle(PathElement...) byte offset handle} constructed using
-     * the given path elements.
+     * the path elements pertaining to a particular path section. Where the arguments are taken from the dynamic
+     * {@code long} coordinates corresponding to that path section.
      * <p>
      * The accessed address must be <a href="MemorySegment.html#segment-alignment">aligned</a> according to the {@linkplain
      * #byteAlignment() alignment constraint} of the root layout (this layout). Note that this can be more strict
@@ -449,6 +452,30 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * <p>
      * Additionally, the provided dynamic values must conform to bounds which are derived from the layout path, that is,
      * {@code 0 <= x_i < b_i}, where {@code 1 <= i <= n}, or {@link IndexOutOfBoundsException} is thrown.
+     * <p>
+     * Multiple path sections can be chained, with <a href=#deref-path-elements>dereference path elements</a>.
+     * A dereference path element constructs a fresh native memory segment whose base address is the address value
+     * obtained by accessing a memory segment at the offset determined by the layout path elements immediately
+     * preceding the dereference path element. In other words, if a layout path contains one or more dereference path
+     * elements, the final address accessed by the returned var handle can be computed as follows:
+     *
+     * <blockquote><pre>{@code
+     * address_1 = base(segment) + offset_1
+     * address_2 = base(segment_1) + offset_2
+     * ...
+     * address_k = base(segment_k-1) + offset_k
+     * }</pre></blockquote>
+     *
+     * where {@code k} is the number of dereference path elements in a layout path, {@code segment} is the input segment,
+     * {@code segment_1}, ...  {@code segment_k-1} are the segments obtained by dereferencing the address associated with
+     * a given dereference path element (e.g. {@code segment_1} is a native segment whose base address is {@code address_1}),
+     * and {@code offset_1}, {@code offset_2}, ... {@code offset_k} are the offsets computed by evaluating
+     * the path elements after a given dereference operation. These offsets are again obtained as if by a call to a
+     * {@linkplain #byteOffsetHandle(PathElement...) byte offset handle} constructed using the path elements pertaining
+     * to a particular path section, except that for any offset besides {@code offset_1}, the base offset argument is
+     * assumed to be {@code 0}. In these more complex access operations, all memory accesses immediately preceding a
+     * dereference operation (e.g. those at addresses {@code address_1}, {@code address_2}, ...,  {@code address_k-1}
+     * are performed using the {@link VarHandle.AccessMode#GET} access mode.
      * <p>
      * As an example, consider the memory layout expressed by a {@link GroupLayout} instance constructed as follows:
      * {@snippet lang = "java":
@@ -648,28 +675,6 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
         /**
          * Returns a path element which dereferences an address layout as its
          * {@linkplain AddressLayout#targetLayout() target layout} (where set).
-         * <p>
-         * Multiple paths can be chained, with <a href=#deref-path-elements>dereference path elements</a>.
-         * A dereference path element constructs a fresh native memory segment whose base address is the address value
-         * read obtained by accessing a memory segment at the offset determined by the layout path elements immediately preceding
-         * the dereference path element. In other words, if a layout path contains one or more dereference path elements,
-         * the final address accessed by the returned var handle can be computed as follows:
-         *
-         * <blockquote><pre>{@code
-         * address_1 = base(segment) + offset_1
-         * address_2 = base(segment_1) + offset_2
-         * ...
-         * address_k = base(segment_k-1) + offset_k
-         * }</pre></blockquote>
-         *
-         * where {@code k} is the number of dereference path elements in a layout path, {@code segment} is the input segment,
-         * {@code segment_1}, ...  {@code segment_k-1} are the segments obtained by dereferencing the address associated with
-         * a given dereference path element (e.g. {@code segment_1} is a native segment whose base address is {@code address_1}),
-         * and {@code offset_1}, {@code offset_2}, ... {@code offset_k} are the offsets computed by evaluating
-         * the path elements after a given dereference operation (these offsets are obtained using the computation described
-         * above). In these more complex access operations, all memory accesses immediately preceding a dereference operation
-         * (e.g. those at addresses {@code address_1}, {@code address_2}, ...,  {@code address_k-1} are performed using the
-         * {@link VarHandle.AccessMode#GET} access mode.
          *
          * @return a path element which dereferences an address layout.
          */

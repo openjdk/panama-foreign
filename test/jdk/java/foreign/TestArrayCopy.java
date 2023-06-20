@@ -293,21 +293,8 @@ public class TestArrayCopy {
     }
 
     private static VarHandle arrayVarHandle(ValueLayout layout) {
-        class Holder {
-            static final MethodHandle MH_SCALE;
-            static {
-                try {
-                    MH_SCALE = MethodHandles.lookup().findVirtual(MemoryLayout.class, "scale",
-                            MethodType.methodType(long.class, long.class, long.class));
-                } catch (ReflectiveOperationException e) {
-                    throw new ExceptionInInitializerError(e);
-                }
-            }
-        }
-        MethodHandle scaleHandle = Holder.MH_SCALE.bindTo(layout);
-        scaleHandle = MethodHandles.insertArguments(scaleHandle, 0, 0L);
-
-        return MethodHandles.collectCoordinates(layout.varHandle(), 1, scaleHandle);
+        return MethodHandles.collectCoordinates(layout.varHandle(),
+                1, MethodHandles.insertArguments(layout.scaleHandle(), 0, 0L));
     }
 
     public static MemorySegment truthSegment(MemorySegment srcSeg, CopyHelper<?, ?> helper, int indexShifts, CopyMode mode) {
