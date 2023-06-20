@@ -1439,7 +1439,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default byte get(ValueLayout.OfByte layout, long offset) {
-        return (byte) ((ValueLayouts.OfByteImpl) layout).varHandle().get(this, offset);
+        return (byte) layout.varHandle().get(this, offset);
     }
 
     /**
@@ -1459,7 +1459,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default void set(ValueLayout.OfByte layout, long offset, byte value) {
-        ((ValueLayouts.OfByteImpl) layout).varHandle().set(this, offset, value);
+        layout.varHandle().set(this, offset, value);
     }
 
     /**
@@ -1478,7 +1478,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default boolean get(ValueLayout.OfBoolean layout, long offset) {
-        return (boolean) ((ValueLayouts.OfBooleanImpl) layout).varHandle().get(this, offset);
+        return (boolean) layout.varHandle().get(this, offset);
     }
 
     /**
@@ -1498,7 +1498,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default void set(ValueLayout.OfBoolean layout, long offset, boolean value) {
-        ((ValueLayouts.OfBooleanImpl) layout).varHandle().set(this, offset, value);
+        layout.varHandle().set(this, offset, value);
     }
 
     /**
@@ -1517,7 +1517,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default char get(ValueLayout.OfChar layout, long offset) {
-        return (char) ((ValueLayouts.OfCharImpl) layout).varHandle().get(this, offset);
+        return (char) layout.varHandle().get(this, offset);
     }
 
     /**
@@ -1537,7 +1537,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default void set(ValueLayout.OfChar layout, long offset, char value) {
-        ((ValueLayouts.OfCharImpl) layout).varHandle().set(this, offset, value);
+        layout.varHandle().set(this, offset, value);
     }
 
     /**
@@ -1556,7 +1556,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default short get(ValueLayout.OfShort layout, long offset) {
-        return (short) ((ValueLayouts.OfShortImpl) layout).varHandle().get(this, offset);
+        return (short) layout.varHandle().get(this, offset);
     }
 
     /**
@@ -1576,7 +1576,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default void set(ValueLayout.OfShort layout, long offset, short value) {
-        ((ValueLayouts.OfShortImpl) layout).varHandle().set(this, offset, value);
+        layout.varHandle().set(this, offset, value);
     }
 
     /**
@@ -1595,7 +1595,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default int get(ValueLayout.OfInt layout, long offset) {
-        return (int) ((ValueLayouts.OfIntImpl) layout).varHandle().get(this, offset);
+        return (int) layout.varHandle().get(this, offset);
     }
 
     /**
@@ -1615,7 +1615,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default void set(ValueLayout.OfInt layout, long offset, int value) {
-        ((ValueLayouts.OfIntImpl) layout).varHandle().set(this, offset, value);
+        layout.varHandle().set(this, offset, value);
     }
 
     /**
@@ -1634,7 +1634,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default float get(ValueLayout.OfFloat layout, long offset) {
-        return (float)((ValueLayouts.OfFloatImpl) layout).varHandle().get(this, offset);
+        return (float)layout.varHandle().get(this, offset);
     }
 
     /**
@@ -1654,7 +1654,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default void set(ValueLayout.OfFloat layout, long offset, float value) {
-        ((ValueLayouts.OfFloatImpl) layout).varHandle().set(this, offset, value);
+        layout.varHandle().set(this, offset, value);
     }
 
     /**
@@ -1673,7 +1673,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default long get(ValueLayout.OfLong layout, long offset) {
-        return (long) ((ValueLayouts.OfLongImpl) layout).varHandle().get(this, offset);
+        return (long) layout.varHandle().get(this, offset);
     }
 
     /**
@@ -1693,7 +1693,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default void set(ValueLayout.OfLong layout, long offset, long value) {
-        ((ValueLayouts.OfLongImpl) layout).varHandle().set(this, offset, value);
+        layout.varHandle().set(this, offset, value);
     }
 
     /**
@@ -1712,7 +1712,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default double get(ValueLayout.OfDouble layout, long offset) {
-        return (double) ((ValueLayouts.OfDoubleImpl) layout).varHandle().get(this, offset);
+        return (double) layout.varHandle().get(this, offset);
     }
 
     /**
@@ -1732,7 +1732,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default void set(ValueLayout.OfDouble layout, long offset, double value) {
-        ((ValueLayouts.OfDoubleImpl) layout).varHandle().set(this, offset, value);
+        layout.varHandle().set(this, offset, value);
     }
 
     /**
@@ -1757,7 +1757,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default MemorySegment get(AddressLayout layout, long offset) {
-        return (MemorySegment) ((ValueLayouts.OfAddressImpl) layout).varHandle().get(this, offset);
+        return (MemorySegment) layout.varHandle().get(this, offset);
     }
 
     /**
@@ -1778,7 +1778,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      */
     @ForceInline
     default void set(AddressLayout layout, long offset, MemorySegment value) {
-        ((ValueLayouts.OfAddressImpl) layout).varHandle().set(this, offset, value);
+        layout.varHandle().set(this, offset, value);
     }
 
     /**
@@ -1802,7 +1802,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default byte getAtIndex(ValueLayout.OfByte layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        return (byte) ((ValueLayouts.OfByteImpl) layout).varHandle().get(this, index * layout.byteSize());
+        return (byte) layout.varHandle().get(this, index * layout.byteSize());
     }
 
     /**
@@ -1826,7 +1826,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default boolean getAtIndex(ValueLayout.OfBoolean layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        return (boolean) ((ValueLayouts.OfBooleanImpl) layout).varHandle().get(this, index * layout.byteSize());
+        return (boolean) layout.varHandle().get(this, index * layout.byteSize());
     }
 
     /**
@@ -1850,7 +1850,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default char getAtIndex(ValueLayout.OfChar layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        return (char) ((ValueLayouts.OfCharImpl) layout).varHandle().get(this, index * layout.byteSize());
+        return (char) layout.varHandle().get(this, index * layout.byteSize());
     }
 
     /**
@@ -1875,7 +1875,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default void setAtIndex(ValueLayout.OfChar layout, long index, char value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        ((ValueLayouts.OfCharImpl) layout).varHandle().set(this, index * layout.byteSize(), value);
+        layout.varHandle().set(this, index * layout.byteSize(), value);
     }
 
     /**
@@ -1899,7 +1899,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default short getAtIndex(ValueLayout.OfShort layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        return (short) ((ValueLayouts.OfShortImpl) layout).varHandle().get(this, index * layout.byteSize());
+        return (short) layout.varHandle().get(this, index * layout.byteSize());
     }
 
     /**
@@ -1924,7 +1924,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default void setAtIndex(ValueLayout.OfByte layout, long index, byte value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        ((ValueLayouts.OfByteImpl) layout).varHandle().set(this, index * layout.byteSize(), value);
+        layout.varHandle().set(this, index * layout.byteSize(), value);
 
     }
 
@@ -1950,7 +1950,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default void setAtIndex(ValueLayout.OfBoolean layout, long index, boolean value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        ((ValueLayouts.OfBooleanImpl) layout).varHandle().set(this, index * layout.byteSize(), value);
+        layout.varHandle().set(this, index * layout.byteSize(), value);
     }
 
     /**
@@ -1975,7 +1975,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default void setAtIndex(ValueLayout.OfShort layout, long index, short value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        ((ValueLayouts.OfShortImpl) layout).varHandle().set(this, index * layout.byteSize(), value);
+        layout.varHandle().set(this, index * layout.byteSize(), value);
     }
 
     /**
@@ -1999,7 +1999,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default int getAtIndex(ValueLayout.OfInt layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        return (int) ((ValueLayouts.OfIntImpl) layout).varHandle().get(this, index * layout.byteSize());
+        return (int) layout.varHandle().get(this, index * layout.byteSize());
     }
 
     /**
@@ -2024,7 +2024,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default void setAtIndex(ValueLayout.OfInt layout, long index, int value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        ((ValueLayouts.OfIntImpl) layout).varHandle().set(this, index * layout.byteSize(), value);
+        layout.varHandle().set(this, index * layout.byteSize(), value);
     }
 
     /**
@@ -2048,7 +2048,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default float getAtIndex(ValueLayout.OfFloat layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        return (float) ((ValueLayouts.OfFloatImpl) layout).varHandle().get(this, index * layout.byteSize());
+        return (float) layout.varHandle().get(this, index * layout.byteSize());
     }
 
     /**
@@ -2073,7 +2073,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default void setAtIndex(ValueLayout.OfFloat layout, long index, float value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        ((ValueLayouts.OfFloatImpl) layout).varHandle().set(this, index * layout.byteSize(), value);
+        layout.varHandle().set(this, index * layout.byteSize(), value);
     }
 
     /**
@@ -2097,7 +2097,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default long getAtIndex(ValueLayout.OfLong layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        return (long) ((ValueLayouts.OfLongImpl) layout).varHandle().get(this, index * layout.byteSize());
+        return (long) layout.varHandle().get(this, index * layout.byteSize());
     }
 
     /**
@@ -2122,7 +2122,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default void setAtIndex(ValueLayout.OfLong layout, long index, long value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        ((ValueLayouts.OfLongImpl) layout).varHandle().set(this, index * layout.byteSize(), value);
+        layout.varHandle().set(this, index * layout.byteSize(), value);
     }
 
     /**
@@ -2146,7 +2146,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default double getAtIndex(ValueLayout.OfDouble layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        return (double) ((ValueLayouts.OfDoubleImpl) layout).varHandle().get(this, index * layout.byteSize());
+        return (double) layout.varHandle().get(this, index * layout.byteSize());
     }
 
     /**
@@ -2171,7 +2171,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default void setAtIndex(ValueLayout.OfDouble layout, long index, double value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        ((ValueLayouts.OfDoubleImpl) layout).varHandle().set(this, index * layout.byteSize(), value);
+        layout.varHandle().set(this, index * layout.byteSize(), value);
     }
 
     /**
@@ -2201,7 +2201,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default MemorySegment getAtIndex(AddressLayout layout, long index) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        return (MemorySegment) ((ValueLayouts.OfAddressImpl) layout).varHandle().get(this, index * layout.byteSize());
+        return (MemorySegment) layout.varHandle().get(this, index * layout.byteSize());
     }
 
     /**
@@ -2227,7 +2227,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
     default void setAtIndex(AddressLayout layout, long index, MemorySegment value) {
         Utils.checkElementAlignment(layout, "Layout alignment greater than its size");
         // note: we know size is a small value (as it comes from ValueLayout::byteSize())
-        ((ValueLayouts.OfAddressImpl) layout).varHandle().set(this, index * layout.byteSize(), value);
+        layout.varHandle().set(this, index * layout.byteSize(), value);
     }
 
     /**
