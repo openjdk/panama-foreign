@@ -60,6 +60,7 @@ public class LayoutPath {
 
     private static final MethodHandle MH_ADD_SCALED_OFFSET;
     private static final MethodHandle MH_SLICE;
+    private static final MethodHandle MH_SLICE_LAYOUT;;
     private static final MethodHandle MH_CHECK_ALIGN;
     private static final MethodHandle MH_SEGMENT_RESIZE;
     private static final MethodHandle MH_ADD;
@@ -70,6 +71,8 @@ public class LayoutPath {
             MH_ADD_SCALED_OFFSET = lookup.findStatic(LayoutPath.class, "addScaledOffset",
                     MethodType.methodType(long.class, long.class, long.class, long.class, long.class));
             MH_SLICE = lookup.findVirtual(MemorySegment.class, "asSlice",
+                    MethodType.methodType(MemorySegment.class, long.class, long.class));
+            MH_SLICE_LAYOUT = lookup.findVirtual(MemorySegment.class, "asSlice",
                     MethodType.methodType(MemorySegment.class, long.class, MemoryLayout.class));
             MH_CHECK_ALIGN = lookup.findStatic(LayoutPath.class, "checkAlign",
                     MethodType.methodType(void.class, MemorySegment.class, long.class, MemoryLayout.class));
@@ -201,9 +204,16 @@ public class LayoutPath {
             throw new IllegalArgumentException("Path does not select a value layout");
         }
 
-        VarHandle handle = valueLayout.varHandle();
+        // If we have an enclosing layout, drop the alignment check for the accessed element,
+        // we check the root layout instead
+        ValueLayout accessedLayout = enclosing != null ? valueLayout.withByteAlignment(1) : valueLayout;
+        VarHandle handle = accessedLayout.varHandle();
         handle = MethodHandles.collectCoordinates(handle, 1, offsetHandle());
-        if (enclosing != null) {
+
+        // we only have to check the alignment of the root layout for the first dereference we do,
+        // as each dereference checks the alignment of the target address when constructing its segment
+        // (see Utils::longToAddress)
+        if (derefAdapters.length == 0 && enclosing != null) {
             // insert align check for the root layout on the initial MS + offset
             List<Class<?>> coordinateTypes = handle.coordinateTypes();
             MethodHandle alignCheck = MethodHandles.insertArguments(MH_CHECK_ALIGN, 2, rootLayout());
@@ -253,8 +263,15 @@ public class LayoutPath {
     }
 
     public MethodHandle sliceHandle() {
-        MethodHandle sliceHandle = MH_SLICE; // (MS, long, MemoryLayout) -> MS
-        sliceHandle = MethodHandles.insertArguments(sliceHandle, 2, layout); // (MS, long, ...) -> MS
+        MethodHandle sliceHandle;
+        if (enclosing != null) {
+            // drop the alignment check for the accessed element, we check the root layout instead
+            sliceHandle = MH_SLICE; // (MS, long, long) -> MS
+            sliceHandle = MethodHandles.insertArguments(sliceHandle, 2, layout.byteSize()); // (MS, long) -> MS
+        } else {
+            sliceHandle = MH_SLICE_LAYOUT; // (MS, long, MemoryLayout) -> MS
+            sliceHandle = MethodHandles.insertArguments(sliceHandle, 2, layout); // (MS, long) -> MS
+        }
         sliceHandle = MethodHandles.collectArguments(sliceHandle, 1, offsetHandle()); // (MS, long, ...) -> MS
 
         if (enclosing != null) {
@@ -271,7 +288,7 @@ public class LayoutPath {
 
     private static void checkAlign(MemorySegment segment, long offset, MemoryLayout constraint) {
         if (!((AbstractMemorySegmentImpl) segment).isAlignedForElement(offset, constraint)) {
-            throw new IllegalArgumentException("Target offset incompatible with alignment constraints");
+            throw new IllegalArgumentException("Target offset incompatible with alignment constraints: " + constraint.byteAlignment());
         }
     }
 

@@ -446,7 +446,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * the path elements pertaining to a particular path section. Where the arguments are taken from the dynamic
      * {@code long} coordinates corresponding to that path section.
      * <p>
-     * The accessed address must be <a href="MemorySegment.html#segment-alignment">aligned</a> according to the {@linkplain
+     * The base address must be <a href="MemorySegment.html#segment-alignment">aligned</a> according to the {@linkplain
      * #byteAlignment() alignment constraint} of the root layout (this layout). Note that this can be more strict
      * (but not less) than the alignment constraint of the selected value layout.
      * <p>
@@ -522,6 +522,10 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * <p>
      * The offset of the returned segment is computed as if by a call to a
      * {@linkplain #byteOffsetHandle(PathElement...) byte offset handle} constructed using the given path elements.
+     * <p>
+     * The segment to be sliced must be <a href="MemorySegment.html#segment-alignment">aligned</a> according to the
+     * {@linkplain #byteAlignment() alignment constraint} of the root layout (this layout). Note that this can be more
+     * strict (but not less) than the alignment constraint of the selected value layout.
      *
      * @apiNote The returned method handle can be used to obtain a memory segment slice, similarly to {@link MemorySegment#asSlice(long, long)},
      * but more flexibly, as some indices can be specified when invoking the method handle.
