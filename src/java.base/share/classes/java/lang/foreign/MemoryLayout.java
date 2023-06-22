@@ -444,17 +444,16 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * {@code segment_1} is the input segment, {@code segment_2}, ...  {@code segment_k-1} are the segments obtained by
      * dereferencing the address associated with a given dereference path element (e.g. {@code segment_2} is a native
      * segment whose base address is {@code address_1}), and {@code offset_1}, {@code offset_2}, ... {@code offset_k}
-     * are the offsets computed based on the path elements corresponding to a particular section
-     * {@code address_i = base(segment_i) + offset_i} of the path, delimited by dereference path elements, where
-     * {@code 0 < i <= k}. {@code base(segment)} denotes a function that returns the physical base address of the
-     * accessed memory segment. For native segments, this function just returns the native segment's
-     * {@linkplain MemorySegment#address() address}. For heap segments, this function is more complex, as the address of
-     * heap segments is virtualized. Each {@code offset_i} corresponding to a section of the path, is computed as if by
-     * a call to a {@linkplain #byteOffsetHandle(PathElement...) byte offset handle} constructed using the path elements
-     * pertaining to that particular section of the path. The arguments to the byte offset handle are taken from the
-     * dynamic {@code long} coordinates corresponding to that path section. The base offset parameter of the returned
-     * var handle is used in the offset computation of the first path section. The base offset used when computing the
-     * offset for the other path sections is zero.
+     * are the offsets computed based on the path elements corresponding to a particular section,
+     * {@code address_i = base(segment_i) + offset_i}, of the path, where {@code 0 < i <= k}. {@code base(segment)}
+     * denotes a function that returns the physical base address of the accessed memory segment. For native segments,
+     * this function just returns the native segment's {@linkplain MemorySegment#address() address}. For heap segments,
+     * this function is more complex, as the address of heap segments is virtualized. Each {@code offset_i} corresponding
+     * to a section of the path, is computed as if by a call to a {@linkplain #byteOffsetHandle(PathElement...) byte offset handle}
+     * constructed using the path elements pertaining to that particular section of the path. The arguments to the byte
+     * offset handle are taken from the dynamic {@code long} coordinates corresponding to that path section. The base
+     * offset parameter of the returned var handle is used in the offset computation of the first path section. The base
+     * offset used when computing the offset for the other path sections is zero.
      * <p>
      * All memory accesses immediately preceding a dereference operation (e.g. those at addresses {@code address_1},
      * {@code address_2}, ..., {@code address_k-1} are performed using the {@link VarHandle.AccessMode#GET} access mode.
