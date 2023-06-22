@@ -407,9 +407,13 @@ class Snippets {
             {
                 MemorySegment segment = null; // ...
 
-                MemoryLayout segmentLayout = MemoryLayout.sequenceLayout(4, ValueLayout.JAVA_INT);
-                VarHandle intHandle = segmentLayout.varHandle(MemoryLayout.PathElement.sequenceElement());
-                int value = (int) intHandle.get(segment, 0L, 3L); // get int element at offset 3 * 4 = 12
+                MemoryLayout segmentLayout = MemoryLayout.structLayout(
+                    ValueLayout.JAVA_INT.withName("size"),
+                    MemoryLayout.sequenceLayout(4, ValueLayout.JAVA_INT).withName("data") // array of 4 elements
+                );
+                VarHandle intHandle = segmentLayout.varHandle(MemoryLayout.PathElement.groupElement("data"),
+                                                              MemoryLayout.PathElement.sequenceElement());
+                int value = (int) intHandle.get(segment, 0L, 3L); // get int element at offset 0 + offsetof(data) + 3 * 4 = 12
             }
 
             {

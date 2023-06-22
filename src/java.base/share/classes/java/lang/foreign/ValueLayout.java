@@ -27,7 +27,6 @@ package java.lang.foreign;
 
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
-
 import jdk.internal.foreign.layout.ValueLayouts;
 import jdk.internal.javac.PreviewFeature;
 
@@ -95,7 +94,7 @@ public sealed interface ValueLayout extends MemoryLayout permits
     ValueLayout withByteAlignment(long byteAlignment);
 
     /**
-     * {@return a var handle which can be used to access values represented by this value layout, in a given memory segment.}
+     * {@return a var handle which can be used to access values describe by this value layout, in a given memory segment.}
      * <p>
      * The returned var handle's {@linkplain VarHandle#varType() var type} is the {@linkplain ValueLayout#carrier() carrier type} of
      * this value layout, and the list of coordinate types is {@code (MemorySegment, long)}, where the memory segment coordinate
@@ -104,6 +103,9 @@ public sealed interface ValueLayout extends MemoryLayout permits
      * <p>
      * The returned var handle checks that accesses are aligned according to this value layout's
      * {@linkplain MemoryLayout#byteAlignment() alignment constraint}.
+     *
+     * @apiNote This method is similar, but more efficient, than calling {@code MemoryLayout#varHandle(PathElement...)}
+     * with zero arguments, as it avoids the creation of the var args array.
      *
      * @apiNote The returned var handle features certain <a href="MemoryLayout.html#access-mode-restrictions">access mode
      * restrictions</a> common to all memory access var handles derived from memory layouts.

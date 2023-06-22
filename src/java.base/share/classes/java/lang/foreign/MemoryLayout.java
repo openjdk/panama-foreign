@@ -237,11 +237,11 @@ import jdk.internal.vm.annotation.ForceInline;
  *
  * The var handles returned by {@link #varHandle(PathElement...)} and {@link ValueLayout#varHandle()} feature certain
  * <i>access mode restrictions</i>. A var handle is associated with an access size {@code S}, derived from the
- * {@linkplain ValueLayout#byteSize() byte size} of this layout, and an alignment constraint {@code B}, derived from the
- * {@linkplain ValueLayout#byteAlignment() alignment constraint} of this value layout. We say that a memory access
- * operation is <em>fully aligned</em> if it occurs at a memory address {@code A} which is compatible with both alignment
- * constraints {@code S} and {@code B}. If access is fully aligned then following access modes are supported and are
- * guaranteed to support atomic access:
+ * {@linkplain ValueLayout#byteSize() byte size} of the receiver layout, and an alignment constraint {@code B}, derived
+ * from the {@linkplain ValueLayout#byteAlignment() alignment constraint} of the receiver layout. We say that a memory
+ * access operation is <em>fully aligned</em> if it occurs at a memory address {@code A} which is compatible with both
+ * alignment constraints {@code S} and {@code B}. If access is fully aligned then following access modes are supported
+ * and are guaranteed to support atomic access:
  * <ul>
  * <li>read write access modes for all {@code T}, with the exception of
  *     access modes {@code get} and {@code set} for {@code long} and
@@ -423,8 +423,8 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * <ul>
      *     <li>its type is derived from the {@linkplain ValueLayout#carrier() carrier} of the
      *     selected value layout;</li>
-     *     <li>it has two leading access coordinates of type {@link MemorySegment} and {@code long},
-     *     representing the accessed segment and base offset respectively</li>
+     *     <li>it has a leading parameter of type {@code MemorySegment} representing the accessed segment</li>
+     *     <li>a following {@code long} parameter, corresponding to the base offset</li>
      *     <li>it has as zero or more trailing access coordinates of type {@code long}, one for each
      *     <a href=#open-path-elements>open path element</a> in the provided layout path. The order of these access
      *     coordinates corresponds to the order in which the open path elements occur in the provided
@@ -513,8 +513,8 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * The returned method handle has the following characteristics:
      * <ul>
      *     <li>its return type is {@code MemorySegment};</li>
-     *     <li>it has two leading parameter of type {@code MemorySegment} and {@code long}, corresponding to the memory segment
-     *     to be sliced, and the base offset respectively;</li>
+     *     <li>it has a leading parameter of type {@code MemorySegment} corresponding to the memory segment to be sliced</li>
+     *     <li>a following {@code long} parameter, corresponding to the base offset</li>
      *     <li>it has as zero or more trailing parameters of type {@code long}, one for each <a href=#open-path-elements>open path element</a>
      *     in the provided layout path. The order of these parameters corresponds to the order in which the open path
      *     elements occur in the provided layout path.
