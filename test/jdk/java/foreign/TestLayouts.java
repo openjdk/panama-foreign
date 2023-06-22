@@ -358,6 +358,12 @@ public class TestLayouts {
         JAVA_INT.scale(-1, 0);
     }
 
+    @Test(expectedExceptions=IllegalArgumentException.class,
+        expectedExceptionsMessageRegExp=".*Negative index.*")
+    public void testScaleNegativeIndex() {
+        JAVA_INT.scale(0, -1);
+    }
+
     @Test(expectedExceptions=ArithmeticException.class)
     public void testScaleAddOverflow() {
         JAVA_INT.scale(Long.MAX_VALUE, 1);

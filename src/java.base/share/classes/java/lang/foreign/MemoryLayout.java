@@ -338,7 +338,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      *
      * @param offset the base offset
      * @param index the index to be scaled by the byte size of this layout
-     * @throws IllegalArgumentException if {@code offset} is negative
+     * @throws IllegalArgumentException if {@code offset} or {@code index} is negative
      * @throws ArithmeticException if either the addition or multiplication overflows
      */
     @ForceInline
@@ -346,6 +346,10 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
         if (offset < 0) {
             throw new IllegalArgumentException("Negative offset: " + offset);
         }
+        if (index < 0) {
+            throw new IllegalArgumentException("Negative index: " + index);
+        }
+
         return Math.addExact(offset, Math.multiplyExact(byteSize(), index));
     }
 
