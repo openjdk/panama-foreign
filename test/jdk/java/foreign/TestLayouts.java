@@ -352,6 +352,22 @@ public class TestLayouts {
         assertNotSame(ADDRESS.withTargetLayout(JAVA_INT).varHandle(), ADDRESS.varHandle());
     }
 
+    @Test(expectedExceptions=IllegalArgumentException.class,
+        expectedExceptionsMessageRegExp=".*Negative offset.*")
+    public void testScaleNegativeOffset() {
+        JAVA_INT.scale(-1, 0);
+    }
+
+    @Test(expectedExceptions=ArithmeticException.class)
+    public void testScaleAddOverflow() {
+        JAVA_INT.scale(Long.MAX_VALUE, 1);
+    }
+
+    @Test(expectedExceptions=ArithmeticException.class)
+    public void testScaleMultiplyOverflow() {
+        JAVA_INT.scale(0, Long.MAX_VALUE);
+    }
+
     @DataProvider(name = "badAlignments")
     public Object[][] layoutsAndBadAlignments() {
         LayoutKind[] layoutKinds = LayoutKind.values();

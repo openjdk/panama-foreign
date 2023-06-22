@@ -338,10 +338,15 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      *
      * @param offset the base offset
      * @param index the index to be scaled by the byte size of this layout
+     * @throws IllegalArgumentException if {@code offset} is negative
+     * @throws ArithmeticException if either the addition or multiplication overflows
      */
     @ForceInline
     default long scale(long offset, long index) {
-        return offset + (byteSize() * index);
+        if (offset < 0) {
+            throw new IllegalArgumentException("Negative offset: " + offset);
+        }
+        return Math.addExact(offset, Math.multiplyExact(byteSize(), index));
     }
 
     /**
@@ -384,7 +389,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * The returned method handle has the following characteristics:
      * <ul>
      *     <li>its return type is {@code long};</li>
-     *     <li>it has at least one {@code long} leading parameter representing the base offset;</li>
+     *     <li>it has one leading {@code long} parameter representing the base offset;</li>
      *     <li>it has as zero or more trailing parameters of type {@code long}, one for each <a href=#open-path-elements>open path element</a>
      *     in the provided layout path. The order of these parameters corresponds to the order in which the open path
      *     elements occur in the provided layout path.
