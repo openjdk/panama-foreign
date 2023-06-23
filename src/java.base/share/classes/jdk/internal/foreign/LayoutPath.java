@@ -60,7 +60,7 @@ public class LayoutPath {
 
     private static final MethodHandle MH_ADD_SCALED_OFFSET;
     private static final MethodHandle MH_SLICE;
-    private static final MethodHandle MH_SLICE_LAYOUT;;
+    private static final MethodHandle MH_SLICE_LAYOUT;
     private static final MethodHandle MH_CHECK_ALIGN;
     private static final MethodHandle MH_SEGMENT_RESIZE;
     private static final MethodHandle MH_ADD;

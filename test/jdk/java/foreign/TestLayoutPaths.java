@@ -31,7 +31,6 @@
 import java.lang.foreign.*;
 import java.lang.foreign.MemoryLayout.PathElement;
 
-import org.testng.SkipException;
 import org.testng.annotations.*;
 
 import java.lang.invoke.MethodHandle;
