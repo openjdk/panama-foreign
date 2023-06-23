@@ -433,46 +433,51 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      *     <li>its type is derived from the {@linkplain ValueLayout#carrier() carrier} of the
      *     selected value layout;</li>
      *     <li>it has a leading parameter of type {@code MemorySegment} representing the accessed segment</li>
-     *     <li>a following {@code long} parameter, corresponding to the base offset</li>
-     *     <li>it has as zero or more trailing access coordinates of type {@code long}, one for each
-     *     <a href=#open-path-elements>open path element</a> in the provided layout path. The order of these access
-     *     coordinates corresponds to the order in which the open path elements occur in the provided
-     *     layout path.
+     *     <li>a following {@code long} parameter, corresponding to the base offset, denoted as {@code B};</li>
+     *     <li>it has zero or more trailing access coordinates of type {@code long}, one for each
+     *     <a href=#open-path-elements>open path element</a> in the provided layout path, denoted as
+     *     {@code I1, I2, ... In}, respectively. The order of these access coordinates corresponds to the order
+     *     in which the open path elements occur in the provided layout path.
      * </ul>
      * <p>
-     * The final address accessed by the returned var handle can be computed as follows:
+     * If the provided layout path {@code P} contains no dereference elements, then the offset of the access operation is
+     * computed as follows:
      *
-     * <blockquote><pre>{@code
-     * address_1 = base(segment_1) + offset_1
-     * address_2 = base(segment_2) + offset_2
-     * ...
-     * address_k = base(segment_k-1) + offset_k
-     * }</pre></blockquote>
+     * {@snippet lang = "java":
+     * offset = this.offsetHandle(P).invokeExact(B, I1, I2, ... In);
+     * }
      *
-     * where {@code k} is the number of <a href=#deref-path-elements>dereference path elements</a> in a layout path,
-     * {@code segment_1} is the input segment, {@code segment_2}, ...  {@code segment_k-1} are the segments obtained by
-     * dereferencing the address associated with a given dereference path element (e.g. {@code segment_2} is a native
-     * segment whose base address is {@code address_1}), and {@code offset_1}, {@code offset_2}, ... {@code offset_k}
-     * are the offsets computed based on the path elements corresponding to a particular section,
-     * {@code address_i = base(segment_i) + offset_i}, of the path, where {@code 0 < i <= k}. {@code base(segment)}
-     * denotes a function that returns the physical base address of the accessed memory segment. For native segments,
-     * this function just returns the native segment's {@linkplain MemorySegment#address() address}. For heap segments,
-     * this function is more complex, as the address of heap segments is virtualized. Each {@code offset_i} corresponding
-     * to a section of the path, is computed as if by a call to a {@linkplain #byteOffsetHandle(PathElement...) byte offset handle}
-     * constructed using the path elements pertaining to that particular section of the path. The arguments to the byte
-     * offset handle are taken from the dynamic {@code long} coordinates corresponding to that path section. The base
-     * offset parameter of the returned var handle is used in the offset computation of the first path section. The base
-     * offset used when computing the offset for the other path sections is zero.
+     * The physical address corresponding to the accessed offset must be <a href="MemorySegment.html#segment-alignment">aligned</a>
+     * according to the {@linkplain #byteAlignment() alignment constraint} of the root layout (this layout).
+     * Note that this can be more strict (but not less) than the alignment constraint of the selected value layout.
      * <p>
-     * All memory accesses immediately preceding a dereference operation (e.g. those at addresses {@code address_1},
-     * {@code address_2}, ..., {@code address_k-1} are performed using the {@link VarHandle.AccessMode#GET} access mode.
+     * If the selected layout is an {@linkplain AddressLayout address layout}, calling {@link VarHandle#get(Object...)}
+     * on the returned var handle will return a new memory segment. The segment is associated with a fresh scope that is
+     * always alive. Moreover, the size of the segment depends on whether the address layout has a
+     * {@linkplain AddressLayout#targetLayout() target layout}. More specifically:
+     * <ul>
+     *     <li>If the address layout has a target layout {@code T}, then the size of the returned segment
+     *     is {@code T.byteSize()};</li>
+     *     <li>Otherwise, the address layout has no target layout, and the size of the returned segment
+     *     is <a href="MemorySegment.html#wrapping-addresses">zero</a>.</li>
+     * </ul>
      * <p>
-     * The base address must be <a href="MemorySegment.html#segment-alignment">aligned</a> according to the {@linkplain
-     * #byteAlignment() alignment constraint} of the root layout (this layout). Note that this can be more strict
-     * (but not less) than the alignment constraint of the selected value layout.
-     * <p>
-     * Additionally, the provided dynamic values must conform to bounds which are derived from the layout path, that is,
-     * {@code 0 <= x_i < b_i}, where {@code 1 <= i <= n}, or {@link IndexOutOfBoundsException} is thrown.
+     * If the provided layout path has size {@code m} and contains a dereference path element in position {@code k}
+     * (where {@code k <= m}) then two layout paths {@code P} and {@code P'} are derived, where P contains all the path
+     * elements from 0 to {@code k - 1} and {@code P'} contains all the path elements from {@code k + 1} to
+     * {@code m} (if any). Then, the returned var handle is computed as follows:
+     *
+     * {@snippet lang = "java":
+     * VarHandle baseHandle = this.varHandle(P);
+     * MemoryLayout target = ((AddressLayout)this.select(P)).targetLayout().get();
+     * VarHandle targetHandle = target.varHandle(P');
+     * targetHandle = MethodHandles.insertCoordinates(targetHandle, 1, 0L); // always access nested targets at offset 0
+     * targetHandle = MethodHandles.collectCoordinates(targetHandle, 0,
+     *         baseHandle.toMethodHandle(VarHandle.AccessMode.GET));
+     * }
+     *
+     * (The above can be trivially generalized to cases where the provided layout path contains more than one dereference
+     * path elements).
      * <p>
      * As an example, consider the memory layout expressed by a {@link GroupLayout} instance constructed as follows:
      * {@snippet lang = "java":
