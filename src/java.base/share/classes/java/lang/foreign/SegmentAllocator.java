@@ -71,6 +71,8 @@ import jdk.internal.vm.annotation.ForceInline;
  * <p>
  * Clients should consider using an {@linkplain Arena arena} instead, which, provides strong thread-safety,
  * lifetime and non-overlapping guarantees.
+ *
+ * @since 19
  */
 @FunctionalInterface
 @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
