@@ -598,7 +598,7 @@ public final class LauncherHelper {
                 addExportsOrOpens(opens, true);
             }
             String enablesNativeAccess = mainAttrs.getValue(ENABLE_NATIVE_ACCESS);
-            if (enablesNativeAccess != null && "true".equals(enablesNativeAccess)) {
+            if ("true".equals(enablesNativeAccess)) {
                 Modules.addEnableNativeAccessToAllUnnamed();
             }
 
