@@ -773,9 +773,14 @@ public final class ModuleBootstrap {
 
     private static final boolean HAS_ENABLE_NATIVE_ACCESS_FLAG;
     private static final Set<String> NATIVE_ACCESS_MODULES;
+    private static boolean ENABLE_NATIVE_ACCESS_SET_IN_MANIFEST = false;
+
+    public static void setEnableNativeAccessSetInManifest() {
+        ENABLE_NATIVE_ACCESS_SET_IN_MANIFEST = true;
+    }
 
     public static boolean hasEnableNativeAccessFlag() {
-        return HAS_ENABLE_NATIVE_ACCESS_FLAG;
+        return HAS_ENABLE_NATIVE_ACCESS_FLAG || ENABLE_NATIVE_ACCESS_SET_IN_MANIFEST;
     }
 
     static {

@@ -30,7 +30,7 @@
  * @library /test/lib
  * @build TestEnableNativeAccess
  *        panama_module/*
- *        org.openjdk.foreigntest.PanamaMainUnnamedModule
+ *        org.openjdk.foreigntest.unnamed.PanamaMainUnnamedModule
  * @run testng/othervm/timeout=180 TestEnableNativeAccess
  * @summary Basic test for java --enable-native-access
  */

@@ -30,8 +30,9 @@
  * @requires !vm.musl
  *
  * @enablePreview
- * @build TestEnableNativeAccess
- *        org.openjdk.foreigntest.PanamaMainUnnamedModule
+ * @build TestEnableNativeAccessJarManifest
+ *        panama_module/*
+ *        org.openjdk.foreigntest.unnamed.PanamaMainUnnamedModule
  * @run testng TestEnableNativeAccessJarManifest
  */
 
@@ -39,6 +40,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -53,12 +56,13 @@ public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBas
 
     static record Attribute(String name, String value) {}
 
-    @Test(dataProvider = "succeedCases")
-    public void testSucceed(String action, Result expectedResult, List<Attribute> attributes) throws Exception {
+    @Test(dataProvider = "cases")
+    public void testEnableNativeAccessInJarManifest(String action, String cls, Result expectedResult,
+                                                    List<Attribute> attributes, List<String> programArgs) throws Exception {
         Manifest man = new Manifest();
         Attributes attrs = man.getMainAttributes();
         attrs.put(Attributes.Name.MANIFEST_VERSION, "1.0");
-        attrs.put(Attributes.Name.MAIN_CLASS, UNNAMED);
+        attrs.put(Attributes.Name.MAIN_CLASS, cls);
 
         for (Attribute attrib : attributes) {
             attrs.put(new Attributes.Name(attrib.name()), attrib.value());
@@ -69,26 +73,53 @@ public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBas
         Files.deleteIfExists(jarfile);
 
         Path classes = Paths.get(System.getProperty("test.classes", ""));
-        JarUtils.createJarFile(jarfile, man, classes, Paths.get(UNNAMED.replace('.', '/') + ".class"));
+        JarUtils.createJarFile(jarfile, man, classes, Paths.get(cls.replace('.', '/') + ".class"));
 
         // java -jar test.jar
-        OutputAnalyzer outputAnalyzer = ProcessTools.executeTestJava(
-                    "--enable-preview",
-                    "-Djava.library.path=" + System.getProperty("java.library.path"),
-                    "-jar", jarfile.toString())
+        List<String> command = new ArrayList<>(List.of(
+            "--enable-preview",
+            "-Djava.library.path=" + System.getProperty("java.library.path"),
+            "-p", MODULE_PATH,
+            "--add-modules", "panama_module",
+            "-jar", jarfile.toString()
+        ));
+        command.addAll(programArgs);
+        OutputAnalyzer outputAnalyzer = ProcessTools.executeTestJava(command.toArray(String[]::new))
                 .outputTo(System.out)
                 .errorTo(System.out);
         checkResult(expectedResult, outputAnalyzer);
     }
 
     @DataProvider
-    public Object[][] succeedCases() {
+    public Object[][] cases() {
         return new Object[][] {
-            { "panama_no_unnamed_module_native_access", successWithWarning("ALL-UNNAMED"), List.of() },
-            { "panama_unnamed_module_native_access_false", successWithWarning("ALL-UNNAMED"), List.of(new Attribute("Enable-Native-Access", "false")) },
-            { "panama_unnamed_module_native_access_asdf", successWithWarning("ALL-UNNAMED"), List.of(new Attribute("Enable-Native-Access", "asdf")) },
-            { "panama_unnamed_module_native_access_true", successNoWarning(), List.of(new Attribute("Enable-Native-Access", "true")) },
-            { "panama_unnamed_module_native_access_True", successNoWarning(), List.of(new Attribute("Enable-Native-Access", "True")) },
+            { "panama_no_unnamed_module_native_access", UNNAMED, successWithWarning("ALL-UNNAMED"),
+                    List.of(), List.of() },
+            { "panama_unnamed_module_native_access_asdf", UNNAMED, successWithWarning("ALL-UNNAMED"),
+                    List.of(new Attribute("Enable-Native-Access", "asdf")), List.of() },
+            { "panama_unnamed_module_native_access_true", UNNAMED, successNoWarning(),
+                    List.of(new Attribute("Enable-Native-Access", "true")), List.of() },
+            { "panama_unnamed_module_native_access_True", UNNAMED, successNoWarning(),
+                    List.of(new Attribute("Enable-Native-Access", "True")), List.of() },
+
+            { "panama_no_unnamed_module_native_access_false", UNNAMED, failWithError("Illegal native access from: unnamed module"),
+                    List.of(new Attribute("Enable-Native-Access", "false")), List.of() },
+            { "panama_enable_native_access_false", REINVOKER, failWithError("Illegal native access from: module panama_module"),
+                    List.of(new Attribute("Enable-Native-Access", "false")), List.of(PANAMA_MAIN_CLS) },
+            { "panama_enable_native_access_reflection_false", REINVOKER, failWithError("Illegal native access from: module panama_module"),
+                    List.of(new Attribute("Enable-Native-Access", "false")), List.of(PANAMA_REFLECTION_CLS) },
+            { "panama_enable_native_access_invoke_false", REINVOKER, failWithError("Illegal native access from: module panama_module"),
+                    List.of(new Attribute("Enable-Native-Access", "false")), List.of(PANAMA_INVOKE_CLS) },
+            { "panama_enable_native_access_jni_false", REINVOKER, failWithError("Illegal native access from: unnamed module"),
+                    List.of(new Attribute("Enable-Native-Access", "false")), List.of(PANAMA_JNI_CLS) },
         };
+    }
+
+    public class Reinvoker {
+
+        public static void main(String[] args) throws Throwable {
+            Class<?> realMainClass = Class.forName(args[0]);
+            realMainClass.getMethod("main", String[].class).invoke(null, (Object) new String[0]);
+        }
     }
 }

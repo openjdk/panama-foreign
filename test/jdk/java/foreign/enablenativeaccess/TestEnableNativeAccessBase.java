@@ -32,11 +32,16 @@ import static org.testng.Assert.*;
 public class TestEnableNativeAccessBase {
     static final String MODULE_PATH = System.getProperty("jdk.module.path");
 
-    static final String PANAMA_MAIN = "panama_module/org.openjdk.foreigntest.PanamaMainDirect";
-    static final String PANAMA_REFLECTION = "panama_module/org.openjdk.foreigntest.PanamaMainReflection";
-    static final String PANAMA_INVOKE = "panama_module/org.openjdk.foreigntest.PanamaMainInvoke";
-    static final String PANAMA_JNI = "panama_module/org.openjdk.foreigntest.PanamaMainJNI";
-    static final String UNNAMED = "org.openjdk.foreigntest.PanamaMainUnnamedModule";
+    static final String PANAMA_MAIN_CLS = "org.openjdk.foreigntest.PanamaMainDirect";
+    static final String PANAMA_MAIN = "panama_module/" + PANAMA_MAIN_CLS;
+    static final String PANAMA_REFLECTION_CLS = "org.openjdk.foreigntest.PanamaMainReflection";
+    static final String PANAMA_REFLECTION = "panama_module/" + PANAMA_REFLECTION_CLS;
+    static final String PANAMA_INVOKE_CLS = "org.openjdk.foreigntest.PanamaMainInvoke";
+    static final String PANAMA_INVOKE = "panama_module/" + PANAMA_INVOKE_CLS;
+    static final String PANAMA_JNI_CLS = "org.openjdk.foreigntest.PanamaMainJNI";
+    static final String PANAMA_JNI = "panama_module/" + PANAMA_JNI_CLS;
+    static final String UNNAMED = "org.openjdk.foreigntest.unnamed.PanamaMainUnnamedModule";
+    static final String REINVOKER = "TestEnableNativeAccessJarManifest$Reinvoker";
 
     /**
      * Represents the expected result of a test.
