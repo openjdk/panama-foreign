@@ -38,6 +38,7 @@
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -52,12 +53,8 @@ public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBas
 
     static record Attribute(String name, String value) {}
 
-    /**
-     * Runs the test to execute the given test action. The VM is run with the
-     * given VM options and the output checked to see that it matches the
-     * expected result.
-     */
-    OutputAnalyzer run(String action, Result expectedResult, Attribute... attributes) throws Exception {
+    @Test(dataProvider = "succeedCases")
+    public void testSucceed(String action, Result expectedResult, List<Attribute> attributes) throws Exception {
         Manifest man = new Manifest();
         Attributes attrs = man.getMainAttributes();
         attrs.put(Attributes.Name.MANIFEST_VERSION, "1.0");
@@ -82,22 +79,16 @@ public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBas
                 .outputTo(System.out)
                 .errorTo(System.out);
         checkResult(expectedResult, outputAnalyzer);
-        return outputAnalyzer;
-    }
-
-    @Test
-    public void testSucceed() throws Exception {
-
     }
 
     @DataProvider
     public Object[][] succeedCases() {
         return new Object[][] {
-            { "panama_no_unnamed_module_native_access", successWithWarning("ALL-UNNAMED") },
-            { "panama_unnamed_module_native_access_false", successWithWarning("ALL-UNNAMED"), new Attribute[] {new Attribute("Enable-Native-Access", "false")} },
-            { "panama_unnamed_module_native_access_asdf", successWithWarning("ALL-UNNAMED"), new Attribute[] {new Attribute("Enable-Native-Access", "asdf")} },
-            { "panama_unnamed_module_native_access_true", successNoWarning(), new Attribute[] {new Attribute("Enable-Native-Access", "true")} },
-            { "panama_unnamed_module_native_access_True", successNoWarning(), new Attribute[] {new Attribute("Enable-Native-Access", "True")} },
+            { "panama_no_unnamed_module_native_access", successWithWarning("ALL-UNNAMED"), List.of() },
+            { "panama_unnamed_module_native_access_false", successWithWarning("ALL-UNNAMED"), List.of(new Attribute("Enable-Native-Access", "false")) },
+            { "panama_unnamed_module_native_access_asdf", successWithWarning("ALL-UNNAMED"), List.of(new Attribute("Enable-Native-Access", "asdf")) },
+            { "panama_unnamed_module_native_access_true", successNoWarning(), List.of(new Attribute("Enable-Native-Access", "true")) },
+            { "panama_unnamed_module_native_access_True", successNoWarning(), List.of(new Attribute("Enable-Native-Access", "True")) },
         };
     }
 }
