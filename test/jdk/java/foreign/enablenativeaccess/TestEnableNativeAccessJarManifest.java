@@ -23,16 +23,16 @@
 
 /**
  * @test
- * @enablePreview
+ * @summary Basic test for Enable-Native-Access attribute in the
+ *          manifest of a main application JAR
+ * @library /test/lib
  * @requires jdk.foreign.linker != "UNSUPPORTED"
  * @requires !vm.musl
  *
- * @library /test/lib
+ * @enablePreview
  * @build TestEnableNativeAccess
  *        org.openjdk.foreigntest.PanamaMainUnnamedModule
  * @run testng TestEnableNativeAccessJarManifest
- * @summary Basic test for Enable-Native-Access attribute in the
- *          manifest of a main application JAR
  */
 
 import java.nio.file.Files;
@@ -46,27 +46,25 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.util.JarUtils;
 
 import org.testng.annotations.Test;
+import org.testng.annotations.DataProvider;
 
 public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBase {
+
+    static record Attribute(String name, String value) {}
 
     /**
      * Runs the test to execute the given test action. The VM is run with the
      * given VM options and the output checked to see that it matches the
      * expected result.
      */
-    OutputAnalyzer run(String action, String cls, Result expectedResult, String... attributes) throws Exception {
+    OutputAnalyzer run(String action, Result expectedResult, Attribute... attributes) throws Exception {
         Manifest man = new Manifest();
         Attributes attrs = man.getMainAttributes();
         attrs.put(Attributes.Name.MANIFEST_VERSION, "1.0");
-        attrs.put(Attributes.Name.MAIN_CLASS, cls);
+        attrs.put(Attributes.Name.MAIN_CLASS, UNNAMED);
 
-        for (String nameAndValue : attributes) {
-            String[] s = nameAndValue.split("=");
-            if (s.length != 2)
-                throw new RuntimeException("Malformed: " + nameAndValue);
-            String name = s[0];
-            String value = s[1];
-            attrs.put(new Attributes.Name(name), value);
+        for (Attribute attrib : attributes) {
+            attrs.put(new Attributes.Name(attrib.name()), attrib.value());
         }
 
         // create the JAR file with Test1 and Test2
@@ -74,7 +72,7 @@ public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBas
         Files.deleteIfExists(jarfile);
 
         Path classes = Paths.get(System.getProperty("test.classes", ""));
-        JarUtils.createJarFile(jarfile, man, classes, Paths.get(cls.replace('.', '/') + ".class"));
+        JarUtils.createJarFile(jarfile, man, classes, Paths.get(UNNAMED.replace('.', '/') + ".class"));
 
         // java -jar test.jar
         OutputAnalyzer outputAnalyzer = ProcessTools.executeTestJava(
@@ -89,9 +87,17 @@ public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBas
 
     @Test
     public void testSucceed() throws Exception {
-        run("panama_no_unnamed_module_native_access", UNNAMED, successWithWarning("ALL-UNNAMED"), new String[]{});
-        run("panama_unnamed_module_native_access_false", UNNAMED, successWithWarning("ALL-UNNAMED"), new String[]{"Enable-Native-Access=false"});
-        run("panama_unnamed_module_native_access_asdf", UNNAMED, successWithWarning("ALL-UNNAMED"), new String[]{"Enable-Native-Access=asdf"});
-        run("panama_unnamed_module_native_access_true", UNNAMED, successNoWarning(), new String[]{"Enable-Native-Access=true"});
+
+    }
+
+    @DataProvider
+    public Object[][] succeedCases() {
+        return new Object[][] {
+            { "panama_no_unnamed_module_native_access", successWithWarning("ALL-UNNAMED") },
+            { "panama_unnamed_module_native_access_false", successWithWarning("ALL-UNNAMED"), new Attribute[] {new Attribute("Enable-Native-Access", "false")} },
+            { "panama_unnamed_module_native_access_asdf", successWithWarning("ALL-UNNAMED"), new Attribute[] {new Attribute("Enable-Native-Access", "asdf")} },
+            { "panama_unnamed_module_native_access_true", successNoWarning(), new Attribute[] {new Attribute("Enable-Native-Access", "true")} },
+            { "panama_unnamed_module_native_access_True", successNoWarning(), new Attribute[] {new Attribute("Enable-Native-Access", "True")} },
+        };
     }
 }
