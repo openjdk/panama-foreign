@@ -57,7 +57,7 @@ public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBas
 
     @Test(dataProvider = "cases")
     public void testEnableNativeAccessInJarManifest(String action, String cls, Result expectedResult,
-                                                    List<Attribute> attributes, List<String> programArgs) throws Exception {
+                                                    List<Attribute> attributes, List<String> vmArgs, List<String> programArgs) throws Exception {
         Manifest man = new Manifest();
         Attributes attrs = man.getMainAttributes();
         attrs.put(Attributes.Name.MANIFEST_VERSION, "1.0");
@@ -77,11 +77,11 @@ public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBas
         // java -jar test.jar
         List<String> command = new ArrayList<>(List.of(
             "--enable-preview",
-            "-Djava.library.path=" + System.getProperty("java.library.path"),
-            "-p", MODULE_PATH,
-            "--add-modules", "panama_module",
-            "-jar", jarfile.toString()
+            "-Djava.library.path=" + System.getProperty("java.library.path")
         ));
+        command.addAll(vmArgs);
+        command.add("-jar");
+        command.add(jarfile.toString());
         command.addAll(programArgs);
         OutputAnalyzer outputAnalyzer = ProcessTools.executeTestJava(command.toArray(String[]::new))
                 .outputTo(System.out)
@@ -93,18 +93,37 @@ public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBas
     public Object[][] cases() {
         return new Object[][] {
             { "panama_no_unnamed_module_native_access", UNNAMED, successWithWarning("ALL-UNNAMED"),
-                    List.of(), List.of() },
+                    List.of(), List.of(), List.of() },
             { "panama_unnamed_module_native_access", UNNAMED, successNoWarning(),
-                    List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")), List.of() },
-
+                    List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")), List.of(), List.of() },
             { "panama_unnamed_module_native_access_invalid", UNNAMED, failWithError("Only ALL-UNNAMED allowed as value for Enable-Native-Access"),
-                    List.of(new Attribute("Enable-Native-Access", "asdf")), List.of() },
+                    List.of(new Attribute("Enable-Native-Access", "asdf")), List.of(), List.of() },
+
             { "panama_enable_native_access_false", REINVOKER, failWithError("Illegal native access from: module panama_module"),
-                    List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")), List.of(PANAMA_MAIN_CLS) },
+                    List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")),
+                    List.of("-p", MODULE_PATH, "--add-modules=panama_module"),
+                    List.of(PANAMA_MAIN_CLS) },
             { "panama_enable_native_access_reflection_false", REINVOKER, failWithError("Illegal native access from: module panama_module"),
-                    List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")), List.of(PANAMA_REFLECTION_CLS) },
+                    List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")),
+                    List.of("-p", MODULE_PATH, "--add-modules=panama_module"),
+                    List.of(PANAMA_REFLECTION_CLS) },
             { "panama_enable_native_access_invoke_false", REINVOKER, failWithError("Illegal native access from: module panama_module"),
-                    List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")), List.of(PANAMA_INVOKE_CLS) }
+                    List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")),
+                    List.of("-p", MODULE_PATH, "--add-modules=panama_module"),
+                    List.of(PANAMA_INVOKE_CLS) },
+
+            { "panama_enable_native_access_true", REINVOKER, successNoWarning(),
+                    List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")),
+                    List.of("-p", MODULE_PATH, "--add-modules=panama_module", "--enable-native-access=panama_module"),
+                    List.of(PANAMA_MAIN_CLS) },
+            { "panama_enable_native_access_reflection_true", REINVOKER, successNoWarning(),
+                    List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")),
+                    List.of("-p", MODULE_PATH, "--add-modules=panama_module", "--enable-native-access=panama_module"),
+                    List.of(PANAMA_REFLECTION_CLS) },
+            { "panama_enable_native_access_invoke_true", REINVOKER, successNoWarning(),
+                    List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")),
+                    List.of("-p", MODULE_PATH, "--add-modules=panama_module", "--enable-native-access=panama_module"),
+                    List.of(PANAMA_INVOKE_CLS) }
         };
     }
 
