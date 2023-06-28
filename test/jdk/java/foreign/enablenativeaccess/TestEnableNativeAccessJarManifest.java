@@ -41,7 +41,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.stream.Collectors;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -95,23 +94,17 @@ public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBas
         return new Object[][] {
             { "panama_no_unnamed_module_native_access", UNNAMED, successWithWarning("ALL-UNNAMED"),
                     List.of(), List.of() },
-            { "panama_unnamed_module_native_access_asdf", UNNAMED, successWithWarning("ALL-UNNAMED"),
-                    List.of(new Attribute("Enable-Native-Access", "asdf")), List.of() },
-            { "panama_unnamed_module_native_access_true", UNNAMED, successNoWarning(),
-                    List.of(new Attribute("Enable-Native-Access", "true")), List.of() },
-            { "panama_unnamed_module_native_access_True", UNNAMED, successNoWarning(),
-                    List.of(new Attribute("Enable-Native-Access", "True")), List.of() },
+            { "panama_unnamed_module_native_access", UNNAMED, successNoWarning(),
+                    List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")), List.of() },
 
-            { "panama_no_unnamed_module_native_access_false", UNNAMED, failWithError("Illegal native access from: unnamed module"),
-                    List.of(new Attribute("Enable-Native-Access", "false")), List.of() },
+            { "panama_unnamed_module_native_access_invalid", UNNAMED, failWithError("Only ALL-UNNAMED allowed as value for Enable-Native-Access"),
+                    List.of(new Attribute("Enable-Native-Access", "asdf")), List.of() },
             { "panama_enable_native_access_false", REINVOKER, failWithError("Illegal native access from: module panama_module"),
-                    List.of(new Attribute("Enable-Native-Access", "false")), List.of(PANAMA_MAIN_CLS) },
+                    List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")), List.of(PANAMA_MAIN_CLS) },
             { "panama_enable_native_access_reflection_false", REINVOKER, failWithError("Illegal native access from: module panama_module"),
-                    List.of(new Attribute("Enable-Native-Access", "false")), List.of(PANAMA_REFLECTION_CLS) },
+                    List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")), List.of(PANAMA_REFLECTION_CLS) },
             { "panama_enable_native_access_invoke_false", REINVOKER, failWithError("Illegal native access from: module panama_module"),
-                    List.of(new Attribute("Enable-Native-Access", "false")), List.of(PANAMA_INVOKE_CLS) },
-            { "panama_enable_native_access_jni_false", REINVOKER, failWithError("Illegal native access from: unnamed module"),
-                    List.of(new Attribute("Enable-Native-Access", "false")), List.of(PANAMA_JNI_CLS) },
+                    List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")), List.of(PANAMA_INVOKE_CLS) }
         };
     }
 

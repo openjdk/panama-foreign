@@ -773,6 +773,7 @@ public final class ModuleBootstrap {
 
     private static final boolean HAS_ENABLE_NATIVE_ACCESS_FLAG;
     private static final Set<String> NATIVE_ACCESS_MODULES;
+    // This flag is lazily initialized in LauncherHelper after this class is initialized (hence mutable)
     private static boolean ENABLE_NATIVE_ACCESS_SET_IN_MANIFEST = false;
 
     public static void setEnableNativeAccessSetInManifest() {

@@ -598,15 +598,12 @@ public final class LauncherHelper {
                 addExportsOrOpens(opens, true);
             }
             String enableNativeAccess = mainAttrs.getValue(ENABLE_NATIVE_ACCESS);
-            if ("true".equalsIgnoreCase(enableNativeAccess) || "false".equalsIgnoreCase(enableNativeAccess)) {
-                // values besides true/false are ignored
-                // if the value is false, we emit an error when any code tries to access a restricted method,
-                // whereas with the flag not set we just emit a warning.
-                boolean value = Boolean.parseBoolean(enableNativeAccess);
-                ModuleBootstrap.setEnableNativeAccessSetInManifest();
-                if (value) {
-                   Modules.addEnableNativeAccessToAllUnnamed();
+            if (enableNativeAccess != null) {
+                if (!enableNativeAccess.equals("ALL-UNNAMED")) {
+                    throw new IllegalArgumentException("Only ALL-UNNAMED allowed as value for " + ENABLE_NATIVE_ACCESS);
                 }
+                ModuleBootstrap.setEnableNativeAccessSetInManifest();
+                Modules.addEnableNativeAccessToAllUnnamed();
             }
 
             /*
