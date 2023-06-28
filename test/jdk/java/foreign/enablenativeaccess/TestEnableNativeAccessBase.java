@@ -41,7 +41,6 @@ public class TestEnableNativeAccessBase {
     static final String PANAMA_JNI_CLS = "org.openjdk.foreigntest.PanamaMainJNI";
     static final String PANAMA_JNI = "panama_module/" + PANAMA_JNI_CLS;
     static final String UNNAMED = "org.openjdk.foreigntest.unnamed.PanamaMainUnnamedModule";
-    static final String REINVOKER = "TestEnableNativeAccessJarManifest$Reinvoker";
 
     /**
      * Represents the expected result of a test.

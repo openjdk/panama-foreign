@@ -53,6 +53,8 @@ import org.testng.annotations.DataProvider;
 
 public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBase {
 
+    private static final String REINVOKER = "TestEnableNativeAccessJarManifest$Reinvoker";
+
     static record Attribute(String name, String value) {}
 
     @Test(dataProvider = "cases")
