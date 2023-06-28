@@ -92,6 +92,7 @@ public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBas
     @DataProvider
     public Object[][] cases() {
         return new Object[][] {
+            // simple cases where a jar contains a single main class with no dependencies
             { "panama_no_unnamed_module_native_access", UNNAMED, successWithWarning("ALL-UNNAMED"),
                     List.of(), List.of(), List.of() },
             { "panama_unnamed_module_native_access", UNNAMED, successNoWarning(),
@@ -99,6 +100,7 @@ public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBas
             { "panama_unnamed_module_native_access_invalid", UNNAMED, failWithError("Only ALL-UNNAMED allowed as value for Enable-Native-Access"),
                     List.of(new Attribute("Enable-Native-Access", "asdf")), List.of(), List.of() },
 
+            // more complex cases where a jar invokes a module on the module path that does native access
             { "panama_enable_native_access_false", REINVOKER, failWithError("Illegal native access from: module panama_module"),
                     List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")),
                     List.of("-p", MODULE_PATH, "--add-modules=panama_module"),
@@ -128,7 +130,6 @@ public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBas
     }
 
     public class Reinvoker {
-
         public static void main(String[] args) throws Throwable {
             Class<?> realMainClass = Class.forName(args[0]);
             realMainClass.getMethod("main", String[].class).invoke(null, (Object) new String[0]);
