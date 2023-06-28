@@ -602,7 +602,6 @@ public final class LauncherHelper {
                 if (!enableNativeAccess.equals("ALL-UNNAMED")) {
                     throw new IllegalArgumentException("Only ALL-UNNAMED allowed as value for " + ENABLE_NATIVE_ACCESS);
                 }
-                ModuleBootstrap.setEnableNativeAccessSetInManifest();
                 Modules.addEnableNativeAccessToAllUnnamed();
             }
 

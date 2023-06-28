@@ -101,15 +101,15 @@ public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBas
                     List.of(new Attribute("Enable-Native-Access", "asdf")), List.of(), List.of() },
 
             // more complex cases where a jar invokes a module on the module path that does native access
-            { "panama_enable_native_access_false", REINVOKER, failWithError("Illegal native access from: module panama_module"),
+            { "panama_enable_native_access_false", REINVOKER, successWithWarning("panama_module"),
                     List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")),
                     List.of("-p", MODULE_PATH, "--add-modules=panama_module"),
                     List.of(PANAMA_MAIN_CLS) },
-            { "panama_enable_native_access_reflection_false", REINVOKER, failWithError("Illegal native access from: module panama_module"),
+            { "panama_enable_native_access_reflection_false", REINVOKER, successWithWarning("panama_module"),
                     List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")),
                     List.of("-p", MODULE_PATH, "--add-modules=panama_module"),
                     List.of(PANAMA_REFLECTION_CLS) },
-            { "panama_enable_native_access_invoke_false", REINVOKER, failWithError("Illegal native access from: module panama_module"),
+            { "panama_enable_native_access_invoke_false", REINVOKER, successWithWarning("panama_module"),
                     List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")),
                     List.of("-p", MODULE_PATH, "--add-modules=panama_module"),
                     List.of(PANAMA_INVOKE_CLS) },
