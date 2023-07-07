@@ -81,17 +81,17 @@ public class MemorySegmentCopyALL {
     }
 
     @Benchmark
-    public void panamam_array_to_ALL() {
+    public void panama_array_to_ALL() {
         MemorySegment.copy(ints, 0, ALL, JAVA_INT_UNALIGNED, unsafe_dst, ELEM_SIZE);
     }
 
     @Benchmark
-    public void panamam_ALL_to_array() {
+    public void panama_ALL_to_array() {
         MemorySegment.copy(ALL, JAVA_INT_UNALIGNED, unsafe_src, ints, 0, ELEM_SIZE);
     }
 
     @Benchmark
-    public void panamam_ALL_to_ALL() {
+    public void panama_ALL_to_ALL() {
         MemorySegment.copy(ALL, JAVA_INT_UNALIGNED, unsafe_src, ALL, JAVA_INT_UNALIGNED, unsafe_dst, ELEM_SIZE);
     }
 
