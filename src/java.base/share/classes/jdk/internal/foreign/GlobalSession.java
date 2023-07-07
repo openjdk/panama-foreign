@@ -67,4 +67,10 @@ final class GlobalSession extends MemorySessionImpl {
     public void justClose() {
         throw nonCloseable();
     }
+
+    @Override
+    @ForceInline
+    public void checkValidStateRaw() {
+        // do nothing, avoid liveness check
+    }
 }
