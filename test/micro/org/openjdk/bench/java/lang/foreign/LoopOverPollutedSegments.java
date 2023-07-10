@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@ import static java.lang.foreign.ValueLayout.*;
 @Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-@Fork(value = 3, jvmArgsAppend = "--enable-preview")
+@Fork(value = 3, jvmArgsAppend = {"--enable-preview", "--enable-native-access=ALL-UNNAMED"})
 public class LoopOverPollutedSegments extends JavaLayouts {
 
     static final int ELEM_SIZE = 1_000_000;
@@ -57,7 +57,7 @@ public class LoopOverPollutedSegments extends JavaLayouts {
 
 
     Arena confinedArena, sharedArena;
-    MemorySegment nativeSegment, nativeSharedSegment, heapSegmentBytes, heapSegmentFloats;
+    MemorySegment nativeSegment, nativeSharedSegment, nativeGlobal, heapSegmentBytes, heapSegmentFloats;
     byte[] arr;
     long addr;
 
@@ -74,6 +74,7 @@ public class LoopOverPollutedSegments extends JavaLayouts {
         nativeSegment = scope1.allocate(ALLOC_SIZE, 4);
         Arena scope = sharedArena;
         nativeSharedSegment = scope.allocate(ALLOC_SIZE, 4);
+        nativeGlobal = nativeSegment.reinterpret(Arena.global(), null);
         heapSegmentBytes = MemorySegment.ofArray(new byte[ALLOC_SIZE]);
         heapSegmentFloats = MemorySegment.ofArray(new float[ELEM_SIZE]);
 
@@ -84,6 +85,8 @@ public class LoopOverPollutedSegments extends JavaLayouts {
                 nativeSegment.setAtIndex(JAVA_FLOAT_UNALIGNED, i, i);
                 nativeSharedSegment.setAtIndex(JAVA_INT_UNALIGNED, i, i);
                 nativeSharedSegment.setAtIndex(JAVA_FLOAT_UNALIGNED, i, i);
+                nativeGlobal.setAtIndex(JAVA_INT_UNALIGNED, i, i);
+                nativeGlobal.setAtIndex(JAVA_FLOAT_UNALIGNED, i, i);
                 VH_INT_UNALIGNED.set(nativeSegment, (long)i, i);
                 heapSegmentBytes.setAtIndex(JAVA_INT_UNALIGNED, i, i);
                 heapSegmentBytes.setAtIndex(JAVA_FLOAT_UNALIGNED, i, i);
