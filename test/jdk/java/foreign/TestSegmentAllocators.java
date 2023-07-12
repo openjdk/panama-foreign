@@ -203,7 +203,7 @@ public class TestSegmentAllocators {
                 return allocate(size, 1);
             };
         };
-        allocator.allocateString("Hello");
+        allocator.allocateFrom("Hello");
         assertEquals(calls.get(), 1);
     }
 

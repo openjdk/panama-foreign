@@ -83,16 +83,16 @@ public interface SegmentAllocator {
      * <p>
      * Calling this method is equivalent to the following code:
      * {@snippet lang = java:
-     * allocateString(str, StandardCharsets.UTF_8);
+     * allocateFrom(str, StandardCharsets.UTF_8);
      *}
      *
      * @param str the Java string to be converted into a C string.
      * @return a new native segment containing the converted C string.
      */
     @ForceInline
-    default MemorySegment allocateString(String str) {
+    default MemorySegment allocateFrom(String str) {
         Objects.requireNonNull(str);
-        return allocateString(str, StandardCharsets.UTF_8);
+        return allocateFrom(str, StandardCharsets.UTF_8);
     }
 
     /**
@@ -123,7 +123,7 @@ public interface SegmentAllocator {
      * </ul>
      */
     @ForceInline
-    default MemorySegment allocateString(String str, Charset charset) {
+    default MemorySegment allocateFrom(String str, Charset charset) {
         Objects.requireNonNull(charset);
         Objects.requireNonNull(str);
         int termCharSize = StringSupport.CharsetKind.of(charset).terminatorCharSize();

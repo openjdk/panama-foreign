@@ -294,7 +294,7 @@ public class Examples {
         );
 
         try (Arena arena = Arena.ofConfined()) {
-            MemorySegment hello = arena.allocateString("Hello");
+            MemorySegment hello = arena.allocateFrom("Hello");
             long len = (long) strlen.invokeExact(hello); // 5
             System.out.println(len);
         }
@@ -306,7 +306,7 @@ public class Examples {
         );
 
         try (Arena arena = Arena.ofConfined()) {
-            MemorySegment hello = arena.allocateString("Hello");
+            MemorySegment hello = arena.allocateFrom("Hello");
             long len = (long) strlen_virtual.invokeExact(
                     STDLIB.find("strlen").get(),
                     hello); // 5
@@ -350,7 +350,7 @@ public class Examples {
                 Linker.Option.firstVariadicArg(1) // first int is variadic
         );
         try (Arena arena = Arena.ofConfined()) {
-            MemorySegment s = arena.allocateString("%d plus %d equals %d\n");
+            MemorySegment s = arena.allocateFrom("%d plus %d equals %d\n");
             int res = (int) printf.invokeExact(s, 2, 2, 4);
         }
     }

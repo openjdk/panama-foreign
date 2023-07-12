@@ -167,7 +167,7 @@ class Snippets {
             );
 
             try (Arena arena = Arena.ofConfined()) {
-                MemorySegment str = arena.allocateString("Hello");
+                MemorySegment str = arena.allocateFrom("Hello");
                 long len = (long) strlen.invokeExact(str);  // 5
             }
 
@@ -287,7 +287,7 @@ class Snippets {
             );
 
             try (Arena arena = Arena.ofConfined()) {
-                int res = (int) printf.invokeExact(arena.allocateString("%d plus %d equals %d"), 2, 2, 4); //prints "2 plus 2 equals 4"
+                int res = (int) printf.invokeExact(arena.allocateFrom("%d plus %d equals %d"), 2, 2, 4); //prints "2 plus 2 equals 4"
             }
 
         }
@@ -572,7 +572,7 @@ class Snippets {
             );
 
             try (Arena arena = Arena.ofConfined()) {
-                MemorySegment cString = arena.allocateString("Hello");
+                MemorySegment cString = arena.allocateFrom("Hello");
                 long len = (long) strlen.invokeExact(cString); // 5
             }
 
