@@ -277,7 +277,7 @@ public class StdLibTest extends NativeTestHelper {
         int[] qsort(int[] arr) throws Throwable {
             //init native array
             try (var arena = Arena.ofConfined()) {
-                MemorySegment nativeArr = arena.allocateArray(C_INT, arr);
+                MemorySegment nativeArr = arena.allocateFrom(C_INT, arr);
 
                 //call qsort
                 MemorySegment qsortUpcallStub = abi.upcallStub(qsortCompar, qsortComparFunction, arena);

@@ -308,7 +308,7 @@ import java.util.stream.Stream;
  * {@snippet lang = java:
  * try (Arena arena = Arena.ofConfined()) {
  *     MemorySegment comparFunc = linker.upcallStub(comparHandle, comparDesc, arena);
- *     MemorySegment array = arena.allocateArray(JAVA_INT, 0, 9, 3, 4, 6, 5, 1, 8, 2, 7);
+ *     MemorySegment array = arena.allocateFrom(JAVA_INT, 0, 9, 3, 4, 6, 5, 1, 8, 2, 7);
  *     qsort.invokeExact(array, 10L, 4L, comparFunc);
  *     int[] sorted = array.toArray(JAVA_INT); // [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
  * }
