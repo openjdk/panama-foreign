@@ -475,6 +475,7 @@ import java.util.stream.Stream;
  * try (Arena arena = Arena.ofConfined()) {
  *     int res = (int)printf.invokeExact(arena.allocateFrom("%d plus %d equals %d"), 2, 2, 4); //prints "2 plus 2 equals 4"
  * }
+ *}
  *
  * <h2 id="safety">Safety considerations</h2>
  *
