@@ -431,7 +431,7 @@ import java.util.stream.Stream;
  * function descriptor, are called <em>variadic argument layouts</em>.
  * <p>
  * The native linker does not automatically perform default argument promotions, since it would be ambiguous whether sign
- * extension should take place. However, since passing arguments of a non-promoted type as a variadic argument is not
+ * extension should take place. However, since passing an argument of a non-promoted type as a variadic argument is not
  * supported in C, the native linker will reject an attempt to link a specialized function descriptor with any variadic
  * argument layouts corresponding to a non-promoted C type. Since the size of the C {@code int} type is platform-specific,
  * exactly which layouts will be rejected is platform-specific as well. As an example: on Linux/x64 the layouts
