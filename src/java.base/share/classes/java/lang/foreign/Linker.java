@@ -421,8 +421,8 @@ import java.util.stream.Stream;
  * </ul>
  * whereby the signed-ness of the source type corresponds to the signed-ness of the promoted type. The complete process
  * of default argument promotion is described in the C specification. In effect these promotions place limits on the
- * types that can be used to replace the {@code ...}, as the variadic parameters of the specialized form will always
- * have a promoted type.
+ * types that can be used to replace the {@code ...}, as the variadic parameters of the specialized form of a variadic
+ * function will always have a promoted type.
  * <p>
  * The native linker only supports linking the specialized form of a variadic function. A variadic function in its specialized
  * form can be linked using a function descriptor describing the specialized form. Additionally, the
@@ -430,14 +430,13 @@ import java.util.stream.Stream;
  * the parameter list. The corresponding argument layout (if any), and all following argument layouts in the specialized
  * function descriptor, are called <em>variadic argument layouts</em>.
  * <p>
- * The native linker does not automatically perform default argument promotions, since it would be ambiguous whether sign
- * extension should take place. However, since passing an argument of a non-promoted type as a variadic argument is not
- * supported in C, the native linker will reject an attempt to link a specialized function descriptor with any variadic
- * argument layouts corresponding to a non-promoted C type. Since the size of the C {@code int} type is platform-specific,
- * exactly which layouts will be rejected is platform-specific as well. As an example: on Linux/x64 the layouts
- * corresponding to the C types {@code _Bool}, {@code (unsigned) char}, {@code (unsigned) short}, and {@code float}
- * (among others), will be rejected by the linker. The {@link #canonicalLayouts()} API can be used to find which layout
- * corresponds to a particular C type.
+ * The native linker does not automatically perform default argument promotions. However, since passing an argument of a
+ * non-promoted type as a variadic argument is not supported in C, the native linker will reject an attempt to link a
+ * specialized function descriptor with any variadic argument value layouts corresponding to a non-promoted C type.
+ * Since the size of the C {@code int} type is platform-specific, exactly which layouts will be rejected is
+ * platform-specific as well. As an example: on Linux/x64 the layouts corresponding to the C types {@code _Bool},
+ * {@code (unsigned) char}, {@code (unsigned) short}, and {@code float} (among others), will be rejected by the linker.
+ * The {@link #canonicalLayouts()} API can be used to find which layout corresponds to a particular C type.
  * <p>
  * A well-known variadic function is the {@code printf} function, defined in the C standard library:
  *
