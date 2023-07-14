@@ -436,7 +436,7 @@ import java.util.stream.Stream;
  * Since the size of the C {@code int} type is platform-specific, exactly which layouts will be rejected is
  * platform-specific as well. As an example: on Linux/x64 the layouts corresponding to the C types {@code _Bool},
  * {@code (unsigned) char}, {@code (unsigned) short}, and {@code float} (among others), will be rejected by the linker.
- * The {@link #canonicalLayouts()} API can be used to find which layout corresponds to a particular C type.
+ * The {@link #canonicalLayouts()} method can be used to find which layout corresponds to a particular C type.
  * <p>
  * A well-known variadic function is the {@code printf} function, defined in the C standard library:
  *
