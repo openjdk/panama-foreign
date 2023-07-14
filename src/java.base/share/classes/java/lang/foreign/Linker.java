@@ -405,7 +405,7 @@ import java.util.stream.Stream;
  *
  * <h3 id="variadic-funcs">Variadic functions</h3>
  *
- * Variadic functions are C functions which can accept a variable number and type of arguments. They are declared With a
+ * Variadic functions are C functions which can accept a variable number and type of arguments. They are declared with a
  * trailing ellipsis ({@code ...}) at the end of the formal parameter list, such as: {@code void foo(int x, ...);}.
  * The arguments passed in place of the ellipsis are called <em>variadic arguments</em>. Variadic functions are,
  * essentially, templates that can be <em>specialized</em> into multiple non-variadic functions by replacing the
