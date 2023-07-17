@@ -51,6 +51,7 @@ public class TestStringEncoding {
                     if (charset == StandardCharsets.UTF_16) {
                         terminatorSize -= 2; // drop BOM
                     }
+                    // note that UTF_32 doesn't use a BOM
 
                     int expectedByteLength =
                             testString.getBytes(charset).length +
