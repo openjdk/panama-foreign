@@ -123,6 +123,10 @@ public class NativeTestHelper {
      */
     public static final AddressLayout C_POINTER = ValueLayout.ADDRESS
             .withTargetLayout(MemoryLayout.sequenceLayout(Long.MAX_VALUE, C_CHAR));
+    /**
+     * The layout for the {@code size_t} C type
+     */
+    public static final ValueLayout C_SIZE_T = ValueLayout.ADDRESS.byteSize() == 8 ? C_LONG_LONG : C_INT;
 
     public static final Linker LINKER = Linker.nativeLinker();
 

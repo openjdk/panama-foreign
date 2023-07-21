@@ -51,12 +51,16 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
     static final Linker LINKER = Linker.nativeLinker();
 
     // struct S_PDI { void* p0; double p1; int p2; };
-    static final MemoryLayout S_PDI_LAYOUT = MemoryLayout.structLayout(
-        C_POINTER.withName("p0"),
-        C_DOUBLE.withName("p1"),
-        C_INT.withName("p2"),
-        MemoryLayout.paddingLayout(4)
-    );
+    static final MemoryLayout S_PDI_LAYOUT = ValueLayout.ADDRESS.byteSize() == 8
+        ? MemoryLayout.structLayout(
+            C_POINTER.withName("p0"),
+            C_DOUBLE.withName("p1"),
+            C_INT.withName("p2"),
+            MemoryLayout.paddingLayout(4))
+        : MemoryLayout.structLayout(
+            C_POINTER.withName("p0"),
+            C_DOUBLE.withName("p1"),
+            C_INT.withName("p2"));
 
     static {
         System.loadLibrary("TestUpcallHighArity");
