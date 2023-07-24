@@ -214,7 +214,7 @@ public class TestIllegalLink extends NativeTestHelper {
                     "GroupLayout is too large"
             });
         }
-        if (ADDRESS.byteSize() == 8) {
+        if (ValueLayout.JAVA_LONG.byteAlignment() == 8) {
             cases.add(new Object[]{
                     FunctionDescriptor.ofVoid(MemoryLayout.structLayout(
                             ValueLayout.JAVA_LONG,
