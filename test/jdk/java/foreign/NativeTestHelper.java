@@ -128,6 +128,21 @@ public class NativeTestHelper {
      */
     public static final ValueLayout C_SIZE_T = ValueLayout.ADDRESS.byteSize() == 8 ? C_LONG_LONG : C_INT;
 
+    // Common layout shared by some tests
+    // struct S_PDI { void* p0; double p1; int p2; };
+    public static final MemoryLayout S_PDI_LAYOUT = switch ((int) ValueLayout.ADDRESS.byteSize()) {
+        case 8 -> MemoryLayout.structLayout(
+            C_POINTER.withName("p0"),
+            C_DOUBLE.withName("p1"),
+            C_INT.withName("p2"),
+            MemoryLayout.paddingLayout(4));
+        case 4 -> MemoryLayout.structLayout(
+            C_POINTER.withName("p0"),
+            C_DOUBLE.withName("p1"),
+            C_INT.withName("p2"));
+        default -> throw new UnsupportedOperationException("Unsupported address size");
+    };
+
     public static final Linker LINKER = Linker.nativeLinker();
 
     private static final MethodHandle FREE = LINKER.downcallHandle(
