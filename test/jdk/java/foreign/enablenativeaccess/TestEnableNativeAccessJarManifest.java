@@ -26,7 +26,6 @@
  * @summary Basic test for Enable-Native-Access attribute in the
  *          manifest of a main application JAR
  * @library /test/lib
- * @requires jdk.foreign.linker != "UNSUPPORTED"
  * @requires !vm.musl
  *
  * @enablePreview
