@@ -66,6 +66,10 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
         return dup(byteAlignment, name);
     }
 
+    public final L withoutByteAlignment() {
+        return withByteAlignment(1);
+    }
+
     public final long byteAlignment() {
         return byteAlignment;
     }

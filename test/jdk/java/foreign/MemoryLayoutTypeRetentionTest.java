@@ -49,6 +49,7 @@ public class MemoryLayoutTypeRetentionTest {
     @Test
     public void testOfBoolean() {
         OfBoolean v = JAVA_BOOLEAN
+                .withoutByteAlignment()
                 .withByteAlignment(BYTE_ALIGNMENT)
                 .withoutName()
                 .withName(NAME)
@@ -59,6 +60,7 @@ public class MemoryLayoutTypeRetentionTest {
     @Test
     public void testOfByte() {
         OfByte v = JAVA_BYTE
+                .withoutByteAlignment()
                 .withByteAlignment(BYTE_ALIGNMENT)
                 .withoutName()
                 .withName(NAME)
@@ -69,6 +71,7 @@ public class MemoryLayoutTypeRetentionTest {
     @Test
     public void testOfShort() {
         OfShort v = JAVA_SHORT
+                .withoutByteAlignment()
                 .withByteAlignment(BYTE_ALIGNMENT)
                 .withoutName()
                 .withName(NAME)
@@ -79,6 +82,7 @@ public class MemoryLayoutTypeRetentionTest {
     @Test
     public void testOfInt() {
         OfInt v = JAVA_INT
+                .withoutByteAlignment()
                 .withByteAlignment(BYTE_ALIGNMENT)
                 .withoutName()
                 .withName(NAME)
@@ -89,6 +93,7 @@ public class MemoryLayoutTypeRetentionTest {
     @Test
     public void testOfChar() {
         OfChar v = JAVA_CHAR
+                .withoutByteAlignment()
                 .withByteAlignment(BYTE_ALIGNMENT)
                 .withoutName()
                 .withName(NAME)
@@ -99,6 +104,7 @@ public class MemoryLayoutTypeRetentionTest {
     @Test
     public void testOfLong() {
         OfLong v = JAVA_LONG
+                .withoutByteAlignment()
                 .withByteAlignment(BYTE_ALIGNMENT)
                 .withoutName()
                 .withName(NAME)
@@ -109,6 +115,7 @@ public class MemoryLayoutTypeRetentionTest {
     @Test
     public void testOfFloat() {
         OfFloat v = JAVA_FLOAT
+                .withoutByteAlignment()
                 .withByteAlignment(BYTE_ALIGNMENT)
                 .withoutName()
                 .withName(NAME)
@@ -119,6 +126,7 @@ public class MemoryLayoutTypeRetentionTest {
     @Test
     public void testOfDouble() {
         OfDouble v = JAVA_DOUBLE
+                .withoutByteAlignment()
                 .withByteAlignment(BYTE_ALIGNMENT)
                 .withoutName()
                 .withName(NAME)
@@ -129,6 +137,7 @@ public class MemoryLayoutTypeRetentionTest {
     @Test
     public void testValueLayout() {
         ValueLayout v = ((ValueLayout) JAVA_INT)
+                .withoutByteAlignment()
                 .withByteAlignment(BYTE_ALIGNMENT)
                 .withoutName()
                 .withName(NAME)
@@ -139,6 +148,7 @@ public class MemoryLayoutTypeRetentionTest {
     @Test
     public void testAddressLayout() {
         AddressLayout v = ADDRESS
+                .withoutByteAlignment()
                 .withByteAlignment(BYTE_ALIGNMENT)
                 .withoutName()
                 .withName(NAME)
@@ -157,6 +167,7 @@ public class MemoryLayoutTypeRetentionTest {
     @Test
     public void testPaddingLayout() {
         PaddingLayout v = MemoryLayout.paddingLayout(1)
+                .withoutByteAlignment()
                 .withByteAlignment(BYTE_ALIGNMENT)
                 .withoutName()
                 .withName(NAME);
@@ -168,6 +179,7 @@ public class MemoryLayoutTypeRetentionTest {
         GroupLayout v = MemoryLayout.structLayout(
                         JAVA_INT.withByteAlignment(BYTE_ALIGNMENT),
                         JAVA_LONG.withByteAlignment(BYTE_ALIGNMENT))
+                .withoutByteAlignment()
                 .withByteAlignment(BYTE_ALIGNMENT)
                 .withoutName()
                 .withName(NAME);
@@ -179,6 +191,7 @@ public class MemoryLayoutTypeRetentionTest {
         StructLayout v = MemoryLayout.structLayout(
                         JAVA_INT.withByteAlignment(BYTE_ALIGNMENT),
                         JAVA_LONG.withByteAlignment(BYTE_ALIGNMENT))
+                .withoutByteAlignment()
                 .withByteAlignment(BYTE_ALIGNMENT)
                 .withoutName()
                 .withName(NAME);
@@ -190,6 +203,7 @@ public class MemoryLayoutTypeRetentionTest {
         UnionLayout v = MemoryLayout.unionLayout(
                     JAVA_INT.withByteAlignment(BYTE_ALIGNMENT),
                     JAVA_LONG.withByteAlignment(BYTE_ALIGNMENT))
+                .withoutByteAlignment()
                 .withByteAlignment(BYTE_ALIGNMENT)
                 .withoutName()
                 .withName(NAME);

@@ -334,6 +334,14 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
     MemoryLayout withByteAlignment(long byteAlignment);
 
     /**
+     * {@return a memory layout with the same characteristics as this layout, but with an alignment
+     * constraint of 1 byte (unaligned)}
+     *
+     * @see MemoryLayout#byteAlignment()
+     */
+    MemoryLayout withoutByteAlignment();
+
+    /**
      * {@return {@code offset + (byteSize() * index)}}
      *
      * @param offset the base offset

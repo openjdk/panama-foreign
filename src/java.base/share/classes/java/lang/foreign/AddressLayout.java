@@ -80,6 +80,12 @@ public sealed interface AddressLayout extends ValueLayout permits ValueLayouts.O
      * {@inheritDoc}
      */
     @Override
+    AddressLayout withoutByteAlignment();
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     AddressLayout withOrder(ByteOrder order);
 
     /**

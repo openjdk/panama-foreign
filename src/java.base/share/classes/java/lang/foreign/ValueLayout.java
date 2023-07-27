@@ -94,6 +94,12 @@ public sealed interface ValueLayout extends MemoryLayout permits
     ValueLayout withByteAlignment(long byteAlignment);
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    ValueLayout withoutByteAlignment();
+
+    /**
      * {@return a var handle which can be used to access values described by this value layout, in a given memory segment.}
      * <p>
      * The returned var handle's {@linkplain VarHandle#varType() var type} is the {@linkplain ValueLayout#carrier() carrier type} of
@@ -146,6 +152,12 @@ public sealed interface ValueLayout extends MemoryLayout permits
          * {@inheritDoc}
          */
         @Override
+        OfBoolean withoutByteAlignment();
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
         OfBoolean withOrder(ByteOrder order);
 
     }
@@ -177,6 +189,12 @@ public sealed interface ValueLayout extends MemoryLayout permits
          */
         @Override
         OfByte withByteAlignment(long byteAlignment);
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        OfByte withoutByteAlignment();
 
         /**
          * {@inheritDoc}
@@ -219,6 +237,12 @@ public sealed interface ValueLayout extends MemoryLayout permits
          * {@inheritDoc}
          */
         @Override
+        OfChar withoutByteAlignment();
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
         OfChar withOrder(ByteOrder order);
 
     }
@@ -251,6 +275,12 @@ public sealed interface ValueLayout extends MemoryLayout permits
          */
         @Override
         OfShort withByteAlignment(long byteAlignment);
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        OfShort withoutByteAlignment();
 
         /**
          * {@inheritDoc}
@@ -293,6 +323,12 @@ public sealed interface ValueLayout extends MemoryLayout permits
          * {@inheritDoc}
          */
         @Override
+        OfInt withoutByteAlignment();
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
         OfInt withOrder(ByteOrder order);
 
     }
@@ -324,6 +360,12 @@ public sealed interface ValueLayout extends MemoryLayout permits
          */
         @Override
         OfFloat withByteAlignment(long byteAlignment);
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        OfFloat withoutByteAlignment();
 
         /**
          * {@inheritDoc}
@@ -366,6 +408,12 @@ public sealed interface ValueLayout extends MemoryLayout permits
          * {@inheritDoc}
          */
         @Override
+        OfLong withoutByteAlignment();
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
         OfLong withOrder(ByteOrder order);
 
     }
@@ -398,6 +446,12 @@ public sealed interface ValueLayout extends MemoryLayout permits
          */
         @Override
         OfDouble withByteAlignment(long byteAlignment);
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        OfDouble withoutByteAlignment();
 
         /**
          * {@inheritDoc}
@@ -468,83 +522,83 @@ public sealed interface ValueLayout extends MemoryLayout permits
      * and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * ADDRESS.withByteAlignment(1);
+     * ADDRESS.withoutByteAlignment();
      * }
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
      */
-    AddressLayout ADDRESS_UNALIGNED = ADDRESS.withByteAlignment(1);
+    AddressLayout ADDRESS_UNALIGNED = ADDRESS.withoutByteAlignment();
 
     /**
      * An unaligned value layout constant whose size is the same as that of a Java {@code char}
      * and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * JAVA_CHAR.withByteAlignment(1);
+     * JAVA_CHAR.withoutByteAlignment();
      * }
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
      */
-    OfChar JAVA_CHAR_UNALIGNED = JAVA_CHAR.withByteAlignment(1);
+    OfChar JAVA_CHAR_UNALIGNED = JAVA_CHAR.withoutByteAlignment();
 
     /**
      * An unaligned value layout constant whose size is the same as that of a Java {@code short}
      * and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * JAVA_SHORT.withByteAlignment(1);
+     * JAVA_SHORT.withoutByteAlignment();
      * }
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
      */
-    OfShort JAVA_SHORT_UNALIGNED = JAVA_SHORT.withByteAlignment(1);
+    OfShort JAVA_SHORT_UNALIGNED = JAVA_SHORT.withoutByteAlignment();
 
     /**
      * An unaligned value layout constant whose size is the same as that of a Java {@code int}
      * and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * JAVA_INT.withByteAlignment(1);
+     * JAVA_INT.withoutByteAlignment();
      * }
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
      */
-    OfInt JAVA_INT_UNALIGNED = JAVA_INT.withByteAlignment(1);
+    OfInt JAVA_INT_UNALIGNED = JAVA_INT.withoutByteAlignment();
 
     /**
      * An unaligned value layout constant whose size is the same as that of a Java {@code long}
      * and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * JAVA_LONG.withByteAlignment(1);
+     * JAVA_LONG.withoutByteAlignment();
      * }
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
      */
-    OfLong JAVA_LONG_UNALIGNED = JAVA_LONG.withByteAlignment(1);
+    OfLong JAVA_LONG_UNALIGNED = JAVA_LONG.withoutByteAlignment();
 
     /**
      * An unaligned value layout constant whose size is the same as that of a Java {@code float}
      * and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * JAVA_FLOAT.withByteAlignment(1);
+     * JAVA_FLOAT.withoutByteAlignment();
      * }
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
      */
-    OfFloat JAVA_FLOAT_UNALIGNED = JAVA_FLOAT.withByteAlignment(1);
+    OfFloat JAVA_FLOAT_UNALIGNED = JAVA_FLOAT.withoutByteAlignment();
 
     /**
      * An unaligned value layout constant whose size is the same as that of a Java {@code double}
      * and byte order set to {@link ByteOrder#nativeOrder()}.
      * Equivalent to the following code:
      * {@snippet lang=java :
-     * JAVA_DOUBLE.withByteAlignment(1);
+     * JAVA_DOUBLE.withoutByteAlignment();
      * }
      * @apiNote Care should be taken when using unaligned value layouts as they may induce
      *          performance and portability issues.
      */
-    OfDouble JAVA_DOUBLE_UNALIGNED = JAVA_DOUBLE.withByteAlignment(1);
+    OfDouble JAVA_DOUBLE_UNALIGNED = JAVA_DOUBLE.withoutByteAlignment();
 
 }

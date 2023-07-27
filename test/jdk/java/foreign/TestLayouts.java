@@ -336,6 +336,17 @@ public class TestLayouts {
         MemoryLayout.structLayout(layout, layout);
     }
 
+    @Test(dataProvider="layoutsAndAlignments")
+    public void testWithoutAlignment(MemoryLayout layout, long byteAlign) {
+        if ((layout instanceof GroupLayout || layout instanceof SequenceLayout) && byteAlign != 1) {
+            // Group and sequence layouts are not generally able to be unaligned
+            return;
+        }
+        layout = layout.withoutByteAlignment();
+        assertEquals(layout.byteAlignment(), 1);
+
+    }
+
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testSequenceElement() {
         SequenceLayout layout = MemoryLayout.sequenceLayout(10, JAVA_INT);

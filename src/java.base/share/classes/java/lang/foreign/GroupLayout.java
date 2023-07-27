@@ -72,4 +72,11 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
      */
     @Override
     GroupLayout withByteAlignment(long byteAlignment);
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    GroupLayout withoutByteAlignment();
+
 }
