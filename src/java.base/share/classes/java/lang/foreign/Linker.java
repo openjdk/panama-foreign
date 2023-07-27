@@ -29,7 +29,6 @@ import jdk.internal.foreign.abi.AbstractLinker;
 import jdk.internal.foreign.abi.LinkerOptions;
 import jdk.internal.foreign.abi.CapturableState;
 import jdk.internal.foreign.abi.SharedUtils;
-import jdk.internal.javac.PreviewFeature;
 import jdk.internal.reflect.CallerSensitive;
 
 import java.lang.invoke.MethodHandle;
@@ -496,7 +495,6 @@ import java.util.stream.Stream;
  *
  * @since 19
  */
-@PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
 public sealed interface Linker permits AbstractLinker {
 
     /**
@@ -667,7 +665,6 @@ public sealed interface Linker permits AbstractLinker {
      * A linker option is used to provide additional parameters to a linkage request.
      * @since 20
      */
-    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
     sealed interface Option
             permits LinkerOptions.LinkerOptionImpl {
 

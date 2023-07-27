@@ -28,11 +28,10 @@
  * @library /test/lib
  * @requires !vm.musl
  *
- * @enablePreview
  * @build TestEnableNativeAccessJarManifest
  *        panama_module/*
  *        org.openjdk.foreigntest.unnamed.PanamaMainUnnamedModule
- * @run testng TestEnableNativeAccessJarManifest
+ * @run testng/othervm TestEnableNativeAccessJarManifest
  */
 
 import java.nio.file.Files;
@@ -77,7 +76,6 @@ public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBas
 
         // java -jar test.jar
         List<String> command = new ArrayList<>(List.of(
-            "--enable-preview",
             "-Djava.library.path=" + System.getProperty("java.library.path")
         ));
         command.addAll(vmArgs);

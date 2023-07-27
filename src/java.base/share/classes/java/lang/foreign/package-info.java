@@ -150,7 +150,5 @@
  *
  * @since 19
  */
-@PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
 package java.lang.foreign;
 
-import jdk.internal.javac.PreviewFeature;

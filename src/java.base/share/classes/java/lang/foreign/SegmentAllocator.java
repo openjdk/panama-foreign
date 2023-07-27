@@ -34,7 +34,6 @@ import java.util.function.Function;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.SlicingAllocator;
 import jdk.internal.foreign.StringSupport;
-import jdk.internal.javac.PreviewFeature;
 import jdk.internal.vm.annotation.ForceInline;
 
 /**
@@ -74,7 +73,6 @@ import jdk.internal.vm.annotation.ForceInline;
  * @since 19
  */
 @FunctionalInterface
-@PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
 public interface SegmentAllocator {
 
     /**

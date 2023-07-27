@@ -7992,7 +7992,6 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      * @throws NullPointerException if any of the arguments is {@code null}.
      * @since 19
      */
-    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
     public static VarHandle filterValue(VarHandle target, MethodHandle filterToTarget, MethodHandle filterFromTarget) {
         return VarHandles.filterValue(target, filterToTarget, filterFromTarget);
     }
@@ -8028,7 +8027,6 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      * @throws NullPointerException if any of the arguments is {@code null} or {@code filters} contains {@code null}.
      * @since 19
      */
-    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
     public static VarHandle filterCoordinates(VarHandle target, int pos, MethodHandle... filters) {
         return VarHandles.filterCoordinates(target, pos, filters);
     }
@@ -8060,7 +8058,6 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      * @throws NullPointerException if any of the arguments is {@code null} or {@code values} contains {@code null}.
      * @since 19
      */
-    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
     public static VarHandle insertCoordinates(VarHandle target, int pos, Object... values) {
         return VarHandles.insertCoordinates(target, pos, values);
     }
@@ -8103,7 +8100,6 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      * @throws NullPointerException if any of the arguments is {@code null} or {@code newCoordinates} contains {@code null}.
      * @since 19
      */
-    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
     public static VarHandle permuteCoordinates(VarHandle target, List<Class<?>> newCoordinates, int... reorder) {
         return VarHandles.permuteCoordinates(target, newCoordinates, reorder);
     }
@@ -8147,7 +8143,6 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      * @throws NullPointerException if any of the arguments is {@code null}.
      * @since 19
      */
-    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
     public static VarHandle collectCoordinates(VarHandle target, int pos, MethodHandle filter) {
         return VarHandles.collectCoordinates(target, pos, filter);
     }
@@ -8173,7 +8168,6 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      * @throws NullPointerException if any of the arguments is {@code null} or {@code valueTypes} contains {@code null}.
      * @since 19
      */
-    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
     public static VarHandle dropCoordinates(VarHandle target, int pos, Class<?>... valueTypes) {
         return VarHandles.dropCoordinates(target, pos, valueTypes);
     }

@@ -44,7 +44,6 @@ import jdk.internal.foreign.layout.PaddingLayoutImpl;
 import jdk.internal.foreign.layout.SequenceLayoutImpl;
 import jdk.internal.foreign.layout.StructLayoutImpl;
 import jdk.internal.foreign.layout.UnionLayoutImpl;
-import jdk.internal.javac.PreviewFeature;
 import jdk.internal.vm.annotation.ForceInline;
 
 /**
@@ -278,7 +277,6 @@ import jdk.internal.vm.annotation.ForceInline;
  * @sealedGraph
  * @since 19
  */
-@PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
 public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, PaddingLayout, ValueLayout {
 
     /**
@@ -587,7 +585,6 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      *
      * @since 19
      */
-    @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
     sealed interface PathElement permits LayoutPath.PathElementImpl {
 
         /**

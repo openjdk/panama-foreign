@@ -27,7 +27,6 @@
 package java.lang.foreign;
 
 import jdk.internal.foreign.layout.ValueLayouts;
-import jdk.internal.javac.PreviewFeature;
 import jdk.internal.reflect.CallerSensitive;
 
 import java.lang.foreign.Linker.Option;
@@ -55,7 +54,6 @@ import java.util.Optional;
  * @see #ADDRESS_UNALIGNED
  * @since 19
  */
-@PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
 public sealed interface AddressLayout extends ValueLayout permits ValueLayouts.OfAddressImpl {
 
     /**

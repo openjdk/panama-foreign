@@ -29,7 +29,6 @@ import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.Utils;
-import jdk.internal.javac.PreviewFeature;
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.NativeLibrary;
 import jdk.internal.loader.RawNativeLibraries;
@@ -121,7 +120,6 @@ import java.util.function.BiFunction;
  *
  * @since 19
  */
-@PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
 @FunctionalInterface
 public interface SymbolLookup {
 

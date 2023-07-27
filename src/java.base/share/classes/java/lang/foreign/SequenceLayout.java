@@ -26,7 +26,6 @@
 package java.lang.foreign;
 
 import jdk.internal.foreign.layout.SequenceLayoutImpl;
-import jdk.internal.javac.PreviewFeature;
 
 /**
  * A compound layout that denotes a homogeneous repetition of a given <em>element layout</em>.
@@ -52,7 +51,6 @@ import jdk.internal.javac.PreviewFeature;
  *
  * @since 19
  */
-@PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
 public sealed interface SequenceLayout extends MemoryLayout permits SequenceLayoutImpl {
 
 

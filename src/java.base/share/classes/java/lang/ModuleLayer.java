@@ -323,7 +323,6 @@ public final class ModuleLayer {
          *
          * @since 20
          */
-        @PreviewFeature(feature=PreviewFeature.Feature.FOREIGN)
         @CallerSensitive
         public Controller enableNativeAccess(Module target) {
             ensureInLayer(target);
