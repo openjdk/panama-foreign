@@ -206,7 +206,7 @@ public class LayoutPath {
 
         // If we have an enclosing layout, drop the alignment check for the accessed element,
         // we check the root layout instead
-        ValueLayout accessedLayout = enclosing != null ? valueLayout.withByteAlignment(1) : valueLayout;
+        ValueLayout accessedLayout = enclosing != null ? valueLayout.withoutByteAlignment() : valueLayout;
         VarHandle handle = accessedLayout.varHandle();
         handle = MethodHandles.collectCoordinates(handle, 1, offsetHandle());
 
