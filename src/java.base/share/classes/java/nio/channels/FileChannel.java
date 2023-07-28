@@ -1088,7 +1088,7 @@ public abstract class FileChannel
      * @throws  UnsupportedOperationException
      *          If an unsupported map mode is specified.
      *
-     * @since   19
+     * @since   22
      */
     public MemorySegment map(MapMode mode, long offset, long size, Arena arena)
         throws IOException

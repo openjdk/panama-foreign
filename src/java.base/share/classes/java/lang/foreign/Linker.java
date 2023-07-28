@@ -493,7 +493,7 @@ import java.util.stream.Stream;
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
- * @since 19
+ * @since 22
  */
 public sealed interface Linker permits AbstractLinker {
 
@@ -663,7 +663,7 @@ public sealed interface Linker permits AbstractLinker {
 
     /**
      * A linker option is used to provide additional parameters to a linkage request.
-     * @since 20
+     * @since 22
      */
     sealed interface Option
             permits LinkerOptions.LinkerOptionImpl {

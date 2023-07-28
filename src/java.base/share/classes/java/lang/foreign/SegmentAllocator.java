@@ -70,7 +70,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * Clients should consider using an {@linkplain Arena arena} instead, which, provides strong thread-safety,
  * lifetime and non-overlapping guarantees.
  *
- * @since 19
+ * @since 22
  */
 @FunctionalInterface
 public interface SegmentAllocator {

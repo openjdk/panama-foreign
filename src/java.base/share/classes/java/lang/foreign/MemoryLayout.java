@@ -275,7 +275,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
  * @sealedGraph
- * @since 19
+ * @since 22
  */
 public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, PaddingLayout, ValueLayout {
 
@@ -583,7 +583,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * @implSpec
      * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
      *
-     * @since 19
+     * @since 22
      */
     sealed interface PathElement permits LayoutPath.PathElementImpl {
 

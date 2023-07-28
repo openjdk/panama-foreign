@@ -194,7 +194,7 @@ import java.lang.foreign.MemorySegment.Scope;
  *
  * @see MemorySegment
  *
- * @since 20
+ * @since 22
  */
 public interface Arena extends SegmentAllocator, AutoCloseable {
 

@@ -34,7 +34,7 @@ import jdk.internal.foreign.layout.PaddingLayoutImpl;
  * @implSpec
  * Implementing classes are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
- * @since 20
+ * @since 22
  */
 public sealed interface PaddingLayout extends MemoryLayout permits PaddingLayoutImpl {
 

@@ -321,7 +321,7 @@ public final class ModuleLayer {
          * @throws IllegalCallerException
          *         If the caller is in a module that does not have native access enabled
          *
-         * @since 20
+         * @since 22
          */
         @CallerSensitive
         public Controller enableNativeAccess(Module target) {

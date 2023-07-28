@@ -52,7 +52,7 @@ import java.util.Optional;
  *
  * @see #ADDRESS
  * @see #ADDRESS_UNALIGNED
- * @since 19
+ * @since 22
  */
 public sealed interface AddressLayout extends ValueLayout permits ValueLayouts.OfAddressImpl {
 

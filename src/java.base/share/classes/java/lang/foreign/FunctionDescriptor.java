@@ -42,7 +42,7 @@ import jdk.internal.foreign.FunctionDescriptorImpl;
  * Implementing classes are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
  * @see MemoryLayout
- * @since 19
+ * @since 22
  */
 public sealed interface FunctionDescriptor permits FunctionDescriptorImpl {
 

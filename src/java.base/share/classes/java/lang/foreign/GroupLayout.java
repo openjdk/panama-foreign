@@ -37,7 +37,7 @@ import java.util.List;
  * This class is immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
  * @sealedGraph
- * @since 19
+ * @since 22
  */
 public sealed interface GroupLayout extends MemoryLayout permits StructLayout, UnionLayout {
 

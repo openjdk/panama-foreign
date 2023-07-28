@@ -148,7 +148,7 @@
  *
  * @spec jni/index.html Java Native Interface Specification
  *
- * @since 19
+ * @since 22
  */
 package java.lang.foreign;
 

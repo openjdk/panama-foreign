@@ -118,7 +118,7 @@ import java.util.function.BiFunction;
  * MemorySegment malloc = stdlib.find("malloc").orElseThrow();
  *}
  *
- * @since 19
+ * @since 22
  */
 @FunctionalInterface
 public interface SymbolLookup {

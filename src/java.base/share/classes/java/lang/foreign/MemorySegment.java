@@ -445,7 +445,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
- * @since 19
+ * @since 22
  */
 public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
