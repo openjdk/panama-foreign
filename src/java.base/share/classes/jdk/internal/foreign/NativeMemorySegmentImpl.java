@@ -48,6 +48,8 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
     private static final long MAX_MALLOC_ALIGN = Unsafe.ADDRESS_SIZE == 4 ? 8 : 16;
     private static final boolean SKIP_ZERO_MEMORY = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.skipZeroMemory");
 
+    private static final boolean SKIP_RESERVE_MEMORY = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.skipReserveMemory");
+
     final long min;
 
     @ForceInline
@@ -124,7 +126,9 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
                 byteSize + (byteAlignment - 1) :
                 byteSize);
 
-        NIO_ACCESS.reserveMemory(alignedSize, byteSize);
+        if (!SKIP_RESERVE_MEMORY) {
+            NIO_ACCESS.reserveMemory(alignedSize, byteSize);
+        }
 
         long buf = UNSAFE.allocateMemory(alignedSize);
         if (!SKIP_ZERO_MEMORY) {
@@ -137,7 +141,9 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
             @Override
             public void cleanup() {
                 UNSAFE.freeMemory(buf);
-                NIO_ACCESS.unreserveMemory(alignedSize, byteSize);
+                if (!SKIP_RESERVE_MEMORY) {
+                    NIO_ACCESS.unreserveMemory(alignedSize, byteSize);
+                }
             }
         });
         if (alignedSize != byteSize) {

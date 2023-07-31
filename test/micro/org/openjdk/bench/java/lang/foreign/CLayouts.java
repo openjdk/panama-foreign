@@ -74,10 +74,13 @@ public class CLayouts {
     private static Linker LINKER = Linker.nativeLinker();
 
     private static final MethodHandle FREE = LINKER.downcallHandle(
-            LINKER.defaultLookup().find("free").get(), FunctionDescriptor.ofVoid(C_POINTER));
+            LINKER.defaultLookup().find("free").get(), FunctionDescriptor.ofVoid(C_POINTER), Linker.Option.isTrivial());
 
     private static final MethodHandle MALLOC = LINKER.downcallHandle(
-            LINKER.defaultLookup().find("malloc").get(), FunctionDescriptor.of(C_POINTER, ValueLayout.JAVA_LONG));
+            LINKER.defaultLookup().find("malloc").get(), FunctionDescriptor.of(C_POINTER, ValueLayout.JAVA_LONG), Linker.Option.isTrivial());
+
+    private static final MethodHandle CALLOC = LINKER.downcallHandle(
+            LINKER.defaultLookup().find("calloc").get(), FunctionDescriptor.of(C_POINTER, ValueLayout.JAVA_LONG, ValueLayout.JAVA_LONG), Linker.Option.isTrivial());
 
     public static void freeMemory(MemorySegment address) {
         try {
@@ -90,6 +93,14 @@ public class CLayouts {
     public static MemorySegment allocateMemory(long size) {
         try {
             return (MemorySegment)MALLOC.invokeExact(size);
+        } catch (Throwable ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    public static MemorySegment callocateMemory(long nmemb, long size) {
+        try {
+            return (MemorySegment)CALLOC.invokeExact(nmemb, size);
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
