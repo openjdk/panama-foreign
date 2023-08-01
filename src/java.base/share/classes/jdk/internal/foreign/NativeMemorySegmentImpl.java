@@ -29,6 +29,7 @@ package jdk.internal.foreign;
 import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.util.Optional;
+import java.util.concurrent.atomic.LongAdder;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;
@@ -115,7 +116,7 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
 
     // factories
 
-    public static MemorySegment makeNativeSegment(long byteSize, long byteAlignment, MemorySessionImpl sessionImpl) {
+    public static MemorySegment makeNativeSegment(long byteSize, long byteAlignment, MemorySessionImpl sessionImpl, boolean shouldInit) {
         sessionImpl.checkValidState();
         if (VM.isDirectMemoryPageAligned()) {
             byteAlignment = Math.max(byteAlignment, NIO_ACCESS.pageSize());
@@ -124,10 +125,10 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
                 byteSize + (byteAlignment - 1) :
                 byteSize);
 
-        NIO_ACCESS.reserveMemory(alignedSize, byteSize);
+        NIO_ACCESS.reserveMemoryFast(alignedSize);
 
         long buf = UNSAFE.allocateMemory(alignedSize);
-        if (!SKIP_ZERO_MEMORY) {
+        if (shouldInit && !SKIP_ZERO_MEMORY) {
             UNSAFE.setMemory(buf, alignedSize, (byte)0);
         }
         long alignedBuf = Utils.alignUp(buf, byteAlignment);
@@ -137,7 +138,7 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
             @Override
             public void cleanup() {
                 UNSAFE.freeMemory(buf);
-                NIO_ACCESS.unreserveMemory(alignedSize, byteSize);
+                NIO_ACCESS.unreserveMemoryFast(alignedSize);
             }
         });
         if (alignedSize != byteSize) {

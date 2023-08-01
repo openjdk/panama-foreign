@@ -31,7 +31,11 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.function.Function;
+
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
+import jdk.internal.foreign.ArenaImpl;
 import jdk.internal.foreign.SlicingAllocator;
 import jdk.internal.foreign.StringSupport;
 import jdk.internal.vm.annotation.ForceInline;
@@ -126,8 +130,11 @@ public interface SegmentAllocator {
         Objects.requireNonNull(str);
         int termCharSize = StringSupport.CharsetKind.of(charset).terminatorCharSize();
         byte[] bytes = str.getBytes(charset);
-        MemorySegment segment = allocate(bytes.length + termCharSize);
+        MemorySegment segment = allocateNoInit(bytes.length + termCharSize);
         MemorySegment.copy(bytes, 0, segment, ValueLayout.JAVA_BYTE, 0, bytes.length);
+        for (int i = 0 ; i < termCharSize ; i++) {
+            segment.set(ValueLayout.JAVA_BYTE, bytes.length + i, (byte)0);
+        }
         return segment;
     }
 
@@ -140,7 +147,7 @@ public interface SegmentAllocator {
      */
     default MemorySegment allocateFrom(ValueLayout.OfByte layout, byte value) {
         Objects.requireNonNull(layout);
-        MemorySegment addr = allocate(layout);
+        MemorySegment addr = allocateNoInit(layout);
         addr.set(layout, 0, value);
         return addr;
     }
@@ -154,7 +161,7 @@ public interface SegmentAllocator {
      */
     default MemorySegment allocateFrom(ValueLayout.OfChar layout, char value) {
         Objects.requireNonNull(layout);
-        MemorySegment addr = allocate(layout);
+        MemorySegment addr = allocateNoInit(layout);
         addr.set(layout, 0, value);
         return addr;
     }
@@ -168,7 +175,7 @@ public interface SegmentAllocator {
      */
     default MemorySegment allocateFrom(ValueLayout.OfShort layout, short value) {
         Objects.requireNonNull(layout);
-        MemorySegment addr = allocate(layout);
+        MemorySegment addr = allocateNoInit(layout);
         addr.set(layout, 0, value);
         return addr;
     }
@@ -182,7 +189,7 @@ public interface SegmentAllocator {
      */
     default MemorySegment allocateFrom(ValueLayout.OfInt layout, int value) {
         Objects.requireNonNull(layout);
-        MemorySegment addr = allocate(layout);
+        MemorySegment addr = allocateNoInit(layout);
         addr.set(layout, 0, value);
         return addr;
     }
@@ -196,7 +203,7 @@ public interface SegmentAllocator {
      */
     default MemorySegment allocateFrom(ValueLayout.OfFloat layout, float value) {
         Objects.requireNonNull(layout);
-        MemorySegment addr = allocate(layout);
+        MemorySegment addr = allocateNoInit(layout);
         addr.set(layout, 0, value);
         return addr;
     }
@@ -210,7 +217,7 @@ public interface SegmentAllocator {
      */
     default MemorySegment allocateFrom(ValueLayout.OfLong layout, long value) {
         Objects.requireNonNull(layout);
-        MemorySegment addr = allocate(layout);
+        MemorySegment addr = allocateNoInit(layout);
         addr.set(layout, 0, value);
         return addr;
     }
@@ -224,7 +231,7 @@ public interface SegmentAllocator {
      */
     default MemorySegment allocateFrom(ValueLayout.OfDouble layout, double value) {
         Objects.requireNonNull(layout);
-        MemorySegment addr = allocate(layout);
+        MemorySegment addr = allocateNoInit(layout);
         addr.set(layout, 0, value);
         return addr;
     }
@@ -240,7 +247,7 @@ public interface SegmentAllocator {
     default MemorySegment allocateFrom(AddressLayout layout, MemorySegment value) {
         Objects.requireNonNull(value);
         Objects.requireNonNull(layout);
-        MemorySegment segment = allocate(layout);
+        MemorySegment segment = allocateNoInit(layout);
         segment.set(layout, 0, value);
         return segment;
     }
@@ -253,7 +260,7 @@ public interface SegmentAllocator {
      * @return a segment for the newly allocated memory block.
      */
     default MemorySegment allocateFrom(ValueLayout.OfByte elementLayout, byte... elements) {
-        return copyArrayWithSwapIfNeeded(elements, elementLayout, MemorySegment::ofArray);
+        return copyArrayWithSwapIfNeeded(elements, elementLayout);
     }
 
     /**
@@ -264,7 +271,7 @@ public interface SegmentAllocator {
      * @return a segment for the newly allocated memory block.
      */
     default MemorySegment allocateFrom(ValueLayout.OfShort elementLayout, short... elements) {
-        return copyArrayWithSwapIfNeeded(elements, elementLayout, MemorySegment::ofArray);
+        return copyArrayWithSwapIfNeeded(elements, elementLayout);
     }
 
     /**
@@ -275,7 +282,7 @@ public interface SegmentAllocator {
      * @return a segment for the newly allocated memory block.
      */
     default MemorySegment allocateFrom(ValueLayout.OfChar elementLayout, char... elements) {
-        return copyArrayWithSwapIfNeeded(elements, elementLayout, MemorySegment::ofArray);
+        return copyArrayWithSwapIfNeeded(elements, elementLayout);
     }
 
     /**
@@ -286,7 +293,7 @@ public interface SegmentAllocator {
      * @return a segment for the newly allocated memory block.
      */
     default MemorySegment allocateFrom(ValueLayout.OfInt elementLayout, int... elements) {
-        return copyArrayWithSwapIfNeeded(elements, elementLayout, MemorySegment::ofArray);
+        return copyArrayWithSwapIfNeeded(elements, elementLayout);
     }
 
     /**
@@ -297,7 +304,7 @@ public interface SegmentAllocator {
      * @return a segment for the newly allocated memory block.
      */
     default MemorySegment allocateFrom(ValueLayout.OfFloat elementLayout, float... elements) {
-        return copyArrayWithSwapIfNeeded(elements, elementLayout, MemorySegment::ofArray);
+        return copyArrayWithSwapIfNeeded(elements, elementLayout);
     }
 
     /**
@@ -308,7 +315,7 @@ public interface SegmentAllocator {
      * @return a segment for the newly allocated memory block.
      */
     default MemorySegment allocateFrom(ValueLayout.OfLong elementLayout, long... elements) {
-        return copyArrayWithSwapIfNeeded(elements, elementLayout, MemorySegment::ofArray);
+        return copyArrayWithSwapIfNeeded(elements, elementLayout);
     }
 
     /**
@@ -319,18 +326,17 @@ public interface SegmentAllocator {
      * @return a segment for the newly allocated memory block.
      */
     default MemorySegment allocateFrom(ValueLayout.OfDouble elementLayout, double... elements) {
-        return copyArrayWithSwapIfNeeded(elements, elementLayout, MemorySegment::ofArray);
+        return copyArrayWithSwapIfNeeded(elements, elementLayout);
     }
 
-    private <Z> MemorySegment copyArrayWithSwapIfNeeded(Z array, ValueLayout elementLayout,
-                                                        Function<Z, MemorySegment> heapSegmentFactory) {
+    private MemorySegment copyArrayWithSwapIfNeeded(Object array, ValueLayout elementLayout) {
         int size = Array.getLength(Objects.requireNonNull(array));
-        MemorySegment addr = allocate(Objects.requireNonNull(elementLayout), size);
+        Objects.requireNonNull(elementLayout);
+        MemorySegment segment = allocateNoInit(elementLayout, size);
         if (size > 0) {
-            MemorySegment.copy(heapSegmentFactory.apply(array), elementLayout, 0,
-                    addr, elementLayout.withOrder(ByteOrder.nativeOrder()), 0, size);
+            MemorySegment.copy(array, 0, segment, elementLayout, 0, size);
         }
-        return addr;
+        return segment;
     }
 
     /**
@@ -422,5 +428,33 @@ public interface SegmentAllocator {
      */
     static SegmentAllocator prefixAllocator(MemorySegment segment) {
         return (AbstractMemorySegmentImpl)Objects.requireNonNull(segment);
+    }
+
+    @ForceInline
+    private MemorySegment allocateNoInit(long byteSize, long byteAlignment) {
+        return this instanceof ArenaImpl arenaImpl ?
+            arenaImpl.allocateNoInit(byteSize, byteAlignment) :
+            allocate(byteSize, byteAlignment);
+    }
+
+    @ForceInline
+    private MemorySegment allocateNoInit(MemoryLayout layout) {
+        return this instanceof ArenaImpl arenaImpl ?
+                arenaImpl.allocateNoInit(layout) :
+                allocate(layout);
+    }
+
+    @ForceInline
+    private MemorySegment allocateNoInit(long size) {
+        return this instanceof ArenaImpl arenaImpl ?
+                arenaImpl.allocateNoInit(size) :
+                allocate(size);
+    }
+
+    @ForceInline
+    private MemorySegment allocateNoInit(MemoryLayout layout, long size) {
+        return this instanceof ArenaImpl arenaImpl ?
+                arenaImpl.allocateNoInit(layout, size) :
+                allocate(layout, size);
     }
 }

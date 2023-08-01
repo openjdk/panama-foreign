@@ -906,13 +906,13 @@ public abstract sealed class Buffer
                 }
 
                 @Override
-                public void reserveMemory(long size, long cap) {
-                    Bits.reserveMemory(size, cap);
+                public void reserveMemoryFast(long size) {
+                    Bits.reserveMemoryFast(size);
                 }
 
                 @Override
-                public void unreserveMemory(long size, long cap) {
-                    Bits.unreserveMemory(size, cap);
+                public void unreserveMemoryFast(long size) {
+                    Bits.unreserveMemoryFast(size);
                 }
 
                 @Override
