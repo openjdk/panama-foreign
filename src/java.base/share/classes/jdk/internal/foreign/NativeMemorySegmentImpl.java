@@ -29,12 +29,10 @@ package jdk.internal.foreign;
 import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.util.Optional;
-import java.util.concurrent.atomic.LongAdder;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;
 import jdk.internal.vm.annotation.ForceInline;
-import sun.security.action.GetBooleanAction;
 
 /**
  * Implementation for native memory segments. A native memory segment is essentially a wrapper around
@@ -47,7 +45,6 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
     // The maximum alignment supported by malloc - typically 16 bytes on
     // 64-bit platforms and 8 bytes on 32-bit platforms.
     private static final long MAX_MALLOC_ALIGN = Unsafe.ADDRESS_SIZE == 4 ? 8 : 16;
-    private static final boolean SKIP_ZERO_MEMORY = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.skipZeroMemory");
 
     final long min;
 
@@ -116,7 +113,8 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
 
     // factories
 
-    public static MemorySegment makeNativeSegment(long byteSize, long byteAlignment, MemorySessionImpl sessionImpl, boolean shouldInit) {
+    public static MemorySegment makeNativeSegment(long byteSize, long byteAlignment, MemorySessionImpl sessionImpl,
+                                                  boolean shouldInit, boolean shouldReserve) {
         sessionImpl.checkValidState();
         if (VM.isDirectMemoryPageAligned()) {
             byteAlignment = Math.max(byteAlignment, NIO_ACCESS.pageSize());
@@ -125,10 +123,12 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
                 byteSize + (byteAlignment - 1) :
                 byteSize);
 
-        NIO_ACCESS.reserveMemoryFast(alignedSize);
+        if (shouldReserve) {
+            NIO_ACCESS.reserveMemory(alignedSize, byteSize);
+        }
 
         long buf = UNSAFE.allocateMemory(alignedSize);
-        if (shouldInit && !SKIP_ZERO_MEMORY) {
+        if (shouldInit) {
             UNSAFE.setMemory(buf, alignedSize, (byte)0);
         }
         long alignedBuf = Utils.alignUp(buf, byteAlignment);
@@ -138,7 +138,9 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
             @Override
             public void cleanup() {
                 UNSAFE.freeMemory(buf);
-                NIO_ACCESS.unreserveMemoryFast(alignedSize);
+                if (shouldReserve) {
+                    NIO_ACCESS.unreserveMemory(alignedSize, byteSize);
+                }
             }
         });
         if (alignedSize != byteSize) {

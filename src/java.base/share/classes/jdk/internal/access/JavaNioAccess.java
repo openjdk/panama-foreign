@@ -130,12 +130,12 @@ public interface JavaNioAccess {
     /**
      * Used by {@code jdk.internal.foreign.NativeMemorySegmentImpl}.
      */
-    void reserveMemoryFast(long size);
+    void reserveMemory(long size, long cap);
 
     /**
      * Used by {@code jdk.internal.foreign.NativeMemorySegmentImpl}.
      */
-    void unreserveMemoryFast(long size);
+    void unreserveMemory(long size, long cap);
 
     /**
      * Used by {@code jdk.internal.foreign.NativeMemorySegmentImpl}.

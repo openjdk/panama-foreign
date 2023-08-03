@@ -9,8 +9,10 @@ import java.util.Objects;
 public class ArenaImpl implements Arena {
 
     final MemorySessionImpl session;
+    final boolean shouldReserveMemory;
     ArenaImpl(MemorySessionImpl session) {
         this.session = session;
+        shouldReserveMemory = session instanceof ImplicitSession;
     }
 
     @Override
@@ -25,7 +27,7 @@ public class ArenaImpl implements Arena {
 
     public MemorySegment allocateNoInit(long byteSize, long byteAlignment) {
         Utils.checkAllocationSizeAndAlign(byteSize, byteAlignment);
-        return NativeMemorySegmentImpl.makeNativeSegment(byteSize, byteAlignment, session, false);
+        return NativeMemorySegmentImpl.makeNativeSegment(byteSize, byteAlignment, session, false, shouldReserveMemory);
     }
 
     public MemorySegment allocateNoInit(long byteSize) {
@@ -48,6 +50,6 @@ public class ArenaImpl implements Arena {
     @Override
     public MemorySegment allocate(long byteSize, long byteAlignment) {
         Utils.checkAllocationSizeAndAlign(byteSize, byteAlignment);
-        return NativeMemorySegmentImpl.makeNativeSegment(byteSize, byteAlignment, session, true);
+        return NativeMemorySegmentImpl.makeNativeSegment(byteSize, byteAlignment, session, true, shouldReserveMemory);
     }
 }

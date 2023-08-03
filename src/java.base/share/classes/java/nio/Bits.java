@@ -32,7 +32,6 @@ import jdk.internal.misc.VM;
 import jdk.internal.misc.VM.BufferPool;
 
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.LongAdder;
 
 /**
  * Access to bits, native and otherwise.
@@ -97,8 +96,6 @@ class Bits {                            // package-private
     private static final AtomicLong TOTAL_CAPACITY = new AtomicLong();
     private static final AtomicLong COUNT = new AtomicLong();
     private static volatile boolean MEMORY_LIMIT_SET;
-
-    private static final LongAdder SEGMENT_BYTES = new LongAdder();
 
     // max. number of sleeps during try-reserving with exponentially
     // increasing delay before throwing OutOfMemoryError:
@@ -178,7 +175,7 @@ class Bits {                            // package-private
             throw new OutOfMemoryError
                 ("Cannot reserve "
                  + size + " bytes of direct buffer memory (allocated: "
-                 + RESERVED_MEMORY.get() + SEGMENT_BYTES.sum() + ", limit: " + MAX_MEMORY +")");
+                 + RESERVED_MEMORY.get() + ", limit: " + MAX_MEMORY +")");
 
         } finally {
             if (interrupted) {
@@ -194,7 +191,7 @@ class Bits {                            // package-private
         // actual memory usage, which will differ when buffers are page
         // aligned.
         long totalCap;
-        while (cap <= MAX_MEMORY - (totalCap = (TOTAL_CAPACITY.get())) - SEGMENT_BYTES.sum()) {
+        while (cap <= MAX_MEMORY - (totalCap = TOTAL_CAPACITY.get())) {
             if (TOTAL_CAPACITY.compareAndSet(totalCap, totalCap + cap)) {
                 RESERVED_MEMORY.addAndGet(size);
                 COUNT.incrementAndGet();
@@ -213,19 +210,6 @@ class Bits {                            // package-private
         assert cnt >= 0 && reservedMem >= 0 && totalCap >= 0;
     }
 
-    static void reserveMemoryFast(long size) {
-        if (MAX_MEMORY == Long.MAX_VALUE) {
-            // no limit, nothing to check (fast-path)
-            SEGMENT_BYTES.add(size);
-        } else if (size > MAX_MEMORY - TOTAL_CAPACITY.get() - SEGMENT_BYTES.sum()) {
-            throw new OutOfMemoryError();
-        }
-    }
-
-    static void unreserveMemoryFast(long size) {
-        SEGMENT_BYTES.add(-size);
-    }
-
     static final BufferPool BUFFER_POOL = new BufferPool() {
         @Override
         public String getName() {
@@ -237,11 +221,11 @@ class Bits {                            // package-private
         }
         @Override
         public long getTotalCapacity() {
-            return Bits.TOTAL_CAPACITY.get() + SEGMENT_BYTES.sum();
+            return Bits.TOTAL_CAPACITY.get();
         }
         @Override
         public long getMemoryUsed() {
-            return Bits.RESERVED_MEMORY.get() + SEGMENT_BYTES.sum();
+            return Bits.RESERVED_MEMORY.get();
         }
     };
 
