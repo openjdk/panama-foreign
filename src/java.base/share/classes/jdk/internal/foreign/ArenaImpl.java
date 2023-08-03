@@ -8,8 +8,8 @@ import java.util.Objects;
 
 public class ArenaImpl implements Arena {
 
-    final MemorySessionImpl session;
-    final boolean shouldReserveMemory;
+    private final MemorySessionImpl session;
+    private final boolean shouldReserveMemory;
     ArenaImpl(MemorySessionImpl session) {
         this.session = session;
         shouldReserveMemory = session instanceof ImplicitSession;

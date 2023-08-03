@@ -26,14 +26,10 @@
 package java.lang.foreign;
 
 import java.lang.reflect.Array;
-import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
-import java.util.function.Function;
 
-import jdk.internal.access.JavaLangAccess;
-import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.ArenaImpl;
 import jdk.internal.foreign.SlicingAllocator;
