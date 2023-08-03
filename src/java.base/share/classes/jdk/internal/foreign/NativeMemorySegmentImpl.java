@@ -127,7 +127,7 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
             NIO_ACCESS.reserveMemory(alignedSize, byteSize);
         }
 
-        long buf = UNSAFE.allocateMemory(alignedSize);
+        long buf = allocateMemoryWrapper(alignedSize);
         if (shouldInit) {
             UNSAFE.setMemory(buf, alignedSize, (byte)0);
         }
@@ -148,6 +148,14 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
             segment = segment.asSlice(delta, byteSize);
         }
         return segment;
+    }
+
+    private static long allocateMemoryWrapper(long size) {
+        try {
+            return UNSAFE.allocateMemory(size);
+        } catch (IllegalArgumentException ex) {
+            throw new OutOfMemoryError();
+        }
     }
 
     // Unsafe native segment factories. These are used by the implementation code, to skip the sanity checks

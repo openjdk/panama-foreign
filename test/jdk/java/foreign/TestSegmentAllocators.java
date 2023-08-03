@@ -157,7 +157,7 @@ public class TestSegmentAllocators {
     @Test(expectedExceptions = OutOfMemoryError.class)
     public void testBadArenaNullReturn() {
         try (Arena arena = Arena.ofConfined()) {
-            arena.allocate(Long.MAX_VALUE, 2);
+             arena.allocate(Long.MAX_VALUE, 2);
         }
     }
 
