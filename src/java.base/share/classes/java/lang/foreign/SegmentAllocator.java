@@ -427,13 +427,6 @@ public interface SegmentAllocator {
     }
 
     @ForceInline
-    private MemorySegment allocateNoInit(long byteSize, long byteAlignment) {
-        return this instanceof ArenaImpl arenaImpl ?
-            arenaImpl.allocateNoInit(byteSize, byteAlignment) :
-            allocate(byteSize, byteAlignment);
-    }
-
-    @ForceInline
     private MemorySegment allocateNoInit(MemoryLayout layout) {
         return this instanceof ArenaImpl arenaImpl ?
                 arenaImpl.allocateNoInit(layout) :
