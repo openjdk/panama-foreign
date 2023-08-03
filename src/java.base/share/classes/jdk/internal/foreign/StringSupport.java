@@ -34,24 +34,29 @@ import java.lang.invoke.MethodHandle;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-import static java.lang.foreign.ValueLayout.*;
+import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
+import static java.lang.foreign.ValueLayout.JAVA_SHORT;
 
 /**
  * Miscellaneous functions to read and write strings, in various charsets.
  */
 public class StringSupport {
 
+    // Maximum segment byte size for which a trivial method will be invoked.
+    private static final long MAX_TRIVIAL_SIZE = 1024L;
+    private static final MethodHandle STRLEN_TRIVIAL;
     private static final MethodHandle STRLEN;
-    private static final MethodHandle STRLEN_CRITICAL;
-    private static final long MAX_CRITICAL_SIZE = 1024;
 
     static {
         Linker linker = Linker.nativeLinker();
         var strlen = linker.defaultLookup().find("strlen").orElseThrow();
         var description = FunctionDescriptor.of(JAVA_LONG, ADDRESS);
 
+        STRLEN_TRIVIAL = linker.downcallHandle(strlen, description, Linker.Option.isTrivial());
         STRLEN = linker.downcallHandle(strlen, description);
-        STRLEN_CRITICAL = linker.downcallHandle(strlen, description, Linker.Option.isTrivial());
     }
 
     public static String read(MemorySegment segment, long offset, Charset charset) {
@@ -115,8 +120,8 @@ public class StringSupport {
             if (start > 0) {
                 segment = segment.asSlice(start);
             }
-            long len = segment.byteSize() < MAX_CRITICAL_SIZE
-                    ? (long)STRLEN_CRITICAL.invokeExact(segment)
+            long len = segment.byteSize() < MAX_TRIVIAL_SIZE
+                    ? (long)STRLEN_TRIVIAL.invokeExact(segment)
                     : (long)STRLEN.invokeExact(segment);
 
             // On platforms where `size_t` maps to an `int`, we must check if `len < 0`

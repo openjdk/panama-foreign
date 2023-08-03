@@ -74,7 +74,7 @@ public class TestStringEncoding {
 
                     int expectedByteLength =
                             testString.getBytes(charset).length +
-                                    terminatorSize;
+                            terminatorSize;
 
                     assertEquals(text.byteSize(), expectedByteLength);
 
