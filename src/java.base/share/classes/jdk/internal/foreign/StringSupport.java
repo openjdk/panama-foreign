@@ -25,13 +25,16 @@
 
 package jdk.internal.foreign;
 
+import jdk.internal.foreign.abi.SharedUtils;
+
 import java.lang.foreign.MemorySegment;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-import static java.lang.foreign.ValueLayout.JAVA_BYTE;
-import static java.lang.foreign.ValueLayout.JAVA_SHORT;
-import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.*;
 
 /**
  * Miscellaneous functions to read and write strings, in various charsets.
@@ -55,7 +58,10 @@ public class StringSupport {
         }
     }
     private static String readFast_byte(MemorySegment segment, long offset, Charset charset) {
-        long len = strlen_byte(segment, offset);
+        long len = segment.byteSize() < Long.MAX_VALUE
+                // We can only read in chunks if the segment is bound
+                ? chunked_strlen_byte(segment, offset)
+                : strlen_byte(segment, offset);
         byte[] bytes = new byte[(int)len];
         MemorySegment.copy(segment, JAVA_BYTE, offset, bytes, 0, (int)len);
         return new String(bytes, charset);
@@ -91,6 +97,69 @@ public class StringSupport {
         byte[] bytes = string.getBytes(charset);
         MemorySegment.copy(bytes, 0, segment, JAVA_BYTE, offset, bytes.length);
         segment.set(JAVA_INT, offset + bytes.length, 0);
+    }
+
+    // Create an array handle for which the index parameter is always zero
+    private static final VarHandle LONG_HANDLE =
+            MethodHandles.insertCoordinates(MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.nativeOrder()), 1, 0);
+
+    // This method is inspired by the `glibc/string/strlen.c` implementation
+    private static int chunked_strlen_byte(MemorySegment segment, long start) {
+
+        long startAddress = segment.address() + start;
+        int headCount = (int)(SharedUtils.alignUp(startAddress, Long.BYTES) - startAddress);
+
+        int offset = 0;
+        for (; offset < headCount; offset++) {
+            byte curr = segment.get(JAVA_BYTE, start + offset);
+            if (curr == 0) {
+                return offset;
+            }
+        }
+
+        // We are now on a long-aligned boundary
+        int bodyCount = (int)Math.min(
+                // Make sure we do not wrap around
+                Integer.MAX_VALUE - Long.BYTES,
+                // Remaining bytes to consider
+                (segment.byteSize() - start - headCount)  // segment.byteSize() might be Long.MAX_VALUE
+        ) & -Long.BYTES;
+
+        for (; offset < bodyCount; offset += Long.BYTES) {
+            // We know we are `long` aligned so, we can save on alignment checking here
+            long curr = segment.get(JAVA_LONG_UNALIGNED, start + offset);
+            // Is this a candidate?
+            if (mightContainZeroByte(curr)) {
+                byte[] arr = new byte[Long.BYTES];
+                // Check the actual content
+                LONG_HANDLE.set(arr, curr);
+                for (int j = 0; j < 8; j++) {
+                    if (arr[j] == 0) {
+                        return offset + j;
+                    }
+                }
+            }
+        }
+
+        // Handle the tail
+        return offset + strlen_byte(segment, start + offset);
+    }
+
+    /* Bits 63 and N * 8 (N = 1..7) of this number are zero.  Call these bits
+       the "holes".  Note that there is a hole just to the left of
+       each byte, with an extra at the end:
+
+       bits:  01111110 11111110 11111110 11111110 11111110 11111110 11111110 11111111
+       bytes: AAAAAAAA BBBBBBBB CCCCCCCC DDDDDDDD EEEEEEEE FFFFFFFF GGGGGGGG HHHHHHHH
+
+       The 1-bits make sure that carries propagate to the next 0-bit.
+       The 0-bits provide holes for carries to fall into.
+    */
+    private static final long HI_MAGIC = 0x8080_8080_8080_8080L;
+    private static final long LO_MAGIC = 0x0101_0101_0101_0101L;
+
+    static boolean mightContainZeroByte(long l) {
+        return ((l - LO_MAGIC) & (~l) & HI_MAGIC) != 0;
     }
 
     private static int strlen_byte(MemorySegment segment, long start) {
