@@ -72,14 +72,12 @@ public class TestStringEncoding {
 
     @DataProvider
     public static Object[][] strings() {
-        byte[] arr= "yen \u00A5".getBytes(StandardCharsets.UTF_8);
-        String yen = new String(arr, 0, arr.length);
         return new Object[][] {
             { "testing" },
             { "" },
             { "X" },
             { "12345" },
-            { yen },
+            { "yen \u00A5" },
             { "snowman \u26C4" },
             { "rainbow \uD83C\uDF08" }
         };
