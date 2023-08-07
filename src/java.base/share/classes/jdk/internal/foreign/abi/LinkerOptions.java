@@ -65,7 +65,7 @@ public class LinkerOptions {
 
         LinkerOptions linkerOptions = new LinkerOptions(optionMap);
         if (linkerOptions.hasCapturedCallState() && linkerOptions.isTrivial()) {
-            throw new IllegalArgumentException("captureCallState and isTrivial are mutually exclusive");
+            throw new IllegalArgumentException("Incompatible linker options: captureCallState, isTrivial");
         }
         return linkerOptions;
     }

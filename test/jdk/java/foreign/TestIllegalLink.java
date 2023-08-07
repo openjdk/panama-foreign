@@ -195,7 +195,7 @@ public class TestIllegalLink extends NativeTestHelper {
             {
                     FunctionDescriptor.ofVoid(),
                     new Linker.Option[]{Linker.Option.isTrivial(), Linker.Option.captureCallState("errno")},
-                    "captureCallState and isTrivial are mutually exclusive"
+                    "Incompatible linker options: captureCallState, isTrivial"
             },
         }));
 
