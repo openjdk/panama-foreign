@@ -265,7 +265,9 @@ public class TestStringEncoding {
         String addition = "123";
         try (var arena = Arena.ofConfined()) {
             try {
-                MemorySegment concatenation = (MemorySegment) STRCAT.invokeExact(arena.allocateFrom(testString), arena.allocateFrom(addition));
+                var destination = arena.allocate(997);
+                destination.copyFrom(arena.allocateFrom(testString));
+                MemorySegment concatenation = (MemorySegment) STRCAT.invokeExact(destination, arena.allocateFrom(addition));
                 var actual = concatenation.getString(0);
                 assertEquals(actual, testString + addition);
             } catch (Throwable t) {
