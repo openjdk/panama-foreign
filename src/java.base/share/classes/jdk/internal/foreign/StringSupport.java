@@ -122,6 +122,9 @@ public class StringSupport {
         if (start > 0) {
             segment = segment.asSlice(start);
         }
+        if (!segment.isNative()) {
+            return strlen_byte(segment, start);
+        }
         long segmentSize = segment.byteSize();
         final long len;
         if (SIZE_T_IS_INT) {
@@ -133,7 +136,7 @@ public class StringSupport {
                 // There is no way to express the max size in the native method using an int so, revert
                 // to a Java method. It is possible to use a reduction of several STRNLEN invocations
                 // in a future optimization.
-                len = strlen_byte(segment);
+                len = strlen_byte(segment, 0);
             }
         } else {
             len = segmentSize < MAX_TRIVIAL_SIZE
@@ -186,10 +189,10 @@ public class StringSupport {
         }
     }
 
-    private static int strlen_byte(MemorySegment segment) {
+    private static int strlen_byte(MemorySegment segment, long start) {
         // iterate until overflow (String can only hold a byte[], whose length can be expressed as an int)
-        for (int offset = 0; offset >= 0; offset += 2) {
-            short curr = segment.get(JAVA_SHORT, offset);
+        for (int offset = 0; offset >= 0; offset += 1) {
+            short curr = segment.get(JAVA_BYTE, start + offset);
             if (curr == 0) {
                 return offset;
             }
