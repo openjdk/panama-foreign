@@ -33,11 +33,11 @@ import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
-import static java.lang.foreign.ValueLayout.JAVA_LONG;
 import static java.lang.foreign.ValueLayout.JAVA_SHORT;
 
 /**
@@ -47,16 +47,19 @@ public class StringSupport {
 
     // Maximum segment byte size for which a trivial method will be invoked.
     private static final long MAX_TRIVIAL_SIZE = 1024L;
-    private static final MethodHandle STRLEN_TRIVIAL;
-    private static final MethodHandle STRLEN;
+    private static final MethodHandle STRNLEN_TRIVIAL;
+    private static final MethodHandle STRNLEN;
+    private static final boolean SIZE_T_IS_INT;
 
     static {
+        var size_t = Objects.requireNonNull(Linker.nativeLinker().canonicalLayouts().get("size_t"));
         Linker linker = Linker.nativeLinker();
-        var strlen = linker.defaultLookup().find("strlen").orElseThrow();
-        var description = FunctionDescriptor.of(JAVA_LONG, ADDRESS);
+        var strnlen = linker.defaultLookup().find("strnlen").orElseThrow();
+        var description = FunctionDescriptor.of(size_t, ADDRESS, size_t);
 
-        STRLEN_TRIVIAL = linker.downcallHandle(strlen, description, Linker.Option.isTrivial());
-        STRLEN = linker.downcallHandle(strlen, description);
+        STRNLEN_TRIVIAL = linker.downcallHandle(strnlen, description, Linker.Option.isTrivial());
+        STRNLEN = linker.downcallHandle(strnlen, description);
+        SIZE_T_IS_INT = (size_t.byteSize() == Integer.BYTES);
     }
 
     public static String read(MemorySegment segment, long offset, Charset charset) {
@@ -120,20 +123,46 @@ public class StringSupport {
             if (start > 0) {
                 segment = segment.asSlice(start);
             }
-            long len = segment.byteSize() < MAX_TRIVIAL_SIZE
-                    ? (long)STRLEN_TRIVIAL.invokeExact(segment)
-                    : (long)STRLEN.invokeExact(segment);
+            long segmentSize = segment.byteSize();
+            final long len;
+            if (SIZE_T_IS_INT) {
+                if (segmentSize < MAX_TRIVIAL_SIZE) {
+                    len = (int)STRNLEN_TRIVIAL.invokeExact(segment, (int) segmentSize);
+                } else if (segmentSize < Integer.MAX_VALUE) {
+                    len = (int)STRNLEN.invokeExact(segment, (int) segmentSize);
+                } else {
+                    // There is no way to express the max size in the native method using an int so, revert
+                    // to a Java method. It is possible to use a reduction of several STRNLEN invocations
+                    // in a future optimization.
+                    len = strlen_byte(segment);
+                }
+            } else {
+                len = segmentSize < MAX_TRIVIAL_SIZE
+                        ? (long)STRNLEN_TRIVIAL.invokeExact(segment, segmentSize)
+                        : (long)STRNLEN.invokeExact(segment, segmentSize);
+            }
 
             // On platforms where `size_t` maps to an `int`, we must check if `len < 0`
             if (len < 0 || len > ArraysSupport.SOFT_MAX_ARRAY_LENGTH) {
                 throw new IllegalArgumentException("String too large");
             }
-            return (int) len;
+            return (int)len;
         } catch (RuntimeException | Error e) {
             throw e;
         } catch (Throwable e) {
             throw new IllegalArgumentException(e);
         }
+    }
+
+    private static int strlen_byte(MemorySegment segment) {
+        // iterate until overflow (String can only hold a byte[], whose length can be expressed as an int)
+        for (int offset = 0; offset >= 0; offset += 2) {
+            short curr = segment.get(JAVA_SHORT, offset);
+            if (curr == 0) {
+                return offset;
+            }
+        }
+        throw new IllegalArgumentException("String too large");
     }
 
     private static int strlen_short(MemorySegment segment, long start) {
