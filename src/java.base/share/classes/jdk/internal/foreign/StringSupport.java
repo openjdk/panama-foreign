@@ -119,12 +119,15 @@ public class StringSupport {
     }
 
     private static int native_strlen_byte(MemorySegment segment, long start) {
-        if (start > 0) {
-            segment = segment.asSlice(start);
-        }
+        // Heap segments must be handled by Java code
         if (!segment.isNative()) {
             return strlen_byte(segment, start);
         }
+
+        if (start > 0) {
+            segment = segment.asSlice(start);
+        }
+
         long segmentSize = segment.byteSize();
         final long len;
         if (SIZE_T_IS_INT) {
@@ -192,7 +195,7 @@ public class StringSupport {
     private static int strlen_byte(MemorySegment segment, long start) {
         // iterate until overflow (String can only hold a byte[], whose length can be expressed as an int)
         for (int offset = 0; offset >= 0; offset += 1) {
-            short curr = segment.get(JAVA_BYTE, start + offset);
+            byte curr = segment.get(JAVA_BYTE, start + offset);
             if (curr == 0) {
                 return offset;
             }
