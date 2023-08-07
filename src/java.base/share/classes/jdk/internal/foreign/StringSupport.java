@@ -128,7 +128,9 @@ public class StringSupport {
             if (len < 0 || len > ArraysSupport.SOFT_MAX_ARRAY_LENGTH) {
                 throw new IllegalArgumentException("String too large");
             }
-            return (int)len;
+            return (int) len;
+        } catch (RuntimeException | Error e) {
+            throw e;
         } catch (Throwable e) {
             throw new IllegalArgumentException(e);
         }

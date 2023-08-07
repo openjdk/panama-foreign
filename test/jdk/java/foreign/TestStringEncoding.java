@@ -249,6 +249,23 @@ public class TestStringEncoding {
         }
     }
 
+    @Test
+    public void segmentationFault() {
+        for (int i = 1; i < 18; i++) {
+            var size = 1 << i;
+            try (var arena = Arena.ofConfined()) {
+                var seg = arena.allocate(size, size);
+                seg.fill((byte)1);
+                try {
+                    var s = seg.getString(0);
+                    System.out.println("s.length() = " + s.length());
+                } catch (IndexOutOfBoundsException e) {
+                    // we will end up here if strlen finds a zero outside the MS
+                }
+            }
+        }
+    }
+
     @DataProvider
     public static Object[][] strings() {
         return new Object[][]{
