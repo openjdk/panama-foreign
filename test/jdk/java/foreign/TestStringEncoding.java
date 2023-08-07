@@ -270,7 +270,7 @@ public class TestStringEncoding {
                 var destination = arena.allocate(testStringSegment.byteSize() + additionSegment.byteSize() - 1);
                 destination.copyFrom(testStringSegment);
 
-                MemorySegment concatenation = (MemorySegment) STRCAT.invokeExact(destination, arena.allocateFrom(addition));
+                MemorySegment concatenation = (MemorySegment) STRCAT.invokeExact(destination, additionSegment);
                 var actual = concatenation.getString(0);
                 assertEquals(actual, testString + addition);
             } catch (Throwable t) {
