@@ -142,8 +142,7 @@ public class StringSupport {
                         : (long)STRNLEN.invokeExact(segment, segmentSize);
             }
 
-            // On platforms where `size_t` maps to an `int`, we must check if `len < 0`
-            if (len < 0 || len > ArraysSupport.SOFT_MAX_ARRAY_LENGTH) {
+            if (len > ArraysSupport.SOFT_MAX_ARRAY_LENGTH) {
                 throw new IllegalArgumentException("String too large");
             }
             return (int)len;
