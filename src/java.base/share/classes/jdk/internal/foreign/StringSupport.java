@@ -119,33 +119,66 @@ public class StringSupport {
     }
 
     private static int native_strlen_byte(MemorySegment segment, long start) {
-        try {
-            if (start > 0) {
-                segment = segment.asSlice(start);
-            }
-            long segmentSize = segment.byteSize();
-            final long len;
-            if (SIZE_T_IS_INT) {
-                if (segmentSize < MAX_TRIVIAL_SIZE) {
-                    len = (int)STRNLEN_TRIVIAL.invokeExact(segment, (int) segmentSize);
-                } else if (segmentSize < Integer.MAX_VALUE) {
-                    len = (int)STRNLEN.invokeExact(segment, (int) segmentSize);
-                } else {
-                    // There is no way to express the max size in the native method using an int so, revert
-                    // to a Java method. It is possible to use a reduction of several STRNLEN invocations
-                    // in a future optimization.
-                    len = strlen_byte(segment);
-                }
+        if (start > 0) {
+            segment = segment.asSlice(start);
+        }
+        long segmentSize = segment.byteSize();
+        final long len;
+        if (SIZE_T_IS_INT) {
+            if (segmentSize < MAX_TRIVIAL_SIZE) {
+                len = strnlen_int_trivial(segment, segmentSize);
+            } else if (segmentSize < Integer.MAX_VALUE * 2L) { // size_t is unsigned
+                len = strnlen_int(segment, segmentSize);
             } else {
-                len = segmentSize < MAX_TRIVIAL_SIZE
-                        ? (long)STRNLEN_TRIVIAL.invokeExact(segment, segmentSize)
-                        : (long)STRNLEN.invokeExact(segment, segmentSize);
+                // There is no way to express the max size in the native method using an int so, revert
+                // to a Java method. It is possible to use a reduction of several STRNLEN invocations
+                // in a future optimization.
+                len = strlen_byte(segment);
             }
+        } else {
+            len = segmentSize < MAX_TRIVIAL_SIZE
+                    ? strnlen_long_trivial(segment, segmentSize)
+                    : strnlen_long(segment, segmentSize);
+        }
+        if (len > ArraysSupport.SOFT_MAX_ARRAY_LENGTH) {
+            throw newIaeStringTooLarge();
+        }
+        return (int)len;
+    }
 
-            if (len > ArraysSupport.SOFT_MAX_ARRAY_LENGTH) {
-                throw new IllegalArgumentException("String too large");
-            }
-            return (int)len;
+    static long strnlen_int_trivial(MemorySegment segment, long size) {
+        try {
+            return Integer.toUnsignedLong((int)STRNLEN_TRIVIAL.invokeExact(segment, (int)size));
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    static long strnlen_int(MemorySegment segment, long size) {
+        try {
+            return Integer.toUnsignedLong((int)STRNLEN.invokeExact(segment, (int)size));
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    static long strnlen_long_trivial(MemorySegment segment, long size) {
+        try {
+            return (long)STRNLEN_TRIVIAL.invokeExact(segment, size);
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    static long strnlen_long(MemorySegment segment, long size) {
+        try {
+            return (long)STRNLEN.invokeExact(segment, size);
         } catch (RuntimeException | Error e) {
             throw e;
         } catch (Throwable e) {
@@ -161,7 +194,7 @@ public class StringSupport {
                 return offset;
             }
         }
-        throw new IllegalArgumentException("String too large");
+        throw newIaeStringTooLarge();
     }
 
     private static int strlen_short(MemorySegment segment, long start) {
@@ -172,7 +205,7 @@ public class StringSupport {
                 return offset;
             }
         }
-        throw new IllegalArgumentException("String too large");
+        throw newIaeStringTooLarge();
     }
 
     private static int strlen_int(MemorySegment segment, long start) {
@@ -183,7 +216,7 @@ public class StringSupport {
                 return offset;
             }
         }
-        throw new IllegalArgumentException("String too large");
+        throw newIaeStringTooLarge();
     }
 
     public enum CharsetKind {
@@ -213,4 +246,9 @@ public class StringSupport {
             }
         }
     }
+
+    private static IllegalArgumentException newIaeStringTooLarge() {
+        return new IllegalArgumentException("String too large");
+    }
+
 }
