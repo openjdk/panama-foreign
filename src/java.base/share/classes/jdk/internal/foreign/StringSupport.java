@@ -45,9 +45,9 @@ import static java.lang.foreign.ValueLayout.JAVA_SHORT;
  */
 public class StringSupport {
 
-    // Maximum segment byte size for which a trivial method will be invoked.
-    private static final long MAX_TRIVIAL_SIZE = 1024L;
-    private static final MethodHandle STRNLEN_TRIVIAL;
+    // Maximum segment byte size for which a critical method will be invoked.
+    private static final long MAX_CRITICAL_SIZE = 1024L;
+    private static final MethodHandle STRNLEN_CRITICAL;
     private static final MethodHandle STRNLEN;
     private static final boolean SIZE_T_IS_INT;
 
@@ -57,7 +57,7 @@ public class StringSupport {
         var strnlen = linker.defaultLookup().find("strnlen").orElseThrow();
         var description = FunctionDescriptor.of(size_t, ADDRESS, size_t);
 
-        STRNLEN_TRIVIAL = linker.downcallHandle(strnlen, description, Linker.Option.isTrivial());
+        STRNLEN_CRITICAL = linker.downcallHandle(strnlen, description, Linker.Option.critical());
         STRNLEN = linker.downcallHandle(strnlen, description);
         SIZE_T_IS_INT = (size_t.byteSize() == Integer.BYTES);
     }
@@ -131,8 +131,8 @@ public class StringSupport {
         long segmentSize = segment.byteSize();
         final long len;
         if (SIZE_T_IS_INT) {
-            if (segmentSize < MAX_TRIVIAL_SIZE) {
-                len = strnlen_int_trivial(segment, segmentSize);
+            if (segmentSize < MAX_CRITICAL_SIZE) {
+                len = strnlen_int_critical(segment, segmentSize);
             } else if (segmentSize < Integer.MAX_VALUE * 2L) { // size_t is unsigned
                 len = strnlen_int(segment, segmentSize);
             } else {
@@ -142,8 +142,8 @@ public class StringSupport {
                 len = strlen_byte(segment, 0);
             }
         } else {
-            len = segmentSize < MAX_TRIVIAL_SIZE
-                    ? strnlen_long_trivial(segment, segmentSize)
+            len = segmentSize < MAX_CRITICAL_SIZE
+                    ? strnlen_long_critical(segment, segmentSize)
                     : strnlen_long(segment, segmentSize);
         }
         if (len > ArraysSupport.SOFT_MAX_ARRAY_LENGTH) {
@@ -152,9 +152,9 @@ public class StringSupport {
         return (int)len;
     }
 
-    static long strnlen_int_trivial(MemorySegment segment, long size) {
+    static long strnlen_int_critical(MemorySegment segment, long size) {
         try {
-            return Integer.toUnsignedLong((int)STRNLEN_TRIVIAL.invokeExact(segment, (int)size));
+            return Integer.toUnsignedLong((int)STRNLEN_CRITICAL.invokeExact(segment, (int)size));
         } catch (RuntimeException | Error e) {
             throw e;
         } catch (Throwable e) {
@@ -172,9 +172,9 @@ public class StringSupport {
         }
     }
 
-    static long strnlen_long_trivial(MemorySegment segment, long size) {
+    static long strnlen_long_critical(MemorySegment segment, long size) {
         try {
-            return (long)STRNLEN_TRIVIAL.invokeExact(segment, size);
+            return (long)STRNLEN_CRITICAL.invokeExact(segment, size);
         } catch (RuntimeException | Error e) {
             throw e;
         } catch (Throwable e) {
