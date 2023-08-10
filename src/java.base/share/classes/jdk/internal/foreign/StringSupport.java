@@ -32,9 +32,6 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -119,10 +116,6 @@ public class StringSupport {
         segment.set(JAVA_INT, offset + bytes.length, 0);
     }
 
-    // Create an array handle for which the index parameter is always zero
-    private static final VarHandle LONG_HANDLE =
-            MethodHandles.insertCoordinates(MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.nativeOrder()), 1, 0);
-
     /**
      * {@return the shortest distance beginning at the provided {@code start}
      *  to the encountering of a zero byte in the provided {@code segment}}
@@ -166,11 +159,8 @@ public class StringSupport {
             long curr = segment.get(JAVA_LONG_UNALIGNED, start + offset);
             // Is this a candidate?
             if (mightContainZeroByte(curr)) {
-                byte[] arr = new byte[Long.BYTES];
-                // Check the actual content
-                LONG_HANDLE.set(arr, curr);
                 for (int j = 0; j < 8; j++) {
-                    if (arr[j] == 0) {
+                    if (segment.get(JAVA_BYTE, start + offset + j) == 0) {
                         return offset + j;
                     }
                 }
@@ -191,11 +181,18 @@ public class StringSupport {
        The 1-bits make sure that carries propagate to the next 0-bit.
        The 0-bits provide holes for carries to fall into.
     */
-    private static final long HIMAGIC = 0x8080_8080_8080_8080L;
-    private static final long LOMAGIC = 0x0101_0101_0101_0101L;
+    private static final long HIMAGIC_FOR_BYTES = 0x8080_8080_8080_8080L;
+    private static final long LOMAGIC_FOR_BYTES = 0x0101_0101_0101_0101L;
 
     static boolean mightContainZeroByte(long l) {
-        return ((l - LOMAGIC) & (~l) & HIMAGIC) != 0;
+        return ((l - LOMAGIC_FOR_BYTES) & (~l) & HIMAGIC_FOR_BYTES) != 0;
+    }
+
+    private static final long HIMAGIC_FOR_SHORTS = 0x8000_8000_8000_8000L;
+    private static final long LOMAGIC_FOR_SHORTS = 0x0001_0001_0001_0001L;
+
+    static boolean mightContainZeroShort(long l) {
+        return ((l - LOMAGIC_FOR_SHORTS) & (~l) & HIMAGIC_FOR_SHORTS) != 0;
     }
 
     static int requireWithinArraySize(long size) {
@@ -215,8 +212,7 @@ public class StringSupport {
     }
 
     private static int strlen_byte(MemorySegment segment, long start) {
-        // iterate until overflow (String can only hold a byte[], whose length can be expressed as an int)
-        for (int offset = 0; offset >= 0; offset += 1) {
+        for (int offset = 0; offset < ArraysSupport.SOFT_MAX_ARRAY_LENGTH; offset += 1) {
             byte curr = segment.get(JAVA_BYTE, start + offset);
             if (curr == 0) {
                 return offset;
@@ -224,7 +220,6 @@ public class StringSupport {
         }
         throw newIaeStringTooLarge();
     }
-
 
     /**
      * {@return the shortest distance beginning at the provided {@code start}
@@ -259,12 +254,9 @@ public class StringSupport {
             // We know we are `long` aligned so, we can save on alignment checking here
             long curr = segment.get(JAVA_LONG_UNALIGNED, start + offset);
             // Is this a candidate?
-            if (mightContainZeroByte(curr)) {
-                short[] arr = new short[Long.BYTES / Short.BYTES];
-                // Check the actual content
-                LONG_HANDLE.set(arr, curr);
-                for (int j = 0; j < Long.BYTES / Short.BYTES; j++) {
-                    if (arr[j] == 0) {
+            if (mightContainZeroShort(curr)) {
+                for (int j = 0; j < Long.BYTES; j += Short.BYTES) {
+                    if (segment.get(JAVA_SHORT_UNALIGNED, start + offset + j) == 0) {
                         return offset + j;
                     }
                 }
@@ -276,20 +268,30 @@ public class StringSupport {
     }
 
     private static int strlen_short(MemorySegment segment, long start) {
-        // iterate until overflow (String can only hold a byte[], whose length can be expressed as an int)
-        for (int offset = 0; offset >= 0; offset += 2) {
-            short curr = segment.get(JAVA_SHORT, start + offset);
-            if (curr == 0) {
+        // Do an initial read using aligned semantics.
+        // If this succeeds, we know that all other subsequent reads will be aligned
+        if (segment.get(JAVA_SHORT, start) == (short)0) {
+            return 0;
+        }
+        for (int offset = Short.BYTES; offset < ArraysSupport.SOFT_MAX_ARRAY_LENGTH; offset += Short.BYTES) {
+            short curr = segment.get(JAVA_SHORT_UNALIGNED, start + offset);
+            if (curr == (short)0) {
                 return offset;
             }
         }
         throw newIaeStringTooLarge();
     }
 
+    // The gain of using `long` wide operations for `int` is lower than for the two other `byte` and `short` variants
     private static int strlen_int(MemorySegment segment, long start) {
-        // iterate until overflow (String can only hold a byte[], whose length can be expressed as an int)
-        for (int offset = 0; offset >= 0; offset += 4) {
-            int curr = segment.get(JAVA_INT, start + offset);
+        // Do an initial read using aligned semantics.
+        // If this succeeds, we know that all other subsequent reads will be aligned
+        if (segment.get(JAVA_INT, start) == 0) {
+            return 0;
+        }
+        for (int offset = Integer.BYTES; offset < ArraysSupport.SOFT_MAX_ARRAY_LENGTH; offset += Integer.BYTES) {
+            // We are guaranteed to be aligned here so, we can use unaligned access.
+            int curr = segment.get(JAVA_INT_UNALIGNED, start + offset);
             if (curr == 0) {
                 return offset;
             }
