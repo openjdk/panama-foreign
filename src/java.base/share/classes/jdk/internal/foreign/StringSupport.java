@@ -25,20 +25,21 @@
 
 package jdk.internal.foreign;
 
+import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.util.ArraysSupport;
 
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-import static java.lang.foreign.ValueLayout.ADDRESS;
-import static java.lang.foreign.ValueLayout.JAVA_BYTE;
-import static java.lang.foreign.ValueLayout.JAVA_INT;
-import static java.lang.foreign.ValueLayout.JAVA_SHORT;
+import static java.lang.foreign.ValueLayout.*;
 
 /**
  * Miscellaneous functions to read and write strings, in various charsets.
@@ -80,7 +81,7 @@ public class StringSupport {
         }
     }
     private static String readFast_byte(MemorySegment segment, long offset, Charset charset) {
-        long len = native_strlen_byte(segment, offset);
+        long len = chunked_strlen_byte(segment, offset);
         byte[] bytes = new byte[(int)len];
         MemorySegment.copy(segment, JAVA_BYTE, offset, bytes, 0, (int)len);
         return new String(bytes, charset);
@@ -93,7 +94,7 @@ public class StringSupport {
     }
 
     private static String readFast_short(MemorySegment segment, long offset, Charset charset) {
-        long len = strlen_short(segment, offset);
+        long len = chunked_strlen_short(segment, offset);
         byte[] bytes = new byte[(int)len];
         MemorySegment.copy(segment, JAVA_BYTE, offset, bytes, 0, (int)len);
         return new String(bytes, charset);
@@ -118,78 +119,99 @@ public class StringSupport {
         segment.set(JAVA_INT, offset + bytes.length, 0);
     }
 
-    private static int native_strlen_byte(MemorySegment segment, long start) {
-        // Heap segments must be handled by Java code
-        if (!segment.isNative()) {
-            return strlen_byte(segment, start);
-        }
+    // Create an array handle for which the index parameter is always zero
+    private static final VarHandle LONG_HANDLE =
+            MethodHandles.insertCoordinates(MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.nativeOrder()), 1, 0);
 
-        if (start > 0) {
-            segment = segment.asSlice(start);
-        }
+    /**
+     * {@return the shortest distance beginning at the provided {@code start}
+     *  to the encountering of a zero byte in the provided {@code segment}}
+     * <p>
+     * The method divides the region of interest into three distinct regions:
+     * <ul>
+     *     <li>head (un-aligned access handling on a byte-by-byte basis) (if any)</li>
+     *     <li>body (long aligned access handling eight bytes at a time) (if any)</li>
+     *     <li>tail (un-aligned access handling on a byte-by-byte basis) (if any)</li>
+     * </ul>
+     * <p>
+     * The body is using a heuristic method to determine if a long word
+     * contains a zero byte. The method might have false positives but
+     * never false negatives.
+     * <p>
+     * This method is inspired by the `glibc/string/strlen.c` implementation
+     *
+     * @param segment to examine
+     * @param start   from where examination shall begin
+     * @throws IllegalArgumentException if the examined region contains no zero bytes
+     *                                  within a length that can be accepted by a String
+     */
+    private static int chunked_strlen_byte(MemorySegment segment, long start) {
 
-        long segmentSize = segment.byteSize();
-        final long len;
-        if (SIZE_T_IS_INT) {
-            if (segmentSize < MAX_TRIVIAL_SIZE) {
-                len = strnlen_int_trivial(segment, segmentSize);
-            } else if (segmentSize < Integer.MAX_VALUE * 2L) { // size_t is unsigned
-                len = strnlen_int(segment, segmentSize);
-            } else {
-                // There is no way to express the max size in the native method using an int so, revert
-                // to a Java method. It is possible to use a reduction of several STRNLEN invocations
-                // in a future optimization.
-                len = strlen_byte(segment, 0);
+        // Handle the first unaligned "head" bytes separately
+        int headCount = (int)SharedUtils.remainsToAlignment(segment.address() + start, Long.BYTES);
+
+        int offset = 0;
+        for (; offset < headCount; offset++) {
+            byte curr = segment.get(JAVA_BYTE, start + offset);
+            if (curr == 0) {
+                return offset;
             }
-        } else {
-            len = segmentSize < MAX_TRIVIAL_SIZE
-                    ? strnlen_long_trivial(segment, segmentSize)
-                    : strnlen_long(segment, segmentSize);
         }
-        if (len > ArraysSupport.SOFT_MAX_ARRAY_LENGTH) {
+
+        // We are now on a long-aligned boundary so this is the "body"
+        int bodyCount = bodyCount(segment.byteSize() - start - headCount);
+
+        for (; offset < bodyCount; offset += Long.BYTES) {
+            // We know we are `long` aligned so, we can save on alignment checking here
+            long curr = segment.get(JAVA_LONG_UNALIGNED, start + offset);
+            // Is this a candidate?
+            if (mightContainZeroByte(curr)) {
+                byte[] arr = new byte[Long.BYTES];
+                // Check the actual content
+                LONG_HANDLE.set(arr, curr);
+                for (int j = 0; j < 8; j++) {
+                    if (arr[j] == 0) {
+                        return offset + j;
+                    }
+                }
+            }
+        }
+
+        // Handle the "tail"
+        return requireWithinArraySize((long) offset + strlen_byte(segment, start + offset));
+    }
+
+    /* Bits 63 and N * 8 (N = 1..7) of this number are zero.  Call these bits
+       the "holes".  Note that there is a hole just to the left of
+       each byte, with an extra at the end:
+
+       bits:  01111110 11111110 11111110 11111110 11111110 11111110 11111110 11111111
+       bytes: AAAAAAAA BBBBBBBB CCCCCCCC DDDDDDDD EEEEEEEE FFFFFFFF GGGGGGGG HHHHHHHH
+
+       The 1-bits make sure that carries propagate to the next 0-bit.
+       The 0-bits provide holes for carries to fall into.
+    */
+    private static final long HIMAGIC = 0x8080_8080_8080_8080L;
+    private static final long LOMAGIC = 0x0101_0101_0101_0101L;
+
+    static boolean mightContainZeroByte(long l) {
+        return ((l - LOMAGIC) & (~l) & HIMAGIC) != 0;
+    }
+
+    static int requireWithinArraySize(long size) {
+        if (size > ArraysSupport.SOFT_MAX_ARRAY_LENGTH) {
             throw newIaeStringTooLarge();
         }
-        return (int)len;
+        return (int) size;
     }
 
-    static long strnlen_int_trivial(MemorySegment segment, long size) {
-        try {
-            return Integer.toUnsignedLong((int)STRNLEN_TRIVIAL.invokeExact(segment, (int)size));
-        } catch (RuntimeException | Error e) {
-            throw e;
-        } catch (Throwable e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
-    static long strnlen_int(MemorySegment segment, long size) {
-        try {
-            return Integer.toUnsignedLong((int)STRNLEN.invokeExact(segment, (int)size));
-        } catch (RuntimeException | Error e) {
-            throw e;
-        } catch (Throwable e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
-    static long strnlen_long_trivial(MemorySegment segment, long size) {
-        try {
-            return (long)STRNLEN_TRIVIAL.invokeExact(segment, size);
-        } catch (RuntimeException | Error e) {
-            throw e;
-        } catch (Throwable e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
-    static long strnlen_long(MemorySegment segment, long size) {
-        try {
-            return (long)STRNLEN.invokeExact(segment, size);
-        } catch (RuntimeException | Error e) {
-            throw e;
-        } catch (Throwable e) {
-            throw new IllegalArgumentException(e);
-        }
+    static int bodyCount(long remaining) {
+        return (int) Math.min(
+                // Make sure we do not wrap around
+                Integer.MAX_VALUE - Long.BYTES,
+                // Remaining bytes to consider
+                remaining)
+                & -Long.BYTES; // Mask 0xFFFFFFF8
     }
 
     private static int strlen_byte(MemorySegment segment, long start) {
@@ -201,6 +223,56 @@ public class StringSupport {
             }
         }
         throw newIaeStringTooLarge();
+    }
+
+
+    /**
+     * {@return the shortest distance beginning at the provided {@code start}
+     *  to the encountering of a zero short in the provided {@code segment}}
+     * <p>
+     * Note: The inspected region must be short aligned.
+     *
+     * @see #chunked_strlen_byte(MemorySegment, long) for more information
+     *
+     * @param segment to examine
+     * @param start   from where examination shall begin
+     * @throws IllegalArgumentException if the examined region contains no zero shorts
+     *                                  within a length that can be accepted by a String
+     */
+    private static int chunked_strlen_short(MemorySegment segment, long start) {
+
+        // Handle the first unaligned "head" bytes separately
+        int headCount = (int)SharedUtils.remainsToAlignment(segment.address() + start, Long.BYTES);
+
+        int offset = 0;
+        for (; offset < headCount; offset += Short.BYTES) {
+            short curr = segment.get(JAVA_SHORT, start + offset);
+            if (curr == 0) {
+                return offset;
+            }
+        }
+
+        // We are now on a long-aligned boundary so this is the "body"
+        int bodyCount = bodyCount(segment.byteSize() - start - headCount);
+
+        for (; offset < bodyCount; offset += Long.BYTES) {
+            // We know we are `long` aligned so, we can save on alignment checking here
+            long curr = segment.get(JAVA_LONG_UNALIGNED, start + offset);
+            // Is this a candidate?
+            if (mightContainZeroByte(curr)) {
+                short[] arr = new short[Long.BYTES / Short.BYTES];
+                // Check the actual content
+                LONG_HANDLE.set(arr, curr);
+                for (int j = 0; j < Long.BYTES / Short.BYTES; j++) {
+                    if (arr[j] == 0) {
+                        return offset + j;
+                    }
+                }
+            }
+        }
+
+        // Handle the "tail"
+        return requireWithinArraySize((long) offset + strlen_short(segment, start + offset));
     }
 
     private static int strlen_short(MemorySegment segment, long start) {
