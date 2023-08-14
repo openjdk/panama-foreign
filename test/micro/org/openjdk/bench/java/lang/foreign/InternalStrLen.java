@@ -42,51 +42,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-/*
-Mac M1, Arm
-Benchmark                                  (size)  Mode  Cnt    Score   Error  Units
-InternalStrLen.legacyDoubleByte                 1  avgt   30    1.899 ? 0.018  ns/op
-InternalStrLen.legacyDoubleByte                 4  avgt   30    3.784 ? 0.016  ns/op
-InternalStrLen.legacyDoubleByte                16  avgt   30   11.334 ? 0.090  ns/op
-InternalStrLen.legacyDoubleByte               251  avgt   30  165.397 ? 0.529  ns/op
-InternalStrLen.legacyDoubleByte              1024  avgt   30  648.698 ? 2.378  ns/op
-InternalStrLen.legacyQuadByte                   1  avgt   30    1.875 ? 0.006  ns/op
-InternalStrLen.legacyQuadByte                   4  avgt   30    3.754 ? 0.016  ns/op
-InternalStrLen.legacyQuadByte                  16  avgt   30   11.237 ? 0.026  ns/op
-InternalStrLen.legacyQuadByte                 251  avgt   30  166.247 ? 1.045  ns/op
-InternalStrLen.legacyQuadByte                1024  avgt   30  647.522 ? 1.655  ns/op
-InternalStrLen.legacySingleByte                 1  avgt   30    1.580 ? 0.017  ns/op
-InternalStrLen.legacySingleByte                 4  avgt   30    3.752 ? 0.753  ns/op
-InternalStrLen.legacySingleByte                16  avgt   30    8.589 ? 0.022  ns/op
-InternalStrLen.legacySingleByte               251  avgt   30  125.007 ? 0.424  ns/op
-InternalStrLen.legacySingleByte              1024  avgt   30  488.003 ? 2.353  ns/op
-InternalStrLen.legacySingleByteMisaligned       1  avgt   30    1.563 ? 0.005  ns/op
-InternalStrLen.legacySingleByteMisaligned       4  avgt   30    2.968 ? 0.009  ns/op
-InternalStrLen.legacySingleByteMisaligned      16  avgt   30    8.583 ? 0.023  ns/op
-InternalStrLen.legacySingleByteMisaligned     251  avgt   30  125.197 ? 0.712  ns/op
-InternalStrLen.legacySingleByteMisaligned    1024  avgt   30  487.469 ? 1.375  ns/op
-InternalStrLen.newDoubleByte                    1  avgt   30    2.033 ? 0.006  ns/op
-InternalStrLen.newDoubleByte                    4  avgt   30    4.065 ? 0.018  ns/op
-InternalStrLen.newDoubleByte                   16  avgt   30    5.943 ? 0.017  ns/op
-InternalStrLen.newDoubleByte                  251  avgt   30   28.519 ? 0.076  ns/op
-InternalStrLen.newDoubleByte                 1024  avgt   30   71.109 ? 0.271  ns/op
-InternalStrLen.newQuadByte                      1  avgt   30    1.576 ? 0.014  ns/op
-InternalStrLen.newQuadByte                      4  avgt   30    3.788 ? 0.012  ns/op
-InternalStrLen.newQuadByte                     16  avgt   30    6.902 ? 0.028  ns/op
-InternalStrLen.newQuadByte                    251  avgt   30   47.852 ? 0.212  ns/op
-InternalStrLen.newQuadByte                   1024  avgt   30  194.088 ? 1.644  ns/op
-InternalStrLen.newSingleByte                    1  avgt   30    1.886 ? 0.006  ns/op
-InternalStrLen.newSingleByte                    4  avgt   30    4.084 ? 0.018  ns/op
-InternalStrLen.newSingleByte                   16  avgt   30    5.337 ? 0.018  ns/op
-InternalStrLen.newSingleByte                  251  avgt   30   22.275 ? 0.287  ns/op
-InternalStrLen.newSingleByte                 1024  avgt   30   38.859 ? 0.229  ns/op
-InternalStrLen.newSingleByteMisaligned          1  avgt   30    1.754 ? 0.018  ns/op
-InternalStrLen.newSingleByteMisaligned          4  avgt   30    7.204 ? 0.042  ns/op
-InternalStrLen.newSingleByteMisaligned         16  avgt   30    9.692 ? 0.237  ns/op
-InternalStrLen.newSingleByteMisaligned        251  avgt   30   27.572 ? 0.100  ns/op
-InternalStrLen.newSingleByteMisaligned       1024  avgt   30   44.960 ? 2.210  ns/op
- */
-
 import static java.lang.foreign.ValueLayout.*;
 
 @BenchmarkMode(Mode.AverageTime)

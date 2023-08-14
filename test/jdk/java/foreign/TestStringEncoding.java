@@ -75,7 +75,7 @@ public class TestStringEncoding {
 
                     int expectedByteLength =
                             testString.getBytes(charset).length +
-                                    terminatorSize;
+                            terminatorSize;
 
                     assertEquals(text.byteSize(), expectedByteLength);
 
@@ -192,7 +192,7 @@ public class TestStringEncoding {
         if (testString.length() < 3 || !containsOnlyRegularCharacters(testString)) {
             return;
         }
-        for (var charset : singleByteCharsets()) {
+        for (var charset:singleByteCharsets()) {
             try (Arena arena = Arena.ofConfined()) {
                 MemorySegment inSegment = arena.allocateFrom(testString, charset);
                 for (int i = 0; i < 3; i++) {
@@ -286,7 +286,7 @@ public class TestStringEncoding {
             var size = 1 << i;
             try (var arena = Arena.ofConfined()) {
                 var seg = arena.allocate(size, size);
-                seg.fill((byte) 1);
+                seg.fill((byte)1);
                 try {
                     var s = seg.getString(0);
                     System.out.println("s.length() = " + s.length());
