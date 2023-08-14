@@ -241,15 +241,14 @@ public class StringSupport {
         }
 
         public static CharsetKind of(Charset charset) {
-            if (charset == StandardCharsets.UTF_8 || charset == StandardCharsets.ISO_8859_1 || charset == StandardCharsets.US_ASCII) {
-                return CharsetKind.SINGLE_BYTE;
-            } else if (charset == StandardCharsets.UTF_16LE || charset == StandardCharsets.UTF_16BE || charset == StandardCharsets.UTF_16) {
-                return CharsetKind.DOUBLE_BYTE;
-            } else if (charset == StandardCharsets.UTF_32LE || charset == StandardCharsets.UTF_32BE || charset == StandardCharsets.UTF_32) {
-                return CharsetKind.QUAD_BYTE;
-            } else {
-                throw new UnsupportedOperationException("Unsupported charset: " + charset);
-            }
+            // Switching on the charset names rather than specific instances of
+            // `Charset` avoids loading the class `StandardCharsets`
+            return switch (charset.name()) {
+                case "UTF-8", "ISO8859_1", "US-ASCII" -> CharsetKind.SINGLE_BYTE;
+                case "UTF-16LE", "UTF-16BE", "UTF-16" -> CharsetKind.DOUBLE_BYTE;
+                case "UTF-32LE", "UTF-32BE", "UTF-32" -> CharsetKind.QUAD_BYTE;
+                default -> throw new UnsupportedOperationException("Unsupported charset: " + charset);
+            };
         }
     }
 

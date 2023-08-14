@@ -90,7 +90,7 @@ public interface SegmentAllocator {
     @ForceInline
     default MemorySegment allocateFrom(String str) {
         Objects.requireNonNull(str);
-        return allocateFrom(str, StandardCharsets.UTF_8);
+        return allocateFrom(str, sun.nio.cs.UTF_8.INSTANCE);
     }
 
     /**
