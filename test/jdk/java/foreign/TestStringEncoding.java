@@ -44,14 +44,15 @@ import java.util.Random;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
+import jdk.internal.foreign.StringSupport;
 import org.testng.annotations.*;
 
-import static java.lang.foreign.ValueLayout.ADDRESS;
-import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.*;
 import static org.testng.Assert.*;
 
 /*
  * @test
+ * @modules java.base/jdk.internal.foreign
  * @run testng TestStringEncoding
  */
 
@@ -74,7 +75,7 @@ public class TestStringEncoding {
 
                     int expectedByteLength =
                             testString.getBytes(charset).length +
-                            terminatorSize;
+                                    terminatorSize;
 
                     assertEquals(text.byteSize(), expectedByteLength);
 
@@ -191,7 +192,7 @@ public class TestStringEncoding {
         if (testString.length() < 3 || !containsOnlyRegularCharacters(testString)) {
             return;
         }
-        for(var charset:singleByteCharsets()) {
+        for (var charset : singleByteCharsets()) {
             try (Arena arena = Arena.ofConfined()) {
                 MemorySegment inSegment = arena.allocateFrom(testString, charset);
                 for (int i = 0; i < 3; i++) {
@@ -238,7 +239,7 @@ public class TestStringEncoding {
         } catch (Exception e) {
             throw new AssertionError(e);
         } catch (OutOfMemoryError oome) {
-           // Unfortunately, we run out of memory and cannot run this test in this configuration
+            // Unfortunately, we run out of memory and cannot run this test in this configuration
             System.out.println("Skipping test because of insufficient memory: " + testName);
         } finally {
             deleteIfExistsOrThrow(path);
@@ -285,12 +286,90 @@ public class TestStringEncoding {
             var size = 1 << i;
             try (var arena = Arena.ofConfined()) {
                 var seg = arena.allocate(size, size);
-                seg.fill((byte)1);
+                seg.fill((byte) 1);
                 try {
                     var s = seg.getString(0);
                     System.out.println("s.length() = " + s.length());
                 } catch (IndexOutOfBoundsException e) {
                     // we will end up here if strlen finds a zero outside the MS
+                }
+            }
+        }
+    }
+
+    private static final int TEST_LENGTH_MAX = 277;
+
+    private final Random deterministicRandom() {
+        return new Random(42);
+    }
+
+    @Test
+    public void chunked_strlen_byte() {
+        Random random = deterministicRandom();
+        for (int skew = 0; skew < Long.BYTES; skew++) {
+            for (int len = 0; len < TEST_LENGTH_MAX; len++) {
+                try (var arena = Arena.ofConfined()) {
+                    var segment = arena.allocate(len + 1 + skew)
+                            .asSlice(skew);
+                    for (int i = 0; i < len; i++) {
+                        byte value;
+                        while ((value = (byte) random.nextInt()) == 0) {
+                        }
+                        segment.setAtIndex(JAVA_BYTE, i, value);
+                    }
+                    segment.setAtIndex(JAVA_BYTE, len, (byte) 0);
+                    for (int j = 0; j < len; j++) {
+                        int actual = StringSupport.chunked_strlen_byte(segment, j);
+                        assertEquals(actual, len - j);
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    public void chunked_strlen_short() {
+        Random random = deterministicRandom();
+        for (int skew = 0; skew < Long.BYTES; skew += Short.BYTES) {
+            for (int len = 0; len < TEST_LENGTH_MAX; len++) {
+                try (var arena = Arena.ofConfined()) {
+                    var segment = arena.allocate((len + 1) * Short.BYTES + skew, JAVA_SHORT.byteAlignment())
+                            .asSlice(skew);
+                    for (int i = 0; i < len; i++) {
+                        short value;
+                        while ((value = (short) random.nextInt()) == 0) {
+                        }
+                        segment.setAtIndex(JAVA_SHORT, i, value);
+                    }
+                    segment.setAtIndex(JAVA_SHORT, len, (short) 0);
+                    for (int j = 0; j < len; j++) {
+                        int actual = StringSupport.chunked_strlen_short(segment, j * Short.BYTES);
+                        assertEquals(actual, (len - j) * Short.BYTES);
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    public void strlen_int() {
+        Random random = deterministicRandom();
+        for (int skew = 0; skew < Long.BYTES; skew += Integer.BYTES) {
+            for (int len = 0; len < TEST_LENGTH_MAX; len++) {
+                try (var arena = Arena.ofConfined()) {
+                    var segment = arena.allocate((len + 1) * Integer.BYTES + skew, JAVA_INT.byteAlignment())
+                            .asSlice(skew);
+                    for (int i = 0; i < len; i++) {
+                        int value;
+                        while ((value = random.nextInt()) == 0) {
+                        }
+                        segment.setAtIndex(JAVA_INT, i, value);
+                    }
+                    segment.setAtIndex(JAVA_INT, len, 0);
+                    for (int j = 0; j < len; j++) {
+                        int actual = StringSupport.strlen_int(segment, j * Integer.BYTES);
+                        assertEquals(actual, (len - j) * Integer.BYTES);
+                    }
                 }
             }
         }

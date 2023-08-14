@@ -28,13 +28,9 @@ package jdk.internal.foreign;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.util.ArraysSupport;
 
-import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
-import java.lang.invoke.MethodHandle;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 import static java.lang.foreign.ValueLayout.*;
 
@@ -42,23 +38,6 @@ import static java.lang.foreign.ValueLayout.*;
  * Miscellaneous functions to read and write strings, in various charsets.
  */
 public class StringSupport {
-
-    // Maximum segment byte size for which a trivial method will be invoked.
-    private static final long MAX_TRIVIAL_SIZE = 1024L;
-    private static final MethodHandle STRNLEN_TRIVIAL;
-    private static final MethodHandle STRNLEN;
-    private static final boolean SIZE_T_IS_INT;
-
-    static {
-        var size_t = Objects.requireNonNull(Linker.nativeLinker().canonicalLayouts().get("size_t"));
-        Linker linker = Linker.nativeLinker();
-        var strnlen = linker.defaultLookup().find("strnlen").orElseThrow();
-        var description = FunctionDescriptor.of(size_t, ADDRESS, size_t);
-
-        STRNLEN_TRIVIAL = linker.downcallHandle(strnlen, description, Linker.Option.isTrivial());
-        STRNLEN = linker.downcallHandle(strnlen, description);
-        SIZE_T_IS_INT = (size_t.byteSize() == Integer.BYTES);
-    }
 
     public static String read(MemorySegment segment, long offset, Charset charset) {
         return switch (CharsetKind.of(charset)) {
@@ -138,7 +117,7 @@ public class StringSupport {
      * @throws IllegalArgumentException if the examined region contains no zero bytes
      *                                  within a length that can be accepted by a String
      */
-    private static int chunked_strlen_byte(MemorySegment segment, long start) {
+    public static int chunked_strlen_byte(MemorySegment segment, long start) {
 
         // Handle the first unaligned "head" bytes separately
         int headCount = (int)SharedUtils.remainsToAlignment(segment.address() + start, Long.BYTES);
@@ -234,7 +213,7 @@ public class StringSupport {
      * @throws IllegalArgumentException if the examined region contains no zero shorts
      *                                  within a length that can be accepted by a String
      */
-    private static int chunked_strlen_short(MemorySegment segment, long start) {
+    public static int chunked_strlen_short(MemorySegment segment, long start) {
 
         // Handle the first unaligned "head" bytes separately
         int headCount = (int)SharedUtils.remainsToAlignment(segment.address() + start, Long.BYTES);
@@ -283,7 +262,7 @@ public class StringSupport {
     }
 
     // The gain of using `long` wide operations for `int` is lower than for the two other `byte` and `short` variants
-    private static int strlen_int(MemorySegment segment, long start) {
+    public static int strlen_int(MemorySegment segment, long start) {
         // Do an initial read using aligned semantics.
         // If this succeeds, we know that all other subsequent reads will be aligned
         if (segment.get(JAVA_INT, start) == 0) {
