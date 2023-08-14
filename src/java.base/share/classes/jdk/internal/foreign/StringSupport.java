@@ -43,7 +43,9 @@ import static java.lang.foreign.ValueLayout.JAVA_SHORT;
 /**
  * Miscellaneous functions to read and write strings, in various charsets.
  */
-public class StringSupport {
+public final class StringSupport {
+
+    private StringSupport() {}
 
     // Maximum segment byte size for which a critical method will be invoked.
     private static final long MAX_CRITICAL_SIZE = 1024L;
@@ -67,7 +69,6 @@ public class StringSupport {
             case SINGLE_BYTE -> readFast_byte(segment, offset, charset);
             case DOUBLE_BYTE -> readFast_short(segment, offset, charset);
             case QUAD_BYTE -> readFast_int(segment, offset, charset);
-            default -> throw new UnsupportedOperationException("Unsupported charset: " + charset);
         };
     }
 
@@ -76,7 +77,6 @@ public class StringSupport {
             case SINGLE_BYTE -> writeFast_byte(segment, offset, charset, string);
             case DOUBLE_BYTE -> writeFast_short(segment, offset, charset, string);
             case QUAD_BYTE -> writeFast_int(segment, offset, charset, string);
-            default -> throw new UnsupportedOperationException("Unsupported charset: " + charset);
         }
     }
     private static String readFast_byte(MemorySegment segment, long offset, Charset charset) {
