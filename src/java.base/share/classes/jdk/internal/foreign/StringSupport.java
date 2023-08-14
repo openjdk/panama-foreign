@@ -39,6 +39,7 @@ import static java.lang.foreign.ValueLayout.*;
  */
 public class StringSupport {
 
+
     public static String read(MemorySegment segment, long offset, Charset charset) {
         return switch (CharsetKind.of(charset)) {
             case SINGLE_BYTE -> readFast_byte(segment, offset, charset);
