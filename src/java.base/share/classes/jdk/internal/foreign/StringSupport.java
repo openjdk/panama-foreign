@@ -32,7 +32,6 @@ import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
@@ -241,14 +240,22 @@ public class StringSupport {
         }
 
         public static CharsetKind of(Charset charset) {
-            // Switching on the charset names rather than specific instances of
-            // `Charset` avoids loading the class `StandardCharsets`
-            return switch (charset.name()) {
-                case "UTF-8", "ISO8859_1", "US-ASCII" -> CharsetKind.SINGLE_BYTE;
-                case "UTF-16LE", "UTF-16BE", "UTF-16" -> CharsetKind.DOUBLE_BYTE;
-                case "UTF-32LE", "UTF-32BE", "UTF-32" -> CharsetKind.QUAD_BYTE;
-                default -> throw new UnsupportedOperationException("Unsupported charset: " + charset);
-            };
+            // Comparing the charset to specific internal implementations avoids loading the class `StandardCharsets`
+            if        (charset == sun.nio.cs.UTF_8.INSTANCE ||
+                       charset == sun.nio.cs.ISO_8859_1.INSTANCE ||
+                       charset == sun.nio.cs.US_ASCII.INSTANCE) {
+                return SINGLE_BYTE;
+            } else if (charset instanceof sun.nio.cs.UTF_16LE ||
+                       charset instanceof sun.nio.cs.UTF_16BE ||
+                       charset instanceof sun.nio.cs.UTF_16) {
+                return DOUBLE_BYTE;
+            } else if (charset instanceof sun.nio.cs.UTF_32LE ||
+                       charset instanceof sun.nio.cs.UTF_32BE ||
+                       charset instanceof sun.nio.cs.UTF_32) {
+                return QUAD_BYTE;
+            } else {
+                throw new UnsupportedOperationException("Unsupported charset: " + charset);
+            }
         }
     }
 
