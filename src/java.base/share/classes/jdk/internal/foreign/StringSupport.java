@@ -57,7 +57,9 @@ public final class StringSupport {
     }
 
     private static String readByte(MemorySegment segment, long offset, Charset charset) {
-        long len = segment.isNative()
+        long len = segment.isNative() ||
+                segment instanceof HeapMemorySegmentImpl.OfLong ||
+                segment instanceof HeapMemorySegmentImpl.OfDouble
                 ? chunkedStrlenByte(segment, offset)
                 : strlenByte(segment, offset); // Heap segments might not be 64-bit aligned
         byte[] bytes = new byte[(int)len];
@@ -72,7 +74,9 @@ public final class StringSupport {
     }
 
     private static String readShort(MemorySegment segment, long offset, Charset charset) {
-        long len = segment.isNative()
+        long len = segment.isNative() ||
+                segment instanceof HeapMemorySegmentImpl.OfLong ||
+                segment instanceof HeapMemorySegmentImpl.OfDouble
                 ? chunkedStrlenShort(segment, offset)
                 : strlenShort(segment, offset); // Heap segments might not be 64-bit aligned
         byte[] bytes = new byte[(int)len];
