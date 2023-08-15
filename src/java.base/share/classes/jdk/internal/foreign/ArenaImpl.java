@@ -31,7 +31,7 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySegment.Scope;
 import java.util.Objects;
 
-public class ArenaImpl implements Arena {
+public final class ArenaImpl implements Arena {
 
     private final MemorySessionImpl session;
     private final boolean shouldReserveMemory;
