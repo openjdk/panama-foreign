@@ -192,7 +192,7 @@ public class TestStringEncoding {
         if (testString.length() < 3 || !containsOnlyRegularCharacters(testString)) {
             return;
         }
-        for (var charset:singleByteCharsets()) {
+        for (var charset : singleByteCharsets()) {
             try (Arena arena = Arena.ofConfined()) {
                 MemorySegment inSegment = arena.allocateFrom(testString, charset);
                 for (int i = 0; i < 3; i++) {
