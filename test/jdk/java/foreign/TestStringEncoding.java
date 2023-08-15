@@ -40,6 +40,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
@@ -62,26 +63,29 @@ public class TestStringEncoding {
     public void testStrings(String testString) {
         for (Charset charset : Charset.availableCharsets().values()) {
             if (isStandard(charset)) {
-                try (Arena arena = Arena.ofConfined()) {
-                    MemorySegment text = arena.allocateFrom(testString, charset);
+                for (Arena arena : arenas()) {
+                    try (arena) {
+                        System.out.println("arena = " + arena);
+                        MemorySegment text = arena.allocateFrom(testString, charset);
 
-                    int terminatorSize = "\0".getBytes(charset).length;
-                    if (charset == StandardCharsets.UTF_16) {
-                        terminatorSize -= 2; // drop BOM
-                    }
-                    // Note that the JDK's UTF_32 encoder doesn't add a BOM.
-                    // This is legal under the Unicode standard, and means the byte order is BE.
-                    // See: https://unicode.org/faq/utf_bom.html#gen7
+                        int terminatorSize = "\0".getBytes(charset).length;
+                        if (charset == StandardCharsets.UTF_16) {
+                            terminatorSize -= 2; // drop BOM
+                        }
+                        // Note that the JDK's UTF_32 encoder doesn't add a BOM.
+                        // This is legal under the Unicode standard, and means the byte order is BE.
+                        // See: https://unicode.org/faq/utf_bom.html#gen7
 
-                    int expectedByteLength =
-                            testString.getBytes(charset).length +
-                            terminatorSize;
+                        int expectedByteLength =
+                                testString.getBytes(charset).length +
+                                        terminatorSize;
 
-                    assertEquals(text.byteSize(), expectedByteLength);
+                        assertEquals(text.byteSize(), expectedByteLength);
 
-                    String roundTrip = text.getString(0, charset);
-                    if (charset.newEncoder().canEncode(testString)) {
-                        assertEquals(roundTrip, testString);
+                        String roundTrip = text.getString(0, charset);
+                        if (charset.newEncoder().canEncode(testString)) {
+                            assertEquals(roundTrip, testString);
+                        }
                     }
                 }
             } else {
@@ -90,21 +94,24 @@ public class TestStringEncoding {
         }
     }
 
+
     @Test(dataProvider = "strings")
     public void testStringsHeap(String testString) {
         for (Charset charset : singleByteCharsets()) {
-            try (Arena arena = Arena.ofConfined()) {
-                MemorySegment text = arena.allocateFrom(testString, charset);
-                text = toHeapSegment(text);
+            for (var arena : arenas()) {
+                try (arena) {
+                    MemorySegment text = arena.allocateFrom(testString, charset);
+                    text = toHeapSegment(text);
 
-                int expectedByteLength =
-                        testString.getBytes(charset).length + 1;
+                    int expectedByteLength =
+                            testString.getBytes(charset).length + 1;
 
-                assertEquals(text.byteSize(), expectedByteLength);
+                    assertEquals(text.byteSize(), expectedByteLength);
 
-                String roundTrip = text.getString(0, charset);
-                if (charset.newEncoder().canEncode(testString)) {
-                    assertEquals(roundTrip, testString);
+                    String roundTrip = text.getString(0, charset);
+                    if (charset.newEncoder().canEncode(testString)) {
+                        assertEquals(roundTrip, testString);
+                    }
                 }
             }
         }
@@ -170,22 +177,23 @@ public class TestStringEncoding {
     public void testPeculiarContentSingleByte() {
         Random random = new Random(42);
         for (int len = 7; len < 71; len++) {
-            try (var arena = Arena.ofConfined()) {
-                var segment = arena.allocate(len, 4);
-                var arr = new byte[len];
-                random.nextBytes(arr);
-                segment.copyFrom(MemorySegment.ofArray(arr));
-                int terminatorIndex = random.nextInt(len);
-                segment.set(ValueLayout.JAVA_BYTE, terminatorIndex, (byte) 0);
-                for (Charset charset : singleByteCharsets()) {
-                    var s = segment.getString(0, charset);
-                    var ref = referenceImpl(segment, 0, charset);
-                    assertEquals(s, ref);
+            for (var arena : arenas()) {
+                try (arena) {
+                    var segment = arena.allocate(len, 4);
+                    var arr = new byte[len];
+                    random.nextBytes(arr);
+                    segment.copyFrom(MemorySegment.ofArray(arr));
+                    int terminatorIndex = random.nextInt(len);
+                    segment.set(ValueLayout.JAVA_BYTE, terminatorIndex, (byte) 0);
+                    for (Charset charset : singleByteCharsets()) {
+                        var s = segment.getString(0, charset);
+                        var ref = referenceImpl(segment, 0, charset);
+                        assertEquals(s, ref);
+                    }
                 }
             }
         }
     }
-
 
     @Test(dataProvider = "strings")
     public void testOffset(String testString) {
@@ -193,11 +201,13 @@ public class TestStringEncoding {
             return;
         }
         for (var charset : singleByteCharsets()) {
-            try (Arena arena = Arena.ofConfined()) {
-                MemorySegment inSegment = arena.allocateFrom(testString, charset);
-                for (int i = 0; i < 3; i++) {
-                    String actual = inSegment.getString(i, charset);
-                    assertEquals(actual, testString.substring(i));
+            for (var arena: arenas()) {
+                try (arena) {
+                    MemorySegment inSegment = arena.allocateFrom(testString, charset);
+                    for (int i = 0; i < 3; i++) {
+                        String actual = inSegment.getString(i, charset);
+                        assertEquals(actual, testString.substring(i));
+                    }
                 }
             }
         }
@@ -286,7 +296,7 @@ public class TestStringEncoding {
             var size = 1 << i;
             try (var arena = Arena.ofConfined()) {
                 var seg = arena.allocate(size, size);
-                seg.fill((byte)1);
+                seg.fill((byte) 1);
                 try {
                     var s = seg.getString(0);
                     System.out.println("s.length() = " + s.length());
@@ -299,7 +309,7 @@ public class TestStringEncoding {
 
     private static final int TEST_LENGTH_MAX = 277;
 
-    private final Random deterministicRandom() {
+    private Random deterministicRandom() {
         return new Random(42);
     }
 
@@ -445,6 +455,63 @@ public class TestStringEncoding {
             }
         }
         throw new IllegalArgumentException("String too large");
+    }
+
+    private static List<Arena> arenas() {
+        return Arrays.asList(
+                Arena.ofConfined(),          // Native memory
+                new HeapArena(byte.class),   // Heap memory backed by a byte array
+                new HeapArena(short.class),  // Heap memory backed by a short array
+                new HeapArena(int.class),    // Heap memory backed by an int array
+                new HeapArena(long.class));  // Heap memory backed by a long array
+    }
+
+    private static final class HeapArena implements Arena {
+
+        private final Class<?> type;
+        private final Arena delegate;
+
+        public HeapArena(Class<?> type) {
+            if (!type.isPrimitive()) {
+                throw new IllegalArgumentException(type.toString());
+            }
+            this.type = type;
+            this.delegate = Arena.ofConfined();
+        }
+
+        @Override
+        public MemorySegment allocate(long byteSize, long byteAlignment) {
+            var seg = switch (type) {
+                case Class<?> c when byte.class.equals(c) -> MemorySegment.ofArray(new byte[Math.toIntExact(byteSize)]);
+                case Class<?> c when short.class.equals(c) ->
+                        MemorySegment.ofArray(new short[1 + Math.toIntExact(byteSize / Short.BYTES)]);
+                case Class<?> c when int.class.equals(c) ->
+                        MemorySegment.ofArray(new int[1 + Math.toIntExact(byteSize / Integer.BYTES)]);
+                case Class<?> c when long.class.equals(c) ->
+                        MemorySegment.ofArray(new long[1 + Math.toIntExact(byteSize / Long.BYTES)]);
+                default -> throw new IllegalArgumentException();
+            };
+            seg = seg.asSlice(0, byteSize);
+            return seg;
+        }
+
+        @Override
+        public MemorySegment.Scope scope() {
+            return delegate.scope();
+        }
+
+        @Override
+        public void close() {
+            delegate.close();
+        }
+
+        @Override
+        public String toString() {
+            return "HeapArena{" +
+                    "type=" + type +
+                    ", delegate=" + delegate +
+                    '}';
+        }
     }
 
 }

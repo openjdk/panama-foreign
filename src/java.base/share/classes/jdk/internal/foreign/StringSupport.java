@@ -57,7 +57,9 @@ public final class StringSupport {
     }
 
     private static String readByte(MemorySegment segment, long offset, Charset charset) {
-        long len = chunkedStrlenByte(segment, offset);
+        long len = segment.isNative()
+                ? chunkedStrlenByte(segment, offset)
+                : strlenByte(segment, offset); // Heap segments might not be 64-bit aligned
         byte[] bytes = new byte[(int)len];
         MemorySegment.copy(segment, JAVA_BYTE, offset, bytes, 0, (int)len);
         return new String(bytes, charset);
@@ -70,7 +72,9 @@ public final class StringSupport {
     }
 
     private static String readShort(MemorySegment segment, long offset, Charset charset) {
-        long len = chunkedStrlenShort(segment, offset);
+        long len = segment.isNative()
+                ? chunkedStrlenShort(segment, offset)
+                : strlenShort(segment, offset); // Heap segments might not be 64-bit aligned
         byte[] bytes = new byte[(int)len];
         MemorySegment.copy(segment, JAVA_BYTE, offset, bytes, 0, (int)len);
         return new String(bytes, charset);
@@ -247,12 +251,7 @@ public final class StringSupport {
     }
 
     private static int strlenShort(MemorySegment segment, long start) {
-        // Do an initial read using aligned semantics.
-        // If this succeeds, we know that all other subsequent reads will be aligned
-        if (segment.get(JAVA_SHORT, start) == (short)0) {
-            return 0;
-        }
-        for (int offset = Short.BYTES; offset < ArraysSupport.SOFT_MAX_ARRAY_LENGTH; offset += Short.BYTES) {
+        for (int offset = 0; offset < ArraysSupport.SOFT_MAX_ARRAY_LENGTH; offset += Short.BYTES) {
             short curr = segment.get(JAVA_SHORT_UNALIGNED, start + offset);
             if (curr == (short)0) {
                 return offset;
@@ -262,13 +261,9 @@ public final class StringSupport {
     }
 
     // The gain of using `long` wide operations for `int` is lower than for the two other `byte` and `short` variants
+    // so, there is only one method for ints.
     public static int strlenInt(MemorySegment segment, long start) {
-        // Do an initial read using aligned semantics.
-        // If this succeeds, we know that all other subsequent reads will be aligned
-        if (segment.get(JAVA_INT, start) == 0) {
-            return 0;
-        }
-        for (int offset = Integer.BYTES; offset < ArraysSupport.SOFT_MAX_ARRAY_LENGTH; offset += Integer.BYTES) {
+        for (int offset = 0; offset < ArraysSupport.SOFT_MAX_ARRAY_LENGTH; offset += Integer.BYTES) {
             // We are guaranteed to be aligned here so, we can use unaligned access.
             int curr = segment.get(JAVA_INT_UNALIGNED, start + offset);
             if (curr == 0) {
