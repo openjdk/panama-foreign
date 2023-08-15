@@ -30,22 +30,21 @@ import jdk.internal.util.ArraysSupport;
 
 import java.lang.foreign.MemorySegment;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 import static java.lang.foreign.ValueLayout.*;
 
 /**
  * Miscellaneous functions to read and write strings, in various charsets.
  */
-public class StringSupport {
+public final class StringSupport {
 
+    private StringSupport() {}
 
     public static String read(MemorySegment segment, long offset, Charset charset) {
         return switch (CharsetKind.of(charset)) {
             case SINGLE_BYTE -> readFast_byte(segment, offset, charset);
             case DOUBLE_BYTE -> readFast_short(segment, offset, charset);
             case QUAD_BYTE -> readFast_int(segment, offset, charset);
-            default -> throw new UnsupportedOperationException("Unsupported charset: " + charset);
         };
     }
 
@@ -54,9 +53,9 @@ public class StringSupport {
             case SINGLE_BYTE -> writeFast_byte(segment, offset, charset, string);
             case DOUBLE_BYTE -> writeFast_short(segment, offset, charset, string);
             case QUAD_BYTE -> writeFast_int(segment, offset, charset, string);
-            default -> throw new UnsupportedOperationException("Unsupported charset: " + charset);
         }
     }
+
     private static String readFast_byte(MemorySegment segment, long offset, Charset charset) {
         long len = chunked_strlen_byte(segment, offset);
         byte[] bytes = new byte[(int)len];
@@ -295,12 +294,19 @@ public class StringSupport {
         }
 
         public static CharsetKind of(Charset charset) {
-            if (charset == StandardCharsets.UTF_8 || charset == StandardCharsets.ISO_8859_1 || charset == StandardCharsets.US_ASCII) {
-                return CharsetKind.SINGLE_BYTE;
-            } else if (charset == StandardCharsets.UTF_16LE || charset == StandardCharsets.UTF_16BE || charset == StandardCharsets.UTF_16) {
-                return CharsetKind.DOUBLE_BYTE;
-            } else if (charset == StandardCharsets.UTF_32LE || charset == StandardCharsets.UTF_32BE || charset == StandardCharsets.UTF_32) {
-                return CharsetKind.QUAD_BYTE;
+            // Comparing the charset to specific internal implementations avoids loading the class `StandardCharsets`
+            if        (charset == sun.nio.cs.UTF_8.INSTANCE ||
+                       charset == sun.nio.cs.ISO_8859_1.INSTANCE ||
+                       charset == sun.nio.cs.US_ASCII.INSTANCE) {
+                return SINGLE_BYTE;
+            } else if (charset instanceof sun.nio.cs.UTF_16LE ||
+                       charset instanceof sun.nio.cs.UTF_16BE ||
+                       charset instanceof sun.nio.cs.UTF_16) {
+                return DOUBLE_BYTE;
+            } else if (charset instanceof sun.nio.cs.UTF_32LE ||
+                       charset instanceof sun.nio.cs.UTF_32BE ||
+                       charset instanceof sun.nio.cs.UTF_32) {
+                return QUAD_BYTE;
             } else {
                 throw new UnsupportedOperationException("Unsupported charset: " + charset);
             }
