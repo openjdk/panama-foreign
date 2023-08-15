@@ -319,7 +319,7 @@ public class TestStringEncoding {
                     }
                     segment.setAtIndex(JAVA_BYTE, len, (byte) 0);
                     for (int j = 0; j < len; j++) {
-                        int actual = StringSupport.chunked_strlen_byte(segment, j);
+                        int actual = StringSupport.chunkedStrlenByte(segment, j);
                         assertEquals(actual, len - j);
                     }
                 }
@@ -343,7 +343,7 @@ public class TestStringEncoding {
                     }
                     segment.setAtIndex(JAVA_SHORT, len, (short) 0);
                     for (int j = 0; j < len; j++) {
-                        int actual = StringSupport.chunked_strlen_short(segment, j * Short.BYTES);
+                        int actual = StringSupport.chunkedStrlenShort(segment, j * Short.BYTES);
                         assertEquals(actual, (len - j) * Short.BYTES);
                     }
                 }
@@ -367,7 +367,7 @@ public class TestStringEncoding {
                     }
                     segment.setAtIndex(JAVA_INT, len, 0);
                     for (int j = 0; j < len; j++) {
-                        int actual = StringSupport.strlen_int(segment, j * Integer.BYTES);
+                        int actual = StringSupport.strlenInt(segment, j * Integer.BYTES);
                         assertEquals(actual, (len - j) * Integer.BYTES);
                     }
                 }

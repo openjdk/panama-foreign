@@ -42,54 +42,54 @@ public final class StringSupport {
 
     public static String read(MemorySegment segment, long offset, Charset charset) {
         return switch (CharsetKind.of(charset)) {
-            case SINGLE_BYTE -> readFast_byte(segment, offset, charset);
-            case DOUBLE_BYTE -> readFast_short(segment, offset, charset);
-            case QUAD_BYTE -> readFast_int(segment, offset, charset);
+            case SINGLE_BYTE -> readByte(segment, offset, charset);
+            case DOUBLE_BYTE -> readShort(segment, offset, charset);
+            case QUAD_BYTE -> readInt(segment, offset, charset);
         };
     }
 
     public static void write(MemorySegment segment, long offset, Charset charset, String string) {
         switch (CharsetKind.of(charset)) {
-            case SINGLE_BYTE -> writeFast_byte(segment, offset, charset, string);
-            case DOUBLE_BYTE -> writeFast_short(segment, offset, charset, string);
-            case QUAD_BYTE -> writeFast_int(segment, offset, charset, string);
+            case SINGLE_BYTE -> writeByte(segment, offset, charset, string);
+            case DOUBLE_BYTE -> writeShort(segment, offset, charset, string);
+            case QUAD_BYTE -> writeInt(segment, offset, charset, string);
         }
     }
 
-    private static String readFast_byte(MemorySegment segment, long offset, Charset charset) {
-        long len = chunked_strlen_byte(segment, offset);
+    private static String readByte(MemorySegment segment, long offset, Charset charset) {
+        long len = chunkedStrlenByte(segment, offset);
         byte[] bytes = new byte[(int)len];
         MemorySegment.copy(segment, JAVA_BYTE, offset, bytes, 0, (int)len);
         return new String(bytes, charset);
     }
 
-    private static void writeFast_byte(MemorySegment segment, long offset, Charset charset, String string) {
+    private static void writeByte(MemorySegment segment, long offset, Charset charset, String string) {
         byte[] bytes = string.getBytes(charset);
         MemorySegment.copy(bytes, 0, segment, JAVA_BYTE, offset, bytes.length);
         segment.set(JAVA_BYTE, offset + bytes.length, (byte)0);
     }
 
-    private static String readFast_short(MemorySegment segment, long offset, Charset charset) {
-        long len = chunked_strlen_short(segment, offset);
+    private static String readShort(MemorySegment segment, long offset, Charset charset) {
+        long len = chunkedStrlenShort(segment, offset);
         byte[] bytes = new byte[(int)len];
         MemorySegment.copy(segment, JAVA_BYTE, offset, bytes, 0, (int)len);
         return new String(bytes, charset);
     }
 
-    private static void writeFast_short(MemorySegment segment, long offset, Charset charset, String string) {
+    private static void writeShort(MemorySegment segment, long offset, Charset charset, String string) {
         byte[] bytes = string.getBytes(charset);
         MemorySegment.copy(bytes, 0, segment, JAVA_BYTE, offset, bytes.length);
         segment.set(JAVA_SHORT, offset + bytes.length, (short)0);
     }
 
-    private static String readFast_int(MemorySegment segment, long offset, Charset charset) {
-        long len = strlen_int(segment, offset);
+    private static String readInt(MemorySegment segment, long offset, Charset charset) {
+        long len = strlenInt(segment, offset);
         byte[] bytes = new byte[(int)len];
         MemorySegment.copy(segment, JAVA_BYTE, offset, bytes, 0, (int)len);
         return new String(bytes, charset);
     }
 
-    private static void writeFast_int(MemorySegment segment, long offset, Charset charset, String string) {
+    private static void writeInt(MemorySegment segment, long offset, Charset charset, String string) {
         byte[] bytes = string.getBytes(charset);
         MemorySegment.copy(bytes, 0, segment, JAVA_BYTE, offset, bytes.length);
         segment.set(JAVA_INT, offset + bytes.length, 0);
@@ -117,7 +117,7 @@ public final class StringSupport {
      * @throws IllegalArgumentException if the examined region contains no zero bytes
      *                                  within a length that can be accepted by a String
      */
-    public static int chunked_strlen_byte(MemorySegment segment, long start) {
+    public static int chunkedStrlenByte(MemorySegment segment, long start) {
 
         // Handle the first unaligned "head" bytes separately
         int headCount = (int)SharedUtils.remainsToAlignment(segment.address() + start, Long.BYTES);
@@ -147,7 +147,7 @@ public final class StringSupport {
         }
 
         // Handle the "tail"
-        return requireWithinArraySize((long) offset + strlen_byte(segment, start + offset));
+        return requireWithinArraySize((long) offset + strlenByte(segment, start + offset));
     }
 
     /* Bits 63 and N * 8 (N = 1..7) of this number are zero.  Call these bits
@@ -190,7 +190,7 @@ public final class StringSupport {
                 & -Long.BYTES; // Mask 0xFFFFFFF8
     }
 
-    private static int strlen_byte(MemorySegment segment, long start) {
+    private static int strlenByte(MemorySegment segment, long start) {
         for (int offset = 0; offset < ArraysSupport.SOFT_MAX_ARRAY_LENGTH; offset += 1) {
             byte curr = segment.get(JAVA_BYTE, start + offset);
             if (curr == 0) {
@@ -206,14 +206,14 @@ public final class StringSupport {
      * <p>
      * Note: The inspected region must be short aligned.
      *
-     * @see #chunked_strlen_byte(MemorySegment, long) for more information
+     * @see #chunkedStrlenByte(MemorySegment, long) for more information
      *
      * @param segment to examine
      * @param start   from where examination shall begin
      * @throws IllegalArgumentException if the examined region contains no zero shorts
      *                                  within a length that can be accepted by a String
      */
-    public static int chunked_strlen_short(MemorySegment segment, long start) {
+    public static int chunkedStrlenShort(MemorySegment segment, long start) {
 
         // Handle the first unaligned "head" bytes separately
         int headCount = (int)SharedUtils.remainsToAlignment(segment.address() + start, Long.BYTES);
@@ -243,10 +243,10 @@ public final class StringSupport {
         }
 
         // Handle the "tail"
-        return requireWithinArraySize((long) offset + strlen_short(segment, start + offset));
+        return requireWithinArraySize((long) offset + strlenShort(segment, start + offset));
     }
 
-    private static int strlen_short(MemorySegment segment, long start) {
+    private static int strlenShort(MemorySegment segment, long start) {
         // Do an initial read using aligned semantics.
         // If this succeeds, we know that all other subsequent reads will be aligned
         if (segment.get(JAVA_SHORT, start) == (short)0) {
@@ -262,7 +262,7 @@ public final class StringSupport {
     }
 
     // The gain of using `long` wide operations for `int` is lower than for the two other `byte` and `short` variants
-    public static int strlen_int(MemorySegment segment, long start) {
+    public static int strlenInt(MemorySegment segment, long start) {
         // Do an initial read using aligned semantics.
         // If this succeeds, we know that all other subsequent reads will be aligned
         if (segment.get(JAVA_INT, start) == 0) {
