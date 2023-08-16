@@ -29,6 +29,7 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
@@ -40,7 +41,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Random;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
@@ -65,7 +65,6 @@ public class TestStringEncoding {
             if (isStandard(charset)) {
                 for (Arena arena : arenas()) {
                     try (arena) {
-                        System.out.println("arena = " + arena);
                         MemorySegment text = arena.allocateFrom(testString, charset);
 
                         int terminatorSize = "\0".getBytes(charset).length;
@@ -179,7 +178,7 @@ public class TestStringEncoding {
         for (int len = 7; len < 71; len++) {
             for (var arena : arenas()) {
                 try (arena) {
-                    var segment = arena.allocate(len, 4);
+                    var segment = arena.allocate(len, 1);
                     var arr = new byte[len];
                     random.nextBytes(arr);
                     segment.copyFrom(MemorySegment.ofArray(arr));
@@ -436,14 +435,12 @@ public class TestStringEncoding {
         return Arrays.asList(StandardCharsets.UTF_8, StandardCharsets.ISO_8859_1, StandardCharsets.US_ASCII);
     }
 
-
     static String referenceImpl(MemorySegment segment, long offset, Charset charset) {
         long len = strlen_byte(segment, offset);
         byte[] bytes = new byte[(int) len];
         MemorySegment.copy(segment, JAVA_BYTE, offset, bytes, 0, (int) len);
         return new String(bytes, charset);
     }
-
 
     // Reference implementation
     private static int strlen_byte(MemorySegment segment, long start) {
@@ -468,48 +465,47 @@ public class TestStringEncoding {
 
     private static final class HeapArena implements Arena {
 
-        private final Class<?> type;
-        private final Arena delegate;
+        private static final int ELEMENT_SIZE = 1_000;
+
+        private final MemorySegment backingSegment;
+        private final SegmentAllocator allocator;
 
         public HeapArena(Class<?> type) {
             if (!type.isPrimitive()) {
                 throw new IllegalArgumentException(type.toString());
             }
-            this.type = type;
-            this.delegate = Arena.ofConfined();
+            backingSegment = switch (type) {
+                case Class<?> c when byte.class.equals(c) -> MemorySegment.ofArray(new byte[ELEMENT_SIZE]);
+                case Class<?> c when short.class.equals(c) ->
+                        MemorySegment.ofArray(new short[ELEMENT_SIZE]);
+                case Class<?> c when int.class.equals(c) ->
+                        MemorySegment.ofArray(new int[ELEMENT_SIZE]);
+                case Class<?> c when long.class.equals(c) ->
+                        MemorySegment.ofArray(new long[ELEMENT_SIZE]);
+                default -> throw new IllegalArgumentException();
+            };
+            allocator = SegmentAllocator.slicingAllocator(backingSegment);
         }
 
         @Override
         public MemorySegment allocate(long byteSize, long byteAlignment) {
-            var seg = switch (type) {
-                case Class<?> c when byte.class.equals(c) -> MemorySegment.ofArray(new byte[Math.toIntExact(byteSize)]);
-                case Class<?> c when short.class.equals(c) ->
-                        MemorySegment.ofArray(new short[1 + Math.toIntExact(byteSize / Short.BYTES)]);
-                case Class<?> c when int.class.equals(c) ->
-                        MemorySegment.ofArray(new int[1 + Math.toIntExact(byteSize / Integer.BYTES)]);
-                case Class<?> c when long.class.equals(c) ->
-                        MemorySegment.ofArray(new long[1 + Math.toIntExact(byteSize / Long.BYTES)]);
-                default -> throw new IllegalArgumentException();
-            };
-            seg = seg.asSlice(0, byteSize);
-            return seg;
+            return allocator.allocate(byteSize, byteAlignment);
         }
 
         @Override
         public MemorySegment.Scope scope() {
-            return delegate.scope();
+            return backingSegment.scope();
         }
 
         @Override
         public void close() {
-            delegate.close();
+            // Do nothing
         }
 
         @Override
         public String toString() {
             return "HeapArena{" +
-                    "type=" + type +
-                    ", delegate=" + delegate +
+                    "type=" + backingSegment.heapBase().orElseThrow().getClass().getName() +
                     '}';
         }
     }
