@@ -52,29 +52,12 @@ public final class ArenaImpl implements Arena {
 
     public MemorySegment allocateNoInit(long byteSize, long byteAlignment) {
         Utils.checkAllocationSizeAndAlign(byteSize, byteAlignment);
-        return NativeMemorySegmentImpl.makeNativeSegment(byteSize, byteAlignment, session, false, shouldReserveMemory);
-    }
-
-    public MemorySegment allocateNoInit(long byteSize) {
-        return allocateNoInit(byteSize, 1);
-    }
-
-    public MemorySegment allocateNoInit(MemoryLayout layout) {
-        Objects.requireNonNull(layout);
-        return allocateNoInit(layout.byteSize(), layout.byteAlignment());
-    }
-
-    public MemorySegment allocateNoInit(MemoryLayout layout, long size) {
-        Objects.requireNonNull(layout);
-        if (size < 0) {
-            throw new IllegalArgumentException("Negative array size");
-        }
-        return allocateNoInit(layout.byteSize() * size, layout.byteAlignment());
+        return NativeMemorySegmentImpl.makeNativeSegment(byteSize, byteAlignment, session, shouldReserveMemory);
     }
 
     @Override
     public MemorySegment allocate(long byteSize, long byteAlignment) {
-        Utils.checkAllocationSizeAndAlign(byteSize, byteAlignment);
-        return NativeMemorySegmentImpl.makeNativeSegment(byteSize, byteAlignment, session, true, shouldReserveMemory);
+        MemorySegment segment = allocateNoInit(byteSize, byteAlignment);
+        return segment.fill((byte)0);
     }
 }

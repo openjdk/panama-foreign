@@ -67,7 +67,7 @@ public class AllocFromTest extends CLayouts {
     }
 
     @Benchmark
-    public MemorySegment alloc() {
+    public MemorySegment alloc_confined() {
         Arena arena = Arena.ofConfined();
         MemorySegment segment = arena.allocateFrom(ValueLayout.JAVA_BYTE, arr);
         arena.close();

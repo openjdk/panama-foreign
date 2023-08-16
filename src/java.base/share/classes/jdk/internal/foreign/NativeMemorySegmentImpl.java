@@ -114,7 +114,7 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
     // factories
 
     public static MemorySegment makeNativeSegment(long byteSize, long byteAlignment, MemorySessionImpl sessionImpl,
-                                                  boolean shouldInit, boolean shouldReserve) {
+                                                  boolean shouldReserve) {
         sessionImpl.checkValidState();
         if (VM.isDirectMemoryPageAligned()) {
             byteAlignment = Math.max(byteAlignment, NIO_ACCESS.pageSize());
@@ -128,9 +128,6 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
         }
 
         long buf = allocateMemoryWrapper(alignedSize);
-        if (shouldInit) {
-            UNSAFE.setMemory(buf, alignedSize, (byte)0);
-        }
         long alignedBuf = Utils.alignUp(buf, byteAlignment);
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(buf, alignedSize,
                 false, sessionImpl);
