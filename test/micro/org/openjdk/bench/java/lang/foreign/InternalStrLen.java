@@ -158,14 +158,5 @@ public class InternalStrLen {
         throw new IllegalArgumentException("String too large");
     }
 
-
-    public static long alignUp(long addr, long alignment) {
-        return ((addr - 1) | (alignment - 1)) + 1;
-    }
-
-    public static long remainsToAlignment(long addr, long alignment) {
-        return alignUp(addr, alignment) - addr;
-    }
-
 }
 
