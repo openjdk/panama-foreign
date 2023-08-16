@@ -57,9 +57,7 @@ public final class StringSupport {
     }
 
     private static String readByte(MemorySegment segment, long offset, Charset charset) {
-        long len = canUseChunkedAccess(segment)
-                ? chunkedStrlenByte(segment, offset)
-                : strlenByte(segment, offset); // Heap segments might not be 64-bit aligned
+        long len = chunkedStrlenByte(segment, offset);
         byte[] bytes = new byte[(int)len];
         MemorySegment.copy(segment, JAVA_BYTE, offset, bytes, 0, (int)len);
         return new String(bytes, charset);
@@ -72,9 +70,7 @@ public final class StringSupport {
     }
 
     private static String readShort(MemorySegment segment, long offset, Charset charset) {
-        long len = canUseChunkedAccess(segment)
-                ? chunkedStrlenShort(segment, offset)
-                : strlenShort(segment, offset); // Heap segments might not be 64-bit aligned
+        long len = chunkedStrlenShort(segment, offset);
         byte[] bytes = new byte[(int)len];
         MemorySegment.copy(segment, JAVA_BYTE, offset, bytes, 0, (int)len);
         return new String(bytes, charset);
@@ -97,12 +93,6 @@ public final class StringSupport {
         byte[] bytes = string.getBytes(charset);
         MemorySegment.copy(bytes, 0, segment, JAVA_BYTE, offset, bytes.length);
         segment.set(JAVA_INT, offset + bytes.length, 0);
-    }
-
-    private static boolean canUseChunkedAccess(MemorySegment segment) {
-        return segment.isNative() ||
-                segment instanceof HeapMemorySegmentImpl.OfLong ||
-                segment instanceof HeapMemorySegmentImpl.OfDouble;
     }
 
     /**
