@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,15 +59,15 @@ public class InternalStrLen {
     private MemorySegment quadByteSegment;
 
     @Param({"1", "4", "16", "251", "1024"})
-    // @Param({"4", "251"})
     int size;
 
     @Setup
     public void setup() {
-        singleByteSegment = Arena.ofAuto().allocate((size + 1L) * Byte.BYTES);
-        singleByteSegmentMisaligned = Arena.ofAuto().allocate((size + 1L) * Byte.BYTES);
-        doubleByteSegment = Arena.ofAuto().allocate((size + 1L) * Short.BYTES);
-        quadByteSegment = Arena.ofAuto().allocate((size + 1L) * Integer.BYTES);
+        var arena = Arena.ofAuto();
+        singleByteSegment = arena.allocate((size + 1L) * Byte.BYTES);
+        singleByteSegmentMisaligned = arena.allocate((size + 1L) * Byte.BYTES);
+        doubleByteSegment = arena.allocate((size + 1L) * Short.BYTES);
+        quadByteSegment = arena.allocate((size + 1L) * Integer.BYTES);
         Stream.of(singleByteSegment, doubleByteSegment, quadByteSegment)
                 .forEach(s -> IntStream.range(0, (int) s.byteSize() - 1)
                         .forEach(i -> s.set(
@@ -78,7 +78,7 @@ public class InternalStrLen {
         singleByteSegment.set(ValueLayout.JAVA_BYTE, singleByteSegment.byteSize() - Byte.BYTES, (byte) 0);
         doubleByteSegment.set(ValueLayout.JAVA_SHORT, doubleByteSegment.byteSize() - Short.BYTES, (short) 0);
         quadByteSegment.set(ValueLayout.JAVA_INT, quadByteSegment.byteSize() - Integer.BYTES, 0);
-        singleByteSegmentMisaligned = Arena.ofAuto().allocate(singleByteSegment.byteSize() + 1).
+        singleByteSegmentMisaligned = arena.allocate(singleByteSegment.byteSize() + 1).
                 asSlice(1);
         MemorySegment.copy(singleByteSegment, 0, singleByteSegmentMisaligned, 0, singleByteSegment.byteSize());
     }
@@ -159,4 +159,3 @@ public class InternalStrLen {
     }
 
 }
-
