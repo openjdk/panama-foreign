@@ -84,42 +84,42 @@ public class InternalStrLen {
     }
 
     @Benchmark
-    public int legacySingleByte() {
+    public int elementSingle() {
         return legacy_strlen_byte(singleByteSegment, 0);
     }
 
     @Benchmark
-    public int legacySingleByteMisaligned() {
+    public int elementByteMisaligned() {
         return legacy_strlen_byte(singleByteSegmentMisaligned, 0);
     }
 
     @Benchmark
-    public int legacyDoubleByte() {
+    public int elementDouble() {
         return legacy_strlen_short(doubleByteSegment, 0);
     }
 
     @Benchmark
-    public int legacyQuadByte() {
+    public int elementQuad() {
         return legacy_strlen_int(quadByteSegment, 0);
     }
 
     @Benchmark
-    public int newSingleByte() {
+    public int chunkedSingle() {
         return chunkedStrlenByte(singleByteSegment, 0);
     }
 
     @Benchmark
-    public int newSingleByteMisaligned() {
+    public int chunkedSingleMisaligned() {
         return chunkedStrlenByte(singleByteSegmentMisaligned, 0);
     }
 
     @Benchmark
-    public int newDoubleByte() {
+    public int chunkedDouble() {
         return chunkedStrlenShort(doubleByteSegment, 0);
     }
 
     @Benchmark
-    public int newQuadByte() {
+    public int changedElementQuad() {
         return strlenInt(quadByteSegment, 0);
     }
 

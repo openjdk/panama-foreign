@@ -101,9 +101,9 @@ public final class StringSupport {
      * <p>
      * The method divides the region of interest into three distinct regions:
      * <ul>
-     *     <li>head (un-aligned access handling on a byte-by-byte basis) (if any)</li>
-     *     <li>body (long aligned access handling eight bytes at a time) (if any)</li>
-     *     <li>tail (un-aligned access handling on a byte-by-byte basis) (if any)</li>
+     *     <li>head (access made on a byte-by-byte basis) (if any)</li>
+     *     <li>body (access made with eight bytes at a time at physically 64-bit-aligned memory) (if any)</li>
+     *     <li>tail (access made on a byte-by-byte basis) (if any)</li>
      * </ul>
      * <p>
      * The body is using a heuristic method to determine if a long word

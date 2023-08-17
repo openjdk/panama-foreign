@@ -471,9 +471,6 @@ public class TestStringEncoding {
         private final SegmentAllocator allocator;
 
         public HeapArena(Class<?> type) {
-            if (!type.isPrimitive()) {
-                throw new IllegalArgumentException(type.toString());
-            }
             backingSegment = switch (type) {
                 case Class<?> c when byte.class.equals(c) -> MemorySegment.ofArray(new byte[ELEMENT_SIZE]);
                 case Class<?> c when short.class.equals(c) ->
@@ -482,7 +479,7 @@ public class TestStringEncoding {
                         MemorySegment.ofArray(new int[ELEMENT_SIZE]);
                 case Class<?> c when long.class.equals(c) ->
                         MemorySegment.ofArray(new long[ELEMENT_SIZE]);
-                default -> throw new IllegalArgumentException();
+                default -> throw new IllegalArgumentException(type.toString());
             };
             allocator = SegmentAllocator.slicingAllocator(backingSegment);
         }
