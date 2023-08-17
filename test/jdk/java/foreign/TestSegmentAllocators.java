@@ -164,9 +164,17 @@ public class TestSegmentAllocators {
     @Test
     public void testArrayAllocateDelegation() {
         AtomicInteger calls = new AtomicInteger();
-        SegmentAllocator allocator = (bytesSize, byteAlignment) -> {
-            calls.incrementAndGet();
-            return null;
+        SegmentAllocator allocator = new SegmentAllocator() {
+            @Override
+            public MemorySegment allocate(long bytesSize, long byteAlignment) {
+                return null;
+            }
+
+            @Override
+            public MemorySegment allocate(MemoryLayout elementLayout, long count) {
+                calls.incrementAndGet();
+                return null;
+            };
         };
         allocator.allocateFrom(ValueLayout.JAVA_BYTE);
         allocator.allocateFrom(ValueLayout.JAVA_SHORT);
@@ -181,9 +189,18 @@ public class TestSegmentAllocators {
     @Test
     public void testStringAllocateDelegation() {
         AtomicInteger calls = new AtomicInteger();
-        SegmentAllocator allocator = (byteSize, byteAlignment) -> {
-            calls.incrementAndGet();
-            return Arena.ofAuto().allocate(byteSize, byteAlignment);
+        SegmentAllocator allocator = new SegmentAllocator() {
+            @Override
+
+            public MemorySegment allocate(long byteSize, long byteAlignment) {
+                return Arena.ofAuto().allocate(byteSize, byteAlignment);
+            }
+
+            @Override
+            public MemorySegment allocate(long size) {
+                calls.incrementAndGet();
+                return allocate(size, 1);
+            };
         };
         allocator.allocateFrom("Hello");
         assertEquals(calls.get(), 1);
