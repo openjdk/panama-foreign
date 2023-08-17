@@ -337,7 +337,7 @@ public class TestByteBuffer {
         }
     }
 
-    static final long LARGE_SIZE = 3L * 1024L * 1024L * 1024L; // 3GB
+    static final long LARGE_SIZE = (2L * 1024L + 512L) * 1024L * 1024L; // 2.5 GiB
 
     @Test
     public void testLargeMappedSegment() throws Throwable {
