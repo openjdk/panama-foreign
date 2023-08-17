@@ -24,7 +24,7 @@
 /*
  * @test
  * @modules java.base/sun.nio.ch java.base/jdk.internal.foreign
- * @run testng/othervm --enable-native-access=ALL-UNNAMED TestByteBuffer
+ * @run testng/othervm/timeout=600 --enable-native-access=ALL-UNNAMED TestByteBuffer
  */
 
 import java.lang.foreign.*;
@@ -81,13 +81,13 @@ import static org.testng.Assert.*;
 
 public class TestByteBuffer {
 
-    static Path tempPath;
+    static final Path TEMP_PATH;
 
     static {
         try {
             File file = File.createTempFile("buffer", "txt");
             file.deleteOnExit();
-            tempPath = file.toPath();
+            TEMP_PATH = file.toPath();
             Files.write(file.toPath(), new byte[256], StandardOpenOption.WRITE);
 
         } catch (IOException ex) {
@@ -102,22 +102,22 @@ public class TestByteBuffer {
     static final ValueLayout.OfFloat BB_FLOAT = JAVA_FLOAT_UNALIGNED.withOrder(ByteOrder.BIG_ENDIAN);
     static final ValueLayout.OfDouble BB_DOUBLE = JAVA_DOUBLE_UNALIGNED.withOrder(ByteOrder.BIG_ENDIAN);
 
-    static SequenceLayout tuples = MemoryLayout.sequenceLayout(500,
+    static final SequenceLayout tuples = MemoryLayout.sequenceLayout(500,
             MemoryLayout.structLayout(
                     BB_INT.withName("index"),
                     BB_FLOAT.withName("value")
             ));
 
-    static SequenceLayout bytes = MemoryLayout.sequenceLayout(100, JAVA_BYTE);
-    static SequenceLayout chars = MemoryLayout.sequenceLayout(100, BB_CHAR);
-    static SequenceLayout shorts = MemoryLayout.sequenceLayout(100, BB_SHORT);
-    static SequenceLayout ints = MemoryLayout.sequenceLayout(100, BB_INT);
-    static SequenceLayout floats = MemoryLayout.sequenceLayout(100, BB_FLOAT);
-    static SequenceLayout longs = MemoryLayout.sequenceLayout(100, BB_LONG);
-    static SequenceLayout doubles = MemoryLayout.sequenceLayout(100, BB_DOUBLE);
+    static final SequenceLayout bytes = MemoryLayout.sequenceLayout(100, JAVA_BYTE);
+    static final SequenceLayout chars = MemoryLayout.sequenceLayout(100, BB_CHAR);
+    static final SequenceLayout shorts = MemoryLayout.sequenceLayout(100, BB_SHORT);
+    static final SequenceLayout ints = MemoryLayout.sequenceLayout(100, BB_INT);
+    static final SequenceLayout floats = MemoryLayout.sequenceLayout(100, BB_FLOAT);
+    static final SequenceLayout longs = MemoryLayout.sequenceLayout(100, BB_LONG);
+    static final SequenceLayout doubles = MemoryLayout.sequenceLayout(100, BB_DOUBLE);
 
-    static VarHandle indexHandle = tuples.varHandle(PathElement.sequenceElement(), PathElement.groupElement("index"));
-    static VarHandle valueHandle = tuples.varHandle(PathElement.sequenceElement(), PathElement.groupElement("value"));
+    static final VarHandle indexHandle = tuples.varHandle(PathElement.sequenceElement(), PathElement.groupElement("index"));
+    static final VarHandle valueHandle = tuples.varHandle(PathElement.sequenceElement(), PathElement.groupElement("value"));
 
     static void initTuples(MemorySegment base, long count) {
         for (long i = 0; i < count ; i++) {
@@ -219,13 +219,13 @@ public class TestByteBuffer {
     @Test
     public void testDefaultAccessModesMappedSegment() throws Throwable {
         try (Arena arena = Arena.ofConfined();
-             FileChannel fileChannel = FileChannel.open(tempPath, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+             FileChannel fileChannel = FileChannel.open(TEMP_PATH, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
             MemorySegment segment = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0L, 8L, arena);
             assertFalse(segment.isReadOnly());
         }
 
         try (Arena arena = Arena.ofConfined();
-             FileChannel fileChannel = FileChannel.open(tempPath, StandardOpenOption.READ)) {
+             FileChannel fileChannel = FileChannel.open(TEMP_PATH, StandardOpenOption.READ)) {
             MemorySegment segment = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0L, 8L, arena);
             assertTrue(segment.isReadOnly());
         }
@@ -990,7 +990,7 @@ public class TestByteBuffer {
         Predicate<MemorySegment> heapTest = segment -> segment instanceof HeapMemorySegmentImpl;
         Predicate<MemorySegment> nativeTest = segment -> segment instanceof NativeMemorySegmentImpl;
         Predicate<MemorySegment> mappedTest = segment -> segment instanceof MappedMemorySegmentImpl;
-        try (FileChannel channel = FileChannel.open(tempPath, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+        try (FileChannel channel = FileChannel.open(TEMP_PATH, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
             return new Object[][]{
                     { ByteBuffer.wrap(new byte[256]), heapTest },
                     { ByteBuffer.allocate(256), heapTest },
