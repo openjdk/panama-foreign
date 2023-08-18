@@ -69,7 +69,7 @@ import java.util.function.BiFunction;
  * {@snippet lang = java:
  * try (Arena arena = Arena.ofConfined()) {
  *     SymbolLookup libGL = SymbolLookup.libraryLookup("libGL.so", arena); // libGL.so loaded here
- *     MemorySegment glGetString = libGL.find("glGetString").orElseThrow();
+ *     MemorySegment glGetString = libGL.get("glGetString");
  *     ...
  * } //  libGL.so unloaded here
  *}
@@ -82,7 +82,7 @@ import java.util.function.BiFunction;
  * System.loadLibrary("GL"); // libGL.so loaded here
  * ...
  * SymbolLookup libGL = SymbolLookup.loaderLookup();
- * MemorySegment glGetString = libGL.find("glGetString").orElseThrow();
+ * MemorySegment glGetString = libGL.get("glGetString");
  * }
  *
  * This symbol lookup, which is known as a <em>loader lookup</em>, is dynamic with respect to the libraries associated
@@ -115,7 +115,7 @@ import java.util.function.BiFunction;
  * {@snippet lang = java:
  * Linker nativeLinker = Linker.nativeLinker();
  * SymbolLookup stdlib = nativeLinker.defaultLookup();
- * MemorySegment malloc = stdlib.find("malloc").orElseThrow();
+ * MemorySegment malloc = stdlib.get("malloc");
  *}
  *
  * @since 22
@@ -129,6 +129,17 @@ public interface SymbolLookup {
      * @return a zero-length memory segment whose address indicates the address of the symbol, if found.
      */
     Optional<MemorySegment> find(String name);
+
+    /**
+     * Returns the address of the symbol with the given name.
+     * @implSpec the default implementation for this method calls {@code this.find(name).get()}.
+     * @param name the symbol name.
+     * @return a zero-length memory segment whose address indicates the address of the symbol.
+     * @throws java.util.NoSuchElementException if no symbol with the given name exists.
+     */
+    default MemorySegment get(String name) {
+        return find(name).get();
+    }
 
     /**
      * {@return a composed symbol lookup that returns result of finding the symbol with this lookup if found,
