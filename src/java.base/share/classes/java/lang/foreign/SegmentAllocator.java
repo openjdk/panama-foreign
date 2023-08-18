@@ -329,9 +329,7 @@ public interface SegmentAllocator {
     private MemorySegment copyArrayWithSwapIfNeeded(Object array, ValueLayout elementLayout) {
         int size = Array.getLength(Objects.requireNonNull(array));
         MemorySegment segment = allocateNoInit(Objects.requireNonNull(elementLayout), size);
-        if (size > 0) {
-            MemorySegment.copy(array, 0, segment, elementLayout, 0, size);
-        }
+        MemorySegment.copy(array, 0, segment, elementLayout, 0, size);
         return segment;
     }
 
