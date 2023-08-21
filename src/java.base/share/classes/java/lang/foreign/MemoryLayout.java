@@ -480,7 +480,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * {@snippet lang = "java":
      * VarHandle baseHandle = this.varHandle(P);
      * MemoryLayout target = ((AddressLayout)this.select(P)).targetLayout().get();
-     * VarHandle targetHandle = target.varHandle(P);
+     * VarHandle targetHandle = target.varHandle(P');
      * targetHandle = MethodHandles.insertCoordinates(targetHandle, 1, 0L); // always access nested targets at offset 0
      * targetHandle = MethodHandles.collectCoordinates(targetHandle, 0,
      *         baseHandle.toMethodHandle(VarHandle.AccessMode.GET));
