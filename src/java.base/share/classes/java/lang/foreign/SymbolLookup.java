@@ -37,6 +37,7 @@ import jdk.internal.reflect.Reflection;
 
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -138,7 +139,13 @@ public interface SymbolLookup {
      * @throws java.util.NoSuchElementException if no symbol with the given name exists.
      */
     default MemorySegment get(String name) {
-        return find(name).get();
+        var address = this.find(name);
+        // Note: the code below could use orElseThrow, but that would require a capturing lambda
+        if (address.isPresent()) {
+            return address.get();
+        } else {
+            throw new NoSuchElementException("Unable to find a symbol with name '" + name + "'");
+        }
     }
 
     /**
