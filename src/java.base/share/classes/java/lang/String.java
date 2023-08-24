@@ -28,6 +28,8 @@ package java.lang;
 import java.io.ObjectStreamField;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Native;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandles;
 import java.lang.constant.Constable;
 import java.lang.constant.ConstantDesc;
@@ -1834,6 +1836,21 @@ public final class String
      */
     public byte[] getBytes() {
         return encode(Charset.defaultCharset(), coder(), value);
+    }
+
+    boolean bytesCompatible(Charset charset) {
+        if (coder == LATIN1 && charset == ISO_8859_1.INSTANCE) {
+            return true;
+        } else if (coder == LATIN1 && (charset == UTF_8.INSTANCE || charset == US_ASCII.INSTANCE) &&
+                !StringCoding.hasNegatives(value, 0, value.length)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    void copyToSegmentRaw(MemorySegment segment, long offset) {
+        MemorySegment.copy(value, 0, segment, ValueLayout.JAVA_BYTE, offset, value.length);
     }
 
     /**
