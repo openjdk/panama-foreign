@@ -43,8 +43,6 @@ import static java.lang.foreign.ValueLayout.*;
 public final class StringSupport {
 
     static final JavaLangAccess JAVA_LANG_ACCESS = SharedSecrets.getJavaLangAccess();
-    public static final boolean SKIP_STRING_COPY = Boolean.parseBoolean(
-            GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.StringSupport.SKIP_STRING_COPY", "true"));
 
     private StringSupport() {}
 
@@ -310,7 +308,7 @@ public final class StringSupport {
     }
 
     public static boolean bytesCompatible(String string, Charset charset) {
-        return SKIP_STRING_COPY && JAVA_LANG_ACCESS.bytesCompatible(string, charset);
+        return JAVA_LANG_ACCESS.bytesCompatible(string, charset);
     }
 
     public static int copyBytes(String string, MemorySegment segment, Charset charset, long offset) {
