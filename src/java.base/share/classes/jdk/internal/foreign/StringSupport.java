@@ -25,11 +25,15 @@
 
 package jdk.internal.foreign;
 
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.util.ArraysSupport;
+import sun.security.action.GetPropertyAction;
 
 import java.lang.foreign.MemorySegment;
 import java.nio.charset.Charset;
+import java.util.function.IntFunction;
 
 import static java.lang.foreign.ValueLayout.*;
 
@@ -37,6 +41,8 @@ import static java.lang.foreign.ValueLayout.*;
  * Miscellaneous functions to read and write strings, in various charsets.
  */
 public final class StringSupport {
+
+    static final JavaLangAccess JAVA_LANG_ACCESS = SharedSecrets.getJavaLangAccess();
 
     private StringSupport() {}
 
@@ -64,9 +70,8 @@ public final class StringSupport {
     }
 
     private static void writeByte(MemorySegment segment, long offset, Charset charset, String string) {
-        byte[] bytes = string.getBytes(charset);
-        MemorySegment.copy(bytes, 0, segment, JAVA_BYTE, offset, bytes.length);
-        segment.set(JAVA_BYTE, offset + bytes.length, (byte)0);
+        int bytes = copyBytes(string, segment, charset, offset);
+        segment.set(JAVA_BYTE, offset + bytes, (byte)0);
     }
 
     private static String readShort(MemorySegment segment, long offset, Charset charset) {
@@ -77,9 +82,8 @@ public final class StringSupport {
     }
 
     private static void writeShort(MemorySegment segment, long offset, Charset charset, String string) {
-        byte[] bytes = string.getBytes(charset);
-        MemorySegment.copy(bytes, 0, segment, JAVA_BYTE, offset, bytes.length);
-        segment.set(JAVA_SHORT, offset + bytes.length, (short)0);
+        int bytes = copyBytes(string, segment, charset, offset);
+        segment.set(JAVA_SHORT, offset + bytes, (short)0);
     }
 
     private static String readInt(MemorySegment segment, long offset, Charset charset) {
@@ -90,9 +94,8 @@ public final class StringSupport {
     }
 
     private static void writeInt(MemorySegment segment, long offset, Charset charset, String string) {
-        byte[] bytes = string.getBytes(charset);
-        MemorySegment.copy(bytes, 0, segment, JAVA_BYTE, offset, bytes.length);
-        segment.set(JAVA_INT, offset + bytes.length, 0);
+        int bytes = copyBytes(string, segment, charset, offset);
+        segment.set(JAVA_INT, offset + bytes, 0);
     }
 
     /**
@@ -302,6 +305,25 @@ public final class StringSupport {
                 throw new UnsupportedOperationException("Unsupported charset: " + charset);
             }
         }
+    }
+
+    public static boolean bytesCompatible(String string, Charset charset) {
+        return JAVA_LANG_ACCESS.bytesCompatible(string, charset);
+    }
+
+    public static int copyBytes(String string, MemorySegment segment, Charset charset, long offset) {
+        if (bytesCompatible(string, charset)) {
+            copyToSegmentRaw(string, segment, offset);
+            return string.length();
+        } else {
+            byte[] bytes = string.getBytes(charset);
+            MemorySegment.copy(bytes, 0, segment, JAVA_BYTE, offset, bytes.length);
+            return bytes.length;
+        }
+    }
+
+    public static void copyToSegmentRaw(String string, MemorySegment segment, long offset) {
+        JAVA_LANG_ACCESS.copyToSegmentRaw(string, segment, offset);
     }
 
     private static IllegalArgumentException newIaeStringTooLarge() {
