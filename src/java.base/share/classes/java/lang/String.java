@@ -1839,14 +1839,10 @@ public final class String
     }
 
     boolean bytesCompatible(Charset charset) {
-        if (coder == LATIN1 && charset == ISO_8859_1.INSTANCE) {
-            return true;
-        } else if (coder == LATIN1 && (charset == UTF_8.INSTANCE || charset == US_ASCII.INSTANCE) &&
-                !StringCoding.hasNegatives(value, 0, value.length)) {
-            return true;
-        } else {
-            return false;
-        }
+        return isLatin1() &&
+                (charset == ISO_8859_1.INSTANCE || // same encoding, ok
+                (charset == UTF_8.INSTANCE || charset == US_ASCII.INSTANCE)
+                        && !StringCoding.hasNegatives(value, 0, value.length)); // ASCII-compatible, ok
     }
 
     void copyToSegmentRaw(MemorySegment segment, long offset) {
