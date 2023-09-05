@@ -24,17 +24,16 @@
 
 /*
  * @test
- * @enablePreview
  * @run testng TestLayoutPaths
  */
 
 import java.lang.foreign.*;
 import java.lang.foreign.MemoryLayout.PathElement;
 
-import org.testng.SkipException;
 import org.testng.annotations.*;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntFunction;
@@ -42,6 +41,8 @@ import java.util.function.IntFunction;
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static java.lang.foreign.MemoryLayout.PathElement.sequenceElement;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
+import static java.lang.foreign.ValueLayout.JAVA_SHORT;
 import static org.testng.Assert.*;
 
 public class TestLayoutPaths {
@@ -122,10 +123,44 @@ public class TestLayoutPaths {
         seq.varHandle(sequenceElement());
     }
 
+    @Test
+    public void testByteOffsetHandleRange() {
+        SequenceLayout seq = MemoryLayout.sequenceLayout(5, MemoryLayout.structLayout(JAVA_INT));
+        seq.byteOffsetHandle(sequenceElement(0, 1));
+    }
+
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testByteOffsetHandleBadRange() {
         SequenceLayout seq = MemoryLayout.sequenceLayout(5, MemoryLayout.structLayout(JAVA_INT));
-        seq.byteOffsetHandle(sequenceElement(0, 1)); // ranges not accepted
+        seq.byteOffsetHandle(sequenceElement(5, 1)); // invalid range (starting position is outside the sequence)
+    }
+
+    @Test
+    public void testBadAlignmentOfRoot() throws Throwable {
+        MemoryLayout struct = MemoryLayout.structLayout(
+            JAVA_INT,
+            JAVA_SHORT.withName("x"));
+        assertEquals(struct.byteAlignment(), 4);
+
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment seg = arena.allocate(struct.byteSize() + 2, struct.byteAlignment()).asSlice(2);
+            assertEquals(seg.address() % JAVA_SHORT.byteAlignment(), 0); // should be aligned
+            assertNotEquals(seg.address() % struct.byteAlignment(), 0); // should not be aligned
+
+            String expectedMessage = "Target offset incompatible with alignment constraints: " + struct.byteAlignment();
+
+            VarHandle vhX = struct.varHandle(groupElement("x"));
+            IllegalArgumentException iae = expectThrows(IllegalArgumentException.class, () -> {
+                vhX.set(seg, 0L, (short) 42);
+            });
+            assertEquals(iae.getMessage(), expectedMessage);
+
+            MethodHandle sliceX = struct.sliceHandle(groupElement("x"));
+            iae = expectThrows(IllegalArgumentException.class, () -> {
+                MemorySegment slice = (MemorySegment) sliceX.invokeExact(seg, 0L);
+            });
+            assertEquals(iae.getMessage(), expectedMessage);
+        }
     }
 
     @Test
@@ -236,7 +271,7 @@ public class TestLayoutPaths {
                                  long expectedByteOffset) throws Throwable {
         MethodHandle byteOffsetHandle = layout.byteOffsetHandle(pathElements);
         byteOffsetHandle = byteOffsetHandle.asSpreader(long[].class, indexes.length);
-        long actualByteOffset = (long) byteOffsetHandle.invokeExact(indexes);
+        long actualByteOffset = (long) byteOffsetHandle.invokeExact(0L, indexes);
         assertEquals(actualByteOffset, expectedByteOffset);
     }
 
@@ -325,11 +360,10 @@ public class TestLayoutPaths {
 
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment segment = arena.allocate(layout);
-            MemorySegment slice = (MemorySegment) sliceHandle.invokeExact(segment, indexes);
+            MemorySegment slice = (MemorySegment) sliceHandle.invokeExact(segment, 0L, indexes);
             assertEquals(slice.address() - segment.address(), expectedByteOffset);
             assertEquals(slice.byteSize(), selected.byteSize());
         }
     }
 
 }
-

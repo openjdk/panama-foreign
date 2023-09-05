@@ -23,8 +23,6 @@
 
 /*
  * @test
- * @enablePreview
- * @requires jdk.foreign.linker != "UNSUPPORTED"
  * @modules java.base/jdk.internal.foreign
  * @run testng TestLinker
  */
@@ -35,6 +33,8 @@ import org.testng.annotations.Test;
 
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,8 +43,10 @@ import java.util.List;
 import static java.lang.foreign.MemoryLayout.*;
 import static java.lang.foreign.ValueLayout.JAVA_CHAR;
 import static java.lang.foreign.ValueLayout.JAVA_SHORT;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertSame;
 import static org.testng.Assert.assertNotSame;
+import static org.testng.Assert.assertTrue;
 
 public class TestLinker extends NativeTestHelper {
 
@@ -89,10 +91,6 @@ public class TestLinker extends NativeTestHelper {
                     FunctionDescriptor.ofVoid(structLayout(C_INT).withName("x")) },
             { FunctionDescriptor.ofVoid(structLayout(C_INT)),
                     FunctionDescriptor.ofVoid(structLayout(C_INT.withName("x"))) },
-            { FunctionDescriptor.ofVoid(structLayout(C_INT, paddingLayout(4), C_LONG_LONG)),
-                    FunctionDescriptor.ofVoid(structLayout(C_INT, paddingLayout(4), C_LONG_LONG.withName("x"))) },
-            { FunctionDescriptor.ofVoid(structLayout(C_INT, paddingLayout(4), C_LONG_LONG)),
-                    FunctionDescriptor.ofVoid(structLayout(C_INT, paddingLayout(4).withName("x"), C_LONG_LONG)) },
             { FunctionDescriptor.ofVoid(structLayout(sequenceLayout(1, C_INT))),
                     FunctionDescriptor.ofVoid(structLayout(sequenceLayout(1, C_INT).withName("x"))) },
             { FunctionDescriptor.ofVoid(structLayout(sequenceLayout(1, C_INT))),
@@ -110,6 +108,12 @@ public class TestLinker extends NativeTestHelper {
                     FunctionDescriptor.ofVoid(unionLayout(C_INT).withName("x")) });
             cases.add(new Object[]{ FunctionDescriptor.ofVoid(unionLayout(C_INT)),
                     FunctionDescriptor.ofVoid(unionLayout(C_INT.withName("x"))) });
+        }
+        if (C_LONG_LONG.byteAlignment() == 8) {
+            cases.add(new Object[]{ FunctionDescriptor.ofVoid(structLayout(C_INT, paddingLayout(4), C_LONG_LONG)),
+                    FunctionDescriptor.ofVoid(structLayout(C_INT, paddingLayout(4), C_LONG_LONG.withName("x"))) });
+            cases.add(new Object[]{ FunctionDescriptor.ofVoid(structLayout(C_INT, paddingLayout(4), C_LONG_LONG)),
+                    FunctionDescriptor.ofVoid(structLayout(C_INT, paddingLayout(4).withName("x"), C_LONG_LONG)) });
         }
 
         return cases.toArray(Object[][]::new);
@@ -138,4 +142,27 @@ public class TestLinker extends NativeTestHelper {
         Linker.Option.captureCallState("foo"); // throws
     }
 
+    @Test(dataProvider = "canonicalTypeNames")
+    public void testCanonicalLayouts(String typeName) {
+        MemoryLayout layout = LINKER.canonicalLayouts().get(typeName);
+        assertNotNull(layout);
+        assertTrue(layout instanceof ValueLayout);
+    }
+
+    @DataProvider
+    public static Object[][] canonicalTypeNames() {
+        return new Object[][]{
+                { "bool" },
+                { "char" },
+                { "short" },
+                { "int" },
+                { "long" },
+                { "long long" },
+                { "float" },
+                { "double" },
+                { "void*" },
+                { "size_t" },
+                { "wchar_t" },
+        };
+    }
 }

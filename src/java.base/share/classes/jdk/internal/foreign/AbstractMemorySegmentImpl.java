@@ -114,6 +114,8 @@ public abstract sealed class AbstractMemorySegmentImpl
     @Override
     public MemorySegment asSlice(long offset, long newSize, long byteAlignment) {
         checkBounds(offset, newSize);
+        Utils.checkAlign(byteAlignment);
+
         if (!isAlignedForElement(offset, byteAlignment)) {
             throw new IllegalArgumentException("Target offset incompatible with alignment constraints");
         }
@@ -125,7 +127,7 @@ public abstract sealed class AbstractMemorySegmentImpl
     public final MemorySegment reinterpret(long newSize, Arena arena, Consumer<MemorySegment> cleanup) {
         Objects.requireNonNull(arena);
         return reinterpretInternal(Reflection.getCallerClass(), newSize,
-                MemorySessionImpl.toMemorySession(arena), null);
+                MemorySessionImpl.toMemorySession(arena), cleanup);
     }
 
     @Override
@@ -262,21 +264,12 @@ public abstract sealed class AbstractMemorySegmentImpl
             final long thatEnd = thatStart + that.byteSize();
 
             if (thisStart < thatEnd && thisEnd > thatStart) {  //overlap occurs
-                long offsetToThat = this.segmentOffset(that);
+                long offsetToThat = that.address() - this.address();
                 long newOffset = offsetToThat >= 0 ? offsetToThat : 0;
                 return Optional.of(asSlice(newOffset, Math.min(this.byteSize() - newOffset, that.byteSize() + offsetToThat)));
             }
         }
         return Optional.empty();
-    }
-
-    @Override
-    public final long segmentOffset(MemorySegment other) {
-        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl) Objects.requireNonNull(other);
-        if (unsafeGetBase() == that.unsafeGetBase()) {
-            return that.unsafeGetOffset() - this.unsafeGetOffset();
-        }
-        throw new UnsupportedOperationException("Cannot compute offset from native to heap (or vice versa).");
     }
 
     @Override

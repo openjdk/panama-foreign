@@ -24,8 +24,6 @@
 
 /*
  * @test
- * @enablePreview
- * @requires jdk.foreign.linker != "UNSUPPORTED"
  * @modules java.base/jdk.internal.foreign
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestIllegalLink
  */
@@ -48,6 +46,8 @@ import jdk.internal.foreign.CABI;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import static java.lang.foreign.ValueLayout.*;
+
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -60,9 +60,9 @@ public class TestIllegalLink extends NativeTestHelper {
     private static final Linker ABI = Linker.nativeLinker();
 
     @Test(dataProvider = "types")
-    public void testIllegalLayouts(FunctionDescriptor desc, String expectedExceptionMessage) {
+    public void testIllegalLayouts(FunctionDescriptor desc, Linker.Option[] options, String expectedExceptionMessage) {
         try {
-            ABI.downcallHandle(DUMMY_TARGET, desc);
+            ABI.downcallHandle(DUMMY_TARGET, desc, options);
             fail("Expected IllegalArgumentException was not thrown");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains(expectedExceptionMessage),
@@ -102,32 +102,38 @@ public class TestIllegalLink extends NativeTestHelper {
         return new Object[][]{
             { Linker.Option.firstVariadicArg(0) },
             { Linker.Option.captureCallState("errno") },
-            { Linker.Option.isTrivial() },
+            { Linker.Option.critical() },
         };
     }
 
     @DataProvider
     public static Object[][] types() {
+        Linker.Option[] NO_OPTIONS = new Linker.Option[0];
         List<Object[]> cases = new ArrayList<>(Arrays.asList(new Object[][]{
             {
                     FunctionDescriptor.of(MemoryLayout.sequenceLayout(2, C_INT)),
+                    NO_OPTIONS,
                     "Unsupported layout: [2:i4]"
             },
             {
                     FunctionDescriptor.ofVoid(MemoryLayout.sequenceLayout(2, C_INT)),
+                    NO_OPTIONS,
                     "Unsupported layout: [2:i4]"
             },
             {
                     FunctionDescriptor.ofVoid(C_INT.withByteAlignment(2)),
-                    "Layout alignment must be natural alignment"
+                    NO_OPTIONS,
+                    "Unsupported layout: 2%i4"
             },
             {
                     FunctionDescriptor.ofVoid(C_POINTER.withByteAlignment(2)),
-                    "Layout alignment must be natural alignment"
+                    NO_OPTIONS,
+                    "Unsupported layout: 2%a" + ADDRESS.byteSize()
             },
             {
                     FunctionDescriptor.ofVoid(ValueLayout.JAVA_CHAR.withByteAlignment(4)),
-                    "Layout alignment must be natural alignment"
+                    NO_OPTIONS,
+                    "Unsupported layout: 4%c2"
             },
             {
                     FunctionDescriptor.ofVoid(MemoryLayout.structLayout(
@@ -135,7 +141,8 @@ public class TestIllegalLink extends NativeTestHelper {
                             C_SHORT.withName("y").withByteAlignment(1),
                             C_INT.withName("z").withByteAlignment(1)
                             ).withByteAlignment(1)),
-                    "Layout alignment must be natural alignment"
+                    NO_OPTIONS,
+                    "Unsupported layout: 1%s2"
             },
             {
                     FunctionDescriptor.ofVoid(MemoryLayout.structLayout(
@@ -144,55 +151,79 @@ public class TestIllegalLink extends NativeTestHelper {
                                 C_SHORT.withName("y").withByteAlignment(1),
                                 C_INT.withName("z").withByteAlignment(1)
                             ))),
-                    "Layout alignment must be natural alignment"
+                    NO_OPTIONS,
+                    "Unsupported layout: 1%s2"
             },
             {
                     FunctionDescriptor.ofVoid(MemoryLayout.structLayout(
-                            MemoryLayout.sequenceLayout(
+                            MemoryLayout.sequenceLayout(1,
                                 C_INT.withByteAlignment(1)
                             ))),
-                    "Layout alignment must be natural alignment"
+                    NO_OPTIONS,
+                    "Unsupported layout: 1%i4"
             },
             {
                     FunctionDescriptor.ofVoid(MemoryLayout.structLayout(
                             ValueLayout.JAVA_INT,
                             MemoryLayout.paddingLayout(4), // no excess padding
                             ValueLayout.JAVA_INT)),
+                    NO_OPTIONS,
                     "unexpected offset"
             },
             {
                     FunctionDescriptor.of(C_INT.withOrder(nonNativeOrder())),
-                    "Layout does not have the right byte order"
+                    NO_OPTIONS,
+                    "Unsupported layout: I4"
             },
             {
                     FunctionDescriptor.of(MemoryLayout.structLayout(C_INT.withOrder(nonNativeOrder()))),
-                    "Layout does not have the right byte order"
+                    NO_OPTIONS,
+                    "Unsupported layout: I4"
             },
             {
-                    FunctionDescriptor.of(MemoryLayout.structLayout(MemoryLayout.sequenceLayout(C_INT.withOrder(nonNativeOrder())))),
-                    "Layout does not have the right byte order"
-            },
-            {
-                    FunctionDescriptor.ofVoid(MemoryLayout.structLayout(
-                            ValueLayout.JAVA_LONG,
-                            ValueLayout.JAVA_INT)), // missing trailing padding
-                    "has unexpected size"
+                    FunctionDescriptor.of(MemoryLayout.structLayout(MemoryLayout.sequenceLayout(1, C_INT.withOrder(nonNativeOrder())))),
+                    NO_OPTIONS,
+                    "Unsupported layout: I4"
             },
             {
                     FunctionDescriptor.ofVoid(MemoryLayout.structLayout(
                             ValueLayout.JAVA_INT,
                             MemoryLayout.paddingLayout(4))), // too much trailing padding
+                    NO_OPTIONS,
                     "has unexpected size"
             },
+            {
+                    FunctionDescriptor.ofVoid(),
+                    new Linker.Option[]{Linker.Option.critical(), Linker.Option.captureCallState("errno")},
+                    "Incompatible linker options: captureCallState, critical"
+            },
         }));
+
+        for (ValueLayout illegalLayout : List.of(C_CHAR, ValueLayout.JAVA_CHAR, C_BOOL, C_SHORT, C_FLOAT)) {
+            cases.add(new Object[]{
+                FunctionDescriptor.ofVoid(C_INT, illegalLayout),
+                new Linker.Option[]{Linker.Option.firstVariadicArg(1)},
+                "Invalid variadic argument layout"
+            });
+        }
 
         if (IS_SYSV) {
             cases.add(new Object[] {
                     FunctionDescriptor.ofVoid(MemoryLayout.structLayout(
-                            MemoryLayout.sequenceLayout(
+                            MemoryLayout.sequenceLayout(Long.MAX_VALUE / C_INT.byteSize(),
                                 C_INT
                             ))),
+                    NO_OPTIONS,
                     "GroupLayout is too large"
+            });
+        }
+        if (ValueLayout.JAVA_LONG.byteAlignment() == 8) {
+            cases.add(new Object[]{
+                    FunctionDescriptor.ofVoid(MemoryLayout.structLayout(
+                            ValueLayout.JAVA_LONG,
+                            ValueLayout.JAVA_INT)), // missing trailing padding
+                    NO_OPTIONS,
+                    "has unexpected size"
             });
         }
         return cases.toArray(Object[][]::new);

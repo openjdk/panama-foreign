@@ -45,11 +45,20 @@ import java.lang.invoke.MethodType;
 import java.lang.ref.Reference;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_BOOLEAN;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.JAVA_CHAR;
+import static java.lang.foreign.ValueLayout.JAVA_DOUBLE;
+import static java.lang.foreign.ValueLayout.JAVA_FLOAT;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static java.lang.foreign.ValueLayout.JAVA_LONG;
+import static java.lang.foreign.ValueLayout.JAVA_SHORT;
 import static java.lang.invoke.MethodHandles.foldArguments;
 
 public final class FallbackLinker extends AbstractLinker {
@@ -81,7 +90,7 @@ public final class FallbackLinker extends AbstractLinker {
 
     @Override
     protected MethodHandle arrangeDowncall(MethodType inferredMethodType, FunctionDescriptor function, LinkerOptions options) {
-        MemorySegment cif = makeCif(inferredMethodType, function, FFIABI.DEFAULT, Arena.ofAuto());
+        MemorySegment cif = makeCif(inferredMethodType, function, options, Arena.ofAuto());
 
         int capturedStateMask = options.capturedCallState()
                 .mapToInt(CapturableState::mask)
@@ -107,7 +116,7 @@ public final class FallbackLinker extends AbstractLinker {
 
     @Override
     protected UpcallStubFactory arrangeUpcall(MethodType targetType, FunctionDescriptor function, LinkerOptions options) {
-        MemorySegment cif = makeCif(targetType, function, FFIABI.DEFAULT, Arena.ofAuto());
+        MemorySegment cif = makeCif(targetType, function, options, Arena.ofAuto());
 
         UpcallData invData = new UpcallData(function.returnLayout().orElse(null), function.argumentLayouts(), cif);
         MethodHandle doUpcallMH = MethodHandles.insertArguments(MH_DO_UPCALL, 3, invData);
@@ -123,7 +132,9 @@ public final class FallbackLinker extends AbstractLinker {
         return ByteOrder.nativeOrder();
     }
 
-    private static MemorySegment makeCif(MethodType methodType, FunctionDescriptor function, FFIABI abi, Arena scope) {
+    private static MemorySegment makeCif(MethodType methodType, FunctionDescriptor function, LinkerOptions options, Arena scope) {
+        FFIABI abi = FFIABI.DEFAULT;
+
         MemorySegment argTypes = scope.allocate(function.argumentLayouts().size() * ADDRESS.byteSize());
         List<MemoryLayout> argLayouts = function.argumentLayouts();
         for (int i = 0; i < argLayouts.size(); i++) {
@@ -134,7 +145,14 @@ public final class FallbackLinker extends AbstractLinker {
         MemorySegment returnType = methodType.returnType() != void.class
                 ? FFIType.toFFIType(function.returnLayout().orElseThrow(), abi, scope)
                 : LibFallback.voidType();
-        return LibFallback.prepCif(returnType, argLayouts.size(), argTypes, abi, scope);
+
+        if (options.isVariadicFunction()) {
+            int numFixedArgs = options.firstVariadicArgIndex();
+            int numTotalArgs = argLayouts.size();
+            return LibFallback.prepCifVar(returnType, numFixedArgs, numTotalArgs, argTypes, abi, scope);
+        } else {
+            return LibFallback.prepCif(returnType, argLayouts.size(), argTypes, abi, scope);
+        }
     }
 
     private record DowncallData(MemorySegment cif, MemoryLayout returnLayout, List<MemoryLayout> argLayouts,
@@ -152,7 +170,7 @@ public final class FallbackLinker extends AbstractLinker {
 
             MemorySegment capturedState = null;
             if (invData.capturedStateMask() != 0) {
-                capturedState = (MemorySegment) args[argStart++];
+                capturedState = SharedUtils.checkCaptureSegment((MemorySegment) args[argStart++]);
                 MemorySessionImpl capturedStateImpl = ((AbstractMemorySegmentImpl) capturedState).sessionImpl();
                 capturedStateImpl.acquire0();
                 acquiredSessions.add(capturedStateImpl);
@@ -244,7 +262,7 @@ public final class FallbackLinker extends AbstractLinker {
             acquireCallback.accept(addrArg);
             argSeg.set(al, 0, addrArg);
         } else if (layout instanceof GroupLayout) {
-            argSeg.copyFrom((MemorySegment) arg); // by-value struct
+            MemorySegment.copy((MemorySegment) arg, 0, argSeg, 0, argSeg.byteSize()); // by-value struct
         } else {
             assert layout == null;
         }
@@ -274,5 +292,42 @@ public final class FallbackLinker extends AbstractLinker {
         }
         assert layout == null;
         return null;
+    }
+
+    @Override
+    public Map<String, MemoryLayout> canonicalLayouts() {
+        return CANONICAL_LAYOUTS;
+    }
+
+    static final Map<String, MemoryLayout> CANONICAL_LAYOUTS = new HashMap<>();
+
+    static {
+        CANONICAL_LAYOUTS.put("bool", JAVA_BOOLEAN);
+        CANONICAL_LAYOUTS.put("char", JAVA_BYTE);
+        CANONICAL_LAYOUTS.put("float", JAVA_FLOAT);
+        CANONICAL_LAYOUTS.put("double", JAVA_DOUBLE);
+        CANONICAL_LAYOUTS.put("long long", JAVA_LONG);
+        CANONICAL_LAYOUTS.put("void*", ADDRESS);
+        // platform-dependent sizes
+        CANONICAL_LAYOUTS.put("size_t", FFIType.SIZE_T);
+        CANONICAL_LAYOUTS.put("short", FFIType.layoutFor(LibFallback.shortSize()));
+        CANONICAL_LAYOUTS.put("int", FFIType.layoutFor(LibFallback.intSize()));
+        CANONICAL_LAYOUTS.put("long", FFIType.layoutFor(LibFallback.longSize()));
+        int wchar_size = LibFallback.wcharSize();
+        if (wchar_size == 2) {
+            // prefer JAVA_CHAR
+            CANONICAL_LAYOUTS.put("wchar_t", JAVA_CHAR);
+        } else {
+            CANONICAL_LAYOUTS.put("wchar_t", FFIType.layoutFor(wchar_size));
+        }
+        // JNI types
+        CANONICAL_LAYOUTS.put("jboolean", JAVA_BOOLEAN);
+        CANONICAL_LAYOUTS.put("jchar", JAVA_CHAR);
+        CANONICAL_LAYOUTS.put("jbyte", JAVA_BYTE);
+        CANONICAL_LAYOUTS.put("jshort", JAVA_SHORT);
+        CANONICAL_LAYOUTS.put("jint", JAVA_INT);
+        CANONICAL_LAYOUTS.put("jlong", JAVA_LONG);
+        CANONICAL_LAYOUTS.put("jfloat", JAVA_FLOAT);
+        CANONICAL_LAYOUTS.put("jdouble", JAVA_DOUBLE);
     }
 }

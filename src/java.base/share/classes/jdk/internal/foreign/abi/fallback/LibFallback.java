@@ -59,6 +59,12 @@ final class LibFallback {
     static MemorySegment pointerType() { return NativeConstants.POINTER_TYPE; }
     static MemorySegment voidType() { return NativeConstants.VOID_TYPE; }
 
+    // platform-dependent types
+    static int shortSize() { return NativeConstants.SIZEOF_SHORT; }
+    static int intSize() { return NativeConstants.SIZEOF_INT; }
+    static int longSize() {return NativeConstants.SIZEOF_LONG; }
+    static int wcharSize() {return NativeConstants.SIZEOF_WCHAR; }
+
     static short structTag() { return NativeConstants.STRUCT_TAG; }
 
     private static final MethodType UPCALL_TARGET_TYPE = MethodType.methodType(void.class, MemorySegment.class, MemorySegment.class);
@@ -101,6 +107,27 @@ final class LibFallback {
                                          Arena scope) throws IllegalStateException {
         MemorySegment cif = scope.allocate(NativeConstants.SIZEOF_CIF);
         checkStatus(ffi_prep_cif(cif.address(), abi.value(), numArgs, returnType.address(), paramTypes.address()));
+        return cif;
+    }
+
+    /**
+     * Wrapper for {@code ffi_prep_cif_var}. The variadic version of prep_cif
+     *
+     * @param returnType a pointer to an @{code ffi_type} describing the return type
+     * @param numFixedArgs the number of fixed arguments
+     * @param numTotalArgs the number of total arguments
+     * @param paramTypes a pointer to an array of pointers, which each point to an {@code ffi_type} describing a
+     *                parameter type
+     * @param abi the abi to be used
+     * @param scope the scope into which to allocate the returned {@code ffi_cif} struct
+     * @return a pointer to a prepared {@code ffi_cif} struct
+     *
+     * @throws IllegalStateException if the call to {@code ffi_prep_cif} returns a non-zero status code
+     */
+    static MemorySegment prepCifVar(MemorySegment returnType, int numFixedArgs, int numTotalArgs, MemorySegment paramTypes, FFIABI abi,
+                                    Arena scope) throws IllegalStateException {
+        MemorySegment cif = scope.allocate(NativeConstants.SIZEOF_CIF);
+        checkStatus(ffi_prep_cif_var(cif.address(), abi.value(), numFixedArgs, numTotalArgs, returnType.address(), paramTypes.address()));
         return cif;
     }
 
@@ -177,6 +204,7 @@ final class LibFallback {
     private static native void doDowncall(long cif, long fn, long rvalue, long avalues, long capturedState, int capturedStateMask);
 
     private static native int ffi_prep_cif(long cif, int abi, int nargs, long rtype, long atypes);
+    private static native int ffi_prep_cif_var(long cif, int abi, int nfixedargs, int ntotalargs, long rtype, long atypes);
     private static native int ffi_get_struct_offsets(int abi, long type, long offsets);
 
     private static native int ffi_default_abi();
@@ -194,6 +222,10 @@ final class LibFallback {
     private static native long ffi_type_float();
     private static native long ffi_type_double();
     private static native long ffi_type_pointer();
+    private static native int ffi_sizeof_short();
+    private static native int ffi_sizeof_int();
+    private static native int ffi_sizeof_long();
+    private static native int ffi_sizeof_wchar();
 
     // put these in a separate class to avoid an UnsatisfiedLinkError
     // when LibFallback is initialized but the library is not present
@@ -211,6 +243,11 @@ final class LibFallback {
         static final MemorySegment FLOAT_TYPE = MemorySegment.ofAddress(ffi_type_float());
         static final MemorySegment DOUBLE_TYPE = MemorySegment.ofAddress(ffi_type_double());
         static final MemorySegment POINTER_TYPE = MemorySegment.ofAddress(ffi_type_pointer());
+        static final int SIZEOF_SHORT = ffi_sizeof_short();
+        static final int SIZEOF_INT = ffi_sizeof_int();
+        static final int SIZEOF_LONG = ffi_sizeof_long();
+        static final int SIZEOF_WCHAR = ffi_sizeof_wchar();
+
 
         static final MemorySegment VOID_TYPE = MemorySegment.ofAddress(ffi_type_void());
         static final short STRUCT_TAG = ffi_type_struct();

@@ -27,7 +27,6 @@
 package java.lang.foreign;
 
 import jdk.internal.foreign.layout.ValueLayouts;
-import jdk.internal.javac.PreviewFeature;
 import jdk.internal.reflect.CallerSensitive;
 
 import java.lang.foreign.Linker.Option;
@@ -37,7 +36,7 @@ import java.util.Optional;
 
 /**
  * A value layout used to model the address of some region of memory. The carrier associated with an address layout is
- * {@code MemorySegment.class}. The size and alignment of an address layout are platform dependent
+ * {@code MemorySegment.class}. The size and alignment of an address layout are platform-dependent
  * (e.g. on a 64-bit platform, the size and alignment of an address layout are set to 8 bytes).
  * <p>
  * An address layout may optionally feature a {@linkplain #targetLayout() target layout}. An address layout with
@@ -51,11 +50,13 @@ import java.util.Optional;
  *     <li>When creating an upcall stub, using {@link Linker#upcallStub(MethodHandle, FunctionDescriptor, Arena, Option...)}.
  * </ul>
  *
+ * @implSpec
+ * This class is immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
+ *
  * @see #ADDRESS
  * @see #ADDRESS_UNALIGNED
- * @since 19
+ * @since 22
  */
-@PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
 public sealed interface AddressLayout extends ValueLayout permits ValueLayouts.OfAddressImpl {
 
     /**
@@ -95,7 +96,7 @@ public sealed interface AddressLayout extends ValueLayout permits ValueLayouts.O
      * {@snippet lang = java:
      * AddressLayout addressLayout   = ...
      * AddressLayout unboundedLayout = addressLayout.withTargetLayout(
-     *         MemoryLayout.sequenceLayout(ValueLayout.JAVA_BYTE));
+     *         MemoryLayout.sequenceLayout(Long.MAX_VALUE, ValueLayout.JAVA_BYTE));
      *}
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
@@ -113,9 +114,9 @@ public sealed interface AddressLayout extends ValueLayout permits ValueLayouts.O
 
     /**
      * Returns an address layout with the same carrier, alignment constraint, name and order as this address layout,
-     * but without any specified target layout.
-     * <p>
-     * This can be useful to compare two address layouts that have different target layouts, but are otherwise equal.
+     * but with no target layout.
+     *
+     * @apiNote This can be useful to compare two address layouts that have different target layouts, but are otherwise equal.
      *
      * @return an address layout with same characteristics as this layout, but with no target layout.
      * @see #targetLayout()

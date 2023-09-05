@@ -23,8 +23,7 @@
 
 /*
  * @test
- * @enablePreview
- * @requires jdk.foreign.linker != "UNSUPPORTED"
+ * @requires vm.bits == 64
  * @run testng/othervm -Xmx4G -XX:MaxDirectMemorySize=1M --enable-native-access=ALL-UNNAMED TestSegments
  */
 
@@ -36,6 +35,7 @@ import org.testng.annotations.Test;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
@@ -83,7 +83,7 @@ public class TestSegments {
 
     @Test
     public void testNativeSegmentIsZeroed() {
-        VarHandle byteHandle = ValueLayout.JAVA_BYTE.arrayElementVarHandle();
+        VarHandle byteHandle = ValueLayout.JAVA_BYTE.varHandle();
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment segment = arena.allocate(1000, 1);
             for (long i = 0 ; i < segment.byteSize() ; i++) {
@@ -94,7 +94,7 @@ public class TestSegments {
 
     @Test
     public void testSlices() {
-        VarHandle byteHandle = ValueLayout.JAVA_BYTE.arrayElementVarHandle();
+        VarHandle byteHandle = ValueLayout.JAVA_BYTE.varHandle();
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment segment = arena.allocate(10, 1);
             //init
@@ -247,7 +247,7 @@ public class TestSegments {
 
     @Test(dataProvider = "segmentFactories")
     public void testFill(Supplier<MemorySegment> segmentSupplier) {
-        VarHandle byteHandle = ValueLayout.JAVA_BYTE.arrayElementVarHandle();
+        VarHandle byteHandle = ValueLayout.JAVA_BYTE.varHandle();
 
         for (byte value : new byte[] {(byte) 0xFF, (byte) 0x00, (byte) 0x45}) {
             MemorySegment segment = segmentSupplier.get();
@@ -350,6 +350,20 @@ public class TestSegments {
         assertEquals(segment.address(), 0); // base address should be zero (no leaking of impl details)
         MemorySegment end = segment.asSlice(segment.byteSize(), 0);
         assertEquals(end.address(), segment.byteSize()); // end address should be equal to segment byte size
+    }
+
+    @Test
+    void testReinterpret() {
+        AtomicInteger counter = new AtomicInteger();
+        try (Arena arena = Arena.ofConfined()){
+            // check size
+            assertEquals(MemorySegment.ofAddress(42).reinterpret(100).byteSize(), 100);
+            assertEquals(MemorySegment.ofAddress(42).reinterpret(100, Arena.ofAuto(), null).byteSize(), 100);
+            // check scope and cleanup
+            assertEquals(MemorySegment.ofAddress(42).reinterpret(100, arena, s -> counter.incrementAndGet()).scope(), arena.scope());
+            assertEquals(MemorySegment.ofAddress(42).reinterpret(arena, s -> counter.incrementAndGet()).scope(), arena.scope());
+        }
+        assertEquals(counter.get(), 2);
     }
 
     @DataProvider(name = "badSizeAndAlignments")

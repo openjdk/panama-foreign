@@ -294,7 +294,7 @@ public class Examples {
         );
 
         try (Arena arena = Arena.ofConfined()) {
-            MemorySegment hello = arena.allocateUtf8String("Hello");
+            MemorySegment hello = arena.allocateFrom("Hello");
             long len = (long) strlen.invokeExact(hello); // 5
             System.out.println(len);
         }
@@ -306,10 +306,10 @@ public class Examples {
         );
 
         try (Arena arena = Arena.ofConfined()) {
-            MemorySegment hello = arena.allocateUtf8String("Hello");
+            MemorySegment hello = arena.allocateFrom("Hello");
             long len = (long) strlen_virtual.invokeExact(
-                STDLIB.find("strlen").get(),
-                hello); // 5
+                    STDLIB.find("strlen").get(),
+                    hello); // 5
             System.out.println(len);
         }
     }
@@ -326,17 +326,17 @@ public class Examples {
                 FunctionDescriptor.ofVoid(ADDRESS, JAVA_LONG, JAVA_LONG, ADDRESS)
         );
         FunctionDescriptor comparDesc = FunctionDescriptor.of(JAVA_INT,
-                                                              ADDRESS.withTargetLayout(JAVA_INT),
-                                                              ADDRESS.withTargetLayout(JAVA_INT));
+                ADDRESS.withTargetLayout(JAVA_INT),
+                ADDRESS.withTargetLayout(JAVA_INT));
         MethodHandle comparHandle = MethodHandles.lookup()
-                                         .findStatic(Qsort.class, "qsortCompare",
-                                                     comparDesc.toMethodType());
+                .findStatic(Qsort.class, "qsortCompare",
+                        comparDesc.toMethodType());
 
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment comparFunc = LINKER.upcallStub(
-                comparHandle, comparDesc, arena);
+                    comparHandle, comparDesc, arena);
 
-            MemorySegment array = arena.allocateArray(JAVA_INT, 0, 9, 3, 4, 6, 5, 1, 8, 2, 7);
+            MemorySegment array = arena.allocateFrom(JAVA_INT, 0, 9, 3, 4, 6, 5, 1, 8, 2, 7);
             qsort.invokeExact(array, 10L, 4L, comparFunc);
             int[] sorted = array.toArray(JAVA_INT); // [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
             System.out.println(Arrays.toString(sorted));
@@ -350,8 +350,8 @@ public class Examples {
                 Linker.Option.firstVariadicArg(1) // first int is variadic
         );
         try (Arena arena = Arena.ofConfined()) {
-            MemorySegment s = arena.allocateUtf8String("%d plus %d equals %d\n");
-            int res = (int)printf.invokeExact(s, 2, 2, 4);
+            MemorySegment s = arena.allocateFrom("%d plus %d equals %d\n");
+            int res = (int) printf.invokeExact(s, 2, 2, 4);
         }
     }
 }

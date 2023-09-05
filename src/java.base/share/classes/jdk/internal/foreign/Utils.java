@@ -29,7 +29,6 @@ package jdk.internal.foreign;
 import java.lang.foreign.AddressLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.StructLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
@@ -40,13 +39,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.vm.annotation.ForceInline;
 import sun.invoke.util.Wrapper;
 
-import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
 /**
@@ -97,7 +96,19 @@ public final class Utils {
                 VarHandle prev = HANDLE_MAP.putIfAbsent(layout, handle);
                 return prev != null ? prev : handle;
             }
+
+            static VarHandle get(ValueLayout layout) {
+                return HANDLE_MAP.get(layout);
+            }
         }
+        layout = layout.withoutName(); // name doesn't matter
+        // keep the addressee layout as it's used below
+
+        VarHandle handle = VarHandleCache.get(layout);
+        if (handle != null) {
+            return handle;
+        }
+
         Class<?> baseCarrier = layout.carrier();
         if (layout.carrier() == MemorySegment.class) {
             baseCarrier = switch ((int) ValueLayout.ADDRESS.byteSize()) {
@@ -109,7 +120,7 @@ public final class Utils {
             baseCarrier = byte.class;
         }
 
-        VarHandle handle = SharedSecrets.getJavaLangInvokeAccess().memorySegmentViewHandle(baseCarrier,
+        handle = SharedSecrets.getJavaLangInvokeAccess().memorySegmentViewHandle(baseCarrier,
                 layout.byteAlignment() - 1, layout.order());
 
         if (layout.carrier() == boolean.class) {
@@ -148,29 +159,22 @@ public final class Utils {
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(addr, size, scope);
     }
 
-    public static void copy(MemorySegment addr, byte[] bytes) {
-        var heapSegment = MemorySegment.ofArray(bytes);
-        addr.copyFrom(heapSegment);
-        addr.set(JAVA_BYTE, bytes.length, (byte)0);
-    }
-
-    public static MemorySegment toCString(byte[] bytes, SegmentAllocator allocator) {
-        MemorySegment addr = allocator.allocate(bytes.length + 1);
-        copy(addr, bytes);
-        return addr;
-    }
-
     @ForceInline
     public static boolean isAligned(long offset, long align) {
         return (offset & (align - 1)) == 0;
     }
 
     @ForceInline
-    public static void checkElementAlignment(ValueLayout layout, String msg) {
+    public static boolean isElementAligned(ValueLayout layout) {
         // Fast-path: if both size and alignment are powers of two, we can just
         // check if one is greater than the other.
         assert isPowerOfTwo(layout.byteSize());
-        if (layout.byteAlignment() > layout.byteSize()) {
+        return layout.byteAlignment() <= layout.byteSize();
+    }
+
+    @ForceInline
+    public static void checkElementAlignment(ValueLayout layout, String msg) {
+        if (!isElementAligned(layout)) {
             throw new IllegalArgumentException(msg);
         }
     }
@@ -200,6 +204,10 @@ public final class Utils {
             throw new IllegalArgumentException("Invalid allocation size : " + byteSize);
         }
 
+        checkAlign(byteAlignment);
+    }
+
+    public static void checkAlign(long byteAlignment) {
         // alignment should be > 0, and power of two
         if (byteAlignment <= 0 ||
                 ((byteAlignment & (byteAlignment - 1)) != 0L)) {
@@ -250,6 +258,14 @@ public final class Utils {
 
     public static boolean isPowerOfTwo(long value) {
         return (value & (value - 1)) == 0L;
+    }
+
+    public static <L extends MemoryLayout> L wrapOverflow(Supplier<L> layoutSupplier) {
+        try {
+            return layoutSupplier.get();
+        } catch (ArithmeticException ex) {
+            throw new IllegalArgumentException("Layout size exceeds Long.MAX_VALUE");
+        }
     }
 
     public static boolean containsNullChars(String s) {

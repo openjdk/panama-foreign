@@ -272,9 +272,8 @@ public final class Module implements AnnotatedElement {
      * <a href="foreign/package-summary.html#restricted"><em>restricted</em></a> methods.
      *
      * @return {@code true} if this module can access <em>restricted</em> methods.
-     * @since 20
+     * @since 22
      */
-    @PreviewFeature(feature = PreviewFeature.Feature.FOREIGN)
     public boolean isNativeAccessEnabled() {
         Module target = moduleForNativeAccess();
         return EnableNativeAccess.isNativeAccessEnabled(target);
@@ -1590,8 +1589,8 @@ public final class Module implements AnnotatedElement {
      */
     private Class<?> loadModuleInfoClass(InputStream in) throws IOException {
         final String MODULE_INFO = "module-info";
-        byte[] bytes = Classfile.parse(in.readAllBytes(),
-                Classfile.Option.constantPoolSharing(false)).transform((clb, cle) -> {
+        var cc = Classfile.of(Classfile.ConstantPoolSharingOption.NEW_POOL);
+        byte[] bytes = cc.transform(cc.parse(in.readAllBytes()), (clb, cle) -> {
             switch (cle) {
                 case AccessFlags af -> clb.withFlags(AccessFlag.INTERFACE,
                         AccessFlag.ABSTRACT, AccessFlag.SYNTHETIC);
