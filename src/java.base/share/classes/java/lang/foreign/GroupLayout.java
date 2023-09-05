@@ -107,6 +107,7 @@ public sealed interface GroupLayout extends MemoryLayout permits StructLayout, U
          * @throws IllegalArgumentException if an instance cannot be produced, for
          *                                  example, if the provided segment is too small.
          */
+        @Override
         default T apply(MemorySegment segment) {
             return apply(segment, 0L);
         }
