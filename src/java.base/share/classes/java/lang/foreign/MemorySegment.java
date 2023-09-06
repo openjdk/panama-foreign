@@ -1335,8 +1335,9 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * {@linkplain Scope#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread {@code T},
      * such that {@code dstSegment.isAccessibleBy(T) == false}.
-     * @throws IndexOutOfBoundsException if {@code srcOffset > srcSegment.byteSize() - bytes} or if
-     * {@code dstOffset > dstSegment.byteSize() - bytes}, or if either {@code srcOffset}, {@code dstOffset}
+     * @throws IndexOutOfBoundsException if {@code srcOffset > srcSegment.byteSize() - bytes}.
+     * @throws IndexOutOfBoundsException if {@code dstOffset > dstSegment.byteSize() - bytes}.
+     * @throws IndexOutOfBoundsException if either {@code srcOffset}, {@code dstOffset}
      * or {@code bytes} are {@code < 0}.
      * @throws UnsupportedOperationException if {@code dstSegment} is {@linkplain #isReadOnly() read-only}.
      */
