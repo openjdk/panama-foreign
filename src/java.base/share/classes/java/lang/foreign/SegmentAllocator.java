@@ -285,7 +285,7 @@ public interface SegmentAllocator {
         Objects.requireNonNull(sourceElementLayout);
         Objects.requireNonNull(elementLayout);
         MemorySegment dest = allocateNoInit(elementLayout, srcElementCount);
-        MemorySegment.copy(source, sourceElementLayout, sourceOffset, dest, elementLayout, 0, dest.byteSize());
+        MemorySegment.copy(source, sourceElementLayout, sourceOffset, dest, elementLayout, 0, srcElementCount);
         return dest;
     }
 
