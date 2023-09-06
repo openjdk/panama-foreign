@@ -261,11 +261,11 @@ public interface SegmentAllocator {
      * Allocates a memory segment with the given layout and initializes it with the bytes in the provided
      * source memory segment.
      * @implSpec the default implementation for this method calls {@code this.allocate(elementLayout, elementCount)}.
-     * @param elementLayout the value to be set on the newly allocated memory block.
+     * @param elementLayout the element layout of the allocated array.
      * @param source the source segment.
      * @param sourceElementLayout the element layout of the source segment.
      * @param sourceOffset the starting offset, in bytes, of the source segment.
-     * @param srcElementCount the number of elements in the source segment to be copied.
+     * @param elementCount the number of elements in the source segment to be copied.
      * @return a segment for the newly allocated memory block.
      * @throws IllegalArgumentException if the element layouts have different sizes, if the source segment/offset are
      * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a> in the source
@@ -280,12 +280,12 @@ public interface SegmentAllocator {
      */
     @ForceInline
     default MemorySegment allocateFrom(ValueLayout elementLayout, MemorySegment source,
-                                       ValueLayout sourceElementLayout, long sourceOffset, long srcElementCount) {
+                                       ValueLayout sourceElementLayout, long sourceOffset, long elementCount) {
         Objects.requireNonNull(source);
         Objects.requireNonNull(sourceElementLayout);
         Objects.requireNonNull(elementLayout);
-        MemorySegment dest = allocateNoInit(elementLayout, srcElementCount);
-        MemorySegment.copy(source, sourceElementLayout, sourceOffset, dest, elementLayout, 0, srcElementCount);
+        MemorySegment dest = allocateNoInit(elementLayout, elementCount);
+        MemorySegment.copy(source, sourceElementLayout, sourceOffset, dest, elementLayout, 0, elementCount);
         return dest;
     }
 

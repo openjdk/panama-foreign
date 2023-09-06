@@ -171,7 +171,7 @@ public class TestSegmentAllocators {
             }
 
             @Override
-            public MemorySegment allocateFrom(ValueLayout elementLayout, MemorySegment source, ValueLayout sourceElementLayout, long sourceOffset, long srcElementCount) {
+            public MemorySegment allocateFrom(ValueLayout elementLayout, MemorySegment source, ValueLayout sourceElementLayout, long sourceOffset, long elementCount) {
                 calls.incrementAndGet();
                 return MemorySegment.NULL;
             }
