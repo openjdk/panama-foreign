@@ -267,9 +267,11 @@ public interface SegmentAllocator {
      * @param sourceOffset the starting offset, in bytes, of the source segment.
      * @param elementCount the number of elements in the source segment to be copied.
      * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if the element layouts have different sizes, if the source segment/offset are
-     * <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a> in the source
-     * element layout, or if the source element layout alignment is greater than its size.
+     * @throws IllegalArgumentException if {@code elementLayout.byteSize() != sourceElementLayout.byteSize()}.
+     * @throws IllegalArgumentException if the source segment/offset are <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a>
+     * in the source element layout.
+     * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
+     * @throws IllegalArgumentException if {@code sourceElementLayout.byteAlignment() > sourceElementLayout.byteSize()}.
      * @throws IllegalStateException if the {@linkplain MemorySegment#scope() scope} associated with {@code source} is not
      * {@linkplain MemorySegment.Scope#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread {@code T},
@@ -300,6 +302,7 @@ public interface SegmentAllocator {
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the byte elements to be copied to the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
+     * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
     @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfByte elementLayout, byte... elements) {
@@ -318,6 +321,7 @@ public interface SegmentAllocator {
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the short elements to be copied to the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
+     * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
     @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfShort elementLayout, short... elements) {
@@ -336,6 +340,7 @@ public interface SegmentAllocator {
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the char elements to be copied to the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
+     * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
     @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfChar elementLayout, char... elements) {
@@ -354,6 +359,7 @@ public interface SegmentAllocator {
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the int elements to be copied to the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
+     * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
     @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfInt elementLayout, int... elements) {
@@ -372,6 +378,7 @@ public interface SegmentAllocator {
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the float elements to be copied to the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
+     * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
     @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfFloat elementLayout, float... elements) {
@@ -390,6 +397,7 @@ public interface SegmentAllocator {
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the long elements to be copied to the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
+     * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
     @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfLong elementLayout, long... elements) {
@@ -408,6 +416,7 @@ public interface SegmentAllocator {
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the double elements to be copied to the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
+     * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
     @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfDouble elementLayout, double... elements) {
