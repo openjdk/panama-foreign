@@ -25,7 +25,7 @@
 
 package java.lang.foreign;
 
-import java.lang.reflect.Array;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -258,88 +258,163 @@ public interface SegmentAllocator {
     }
 
     /**
+     * Allocates a memory segment with the given layout and initializes it with the bytes in the provided
+     * source memory segment.
+     * @implSpec the default implementation for this method calls {@code this.allocate(elementLayout, elementCount)}.
+     * @param elementLayout the element layout of the allocated array.
+     * @param source the source segment.
+     * @param sourceElementLayout the element layout of the source segment.
+     * @param sourceOffset the starting offset, in bytes, of the source segment.
+     * @param elementCount the number of elements in the source segment to be copied.
+     * @return a segment for the newly allocated memory block.
+     * @throws IllegalArgumentException if {@code elementLayout.byteSize() != sourceElementLayout.byteSize()}.
+     * @throws IllegalArgumentException if the source segment/offset are <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a>
+     * in the source element layout.
+     * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
+     * @throws IllegalArgumentException if {@code sourceElementLayout.byteAlignment() > sourceElementLayout.byteSize()}.
+     * @throws IllegalStateException if the {@linkplain MemorySegment#scope() scope} associated with {@code source} is not
+     * {@linkplain MemorySegment.Scope#isAlive() alive}.
+     * @throws WrongThreadException if this method is called from a thread {@code T},
+     * such that {@code source.isAccessibleBy(T) == false}.
+     * @throws IndexOutOfBoundsException if {@code elementCount * sourceElementLayout.byteSize()} overflows.
+     * @throws IndexOutOfBoundsException if {@code sourceOffset > source.byteSize() - (elementCount * sourceElementLayout.byteSize())}.
+     * @throws IndexOutOfBoundsException if either {@code sourceOffset} or {@code elementCount} are {@code < 0}.
+     */
+    @ForceInline
+    default MemorySegment allocateFrom(ValueLayout elementLayout, MemorySegment source,
+                                       ValueLayout sourceElementLayout, long sourceOffset, long elementCount) {
+        Objects.requireNonNull(source);
+        Objects.requireNonNull(sourceElementLayout);
+        Objects.requireNonNull(elementLayout);
+        MemorySegment dest = allocateNoInit(elementLayout, elementCount);
+        MemorySegment.copy(source, sourceElementLayout, sourceOffset, dest, elementLayout, 0, elementCount);
+        return dest;
+    }
+
+    /**
      * Allocates a memory segment with the given layout and initializes it with the given byte elements.
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout, array.length)}.
+     * @implSpec the default implementation for this method is equivalent to the following code:
+     * {@snippet lang = java:
+     * this.allocateFrom(layout, MemorySegment.ofArray(array),
+     *                   ValueLayout.JAVA_BYTE, 0, array.length)
+     *}
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the byte elements to be copied to the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
+     * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
+    @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfByte elementLayout, byte... elements) {
-        return copyArrayWithSwapIfNeeded(elements, elementLayout);
+        return allocateFrom(elementLayout, MemorySegment.ofArray(elements),
+                ValueLayout.JAVA_BYTE, 0, elements.length);
     }
 
     /**
      * Allocates a memory segment with the given layout and initializes it with the given short elements.
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout, array.length)}.
+     * @implSpec the default implementation for this method is equivalent to the following code:
+     * {@snippet lang = java:
+     * this.allocateFrom(layout, MemorySegment.ofArray(array),
+     *                   ValueLayout.JAVA_SHORT, 0, array.length)
+     *}
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the short elements to be copied to the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
+     * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
+    @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfShort elementLayout, short... elements) {
-        return copyArrayWithSwapIfNeeded(elements, elementLayout);
+        return allocateFrom(elementLayout, MemorySegment.ofArray(elements),
+                ValueLayout.JAVA_SHORT, 0, elements.length);
     }
 
     /**
      * Allocates a memory segment with the given layout and initializes it with the given char elements.
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout, array.length)}.
+     * @implSpec the default implementation for this method is equivalent to the following code:
+     * {@snippet lang = java:
+     * this.allocateFrom(layout, MemorySegment.ofArray(array),
+     *                   ValueLayout.JAVA_CHAR, 0, array.length)
+     *}
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the char elements to be copied to the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
+     * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
+    @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfChar elementLayout, char... elements) {
-        return copyArrayWithSwapIfNeeded(elements, elementLayout);
+        return allocateFrom(elementLayout, MemorySegment.ofArray(elements),
+                ValueLayout.JAVA_CHAR, 0, elements.length);
     }
 
     /**
      * Allocates a memory segment with the given layout and initializes it with the given int elements.
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout, array.length)}.
+     * @implSpec the default implementation for this method is equivalent to the following code:
+     * {@snippet lang = java:
+     * this.allocateFrom(layout, MemorySegment.ofArray(array),
+     *                   ValueLayout.JAVA_INT, 0, array.length)
+     *}
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the int elements to be copied to the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
+     * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
+    @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfInt elementLayout, int... elements) {
-        return copyArrayWithSwapIfNeeded(elements, elementLayout);
+        return allocateFrom(elementLayout, MemorySegment.ofArray(elements),
+                ValueLayout.JAVA_INT, 0, elements.length);
     }
 
     /**
      * Allocates a memory segment with the given layout and initializes it with the given float elements.
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout, array.length)}.
+     * @implSpec the default implementation for this method is equivalent to the following code:
+     * {@snippet lang = java:
+     * this.allocateFrom(layout, MemorySegment.ofArray(array),
+     *                   ValueLayout.JAVA_FLOAT, 0, array.length)
+     *}
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the float elements to be copied to the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
+     * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
+    @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfFloat elementLayout, float... elements) {
-        return copyArrayWithSwapIfNeeded(elements, elementLayout);
+        return allocateFrom(elementLayout, MemorySegment.ofArray(elements),
+                ValueLayout.JAVA_FLOAT, 0, elements.length);
     }
 
     /**
      * Allocates a memory segment with the given layout and initializes it with the given long elements.
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout, array.length)}.
+     * @implSpec the default implementation for this method is equivalent to the following code:
+     * {@snippet lang = java:
+     * this.allocateFrom(layout, MemorySegment.ofArray(array),
+     *                   ValueLayout.JAVA_LONG, 0, array.length)
+     *}
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the long elements to be copied to the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
+     * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
+    @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfLong elementLayout, long... elements) {
-        return copyArrayWithSwapIfNeeded(elements, elementLayout);
+        return allocateFrom(elementLayout, MemorySegment.ofArray(elements),
+                ValueLayout.JAVA_LONG, 0, elements.length);
     }
 
     /**
      * Allocates a memory segment with the given layout and initializes it with the given double elements.
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout, array.length)}.
+     * @implSpec the default implementation for this method is equivalent to the following code:
+     * {@snippet lang = java:
+     * this.allocateFrom(layout, MemorySegment.ofArray(array),
+     *                   ValueLayout.JAVA_DOUBLE, 0, array.length)
+     *}
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the double elements to be copied to the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
+     * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
-    default MemorySegment allocateFrom(ValueLayout.OfDouble elementLayout, double... elements) {
-        return copyArrayWithSwapIfNeeded(elements, elementLayout);
-    }
-
     @ForceInline
-    private MemorySegment copyArrayWithSwapIfNeeded(Object array, ValueLayout elementLayout) {
-        int size = Array.getLength(Objects.requireNonNull(array));
-        MemorySegment segment = allocateNoInit(Objects.requireNonNull(elementLayout), size);
-        MemorySegment.copy(array, 0, segment, elementLayout, 0, size);
-        return segment;
+    default MemorySegment allocateFrom(ValueLayout.OfDouble elementLayout, double... elements) {
+        return allocateFrom(elementLayout, MemorySegment.ofArray(elements),
+                ValueLayout.JAVA_DOUBLE, 0, elements.length);
     }
 
     /**
