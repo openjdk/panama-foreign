@@ -296,8 +296,7 @@ public interface SegmentAllocator {
      * @implSpec the default implementation for this method is equivalent to the following code:
      * {@snippet lang = java:
      * this.allocateFrom(layout, MemorySegment.ofArray(array),
-     *                   layout.withOrder(ByteOrder.nativeOrder()),
-     *                   0, array.length)
+     *                   ValueLayout.JAVA_BYTE, 0, array.length)
      *}
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the byte elements to be copied to the newly allocated memory block.
@@ -307,7 +306,7 @@ public interface SegmentAllocator {
     @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfByte elementLayout, byte... elements) {
         return allocateFrom(elementLayout, MemorySegment.ofArray(elements),
-                elementLayout.withOrder(ByteOrder.nativeOrder()), 0, elements.length);
+                ValueLayout.JAVA_BYTE, 0, elements.length);
     }
 
     /**
@@ -315,8 +314,7 @@ public interface SegmentAllocator {
      * @implSpec the default implementation for this method is equivalent to the following code:
      * {@snippet lang = java:
      * this.allocateFrom(layout, MemorySegment.ofArray(array),
-     *                   layout.withOrder(ByteOrder.nativeOrder()),
-     *                   0, array.length)
+     *                   ValueLayout.JAVA_SHORT, 0, array.length)
      *}
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the short elements to be copied to the newly allocated memory block.
@@ -326,7 +324,7 @@ public interface SegmentAllocator {
     @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfShort elementLayout, short... elements) {
         return allocateFrom(elementLayout, MemorySegment.ofArray(elements),
-                elementLayout.withOrder(ByteOrder.nativeOrder()), 0, elements.length);
+                ValueLayout.JAVA_SHORT, 0, elements.length);
     }
 
     /**
@@ -334,8 +332,7 @@ public interface SegmentAllocator {
      * @implSpec the default implementation for this method is equivalent to the following code:
      * {@snippet lang = java:
      * this.allocateFrom(layout, MemorySegment.ofArray(array),
-     *                   layout.withOrder(ByteOrder.nativeOrder()),
-     *                   0, array.length)
+     *                   ValueLayout.JAVA_CHAR, 0, array.length)
      *}
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the char elements to be copied to the newly allocated memory block.
@@ -345,7 +342,7 @@ public interface SegmentAllocator {
     @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfChar elementLayout, char... elements) {
         return allocateFrom(elementLayout, MemorySegment.ofArray(elements),
-                elementLayout.withOrder(ByteOrder.nativeOrder()), 0, elements.length);
+                ValueLayout.JAVA_CHAR, 0, elements.length);
     }
 
     /**
@@ -353,8 +350,7 @@ public interface SegmentAllocator {
      * @implSpec the default implementation for this method is equivalent to the following code:
      * {@snippet lang = java:
      * this.allocateFrom(layout, MemorySegment.ofArray(array),
-     *                   layout.withOrder(ByteOrder.nativeOrder()),
-     *                   0, array.length)
+     *                   ValueLayout.JAVA_INT, 0, array.length)
      *}
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the int elements to be copied to the newly allocated memory block.
@@ -364,7 +360,7 @@ public interface SegmentAllocator {
     @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfInt elementLayout, int... elements) {
         return allocateFrom(elementLayout, MemorySegment.ofArray(elements),
-                elementLayout.withOrder(ByteOrder.nativeOrder()), 0, elements.length);
+                ValueLayout.JAVA_INT, 0, elements.length);
     }
 
     /**
@@ -372,8 +368,7 @@ public interface SegmentAllocator {
      * @implSpec the default implementation for this method is equivalent to the following code:
      * {@snippet lang = java:
      * this.allocateFrom(layout, MemorySegment.ofArray(array),
-     *                   layout.withOrder(ByteOrder.nativeOrder()),
-     *                   0, array.length)
+     *                   ValueLayout.JAVA_FLOAT, 0, array.length)
      *}
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the float elements to be copied to the newly allocated memory block.
@@ -383,7 +378,7 @@ public interface SegmentAllocator {
     @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfFloat elementLayout, float... elements) {
         return allocateFrom(elementLayout, MemorySegment.ofArray(elements),
-                elementLayout.withOrder(ByteOrder.nativeOrder()), 0, elements.length);
+                ValueLayout.JAVA_FLOAT, 0, elements.length);
     }
 
     /**
@@ -391,8 +386,7 @@ public interface SegmentAllocator {
      * @implSpec the default implementation for this method is equivalent to the following code:
      * {@snippet lang = java:
      * this.allocateFrom(layout, MemorySegment.ofArray(array),
-     *                   layout.withOrder(ByteOrder.nativeOrder()),
-     *                   0, array.length)
+     *                   ValueLayout.JAVA_LONG, 0, array.length)
      *}
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the long elements to be copied to the newly allocated memory block.
@@ -402,7 +396,7 @@ public interface SegmentAllocator {
     @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfLong elementLayout, long... elements) {
         return allocateFrom(elementLayout, MemorySegment.ofArray(elements),
-                elementLayout.withOrder(ByteOrder.nativeOrder()), 0, elements.length);
+                ValueLayout.JAVA_LONG, 0, elements.length);
     }
 
     /**
@@ -410,8 +404,7 @@ public interface SegmentAllocator {
      * @implSpec the default implementation for this method is equivalent to the following code:
      * {@snippet lang = java:
      * this.allocateFrom(layout, MemorySegment.ofArray(array),
-     *                   layout.withOrder(ByteOrder.nativeOrder()),
-     *                   0, array.length)
+     *                   ValueLayout.JAVA_DOUBLE, 0, array.length)
      *}
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the double elements to be copied to the newly allocated memory block.
@@ -421,7 +414,7 @@ public interface SegmentAllocator {
     @ForceInline
     default MemorySegment allocateFrom(ValueLayout.OfDouble elementLayout, double... elements) {
         return allocateFrom(elementLayout, MemorySegment.ofArray(elements),
-                elementLayout.withOrder(ByteOrder.nativeOrder()), 0, elements.length);
+                ValueLayout.JAVA_DOUBLE, 0, elements.length);
     }
 
     /**
