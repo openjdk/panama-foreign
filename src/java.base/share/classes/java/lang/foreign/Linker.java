@@ -572,7 +572,7 @@ public sealed interface Linker permits AbstractLinker {
      * is a {@link MemorySegment}, whose corresponding layout is an {@linkplain GroupLayout group layout}, that needs to
      * be accessed by the linker implementation, one of the exceptions specified by the
      * {@link MemorySegment#get(ValueLayout.OfByte, long)} or the
-     * {@link MemorySegment#copy(MemorySegment, long, ValueLayout, long, long)} methods may be thrown.
+     * {@link MemorySegment#copy(MemorySegment, long, MemorySegment, long, long)} methods may be thrown.
      * The returned method handle will additionally throw {@link NullPointerException} if any argument
      * passed to it is {@code null}.
      * <p>
