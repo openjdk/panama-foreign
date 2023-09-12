@@ -41,7 +41,7 @@ import static org.openjdk.bench.java.lang.foreign.CallOverheadHelper.*;
 @Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
-@Fork(value = 3, jvmArgsAppend = { "--enable-native-access=ALL-UNNAMED", "--enable-preview" })
+@Fork(value = 3, jvmArgsAppend = { "--enable-native-access=ALL-UNNAMED" })
 public class CallOverheadConstant {
 
     @Benchmark
@@ -55,8 +55,8 @@ public class CallOverheadConstant {
     }
 
     @Benchmark
-    public void panama_blank_trivial() throws Throwable {
-        func_trivial.invokeExact();
+    public void panama_blank_critical() throws Throwable {
+        func_critical.invokeExact();
     }
 
     @Benchmark
@@ -70,8 +70,8 @@ public class CallOverheadConstant {
     }
 
     @Benchmark
-    public int panama_identity_trivial() throws Throwable {
-        return (int) identity_trivial.invokeExact(10);
+    public int panama_identity_critical() throws Throwable {
+        return (int) identity_critical.invokeExact(10);
     }
 
     @Benchmark
