@@ -90,7 +90,7 @@ public interface SegmentAllocator {
     @ForceInline
     default MemorySegment allocateFrom(String str) {
         Objects.requireNonNull(str);
-        return allocateFrom(str, sun.nio.cs.UTF_8.INSTANCE);
+        return allocateFrom(str, StandardCharsets.UTF_8);
     }
 
     /**
@@ -111,7 +111,7 @@ public interface SegmentAllocator {
      * @param charset the charset used to {@linkplain Charset#newEncoder() encode} the string bytes.
      * @return a new native segment containing the converted C string.
      * @throws UnsupportedOperationException if {@code charset} is not a {@linkplain StandardCharsets standard charset}.
-     * @implSpec the default implementation for this method copies the contents of the provided Java string
+     * @implSpec The default implementation for this method copies the contents of the provided Java string
      * into a new memory segment obtained by calling {@code this.allocate(B + N)}, where:
      * <ul>
      *     <li>{@code B} is the size, in bytes, of the string encoded using the provided charset
@@ -125,129 +125,178 @@ public interface SegmentAllocator {
         Objects.requireNonNull(charset);
         Objects.requireNonNull(str);
         int termCharSize = StringSupport.CharsetKind.of(charset).terminatorCharSize();
-        MemorySegment segment;
-        int length;
-        if (StringSupport.bytesCompatible(str, charset)) {
-            length = str.length();
-            segment = allocateNoInit(length + termCharSize);
-            StringSupport.copyToSegmentRaw(str, segment, 0);
-        } else {
-            byte[] bytes = str.getBytes(charset);
-            length = bytes.length;
-            segment = allocateNoInit(bytes.length + termCharSize);
-            MemorySegment.copy(bytes, 0, segment, ValueLayout.JAVA_BYTE, 0, bytes.length);
-        }
+        byte[] bytes = str.getBytes(charset);
+        MemorySegment segment = allocateNoInit(bytes.length + termCharSize);
+        MemorySegment.copy(bytes, 0, segment, ValueLayout.JAVA_BYTE, 0, bytes.length);
         for (int i = 0 ; i < termCharSize ; i++) {
-            segment.set(ValueLayout.JAVA_BYTE, length + i, (byte)0);
+            segment.set(ValueLayout.JAVA_BYTE, bytes.length + i, (byte)0);
         }
         return segment;
     }
 
     /**
-     * Allocates a memory segment with the given layout and initializes it with the given byte value.
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
+     * {@return a new memory segment initialized with the provided {@code byte} {@code value} as
+     * specified by the provided {@code layout} (i.e. byte ordering, alignment and size)}
+     *
+     * @implSpec The default implementation is equivalent to:
+     * {@snippet lang=java :
+     *  MemorySegment seg = allocate(Objects.requireNonNull(layout));
+     *  seg.set(layout, 0, value);
+     *  return seg;
+     * }
+     *
      * @param layout the layout of the block of memory to be allocated.
-     * @param value the value to be set on the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
+     * @param value  the value to be set in the newly allocated memory segment.
      */
     default MemorySegment allocateFrom(ValueLayout.OfByte layout, byte value) {
         Objects.requireNonNull(layout);
-        MemorySegment addr = allocateNoInit(layout);
-        addr.set(layout, 0, value);
-        return addr;
+        MemorySegment seg = allocateNoInit(layout);
+        seg.set(layout, 0, value);
+        return seg;
     }
 
     /**
-     * Allocates a memory segment with the given layout and initializes it with the given char value.
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
+     * {@return a new memory segment initialized with the provided {@code char} {@code value} as
+     * specified by the provided {@code layout} (i.e. byte ordering, alignment and size)}
+     *
+     * @implSpec The default implementation is equivalent to:
+     * {@snippet lang=java :
+     *  MemorySegment seg = allocate(Objects.requireNonNull(layout));
+     *  seg.set(layout, 0, value);
+     *  return seg;
+     * }
+     *
      * @param layout the layout of the block of memory to be allocated.
-     * @param value the value to be set on the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
+     * @param value  the value to be set in the newly allocated memory segment.
      */
     default MemorySegment allocateFrom(ValueLayout.OfChar layout, char value) {
         Objects.requireNonNull(layout);
-        MemorySegment addr = allocateNoInit(layout);
-        addr.set(layout, 0, value);
-        return addr;
+        MemorySegment seg = allocateNoInit(layout);
+        seg.set(layout, 0, value);
+        return seg;
     }
 
     /**
-     * Allocates a memory segment with the given layout and initializes it with the given short value.
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
+     * {@return a new memory segment initialized with the provided {@code short} {@code value} as
+     * specified by the provided {@code layout} (i.e. byte ordering, alignment and size)}
+     *
+     * @implSpec The default implementation is equivalent to:
+     * {@snippet lang=java :
+     *  MemorySegment seg = allocate(Objects.requireNonNull(layout));
+     *  seg.set(layout, 0, value);
+     *  return seg;
+     * }
+     *
      * @param layout the layout of the block of memory to be allocated.
-     * @param value the value to be set on the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
+     * @param value  the value to be set in the newly allocated memory segment.
      */
     default MemorySegment allocateFrom(ValueLayout.OfShort layout, short value) {
         Objects.requireNonNull(layout);
-        MemorySegment addr = allocateNoInit(layout);
-        addr.set(layout, 0, value);
-        return addr;
+        MemorySegment seg = allocateNoInit(layout);
+        seg.set(layout, 0, value);
+        return seg;
     }
 
     /**
-     * Allocates a memory segment with the given layout and initializes it with the given int value.
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
+     * {@return a new memory segment initialized with the provided {@code int} {@code value} as
+     * specified by the provided {@code layout} (i.e. byte ordering, alignment and size)}
+     *
+     * @implSpec The default implementation is equivalent to:
+     * {@snippet lang=java :
+     *  MemorySegment seg = allocate(Objects.requireNonNull(layout));
+     *  seg.set(layout, 0, value);
+     *  return seg;
+     * }
+     *
      * @param layout the layout of the block of memory to be allocated.
-     * @param value the value to be set on the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
+     * @param value  the value to be set in the newly allocated memory segment.
      */
     default MemorySegment allocateFrom(ValueLayout.OfInt layout, int value) {
         Objects.requireNonNull(layout);
-        MemorySegment addr = allocateNoInit(layout);
-        addr.set(layout, 0, value);
-        return addr;
+        MemorySegment seg = allocateNoInit(layout);
+        seg.set(layout, 0, value);
+        return seg;
     }
 
     /**
-     * Allocates a memory segment with the given layout and initializes it with the given float value.
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
+     * {@return a new memory segment initialized with the provided {@code float} {@code value} as
+     * specified by the provided {@code layout} (i.e. byte ordering, alignment and size)}
+     *
+     * @implSpec The default implementation is equivalent to:
+     * {@snippet lang=java :
+     *  MemorySegment seg = allocate(Objects.requireNonNull(layout));
+     *  seg.set(layout, 0, value);
+     *  return seg;
+     * }
+     *
      * @param layout the layout of the block of memory to be allocated.
-     * @param value the value to be set on the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
+     * @param value  the value to be set in the newly allocated memory segment.
      */
     default MemorySegment allocateFrom(ValueLayout.OfFloat layout, float value) {
         Objects.requireNonNull(layout);
-        MemorySegment addr = allocateNoInit(layout);
-        addr.set(layout, 0, value);
-        return addr;
+        MemorySegment seg = allocateNoInit(layout);
+        seg.set(layout, 0, value);
+        return seg;
     }
 
     /**
-     * Allocates a memory segment with the given layout and initializes it with the given long value.
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
+     * {@return a new memory segment initialized with the provided {@code long} {@code value} as
+     * specified by the provided {@code layout} (i.e. byte ordering, alignment and size)}
+     *
+     * @implSpec The default implementation is equivalent to:
+     * {@snippet lang=java :
+     *  MemorySegment seg = allocate(Objects.requireNonNull(layout));
+     *  seg.set(layout, 0, value);
+     *  return seg;
+     * }
+     *
      * @param layout the layout of the block of memory to be allocated.
-     * @param value the value to be set on the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
+     * @param value  the value to be set in the newly allocated memory segment.
      */
     default MemorySegment allocateFrom(ValueLayout.OfLong layout, long value) {
         Objects.requireNonNull(layout);
-        MemorySegment addr = allocateNoInit(layout);
-        addr.set(layout, 0, value);
-        return addr;
+        MemorySegment seg = allocateNoInit(layout);
+        seg.set(layout, 0, value);
+        return seg;
     }
 
     /**
-     * Allocates a memory segment with the given layout and initializes it with the given double value.
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
+     * {@return a new memory segment initialized with the provided {@code double} {@code value} as
+     * specified by the provided {@code layout} (i.e. byte ordering, alignment and size)}
+     *
+     * @implSpec The default implementation is equivalent to:
+     * {@snippet lang=java :
+     *  MemorySegment seg = allocate(Objects.requireNonNull(layout));
+     *  seg.set(layout, 0, value);
+     *  return seg;
+     * }
+     *
      * @param layout the layout of the block of memory to be allocated.
-     * @param value the value to be set on the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
+     * @param value  the value to be set in the newly allocated memory segment.
      */
     default MemorySegment allocateFrom(ValueLayout.OfDouble layout, double value) {
         Objects.requireNonNull(layout);
-        MemorySegment addr = allocateNoInit(layout);
-        addr.set(layout, 0, value);
-        return addr;
+        MemorySegment seg = allocateNoInit(layout);
+        seg.set(layout, 0, value);
+        return seg;
     }
 
     /**
-     * Allocates a memory segment with the given layout and initializes it with the given address value.
+     * {@return a new memory segment initialized with the address of the provided {@code value} as
+     * specified by the provided {@code layout} (i.e. byte ordering, alignment and size)}
+     * <p>
      * The address value might be narrowed according to the platform address size (see {@link ValueLayout#ADDRESS}).
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
+     *
+     * @implSpec The default implementation is equivalent to:
+     * {@snippet lang=java :
+     *  Objects.requireNonNull(value);
+     *  MemorySegment seg = allocate(Objects.requireNonNull(layout));
+     *  seg.set(layout, 0, value);
+     *  return seg;
+     * }
+     *
      * @param layout the layout of the block of memory to be allocated.
-     * @param value the value to be set on the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
+     * @param value  the value to be set in the newly allocated memory segment.
      */
     default MemorySegment allocateFrom(AddressLayout layout, MemorySegment value) {
         Objects.requireNonNull(value);
@@ -258,15 +307,21 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocates a memory segment with the given layout and initializes it with the bytes in the provided
-     * source memory segment.
-     * @implSpec the default implementation for this method calls {@code this.allocate(elementLayout, elementCount)}.
+     * {@return a new memory segment with a {@linkplain MemorySegment#byteSize() byteSize()} of
+     * {@code elementCount*elementLayout.byteSize()} initialized with the contents of the provided {@code source} segment
+     * as specified by the provided {@code elementLayout} (i.e. byte ordering, alignment and size)}
+     *
+     * @implSpec the default implementation for this method is equivalent to the following code:
+     * {@snippet lang = java:
+     * MemorySegment dest = this.allocate(elementLayout, elementCount);
+     * MemorySegment.copy(source, sourceElementLayout, sourceOffset, dest, elementLayout, 0, elementCount);
+     * return dest;
+     * }
      * @param elementLayout the element layout of the allocated array.
      * @param source the source segment.
      * @param sourceElementLayout the element layout of the source segment.
      * @param sourceOffset the starting offset, in bytes, of the source segment.
      * @param elementCount the number of elements in the source segment to be copied.
-     * @return a segment for the newly allocated memory block.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize() != sourceElementLayout.byteSize()}.
      * @throws IllegalArgumentException if the source segment/offset are <a href="MemorySegment.html#segment-alignment">incompatible with the alignment constraint</a>
      * in the source element layout.
@@ -292,15 +347,17 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocates a memory segment with the given layout and initializes it with the given byte elements.
+     * {@return a new memory segment with a {@linkplain MemorySegment#byteSize() byteSize()} of
+     * {@code E*layout.byteSize()} initialized with the provided {@code E} {@code byte} {@code elements} as
+     * specified by the provided {@code layout} (i.e. byte ordering, alignment and size)}
+     *
      * @implSpec the default implementation for this method is equivalent to the following code:
      * {@snippet lang = java:
      * this.allocateFrom(layout, MemorySegment.ofArray(array),
      *                   ValueLayout.JAVA_BYTE, 0, array.length)
      *}
      * @param elementLayout the element layout of the array to be allocated.
-     * @param elements the byte elements to be copied to the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
+     * @param elements      the byte elements to be copied to the newly allocated memory block.
      * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
     @ForceInline
@@ -310,15 +367,17 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocates a memory segment with the given layout and initializes it with the given short elements.
+     * {@return a new memory segment with a {@linkplain MemorySegment#byteSize() byteSize()} of
+     * {@code E*layout.byteSize()} initialized with the provided {@code E} {@code short} {@code elements} as
+     * specified by the provided {@code layout} (i.e. byte ordering, alignment and size)}
+     *
      * @implSpec the default implementation for this method is equivalent to the following code:
      * {@snippet lang = java:
      * this.allocateFrom(layout, MemorySegment.ofArray(array),
      *                   ValueLayout.JAVA_SHORT, 0, array.length)
      *}
      * @param elementLayout the element layout of the array to be allocated.
-     * @param elements the short elements to be copied to the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
+     * @param elements      the short elements to be copied to the newly allocated memory block.
      * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
     @ForceInline
@@ -328,15 +387,17 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocates a memory segment with the given layout and initializes it with the given char elements.
+     * {@return a new memory segment with a {@linkplain MemorySegment#byteSize() byteSize()} of
+     * {@code E*layout.byteSize()} initialized with the provided {@code E} {@code char} {@code elements} as
+     * specified by the provided {@code layout} (i.e. byte ordering, alignment and size)}
+     *
      * @implSpec the default implementation for this method is equivalent to the following code:
      * {@snippet lang = java:
      * this.allocateFrom(layout, MemorySegment.ofArray(array),
      *                   ValueLayout.JAVA_CHAR, 0, array.length)
      *}
      * @param elementLayout the element layout of the array to be allocated.
-     * @param elements the char elements to be copied to the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
+     * @param elements      the char elements to be copied to the newly allocated memory block.
      * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
     @ForceInline
@@ -346,15 +407,17 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocates a memory segment with the given layout and initializes it with the given int elements.
+     * {@return a new memory segment with a {@linkplain MemorySegment#byteSize() byteSize()} of
+     * {@code E*layout.byteSize()} initialized with the provided {@code E} {@code int} {@code elements} as
+     * specified by the provided {@code layout} (i.e. byte ordering, alignment and size)}
+     *
      * @implSpec the default implementation for this method is equivalent to the following code:
      * {@snippet lang = java:
      * this.allocateFrom(layout, MemorySegment.ofArray(array),
      *                   ValueLayout.JAVA_INT, 0, array.length)
      *}
      * @param elementLayout the element layout of the array to be allocated.
-     * @param elements the int elements to be copied to the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
+     * @param elements      the int elements to be copied to the newly allocated memory block.
      * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
     @ForceInline
@@ -364,7 +427,10 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocates a memory segment with the given layout and initializes it with the given float elements.
+     * {@return a new memory segment with a {@linkplain MemorySegment#byteSize() byteSize()} of
+     * {@code E*layout.byteSize()} initialized with the provided {@code E} {@code float} {@code elements} as
+     * specified by the provided {@code layout} (i.e. byte ordering, alignment and size)}
+     *
      * @implSpec the default implementation for this method is equivalent to the following code:
      * {@snippet lang = java:
      * this.allocateFrom(layout, MemorySegment.ofArray(array),
@@ -372,7 +438,6 @@ public interface SegmentAllocator {
      *}
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the float elements to be copied to the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
      * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
     @ForceInline
@@ -382,7 +447,10 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocates a memory segment with the given layout and initializes it with the given long elements.
+     * {@return a new memory segment with a {@linkplain MemorySegment#byteSize() byteSize()} of
+     * {@code E*layout.byteSize()} initialized with the provided {@code E} {@code long} {@code elements} as
+     * specified by the provided {@code layout} (i.e. byte ordering, alignment and size)}
+     *
      * @implSpec the default implementation for this method is equivalent to the following code:
      * {@snippet lang = java:
      * this.allocateFrom(layout, MemorySegment.ofArray(array),
@@ -390,7 +458,6 @@ public interface SegmentAllocator {
      *}
      * @param elementLayout the element layout of the array to be allocated.
      * @param elements the long elements to be copied to the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
      * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
     @ForceInline
@@ -400,15 +467,17 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocates a memory segment with the given layout and initializes it with the given double elements.
+     * {@return a new memory segment with a {@linkplain MemorySegment#byteSize() byteSize()} of
+     * {@code E*layout.byteSize()} initialized with the provided {@code E} {@code double} {@code elements} as
+     * specified by the provided {@code layout} (i.e. byte ordering, alignment and size)}
+     *
      * @implSpec the default implementation for this method is equivalent to the following code:
      * {@snippet lang = java:
      * this.allocateFrom(layout, MemorySegment.ofArray(array),
      *                   ValueLayout.JAVA_DOUBLE, 0, array.length)
      *}
      * @param elementLayout the element layout of the array to be allocated.
-     * @param elements the double elements to be copied to the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
+     * @param elements      the double elements to be copied to the newly allocated memory block.
      * @throws IllegalArgumentException if {@code elementLayout.byteAlignment() > elementLayout.byteSize()}.
      */
     @ForceInline
@@ -418,10 +487,12 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocates a memory segment with the given layout.
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout.byteSize(), layout.byteAlignment())}.
+     * {@return a new memory segment with the given layout}
+     *
+     * @implSpec The default implementation for this method calls
+     * {@code this.allocate(layout.byteSize(), layout.byteAlignment())}.
+     *
      * @param layout the layout of the block of memory to be allocated.
-     * @return a segment for the newly allocated memory block.
      */
     default MemorySegment allocate(MemoryLayout layout) {
         Objects.requireNonNull(layout);
@@ -429,11 +500,13 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocates a memory segment with the given element layout and size.
-     * @implSpec the default implementation for this method calls {@code this.allocate(MemoryLayout.sequenceLayout(count, elementLayout))}.
+     * {@return a new memory segment with the given {@code elementLayout} and {@code count}}
+     *
+     * @implSpec The default implementation for this method calls
+     * {@code this.allocate(MemoryLayout.sequenceLayout(count, elementLayout))}.
+     *
      * @param elementLayout the array element layout.
      * @param count the array element count.
-     * @return a segment for the newly allocated memory block.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize() * count} overflows.
      * @throws IllegalArgumentException if {@code count < 0}.
      */
@@ -446,10 +519,12 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocates a memory segment with the given size.
-     * @implSpec the default implementation for this method calls {@code this.allocate(byteSize, 1)}.
+     * {@return a new memory segment with the given {@code byteSize}}
+     *
+     * @implSpec The default implementation for this method calls
+     * {@code this.allocate(byteSize, 1)}.
+     *
      * @param byteSize the size (in bytes) of the block of memory to be allocated.
-     * @return a segment for the newly allocated memory block.
      * @throws IllegalArgumentException if {@code byteSize < 0}
      */
     default MemorySegment allocate(long byteSize) {
@@ -457,10 +532,10 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocates a memory segment with the given size and alignment constraint.
+     * {@return a new memory segment with the given {@code byteSize} and {@code byteAlignment}}
+     *
      * @param byteSize the size (in bytes) of the block of memory to be allocated.
      * @param byteAlignment the alignment (in bytes) of the block of memory to be allocated.
-     * @return a segment for the newly allocated memory block.
      * @throws IllegalArgumentException if {@code byteSize < 0}, {@code byteAlignment <= 0},
      * or if {@code byteAlignment} is not a power of 2.
      */
@@ -473,6 +548,7 @@ public interface SegmentAllocator {
      * <p>
      * The returned allocator throws {@link IndexOutOfBoundsException} when a slice of the provided
      * segment with the requested size and alignment cannot be found.
+     *
      * @implNote A slicing allocator is not <em>thread-safe</em>.
      *
      * @param segment the segment which the returned allocator should slice from.
