@@ -96,7 +96,7 @@ public final class FallbackLinker extends AbstractLinker {
                 .mapToInt(CapturableState::mask)
                 .reduce(0, (a, b) -> a | b);
         DowncallData invData = new DowncallData(cif, function.returnLayout().orElse(null),
-                function.argumentLayouts(), capturedStateMask);
+                function.argumentLayouts(), capturedStateMask, options.allowsHeapAccess());
 
         MethodHandle target = MethodHandles.insertArguments(MH_DO_DOWNCALL, 2, invData);
 
@@ -156,12 +156,13 @@ public final class FallbackLinker extends AbstractLinker {
     }
 
     private record DowncallData(MemorySegment cif, MemoryLayout returnLayout, List<MemoryLayout> argLayouts,
-                                int capturedStateMask) {}
+                                int capturedStateMask, boolean allowsHeapAccess) {}
 
     private static Object doDowncall(SegmentAllocator returnAllocator, Object[] args, DowncallData invData) {
         List<MemorySessionImpl> acquiredSessions = new ArrayList<>();
         try (Arena arena = Arena.ofConfined()) {
             int argStart = 0;
+            Object[] heapBases = invData.allowsHeapAccess() ? new Object[args.length] : null;
 
             MemorySegment target = (MemorySegment) args[argStart++];
             MemorySessionImpl targetImpl = ((AbstractMemorySegmentImpl) target).sessionImpl();
@@ -182,11 +183,13 @@ public final class FallbackLinker extends AbstractLinker {
                 Object arg = args[argStart + i];
                 MemoryLayout layout = argLayouts.get(i);
                 MemorySegment argSeg = arena.allocate(layout);
+                final int finalI = i;
                 writeValue(arg, layout, argSeg, addr -> {
                     MemorySessionImpl sessionImpl = ((AbstractMemorySegmentImpl) addr).sessionImpl();
                     sessionImpl.acquire0();
                     acquiredSessions.add(sessionImpl);
-                });
+                },
+                invData.allowsHeapAccess(), hb -> heapBases[finalI] = hb);
                 argPtrs.setAtIndex(ADDRESS, i, argSeg);
             }
 
@@ -195,7 +198,8 @@ public final class FallbackLinker extends AbstractLinker {
                 retSeg = (invData.returnLayout() instanceof GroupLayout ? returnAllocator : arena).allocate(invData.returnLayout);
             }
 
-            LibFallback.doDowncall(invData.cif, target, retSeg, argPtrs, capturedState, invData.capturedStateMask());
+            LibFallback.doDowncall(invData.cif, target, retSeg, argPtrs, capturedState, invData.capturedStateMask(),
+                                   heapBases, args.length);
 
             Reference.reachabilityFence(invData.cif());
 
@@ -236,11 +240,12 @@ public final class FallbackLinker extends AbstractLinker {
 
     // where
     private static void writeValue(Object arg, MemoryLayout layout, MemorySegment argSeg) {
-        writeValue(arg, layout, argSeg, addr -> {});
+        writeValue(arg, layout, argSeg, addr -> {}, false, hb -> {});
     }
 
     private static void writeValue(Object arg, MemoryLayout layout, MemorySegment argSeg,
-                                   Consumer<MemorySegment> acquireCallback) {
+                                   Consumer<MemorySegment> acquireCallback, boolean allowHeapAccess,
+                                   Consumer<Object> heapBaseCallback) {
         switch (layout) {
             case ValueLayout.OfBoolean bl -> argSeg.set(bl, 0, (Boolean) arg);
             case ValueLayout.OfByte    bl -> argSeg.set(bl, 0, (Byte) arg);
@@ -253,7 +258,13 @@ public final class FallbackLinker extends AbstractLinker {
             case AddressLayout         al -> {
                 MemorySegment addrArg = (MemorySegment) arg;
                 acquireCallback.accept(addrArg);
-                argSeg.set(al, 0, addrArg);
+                if (allowHeapAccess && arg instanceof MemorySegment ms && !ms.isNative()) {
+                    heapBaseCallback.accept(ms.heapBase().get());
+                    // write the offset to the arg segment, add array ptr to it in native code
+                    argSeg.set(JAVA_LONG, 0, ms.address());
+                } else {
+                    argSeg.set(al, 0, addrArg);
+                }
             }
             case GroupLayout           __ ->
                     MemorySegment.copy((MemorySegment) arg, 0, argSeg, 0, argSeg.byteSize()); // by-value struct
