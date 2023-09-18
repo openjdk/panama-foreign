@@ -169,8 +169,8 @@ public class LayoutPath {
     }
 
     public LayoutPath derefElement() {
-        AddressLayout adr = requireLayoutType(AddressLayout.class);
-        var derefLayout = adr.targetLayout()
+        AddressLayout addressLayout = requireLayoutType(AddressLayout.class);
+        var derefLayout = addressLayout.targetLayout()
                 .orElseThrow(() -> badLayoutPath("no targetLayout: " + layout));
         MethodHandle handle = dereferenceHandle(false).toMethodHandle(VarHandle.AccessMode.GET);
         handle = MethodHandles.filterReturnValue(handle,
@@ -193,13 +193,13 @@ public class LayoutPath {
     }
 
     public VarHandle dereferenceHandle(boolean adapt) {
-        if (!(layout instanceof ValueLayout val)) {
+        if (!(layout instanceof ValueLayout valueLayout)) {
             throw new IllegalArgumentException("Path does not select a value layout: " + layout);
         }
 
         // If we have an enclosing layout, drop the alignment check for the accessed element,
         // we check the root layout instead
-        ValueLayout accessedLayout = enclosing != null ? val.withByteAlignment(1) : val;
+        ValueLayout accessedLayout = enclosing != null ? valueLayout.withByteAlignment(1) : valueLayout;
         VarHandle handle = accessedLayout.varHandle();
         handle = MethodHandles.collectCoordinates(handle, 1, offsetHandle());
 
