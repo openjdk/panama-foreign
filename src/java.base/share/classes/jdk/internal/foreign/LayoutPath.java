@@ -132,16 +132,16 @@ public class LayoutPath {
     }
 
     public LayoutPath groupElement(String name) {
-        GroupLayout grp = requireLayoutType(GroupLayout.class);
+        GroupLayout g = requireLayoutType(GroupLayout.class);
         long offset = 0;
         MemoryLayout elem = null;
-        for (int i = 0; i < grp.memberLayouts().size(); i++) {
-            MemoryLayout l = grp.memberLayouts().get(i);
+        for (int i = 0; i < g.memberLayouts().size(); i++) {
+            MemoryLayout l = g.memberLayouts().get(i);
             if (l.name().isPresent() &&
-                    l.name().get().equals(name)) {
+                l.name().get().equals(name)) {
                 elem = l;
                 break;
-            } else if (grp instanceof StructLayout) {
+            } else if (g instanceof StructLayout) {
                 offset += l.byteSize();
             }
         }
@@ -152,16 +152,16 @@ public class LayoutPath {
     }
 
     public LayoutPath groupElement(long index) {
-        GroupLayout grp = requireLayoutType(GroupLayout.class);
-        long elemSize = grp.memberLayouts().size();
+        GroupLayout g = requireLayoutType(GroupLayout.class);
+        long elemSize = g.memberLayouts().size();
         long offset = 0;
         MemoryLayout elem = null;
         for (int i = 0; i <= index; i++) {
             if (i == elemSize) {
                 throw badLayoutPath("cannot resolve element " + index + " in layout " + layout);
             }
-            elem = grp.memberLayouts().get(i);
-            if (grp instanceof StructLayout && i < index) {
+            elem = g.memberLayouts().get(i);
+            if (g instanceof StructLayout && i < index) {
                 offset += elem.byteSize();
             }
         }
