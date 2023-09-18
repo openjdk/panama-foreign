@@ -105,15 +105,13 @@ public class LayoutPath {
     // Layout path selector methods
 
     public LayoutPath sequenceElement() {
-        check(SequenceLayout.class, "attempting to select a sequence element from a non-sequence layout");
-        SequenceLayout seq = (SequenceLayout)layout;
+        SequenceLayout seq = requireLayoutType(SequenceLayout.class);
         MemoryLayout elem = seq.elementLayout();
         return LayoutPath.nestedPath(elem, offset, addStride(elem.byteSize()), addBound(seq.elementCount()), derefAdapters, this);
     }
 
     public LayoutPath sequenceElement(long start, long step) {
-        check(SequenceLayout.class, "attempting to select a sequence element from a non-sequence layout");
-        SequenceLayout seq = (SequenceLayout)layout;
+        SequenceLayout seq = requireLayoutType(SequenceLayout.class);
         checkSequenceBounds(seq, start);
         MemoryLayout elem = seq.elementLayout();
         long elemSize = elem.byteSize();
@@ -122,30 +120,28 @@ public class LayoutPath {
                 start + 1;
         long maxIndex = Math.ceilDiv(nelems, Math.abs(step));
         return LayoutPath.nestedPath(elem, offset + (start * elemSize),
-                                     addStride(elemSize * step), addBound(maxIndex), derefAdapters, this);
+                addStride(elemSize * step), addBound(maxIndex), derefAdapters, this);
     }
 
     public LayoutPath sequenceElement(long index) {
-        check(SequenceLayout.class, "attempting to select a sequence element from a non-sequence layout");
-        SequenceLayout seq = (SequenceLayout)layout;
+        SequenceLayout seq = requireLayoutType(SequenceLayout.class);
         checkSequenceBounds(seq, index);
         long elemSize = seq.elementLayout().byteSize();
         long elemOffset = elemSize * index;
-        return LayoutPath.nestedPath(seq.elementLayout(), offset + elemOffset, strides, bounds, derefAdapters,this);
+        return LayoutPath.nestedPath(seq.elementLayout(), offset + elemOffset, strides, bounds, derefAdapters, this);
     }
 
     public LayoutPath groupElement(String name) {
-        check(GroupLayout.class, "attempting to select a group element from a non-group layout");
-        GroupLayout g = (GroupLayout)layout;
+        GroupLayout grp = requireLayoutType(GroupLayout.class);
         long offset = 0;
         MemoryLayout elem = null;
-        for (int i = 0; i < g.memberLayouts().size(); i++) {
-            MemoryLayout l = g.memberLayouts().get(i);
+        for (int i = 0; i < grp.memberLayouts().size(); i++) {
+            MemoryLayout l = grp.memberLayouts().get(i);
             if (l.name().isPresent() &&
-                l.name().get().equals(name)) {
+                    l.name().get().equals(name)) {
                 elem = l;
                 break;
-            } else if (g instanceof StructLayout) {
+            } else if (grp instanceof StructLayout) {
                 offset += l.byteSize();
             }
         }
@@ -156,17 +152,16 @@ public class LayoutPath {
     }
 
     public LayoutPath groupElement(long index) {
-        check(GroupLayout.class, "attempting to select a group element from a non-group layout");
-        GroupLayout g = (GroupLayout)layout;
-        long elemSize = g.memberLayouts().size();
+        GroupLayout grp = requireLayoutType(GroupLayout.class);
+        long elemSize = grp.memberLayouts().size();
         long offset = 0;
         MemoryLayout elem = null;
         for (int i = 0; i <= index; i++) {
             if (i == elemSize) {
                 throw badLayoutPath("cannot resolve element " + index + " in layout " + layout);
             }
-            elem = g.memberLayouts().get(i);
-            if (g instanceof StructLayout && i < index) {
+            elem = grp.memberLayouts().get(i);
+            if (grp instanceof StructLayout && i < index) {
                 offset += elem.byteSize();
             }
         }
@@ -174,11 +169,9 @@ public class LayoutPath {
     }
 
     public LayoutPath derefElement() {
-        if (!(layout instanceof AddressLayout addressLayout) ||
-                addressLayout.targetLayout().isEmpty()) {
-            throw badLayoutPath("Cannot dereference layout: " + layout);
-        }
-        MemoryLayout derefLayout = addressLayout.targetLayout().get();
+        AddressLayout adr = requireLayoutType(AddressLayout.class);
+        var derefLayout = adr.targetLayout()
+                .orElseThrow(() -> badLayoutPath("no targetLayout: " + layout));
         MethodHandle handle = dereferenceHandle(false).toMethodHandle(VarHandle.AccessMode.GET);
         handle = MethodHandles.filterReturnValue(handle,
                 MethodHandles.insertArguments(MH_SEGMENT_RESIZE, 1, derefLayout));
@@ -200,13 +193,13 @@ public class LayoutPath {
     }
 
     public VarHandle dereferenceHandle(boolean adapt) {
-        if (!(layout instanceof ValueLayout valueLayout)) {
-            throw new IllegalArgumentException("Path does not select a value layout");
+        if (!(layout instanceof ValueLayout val)) {
+            throw new IllegalArgumentException("Path does not select a value layout: " + layout);
         }
 
         // If we have an enclosing layout, drop the alignment check for the accessed element,
         // we check the root layout instead
-        ValueLayout accessedLayout = enclosing != null ? valueLayout.withByteAlignment(1) : valueLayout;
+        ValueLayout accessedLayout = enclosing != null ? val.withByteAlignment(1) : val;
         VarHandle handle = accessedLayout.varHandle();
         handle = MethodHandles.collectCoordinates(handle, 1, offsetHandle());
 
@@ -288,7 +281,9 @@ public class LayoutPath {
 
     private static void checkAlign(MemorySegment segment, long offset, MemoryLayout constraint) {
         if (!((AbstractMemorySegmentImpl) segment).isAlignedForElement(offset, constraint)) {
-            throw new IllegalArgumentException("Target offset incompatible with alignment constraints: " + constraint.byteAlignment());
+            throw new IllegalArgumentException(String.format(
+                    "Target offset %d is incompatible with byteAlignment %d (of %s) for segment %s"
+                    , offset, constraint.byteAlignment(), constraint, segment));
         }
     }
 
@@ -314,15 +309,17 @@ public class LayoutPath {
 
     // Helper methods
 
-    private void check(Class<?> layoutClass, String msg) {
+    private <T extends MemoryLayout> T requireLayoutType(Class<T> layoutClass) {
         if (!layoutClass.isAssignableFrom(layout.getClass())) {
-            throw badLayoutPath(msg);
+            throw badLayoutPath("unable to select a " + layoutClass.getSimpleName() + " from layout: " + layout);
         }
+        return layoutClass.cast(layout);
     }
 
     private void checkSequenceBounds(SequenceLayout seq, long index) {
         if (index >= seq.elementCount()) {
-            throw badLayoutPath(String.format("Sequence index out of bound; found: %d, size: %d", index, seq.elementCount()));
+            throw badLayoutPath(String.format("sequence index out of bounds; index: %d, elementCount is %d for layout %s",
+                    index, seq.elementCount(), seq));
         }
     }
 
