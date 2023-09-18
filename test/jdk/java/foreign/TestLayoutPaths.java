@@ -147,19 +147,19 @@ public class TestLayoutPaths {
             assertEquals(seg.address() % JAVA_SHORT.byteAlignment(), 0); // should be aligned
             assertNotEquals(seg.address() % struct.byteAlignment(), 0); // should not be aligned
 
-            String expectedMessage = "Target offset incompatible with alignment constraints: " + struct.byteAlignment();
+            String expectedMessage = "Target offset 0 is incompatible with byteAlignment "+struct.byteAlignment()+" (of [i4s2(x)]) for segment MemorySegment";
 
             VarHandle vhX = struct.varHandle(groupElement("x"));
             IllegalArgumentException iae = expectThrows(IllegalArgumentException.class, () -> {
                 vhX.set(seg, 0L, (short) 42);
             });
-            assertEquals(iae.getMessage(), expectedMessage);
+            assertTrue(iae.getMessage().startsWith(expectedMessage));
 
             MethodHandle sliceX = struct.sliceHandle(groupElement("x"));
             iae = expectThrows(IllegalArgumentException.class, () -> {
                 MemorySegment slice = (MemorySegment) sliceX.invokeExact(seg, 0L);
             });
-            assertEquals(iae.getMessage(), expectedMessage);
+            assertTrue(iae.getMessage().startsWith(expectedMessage));
         }
     }
 
