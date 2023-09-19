@@ -26,6 +26,7 @@
 package jdk.internal.foreign;
 
 import jdk.internal.vm.annotation.ForceInline;
+import jdk.internal.vm.annotation.Stable;
 
 import java.lang.foreign.AddressLayout;
 import java.lang.foreign.GroupLayout;
@@ -44,6 +45,9 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.joining;
 
 /**
  * This class provide support for constructing layout paths; that is, starting from a root path (see {@link #rootPath(MemoryLayout)},
@@ -89,9 +93,11 @@ public class LayoutPath {
     private final MemoryLayout layout;
     private final long offset;
     private final LayoutPath enclosing;
+    @Stable
     private final long[] strides;
-
+    @Stable
     private final long[] bounds;
+    @Stable
     private final MethodHandle[] derefAdapters;
 
     private LayoutPath(MemoryLayout layout, long offset, long[] strides, long[] bounds, MethodHandle[] derefAdapters, LayoutPath enclosing) {
@@ -147,7 +153,8 @@ public class LayoutPath {
             }
         }
         if (elem == null) {
-            throw badLayoutPath("cannot resolve '" + name + "' in layout " + layout);
+            throw badLayoutPath(
+                    String.format("cannot resolve '%s' in layout %s (%s)", name, layout, breadcrumbs()));
         }
         return LayoutPath.nestedPath(elem, this.offset + offset, strides, bounds, derefAdapters, this);
     }
@@ -159,7 +166,8 @@ public class LayoutPath {
         MemoryLayout elem = null;
         for (int i = 0; i <= index; i++) {
             if (i == elemSize) {
-                throw badLayoutPath("cannot resolve element " + index + " in layout " + layout);
+                throw badLayoutPath(
+                        String.format("cannot resolve element %d in layout: %s (%s)", index, layout, breadcrumbs()));
             }
             elem = g.memberLayouts().get(i);
             if (g instanceof StructLayout && i < index) {
@@ -172,7 +180,8 @@ public class LayoutPath {
     public LayoutPath derefElement() {
         AddressLayout addressLayout = requireLayoutType(AddressLayout.class);
         var derefLayout = addressLayout.targetLayout()
-                .orElseThrow(() -> badLayoutPath("no targetLayout: " + layout));
+                .orElseThrow(() -> badLayoutPath(
+                        String.format("no targetLayout: %s (%s)", layout, breadcrumbs())));
         MethodHandle handle = dereferenceHandle(false).toMethodHandle(VarHandle.AccessMode.GET);
         handle = MethodHandles.filterReturnValue(handle,
                 MethodHandles.insertArguments(MH_SEGMENT_RESIZE, 1, derefLayout));
@@ -195,7 +204,8 @@ public class LayoutPath {
 
     public VarHandle dereferenceHandle(boolean adapt) {
         if (!(layout instanceof ValueLayout valueLayout)) {
-            throw new IllegalArgumentException("Path does not select a value layout: " + layout);
+            throw new IllegalArgumentException(
+                    String.format("Path does not select a value layout: %s (%s)", layout, breadcrumbs()));
         }
 
         // If we have an enclosing layout, drop the alignment check for the accessed element,
@@ -318,16 +328,16 @@ public class LayoutPath {
                     .substring(0, name.indexOf("Layout"))
                     .toLowerCase(Locale.ROOT);
             throw badLayoutPath(
-                    String.format("attempting to select a %s element from a non-%s layout: %s",
-                            type, type, layout));
+                    String.format("attempting to select a %s element from a non-%s layout: %s (%s)",
+                            type, type, layout, breadcrumbs()));
         }
         return layoutClass.cast(layout);
     }
 
     private void checkSequenceBounds(SequenceLayout seq, long index) {
         if (index >= seq.elementCount()) {
-            throw badLayoutPath(String.format("sequence index out of bounds; index: %d, elementCount is %d for layout %s",
-                    index, seq.elementCount(), seq));
+            throw badLayoutPath(String.format("sequence index out of bounds; index: %d, elementCount is %d for layout %s (%s)",
+                    index, seq.elementCount(), seq, breadcrumbs()));
         }
     }
 
@@ -345,6 +355,18 @@ public class LayoutPath {
         long[] newBounds = Arrays.copyOf(bounds, bounds.length + 1);
         newBounds[bounds.length] = maxIndex;
         return newBounds;
+    }
+
+    private String breadcrumbs() {
+        var layouts = Stream.iterate(this, Objects::nonNull, lp -> lp.enclosing)
+                .map(LayoutPath::layout)
+                .toList()
+                .reversed();
+        return layouts.size() == 1
+                ? "root"
+                : layouts.stream()
+                .map(Object::toString)
+                .collect(joining(" -> "));
     }
 
     /**

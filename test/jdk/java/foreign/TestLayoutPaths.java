@@ -165,15 +165,35 @@ public class TestLayoutPaths {
     }
 
     @Test
-    public void testWrongType() {
+    public void testWrongTypeRoot() {
         MemoryLayout struct = MemoryLayout.structLayout(
-                JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN), JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN)
+                JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN),
+                JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN)
         );
 
-        var expectedMessage = "Bad layout path: attempting to select a sequence element from a non-sequence layout: [i4i4]";
+        var expectedMessage = "Bad layout path: attempting to select a sequence element from a non-sequence layout: [i4i4] (root)";
 
         IllegalArgumentException iae = expectThrows(IllegalArgumentException.class, () ->
                 struct.select(PathElement.sequenceElement()));
+        assertEquals(iae.getMessage(), expectedMessage);
+    }
+
+    @Test
+    public void testWrongTypeEnclosing() {
+        MemoryLayout struct = MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, MemoryLayout.structLayout(
+                                JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN).withName("3a"),
+                                JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN).withName("3b")
+                        ).withName("2")
+                ).withName("1")
+        ).withName("0");
+
+        var expectedMessage = "Bad layout path: attempting to select a sequence element from a non-sequence layout: [i4(3a)i4(3b)](2) ([[2:[i4(3a)i4(3b)](2)](1)](0) -> [2:[i4(3a)i4(3b)](2)](1) -> [i4(3a)i4(3b)](2))";
+
+        IllegalArgumentException iae = expectThrows(IllegalArgumentException.class, () ->
+                struct.select(PathElement.groupElement("1"),
+                        PathElement.sequenceElement(),
+                        PathElement.sequenceElement()));
         assertEquals(iae.getMessage(), expectedMessage);
     }
 
