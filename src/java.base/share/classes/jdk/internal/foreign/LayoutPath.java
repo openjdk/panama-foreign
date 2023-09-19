@@ -282,7 +282,7 @@ public class LayoutPath {
     private static void checkAlign(MemorySegment segment, long offset, MemoryLayout constraint) {
         if (!((AbstractMemorySegmentImpl) segment).isAlignedForElement(offset, constraint)) {
             throw new IllegalArgumentException(String.format(
-                    "Target offset %d is incompatible with byteAlignment %d (of %s) for segment %s"
+                    "Target offset %d is incompatible with alignment constraint %d (of %s) for segment %s"
                     , offset, constraint.byteAlignment(), constraint, segment));
         }
     }
