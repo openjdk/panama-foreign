@@ -76,7 +76,7 @@ public class TestHeapAlignment {
         } catch (IllegalArgumentException ex) {
             if (!shouldFail) {
                 fail("Should not get here!");
-            } else if (!ex.getMessage().contains("lignment") && !ex.getMessage().contains("Misaligned")) {
+            } else if (!ex.getMessage().contains("alignment") && !ex.getMessage().contains("Misaligned")) {
                 fail("Unexpected exception: " + ex);
             }
         }

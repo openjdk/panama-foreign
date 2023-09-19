@@ -40,6 +40,7 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
 import java.util.stream.IntStream;
@@ -311,7 +312,14 @@ public class LayoutPath {
 
     private <T extends MemoryLayout> T requireLayoutType(Class<T> layoutClass) {
         if (!layoutClass.isAssignableFrom(layout.getClass())) {
-            throw badLayoutPath("unable to select a " + layoutClass.getSimpleName() + " from layout: " + layout);
+            var name = layoutClass.getSimpleName();
+            var type = name
+                    // Take what is before "Layout"
+                    .substring(0, name.indexOf("Layout"))
+                    .toLowerCase(Locale.ROOT);
+            throw badLayoutPath(
+                    String.format("attempting to select a %s element from a non-%s layout: %s",
+                            type, type, layout));
         }
         return layoutClass.cast(layout);
     }
