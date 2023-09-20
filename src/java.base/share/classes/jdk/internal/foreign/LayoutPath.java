@@ -93,11 +93,8 @@ public class LayoutPath {
     private final MemoryLayout layout;
     private final long offset;
     private final LayoutPath enclosing;
-    @Stable
     private final long[] strides;
-    @Stable
     private final long[] bounds;
-    @Stable
     private final MethodHandle[] derefAdapters;
 
     private LayoutPath(MemoryLayout layout, long offset, long[] strides, long[] bounds, MethodHandle[] derefAdapters, LayoutPath enclosing) {
