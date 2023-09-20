@@ -109,13 +109,13 @@ public class LayoutPath {
     // Layout path selector methods
 
     public LayoutPath sequenceElement() {
-        SequenceLayout seq = requireLayoutType(SequenceLayout.class);
+        SequenceLayout seq = requireLayoutType(SequenceLayout.class, "sequence");
         MemoryLayout elem = seq.elementLayout();
         return LayoutPath.nestedPath(elem, offset, addStride(elem.byteSize()), addBound(seq.elementCount()), derefAdapters, this);
     }
 
     public LayoutPath sequenceElement(long start, long step) {
-        SequenceLayout seq = requireLayoutType(SequenceLayout.class);
+        SequenceLayout seq = requireLayoutType(SequenceLayout.class, "sequence");
         checkSequenceBounds(seq, start);
         MemoryLayout elem = seq.elementLayout();
         long elemSize = elem.byteSize();
@@ -128,7 +128,7 @@ public class LayoutPath {
     }
 
     public LayoutPath sequenceElement(long index) {
-        SequenceLayout seq = requireLayoutType(SequenceLayout.class);
+        SequenceLayout seq = requireLayoutType(SequenceLayout.class, "sequence");
         checkSequenceBounds(seq, index);
         long elemSize = seq.elementLayout().byteSize();
         long elemOffset = elemSize * index;
@@ -136,7 +136,7 @@ public class LayoutPath {
     }
 
     public LayoutPath groupElement(String name) {
-        GroupLayout g = requireLayoutType(GroupLayout.class);
+        GroupLayout g = requireLayoutType(GroupLayout.class, "group");
         long offset = 0;
         MemoryLayout elem = null;
         for (int i = 0; i < g.memberLayouts().size(); i++) {
@@ -157,7 +157,7 @@ public class LayoutPath {
     }
 
     public LayoutPath groupElement(long index) {
-        GroupLayout g = requireLayoutType(GroupLayout.class);
+        GroupLayout g = requireLayoutType(GroupLayout.class, "group");
         long elemSize = g.memberLayouts().size();
         long offset = 0;
         MemoryLayout elem = null;
@@ -175,10 +175,12 @@ public class LayoutPath {
     }
 
     public LayoutPath derefElement() {
-        AddressLayout addressLayout = requireLayoutType(AddressLayout.class);
-        var derefLayout = addressLayout.targetLayout()
-                .orElseThrow(() -> badLayoutPath(
-                        String.format("no targetLayout: %s (%s)", layout, breadcrumbs())));
+        if (!(layout instanceof AddressLayout addressLayout) ||
+                addressLayout.targetLayout().isEmpty()) {
+            throw badLayoutPath(
+                    String.format("Cannot dereference layout: %s (%s)", layout, breadcrumbs()));
+        }
+        MemoryLayout derefLayout = addressLayout.targetLayout().get();
         MethodHandle handle = dereferenceHandle(false).toMethodHandle(VarHandle.AccessMode.GET);
         handle = MethodHandles.filterReturnValue(handle,
                 MethodHandles.insertArguments(MH_SEGMENT_RESIZE, 1, derefLayout));
@@ -317,16 +319,11 @@ public class LayoutPath {
 
     // Helper methods
 
-    private <T extends MemoryLayout> T requireLayoutType(Class<T> layoutClass) {
+    private <T extends MemoryLayout> T requireLayoutType(Class<T> layoutClass, String name) {
         if (!layoutClass.isAssignableFrom(layout.getClass())) {
-            var name = layoutClass.getSimpleName();
-            var type = name
-                    // Take what is before "Layout"
-                    .substring(0, name.indexOf("Layout"))
-                    .toLowerCase(Locale.ROOT);
             throw badLayoutPath(
                     String.format("attempting to select a %s element from a non-%s layout: %s (%s)",
-                            type, type, layout, breadcrumbs()));
+                            name, name, layout, breadcrumbs()));
         }
         return layoutClass.cast(layout);
     }
