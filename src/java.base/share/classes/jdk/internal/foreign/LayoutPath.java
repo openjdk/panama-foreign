@@ -151,7 +151,7 @@ public class LayoutPath {
         }
         if (elem == null) {
             throw badLayoutPath(
-                    String.format("cannot resolve '%s' in layout %s (%s)", name, layout, breadcrumbs()));
+                    String.format("cannot resolve '%s' in layout %s", name, breadcrumbs()));
         }
         return LayoutPath.nestedPath(elem, this.offset + offset, strides, bounds, derefAdapters, this);
     }
@@ -164,7 +164,7 @@ public class LayoutPath {
         for (int i = 0; i <= index; i++) {
             if (i == elemSize) {
                 throw badLayoutPath(
-                        String.format("cannot resolve element %d in layout: %s (%s)", index, layout, breadcrumbs()));
+                        String.format("cannot resolve element %d in layout: %s", index, breadcrumbs()));
             }
             elem = g.memberLayouts().get(i);
             if (g instanceof StructLayout && i < index) {
@@ -178,7 +178,7 @@ public class LayoutPath {
         if (!(layout instanceof AddressLayout addressLayout) ||
                 addressLayout.targetLayout().isEmpty()) {
             throw badLayoutPath(
-                    String.format("Cannot dereference layout: %s (%s)", layout, breadcrumbs()));
+                    String.format("Cannot dereference layout: %s", breadcrumbs()));
         }
         MemoryLayout derefLayout = addressLayout.targetLayout().get();
         MethodHandle handle = dereferenceHandle(false).toMethodHandle(VarHandle.AccessMode.GET);
@@ -204,7 +204,7 @@ public class LayoutPath {
     public VarHandle dereferenceHandle(boolean adapt) {
         if (!(layout instanceof ValueLayout valueLayout)) {
             throw new IllegalArgumentException(
-                    String.format("Path does not select a value layout: %s (%s)", layout, breadcrumbs()));
+                    String.format("Path does not select a value layout: %s", breadcrumbs()));
         }
 
         // If we have an enclosing layout, drop the alignment check for the accessed element,
@@ -330,16 +330,16 @@ public class LayoutPath {
     private <T extends MemoryLayout> T requireLayoutType(Class<T> layoutClass, String name) {
         if (!layoutClass.isAssignableFrom(layout.getClass())) {
             throw badLayoutPath(
-                    String.format("attempting to select a %s element from a non-%s layout: %s (%s)",
-                            name, name, layout, breadcrumbs()));
+                    String.format("attempting to select a %s element from a non-%s layout: %s",
+                            name, name, breadcrumbs()));
         }
         return layoutClass.cast(layout);
     }
 
     private void checkSequenceBounds(SequenceLayout seq, long index) {
         if (index >= seq.elementCount()) {
-            throw badLayoutPath(String.format("sequence index out of bounds; index: %d, elementCount is %d for layout %s (%s)",
-                    index, seq.elementCount(), seq, breadcrumbs()));
+            throw badLayoutPath(String.format("sequence index out of bounds; index: %d, elementCount is %d for layout %s",
+                    index, seq.elementCount(), breadcrumbs()));
         }
     }
 
@@ -360,15 +360,10 @@ public class LayoutPath {
     }
 
     private String breadcrumbs() {
-        var layouts = Stream.iterate(this, Objects::nonNull, lp -> lp.enclosing)
+        return Stream.iterate(this, Objects::nonNull, lp -> lp.enclosing)
                 .map(LayoutPath::layout)
-                .toList()
-                .reversed();
-        return layouts.size() == 1
-                ? "root"
-                : layouts.stream()
                 .map(Object::toString)
-                .collect(joining(" -> "));
+                .collect(joining(", selected from: "));
     }
 
     /**

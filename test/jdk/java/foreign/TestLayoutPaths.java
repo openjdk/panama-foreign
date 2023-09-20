@@ -171,7 +171,7 @@ public class TestLayoutPaths {
                 JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN)
         );
 
-        var expectedMessage = "Bad layout path: attempting to select a sequence element from a non-sequence layout: [i4i4] (root)";
+        var expectedMessage = "Bad layout path: attempting to select a sequence element from a non-sequence layout: [i4i4]";
 
         IllegalArgumentException iae = expectThrows(IllegalArgumentException.class, () ->
                 struct.select(PathElement.sequenceElement()));
@@ -188,7 +188,10 @@ public class TestLayoutPaths {
                 ).withName("1")
         ).withName("0");
 
-        var expectedMessage = "Bad layout path: attempting to select a sequence element from a non-sequence layout: [i4(3a)i4(3b)](2) ([[2:[i4(3a)i4(3b)](2)](1)](0) -> [2:[i4(3a)i4(3b)](2)](1) -> [i4(3a)i4(3b)](2))";
+        var expectedMessage = "Bad layout path: attempting to select a sequence element from a non-sequence layout: " +
+                "[i4(3a)i4(3b)](2), selected from: " +
+                "[2:[i4(3a)i4(3b)](2)](1), selected from: " +
+                "[[2:[i4(3a)i4(3b)](2)](1)](0)";
 
         IllegalArgumentException iae = expectThrows(IllegalArgumentException.class, () ->
                 struct.select(PathElement.groupElement("1"),
