@@ -109,13 +109,13 @@ public class LayoutPath {
     // Layout path selector methods
 
     public LayoutPath sequenceElement() {
-        SequenceLayout seq = requireLayoutType(SequenceLayout.class, "sequence");
+        SequenceLayout seq = requireSequenceLayout();
         MemoryLayout elem = seq.elementLayout();
         return LayoutPath.nestedPath(elem, offset, addStride(elem.byteSize()), addBound(seq.elementCount()), derefAdapters, this);
     }
 
     public LayoutPath sequenceElement(long start, long step) {
-        SequenceLayout seq = requireLayoutType(SequenceLayout.class, "sequence");
+        SequenceLayout seq = requireSequenceLayout();
         checkSequenceBounds(seq, start);
         MemoryLayout elem = seq.elementLayout();
         long elemSize = elem.byteSize();
@@ -128,7 +128,7 @@ public class LayoutPath {
     }
 
     public LayoutPath sequenceElement(long index) {
-        SequenceLayout seq = requireLayoutType(SequenceLayout.class, "sequence");
+        SequenceLayout seq = requireSequenceLayout();
         checkSequenceBounds(seq, index);
         long elemSize = seq.elementLayout().byteSize();
         long elemOffset = elemSize * index;
@@ -136,7 +136,7 @@ public class LayoutPath {
     }
 
     public LayoutPath groupElement(String name) {
-        GroupLayout g = requireLayoutType(GroupLayout.class, "group");
+        GroupLayout g = requireGroupLayout();
         long offset = 0;
         MemoryLayout elem = null;
         for (int i = 0; i < g.memberLayouts().size(); i++) {
@@ -157,7 +157,7 @@ public class LayoutPath {
     }
 
     public LayoutPath groupElement(long index) {
-        GroupLayout g = requireLayoutType(GroupLayout.class, "group");
+        GroupLayout g = requireGroupLayout();
         long elemSize = g.memberLayouts().size();
         long offset = 0;
         MemoryLayout elem = null;
@@ -318,6 +318,14 @@ public class LayoutPath {
     }
 
     // Helper methods
+
+    private SequenceLayout requireSequenceLayout() {
+        return requireLayoutType(SequenceLayout.class, "sequence");
+    }
+
+    private GroupLayout requireGroupLayout() {
+        return requireLayoutType(GroupLayout.class, "group");
+    }
 
     private <T extends MemoryLayout> T requireLayoutType(Class<T> layoutClass, String name) {
         if (!layoutClass.isAssignableFrom(layout.getClass())) {
