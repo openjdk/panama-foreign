@@ -197,7 +197,7 @@ class TypeClass {
         } catch (ArithmeticException e) {
             throw new IllegalArgumentException("GroupLayout is too large: " + group, e);
         }
-        @SuppressWarnings({"unchecked", "rawtypes"})
+        @SuppressWarnings({"unchecked"})
         List<ArgumentClassImpl>[] groups = new List[nEightbytes];
         for (MemoryLayout l : group.memberLayouts()) {
             groupByEightBytes(l, offset, groups);
