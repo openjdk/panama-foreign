@@ -540,23 +540,23 @@ public abstract sealed class AbstractMemorySegmentImpl
             bufferScope = MemorySessionImpl.heapSession(bb);
         }
         if (base != null) {
-            if (base instanceof byte[]) {
-                return new HeapMemorySegmentImpl.OfByte(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
-            } else if (base instanceof short[]) {
-                return new HeapMemorySegmentImpl.OfShort(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
-            } else if (base instanceof char[]) {
-                return new HeapMemorySegmentImpl.OfChar(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
-            } else if (base instanceof int[]) {
-                return new HeapMemorySegmentImpl.OfInt(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
-            } else if (base instanceof float[]) {
-                return new HeapMemorySegmentImpl.OfFloat(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
-            } else if (base instanceof long[]) {
-                return new HeapMemorySegmentImpl.OfLong(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
-            } else if (base instanceof double[]) {
-                return new HeapMemorySegmentImpl.OfDouble(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
-            } else {
-                throw new AssertionError("Cannot get here");
-            }
+            return switch (base) {
+                case byte[] __ ->
+                        new HeapMemorySegmentImpl.OfByte(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
+                case short[] __ ->
+                        new HeapMemorySegmentImpl.OfShort(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
+                case char[] __ ->
+                        new HeapMemorySegmentImpl.OfChar(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
+                case int[] __ ->
+                        new HeapMemorySegmentImpl.OfInt(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
+                case float[] __ ->
+                        new HeapMemorySegmentImpl.OfFloat(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
+                case long[] __ ->
+                        new HeapMemorySegmentImpl.OfLong(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
+                case double[] __ ->
+                        new HeapMemorySegmentImpl.OfDouble(bbAddress + (pos << scaleFactor), base, size << scaleFactor, readOnly, bufferScope);
+                default -> throw new AssertionError("Cannot get here");
+            };
         } else if (unmapper == null) {
             return new NativeMemorySegmentImpl(bbAddress + (pos << scaleFactor), size << scaleFactor, readOnly, bufferScope);
         } else {
@@ -566,23 +566,15 @@ public abstract sealed class AbstractMemorySegmentImpl
     }
 
     private static int getScaleFactor(Buffer buffer) {
-        if (buffer instanceof ByteBuffer) {
-            return 0;
-        } else if (buffer instanceof CharBuffer) {
-            return 1;
-        } else if (buffer instanceof ShortBuffer) {
-            return 1;
-        } else if (buffer instanceof IntBuffer) {
-            return 2;
-        } else if (buffer instanceof FloatBuffer) {
-            return 2;
-        } else if (buffer instanceof LongBuffer) {
-            return 3;
-        } else if (buffer instanceof DoubleBuffer) {
-            return 3;
-        } else {
-            throw new AssertionError("Cannot get here");
-        }
+        return switch (buffer) {
+            case ByteBuffer   __ -> 0;
+            case CharBuffer   __ -> 1;
+            case ShortBuffer  __ -> 1;
+            case IntBuffer    __ -> 2;
+            case FloatBuffer  __ -> 2;
+            case LongBuffer   __ -> 3;
+            case DoubleBuffer __ -> 3;
+        };
     }
 
     @ForceInline
@@ -714,22 +706,27 @@ public abstract sealed class AbstractMemorySegmentImpl
     }
 
     private static long getBaseAndScale(Class<?> arrayType) {
-        if (arrayType.equals(byte[].class)) {
-            return (long) Unsafe.ARRAY_BYTE_BASE_OFFSET | ((long)Unsafe.ARRAY_BYTE_INDEX_SCALE << 32);
-        } else if (arrayType.equals(char[].class)) {
-            return (long) Unsafe.ARRAY_CHAR_BASE_OFFSET | ((long)Unsafe.ARRAY_CHAR_INDEX_SCALE << 32);
-        } else if (arrayType.equals(short[].class)) {
-            return (long)Unsafe.ARRAY_SHORT_BASE_OFFSET | ((long)Unsafe.ARRAY_SHORT_INDEX_SCALE << 32);
-        } else if (arrayType.equals(int[].class)) {
-            return (long)Unsafe.ARRAY_INT_BASE_OFFSET | ((long) Unsafe.ARRAY_INT_INDEX_SCALE << 32);
-        } else if (arrayType.equals(float[].class)) {
-            return (long)Unsafe.ARRAY_FLOAT_BASE_OFFSET | ((long)Unsafe.ARRAY_FLOAT_INDEX_SCALE << 32);
-        } else if (arrayType.equals(long[].class)) {
-            return (long)Unsafe.ARRAY_LONG_BASE_OFFSET | ((long)Unsafe.ARRAY_LONG_INDEX_SCALE << 32);
-        } else if (arrayType.equals(double[].class)) {
-            return (long)Unsafe.ARRAY_DOUBLE_BASE_OFFSET | ((long)Unsafe.ARRAY_DOUBLE_INDEX_SCALE << 32);
-        } else {
-            throw new IllegalArgumentException("Not a supported array class: " + arrayType.getSimpleName());
-        }
+        return switch (arrayType) {
+            case Class<?> c when c.equals(byte[].class) ->
+                    make(Unsafe.ARRAY_BYTE_BASE_OFFSET, Unsafe.ARRAY_BYTE_INDEX_SCALE);
+            case Class<?> c when c.equals(char[].class) ->
+                    make(Unsafe.ARRAY_CHAR_BASE_OFFSET, Unsafe.ARRAY_CHAR_INDEX_SCALE);
+            case Class<?> c when c.equals(short[].class) ->
+                    make(Unsafe.ARRAY_SHORT_BASE_OFFSET, Unsafe.ARRAY_SHORT_INDEX_SCALE);
+            case Class<?> c when c.equals(int[].class) ->
+                    make(Unsafe.ARRAY_INT_BASE_OFFSET, Unsafe.ARRAY_INT_INDEX_SCALE);
+            case Class<?> c when c.equals(float[].class) ->
+                    make(Unsafe.ARRAY_FLOAT_BASE_OFFSET, Unsafe.ARRAY_FLOAT_INDEX_SCALE);
+            case Class<?> c when c.equals(long[].class) ->
+                    make(Unsafe.ARRAY_LONG_BASE_OFFSET,  Unsafe.ARRAY_LONG_INDEX_SCALE);
+            case Class<?> c when c.equals(double[].class) ->
+                    make(Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+            default -> throw new IllegalArgumentException("Not a supported array class: " + arrayType.getSimpleName());
+        };
     }
+
+    static long make(int offset, int scale) {
+        return (long) offset | ((long) scale << 32);
+    }
+
 }

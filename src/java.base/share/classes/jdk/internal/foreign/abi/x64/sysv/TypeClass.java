@@ -209,34 +209,37 @@ class TypeClass {
     }
 
     private static void groupByEightBytes(MemoryLayout l, long offset, List<ArgumentClassImpl>[] groups) {
-        if (l instanceof GroupLayout group) {
-            for (MemoryLayout m : group.memberLayouts()) {
-                groupByEightBytes(m, offset, groups);
-                if (group instanceof StructLayout) {
-                    offset += m.byteSize();
+        switch (l) {
+            case GroupLayout group -> {
+                for (MemoryLayout m : group.memberLayouts()) {
+                    groupByEightBytes(m, offset, groups);
+                    if (group instanceof StructLayout) {
+                        offset += m.byteSize();
+                    }
                 }
             }
-        } else if (l instanceof PaddingLayout) {
-            return;
-        } else if (l instanceof SequenceLayout seq) {
-            MemoryLayout elem = seq.elementLayout();
-            for (long i = 0 ; i < seq.elementCount() ; i++) {
-                groupByEightBytes(elem, offset, groups);
-                offset += elem.byteSize();
+            case PaddingLayout __ -> {
             }
-        } else if (l instanceof ValueLayout vl) {
-            List<ArgumentClassImpl> layouts = groups[(int)offset / 8];
-            if (layouts == null) {
-                layouts = new ArrayList<>();
-                groups[(int)offset / 8] = layouts;
+            case SequenceLayout seq -> {
+                MemoryLayout elem = seq.elementLayout();
+                for (long i = 0; i < seq.elementCount(); i++) {
+                    groupByEightBytes(elem, offset, groups);
+                    offset += elem.byteSize();
+                }
             }
-            // if the aggregate contains unaligned fields, it has class MEMORY
-            ArgumentClassImpl argumentClass = (offset % vl.byteAlignment()) == 0 ?
-                    argumentClassFor(vl) :
-                    ArgumentClassImpl.MEMORY;
-            layouts.add(argumentClass);
-        } else {
-            throw new IllegalStateException("Unexpected layout: " + l);
+            case ValueLayout vl -> {
+                List<ArgumentClassImpl> layouts = groups[(int) offset / 8];
+                if (layouts == null) {
+                    layouts = new ArrayList<>();
+                    groups[(int) offset / 8] = layouts;
+                }
+                // if the aggregate contains unaligned fields, it has class MEMORY
+                ArgumentClassImpl argumentClass = (offset % vl.byteAlignment()) == 0 ?
+                        argumentClassFor(vl) :
+                        ArgumentClassImpl.MEMORY;
+                layouts.add(argumentClass);
+            }
+            case null, default -> throw new IllegalStateException("Unexpected layout: " + l);
         }
     }
 }
