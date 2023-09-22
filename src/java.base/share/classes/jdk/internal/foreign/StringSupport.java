@@ -29,11 +29,9 @@ import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.util.ArraysSupport;
-import sun.security.action.GetPropertyAction;
 
 import java.lang.foreign.MemorySegment;
 import java.nio.charset.Charset;
-import java.util.function.IntFunction;
 
 import static java.lang.foreign.ValueLayout.*;
 
