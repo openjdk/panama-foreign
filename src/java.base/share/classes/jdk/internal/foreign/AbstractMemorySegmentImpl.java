@@ -614,7 +614,7 @@ public abstract sealed class AbstractMemorySegmentImpl
                             Object dstArray, int dstIndex,
                             int elementCount) {
 
-        var dstInfo = baseAndScale(dstArray);
+        var dstInfo = BaseAndScale.of(dstArray);
         if (dstArray.getClass().componentType() != srcLayout.carrier()) {
             throw new IllegalArgumentException("Incompatible value layout: " + srcLayout);
         }
@@ -641,7 +641,7 @@ public abstract sealed class AbstractMemorySegmentImpl
                             MemorySegment dstSegment, ValueLayout dstLayout, long dstOffset,
                             int elementCount) {
 
-        var srcInfo = baseAndScale(srcArray);
+        var srcInfo = BaseAndScale.of(srcArray);
         if (srcArray.getClass().componentType() != dstLayout.carrier()) {
             throw new IllegalArgumentException("Incompatible value layout: " + dstLayout);
         }
@@ -701,19 +701,35 @@ public abstract sealed class AbstractMemorySegmentImpl
         return srcBytes != dstBytes ? bytes : -1;
     }
 
-    private static BaseAndScale baseAndScale(Object array) {
-        return switch (array) {
-            case byte[]   __ -> new BaseAndScale(Unsafe.ARRAY_BYTE_BASE_OFFSET, Unsafe.ARRAY_BYTE_INDEX_SCALE);
-            case char[]   __ -> new BaseAndScale(Unsafe.ARRAY_CHAR_BASE_OFFSET, Unsafe.ARRAY_CHAR_INDEX_SCALE);
-            case short[]  __ -> new BaseAndScale(Unsafe.ARRAY_SHORT_BASE_OFFSET, Unsafe.ARRAY_SHORT_INDEX_SCALE);
-            case int[]    __ -> new BaseAndScale(Unsafe.ARRAY_INT_BASE_OFFSET, Unsafe.ARRAY_INT_INDEX_SCALE);
-            case float[]  __ -> new BaseAndScale(Unsafe.ARRAY_FLOAT_BASE_OFFSET, Unsafe.ARRAY_FLOAT_INDEX_SCALE);
-            case long[]   __ -> new BaseAndScale(Unsafe.ARRAY_LONG_BASE_OFFSET,  Unsafe.ARRAY_LONG_INDEX_SCALE);
-            case double[] __ -> new BaseAndScale(Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
-            default -> throw new IllegalArgumentException("Not a supported array class: " + array.getClass().getSimpleName());
-        };
-    }
+    record BaseAndScale(int base, long scale) {
+        private static final BaseAndScale BYTE =
+                new BaseAndScale(Unsafe.ARRAY_BYTE_BASE_OFFSET, Unsafe.ARRAY_BYTE_INDEX_SCALE);
+        private static final BaseAndScale CHAR =
+                new BaseAndScale(Unsafe.ARRAY_CHAR_BASE_OFFSET, Unsafe.ARRAY_CHAR_INDEX_SCALE);
+        private static final BaseAndScale SHORT =
+                new BaseAndScale(Unsafe.ARRAY_SHORT_BASE_OFFSET, Unsafe.ARRAY_SHORT_INDEX_SCALE);
+        private static final BaseAndScale INT =
+                new BaseAndScale(Unsafe.ARRAY_INT_BASE_OFFSET, Unsafe.ARRAY_INT_INDEX_SCALE);
+        private static final BaseAndScale FLOAT =
+                new BaseAndScale(Unsafe.ARRAY_FLOAT_BASE_OFFSET, Unsafe.ARRAY_FLOAT_INDEX_SCALE);
+        private static final BaseAndScale LONG =
+                new BaseAndScale(Unsafe.ARRAY_LONG_BASE_OFFSET, Unsafe.ARRAY_LONG_INDEX_SCALE);
+        private static final BaseAndScale DOUBLE =
+                new BaseAndScale(Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
 
-    record BaseAndScale(int base, long scale){ }
+        static BaseAndScale of(Object array) {
+            return switch (array) {
+                case byte[]   __ -> BaseAndScale.BYTE;
+                case char[]   __ -> BaseAndScale.CHAR;
+                case short[]  __ -> BaseAndScale.SHORT;
+                case int[]    __ -> BaseAndScale.INT;
+                case float[]  __ -> BaseAndScale.FLOAT;
+                case long[]   __ -> BaseAndScale.LONG;
+                case double[] __ -> BaseAndScale.DOUBLE;
+                default -> throw new IllegalArgumentException("Not a supported array class: " + array.getClass().getSimpleName());
+            };
+        }
+
+    }
 
 }
