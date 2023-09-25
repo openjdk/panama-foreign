@@ -565,18 +565,6 @@ public abstract sealed class AbstractMemorySegmentImpl
         }
     }
 
-    private static int getScaleFactor(Buffer buffer) {
-        return switch (buffer) {
-            case ByteBuffer   __ -> 0;
-            case CharBuffer   __ -> 1;
-            case ShortBuffer  __ -> 1;
-            case IntBuffer    __ -> 2;
-            case FloatBuffer  __ -> 2;
-            case LongBuffer   __ -> 3;
-            case DoubleBuffer __ -> 3;
-        };
-    }
-
     @ForceInline
     public static void copy(MemorySegment srcSegment, ValueLayout srcElementLayout, long srcOffset,
                             MemorySegment dstSegment, ValueLayout dstElementLayout, long dstOffset,
@@ -614,7 +602,7 @@ public abstract sealed class AbstractMemorySegmentImpl
                             Object dstArray, int dstIndex,
                             int elementCount) {
 
-        var dstInfo = BaseAndScale.of(dstArray);
+        var dstInfo = Utils.BaseAndScale.of(dstArray);
         if (dstArray.getClass().componentType() != srcLayout.carrier()) {
             throw new IllegalArgumentException("Incompatible value layout: " + srcLayout);
         }
@@ -641,7 +629,7 @@ public abstract sealed class AbstractMemorySegmentImpl
                             MemorySegment dstSegment, ValueLayout dstLayout, long dstOffset,
                             int elementCount) {
 
-        var srcInfo = BaseAndScale.of(srcArray);
+        var srcInfo = Utils.BaseAndScale.of(srcArray);
         if (srcArray.getClass().componentType() != dstLayout.carrier()) {
             throw new IllegalArgumentException("Incompatible value layout: " + dstLayout);
         }
@@ -701,35 +689,15 @@ public abstract sealed class AbstractMemorySegmentImpl
         return srcBytes != dstBytes ? bytes : -1;
     }
 
-    record BaseAndScale(int base, long scale) {
-        private static final BaseAndScale BYTE =
-                new BaseAndScale(Unsafe.ARRAY_BYTE_BASE_OFFSET, Unsafe.ARRAY_BYTE_INDEX_SCALE);
-        private static final BaseAndScale CHAR =
-                new BaseAndScale(Unsafe.ARRAY_CHAR_BASE_OFFSET, Unsafe.ARRAY_CHAR_INDEX_SCALE);
-        private static final BaseAndScale SHORT =
-                new BaseAndScale(Unsafe.ARRAY_SHORT_BASE_OFFSET, Unsafe.ARRAY_SHORT_INDEX_SCALE);
-        private static final BaseAndScale INT =
-                new BaseAndScale(Unsafe.ARRAY_INT_BASE_OFFSET, Unsafe.ARRAY_INT_INDEX_SCALE);
-        private static final BaseAndScale FLOAT =
-                new BaseAndScale(Unsafe.ARRAY_FLOAT_BASE_OFFSET, Unsafe.ARRAY_FLOAT_INDEX_SCALE);
-        private static final BaseAndScale LONG =
-                new BaseAndScale(Unsafe.ARRAY_LONG_BASE_OFFSET, Unsafe.ARRAY_LONG_INDEX_SCALE);
-        private static final BaseAndScale DOUBLE =
-                new BaseAndScale(Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
-
-        static BaseAndScale of(Object array) {
-            return switch (array) {
-                case byte[]   __ -> BaseAndScale.BYTE;
-                case char[]   __ -> BaseAndScale.CHAR;
-                case short[]  __ -> BaseAndScale.SHORT;
-                case int[]    __ -> BaseAndScale.INT;
-                case float[]  __ -> BaseAndScale.FLOAT;
-                case long[]   __ -> BaseAndScale.LONG;
-                case double[] __ -> BaseAndScale.DOUBLE;
-                default -> throw new IllegalArgumentException("Not a supported array class: " + array.getClass().getSimpleName());
-            };
-        }
-
+    private static int getScaleFactor(Buffer buffer) {
+        return switch (buffer) {
+            case ByteBuffer   __ -> 0;
+            case CharBuffer   __ -> 1;
+            case ShortBuffer  __ -> 1;
+            case IntBuffer    __ -> 2;
+            case FloatBuffer  __ -> 2;
+            case LongBuffer   __ -> 3;
+            case DoubleBuffer __ -> 3;
+        };
     }
-
 }
