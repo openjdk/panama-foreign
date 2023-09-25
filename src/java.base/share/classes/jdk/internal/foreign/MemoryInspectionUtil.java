@@ -112,7 +112,7 @@ final class MemoryInspectionUtil {
                     if (groupLayout instanceof UnionLayout) {
                         // If it is a union, we need to reset the index for each member
                         state.index(initialIndex);
-                        // We record the max index used for any union member so we can leave off from there
+                        // We record the max index used for any union member so that we can leave off from there
                         maxIndex = Math.max(maxIndex, state.index());
                     }
                     toString0(segment, members.get(i), renderer, action, state, (i != (members.size() - 1)) ? separator : "");
