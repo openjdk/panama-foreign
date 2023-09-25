@@ -208,8 +208,10 @@ class TypeClass {
         return groups;
     }
 
-    private static void groupByEightBytes(MemoryLayout l, long offset, List<ArgumentClassImpl>[] groups) {
-        switch (l) {
+    private static void groupByEightBytes(MemoryLayout layout,
+                                          long offset,
+                                          List<ArgumentClassImpl>[] groups) {
+        switch (layout) {
             case GroupLayout group -> {
                 for (MemoryLayout m : group.memberLayouts()) {
                     groupByEightBytes(m, offset, groups);
@@ -239,7 +241,7 @@ class TypeClass {
                         ArgumentClassImpl.MEMORY;
                 layouts.add(argumentClass);
             }
-            case null, default -> throw new IllegalStateException("Unexpected layout: " + l);
+            case null, default -> throw new IllegalStateException("Unexpected layout: " + layout);
         }
     }
 }
