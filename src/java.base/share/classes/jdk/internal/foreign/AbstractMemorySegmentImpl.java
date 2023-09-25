@@ -614,27 +614,25 @@ public abstract sealed class AbstractMemorySegmentImpl
                             Object dstArray, int dstIndex,
                             int elementCount) {
 
-        long baseAndScale = getBaseAndScale(dstArray.getClass());
+        var dstInfo = baseAndScale(dstArray);
         if (dstArray.getClass().componentType() != srcLayout.carrier()) {
             throw new IllegalArgumentException("Incompatible value layout: " + srcLayout);
         }
-        int dstBase = (int)baseAndScale;
-        long dstWidth = (int)(baseAndScale >> 32); // Use long arithmetics below
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
         Utils.checkElementAlignment(srcLayout, "Source layout alignment greater than its size");
         if (!srcImpl.isAlignedForElement(srcOffset, srcLayout)) {
             throw new IllegalArgumentException("Source segment incompatible with alignment constraints");
         }
-        srcImpl.checkAccess(srcOffset, elementCount * dstWidth, true);
+        srcImpl.checkAccess(srcOffset, elementCount * dstInfo.scale(), true);
         Objects.checkFromIndexSize(dstIndex, elementCount, Array.getLength(dstArray));
-        if (dstWidth == 1 || srcLayout.order() == ByteOrder.nativeOrder()) {
+        if (dstInfo.scale() == 1 || srcLayout.order() == ByteOrder.nativeOrder()) {
             ScopedMemoryAccess.getScopedMemoryAccess().copyMemory(srcImpl.sessionImpl(), null,
                     srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
-                    dstArray, dstBase + (dstIndex * dstWidth), elementCount * dstWidth);
+                    dstArray, dstInfo.base() + (dstIndex * dstInfo.scale()), elementCount * dstInfo.scale());
         } else {
             ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(srcImpl.sessionImpl(), null,
                     srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
-                    dstArray, dstBase + (dstIndex * dstWidth), elementCount * dstWidth, dstWidth);
+                    dstArray, dstInfo.base() + (dstIndex * dstInfo.scale()), elementCount * dstInfo.scale(), dstInfo.scale());
         }
     }
 
@@ -643,27 +641,25 @@ public abstract sealed class AbstractMemorySegmentImpl
                             MemorySegment dstSegment, ValueLayout dstLayout, long dstOffset,
                             int elementCount) {
 
-        long baseAndScale = getBaseAndScale(srcArray.getClass());
+        var srcInfo = baseAndScale(srcArray);
         if (srcArray.getClass().componentType() != dstLayout.carrier()) {
             throw new IllegalArgumentException("Incompatible value layout: " + dstLayout);
         }
-        int srcBase = (int)baseAndScale;
-        long srcWidth = (int)(baseAndScale >> 32); // Use long arithmetics below
         Objects.checkFromIndexSize(srcIndex, elementCount, Array.getLength(srcArray));
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
         Utils.checkElementAlignment(dstLayout, "Destination layout alignment greater than its size");
         if (!destImpl.isAlignedForElement(dstOffset, dstLayout)) {
             throw new IllegalArgumentException("Destination segment incompatible with alignment constraints");
         }
-        destImpl.checkAccess(dstOffset, elementCount * srcWidth, false);
-        if (srcWidth == 1 || dstLayout.order() == ByteOrder.nativeOrder()) {
+        destImpl.checkAccess(dstOffset, elementCount * srcInfo.scale(), false);
+        if (srcInfo.scale() == 1 || dstLayout.order() == ByteOrder.nativeOrder()) {
             ScopedMemoryAccess.getScopedMemoryAccess().copyMemory(null, destImpl.sessionImpl(),
-                    srcArray, srcBase + (srcIndex * srcWidth),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount * srcWidth);
+                    srcArray, srcInfo.base() + (srcIndex * srcInfo.scale()),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount * srcInfo.scale());
         } else {
             ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(null, destImpl.sessionImpl(),
-                    srcArray, srcBase + (srcIndex * srcWidth),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount * srcWidth, srcWidth);
+                    srcArray, srcInfo.base() + (srcIndex * srcInfo.scale()),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount * srcInfo.scale(), srcInfo.scale());
         }
     }
 
@@ -705,28 +701,19 @@ public abstract sealed class AbstractMemorySegmentImpl
         return srcBytes != dstBytes ? bytes : -1;
     }
 
-    private static long getBaseAndScale(Class<?> arrayType) {
-        return switch (arrayType) {
-            case Class<?> c when c.equals(byte[].class) ->
-                    make(Unsafe.ARRAY_BYTE_BASE_OFFSET, Unsafe.ARRAY_BYTE_INDEX_SCALE);
-            case Class<?> c when c.equals(char[].class) ->
-                    make(Unsafe.ARRAY_CHAR_BASE_OFFSET, Unsafe.ARRAY_CHAR_INDEX_SCALE);
-            case Class<?> c when c.equals(short[].class) ->
-                    make(Unsafe.ARRAY_SHORT_BASE_OFFSET, Unsafe.ARRAY_SHORT_INDEX_SCALE);
-            case Class<?> c when c.equals(int[].class) ->
-                    make(Unsafe.ARRAY_INT_BASE_OFFSET, Unsafe.ARRAY_INT_INDEX_SCALE);
-            case Class<?> c when c.equals(float[].class) ->
-                    make(Unsafe.ARRAY_FLOAT_BASE_OFFSET, Unsafe.ARRAY_FLOAT_INDEX_SCALE);
-            case Class<?> c when c.equals(long[].class) ->
-                    make(Unsafe.ARRAY_LONG_BASE_OFFSET,  Unsafe.ARRAY_LONG_INDEX_SCALE);
-            case Class<?> c when c.equals(double[].class) ->
-                    make(Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
-            default -> throw new IllegalArgumentException("Not a supported array class: " + arrayType.getSimpleName());
+    private static BaseAndScale baseAndScale(Object array) {
+        return switch (array) {
+            case byte[]   __ -> new BaseAndScale(Unsafe.ARRAY_BYTE_BASE_OFFSET, Unsafe.ARRAY_BYTE_INDEX_SCALE);
+            case char[]   __ -> new BaseAndScale(Unsafe.ARRAY_CHAR_BASE_OFFSET, Unsafe.ARRAY_CHAR_INDEX_SCALE);
+            case short[]  __ -> new BaseAndScale(Unsafe.ARRAY_SHORT_BASE_OFFSET, Unsafe.ARRAY_SHORT_INDEX_SCALE);
+            case int[]    __ -> new BaseAndScale(Unsafe.ARRAY_INT_BASE_OFFSET, Unsafe.ARRAY_INT_INDEX_SCALE);
+            case float[]  __ -> new BaseAndScale(Unsafe.ARRAY_FLOAT_BASE_OFFSET, Unsafe.ARRAY_FLOAT_INDEX_SCALE);
+            case long[]   __ -> new BaseAndScale(Unsafe.ARRAY_LONG_BASE_OFFSET,  Unsafe.ARRAY_LONG_INDEX_SCALE);
+            case double[] __ -> new BaseAndScale(Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+            default -> throw new IllegalArgumentException("Not a supported array class: " + array.getClass().getSimpleName());
         };
     }
 
-    static long make(int offset, int scale) {
-        return (long) offset | ((long) scale << 32);
-    }
+    record BaseAndScale(int base, long scale){ }
 
 }
