@@ -34,7 +34,6 @@ import java.util.Optional;
 
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
-import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
 /**
@@ -50,10 +49,15 @@ import jdk.internal.vm.annotation.ForceInline;
  */
 public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
-    private static final long MAX_ALIGN_1 = ValueLayout.JAVA_BYTE.byteAlignment();
-    private static final long MAX_ALIGN_2 = ValueLayout.JAVA_SHORT.byteAlignment();
-    private static final long MAX_ALIGN_4 = ValueLayout.JAVA_INT.byteAlignment();
-    private static final long MAX_ALIGN_8 = ValueLayout.JAVA_LONG.byteAlignment();
+    // Constants defining the maximum alignment supported by various kinds of heap arrays.
+    // While for most arrays, the maximum alignment is constant (the size, in bytes, of the array elements),
+    // note that the alignment of a long[]/double[] depends on the platform: it's 4-byte on x86, but 8 bytes on x64
+    // (as specified by the JAVA_LONG layout constant).
+
+    private static final long MAX_ALIGN_BYTE_ARRAY = ValueLayout.JAVA_BYTE.byteAlignment();
+    private static final long MAX_ALIGN_SHORT_ARRAY = ValueLayout.JAVA_SHORT.byteAlignment();
+    private static final long MAX_ALIGN_INT_ARRAY = ValueLayout.JAVA_INT.byteAlignment();
+    private static final long MAX_ALIGN_LONG_ARRAY = ValueLayout.JAVA_LONG.byteAlignment();
 
     final long offset;
     final Object base;
@@ -116,7 +120,7 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
 
         @Override
         public long maxAlignMask() {
-            return MAX_ALIGN_1;
+            return MAX_ALIGN_BYTE_ARRAY;
         }
 
         @Override
@@ -150,7 +154,7 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
 
         @Override
         public long maxAlignMask() {
-            return MAX_ALIGN_2;
+            return MAX_ALIGN_SHORT_ARRAY;
         }
 
         @Override
@@ -184,7 +188,7 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
 
         @Override
         public long maxAlignMask() {
-            return MAX_ALIGN_2;
+            return MAX_ALIGN_SHORT_ARRAY;
         }
 
         @Override
@@ -218,7 +222,7 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
 
         @Override
         public long maxAlignMask() {
-            return MAX_ALIGN_4;
+            return MAX_ALIGN_INT_ARRAY;
         }
 
         @Override
@@ -252,7 +256,7 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
 
         @Override
         public long maxAlignMask() {
-            return MAX_ALIGN_8;
+            return MAX_ALIGN_LONG_ARRAY;
         }
 
         @Override
@@ -286,7 +290,7 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
 
         @Override
         public long maxAlignMask() {
-            return MAX_ALIGN_4;
+            return MAX_ALIGN_INT_ARRAY;
         }
 
         @Override
@@ -320,7 +324,7 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
 
         @Override
         public long maxAlignMask() {
-            return MAX_ALIGN_8;
+            return MAX_ALIGN_LONG_ARRAY;
         }
 
         @Override
