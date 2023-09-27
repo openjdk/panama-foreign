@@ -48,12 +48,12 @@ import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.ScopedMemoryAccess;
-import jdk.internal.misc.Unsafe;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.util.ArraysSupport;
 import jdk.internal.util.Preconditions;
 import jdk.internal.vm.annotation.ForceInline;
+import sun.nio.ch.DirectBuffer;
 
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 
@@ -537,7 +537,7 @@ public abstract sealed class AbstractMemorySegmentImpl
         if (bufferSegment != null) {
             bufferScope = bufferSegment.scope;
         } else {
-            bufferScope = MemorySessionImpl.heapSession(bb);
+            bufferScope = MemorySessionImpl.createHeap(bufferRef(bb));
         }
         if (base != null) {
             return switch (base) {
@@ -562,6 +562,17 @@ public abstract sealed class AbstractMemorySegmentImpl
         } else {
             // we can ignore scale factor here, a mapped buffer is always a byte buffer, so scaleFactor == 0.
             return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, readOnly, bufferScope);
+        }
+    }
+
+    private static Object bufferRef(Buffer buffer) {
+        if (buffer instanceof DirectBuffer directBuffer) {
+            // direct buffer, return either the buffer attachment (for slices and views), or the buffer itself
+            return directBuffer.attachment() != null ?
+                    directBuffer.attachment() : directBuffer;
+        } else {
+            // heap buffer, return the underlying array
+            return NIO_ACCESS.getBufferBase(buffer);
         }
     }
 
