@@ -188,7 +188,7 @@ public interface SymbolLookup {
         if ((loader == null || loader instanceof BuiltinClassLoader)) {
             loaderArena = Arena.global();
         } else {
-            MemorySessionImpl session = MemorySessionImpl.heapSession(loader);
+            MemorySessionImpl session = MemorySessionImpl.createHeap(loader);
             loaderArena = session.asArena();
         }
         return name -> {

@@ -48,7 +48,6 @@ import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.ScopedMemoryAccess;
-import jdk.internal.misc.Unsafe;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.util.ArraysSupport;
@@ -537,7 +536,7 @@ public abstract sealed class AbstractMemorySegmentImpl
         if (bufferSegment != null) {
             bufferScope = bufferSegment.scope;
         } else {
-            bufferScope = MemorySessionImpl.heapSession(bb);
+            bufferScope = MemorySessionImpl.createHeap(bb);
         }
         if (base != null) {
             return switch (base) {

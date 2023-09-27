@@ -2378,13 +2378,14 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * }
      * <p>
      * If two distinct memory segments are <a href="#wrapping-addresses">zero-length memory segments</a>, their scopes
-     * are never considered {@linkplain #equals(Object) equal}:
+     * are always considered {@linkplain #equals(Object) equal}:
      * {@snippet lang=java :
      * MemorySegment segment1 = MemorySegment.ofAddress(42L);
-     * MemorySegment segment2 = MemorySegment.ofAddress(42L);
-     * assert !segment1.scope().equals(segment2.scope());
+     * MemorySegment segment2 = MemorySegment.ofAddress(1000L);
+     * assert segment1.scope().equals(segment2.scope());
      * }
-     *
+     * The scope of a zero-length memory segment can always be overridden using the
+     * {@link MemorySegment#reinterpret(Arena, Consumer)} method.
      */
     sealed interface Scope permits MemorySessionImpl {
         /**

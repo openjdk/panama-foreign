@@ -71,20 +71,20 @@ non-sealed class GlobalSession extends MemorySessionImpl {
         throw nonCloseable();
     }
 
-    static class OfHeap extends GlobalSession {
+    static class HeapSession extends GlobalSession {
 
         static final JavaNioAccess NIO_ACCESS = SharedSecrets.getJavaNioAccess();
 
         final Object ref;
 
-        public OfHeap(Object ref) {
+        public HeapSession(Object ref) {
             super();
             this.ref = Objects.requireNonNull(ref);
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof OfHeap session) {
+            if (obj instanceof HeapSession session) {
                 Object ref1 = followRef(ref);
                 Object ref2 = followRef(session.ref);
                 return ref1 == ref2;

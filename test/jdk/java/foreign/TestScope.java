@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @run testng TestScope
+ * @run testng/othervm --enable-native-access=ALL-UNNAMED TestScope
  */
 
 import org.testng.annotations.*;
@@ -36,13 +36,6 @@ import java.nio.IntBuffer;
 import static org.testng.Assert.*;
 
 public class TestScope {
-
-    @Test
-    public void testDifferentNativeScope() {
-        MemorySegment.Scope scope1 = MemorySegment.ofAddress(42).scope();
-        MemorySegment.Scope scope2 = MemorySegment.ofAddress(42).scope();
-        assertNotEquals(scope1, scope2);
-    }
 
     @Test
     public void testDifferentArrayScope() {
@@ -89,6 +82,16 @@ public class TestScope {
             assertEquals(segment1.scope(), segment2.scope());
             testDerivedBufferScope(segment1);
         }
+    }
+
+    @Test
+    public void testSameNativeScope() {
+        MemorySegment segment1 = MemorySegment.ofAddress(42);
+        MemorySegment segment2 = MemorySegment.ofAddress(43);
+        assertEquals(segment1.scope(), segment2.scope());
+        assertEquals(segment1.scope(), segment2.reinterpret(10).scope());
+        assertNotEquals(segment1.scope(), Arena.global().scope());
+        testDerivedBufferScope(segment1.reinterpret(10));
     }
 
     void testDerivedBufferScope(MemorySegment segment) {

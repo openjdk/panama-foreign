@@ -34,7 +34,6 @@ import java.util.Optional;
 
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
-import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
 /**
@@ -111,7 +110,7 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Utils.BaseAndScale.BYTE.scale();
             return new OfByte(Utils.BaseAndScale.BYTE.base(), arr, byteSize, false,
-                    MemorySessionImpl.heapSession(arr));
+                    MemorySessionImpl.createHeap(arr));
         }
 
         @Override
@@ -145,7 +144,7 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Utils.BaseAndScale.CHAR.scale();
             return new OfChar(Utils.BaseAndScale.CHAR.base(), arr, byteSize, false,
-                    MemorySessionImpl.heapSession(arr));
+                    MemorySessionImpl.createHeap(arr));
         }
 
         @Override
@@ -179,7 +178,7 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Utils.BaseAndScale.SHORT.scale();
             return new OfShort(Utils.BaseAndScale.SHORT.base(), arr, byteSize, false,
-                    MemorySessionImpl.heapSession(arr));
+                    MemorySessionImpl.createHeap(arr));
         }
 
         @Override
@@ -213,7 +212,7 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Utils.BaseAndScale.INT.scale();
             return new OfInt(Utils.BaseAndScale.INT.base(), arr, byteSize, false,
-                    MemorySessionImpl.heapSession(arr));
+                    MemorySessionImpl.createHeap(arr));
         }
 
         @Override
@@ -247,7 +246,7 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Utils.BaseAndScale.LONG.scale();
             return new OfLong(Utils.BaseAndScale.LONG.base(), arr, byteSize, false,
-                    MemorySessionImpl.heapSession(arr));
+                    MemorySessionImpl.createHeap(arr));
         }
 
         @Override
@@ -281,7 +280,7 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Utils.BaseAndScale.FLOAT.scale();
             return new OfFloat(Utils.BaseAndScale.FLOAT.base(), arr, byteSize, false,
-                    MemorySessionImpl.heapSession(arr));
+                    MemorySessionImpl.createHeap(arr));
         }
 
         @Override
@@ -315,7 +314,7 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Utils.BaseAndScale.DOUBLE.scale();
             return new OfDouble(Utils.BaseAndScale.DOUBLE.base(), arr, byteSize, false,
-                    MemorySessionImpl.heapSession(arr));
+                    MemorySessionImpl.createHeap(arr));
         }
 
         @Override

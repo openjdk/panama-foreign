@@ -65,7 +65,7 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
      */
     @ForceInline
     public NativeMemorySegmentImpl() {
-        super(0L, false, MemorySessionImpl.globalSession());
+        super(0L, false, MemorySessionImpl.NATIVE_SESSION);
         this.min = 0L;
     }
 
@@ -175,6 +175,6 @@ public sealed class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl pe
 
     @ForceInline
     public static MemorySegment makeNativeSegmentUnchecked(long min, long byteSize) {
-        return new NativeMemorySegmentImpl(min, byteSize, false, MemorySessionImpl.globalSession());
+        return new NativeMemorySegmentImpl(min, byteSize, false, MemorySessionImpl.NATIVE_SESSION);
     }
 }
