@@ -382,7 +382,7 @@ import jdk.internal.vm.annotation.ForceInline;
  *     of memory whose size is not known, any access operations involving these segments cannot be validated.
  *     In effect, a zero-length memory segment <em>wraps</em> an address, and it cannot be used without explicit intent
  *     (see below);</li>
- *     <li>The segment is associated with a fresh scope that is always alive. Thus, while zero-length
+ *     <li>The segment is associated with a scope that is always alive. Thus, while zero-length
  *     memory segments cannot be accessed directly, they can be passed, opaquely, to other pointer-accepting foreign functions.</li>
  * </ul>
  * <p>
@@ -633,7 +633,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * MemorySegment cleanupSegment = MemorySegment.ofAddress(this.address())
      *                                             .reinterpret(byteSize());
      * }
-     * That is, the cleanup action receives a segment that is associated with a fresh scope that is always alive,
+     * That is, the cleanup action receives a segment that is associated with a scope that is always alive,
      * and is accessible from any thread. The size of the segment accepted by the cleanup action is {@link #byteSize()}.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
@@ -671,7 +671,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * MemorySegment cleanupSegment = MemorySegment.ofAddress(this.address())
      *                                             .reinterpret(newSize);
      * }
-     * That is, the cleanup action receives a segment that is associated with a fresh scope that is always alive,
+     * That is, the cleanup action receives a segment that is associated with a scope that is always alive,
      * and is accessible from any thread. The size of the segment accepted by the cleanup action is {@code newSize}.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
@@ -1714,7 +1714,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Reads an address from this segment at the given offset, with the given layout. The read address is wrapped in
-     * a native segment, associated with a fresh scope that is always alive. Under normal conditions,
+     * a native segment, associated with a scope that is always alive. Under normal conditions,
      * the size of the returned segment is {@code 0}. However, if the provided address layout has a
      * {@linkplain AddressLayout#targetLayout() target layout} {@code T}, then the size of the returned segment
      * is set to {@code T.byteSize()}.
@@ -2153,7 +2153,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
 
     /**
      * Reads an address from this segment at the given at the given index, scaled by the given layout size. The read address is wrapped in
-     * a native segment, associated with a fresh scope that is always alive. Under normal conditions,
+     * a native segment, associated with a scope that is always alive. Under normal conditions,
      * the size of the returned segment is {@code 0}. However, if the provided address layout has a
      * {@linkplain AddressLayout#targetLayout() target layout} {@code T}, then the size of the returned segment
      * is set to {@code T.byteSize()}.
