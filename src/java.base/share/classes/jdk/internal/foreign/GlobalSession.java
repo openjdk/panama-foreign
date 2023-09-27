@@ -25,20 +25,23 @@
 
 package jdk.internal.foreign;
 
+import jdk.internal.access.JavaNioAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.vm.annotation.ForceInline;
+import sun.nio.ch.DirectBuffer;
+
+import java.nio.Buffer;
+import java.util.Objects;
 
 /**
  * The global, non-closeable, shared session. Similar to a shared session, but its {@link #close()} method throws unconditionally.
  * Adding new resources to the global session, does nothing: as the session can never become not-alive, there is nothing to track.
  * Acquiring and or releasing a memory session similarly does nothing.
  */
-final class GlobalSession extends MemorySessionImpl {
+non-sealed class GlobalSession extends MemorySessionImpl {
 
-    final Object ref;
-
-    public GlobalSession(Object ref) {
+    public GlobalSession() {
         super(null, null);
-        this.ref = ref;
     }
 
     @Override
@@ -66,5 +69,44 @@ final class GlobalSession extends MemorySessionImpl {
     @Override
     public void justClose() {
         throw nonCloseable();
+    }
+
+    static class OfHeap extends GlobalSession {
+
+        static final JavaNioAccess NIO_ACCESS = SharedSecrets.getJavaNioAccess();
+
+        final Object ref;
+
+        public OfHeap(Object ref) {
+            super();
+            this.ref = Objects.requireNonNull(ref);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof OfHeap session) {
+                Object ref1 = followRef(ref);
+                Object ref2 = followRef(session.ref);
+                return ref1 == ref2;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return ref.hashCode();
+        }
+
+        static Object followRef(Object o) {
+            if (o instanceof DirectBuffer directBuffer) {
+                return directBuffer.attachment() != null ?
+                        directBuffer.attachment() : directBuffer;
+            } else if (o instanceof Buffer heapBuffer) {
+                return NIO_ACCESS.getBufferBase(heapBuffer);
+            } else {
+                return o;
+            }
+        }
     }
 }
