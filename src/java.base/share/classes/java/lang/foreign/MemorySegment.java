@@ -2367,7 +2367,7 @@ public sealed interface MemorySegment permits AbstractMemorySegmentImpl {
      * Scope instances can be compared for equality. That is, two scopes
      * are considered {@linkplain #equals(Object)} if they denote the same lifetime.
      * <p>
-     * If two memory segments obtained from the same {@linkplain #ofBuffer(Buffer) buffer}
+     * If two memory segments are obtained from the same {@linkplain #ofBuffer(Buffer) buffer}
      * or {@linkplain #ofArray(int[]) array}, the scopes associated with said segments are considered
      * {@linkplain #equals(Object) equal}, as the two segments have the same lifetime:
      * {@snippet lang=java :

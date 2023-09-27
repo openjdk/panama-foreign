@@ -72,50 +72,30 @@ non-sealed class GlobalSession extends MemorySessionImpl {
     }
 
     /**
-     * This is a global session that wraps an heap object. Possible objects are: Java arrays, buffers and
-     * class loaders. When a heap session is constructed, the provided reference is analyzed to find the
-     * object that determines this scope's identity (we call this object <em>base</em>). For instance, in the case
-     * of a heap buffer, the base is just the heap array wrapped by the buffer instance.
-     * <p>
-     * Base objects of two heap sessions are compared by identity. That is, if the wrapped object is the same,
-     * then the resulting heap sessions are also considered equals. We do not compare the base objects using
+     * This is a global session that wraps a heap object. Possible objects are: Java arrays, buffers and
+     * class loaders. Objects of two heap sessions are compared by identity. That is, if the wrapped object is the same,
+     * then the resulting heap sessions are also considered equals. We do not compare the objects using
      * {@link Object#equals(Object)}, as that would be problematic when comparing buffers, whose equality and
      * hash codes are content-dependent.
      */
     static class HeapSession extends GlobalSession {
 
-        static final JavaNioAccess NIO_ACCESS = SharedSecrets.getJavaNioAccess();
-
         final Object ref;
 
         public HeapSession(Object ref) {
             super();
-            this.ref = base(Objects.requireNonNull(ref));
+            this.ref = Objects.requireNonNull(ref);
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof HeapSession session) {
-                return ref == session.ref;
-            } else {
-                return false;
-            }
+            return obj instanceof HeapSession session &&
+                    ref == session.ref;
         }
 
         @Override
         public int hashCode() {
             return System.identityHashCode(ref);
-        }
-
-        private static Object base(Object o) {
-            if (o instanceof DirectBuffer directBuffer) {
-                return directBuffer.attachment() != null ?
-                        directBuffer.attachment() : directBuffer;
-            } else if (o instanceof Buffer heapBuffer) {
-                return NIO_ACCESS.getBufferBase(heapBuffer);
-            } else {
-                return o;
-            }
         }
     }
 }
