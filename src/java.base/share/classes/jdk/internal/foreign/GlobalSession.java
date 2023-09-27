@@ -71,6 +71,17 @@ non-sealed class GlobalSession extends MemorySessionImpl {
         throw nonCloseable();
     }
 
+    /**
+     * This is a global session that wraps an heap object. Possible objects are: Java arrays, buffers and
+     * class loaders. When a heap session is constructed, the provided reference is analyzed to find the
+     * object that determines this scope's identity (we call this object <em>base</em>). For instance, in the case
+     * of a heap buffer, the base is just the heap array wrapped by the buffer instance.
+     * <p>
+     * Base objects of two heap sessions are compared by identity. That is, if the wrapped object is the same,
+     * then the resulting heap sessions are also considered equals. We do not compare the base objects using
+     * {@link Object#equals(Object)}, as that would be problematic when comparing buffers, whose equality and
+     * hash codes are content-dependent.
+     */
     static class HeapSession extends GlobalSession {
 
         static final JavaNioAccess NIO_ACCESS = SharedSecrets.getJavaNioAccess();
@@ -79,15 +90,13 @@ non-sealed class GlobalSession extends MemorySessionImpl {
 
         public HeapSession(Object ref) {
             super();
-            this.ref = Objects.requireNonNull(ref);
+            this.ref = base(Objects.requireNonNull(ref));
         }
 
         @Override
         public boolean equals(Object obj) {
             if (obj instanceof HeapSession session) {
-                Object ref1 = followRef(ref);
-                Object ref2 = followRef(session.ref);
-                return ref1 == ref2;
+                return ref == session.ref;
             } else {
                 return false;
             }
@@ -95,10 +104,10 @@ non-sealed class GlobalSession extends MemorySessionImpl {
 
         @Override
         public int hashCode() {
-            return ref.hashCode();
+            return System.identityHashCode(ref);
         }
 
-        static Object followRef(Object o) {
+        private static Object base(Object o) {
             if (o instanceof DirectBuffer directBuffer) {
                 return directBuffer.attachment() != null ?
                         directBuffer.attachment() : directBuffer;
