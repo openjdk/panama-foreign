@@ -30,12 +30,17 @@ import org.testng.annotations.*;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.SymbolLookup;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
 import static org.testng.Assert.*;
 
 public class TestScope {
+
+    static {
+        System.loadLibrary("LookupTest");
+    }
 
     @Test
     public void testDifferentArrayScope() {
@@ -91,6 +96,15 @@ public class TestScope {
         assertEquals(segment1.scope(), segment2.scope());
         assertEquals(segment1.scope(), segment2.reinterpret(10).scope());
         assertNotEquals(segment1.scope(), Arena.global().scope());
+        testDerivedBufferScope(segment1.reinterpret(10));
+    }
+
+    @Test
+    public void testSameLookupScope() {
+        SymbolLookup loaderLookup = SymbolLookup.loaderLookup();
+        MemorySegment segment1 = loaderLookup.find("f").get();
+        MemorySegment segment2 = loaderLookup.find("c").get();
+        assertEquals(segment1.scope(), segment2.scope());
         testDerivedBufferScope(segment1.reinterpret(10));
     }
 
