@@ -673,8 +673,8 @@ public sealed interface Binding {
 
     /**
      * UNBOX_ADDRESS()
-     * Pops a 'MemoryAddress' from the operand stack, converts it to a 'long',
-     * with the given size, and pushes that onto the operand stack
+     *   Pops a native 'MemorySegment' from the operand stack, converts it to a 'long' by calling MemorySegment::address,
+     *   and pushes that onto the operand stack. Heap segments are rejected with an exception. See: SharedUtils::unboxSegment
      */
     record UnboxAddress() implements Binding {
         static final UnboxAddress INSTANCE = new UnboxAddress();
@@ -695,7 +695,8 @@ public sealed interface Binding {
 
     /**
      * SEGMENT_BASE()
-     * AbstractMemorySegmentImpl::unsafeGetBase
+     *   Pops a MemorySegment from the stack, retrieves the heap base object from it, or null if there is none
+     *   (See: AbstractMemorySegmentImpl::unsafeGetBase), and pushes the result onto the operand stack.
      */
     record SegmentBase() implements Binding {
         static final SegmentBase INSTANCE = new SegmentBase();
@@ -716,7 +717,9 @@ public sealed interface Binding {
 
     /**
      * SEGMENT_OFFSET()
-     * AbstractMemorySegmentImpl::unsafeGetOffset
+     *   Pops a MemorySegment from the stack, retrieves the offset from it,
+     *   (See: AbstractMemorySegmentImpl::unsafeGetOffset), and pushes the result onto the operand stack.
+     *   Note that for heap segments, the offset is a virtual address into the heap base object.
      */
     record SegmentOffset() implements Binding {
         static final SegmentOffset INSTANCE = new SegmentOffset();
