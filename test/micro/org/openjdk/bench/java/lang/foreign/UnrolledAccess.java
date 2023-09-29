@@ -40,14 +40,10 @@ import static java.lang.foreign.ValueLayout.*;
 @Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-@Fork(value = 3, jvmArgsAppend = { "--enable-preview", "--enable-native-access=ALL-UNNAMED" })
+@Fork(value = 3, jvmArgsAppend = { "--enable-native-access=ALL-UNNAMED" })
 public class UnrolledAccess extends JavaLayouts {
 
     static final Unsafe U = Utils.unsafe;
-
-    static final VarHandle VH_LONG_UNALIGNED = JAVA_LONG_UNALIGNED.arrayElementVarHandle();
-
-    static final VarHandle VH_LONG = JAVA_LONG.arrayElementVarHandle();
 
     final static int SIZE = 1024;
 
