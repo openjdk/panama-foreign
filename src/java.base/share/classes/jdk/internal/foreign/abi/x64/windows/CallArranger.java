@@ -215,7 +215,7 @@ public class CallArranger {
                         bindings.dup()
                                 .segmentBase()
                                 .vmStore(storage, Object.class)
-                                .segmentOffset()
+                                .segmentOffsetAllowHeap()
                                 .vmStore(null, long.class);
                     } else {
                         bindings.unboxAddress();
