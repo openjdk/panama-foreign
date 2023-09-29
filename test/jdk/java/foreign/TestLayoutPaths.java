@@ -156,9 +156,9 @@ public class TestLayoutPaths {
             });
             assertTrue(iae.getMessage().startsWith(expectedMessage));
 
-            MethodHandle sliceX = struct.sliceHandle(groupElement("x"));
+            MethodHandle sliceX = struct.sliceHandle(0L, groupElement("x"));
             iae = expectThrows(IllegalArgumentException.class, () -> {
-                MemorySegment slice = (MemorySegment) sliceX.invokeExact(seg, 0L);
+                MemorySegment slice = (MemorySegment) sliceX.invokeExact(seg);
             });
             assertTrue(iae.getMessage().startsWith(expectedMessage));
         }
@@ -306,9 +306,9 @@ public class TestLayoutPaths {
     @Test(dataProvider = "testLayouts")
     public void testOffsetHandle(MemoryLayout layout, PathElement[] pathElements, long[] indexes,
                                  long expectedByteOffset) throws Throwable {
-        MethodHandle byteOffsetHandle = layout.byteOffsetHandle(pathElements);
+        MethodHandle byteOffsetHandle = layout.byteOffsetHandle(0L, pathElements);
         byteOffsetHandle = byteOffsetHandle.asSpreader(long[].class, indexes.length);
-        long actualByteOffset = (long) byteOffsetHandle.invokeExact(0L, indexes);
+        long actualByteOffset = (long) byteOffsetHandle.invokeExact(indexes);
         assertEquals(actualByteOffset, expectedByteOffset);
     }
 

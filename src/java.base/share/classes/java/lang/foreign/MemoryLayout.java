@@ -151,8 +151,8 @@ import jdk.internal.vm.annotation.ForceInline;
  * the open elements in the path:
  *
  * {@snippet lang=java :
- * VarHandle valueHandle = taggedValues.varHandle(PathElement.sequenceElement(),
- *                                                PathElement.groupElement("value"));
+ * VarHandle valueHandle = taggedValues.varHandle(0L, PathElement.sequenceElement(),
+ *                                                    PathElement.groupElement("value"));
  * MemorySegment valuesSegment = ...
  * int val = (int) valueHandle.get(valuesSegment, 2); // reads the "value" field of the third struct in the array
  * }
@@ -164,8 +164,8 @@ import jdk.internal.vm.annotation.ForceInline;
  * of the sequence element whose offset is to be computed:
  *
  * {@snippet lang=java :
- * MethodHandle offsetHandle = taggedValues.byteOffsetHandle(PathElement.sequenceElement(),
- *                                                           PathElement.groupElement("kind"));
+ * MethodHandle offsetHandle = taggedValues.byteOffsetHandle(0L, PathElement.sequenceElement(),
+ *                                                               PathElement.groupElement("kind"));
  * long offset1 = (long) offsetHandle.invokeExact(1L); // 8
  * long offset2 = (long) offsetHandle.invokeExact(2L); // 16
  * }
@@ -197,7 +197,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * point in the rectangle, as follows:
  *
  * {@snippet lang=java :
- * VarHandle rectPointYs = RECTANGLE.varHandle(
+ * VarHandle rectPointYs = RECTANGLE.varHandle(0L,
  *         PathElement.groupElement("points"),
  *         PathElement.dereferenceElement(),
  *         PathElement.sequenceElement(),
@@ -351,6 +351,20 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
 
     /**
      *{@return a method handle that can be used to invoke {@link #scale(long, long)} on this layout}
+     * This method is equivalent to {@link #scaleHandle()},
+     * with the exception that the base offset coordinate of the returned method handle is bound to the provided value,
+     * as follows:
+     * {@snippet lang = "java":
+     * MethodHandles.insertCoordinates(scaleHandle(), 0, baseOffset);
+     * }
+     * @param baseOffset the offset to be bound to the returned method handle.
+     */
+    default MethodHandle scaleHandle(long baseOffset) {
+        return MethodHandles.insertArguments(scaleHandle(), 0, baseOffset);
+    }
+
+    /**
+     *{@return a method handle that can be used to invoke {@link #scale(long, long)} on this layout}
      */
     default MethodHandle scaleHandle() {
         class Holder {
@@ -380,6 +394,26 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
     default long byteOffset(PathElement... elements) {
         return computePathOp(LayoutPath.rootPath(this), LayoutPath::offset,
                 EnumSet.of(PathKind.SEQUENCE_ELEMENT, PathKind.SEQUENCE_RANGE, PathKind.DEREF_ELEMENT), elements);
+    }
+
+    /**
+     * Creates a method handle that computes the offset, in bytes, of the layout selected
+     * by the given layout path, where the initial layout in the path is this layout.
+     * <p>
+     * This method is equivalent to {@link #byteOffsetHandle(PathElement...)}, with the exception that the base offset
+     * parameter of the returned method handle is bound to the provided value, as follows:
+     * {@snippet lang = "java":
+     * MethodHandles.insertArguments(byteOffsetHandle(elements), 0, baseOffset);
+     * }
+     *
+     * @param baseOffset the offset to be bound to the returned method handle.
+     * @param elements the layout path elements.
+     * @return a method handle that computes the offset, in bytes, of the layout selected by the given layout path.
+     * @throws IllegalArgumentException if the layout path is not <a href="#well-formedness">well-formed</a> for this layout.
+     * @throws IllegalArgumentException if the layout path contains one or more <a href=#deref-path-elements>dereference path elements</a>.
+     */
+    default MethodHandle byteOffsetHandle(long baseOffset, PathElement... elements) {
+        return MethodHandles.insertArguments(byteOffsetHandle(elements), 0, baseOffset);
     }
 
     /**
@@ -538,6 +572,67 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
         }
         return computePathOp(LayoutPath.rootPath(this), LayoutPath::dereferenceHandle,
                 Set.of(), elements);
+    }
+
+    /**
+     * Creates a var handle that accesses elements in a memory segment at the offsets selected by the given layout path,
+     * where the initial layout in the path is this layout.
+     * <p>
+     * This method is equivalent to {@link #varHandle(PathElement...)},
+     * with the exception that an extra logical index coordinate is added to the returned var handle. The index is
+     * used to scale the accessed offset by this layout size, as follows:
+     * {@snippet lang = "java":
+     * MethodHandles.collectCoordinates(varHandle(elements), 1, scaleHandle());
+     * }
+     *
+     * @param elements the layout path elements.
+     * @return a var handle that accesses elements in a memory segment at the offsets selected by the given layout path.
+     * @throws IllegalArgumentException if the layout path is not <a href="#well-formedness">well-formed</a> for this layout.
+     * @throws IllegalArgumentException if the layout selected by the provided path is not a {@linkplain ValueLayout value layout}.
+     */
+    default VarHandle arrayElementVarHandle(PathElement... elements) {
+        return MethodHandles.collectCoordinates(varHandle(elements), 1, scaleHandle());
+    }
+
+    /**
+     * Creates a var handle that accesses elements in a memory segment at the offsets selected by the given layout path,
+     * where the initial layout in the path is this layout.
+     * <p>
+     * This method is equivalent to {@link #arrayElementVarHandle(PathElement...)},
+     * with the exception that the base offset coordinate of the returned var handle is bound to the provided value,
+     * as follows:
+     * {@snippet lang = "java":
+     * MethodHandles.insertCoordinates(arrayElementVarHandle(elements), 1, baseOffset);
+     * }
+     *
+     * @param baseOffset the offset to be bound to the returned var handle.
+     * @param elements the layout path elements.
+     * @return a var handle that accesses a memory segment at the offset selected by the given layout path.
+     * @throws IllegalArgumentException if the layout path is not <a href="#well-formedness">well-formed</a> for this layout.
+     * @throws IllegalArgumentException if the layout selected by the provided path is not a {@linkplain ValueLayout value layout}.
+     */
+    default VarHandle arrayElementVarHandle(long baseOffset, PathElement... elements) {
+        return MethodHandles.insertCoordinates(arrayElementVarHandle(elements), 1, baseOffset);
+    }
+
+    /**
+     * Creates a method handle which, given a memory segment, returns a {@linkplain MemorySegment#asSlice(long,long) slice}
+     * corresponding to the layout selected by the given layout path, where the initial layout in the path is this layout.
+     * <p>
+     * This method is equivalent to {@link #sliceHandle(PathElement...)}, with the exception that the base offset
+     * parameter of the returned method handle is bound to the provided value, as follows:
+     * {@snippet lang = "java":
+     * MethodHandles.insertArguments(sliceHandle(elements), 1, baseOffset);
+     * }
+     *
+     * @param baseOffset the offset to be bound to the returned method handle.
+     * @param elements the layout path elements.
+     * @return a method handle which is used to slice a memory segment at the offset selected by the given layout path.
+     * @throws IllegalArgumentException if the layout path is not <a href="#well-formedness">well-formed</a> for this layout.
+     * @throws IllegalArgumentException if the layout path contains one or more <a href=#deref-path-elements>dereference path elements</a>.
+     */
+    default MethodHandle sliceHandle(long baseOffset, PathElement... elements) {
+        return MethodHandles.insertArguments(sliceHandle(elements), 1, baseOffset);
     }
 
     /**

@@ -273,10 +273,10 @@ public class NativeTestHelper {
     }
 
     private static UnaryOperator<MemorySegment> slicer(MemoryLayout containerLayout, MemoryLayout.PathElement fieldPath) {
-        MethodHandle slicer = containerLayout.sliceHandle(fieldPath);
+        MethodHandle slicer = containerLayout.sliceHandle(0L, fieldPath);
         return container -> {
               try {
-                return (MemorySegment) slicer.invokeExact(container, 0L);
+                return (MemorySegment) slicer.invokeExact(container);
             } catch (Throwable e) {
                 throw new IllegalStateException(e);
             }

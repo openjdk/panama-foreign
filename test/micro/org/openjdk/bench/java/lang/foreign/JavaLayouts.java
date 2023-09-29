@@ -37,14 +37,9 @@ import static java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED;
  */
 public class JavaLayouts {
 
-    static final VarHandle VH_INT_UNALIGNED = arrayVarHandle(JAVA_INT_UNALIGNED);
-    static final VarHandle VH_INT = arrayVarHandle(JAVA_INT);
+    static final VarHandle VH_INT_UNALIGNED = JAVA_INT_UNALIGNED.arrayElementVarHandle(0L);
+    static final VarHandle VH_INT = JAVA_INT.arrayElementVarHandle(0L);
 
-    static final VarHandle VH_LONG_UNALIGNED = arrayVarHandle(JAVA_LONG_UNALIGNED);
-    static final VarHandle VH_LONG = arrayVarHandle(JAVA_LONG);
-
-    private static VarHandle arrayVarHandle(ValueLayout layout) {
-        return MethodHandles.collectCoordinates(layout.varHandle(),
-            1, MethodHandles.insertArguments(layout.scaleHandle(), 0, 0L));
-    }
+    static final VarHandle VH_LONG_UNALIGNED = JAVA_LONG_UNALIGNED.arrayElementVarHandle(0L);
+    static final VarHandle VH_LONG = JAVA_LONG.arrayElementVarHandle(0L);
 }
