@@ -424,6 +424,27 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      * Creates a var handle that accesses a memory segment at the offset selected by the given layout path,
      * where the initial layout in the path is this layout.
      * <p>
+     * This method is equivalent to {@link #varHandle(PathElement...)},
+     * with the exception that the base offset coordinate of the returned var handle is bound to the provided value,
+     * as follows:
+     * {@snippet lang = "java":
+     * MethodHandles.insertCoordinates(varHandle(elements), 1, baseOffset);
+     * }
+     *
+     * @param baseOffset the offset to be bound to the returned var handle.
+     * @param elements the layout path elements.
+     * @return a var handle that accesses a memory segment at the offset selected by the given layout path.
+     * @throws IllegalArgumentException if the layout path is not <a href="#well-formedness">well-formed</a> for this layout.
+     * @throws IllegalArgumentException if the layout selected by the provided path is not a {@linkplain ValueLayout value layout}.
+     */
+    default VarHandle varHandle(long baseOffset, PathElement... elements) {
+        return MethodHandles.insertCoordinates(varHandle(elements), 1, baseOffset);
+    }
+
+    /**
+     * Creates a var handle that accesses a memory segment at the offset selected by the given layout path,
+     * where the initial layout in the path is this layout.
+     * <p>
      * The returned var handle has the following characteristics:
      * <ul>
      *     <li>its type is derived from the {@linkplain ValueLayout#carrier() carrier} of the

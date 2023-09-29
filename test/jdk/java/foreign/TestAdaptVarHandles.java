@@ -85,9 +85,9 @@ public class TestAdaptVarHandles {
     static final VarHandle intHandleIndexed = MethodHandles.collectCoordinates(ValueLayout.JAVA_INT.varHandle(),
             1, MethodHandles.insertArguments(ValueLayout.JAVA_INT.scaleHandle(), 0, 0L));
 
-    static final VarHandle intHandle = MethodHandles.insertCoordinates(ValueLayout.JAVA_INT.varHandle(), 1, 0L);
+    static final VarHandle intHandle = ValueLayout.JAVA_INT.varHandle(0L);
 
-    static final VarHandle floatHandle = MethodHandles.insertCoordinates(ValueLayout.JAVA_FLOAT.varHandle(), 1, 0L);
+    static final VarHandle floatHandle = ValueLayout.JAVA_FLOAT.varHandle(0L);
 
     @Test
     public void testFilterValue() throws Throwable {

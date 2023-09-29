@@ -65,10 +65,9 @@ public class MemorySegmentGetUnsafe {
         }
     }
 
-    static final VarHandle INT_HANDLE = adaptSegmentHandle(JAVA_INT.varHandle());
+    static final VarHandle INT_HANDLE = adaptSegmentHandle(JAVA_INT.varHandle(0L));
 
     static VarHandle adaptSegmentHandle(VarHandle handle) {
-        handle = MethodHandles.insertCoordinates(handle, 1, 0L);
         handle = MethodHandles.filterCoordinates(handle, 0, OF_ADDRESS_UNSAFE);
         return handle;
     }
