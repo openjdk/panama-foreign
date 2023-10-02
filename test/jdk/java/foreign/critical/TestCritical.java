@@ -22,9 +22,28 @@
  */
 
 /*
- * @test
+ * @test id=no_check_unhandled_oops
  * @library ../ /test/lib
- * @run testng/othervm --enable-native-access=ALL-UNNAMED TestCritical
+ * @requires !vm.debug
+ *
+ * @run testng/othervm
+ *   --enable-native-access=ALL-UNNAMED
+ *   -XX:CompileCommand=dontinline,TestCritical::runTest
+ *   -XX:CompileCommand=BackgroundCompilation,TestCritical::runTest,false
+ *   TestCritical
+ */
+
+/*
+ * @test id=check_unhandled_oops
+ * @library ../ /test/lib
+ * @requires vm.debug
+ *
+ * @run testng/othervm
+ *   --enable-native-access=ALL-UNNAMED
+ *   -XX:CompileCommand=dontinline,TestCritical::runTest
+ *   -XX:CompileCommand=BackgroundCompilation,TestCritical::runTest,false
+ *   -XX:+CheckUnhandledOops
+ *   TestCritical
  */
 
 import org.testng.annotations.DataProvider;
@@ -91,9 +110,8 @@ public class TestCritical extends NativeTestHelper {
     @Test(dataProvider = "allowHeapCases")
     public void testAllowHeap(AllowHeapCase testCase) throws Throwable {
         MethodHandle handle = downcallHandle(testCase.fName(), testCase.fDesc(), Linker.Option.critical(true));
-        int elementCount = 10;
-        MemorySegment heapSegment = testCase.newArraySegment().apply(elementCount);
-        SequenceLayout sequence = MemoryLayout.sequenceLayout(elementCount, testCase.elementLayout());
+        SequenceLayout sequence = MemoryLayout.sequenceLayout(10, testCase.elementLayout());
+        MemorySegment heapSegment = testCase.newArraySegment().apply((int) sequence.elementCount());
 
         try (Arena arena = Arena.ofConfined()) {
             TestValue[] tvs = genTestArgs(testCase.fDesc(), arena);

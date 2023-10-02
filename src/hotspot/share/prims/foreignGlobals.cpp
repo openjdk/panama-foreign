@@ -91,12 +91,19 @@ VMStorage ForeignGlobals::parse_vmstorage(oop storage) {
   return VMStorage(static_cast<StorageType>(type), segment_mask_or_size, index_or_offset);
 }
 
-int RegSpiller::compute_spill_area(const GrowableArray<VMStorage>& regs) {
-  int result_size = 0;
+RegSpiller::RegSpiller(const GrowableArray<VMStorage>& regs) : _regs(regs), _offsets(regs.length(), regs.length(), 0),
+                                                               _spill_size_bytes(0) {
   for (int i = 0; i < regs.length(); i++) {
-    result_size += pd_reg_size(regs.at(i));
+    _offsets.at_put(i, _spill_size_bytes);
+    _spill_size_bytes += pd_reg_size(regs.at(i));
   }
-  return result_size;
+}
+
+int RegSpiller::reg_offset(VMStorage reg) const {
+  // a linear search is fine, since we don't have to do this offset, and have a small number of regs
+  int index = _regs.find(reg);
+  assert(index != -1, "reg not found");
+  return _offsets.at(index);
 }
 
 void RegSpiller::generate(MacroAssembler* masm, int rsp_offset, bool spill) const {

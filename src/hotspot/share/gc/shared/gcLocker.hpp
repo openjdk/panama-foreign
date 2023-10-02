@@ -75,7 +75,7 @@ class GCLocker: public AllStatic {
     assert(GCLocker::is_at_safepoint(), "only read at safepoint");
     return is_active_internal();
   }
-  static bool needs_gc()       { return _needs_gc;                        }
+  static bool needs_gc()       { return _needs_gc; }
 
   // Shorthand
   static bool is_active_and_needs_gc() {

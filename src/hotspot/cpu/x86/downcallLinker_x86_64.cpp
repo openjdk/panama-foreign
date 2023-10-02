@@ -94,6 +94,8 @@ public:
 
   void add_offset_to_oop(VMStorage reg_oop, VMStorage reg_offset, VMStorage shuffle_reg) const;
   void add_offsets_to_oops(GrowableArray<VMStorage>& java_regs, VMStorage shuffle_reg) const;
+  OopMap* generate_oop_map_for_spill(int in_spill_offset, const RegSpiller& in_reg_spiller,
+                                     GrowableArray<VMStorage>& java_regs) const;
 
   void runtime_call(address target) const;
 };
@@ -187,6 +189,27 @@ void DowncallStubGenerator::runtime_call(address target) const {
   __ reinit_heapbase();
 }
 
+OopMap* DowncallStubGenerator::generate_oop_map_for_spill(int in_spill_offset, const RegSpiller& in_reg_spiller,
+                                                          GrowableArray<VMStorage>& java_regs) const {
+  OopMap* map = new OopMap(_frame_size_slots, 0);
+  int reg_idx = 0;
+  for (int sig_idx = 0; sig_idx < _num_args; sig_idx++) {
+    if (_signature[sig_idx] == T_OBJECT) {
+      VMStorage reg = java_regs.at(reg_idx++);
+      if (reg.is_reg()) { // only register args are spilled
+        int offset_in_area = in_reg_spiller.reg_offset(reg);
+        int total_offset = in_spill_offset + offset_in_area;
+        assert((total_offset % VMRegImpl::stack_slot_size) == 0, "must be addressable with VMReg");
+        VMReg vm_reg = VMRegImpl::stack2reg(total_offset / VMRegImpl::stack_slot_size);
+        map->set_oop(vm_reg);
+      }
+    } else if (_signature[sig_idx] != T_VOID) {
+      reg_idx++;
+    }
+  }
+  return map;
+}
+
 void DowncallStubGenerator::generate() {
   enum layout {
     rbp_off,
@@ -205,7 +228,8 @@ void DowncallStubGenerator::generate() {
   RegSpiller in_reg_spiller(java_regs); // spill to lock GCLocker
   bool has_objects = false;
   GrowableArray<VMStorage> filtered_java_regs = ForeignGlobals::downcall_filter_offset_regs(java_regs, _signature,
-                                                                                             _num_args, has_objects);
+                                                                                            _num_args, has_objects);
+  assert(!(_needs_transition && has_objects), "can not pass objects when doing transition");
 
   // in bytes
   int allocated_frame_size = 0;
@@ -215,10 +239,11 @@ void DowncallStubGenerator::generate() {
   // when we don't use a return buffer we need to spill the return value around our slow path calls
   bool should_save_return_value = !_needs_return_buffer;
   RegSpiller out_reg_spiller(_output_registers);
-  int spill_rsp_offset = -1;
+  int ret_spill_rsp_offset = -1;
+  int in_spill_rsp_offset = -1;
 
   if (should_save_return_value) {
-    spill_rsp_offset = 0;
+    ret_spill_rsp_offset = 0;
     // spill area can be shared with shadow space and out args,
     // since they are only used before the call,
     // and spill area is only used after.
@@ -228,7 +253,7 @@ void DowncallStubGenerator::generate() {
   }
 
   if (has_objects) {
-    spill_rsp_offset = 0;
+    in_spill_rsp_offset = 0;
     // in spill area can also be shared
     allocated_frame_size = in_reg_spiller.spill_size_bytes() > allocated_frame_size
       ? in_reg_spiller.spill_size_bytes()
@@ -279,7 +304,7 @@ void DowncallStubGenerator::generate() {
   _frame_size_slots += framesize_base + (allocated_frame_size >> LogBytesPerInt);
   assert(is_even(_frame_size_slots/2), "sp not 16-byte aligned");
 
-  _oop_maps  = _needs_transition ? new OopMapSet() : nullptr;
+  _oop_maps  = _needs_transition || has_objects ? new OopMapSet() : nullptr;
   address start = __ pc();
 
   __ enter();
@@ -304,12 +329,18 @@ void DowncallStubGenerator::generate() {
   }
 
   if (has_objects) {
-    in_reg_spiller.generate_spill(_masm, spill_rsp_offset);
+    in_reg_spiller.generate_spill(_masm, in_spill_rsp_offset);
 
+    // TODO split this into slow/fast paths (See GCLocker::lock_critical impl)
+    address the_pc = __ pc();
+    __ set_last_Java_frame(rsp, rbp, (address)the_pc, rscratch1);
     __ movptr(c_rarg0, r15_thread);
     runtime_call(CAST_FROM_FN_PTR(address, DowncallLinker::lock_gc));
+    __ reset_last_Java_frame(r15_thread, true);
+    OopMap* map = generate_oop_map_for_spill(in_spill_rsp_offset, in_reg_spiller, java_regs);
+    _oop_maps->add_gc_map(the_pc - start, map);
 
-    in_reg_spiller.generate_fill(_masm, spill_rsp_offset);
+    in_reg_spiller.generate_fill(_masm, in_spill_rsp_offset);
 
     add_offsets_to_oops(java_regs, shuffle_reg);
   }
@@ -340,14 +371,19 @@ void DowncallStubGenerator::generate() {
 
   if (has_objects) {
     if (should_save_return_value) {
-      out_reg_spiller.generate_spill(_masm, spill_rsp_offset);
+      out_reg_spiller.generate_spill(_masm, ret_spill_rsp_offset);
     }
 
+    address the_pc = __ pc();
+    __ set_last_Java_frame(rsp, rbp, (address)the_pc, rscratch1);
     __ movptr(c_rarg0, r15_thread);
     runtime_call(CAST_FROM_FN_PTR(address, DowncallLinker::unlock_gc));
+    __ reset_last_Java_frame(r15_thread, true);
+    OopMap* map = new OopMap(_frame_size_slots, 0);
+    _oop_maps->add_gc_map(the_pc - start, map);
 
     if (should_save_return_value) {
-      out_reg_spiller.generate_fill(_masm, spill_rsp_offset);
+      out_reg_spiller.generate_fill(_masm, ret_spill_rsp_offset);
     }
   }
 
@@ -357,7 +393,7 @@ void DowncallStubGenerator::generate() {
     __ block_comment("{ save thread local");
 
     if (should_save_return_value) {
-      out_reg_spiller.generate_spill(_masm, spill_rsp_offset);
+      out_reg_spiller.generate_spill(_masm, ret_spill_rsp_offset);
     }
 
     __ movptr(c_rarg0, Address(rsp, locs.data_offset(StubLocations::CAPTURED_STATE_BUFFER)));
@@ -365,7 +401,7 @@ void DowncallStubGenerator::generate() {
     runtime_call(CAST_FROM_FN_PTR(address, DowncallLinker::capture_state));
 
     if (should_save_return_value) {
-      out_reg_spiller.generate_fill(_masm, spill_rsp_offset);
+      out_reg_spiller.generate_fill(_masm, ret_spill_rsp_offset);
     }
 
     __ block_comment("} save thread local");
@@ -418,14 +454,14 @@ void DowncallStubGenerator::generate() {
     __ bind(L_safepoint_poll_slow_path);
 
     if (should_save_return_value) {
-      out_reg_spiller.generate_spill(_masm, spill_rsp_offset);
+      out_reg_spiller.generate_spill(_masm, ret_spill_rsp_offset);
     }
 
     __ mov(c_rarg0, r15_thread);
     runtime_call(CAST_FROM_FN_PTR(address, JavaThread::check_special_condition_for_native_trans));
 
     if (should_save_return_value) {
-      out_reg_spiller.generate_fill(_masm, spill_rsp_offset);
+      out_reg_spiller.generate_fill(_masm, ret_spill_rsp_offset);
     }
 
     __ jmp(L_after_safepoint_poll);
@@ -437,13 +473,13 @@ void DowncallStubGenerator::generate() {
     __ bind(L_reguard);
 
     if (should_save_return_value) {
-      out_reg_spiller.generate_spill(_masm, spill_rsp_offset);
+      out_reg_spiller.generate_spill(_masm, ret_spill_rsp_offset);
     }
 
     runtime_call(CAST_FROM_FN_PTR(address, SharedRuntime::reguard_yellow_pages));
 
     if (should_save_return_value) {
-      out_reg_spiller.generate_fill(_masm, spill_rsp_offset);
+      out_reg_spiller.generate_fill(_masm, ret_spill_rsp_offset);
     }
 
     __ jmp(L_after_reguard);

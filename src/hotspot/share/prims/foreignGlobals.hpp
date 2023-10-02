@@ -101,17 +101,17 @@ public:
 // Helper class useful for generating spills and fills of a set of registers.
 class RegSpiller {
   GrowableArray<VMStorage> _regs;
+  GrowableArray<int> _offsets;
   int _spill_size_bytes;
 public:
-  RegSpiller(const GrowableArray<VMStorage>& regs) : _regs(regs), _spill_size_bytes(compute_spill_area(regs)) {
-  }
+  RegSpiller(const GrowableArray<VMStorage>& regs);
 
   int spill_size_bytes() const { return _spill_size_bytes; }
+  int reg_offset(VMStorage reg) const;
   void generate_spill(MacroAssembler* masm, int rsp_offset) const { return generate(masm, rsp_offset, true); }
   void generate_fill(MacroAssembler* masm, int rsp_offset) const { return generate(masm, rsp_offset, false); }
 
 private:
-  static int compute_spill_area(const GrowableArray<VMStorage>& regs);
   void generate(MacroAssembler* masm, int rsp_offset, bool is_spill) const;
 
   static int pd_reg_size(VMStorage reg);
