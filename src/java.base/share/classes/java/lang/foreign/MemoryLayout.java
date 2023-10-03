@@ -275,6 +275,67 @@ import jdk.internal.vm.annotation.ForceInline;
  * access modes. All other access modes will result in {@link UnsupportedOperationException} being thrown. Moreover,
  * while supported, access modes {@code get} and {@code set} might lead to word tearing.
  *
+ * <h2 id="variable-length">Working with variable-length structs</h2>
+ *
+ * Memory layouts allow clients to describe the contents of a region of memory whose size is knonw <em>statically</em>.
+ * There are, however, cases, where the size of a region of memory is only known <em>dynamically</em>, as it depends
+ * on the value of one or more struct fields. Consider the following struct declaration in C:
+ *
+ * {@snippet lang=c :
+ * typedef struct {
+ *     int size;
+ *     struct {
+ *         int x;
+ *         int y;
+ *     } points[];
+ * } Polygon;
+ * }
+ *
+ * In the above code, a polygon is modelled as a size (the number of edges in the polygon) and an array of points
+ * (one for each vertex in the polygon). The number of vertices depends on the number of edges in the polygon. As such,
+ * the size of the {@code points} array is left <em>unspecified</em> in the C declaration, using a <em>Flexible Array Member</em>
+ * (a feature standardized in C99).
+ * <p>
+ * Memory layouts do not support sequence layouts whose size is unknown. As such, it is not possible to model
+ * the above struct directly. That said, clients can still enjoy structured access provided by memory layouts, as
+ * demonstrated below:
+ *
+ * {@snippet lang=java :
+ * StructLayout POINT = MemoryLayout.structLayout(
+ *             ValueLayout.JAVA_INT.withName("x"),
+ *             ValueLayout.JAVA_INT.withName("y")
+ * );
+ *
+ * StructLayout POLYGON = MemoryLayout.structLayout(
+ *             ValueLayout.JAVA_INT.withName("size"),
+ *             MemoryLayout.sequenceLayout(0, POINT_2D).withName("points")
+ * );
+ *
+ * VarHandle POLYGON_SIZE = POLYGON_2D.varHandle(0, PathElement.groupElement("size"));
+ * VarHandle POINT_X = POINT.varHandle(PathElement.groupElement("x"));
+ * long POINTS_OFFSET = POLYGON.byteOffset(PathElement.groupElement("points"));
+ * }
+ *
+ * Note how we have split the polygon struct in two. The {@code POLYGON} layout contains a sequence layout
+ * of size <em>zero</em>. The element layout of the sequence layout is the {@code POINT} layout, which defines
+ * the {@code x} and {@code y} coordinates, accordingly. The first layout is used to obtain a var handle
+ * that provides access to the polygon size; the second layout is used to obtain a var handle that provides
+ * access to the {@code x} coordinate of a point struct. Finally, an offset to the start of the variable-length
+ * {@code points} array is also obtained.
+ * <p>
+ * The {@code x} coordinates of all the points in a polygon can then be accessed as follows:
+ * {@snippet lang=java :
+ * MemorySegment polygon = ...
+ * int size = POLYGON_SIZE.get(polygon, 0L);
+ * for (int i = 0 ; i < size ; i++) {
+ *     int x = POINT_X.get(polygon, POINT.scaleOffset(POINTS_OFFSET, i));
+ * }
+ *  }
+ * Here, we first obtain the polygon size, using the {@code POLYGON_SIZE} var handle. Then, in a loop, we read
+ * the {@code x} coordinates of all the points in the polygon. This is done by providing a custom base offset to
+ * the {@code POINT_X} var handle. The custom offset is computed as {@code POINTS_OFFSET + (i * POINT.byteSize())}, where
+ * {@code i} is the loop induction variable.
+ *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
