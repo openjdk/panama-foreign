@@ -28,8 +28,18 @@ package jdk.internal.foreign;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySegment.Scope;
+import java.lang.invoke.MethodHandles;
 
 public final class ArenaImpl implements Arena {
+
+    static {
+        try {
+            // initialize MemorySegment before touching NativeMemorySegmentImpl to avoid deadlock
+            MethodHandles.lookup().ensureInitialized(MemorySegment.class);
+        } catch (ReflectiveOperationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
 
     private final MemorySessionImpl session;
     private final boolean shouldReserveMemory;
