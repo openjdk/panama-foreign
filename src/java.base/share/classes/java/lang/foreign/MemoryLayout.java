@@ -77,7 +77,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * The above declaration can be modelled using a layout object, as follows:
  *
  * {@snippet lang=java :
- * SequenceLayout taggedValues = MemoryLayout.sequenceLayout(5,
+ * SequenceLayout TAGGED_VALUES = MemoryLayout.sequenceLayout(5,
  *     MemoryLayout.structLayout(
  *         ValueLayout.JAVA_BYTE.withName("kind"),
  *         MemoryLayout.paddingLayout(3),
@@ -132,13 +132,13 @@ import jdk.internal.vm.annotation.ForceInline;
  * For instance, given the {@code taggedValues} sequence layout constructed above, we can obtain the offset,
  * in bytes, of the member layout named <code>value</code> in the <em>first</em> sequence element, as follows:
  * {@snippet lang=java :
- * long valueOffset = taggedValues.byteOffset(PathElement.sequenceElement(0),
+ * long valueOffset = TAGGED_VALUES.byteOffset(PathElement.sequenceElement(0),
  *                                           PathElement.groupElement("value")); // yields 4
  * }
  *
  * Similarly, we can select the member layout named {@code value}, as follows:
  * {@snippet lang=java :
- * MemoryLayout value = taggedValues.select(PathElement.sequenceElement(),
+ * MemoryLayout value = TAGGED_VALUES.select(PathElement.sequenceElement(),
  *                                          PathElement.groupElement("value"));
  * }
  *
@@ -151,10 +151,13 @@ import jdk.internal.vm.annotation.ForceInline;
  * the open elements in the path:
  *
  * {@snippet lang=java :
- * VarHandle valueHandle = taggedValues.varHandle(PathElement.sequenceElement(),
+ * VarHandle valueHandle = TAGGED_VALUES.varHandle(PathElement.sequenceElement(),
  *                                                PathElement.groupElement("value"));
- * MemorySegment valuesSegment = ...
- * int val = (int) valueHandle.get(valuesSegment, 2); // reads the "value" field of the third struct in the array
+ * MemorySegment taggedValues = ...
+ * // reads the "value" field of the third struct in the array (taggedValues[2].value)
+ * int val = (int) valueHandle.get(taggedValues,
+ *         0L,  // base offset
+ *         2L); // sequence index
  * }
  *
  * <p>
@@ -164,10 +167,10 @@ import jdk.internal.vm.annotation.ForceInline;
  * of the sequence element whose offset is to be computed:
  *
  * {@snippet lang=java :
- * MethodHandle offsetHandle = taggedValues.byteOffsetHandle(PathElement.sequenceElement(),
+ * MethodHandle offsetHandle = TAGGED_VALUES.byteOffsetHandle(PathElement.sequenceElement(),
  *                                                           PathElement.groupElement("kind"));
- * long offset1 = (long) offsetHandle.invokeExact(1L); // 8
- * long offset2 = (long) offsetHandle.invokeExact(2L); // 16
+ * long offset1 = (long) offsetHandle.invokeExact(0L, 1L); // 0 + (1 * 8) = 8
+ * long offset2 = (long) offsetHandle.invokeExact(0L, 2L); // 0 + (2 * 8) = 16
  * }
  *
  * <h3 id="deref-path-elements">Dereference path elements</h3>
@@ -205,7 +208,10 @@ import jdk.internal.vm.annotation.ForceInline;
  * );
  *
  * MemorySegment rect = ...
- * int rect_y_4 = (int) rectPointYs.get(rect, 2); // rect.points[2]->y
+ * // dereferences the third point struct in the "points" array, and reads its "y" coordinate (rect.points[2]->y)
+ * int rect_y_2 = (int) rectPointYs.get(rect,
+ *     0L,  // base offset
+ *     2L); // sequence index
  * }
  *
  * <h3 id="well-formedness">Layout path well-formedness</h3>
