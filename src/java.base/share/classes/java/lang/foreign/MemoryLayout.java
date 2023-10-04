@@ -308,10 +308,10 @@ import jdk.internal.vm.annotation.ForceInline;
  *
  * StructLayout POLYGON = MemoryLayout.structLayout(
  *             ValueLayout.JAVA_INT.withName("size"),
- *             MemoryLayout.sequenceLayout(0, POINT_2D).withName("points")
+ *             MemoryLayout.sequenceLayout(0, POINT).withName("points")
  * );
  *
- * VarHandle POLYGON_SIZE = POLYGON_2D.varHandle(0, PathElement.groupElement("size"));
+ * VarHandle POLYGON_SIZE = POLYGON.varHandle(0, PathElement.groupElement("size"));
  * VarHandle POINT_X = POINT.varHandle(PathElement.groupElement("x"));
  * long POINTS_OFFSET = POLYGON.byteOffset(PathElement.groupElement("points"));
  * }

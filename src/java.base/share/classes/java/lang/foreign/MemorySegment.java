@@ -143,7 +143,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * {@snippet lang=java:
  * MethodHandle scale = ValueLayout.JAVA_INT.scaleHandle();              // (long, long)long
  * VarHandle intAtOffsetAndIndexHandle =
- *         MethodHandles.filterCoordinates(intAtOffsetHandle, 1, scale); // (MemorySegment, long, long)
+ *         MethodHandles.collectCoordinates(intAtOffsetHandle, 1, scale); // (MemorySegment, long, long)
  * int value = (int) intAtOffsetAndIndexHandle.get(segment, 2L, 3L);     // segment.get(ValueLayout.JAVA_INT, 2L + (3L * 4L))
  * }
  *
