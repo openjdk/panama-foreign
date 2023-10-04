@@ -35,6 +35,8 @@ public final class ArenaImpl implements Arena {
     static {
         try {
             // initialize MemorySegment before touching NativeMemorySegmentImpl to avoid deadlock
+            // if multiple threads try to initialize NativeMemorySegmentImpl and MS through allocateNoInit
+            // and a method on MS at the same time
             MethodHandles.lookup().ensureInitialized(MemorySegment.class);
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
