@@ -277,7 +277,7 @@ import jdk.internal.vm.annotation.ForceInline;
  *
  * <h2 id="variable-length">Working with variable-length structs</h2>
  *
- * Memory layouts allow clients to describe the contents of a region of memory whose size is knonw <em>statically</em>.
+ * Memory layouts allow clients to describe the contents of a region of memory whose size is known <em>statically</em>.
  * There are, however, cases, where the size of a region of memory is only known <em>dynamically</em>, as it depends
  * on the value of one or more struct fields. Consider the following struct declaration in C:
  *
