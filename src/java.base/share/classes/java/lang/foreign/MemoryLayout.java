@@ -420,7 +420,8 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      *{@return a method handle that can be used to invoke {@link #scale(long, long)} on this layout}
      */
     default MethodHandle scaleHandle() {
-        class Holder {
+        final class Holder {
+            private Holder() {}
             static final MethodHandle MH_SCALE;
             static {
                 try {
