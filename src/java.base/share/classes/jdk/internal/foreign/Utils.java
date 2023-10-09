@@ -57,14 +57,10 @@ public final class Utils {
     public static final boolean IS_WINDOWS = privilegedGetProperty("os.name").startsWith("Windows");
 
     static {
-        try {
-            // initialize MemorySegment before touching NativeMemorySegmentImpl to avoid deadlock
-            // if multiple threads try to initialize NativeMemorySegmentImpl and MS through longToAddress
-            // and a method on MS at the same time
-            MethodHandles.lookup().ensureInitialized(MemorySegment.class);
-        } catch (ReflectiveOperationException e) {
-            throw new ExceptionInInitializerError(e);
-        }
+        // initialize MemorySegment before touching NativeMemorySegmentImpl to avoid deadlock
+        // if multiple threads try to initialize NativeMemorySegmentImpl and MS through longToAddress
+        // and a method on MS at the same time
+        Unsafe.getUnsafe().ensureClassInitialized(MemorySegment.class);
     }
 
     // Suppresses default constructor, ensuring non-instantiability.

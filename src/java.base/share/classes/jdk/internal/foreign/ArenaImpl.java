@@ -28,19 +28,16 @@ package jdk.internal.foreign;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySegment.Scope;
-import java.lang.invoke.MethodHandles;
+
+import jdk.internal.misc.Unsafe;
 
 public final class ArenaImpl implements Arena {
 
     static {
-        try {
-            // initialize MemorySegment before touching NativeMemorySegmentImpl to avoid deadlock
-            // if multiple threads try to initialize NativeMemorySegmentImpl and MS through allocateNoInit
-            // and a method on MS at the same time
-            MethodHandles.lookup().ensureInitialized(MemorySegment.class);
-        } catch (ReflectiveOperationException e) {
-            throw new ExceptionInInitializerError(e);
-        }
+        // initialize MemorySegment before touching NativeMemorySegmentImpl to avoid deadlock
+        // if multiple threads try to initialize NativeMemorySegmentImpl and MS through allocateNoInit
+        // and a method on MS at the same time
+        Unsafe.getUnsafe().ensureClassInitialized(MemorySegment.class);
     }
 
     private final MemorySessionImpl session;

@@ -105,6 +105,9 @@ public class FileChannelImpl
     // Cleanable with an action which closes this channel's file descriptor
     private final Cleanable closer;
 
+    // for ensureClassInitialized
+    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
+
     private static class Closer implements Runnable {
         private final FileDescriptor fd;
 
@@ -1335,6 +1338,8 @@ public class FileChannelImpl
         if (mode == MapMode.READ_ONLY) {
             readOnly = true;
         }
+        // enure MS is initialized before touching subclasses directly to avoid deadlock
+        UNSAFE.ensureClassInitialized(MemorySegment.class);
         if (unmapper != null) {
             AbstractMemorySegmentImpl segment =
                 new MappedMemorySegmentImpl(unmapper.address(), unmapper, size,
