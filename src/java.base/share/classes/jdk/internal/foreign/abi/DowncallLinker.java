@@ -38,7 +38,6 @@ import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
@@ -181,10 +180,12 @@ public class DowncallLinker {
                 Object arg = args[i];
                 if (callingSequence.functionDesc().argumentLayouts().get(i) instanceof AddressLayout) {
                     MemorySessionImpl sessionImpl = ((AbstractMemorySegmentImpl) arg).sessionImpl();
-                    sessionImpl.acquire0();
-                    // add this scope _after_ we acquire, so we only release scopes we actually acquired
-                    // in case an exception occurs
-                    acquiredScopes.add(sessionImpl);
+                    if (!(callingSequence.needsReturnBuffer() && i == 0)) { // don't acquire unboxArena's scope
+                        sessionImpl.acquire0();
+                        // add this scope _after_ we acquire, so we only release scopes we actually acquired
+                        // in case an exception occurs
+                        acquiredScopes.add(sessionImpl);
+                    }
                 }
                 BindingInterpreter.unbox(arg, callingSequence.argumentBindings(i), storeFunc, unboxArena);
             }
