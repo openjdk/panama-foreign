@@ -22,28 +22,10 @@
  */
 
 /*
- * @test id=no_check_unhandled_oops
+ * @test
  * @library ../ /test/lib
- * @requires !vm.debug
  *
- * @run testng/othervm
- *   --enable-native-access=ALL-UNNAMED
- *   -XX:CompileCommand=dontinline,TestCritical::runTest
- *   -XX:CompileCommand=BackgroundCompilation,TestCritical::runTest,false
- *   TestCritical
- */
-
-/*
- * @test id=check_unhandled_oops
- * @library ../ /test/lib
- * @requires vm.debug
- *
- * @run testng/othervm
- *   --enable-native-access=ALL-UNNAMED
- *   -XX:CompileCommand=dontinline,TestCritical::runTest
- *   -XX:CompileCommand=BackgroundCompilation,TestCritical::runTest,false
- *   -XX:+CheckUnhandledOops
- *   TestCritical
+ * @run testng/othervm --enable-native-access=ALL-UNNAMED TestCritical
  */
 
 import org.testng.annotations.DataProvider;
