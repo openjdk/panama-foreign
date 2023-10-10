@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  *
  * @since 19
  */
-public sealed abstract class AbstractGroupLayout<L extends AbstractGroupLayout<L> & MemoryLayout>
+abstract sealed class AbstractGroupLayout<L extends AbstractGroupLayout<L> & MemoryLayout>
         extends AbstractLayout<L>
         permits StructLayoutImpl, UnionLayoutImpl {
 
