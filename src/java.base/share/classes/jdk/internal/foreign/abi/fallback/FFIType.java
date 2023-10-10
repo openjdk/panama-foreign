@@ -57,9 +57,7 @@ import static java.lang.foreign.ValueLayout.JAVA_SHORT;
  *   struct _ffi_type **elements;
  * } ffi_type;
  */
-final class FFIType {
-
-    private FFIType() {}
+class FFIType {
 
     static final ValueLayout SIZE_T = layoutFor((int)ADDRESS.byteSize());
     private static final ValueLayout UNSIGNED_SHORT = JAVA_SHORT;
