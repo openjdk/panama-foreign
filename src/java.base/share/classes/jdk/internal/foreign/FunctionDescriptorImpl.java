@@ -52,7 +52,9 @@ public final class FunctionDescriptorImpl implements FunctionDescriptor {
         if (resLayout instanceof PaddingLayout) {
             throw new IllegalArgumentException("Unsupported padding layout return in function descriptor: " + resLayout);
         }
-        Optional<MemoryLayout> paddingLayout = argLayouts.stream().filter(l -> l instanceof PaddingLayout).findAny();
+        Optional<MemoryLayout> paddingLayout = argLayouts.stream()
+                .filter(PaddingLayout.class::isInstance)
+                .findAny();
         if (paddingLayout.isPresent()) {
             throw new IllegalArgumentException("Unsupported padding layout argument in function descriptor: " + paddingLayout.get());
         }
