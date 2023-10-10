@@ -32,10 +32,10 @@ import java.util.Optional;
 public final class PaddingLayoutImpl extends AbstractLayout<PaddingLayoutImpl> implements PaddingLayout {
 
     private PaddingLayoutImpl(long byteSize) {
-        this(byteSize, 1, Optional.empty());
+        this(byteSize, 1, null);
     }
 
-    private PaddingLayoutImpl(long byteSize, long byteAlignment, Optional<String> name) {
+    private PaddingLayoutImpl(long byteSize, long byteAlignment, String name) {
         super(byteSize, byteAlignment, name);
     }
 
@@ -58,7 +58,7 @@ public final class PaddingLayoutImpl extends AbstractLayout<PaddingLayoutImpl> i
     }
 
     @Override
-    PaddingLayoutImpl dup(long byteAlignment, Optional<String> name) {
+    PaddingLayoutImpl dup(long byteAlignment, String name) {
         return new PaddingLayoutImpl(byteSize(), byteAlignment, name);
     }
 

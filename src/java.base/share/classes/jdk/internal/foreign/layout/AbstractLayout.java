@@ -41,24 +41,28 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
 
     private final long byteSize;
     private final long byteAlignment;
-    private final Optional<String> name;
+    private final String name; // Nullable
 
-    AbstractLayout(long byteSize, long byteAlignment, Optional<String> name) {
+    AbstractLayout(long byteSize, long byteAlignment, String name) {
         this.byteSize = MemoryLayoutUtil.requireByteSizeValid(byteSize, true);
         this.byteAlignment = requirePowerOfTwoAndGreaterOrEqualToOne(byteAlignment);
-        this.name = Objects.requireNonNull(name);
+        this.name = name;
     }
 
     public final L withName(String name) {
-        return dup(byteAlignment(), Optional.of(name));
+        return dup(byteAlignment(), Objects.requireNonNull(name));
     }
 
     @SuppressWarnings("unchecked")
     public final L withoutName() {
-        return name.isPresent() ? dup(byteAlignment(), Optional.empty()) : (L) this;
+        return name != null ? dup(byteAlignment(), null) : (L) this;
     }
 
     public final Optional<String> name() {
+        return Optional.ofNullable(name);
+    }
+
+    final String nameOrNull() {
         return name;
     }
 
@@ -109,9 +113,9 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
     @Override
     public boolean equals(Object other) {
         return other instanceof AbstractLayout<?> otherLayout &&
-                name.equals(otherLayout.name) &&
                 byteSize == otherLayout.byteSize &&
-                byteAlignment == otherLayout.byteAlignment;
+                byteAlignment == otherLayout.byteAlignment &&
+                Objects.equals(name, otherLayout.name);
     }
 
     /**
@@ -120,11 +124,11 @@ public abstract sealed class AbstractLayout<L extends AbstractLayout<L> & Memory
     @Override
     public abstract String toString();
 
-    abstract L dup(long byteAlignment, Optional<String> name);
+    abstract L dup(long byteAlignment, String name);
 
     String decorateLayoutString(String s) {
-        if (name().isPresent()) {
-            s = String.format("%s(%s)", s, name().get());
+        if (name != null) {
+            s = String.format("%s(%s)", s, name);
         }
         if (!hasNaturalAlignment()) {
             s = byteAlignment() + "%" + s;

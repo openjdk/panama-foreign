@@ -38,10 +38,10 @@ public final class SequenceLayoutImpl extends AbstractLayout<SequenceLayoutImpl>
     private final MemoryLayout elementLayout;
 
     private SequenceLayoutImpl(long elemCount, MemoryLayout elementLayout) {
-        this(elemCount, elementLayout, elementLayout.byteAlignment(), Optional.empty());
+        this(elemCount, elementLayout, elementLayout.byteAlignment(), null);
     }
 
-    private SequenceLayoutImpl(long elemCount, MemoryLayout elementLayout, long byteAlignment, Optional<String> name) {
+    private SequenceLayoutImpl(long elemCount, MemoryLayout elementLayout, long byteAlignment, String name) {
         super(Math.multiplyExact(elemCount, elementLayout.byteSize()), byteAlignment, name);
         this.elemCount = elemCount;
         this.elementLayout = elementLayout;
@@ -71,7 +71,7 @@ public final class SequenceLayoutImpl extends AbstractLayout<SequenceLayoutImpl>
      */
     public SequenceLayout withElementCount(long elementCount) {
         return Utils.wrapOverflow(() ->
-                new SequenceLayoutImpl(elementCount, elementLayout, byteAlignment(), name()));
+                new SequenceLayoutImpl(elementCount, elementLayout, byteAlignment(), nameOrNull()));
     }
 
     /**
@@ -199,7 +199,7 @@ public final class SequenceLayoutImpl extends AbstractLayout<SequenceLayoutImpl>
     }
 
     @Override
-    SequenceLayoutImpl dup(long byteAlignment, Optional<String> name) {
+    SequenceLayoutImpl dup(long byteAlignment, String name) {
         return new SequenceLayoutImpl(elementCount(), elementLayout, byteAlignment, name);
     }
 

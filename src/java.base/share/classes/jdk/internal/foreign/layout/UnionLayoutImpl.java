@@ -32,12 +32,12 @@ import java.util.Optional;
 
 public final class UnionLayoutImpl extends AbstractGroupLayout<UnionLayoutImpl> implements UnionLayout {
 
-    private UnionLayoutImpl(List<MemoryLayout> elements, long byteSize, long byteAlignment, long minByteAlignment, Optional<String> name) {
+    private UnionLayoutImpl(List<MemoryLayout> elements, long byteSize, long byteAlignment, long minByteAlignment, String name) {
         super(Kind.UNION, elements, byteSize, byteAlignment, minByteAlignment, name);
     }
 
     @Override
-    UnionLayoutImpl dup(long byteAlignment, Optional<String> name) {
+    UnionLayoutImpl dup(long byteAlignment, String name) {
         return new UnionLayoutImpl(memberLayouts(), byteSize(), byteAlignment, minByteAlignment, name);
     }
 
@@ -48,7 +48,7 @@ public final class UnionLayoutImpl extends AbstractGroupLayout<UnionLayoutImpl> 
             size = Math.max(size, elem.byteSize());
             align = Math.max(align, elem.byteAlignment());
         }
-        return new UnionLayoutImpl(elements, size, align, align, Optional.empty());
+        return new UnionLayoutImpl(elements, size, align, align, null);
     }
 
 }

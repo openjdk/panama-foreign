@@ -68,7 +68,7 @@ public final class ValueLayouts {
         @Stable
         private VarHandle handle;
 
-        AbstractValueLayout(Class<?> carrier, ByteOrder order, long byteSize, long byteAlignment, Optional<String> name) {
+        AbstractValueLayout(Class<?> carrier, ByteOrder order, long byteSize, long byteAlignment, String name) {
             super(byteSize, byteAlignment, name);
             this.carrier = carrier;
             this.order = order;
@@ -91,7 +91,7 @@ public final class ValueLayouts {
          */
         public final V withOrder(ByteOrder order) {
             Objects.requireNonNull(order);
-            return dup(order, byteAlignment(), name());
+            return dup(order, byteAlignment(), nameOrNull());
         }
 
         @Override
@@ -125,11 +125,11 @@ public final class ValueLayouts {
         }
 
         @Override
-        final V dup(long byteAlignment, Optional<String> name) {
+        final V dup(long byteAlignment, String name) {
             return dup(order(), byteAlignment, name);
         }
 
-        abstract V dup(ByteOrder order, long byteAlignment, Optional<String> name);
+        abstract V dup(ByteOrder order, long byteAlignment, String name);
 
         static void assertCarrierSize(Class<?> carrier, long byteSize) {
             assert isValidCarrier(carrier);
@@ -172,129 +172,129 @@ public final class ValueLayouts {
 
     public static final class OfBooleanImpl extends AbstractValueLayout<OfBooleanImpl> implements ValueLayout.OfBoolean {
 
-        private OfBooleanImpl(ByteOrder order, long byteAlignment, Optional<String> name) {
+        private OfBooleanImpl(ByteOrder order, long byteAlignment, String name) {
             super(boolean.class, order, Byte.BYTES, byteAlignment, name);
         }
 
         @Override
-        OfBooleanImpl dup(ByteOrder order, long byteAlignment, Optional<String> name) {
+        OfBooleanImpl dup(ByteOrder order, long byteAlignment, String name) {
             return new OfBooleanImpl(order, byteAlignment, name);
         }
 
         public static OfBoolean of(ByteOrder order) {
-            return new OfBooleanImpl(order, Byte.BYTES, Optional.empty());
+            return new OfBooleanImpl(order, Byte.BYTES, null);
         }
     }
 
     public static final class OfByteImpl extends AbstractValueLayout<OfByteImpl> implements ValueLayout.OfByte {
 
-        private OfByteImpl(ByteOrder order, long byteAlignment, Optional<String> name) {
+        private OfByteImpl(ByteOrder order, long byteAlignment, String name) {
             super(byte.class, order, Byte.BYTES, byteAlignment, name);
         }
 
         @Override
-        OfByteImpl dup(ByteOrder order, long byteAlignment, Optional<String> name) {
+        OfByteImpl dup(ByteOrder order, long byteAlignment, String name) {
             return new OfByteImpl(order, byteAlignment, name);
         }
 
         public static OfByte of(ByteOrder order) {
-            return new OfByteImpl(order, Byte.BYTES, Optional.empty());
+            return new OfByteImpl(order, Byte.BYTES, null);
         }
     }
 
     public static final class OfCharImpl extends AbstractValueLayout<OfCharImpl> implements ValueLayout.OfChar {
 
-        private OfCharImpl(ByteOrder order, long byteAlignment, Optional<String> name) {
+        private OfCharImpl(ByteOrder order, long byteAlignment, String name) {
             super(char.class, order, Character.BYTES, byteAlignment, name);
         }
 
         @Override
-        OfCharImpl dup(ByteOrder order, long byteAlignment, Optional<String> name) {
+        OfCharImpl dup(ByteOrder order, long byteAlignment, String name) {
             return new OfCharImpl(order, byteAlignment, name);
         }
 
         public static OfChar of(ByteOrder order) {
-            return new OfCharImpl(order, Character.BYTES, Optional.empty());
+            return new OfCharImpl(order, Character.BYTES, null);
         }
     }
 
     public static final class OfShortImpl extends AbstractValueLayout<OfShortImpl> implements ValueLayout.OfShort {
 
-        private OfShortImpl(ByteOrder order, long byteAlignment, Optional<String> name) {
+        private OfShortImpl(ByteOrder order, long byteAlignment, String name) {
             super(short.class, order, Short.BYTES, byteAlignment, name);
         }
 
         @Override
-        OfShortImpl dup(ByteOrder order, long byteAlignment, Optional<String> name) {
+        OfShortImpl dup(ByteOrder order, long byteAlignment, String name) {
             return new OfShortImpl(order, byteAlignment, name);
         }
 
         public static OfShort of(ByteOrder order) {
-            return new OfShortImpl(order, Short.BYTES, Optional.empty());
+            return new OfShortImpl(order, Short.BYTES, null);
         }
     }
 
     public static final class OfIntImpl extends AbstractValueLayout<OfIntImpl> implements ValueLayout.OfInt {
 
-        private OfIntImpl(ByteOrder order, long byteAlignment, Optional<String> name) {
+        private OfIntImpl(ByteOrder order, long byteAlignment, String name) {
             super(int.class, order, Integer.BYTES, byteAlignment, name);
         }
 
         @Override
-        OfIntImpl dup(ByteOrder order, long byteAlignment, Optional<String> name) {
+        OfIntImpl dup(ByteOrder order, long byteAlignment, String name) {
             return new OfIntImpl(order, byteAlignment, name);
         }
 
         public static OfInt of(ByteOrder order) {
-            return new OfIntImpl(order, Integer.BYTES, Optional.empty());
+            return new OfIntImpl(order, Integer.BYTES, null);
         }
     }
 
     public static final class OfFloatImpl extends AbstractValueLayout<OfFloatImpl> implements ValueLayout.OfFloat {
 
-        private OfFloatImpl(ByteOrder order, long byteAlignment, Optional<String> name) {
+        private OfFloatImpl(ByteOrder order, long byteAlignment, String name) {
             super(float.class, order, Float.BYTES, byteAlignment, name);
         }
 
         @Override
-        OfFloatImpl dup(ByteOrder order, long byteAlignment, Optional<String> name) {
+        OfFloatImpl dup(ByteOrder order, long byteAlignment, String name) {
             return new OfFloatImpl(order, byteAlignment, name);
         }
 
         public static OfFloat of(ByteOrder order) {
-            return new OfFloatImpl(order, Float.BYTES, Optional.empty());
+            return new OfFloatImpl(order, Float.BYTES, null);
         }
     }
 
     public static final class OfLongImpl extends AbstractValueLayout<OfLongImpl> implements ValueLayout.OfLong {
 
-        private OfLongImpl(ByteOrder order, long byteAlignment, Optional<String> name) {
+        private OfLongImpl(ByteOrder order, long byteAlignment, String name) {
             super(long.class, order, Long.BYTES, byteAlignment, name);
         }
 
         @Override
-        OfLongImpl dup(ByteOrder order, long byteAlignment, Optional<String> name) {
+        OfLongImpl dup(ByteOrder order, long byteAlignment, String name) {
             return new OfLongImpl(order, byteAlignment, name);
         }
 
         public static OfLong of(ByteOrder order) {
-            return new OfLongImpl(order, ADDRESS_SIZE_BYTES, Optional.empty());
+            return new OfLongImpl(order, ADDRESS_SIZE_BYTES, null);
         }
     }
 
     public static final class OfDoubleImpl extends AbstractValueLayout<OfDoubleImpl> implements ValueLayout.OfDouble {
 
-        private OfDoubleImpl(ByteOrder order, long byteAlignment, Optional<String> name) {
+        private OfDoubleImpl(ByteOrder order, long byteAlignment, String name) {
             super(double.class, order, Double.BYTES, byteAlignment, name);
         }
 
         @Override
-        OfDoubleImpl dup(ByteOrder order, long byteAlignment, Optional<String> name) {
+        OfDoubleImpl dup(ByteOrder order, long byteAlignment, String name) {
             return new OfDoubleImpl(order, byteAlignment, name);
         }
 
         public static OfDouble of(ByteOrder order) {
-            return new OfDoubleImpl(order, ADDRESS_SIZE_BYTES, Optional.empty());
+            return new OfDoubleImpl(order, ADDRESS_SIZE_BYTES, null);
         }
 
     }
@@ -303,13 +303,13 @@ public final class ValueLayouts {
 
         private final MemoryLayout targetLayout;
 
-        private OfAddressImpl(ByteOrder order, long byteSize, long byteAlignment, MemoryLayout targetLayout, Optional<String> name) {
+        private OfAddressImpl(ByteOrder order, long byteSize, long byteAlignment, MemoryLayout targetLayout, String name) {
             super(MemorySegment.class, order, byteSize, byteAlignment, name);
             this.targetLayout = targetLayout;
         }
 
         @Override
-        OfAddressImpl dup(ByteOrder order, long byteAlignment, Optional<String> name) {
+        OfAddressImpl dup(ByteOrder order, long byteAlignment, String name) {
             return new OfAddressImpl(order, byteSize(), byteAlignment,targetLayout, name);
         }
 
@@ -329,12 +329,12 @@ public final class ValueLayouts {
         public AddressLayout withTargetLayout(MemoryLayout layout) {
             Reflection.ensureNativeAccess(Reflection.getCallerClass(), AddressLayout.class, "withTargetLayout");
             Objects.requireNonNull(layout);
-            return new OfAddressImpl(order(), byteSize(), byteAlignment(), layout, name());
+            return new OfAddressImpl(order(), byteSize(), byteAlignment(), layout, nameOrNull());
         }
 
         @Override
         public AddressLayout withoutTargetLayout() {
-            return new OfAddressImpl(order(), byteSize(), byteAlignment(), null, name());
+            return new OfAddressImpl(order(), byteSize(), byteAlignment(), null, nameOrNull());
         }
 
         @Override
@@ -343,7 +343,7 @@ public final class ValueLayouts {
         }
 
         public static AddressLayout of(ByteOrder order) {
-            return new OfAddressImpl(order, ADDRESS_SIZE_BYTES, ADDRESS_SIZE_BYTES, null, Optional.empty());
+            return new OfAddressImpl(order, ADDRESS_SIZE_BYTES, ADDRESS_SIZE_BYTES, null, null);
         }
 
         @Override

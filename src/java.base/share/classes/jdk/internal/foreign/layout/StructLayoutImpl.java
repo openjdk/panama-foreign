@@ -32,12 +32,12 @@ import java.util.Optional;
 
 public final class StructLayoutImpl extends AbstractGroupLayout<StructLayoutImpl> implements StructLayout {
 
-    private StructLayoutImpl(List<MemoryLayout> elements, long byteSize, long byteAlignment, long minByteAlignment, Optional<String> name) {
+    private StructLayoutImpl(List<MemoryLayout> elements, long byteSize, long byteAlignment, long minByteAlignment, String name) {
         super(Kind.STRUCT, elements, byteSize, byteAlignment, minByteAlignment, name);
     }
 
     @Override
-    StructLayoutImpl dup(long byteAlignment, Optional<String> name) {
+    StructLayoutImpl dup(long byteAlignment, String name) {
         return new StructLayoutImpl(memberLayouts(), byteSize(), byteAlignment, minByteAlignment, name);
     }
 
@@ -51,7 +51,7 @@ public final class StructLayoutImpl extends AbstractGroupLayout<StructLayoutImpl
             size = Math.addExact(size, elem.byteSize());
             align = Math.max(align, elem.byteAlignment());
         }
-        return new StructLayoutImpl(elements, size, align, align, Optional.empty());
+        return new StructLayoutImpl(elements, size, align, align, null);
     }
 
 }
