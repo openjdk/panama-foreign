@@ -63,3 +63,39 @@ JRT_END
 JRT_ENTRY(void, DowncallLinker::unlock_gc(JavaThread* current))
   GCLocker::unlock_critical(current);
 JRT_END
+
+void DowncallLinker::StubGenerator::add_offsets_to_oops(GrowableArray<VMStorage>& java_regs, VMStorage tmp1, VMStorage tmp2) const {
+  int reg_idx = 0;
+  for (int sig_idx = 0; sig_idx < _num_args; sig_idx++) {
+    if (_signature[sig_idx] == T_OBJECT) {
+      assert(_signature[sig_idx + 1] == T_LONG, "expected offset after oop");
+      VMStorage reg_oop = java_regs.at(reg_idx++);
+      VMStorage reg_offset = java_regs.at(reg_idx++);
+      sig_idx++; // skip offset
+      pd_add_offset_to_oop(reg_oop, reg_offset, tmp1, tmp2);
+    } else if (_signature[sig_idx] != T_VOID) {
+      reg_idx++;
+    }
+  }
+}
+
+OopMap* DowncallLinker::StubGenerator::generate_oop_map_for_spill(int in_spill_offset, const RegSpiller& in_reg_spiller,
+                                                                  GrowableArray<VMStorage>& java_regs) const {
+  OopMap* map = new OopMap(_frame_size_slots, 0);
+  int reg_idx = 0;
+  for (int sig_idx = 0; sig_idx < _num_args; sig_idx++) {
+    if (_signature[sig_idx] == T_OBJECT) {
+      VMStorage reg = java_regs.at(reg_idx++);
+      if (reg.is_reg()) { // only register args are spilled
+        int offset_in_area = in_reg_spiller.reg_offset(reg);
+        int total_offset = in_spill_offset + offset_in_area;
+        assert((total_offset % VMRegImpl::stack_slot_size) == 0, "must be addressable with VMReg");
+        VMReg vm_reg = VMRegImpl::stack2reg(total_offset / VMRegImpl::stack_slot_size);
+        map->set_oop(vm_reg);
+      }
+    } else if (_signature[sig_idx] != T_VOID) {
+      reg_idx++;
+    }
+  }
+  return map;
+}
