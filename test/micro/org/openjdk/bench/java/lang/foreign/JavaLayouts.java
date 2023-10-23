@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,6 @@ public class JavaLayouts {
     static final VarHandle VH_LONG = arrayVarHandle(JAVA_LONG);
 
     private static VarHandle arrayVarHandle(ValueLayout layout) {
-        return MethodHandles.collectCoordinates(layout.varHandle(),
-            1, MethodHandles.insertArguments(layout.scaleHandle(), 0, 0L));
+        return MethodHandles.insertCoordinates(layout.arrayElementVarHandle(), 1, 0L);
     }
 }

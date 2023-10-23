@@ -26,12 +26,14 @@
  * @summary Basic test for Enable-Native-Access attribute in the
  *          manifest of a main application JAR
  * @library /test/lib
+ * @requires jdk.foreign.linker != "UNSUPPORTED"
  * @requires !vm.musl
  *
+ * @enablePreview
  * @build TestEnableNativeAccessJarManifest
  *        panama_module/*
  *        org.openjdk.foreigntest.unnamed.PanamaMainUnnamedModule
- * @run testng/othervm TestEnableNativeAccessJarManifest
+ * @run testng TestEnableNativeAccessJarManifest
  */
 
 import java.nio.file.Files;
@@ -76,6 +78,7 @@ public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBas
 
         // java -jar test.jar
         List<String> command = new ArrayList<>(List.of(
+            "--enable-preview",
             "-Djava.library.path=" + System.getProperty("java.library.path")
         ));
         command.addAll(vmArgs);
@@ -96,7 +99,8 @@ public class TestEnableNativeAccessJarManifest extends TestEnableNativeAccessBas
                     List.of(), List.of(), List.of() },
             { "panama_unnamed_module_native_access", UNNAMED, successNoWarning(),
                     List.of(new Attribute("Enable-Native-Access", "ALL-UNNAMED")), List.of(), List.of() },
-            { "panama_unnamed_module_native_access_invalid", UNNAMED, failWithError("Only ALL-UNNAMED allowed as value for Enable-Native-Access"),
+            { "panama_unnamed_module_native_access_invalid", UNNAMED,
+                    failWithError("Error: illegal value \"asdf\" for Enable-Native-Access manifest attribute. Only ALL-UNNAMED is allowed"),
                     List.of(new Attribute("Enable-Native-Access", "asdf")), List.of(), List.of() },
 
             // more complex cases where a jar invokes a module on the module path that does native access

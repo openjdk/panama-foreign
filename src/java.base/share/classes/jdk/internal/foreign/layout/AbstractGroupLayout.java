@@ -39,8 +39,6 @@ import java.util.stream.Collectors;
  *
  * @implSpec
  * This class is immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
- *
- * @since 19
  */
 abstract sealed class AbstractGroupLayout<L extends AbstractGroupLayout<L> & MemoryLayout>
         extends AbstractLayout<L>

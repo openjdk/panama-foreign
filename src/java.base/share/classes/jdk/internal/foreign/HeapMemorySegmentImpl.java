@@ -26,7 +26,6 @@
 
 package jdk.internal.foreign;
 
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -47,7 +46,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * using sharper types would require use of type-conversions, which in turn would inhibit some C2 optimizations,
  * such as the elimination of store barriers in methods like {@link HeapMemorySegmentImpl#dup(long, long, boolean, MemorySessionImpl)}.
  */
-public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
+abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     // Constants defining the maximum alignment supported by various kinds of heap arrays.
     // While for most arrays, the maximum alignment is constant (the size, in bytes, of the array elements),
@@ -111,13 +110,6 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             return (byte[])Objects.requireNonNull(base);
         }
 
-        public static MemorySegment fromArray(byte[] arr) {
-            Objects.requireNonNull(arr);
-            long byteSize = (long)arr.length * Utils.BaseAndScale.BYTE.scale();
-            return new OfByte(Utils.BaseAndScale.BYTE.base(), arr, byteSize, false,
-                    MemorySessionImpl.createHeap(arr));
-        }
-
         @Override
         public long maxAlignMask() {
             return MAX_ALIGN_BYTE_ARRAY;
@@ -143,13 +135,6 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
         @Override
         public char[] unsafeGetBase() {
             return (char[])Objects.requireNonNull(base);
-        }
-
-        public static MemorySegment fromArray(char[] arr) {
-            Objects.requireNonNull(arr);
-            long byteSize = (long)arr.length * Utils.BaseAndScale.CHAR.scale();
-            return new OfChar(Utils.BaseAndScale.CHAR.base(), arr, byteSize, false,
-                    MemorySessionImpl.createHeap(arr));
         }
 
         @Override
@@ -179,13 +164,6 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             return (short[])Objects.requireNonNull(base);
         }
 
-        public static MemorySegment fromArray(short[] arr) {
-            Objects.requireNonNull(arr);
-            long byteSize = (long)arr.length * Utils.BaseAndScale.SHORT.scale();
-            return new OfShort(Utils.BaseAndScale.SHORT.base(), arr, byteSize, false,
-                    MemorySessionImpl.createHeap(arr));
-        }
-
         @Override
         public long maxAlignMask() {
             return MAX_ALIGN_SHORT_ARRAY;
@@ -211,13 +189,6 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
         @Override
         public int[] unsafeGetBase() {
             return (int[])Objects.requireNonNull(base);
-        }
-
-        public static MemorySegment fromArray(int[] arr) {
-            Objects.requireNonNull(arr);
-            long byteSize = (long)arr.length * Utils.BaseAndScale.INT.scale();
-            return new OfInt(Utils.BaseAndScale.INT.base(), arr, byteSize, false,
-                    MemorySessionImpl.createHeap(arr));
         }
 
         @Override
@@ -247,13 +218,6 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             return (long[])Objects.requireNonNull(base);
         }
 
-        public static MemorySegment fromArray(long[] arr) {
-            Objects.requireNonNull(arr);
-            long byteSize = (long)arr.length * Utils.BaseAndScale.LONG.scale();
-            return new OfLong(Utils.BaseAndScale.LONG.base(), arr, byteSize, false,
-                    MemorySessionImpl.createHeap(arr));
-        }
-
         @Override
         public long maxAlignMask() {
             return MAX_ALIGN_LONG_ARRAY;
@@ -281,13 +245,6 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
             return (float[])Objects.requireNonNull(base);
         }
 
-        public static MemorySegment fromArray(float[] arr) {
-            Objects.requireNonNull(arr);
-            long byteSize = (long)arr.length * Utils.BaseAndScale.FLOAT.scale();
-            return new OfFloat(Utils.BaseAndScale.FLOAT.base(), arr, byteSize, false,
-                    MemorySessionImpl.createHeap(arr));
-        }
-
         @Override
         public long maxAlignMask() {
             return MAX_ALIGN_INT_ARRAY;
@@ -313,13 +270,6 @@ public abstract sealed class HeapMemorySegmentImpl extends AbstractMemorySegment
         @Override
         public double[] unsafeGetBase() {
             return (double[])Objects.requireNonNull(base);
-        }
-
-        public static MemorySegment fromArray(double[] arr) {
-            Objects.requireNonNull(arr);
-            long byteSize = (long)arr.length * Utils.BaseAndScale.DOUBLE.scale();
-            return new OfDouble(Utils.BaseAndScale.DOUBLE.base(), arr, byteSize, false,
-                    MemorySessionImpl.createHeap(arr));
         }
 
         @Override
