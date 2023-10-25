@@ -25,6 +25,8 @@
 
 package jdk.internal.foreign;
 
+import sun.nio.ch.DirectBuffer;
+
 import java.lang.ref.Cleaner;
 import java.lang.ref.Reference;
 
@@ -33,7 +35,7 @@ import java.lang.ref.Reference;
  * While it would be possible to model an implicit session as a non-closeable view of a shared
  * session, it is better to capture the fact that an implicit session is not just a non-closeable
  * view of some session which might be closeable. This is useful e.g. in the implementations of
- * {@link sun.nio.ch.DirectBuffer#address()}, where obtaining an address of a buffer instance associated
+ * {@link DirectBuffer#address()}, where obtaining an address of a buffer instance associated
  * with a potentially closeable session is forbidden.
  */
 final class ImplicitSession extends SharedSession {
