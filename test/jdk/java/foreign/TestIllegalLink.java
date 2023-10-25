@@ -128,7 +128,7 @@ public class TestIllegalLink extends NativeTestHelper {
             {
                     FunctionDescriptor.ofVoid(C_POINTER.withByteAlignment(2)),
                     NO_OPTIONS,
-                    (IS_LE ? "Unsupported layout: 2%a" : "Unsupported layout: 2%A") + ADDRESS.byteSize()
+                    (IS_LE ? "Unsupported layout: 2%a" : "Unsupported layout: 2%A")  + ADDRESS.byteSize()
             },
             {
                     FunctionDescriptor.ofVoid(ValueLayout.JAVA_CHAR.withByteAlignment(4)),

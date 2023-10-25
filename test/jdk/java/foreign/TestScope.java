@@ -95,7 +95,7 @@ public class TestScope {
         MemorySegment segment2 = MemorySegment.ofAddress(43);
         assertEquals(segment1.scope(), segment2.scope());
         assertEquals(segment1.scope(), segment2.reinterpret(10).scope());
-        assertNotEquals(segment1.scope(), Arena.global().scope());
+        assertEquals(segment1.scope(), Arena.global().scope());
         testDerivedBufferScope(segment1.reinterpret(10));
     }
 

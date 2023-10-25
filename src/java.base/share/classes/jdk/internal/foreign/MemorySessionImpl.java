@@ -64,7 +64,7 @@ public abstract sealed class MemorySessionImpl
     static final ScopedMemoryAccess.ScopedAccessError ALREADY_CLOSED = new ScopedMemoryAccess.ScopedAccessError(MemorySessionImpl::alreadyClosed);
     static final ScopedMemoryAccess.ScopedAccessError WRONG_THREAD = new ScopedMemoryAccess.ScopedAccessError(MemorySessionImpl::wrongThread);
     // This is the session of all zero-length memory segments
-    static final GlobalSession NATIVE_SESSION = new GlobalSession();
+    public static final MemorySessionImpl GLOBAL_SESSION = new GlobalSession();
 
     final ResourceList resourceList;
     final Thread owner;
@@ -143,10 +143,6 @@ public abstract sealed class MemorySessionImpl
 
     public static MemorySessionImpl createImplicit(Cleaner cleaner) {
         return new ImplicitSession(cleaner);
-    }
-
-    public static MemorySessionImpl createGlobal() {
-        return new GlobalSession();
     }
 
     public static MemorySessionImpl createHeap(Object ref) {

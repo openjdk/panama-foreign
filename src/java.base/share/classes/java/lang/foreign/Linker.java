@@ -33,7 +33,6 @@ import jdk.internal.javac.Restricted;
 import jdk.internal.reflect.CallerSensitive;
 
 import java.lang.invoke.MethodHandle;
-import java.nio.ByteOrder;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -149,8 +148,8 @@ import java.util.stream.Stream;
  * the C type {@code unsigned long} maps to the layout constant {@link ValueLayout#JAVA_LONG} on Linux/x64, but maps to
  * the layout constant {@link ValueLayout#JAVA_INT} on Windows/x64.
  * <p>
- * The following table shows some examples of how C types are modelled in Linux/x64 (all the examples provided
- * here will assume these platform-dependent mappings):
+ * The following table shows some examples of how C types are modelled in Linux/x64 according to the
+ * "System V Application Binary Interface" (all the examples provided here will assume these platform-dependent mappings):
  *
  * <blockquote><table class="plain">
  * <caption style="display:none">Mapping C types</caption>
@@ -366,7 +365,7 @@ import java.util.stream.Stream;
  *
  * The size of the segment returned by the {@code malloc} downcall method handle is
  * <a href="MemorySegment.html#wrapping-addresses">zero</a>. Moreover, the scope of the
- * returned segment is a scope that is always alive. To provide safe access to the segment, we must,
+ * returned segment is the global scope. To provide safe access to the segment, we must,
  * unsafely, resize the segment to the desired size (100, in this case). It might also be desirable to
  * attach the segment to some existing {@linkplain Arena arena}, so that the lifetime of the region of memory
  * backing the segment can be managed automatically, as for any other native segment created directly from Java code.
@@ -406,7 +405,7 @@ import java.util.stream.Stream;
  * <h3 id="variadic-funcs">Variadic functions</h3>
  *
  * Variadic functions are C functions which can accept a variable number and type of arguments. They are declared with a
- * trailing ellipsis ({@code ...}) at the end of the formal parameter list, such as: {@code void foo(int x, ...);}.
+ * trailing ellipsis ({@code ...}) at the end of the formal parameter list, such as: {@code void foo(int x, ...);}
  * The arguments passed in place of the ellipsis are called <em>variadic arguments</em>. Variadic functions are,
  * essentially, templates that can be <em>specialized</em> into multiple non-variadic functions by replacing the
  * {@code ...} with a list of <em>variadic parameters</em> of a fixed number and type.
@@ -520,10 +519,6 @@ public sealed interface Linker permits AbstractLinker {
      * {@snippet lang=java :
      * linker.downcallHandle(function).bindTo(symbol);
      * }
-     * <p>
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption.
      *
      * @param address  the native memory segment whose {@linkplain MemorySegment#address() base address} is the
      *                 address of the target foreign function.
@@ -564,21 +559,18 @@ public sealed interface Linker permits AbstractLinker {
      * <p>
      * Moreover, if the provided function descriptor's return layout is an {@linkplain AddressLayout address layout},
      * invoking the returned method handle will return a native segment associated with
-     * a fresh scope that is always alive. Under normal conditions, the size of the returned segment is {@code 0}.
+     * the global scope. Under normal conditions, the size of the returned segment is {@code 0}.
      * However, if the function descriptor's return layout has a {@linkplain AddressLayout#targetLayout() target layout}
      * {@code T}, then the size of the returned segment is set to {@code T.byteSize()}.
      * <p>
      * The returned method handle will throw an {@link IllegalArgumentException} if the {@link MemorySegment}
      * representing the target address of the foreign function is the {@link MemorySegment#NULL} address. If an argument
-     * is a {@link MemorySegment},whose corresponding layout is an {@linkplain GroupLayout group layout}, the linker might attempt to access the contents of the segment. As such, one of the exceptions specified by the
+     * is a {@link MemorySegment}, whose corresponding layout is a {@linkplain GroupLayout group layout}, the linker
+     * might attempt to access the contents of the segment. As such, one of the exceptions specified by the
      * {@link MemorySegment#get(ValueLayout.OfByte, long)} or the
      * {@link MemorySegment#copy(MemorySegment, long, MemorySegment, long, long)} methods may be thrown.
      * The returned method handle will additionally throw {@link NullPointerException} if any argument
      * passed to it is {@code null}.
-     * <p>
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption.
      *
      * @param function the function descriptor of the target foreign function.
      * @param options  the linker options associated with this linkage request.
@@ -602,7 +594,7 @@ public sealed interface Linker permits AbstractLinker {
      * upcall stub segment will be deallocated when the provided confined arena is {@linkplain Arena#close() closed}.
      * <p>
      * An upcall stub argument whose corresponding layout is an {@linkplain AddressLayout address layout}
-     * is a native segment associated with a scope that is always alive.
+     * is a native segment associated with the global scope.
      * Under normal conditions, the size of this segment argument is {@code 0}.
      * However, if the address layout has a {@linkplain AddressLayout#targetLayout() target layout} {@code T}, then the size of the
      * segment argument is set to {@code T.byteSize()}.
@@ -612,10 +604,6 @@ public sealed interface Linker permits AbstractLinker {
      * try/catch block to catch any unexpected exceptions. This can be done using the
      * {@link java.lang.invoke.MethodHandles#catchException(MethodHandle, Class, MethodHandle)} method handle combinator,
      * and handle exceptions as desired in the corresponding catch block.
-     * <p>
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption.
      *
      * @param target the target method handle.
      * @param function the upcall stub function descriptor.
@@ -733,8 +721,8 @@ public sealed interface Linker permits AbstractLinker {
          *     // use errno
          * }
          * }
-         *
-         * @apiNote This linker option can not be combined with {@link #critical}.
+         * <p>
+         * This linker option can not be combined with {@link #critical}.
          *
          * @param capturedState the names of the values to save.
          * @throws IllegalArgumentException if at least one of the provided {@code capturedState} names

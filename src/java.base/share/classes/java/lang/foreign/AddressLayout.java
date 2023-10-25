@@ -51,7 +51,7 @@ import java.util.Optional;
  * </ul>
  *
  * @implSpec
- * This class is immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
+ * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  *
  * @see #ADDRESS
  * @see #ADDRESS_UNALIGNED
@@ -98,10 +98,6 @@ public sealed interface AddressLayout extends ValueLayout permits ValueLayouts.O
      * AddressLayout unboundedLayout = addressLayout.withTargetLayout(
      *         MemoryLayout.sequenceLayout(Long.MAX_VALUE, ValueLayout.JAVA_BYTE));
      *}
-     * <p>
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption.
      *
      * @param layout the target layout.
      * @return an address layout with same characteristics as this layout, but with the provided target layout.
