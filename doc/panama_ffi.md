@@ -1,6 +1,6 @@
 ## State of foreign function support
 
-**March 2023**
+**December 2023**
 
 **Maurizio Cimadamore**
 
@@ -69,37 +69,35 @@ At the core of the FFM API's foreign function support we find the `Linker` abstr
 
 ```java
 interface Linker {
-    MethodHandle downcallHandle(MemorySegment symbol, FunctionDescriptor function);
-    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, SegmentScope scope);
+    MethodHandle downcallHandle(MemorySegment symbol, FunctionDescriptor function, Linker.Option... options);
+    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, Arena arena, Linker.Option... options);
     ... // some overloads omitted here
 
     static Linker nativeLinker() { ... }
 }
 ```
 
-Both functions take a `FunctionDescriptor` instance — essentially an aggregate of memory layouts which is used to describe the argument and return types of a foreign function in full. Supported layouts are *value layouts* (for scalars and pointers) and *group layouts* (for structs/unions). Each layout in a function descriptor is associated with a carrier Java type (see table below); together, all the carrier types associated with layouts in a function descriptor will determine a unique Java `MethodType` — that is, the Java signature that clients will be using when interacting with said downcall handles, or upcall stubs.
+The `Linker::nativeLinker` factory is used to obtain a `Linker` implementation for the ABI associated with the OS and processor where the Java runtime is currently executing. As such, the native linker can be used to call C functions. When interacting with the native linker, clients must provide a platform-dependent description of the signature of the C function they wish to link against. This description, a `FunctionDescriptor` defines the layouts associated with the parameter types and return type (if any) of the C function.
 
-The `Linker::nativeLinker` factory is used to obtain a `Linker` implementation for the ABI associated with the OS and processor where the Java runtime is currently executing. As such, the native linker can be used to call C functions. The following table shows the mapping between C types, layouts and Java carriers under the Linux/macOS native linker implementation; note that the mappings can be platform dependent: on Windows/x64, the C type `long` is 32-bit, so the `JAVA_INT` layout (and the Java carrier `int.class`) would have to be used instead:
+Scalar C types such as `bool`, `int` are modeled as value layouts of a suitable carrier. Which layout is used to model a C type can vary, depending on the data model supported by a given ABI. For instance, the C type `long` maps to the layout constant `ValueLayout::JAVA_LONG` on Linux/x64, but maps to the layout constant `ValueLayout::JAVA_INT` on Windows/x64. The `Linker` provides a method, namely `Linker::canonicalLayouts` to allow clients to discover the mapping between C types and memory layouts programmatically:
 
-| C type                                                       | Layout                                                       | Java carrier    |
-| ------------------------------------------------------------ | ------------------------------------------------------------ | --------------- |
-| `bool`                                                       | `JAVA_BOOLEAN`                                               | `byte`          |
-| `char`                                                       | `JAVA_BYTE`                                                  | `byte`          |
-| `short`                                                      | `JAVA_SHORT`                                                 | `short`, `char` |
-| `int`                                                        | `JAVA_INT`                                                   | `int`           |
-| `long`                                                       | `JAVA_LONG`                                                  | `long`          |
-| `long long`                                                  | `JAVA_LONG`                                                  | `long`          |
-| `float`                                                      | `JAVA_FLOAT`                                                 | `float`         |
-| `double`                                                     | `JAVA_DOUBLE`                                                | `double`        |
-| `char*`<br />`int**`<br /> ...                               | `ADDRESS`                                                    | `MemorySegment` |
-| `struct Point { int x; int y; };`<br />`union Choice { float a; int b; };`<br />... | `MemoryLayout.structLayout(...)`<br />`MemoryLayout.unionLayout(...)`<br /> | `MemorySegment` |
+```java
+MemoryLayout SIZE_T = Linker.nativeLinker().canonicalLayouts().get("size_t");
+```
 
-Both C structs/unions and pointers are modelled using the `MemorySegment` carrier type. However, C structs/unions are modelled in function descriptors with memory layouts of type `GroupLayout`, whereas pointers are modelled using the `ADDRESS` value layout constant (whose size is platform-specific). Moreover, the behavior of a downcall method handle returning a struct/union type is radically different from that of a downcall method handle returning a C pointer:
+Composite types are modeled as group layouts. More specifically, a C struct type maps to a `StructLayout`, whereas a C `union` type maps to a `UnionLayout`. When defining a struct or union layout, clients must pay attention to the size and alignment constraint of the corresponding composite type definition in C. For instance, padding between two struct fields must be modeled explicitly, by adding an adequately sized padding layout member to the resulting struct layout.
 
-* downcall method handles returning C pointers will wrap the pointer address into a fresh zero-length memory segment (unless an unbounded address layout is specified);
-* downcall method handles returning a C struct/union type will return a *new* segment, of given size (the size of the struct/union). The segment is allocated using a user-provided `SegmentAllocator`, which is provided using an additional prefix parameter inserted in the downcall method handle signature.
+Finally, pointer types such as `int**`, and `int(*)(size_t*, size_t*)` are modeled as address layouts. When the spatial bounds of the pointer type are known statically, the address layout can be associated with a *target layout*. For instance, a pointer that is known to point to a C `int[2]` array can be modelled as follows:
 
-A tool, such as `jextract`, will generate all the required C layouts (for scalars and structs/unions) *automatically*, so that clients do not have to worry about platform-dependent details such as sizes, alignment constraints and padding.
+```java
+ValueLayout.ADDRESS.withTargetLayout(
+    	MemoryLayout.sequenceLayout(2,
+                                    Linker.nativeLinker().canonicalLayouts().get("int")));
+```
+
+For a more exhaustive examples of mapping between C types and layouts, please refer to the [appendix](#c-types-mapping-in-linuxx64). In the following sections, we will assume Linux/x64 as our target platform.
+
+> Note: the [jextract](https://github.com/openjdk/jextract) tool can generate all the required C layouts (for scalars and structs/unions) *automatically*, so that clients do not have to worry about platform-dependent details such as sizes, alignment constraints and padding.
 
 ### Downcalls
 
@@ -116,7 +114,7 @@ In order to do that, we have to:
 
 * create a *downcall* native method handle with the above information, using the native linker
 
-Here's an example of how we might want to do that (a full listing of all the examples in this and subsequent sections will be provided in the [appendix](#appendix-full-source-code)):
+Here's an example of how we might want to do that (a full listing of all the examples in this and subsequent sections will be provided in the [appendix](#Full-source-code)):
 
 ```java
 Linker linker = Linker.nativeLinker();
@@ -132,7 +130,7 @@ Once we have obtained the downcall method handle, we can just use it as any othe
 
 ```java
 try (Arena arena = Arena.ofConfined()) {
-    long len = strlen.invokeExact(arena.allocateUtf8String("Hello")); // 5
+    long len = strlen.invokeExact(arena.allocateFrom("Hello")); // 5
 }
 ```
 
@@ -148,7 +146,7 @@ MethodHandle strlen_virtual = linker.downcallHandle( // address parameter missin
 try (Arena arena = Arena.ofConfined()) {
     long len = strlen_virtual.invokeExact(
         linker.defaultLookup().find("strlen").get() // address provided here!
-        arena.allocateUtf8String("Hello")
+        arena.allocateFrom("Hello")
     ); // 5
 }
 ```
@@ -208,7 +206,7 @@ To do that, we first create a function descriptor for the function pointer type.
 ```java
 try (Arena arena = Arena.ofConfined()) {
     MemorySegment comparFunc = linker.upcallStub(comparHandle, comparDesc, arena);
-    MemorySegment array = session.allocateArray(0, 9, 3, 4, 6, 5, 1, 8, 2, 7);
+    MemorySegment array = session.allocateFrom(0, 9, 3, 4, 6, 5, 1, 8, 2, 7);
     qsort.invokeExact(array, 10L, 4L, comparFunc);
     int[] sorted = array.toArray(JAVA_INT); // [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
 }
@@ -234,7 +232,7 @@ The foreign function support can support variadic calls, but with a caveat: the 
 printf("%d plus %d equals %d", 2, 2, 4);
 ```
 
-To do this using the foreign function support provided by the FFM API we would have to build a *specialized* downcall handle for that call shape, using a linker option to specify the position of the first variadic layout, as follows:
+To do this using the foreign function support provided by the FFM API we would have to build a *specialized* downcall handle for that call shape, using a linker option<a href="#2"><sup>2</sup></a> to specify the position of the first variadic layout, as follows:
 
 ```java
 Linker linker = Linker.nativeLinker();
@@ -249,16 +247,33 @@ Then we can call the specialized downcall handle as usual:
 
 ```java
 try (Arena arena = Arena.ofConfined()) {
-    int res = (int)printf.invokeExact(arena.allocateUtf8String("%d plus %d equals %d"), 2, 2, 4); //prints "2 plus 2 equals 4"
+    int res = (int)printf.invokeExact(arena.allocateFrom("%d plus %d equals %d"), 2, 2, 4); //prints "2 plus 2 equals 4"
 }
 ```
 
-While this works, and provides optimal performance, it has some limitations<a href="#2"><sup>2</sup></a>:
+While this works, and provides optimal performance, it has some limitations<a href="#2"><sup>3</sup></a>:
 
 * If the variadic function needs to be called with many shapes, we have to create many downcall handles
 * while this approach works for downcalls (since the Java code is in charge of determining which and how many arguments should be passed) it fails to scale to upcalls; in that case, the call comes from native code, so we have no way to guarantee that the shape of the upcall stub we have created will match that required by the native function.
 
-### Appendix: full source code
+### Appendix
+
+##### C types mapping in Linux/x64
+
+| C type                                                       | Layout                                                       | Java carrier    |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | --------------- |
+| `bool`                                                       | `JAVA_BOOLEAN`                                               | `byte`          |
+| `char`                                                       | `JAVA_BYTE`                                                  | `byte`          |
+| `short`                                                      | `JAVA_SHORT`                                                 | `short`, `char` |
+| `int`                                                        | `JAVA_INT`                                                   | `int`           |
+| `long`                                                       | `JAVA_LONG`                                                  | `long`          |
+| `long long`                                                  | `JAVA_LONG`                                                  | `long`          |
+| `float`                                                      | `JAVA_FLOAT`                                                 | `float`         |
+| `double`                                                     | `JAVA_DOUBLE`                                                | `double`        |
+| `char*`<br />`int**`<br /> ...                               | `ADDRESS`                                                    | `MemorySegment` |
+| `struct Point { int x; int y; };`<br />`union Choice { float a; int b; };`<br />... | `MemoryLayout.structLayout(...)`<br />`MemoryLayout.unionLayout(...)`<br /> | `MemorySegment` |
+
+##### Full source code
 
 The full source code containing most of the code shown throughout this document can be seen below:
 
@@ -357,7 +372,6 @@ public class Examples {
 }
 ```
 
-
-
 * <a id="1"/>(<sup>1</sup>):<small> In reality this is not entirely new; even in JNI, when you call a `native` method the VM trusts that the corresponding implementing function in C will feature compatible parameter types and return values; if not a crash might occur.</small>
-* <a id="2"/>(<sup>2</sup>):<small> Previous iterations of the FFM API provided a `VaList` class that could be used to model a C `va_list`. This class was later dropped from the FFM API as too implementation specific. It is possible that a future version of the `jextract` tool might provide higher-level bindings for variadic calls. </small>
+* <a id="2"/>(<sup>2</sup>):<small> Linker options can be used to customize the linkage request in various ways, for instance to allow clients to pass heap segments to native functions without copying, to remove Java to native thread transitions and to save the state of special runtime variables (such as `errno`). </small>
+* <a id="3"/>(<sup>2</sup>):<small> Previous iterations of the FFM API provided a `VaList` class that could be used to model a C `va_list`. This class was later dropped from the FFM API as too implementation specific. It is possible that a future version of the `jextract` tool might provide higher-level bindings for variadic calls. </small>
