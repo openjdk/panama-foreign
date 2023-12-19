@@ -91,7 +91,7 @@ Finally, pointer types such as `int**`, and `int(*)(size_t*, size_t*)` are model
 
 ```java
 ValueLayout.ADDRESS.withTargetLayout(
-    	MemoryLayout.sequenceLayout(2,
+        MemoryLayout.sequenceLayout(2,
                                     Linker.nativeLinker().canonicalLayouts().get("int")));
 ```
 
