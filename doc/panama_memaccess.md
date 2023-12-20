@@ -246,7 +246,7 @@ The earlier code which used a slicing allocator directly can now be written more
 ```java
 try (Arena slicingArena = new SlicingArena(1000)) {
      for (int i = 0 ; i < 10 ; i++) {
-         MemorySegment s = arena.allocateArray(JAVA_INT, 1, 2, 3, 4, 5);
+         MemorySegment s = arena.allocateFrom(JAVA_INT, 1, 2, 3, 4, 5);
          ...
      }
 } // all memory allocated is released here
