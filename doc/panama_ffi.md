@@ -95,7 +95,7 @@ ValueLayout.ADDRESS.withTargetLayout(
                                     Linker.nativeLinker().canonicalLayouts().get("int")));
 ```
 
-For a more exhaustive examples of mapping between C types and layouts, please refer to the [appendix](#c-types-mapping-in-linuxx64). In the following sections, we will assume Linux/x64 as our target platform.
+For a more exhaustive examples of mappings between C types and layouts, please refer to the [appendix](#c-types-mapping-in-linuxx64). In the following sections, we will assume Linux/x64 as our target platform.
 
 > Note: the [jextract](https://github.com/openjdk/jextract) tool can generate all the required C layouts (for scalars and structs/unions) *automatically*, so that clients do not have to worry about platform-dependent details such as sizes, alignment constraints and padding.
 
@@ -111,7 +111,6 @@ In order to do that, we have to:
 
 * lookup the `strlen` symbol
 * describe the signature of the C function using a function descriptor
-
 * create a *downcall* native method handle with the above information, using the native linker
 
 Here's an example of how we might want to do that (a full listing of all the examples in this and subsequent sections will be provided in the [appendix](#Full-source-code)):
@@ -251,7 +250,7 @@ try (Arena arena = Arena.ofConfined()) {
 }
 ```
 
-While this works, and provides optimal performance, it has some limitations<a href="#2"><sup>3</sup></a>:
+While this works, and provides optimal performance, it has some limitations<a href="#3"><sup>3</sup></a>:
 
 * If the variadic function needs to be called with many shapes, we have to create many downcall handles
 * while this approach works for downcalls (since the Java code is in charge of determining which and how many arguments should be passed) it fails to scale to upcalls; in that case, the call comes from native code, so we have no way to guarantee that the shape of the upcall stub we have created will match that required by the native function.
@@ -374,4 +373,4 @@ public class Examples {
 
 * <a id="1"/>(<sup>1</sup>):<small> In reality this is not entirely new; even in JNI, when you call a `native` method the VM trusts that the corresponding implementing function in C will feature compatible parameter types and return values; if not a crash might occur.</small>
 * <a id="2"/>(<sup>2</sup>):<small> Linker options can be used to customize the linkage request in various ways, for instance to allow clients to pass heap segments to native functions without copying, to remove Java to native thread transitions and to save the state of special runtime variables (such as `errno`). </small>
-* <a id="3"/>(<sup>2</sup>):<small> Previous iterations of the FFM API provided a `VaList` class that could be used to model a C `va_list`. This class was later dropped from the FFM API as too implementation specific. It is possible that a future version of the `jextract` tool might provide higher-level bindings for variadic calls. </small>
+* <a id="3"/>(<sup>3</sup>):<small> Previous iterations of the FFM API provided a `VaList` class that could be used to model a C `va_list`. This class was later dropped from the FFM API as too implementation specific. It is possible that a future version of the `jextract` tool might provide higher-level bindings for variadic calls. </small>
