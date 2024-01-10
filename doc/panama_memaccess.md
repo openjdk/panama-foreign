@@ -1,6 +1,6 @@
 ## State of foreign memory support
 
-**March 2023**
+**December 2023**
 
 **Maurizio Cimadamore**
 
@@ -58,7 +58,7 @@ MemorySegment slice = segment.asSlice(4, 4);
 
 The above code creates a slice that starts at offset 4 and has a length of 4 bytes. Slices have the *same* temporal bounds (i.e. segment scope) as the parent segment. In the above example, the memory associated with the parent segment will not be released as long as there is at least one *reachable* slice derived from that segment.
 
-To process the contents of a memory segment in bulk, a memory segment can be turned into a stream of slices, using the `MemorySegment::stream` method:
+To process the contents of a memory segment in bulk, a memory segment can be turned into a stream of slices, using the `MemorySegment::elements` method:
 
 ```java
 SequenceLayout seq = MemoryLayout.sequenceLayout(1_000_000, JAVA_INT);
@@ -77,7 +77,7 @@ try (Arena arena = Arena.ofShared()) {
 }
 ```
 
-The `MemorySegment::elements` method takes an element layout and returns a new stream. The stream is built on top of a spliterator instance (see `MemorySegment::spliterator`) which splits the segment into chunks whose size match that of the provided layout. Here, we want to sum elements in an array which contains a million of elements; now, doing a parallel sum where each computation processes *exactly* one element would be inefficient, so instead we use a *bulk* element layout. The bulk element layout is a sequence layout containing a group of 100 elements — which should make it more amenable to parallel processing. Since we are using `Stream::parallel` to work on disjoint slices in parallel, here we use a *shared* arena, to ensure that the resulting segment can be accessed by multiple threads.
+The `MemorySegment::elements` method takes an element layout and returns a new stream. The stream is built on top of a spliterator instance (see `MemorySegment::spliterator`) which splits the segment into chunks whose size matches that of the provided layout. Here, we want to sum elements in an array which contains a million of elements; now, doing a parallel sum where each computation processes *exactly* one element would be inefficient, so instead we use a *bulk* element layout. The bulk element layout is a sequence layout containing a group of 100 elements — which should make it more amenable to parallel processing. Since we are using `Stream::parallel` to work on disjoint slices in parallel, here we use a *shared* arena, to ensure that the resulting segment can be accessed by multiple threads.
 
 ### Accessing segments
 
@@ -132,15 +132,28 @@ VarHandle xHandle = points.varHandle(PathElement.sequenceElement(), PathElement.
 VarHandle yHandle = points.varHandle(PathElement.sequenceElement(), PathElement.groupElement("y"));
 Point[] values = new Point[10];
 for (int i = 0 ; i < values.length ; i++) {
-    int x = (int)xHandle.get(segment, (long)i);
-    int y = (int)yHandle.get(segment, (long)i);
+    int x = (int)xHandle.get(segment, 0L /* base offset */, (long)i /* index */);
+    int y = (int)yHandle.get(segment, 0L /* base offset */, (long)i /* index */);
 }
 ```
 
-In the above, `xHandle` and `yHandle` are two var handle instances whose type is `int` and which takes two access coordinates:
+In the above, `xHandle` and `yHandle` are two var handle instances whose type is `int` and which takes three access coordinates:
 
 1. a `MemorySegment` instance; the segment whose memory should be dereferenced
-2. a *logical* index, which is used to select the element of the sequence we want to access (as the layout path used to construct these var handles contains one free dimension)
+2. a *base offset*, which indicates the portions of the memory segment to be accessed; this is typically left to zero (as above), but can be useful when combining memory access var handles (see below);
+3. a *logical* index, which is used to select the element of the sequence we want to access (as the layout path used to construct these var handles contains one free dimension)
+
+In other words, the offset of the access operation can be expressed as follows:
+
+```java
+offset = baseOffset + (index * JAVA_INT.byteSize());
+```
+
+Or, equivalently, using the `MemoryLayout::scale` method, as:
+
+```java
+offset = JAVA_INT.scale(baseOffset, index);
+```
 
 Note that memory access var handles (as any other var handle) are *strongly* typed; and to get maximum efficiency, it is generally necessary to introduce casts to make sure that the access coordinates match the expected types — in this case we have to cast `i` into a `long`; similarly, since the signature polymorphic method `VarHandle::get` notionally returns `Object` a cast is necessary to force the right return type the var handle operation <a href="#3"><sup>3</sup></a>.
 
@@ -151,12 +164,12 @@ In other words, manual offset computation is no longer needed — offsets and st
 We have seen in the previous sections how memory access var handles dramatically simplify user code when structured access is involved. While deriving memory access var handles from layout is the most convenient option, the FFM API also allows to create such memory access var handles in a standalone fashion, as demonstrated in the following code:
 
 ```java
-VarHandle intHandle = MethodHandles.memorySegmentViewVarHandle(JAVA_INT); // (MS, J) -> I
+VarHandle intHandle = JAVA_INT.varHandle(); // (MS, J) -> I
 ```
 
 The above code creates a memory access var handle which reads/writes `int` values at a certain byte offset in a segment. To create this var handle we have to specify a carrier type — the type we want to use e.g. to extract values from memory, as well as whether any byte swapping should be applied when contents are read from or stored to memory. Additionally, the user might want to impose additional constraints on how memory dereferences should occur; for instance, a client might want to prevent access to misaligned 32 bit values. Of course, all this information can be succinctly derived from the provided value layout (`JAVA_INT` in the above example).
 
-The attentive reader might have noted how rich the var handles obtained from memory layouts are, compared to the simple memory access var handle we have constructed here. How do we go from a simple access var handle that takes a byte offset to a var handle that can dereference a complex layout path? The answer is, by using var handle *combinators*. Developers familiar with the method handles know how simpler method handles can be combined into more complex ones using the various combinator methods in the `MethodHandles` class. These methods allow, for instance, to insert (or bind) arguments into a target method handle, filter return values, permute arguments and much more.
+The attentive reader might have noted how the var handles obtained from the sequence layout in the previous section can be in fact derived from  the simple memory access var handle we have constructed here. That is, var handles can be adapted and turned into more complex var handles, using var handle *combinators*. Developers familiar with the method handle API know how simpler method handles can be combined into more complex ones using the various combinator methods in the `MethodHandles` class. These methods allow, for instance, to insert (or bind) arguments into a target method handle, filter return values, permute arguments and much more.
 
 The FFM API adds a rich set of var handle combinators in the `MethodHandles` class; with these tools, developers can express var handle transformations such as:
 
@@ -168,7 +181,7 @@ The FFM API adds a rich set of var handle combinators in the `MethodHandles` cla
 Without diving too deep, let's consider how we might want to take a basic memory access handle and turn it into a var handle which dereference a segment at a specific offset (again using the `points` layout defined previously):
 
 ```java
-VarHandle intHandle = MemoryHandles.memorySegmentViewVarHandle(JAVA_INT); // (MS, J) -> I
+VarHandle intHandle = JAVA_INT.varHandle(); // (MS, J) -> I
 long offsetOfY = points.byteOffset(PathElement.sequenceElement(3), PathElement.groupElement("y"));
 VarHandle valueHandle = MethodHandles.insertCoordinates(intHandle, 1, offsetOfValue); // (MS) -> I
 ```
@@ -182,8 +195,8 @@ Memory allocation is often a bottleneck when clients use off-heap memory. The FF
 ```java
 FileChannel channel = ...
 try (Arena offHeap = Arena.ofConfined()) {
-    MemorySegment nativeArray   = offHeap.allocateArray(ValueLayout.JAVA_INT, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
-    MemorySegment nativeString  = offHeap.allocateUtf8String("Hello!");
+    MemorySegment nativeArray   = offHeap.allocateFrom(ValueLayout.JAVA_INT, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+    MemorySegment nativeString  = offHeap.allocateFrom("Hello!");
 
     MemorySegment mappedSegment = channel.map(MapMode.READ_WRITE, 0, 1000, arena);
    ...
@@ -196,7 +209,7 @@ Segment allocators can also be obtained via factories in the `SegmentAllocator` 
 MemorySegment segment = ...
 SegmentAllocator allocator = SegmentAllocator.slicingAllocator(segment);
 for (int i = 0 ; i < 10 ; i++) {
-    MemorySegment s = allocator.allocateArray(JAVA_INT, new int[] { 1, 2, 3, 4, 5 });
+    MemorySegment s = allocator.allocateFrom(JAVA_INT, 1, 2, 3, 4, 5);
     ...
 }
 ```
@@ -214,7 +227,7 @@ class SlicingArena {
          slicingAllocator = SegmentAllocator.slicingAllocator(arena.allocate(size));
      }
 
-public void allocate(long byteSize, long byteAlignment) {
+     public void allocate(long byteSize, long byteAlignment) {
          return slicingAllocator.allocate(byteSize, byteAlignment);
      }
 
@@ -233,7 +246,7 @@ The earlier code which used a slicing allocator directly can now be written more
 ```java
 try (Arena slicingArena = new SlicingArena(1000)) {
      for (int i = 0 ; i < 10 ; i++) {
-         MemorySegment s = arena.allocateArray(JAVA_INT, new int[] { 1, 2, 3, 4, 5 });
+         MemorySegment s = arena.allocateFrom(JAVA_INT, 1, 2, 3, 4, 5);
          ...
      }
 } // all memory allocated is released here
