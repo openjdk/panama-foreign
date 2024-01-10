@@ -95,7 +95,7 @@ ValueLayout.ADDRESS.withTargetLayout(
                                     Linker.nativeLinker().canonicalLayouts().get("int")));
 ```
 
-For a more exhaustive examples of mappings between C types and layouts, please refer to the [appendix](#c-types-mapping-in-linuxx64). In the following sections, we will assume Linux/x64 as our target platform.
+For more exhaustive examples of mappings between C types and layouts, please refer to the [appendix](#c-types-mapping-in-linuxx64). In the following sections, we will assume Linux/x64 as our target platform.
 
 > Note: the [jextract](https://github.com/openjdk/jextract) tool can generate all the required C layouts (for scalars and structs/unions) *automatically*, so that clients do not have to worry about platform-dependent details such as sizes, alignment constraints and padding.
 
