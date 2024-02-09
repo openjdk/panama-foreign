@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,23 +21,21 @@
  * questions.
  */
 
+package compiler.lib.ir_framework;
+
 /**
- * @test
- * @bug 7200264
- * @summary 7192963 changes disabled shift vectors
- * @requires vm.cpu.features ~= ".*sse4\\.1.*" & vm.debug & vm.flavor == "server"
- * @requires !vm.emulatedClient & !vm.graal.enabled
- * @library /test/lib /
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:StressLongCountedLoop=0
- *                   compiler.c2.cr7200264.TestSSE4IntVect
+ * Info optionally passed to {@link Setup} annotated methods.
+ *
+ * @see Setup
  */
+public record SetupInfo(int invocationCounter) {
 
-package compiler.c2.cr7200264;
-
-public class TestSSE4IntVect {
-    public static void main(String[] args) throws Throwable {
-        TestDriver test = new TestDriver();
-        test.addExpectedVectorization("MulVI", 2);
-        test.run();
+    /**
+     * Get the invocation counter, which increments with every invocation of the setup method. It allows the creation
+     * of deterministically different inputs to the test method for every invocation.
+     */
+    @Override
+    public int invocationCounter() {
+        return invocationCounter;
     }
 }
