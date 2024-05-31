@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2020, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,11 +21,16 @@
  * questions.
  */
 
-package jdk.jfr.events;
-import jdk.jfr.internal.JVMSupport;
-import jdk.jfr.internal.event.EventConfiguration;
+import java.io.IOException;
 
-public final class EventConfigurations {
-    public static final EventConfiguration FILE_READ = JVMSupport.getConfiguration(FileReadEvent.class);
-    public static final EventConfiguration FILE_WRITE = JVMSupport.getConfiguration(FileWriteEvent.class);
+import static java.io.IO.readln;
+
+public class Input {
+
+    public static void main(String[] args) throws IOException {
+        if (args[0].equals("0"))
+            System.out.print(readln(null));
+        else
+            System.out.print(readln(args[1]));
+    }
 }
