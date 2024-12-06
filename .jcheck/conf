@@ -1,7 +1,7 @@
 [general]
 project=panama
 jbs=JDK
-version=24
+version=25
 
 [checks]
 error=author,committer,reviewers,merge,executable,symlink,message,hg-tag,whitespace,problemlists
