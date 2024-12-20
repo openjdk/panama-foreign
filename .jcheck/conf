@@ -4,7 +4,7 @@ jbs=JDK
 version=25
 
 [checks]
-error=author,committer,reviewers,merge,issues,executable,symlink,message,hg-tag,whitespace,problemlists,copyright
+error=author,committer,reviewers,merge,executable,symlink,message,hg-tag,whitespace,problemlists,copyright
 warning=issuestitle,binary
 
 [repository]
@@ -20,16 +20,13 @@ files=.*\.cpp|.*\.hpp|.*\.c|.*\.h|.*\.java|.*\.cc|.*\.hh|.*\.m|.*\.mm|.*\.S|.*\.
 ignore-tabs=.*\.gmk|Makefile
 
 [checks "merge"]
-message=Merge
+message=Merge .*
 
 [checks "reviewers"]
 committers=1
 
 [checks "committer"]
 role=committer
-
-[checks "issues"]
-pattern=^([124-8][0-9]{6}): (\S.*)$
 
 [checks "problemlists"]
 dirs=test/jdk|test/langtools|test/lib-test|test/hotspot/jtreg|test/jaxp
