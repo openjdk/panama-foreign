@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,20 +19,33 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
+ *
  */
-package metaspace.share;
 
+#ifndef SHARE_GC_G1_G1COLLECTIONSET_INLINE_HPP
+#define SHARE_GC_G1_G1COLLECTIONSET_INLINE_HPP
 
-import jdk.test.whitebox.WhiteBox;
-import nsk.share.test.ExecutionController;
+#include "gc/g1/g1CollectionSet.hpp"
+#include "gc/g1/g1HeapRegionRemSet.hpp"
 
-public class TriggerUnloadingWithWhiteBox implements TriggerUnloadingHelper {
+template <class CardOrRangeVisitor>
+inline void G1CollectionSet::merge_cardsets_for_collection_groups(CardOrRangeVisitor& cl, uint worker_id, uint num_workers) {
+  uint length = collection_groups_increment_length();
+  uint offset =  _selected_groups_inc_part_start;
+  if (length == 0) {
+    return;
+  }
 
-        private final static WhiteBox wb = WhiteBox.getWhiteBox();
-
-        @Override
-        public void triggerUnloading(ExecutionController stresser) {
-                wb.fullGC();
-        }
-
+  uint start_pos = (worker_id * length) / num_workers;
+  uint cur_pos = start_pos;
+  uint count = 0;
+  do {
+    G1HeapRegionRemSet::iterate_for_merge(collection_set_groups()->at(offset + cur_pos)->card_set(), cl);
+    cur_pos++;
+    count++;
+    if (cur_pos == length) {
+      cur_pos = 0;
+    }
+  } while (cur_pos != start_pos);
 }
+#endif /* SHARE_GC_G1_G1COLLECTIONSET_INLINE_HPP */
