@@ -19,41 +19,31 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 /**
  * @test
- * @summary -XX:AOTMode=create should be compatible with ZGC
- * @bug 8352775
- * @requires vm.cds
- * @requires vm.gc.Z
- * @library /test/lib
- * @build AOTCacheWithZGC
- * @run driver jdk.test.lib.helpers.ClassFileInstaller -jar app.jar AOTCacheWithZGCApp
- * @run driver AOTCacheWithZGC
+ * @bug 8369517
+ * @summary Compilation mismatch for equivalent lambda and method reference
+ * @compile/fail/ref=ResultTypeNotBeingCapturedTest.out -XDrawDiagnostics ResultTypeNotBeingCapturedTest.java
  */
 
-import jdk.test.lib.cds.SimpleCDSAppTester;
-import jdk.test.lib.process.OutputAnalyzer;
+import java.util.function.Supplier;
 
-public class AOTCacheWithZGC {
-    public static void main(String... args) throws Exception {
-        SimpleCDSAppTester.of("AOTCacheWithZGC")
-            .addVmArgs("-XX:+UseZGC", "-Xlog:cds", "-Xlog:aot")
-            .classpath("app.jar")
-            .appCommandLine("AOTCacheWithZGCApp")
-            .setProductionChecker((OutputAnalyzer out) -> {
-                    // AOT-linked classes required cached Java heap objects, which is not
-                    // yet supported by ZGC.
-                    out.shouldContain("Using AOT-linked classes: false");
-                })
-            .runAOTWorkflow();
+class ResultTypeNotBeingCapturedTest {
+    interface X<T> {
+        X<T> self();
     }
-}
 
-class AOTCacheWithZGCApp {
-    public static void main(String[] args) {
+    static X<?> makeX() {return null;}
 
+    static <R> X<R> create(Supplier<? extends R> supplier) {return null;}
+
+    static X<X<?>> methodRef() {
+        return create(ResultTypeNotBeingCapturedTest::makeX).self();
+    }
+
+    static X<X<?>> lambda() {
+        return create(() -> makeX()).self();
     }
 }
