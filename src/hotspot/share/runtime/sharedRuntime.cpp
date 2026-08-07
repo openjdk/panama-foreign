@@ -28,6 +28,7 @@
 #include "classfile/classLoader.hpp"
 #include "classfile/compactHashtable.hpp"
 #include "classfile/javaClasses.inline.hpp"
+#include "classfile/javaStackTraceClasses.hpp"
 #include "classfile/stringTable.hpp"
 #include "classfile/vmClasses.hpp"
 #include "classfile/vmSymbols.hpp"
@@ -1240,8 +1241,9 @@ Handle SharedRuntime::find_callee_info_helper(vframeStream& vfst, Bytecodes::Cod
       }
     } else {
       assert(attached_method->has_scalarized_args(), "invalid use of attached method");
-      if (!attached_method->method_holder()->is_inline_klass() || attached_method->is_static()) {
-        // Ignore the attached method in this case to not confuse below code
+      if (attached_method->is_static() || !attached_method->is_scalarized_arg(0)) {
+        // Ignore the attached method if it is only needed to describe scalarized
+        // arguments. It remains attached to the call site for outgoing oop scanning.
         attached_method = methodHandle(current, nullptr);
       }
     }
@@ -2972,12 +2974,38 @@ void CompiledEntrySignature::compute_calling_conventions(bool link_time) {
     _c1_needs_stack_repair = (_args_on_stack_cc < _args_on_stack) || (_args_on_stack_cc_ro < _args_on_stack);
     _c2_needs_stack_repair = (_args_on_stack_cc > _args_on_stack) || (_args_on_stack_cc > _args_on_stack_cc_ro);
 
-    // Upper bound on stack arguments to avoid hitting the argument limit and
-    // bailing out of compilation ("unsupported incoming calling sequence").
-    // TODO 8281260 We need a reasonable limit (flag?) here
-    if (MAX2(_args_on_stack_cc, _args_on_stack_cc_ro) <= 75) {
+    // Limit the scalarized stack argument area to ensure that generated entry
+    // points fit into nmethod's uint16_t *_entry_offset fields.
+    const int max_stack_slots = 128;
+    if (MAX2(_args_on_stack_cc, _args_on_stack_cc_ro) <= max_stack_slots) {
       return; // Success
     }
+
+    // We exceeded the scalarized stack-slot limit. Check if not scalarizing the
+    // receiver would help. If so, use the receiver-as-oop convention for the
+    // method body but keep scalarizing the other arguments. This also preserves
+    // the convention used by calls through super methods.
+    if (_has_inline_recv && _args_on_stack_cc_ro <= max_stack_slots && _num_inline_args > 1) {
+      _sig_cc = _sig_cc_ro;
+      _args_on_stack_cc = SharedRuntime::java_calling_convention(_sig_cc, _regs_cc);
+      assert(_args_on_stack_cc == _args_on_stack_cc_ro, "calling conventions must match");
+      _has_inline_recv = false;
+      _num_inline_args--;
+      _c1_needs_stack_repair = _args_on_stack_cc < _args_on_stack;
+      _c2_needs_stack_repair = _args_on_stack_cc > _args_on_stack;
+      return; // Success
+    }
+
+#ifdef ASSERT
+    if (link_time) {
+      GrowableArray<Method*>* supers = get_supers();
+      for (int i = 0; i < supers->length(); ++i) {
+        Method* super_method = supers->at(i);
+        assert(super_method->mismatch() || !super_method->has_scalarized_args(),
+               "cannot fall back with a scalarized super method");
+      }
+    }
+#endif
   }
 
   // No scalarized args
@@ -4083,6 +4111,7 @@ oop SharedRuntime::allocate_inline_types_impl(JavaThread* current, methodHandle 
     assert(reg_pos < (uint)arg_size, "");
     VMRegPair reg_pair = reg_pairs[reg_pos];
     oop* buffer = callerFrame.oopmapreg_to_oop_location(reg_pair.first(), &reg_map2);
+    guarantee(buffer != nullptr, "bad register save location");
     instanceHandle h_buffer(THREAD, (instanceOop)*buffer);
     InlineKlass* vk = InlineKlass::cast(holder);
     if (h_buffer.not_null()) {
@@ -4121,6 +4150,7 @@ oop SharedRuntime::allocate_inline_types_impl(JavaThread* current, methodHandle 
       assert(reg_pos < (uint)arg_size, "out of bound register?");
       VMRegPair reg_pair = reg_pairs[reg_pos];
       oop* buffer = callerFrame.oopmapreg_to_oop_location(reg_pair.first(), &reg_map2);
+      guarantee(buffer != nullptr, "bad register save location");
       instanceHandle h_buffer(THREAD, (instanceOop)*buffer);
       InlineKlass* vk = ss.as_inline_klass(holder);
       assert(vk != nullptr, "Unexpected klass");
