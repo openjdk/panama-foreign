@@ -54,7 +54,7 @@
 // Beware! This sp_inc is NOT the same as the one mentioned in MacroAssembler::remove_frame but only the size
 // of the extension space + the additional copy of the return address. That means, it doesn't contain the
 // frame size (where the local and sp_inc are) and the saved RBP.
-void C2_MacroAssembler::verified_entry(Compile* C, int sp_inc) {
+void C2_MacroAssembler::verified_entry(Compile* C, int sp_inc, bool do_stack_bang) {
   if (C->clinit_barrier_on_entry()) {
     assert(VM_Version::supports_fast_class_init_checks(), "sanity");
     assert(!C->method()->holder()->is_not_initialized(), "initialization should have been started");
@@ -87,7 +87,7 @@ void C2_MacroAssembler::verified_entry(Compile* C, int sp_inc) {
   // some VM calls (such as call site linkage) can use several kilobytes of
   // stack.  But the stack safety zone should account for that.
   // See bugs 4446381, 4468289, 4497237.
-  if (stack_bang_size > 0) {
+  if (do_stack_bang && stack_bang_size > 0) {
     generate_stack_overflow_check(stack_bang_size);
 
     // We always push rbp, so that on return to interpreter rbp, will be
@@ -1447,7 +1447,7 @@ void C2_MacroAssembler::vgather8b_masked(BasicType elem_bt, XMMRegister dst,
       incq(mask_idx);
     }
   } else {
-    assert(elem_bt == T_BYTE, "");
+    assert(elem_bt == T_BYTE, "only handles short and byte");
     for (int i = 0; i < 8; i++) {
       // dst[i] = mask[i] ? src[idx_base[i]] : 0
       Label skip_load;
@@ -1472,7 +1472,7 @@ void C2_MacroAssembler::vgather8b(BasicType elem_bt, XMMRegister dst,
       pinsrw(dst, Address(base, rtmp, Address::times_2), i);
     }
   } else {
-    assert(elem_bt == T_BYTE, "");
+    assert(elem_bt == T_BYTE, "only handles short and byte");
     for (int i = 0; i < 8; i++) {
       // dst[i] = src[idx_base[i]]
       movl(rtmp, Address(idx_base, i * 4));
@@ -1509,7 +1509,7 @@ void C2_MacroAssembler::vgather_subword(BasicType elem_ty, XMMRegister dst,
                                         Register rtmp, Register mask_idx,
                                         Register length, int vector_len, int vlen_enc) {
   Label GATHER8_LOOP;
-  assert(is_subword_type(elem_ty), "");
+  assert(is_signed_subword_type(elem_ty), "only handles short and byte");
   movl(length, vector_len);
   vpxor(xtmp1, xtmp1, xtmp1, vlen_enc); // xtmp1 = {0, ...}
   vpxor(dst, dst, dst, vlen_enc); // dst = {0, ...}
@@ -2513,7 +2513,7 @@ void C2_MacroAssembler::get_elem(BasicType typ, Register dst, XMMRegister src, i
   int esize =  type2aelembytes(typ);
   int elem_per_lane = 16/esize;
   int eindex = elemindex % elem_per_lane;
-  assert(is_integral_type(typ),"required");
+  assert(is_signed_subword_type(typ) || is_non_subword_integral_type(typ), "only handles signed integral types");
 
   if (eindex == 0) {
     if (typ == T_LONG) {
